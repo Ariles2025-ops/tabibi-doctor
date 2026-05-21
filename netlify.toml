@@ -157,5 +157,41 @@
   force = true
 
 # ────────────────────────────────────────────────────────────────────────
+# [Phase 3 2026-05-21] 301 redirects : anciennes URLs legales -> /legal/
+# Preservation du SEO et compatibilite des liens externes (Conseil de
+# l'Ordre, ANPDP, partenaires, emails Brevo historiques, etc.)
+# A garder en place AU MOINS 12 mois apres mise en prod.
+# ────────────────────────────────────────────────────────────────────────
+[[redirects]]
+  from = "/cgu.html"
+  to = "/legal/cgu.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/confidentialite.html"
+  to = "/legal/confidentialite.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/cookies.html"
+  to = "/legal/cookies.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/mentions-legales.html"
+  to = "/legal/mentions-legales.html"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "/rgpd-droits.html"
+  to = "/legal/rgpd-droits.html"
+  status = 301
+  force = true
+
+# ────────────────────────────────────────────────────────────────────────
 # Pas de SPA fallback : on a de vrais fichiers HTML
 # ────────────────────────────────────────────────────────────────────────

@@ -34,12 +34,24 @@
   - [x] P1 #2 : supprimé fallback dead code `from('profiles')` dans `index.html:1367`
   - [x] 5 P2 documentés pour phases 4/6/10/12/13
 
-## Phase 3 — Pages légales `/legal/` + RGPD (2-3h)
-- [ ] 3.1 Déplacement `cgu.html` → `legal/cgu.html` (+ 4 autres)
-- [ ] 3.2 Netlify rewrites 301 pour anciennes URLs (préservation SEO)
-- [ ] 3.3 Footer global avec liens
-- [ ] 3.4 Bandeau cookies minimaliste (essentiels only)
-- [ ] 3.5 Nouvelle page `legal/dpa.html` (Data Processing Agreement médecins)
+## Phase 3 — Pages légales `/legal/` + RGPD (2-3h) — **✅ DONE 2026-05-21**
+- [x] 3.1 Déplacement `cgu.html` → `legal/cgu.html` (+ 4 autres : confidentialite, cookies, mentions-legales, rgpd-droits)
+  - 5 fichiers déplacés à `/legal/`, asset paths réécrits avec `../` préfixe
+  - Refs intra-legal conservées en relatif (résolvent OK depuis /legal/)
+- [x] 3.2 Netlify rewrites 301 pour anciennes URLs (préservation SEO)
+  - 5 redirects `/cgu.html` → `/legal/cgu.html` etc. (force=true)
+  - 11 fichiers (HTML + JS) sed-edited pour pointer directement vers `/legal/*` (évite hop redirect)
+  - `robots.txt` Allow ajustés vers nouveaux paths
+- [x] 3.3 Footer global avec liens
+  - Pages riches (index, about) déjà OK avec liens vers /legal/
+  - Créé `js/tabibi-footer.js` (injecteur footer minimal idempotent)
+  - Inclus dans login.html, signup.html, doctor-profile.html (3 pages publiques sans footer)
+- [x] 3.4 Bandeau cookies minimaliste (essentiels only)
+  - `js/tabibi-cookies.js` existant audité : 3 boutons (Refuser au même niveau visuel ✅), TTL 6 mois, 3 langues, défaut = rien activé
+  - 2 fixes : path `cookies.html` → `legal/cookies.html` + texte lien `policy_link` ajouté au dict I18N
+- [x] 3.5 Nouvelle page `legal/dpa.html` (Data Processing Agreement médecins)
+  - 11 sections : préambule, objet/durée, données, obligations, mesures sécurité, sous-traitants ultérieurs, transferts internationaux, violations, droit d'audit, durées de conservation, droit applicable, contacts
+  - Article 28 RGPD + loi DZ 18-07 + ANPDP référencés
 
 ## Phase 4 — Dashboard médecin complet (8-12h)
 - [ ] 4.1 Vue d'ensemble (prochains RDV, demandes, stats)

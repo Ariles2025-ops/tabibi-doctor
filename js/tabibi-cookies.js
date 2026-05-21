@@ -50,9 +50,9 @@
   }
 
   const I18N = {
-    fr: { title: "Nous utilisons des cookies", text: "Nous utilisons des cookies essentiels au fonctionnement du site, ainsi que des cookies analytiques et marketing (avec votre consentement).", reject: "Refuser", customize: "Personnaliser", accept: "Tout accepter" },
-    ar: { title: "نستخدم ملفات تعريف الارتباط", text: "نستخدم ملفات تعريف الارتباط الضرورية لعمل الموقع، وكذلك ملفات تحليلية وتسويقية (بموافقتكم).", reject: "رفض", customize: "تخصيص", accept: "قبول الكل" },
-    en: { title: "We use cookies", text: "We use essential cookies for site functioning, plus analytics and marketing cookies (with your consent).", reject: "Reject", customize: "Customize", accept: "Accept all" }
+    fr: { title: "Nous utilisons des cookies", text: "Nous utilisons des cookies essentiels au fonctionnement du site, ainsi que des cookies analytiques et marketing (avec votre consentement).", reject: "Refuser", customize: "Personnaliser", accept: "Tout accepter", policy_link: "Politique cookies" },
+    ar: { title: "نستخدم ملفات تعريف الارتباط", text: "نستخدم ملفات تعريف الارتباط الضرورية لعمل الموقع، وكذلك ملفات تحليلية وتسويقية (بموافقتكم).", reject: "رفض", customize: "تخصيص", accept: "قبول الكل", policy_link: "سياسة الكوكيز" },
+    en: { title: "We use cookies", text: "We use essential cookies for site functioning, plus analytics and marketing cookies (with your consent).", reject: "Reject", customize: "Customize", accept: "Accept all", policy_link: "Cookie policy" }
   };
 
   function render() {
@@ -76,7 +76,7 @@
         #tabibi-cookie-banner .b-link{background:transparent;color:#0F7560;text-decoration:underline;padding:8px 4px}
       </style>
       <h3>🍪 ${t.title}</h3>
-      <p>${t.text} <a href="cookies.html" style="color:#0F7560">cookies.html</a></p>
+      <p>${t.text} <a href="legal/cookies.html" style="color:#0F7560;text-decoration:underline">${t.policy_link}</a></p>
       <div class="acts">
         <button class="b-sec" id="tc-reject">${t.reject}</button>
         <button class="b-link" id="tc-custom">${t.customize}</button>
@@ -87,7 +87,11 @@
 
     document.getElementById('tc-accept').onclick = () => { set({ analytics: true, marketing: true }); banner.remove(); };
     document.getElementById('tc-reject').onclick = () => { set({ analytics: false, marketing: false }); banner.remove(); };
-    document.getElementById('tc-custom').onclick = () => { window.location.href = 'cookies.html'; };
+    // [Phase 3 2026-05-21] path updated : cookies.html -> legal/cookies.html
+    document.getElementById('tc-custom').onclick = () => {
+      var pre = (location.pathname || '').indexOf('/legal/') !== -1 ? '' : 'legal/';
+      window.location.href = pre + 'cookies.html';
+    };
   }
 
   function init() {

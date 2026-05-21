@@ -39,17 +39,19 @@ Disallow: /api/
 Disallow: /tests/
 Disallow: /migrations/
 
-# Autorise explicitement le contenu public marketing + blog + sitemaps
+# Autorise explicitement le contenu public marketing + blog + sitemaps + legal
 Allow: /
 Allow: /blog/
 Allow: /sitemaps/
+Allow: /legal/
 Allow: /index.html
 Allow: /about.html
-Allow: /cgu.html
-Allow: /confidentialite.html
-Allow: /cookies.html
-Allow: /mentions-legales.html
-Allow: /rgpd-droits.html
+Allow: /legal/cgu.html
+Allow: /legal/confidentialite.html
+Allow: /legal/cookies.html
+Allow: /legal/mentions-legales.html
+Allow: /legal/rgpd-droits.html
+Allow: /legal/dpa.html
 Allow: /signup.html
 Allow: /login.html
 
