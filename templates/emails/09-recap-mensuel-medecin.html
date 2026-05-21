@@ -1,0 +1,57 @@
+<!--
+  Tabibi - Email transactionnel
+  Template : Récap mensuel médecin
+  Subject  : Votre mois sur Tabibi : {{nombre_rdv}} rendez-vous en {{mois}}
+  Preheader: Voici votre tableau de bord du mois écoulé.
+-->
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Récapitulatif mensuel</title>
+</head>
+<body style="font-family:Arial,sans-serif;color:#222;line-height:1.6;max-width:600px;margin:0 auto;padding:24px">
+
+<h1 style="color:#0F7560">Votre mois de {{mois}} sur Tabibi</h1>
+
+<p>Bonjour Dr {{nom_medecin}},</p>
+
+<p>Voici le récapitulatif de votre activité Tabibi pour le mois de {{mois}}.</p>
+
+<h2 style="color:#2E8B57">Vos chiffres du mois</h2>
+
+<ul>
+<li><strong>Rendez-vous honorés :</strong> {{nombre_rdv}}</li>
+<li><strong>Nouveaux patients accueillis :</strong> {{nouveaux_patients}}</li>
+<li><strong>Taux d'absentéisme :</strong> {{taux_no_show}} %</li>
+<li><strong>Revenus estimés :</strong> {{revenus_estimes}} DA</li>
+<li><strong>Jour le plus chargé :</strong> {{top_jour}} ({{rdv_top_jour}} rendez-vous)</li>
+<li><strong>Note moyenne des patients :</strong> {{note_moyenne}} / 5 ({{nombre_avis}} avis)</li>
+</ul>
+
+<h2 style="color:#2E8B57">Ce que disent vos patients</h2>
+
+<p style="font-style:italic;border-left:3px solid #2E8B57;padding-left:12px">
+"{{verbatim_avis_patient}}"
+</p>
+
+<p><a href="{{lien_dashboard}}" style="background:#0F7560;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;display:inline-block">Voir le tableau de bord complet</a></p>
+
+<h2 style="color:#2E8B57">Suggestion du mois</h2>
+
+<p>{{suggestion_personnalisee}}</p>
+
+<p>Les revenus estimés sont calculés sur la base des consultations honorées et des tarifs déclarés. Ils n'intègrent pas les remboursements de la sécurité sociale et restent indicatifs.</p>
+
+<p>Bonne fin de mois,<br>
+<strong>L'équipe Tabibi Pro</strong></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:32px 0">
+
+<p style="font-size:12px;color:#666">
+Tabibi &middot; La santé plus simple en Algérie<br>
+<a href="https://tabibi.doctor" style="color:#666">tabibi.doctor</a> &middot; <a href="{{lien_desinscription}}" style="color:#666">Gérer mes notifications</a>
+</p>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!--
+  Tabibi - Email transactionnel
+  Template : Demande d'avis post-RDV patient (24h après le RDV)
+  Subject  : Comment s'est passée votre consultation avec Dr {{nom_medecin}} ?
+  Preheader: Votre retour aide les autres patients à choisir leur médecin.
+-->
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Votre avis sur votre consultation</title>
+</head>
+<body style="font-family:Arial,sans-serif;color:#222;line-height:1.6;max-width:600px;margin:0 auto;padding:24px">
+
+<h1 style="color:#0F7560">Comment s'est passée votre consultation ?</h1>
+
+<p>Bonjour {{prenom_patient}},</p>
+
+<p>Hier, vous avez consulté <strong>Dr {{nom_medecin}}</strong>. Nous espérons que tout s'est bien passé.</p>
+
+<p>Si vous avez quelques minutes, votre retour serait précieux. Il aidera d'autres patients à choisir leur médecin en toute confiance, et permettra au cabinet d'améliorer continuellement la qualité de l'accueil.</p>
+
+<h2 style="color:#2E8B57">Donner mon avis</h2>
+
+<p>Cela prend environ 1 minute. Vous notez de 1 à 5 étoiles et vous laissez, si vous le souhaitez, un commentaire libre.</p>
+
+<p><a href="{{lien_avis}}" style="background:#0F7560;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;display:inline-block">Laisser un avis</a></p>
+
+<p>Si vous avez rencontré un problème particulier (consultation qui ne s'est pas tenue, désaccord, sujet sensible), vous pouvez nous contacter directement à <a href="mailto:support@tabibi.doctor">support@tabibi.doctor</a>. Notre équipe lit chaque message.</p>
+
+<p>Merci pour votre confiance,<br>
+<strong>L'équipe Tabibi</strong></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:32px 0">
+
+<p style="font-size:12px;color:#666">
+Tabibi &middot; La santé plus simple en Algérie<br>
+<a href="https://tabibi.doctor" style="color:#666">tabibi.doctor</a> &middot; <a href="{{lien_desinscription}}" style="color:#666">Gérer mes notifications</a>
+</p>
+
+</body>
+</html>

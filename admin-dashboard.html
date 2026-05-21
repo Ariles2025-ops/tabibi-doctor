@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-avatar.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Espace administration privé Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/admin-dashboard.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#7c3aed">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_admin_dashboard">
+<title>Administration | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+.adm-row { display:flex; align-items:center; gap:12px; padding:12px; background:#fff; border-radius:10px; margin-bottom:6px; transition:.15s; cursor:pointer; }
+.adm-row:hover { background:var(--bg2); }
+.kpi-card { padding:14px; border-left:3px solid; }
+.tx-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--bg2); font-size:13px; }
+.tx-row:last-child { border-bottom:none; }
+@keyframes bell-ring{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(-12deg)}20%,40%{transform:rotate(12deg)}}
+</style>
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <a href="index.html" title="Retour à l'accueil" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,.04);color:var(--text2);text-decoration:none;flex-shrink:0;transition:.15s" onmouseover="this.style.background='var(--blue-l)';this.style.color='var(--blue)'" onmouseout="this.style.background='rgba(0,0,0,.04)';this.style.color='var(--text2)'"><i class="fa fa-house"></i></a>
+  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+    <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 2px 8px rgba(124,58,237,.3)">
+      <i class="fa fa-shield-halved"></i>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div class="app-bar-title" style="font-size:15px;font-weight:800;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Administration</div>
+      <div class="app-bar-sub" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:2px"><i class="fa fa-shield fa-xs" style="color:#7c3aed"></i> Admin Tabibi DZ</div>
+    </div>
+  </div>
+  <button class="btn btn-icon btn-icon-sm" onclick="alert(tabibiT('alert_admin_notif_demo','3 alertes admin · 7 médecins en attente · 5 signalements'))" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
+    <i class="fa fa-bell" style="font-size:14px"></i><span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
+  </button>
+  <button title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:800;font-size:13px;border:none;cursor:default;flex-shrink:0;box-shadow:0 2px 6px rgba(124,58,237,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">AT</span></button>
+  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
+</header>
+
+<div class="dash-tabs" style="position:sticky;top:var(--nav-h);z-index:150;background:#fff;border-bottom:1px solid var(--border)">
+  <button class="dash-tab active" onclick="sw('overview',this)"><i class="fa fa-chart-line" aria-hidden="true"></i> Vue</button>
+  <button class="dash-tab" onclick="sw('users',this)"><i class="fa fa-users" aria-hidden="true"></i> Utilisateurs</button>
+  <button class="dash-tab" onclick="sw('doctors',this)"><i class="fa fa-user-doctor" aria-hidden="true"></i> Médecins</button>
+  <button class="dash-tab" onclick="sw('rdv',this)"><i class="fa fa-calendar-check" aria-hidden="true"></i> RDV</button>
+  <button class="dash-tab" onclick="sw('payments',this)"><i class="fa fa-coins" aria-hidden="true"></i> Paiements</button>
+  <button class="dash-tab" onclick="location.href='admin-reviews.html'" style="position:relative"><i class="fa fa-star" aria-hidden="true"></i> Avis <span id="adm-rev-pending" style="background:var(--red);color:#fff;border-radius:10px;padding:1px 7px;font-size:10px;margin-left:4px;display:none">0</span></button>
+  <button class="dash-tab" onclick="location.href='admin-cabinet.html'"><i class="fa fa-building" aria-hidden="true"></i> Cabinets</button>
+  <button class="dash-tab" onclick="location.href='admin-api-keys.html'"><i class="fa fa-key" aria-hidden="true"></i> Clés API</button>
+  <button class="dash-tab" onclick="sw('settings',this)"><i class="fa fa-gear" aria-hidden="true"></i> Paramètres</button>
+</div>
+
+<main class="page" role="main">
+
+  <!-- ═════ VUE GLOBALE ═════ -->
+  <div id="tab-overview" class="tab-panel active">
+    <div style="background:linear-gradient(135deg,#5b21b6,#7c3aed,#a78bfa);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
+      <div style="font-size:13px;opacity:.85">Bonjour, Admin <i class="fa fa-shield"></i></div>
+      <div style="font-size:22px;font-weight:800;margin-top:4px">Vue d'ensemble</div>
+      <div style="font-size:12px;opacity:.85;margin-top:4px">Plateforme Tabibi — Algérie</div>
+    </div>
+    <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="adm-kpi"></div>
+    <div style="padding:0 16px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px"><i class="fa fa-bolt" style="color:#f59e0b"></i> Activité récente</div>
+      <div class="card"><div id="recent-act"></div></div>
+    </div>
+    <div style="padding:14px 16px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:10px"><i class="fa fa-chart-pie" style="color:#7c3aed"></i> Répartition par wilaya</div>
+      <div class="card"><div id="city-bars"></div></div>
+    </div>
+  </div>
+
+  <!-- ═════ UTILISATEURS ═════ -->
+  <div id="tab-users" class="tab-panel" style="padding:14px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700">Utilisateurs (<span id="ucount">0</span>)</div>
+      <input id="usearch" oninput="renderU()" placeholder="Nom, email..." data-i18n-placeholder="ph_name_email_search" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;width:140px">
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none">
+      <button class="chip active" data-r="all" onclick="filtU('all',this)">Tous</button>
+      <button class="chip" data-r="patient" onclick="filtU('patient',this)" data-i18n="tab_patients">Patients</button>
+      <button class="chip" data-r="medecin" onclick="filtU('medecin',this)">Médecins</button>
+      <button class="chip" data-r="admin" onclick="filtU('admin',this)">Admin</button>
+    </div>
+    <div id="users-list"></div>
+  </div>
+
+  <!-- ═════ MÉDECINS À VALIDER ═════ -->
+  <div id="tab-doctors" class="tab-panel" style="padding:14px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700">Validation médecins</div>
+      <span class="badge badge-amber" id="pend-count"><i class="fa fa-clock"></i> 0 en attente</span>
+    </div>
+    <div id="doctors-list"></div>
+  </div>
+
+  <!-- ═════ RDV PLATEFORME ═════ -->
+  <div id="tab-rdv" class="tab-panel" style="padding:14px 16px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px">Tous les RDV</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px" id="rdv-stats"></div>
+    <div class="card"><div id="rdv-list"></div></div>
+  </div>
+
+  <!-- ═════ PAIEMENTS ═════ -->
+  <div id="tab-payments" class="tab-panel" style="padding:14px 16px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins" style="color:#f59e0b"></i> Transactions</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="pay-kpi"></div>
+    <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none">
+      <button class="chip active" data-pm="all" onclick="filtPay('all',this)">Tous</button>
+      <button class="chip" data-pm="cash" onclick="filtPay('cash',this)">Espèces</button>
+      <button class="chip" data-pm="edahabia" onclick="filtPay('edahabia',this)">Edahabia</button>
+      <button class="chip" data-pm="cib" onclick="filtPay('cib',this)">CIB</button>
+      <button class="chip" data-pm="paymee" onclick="filtPay('paymee',this)">Paymee</button>
+    </div>
+    <div class="card"><div id="pay-list"></div></div>
+  </div>
+
+  <!-- ═════ PARAMÈTRES ═════ -->
+  <div id="tab-settings" class="tab-panel" style="padding:14px 16px">
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins"></i> Tarification</div>
+      <div class="form-group"><label class="form-label">Tarif min consultation (DA)</label><input class="form-control" type="number" value="1000"></div>
+      <div class="form-group"><label class="form-label">Tarif max consultation (DA)</label><input class="form-control" type="number" value="10000"></div>
+      <div class="form-group"><label class="form-label">Commission Tabibi (%)</label><input class="form-control" type="number" value="5"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-envelope"></i> Notifications</div>
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>Email confirmation RDV</span><input type="checkbox" checked></label>
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>SMS rappel 24h</span><input type="checkbox" checked></label>
+      <label style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span>Newsletter mensuelle</span><input type="checkbox"></label>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-database"></i> Données</div>
+      <button class="btn btn-soft btn-full" style="margin-bottom:6px" onclick="alert(tabibiT('alert_export_csv_pending','Export CSV en cours...'))"><i class="fa fa-file-csv"></i> Exporter données (CSV)</button>
+      <button class="btn btn-soft btn-full" style="margin-bottom:6px" onclick="alert(tabibiT('alert_backup_created','Backup créé'))"><i class="fa fa-cloud-arrow-up"></i> Backup manuel</button>
+    </div>
+    <button class="btn btn-primary btn-full btn-lg"><i class="fa fa-save"></i> Sauvegarder paramètres</button>
+    <button class="btn btn-danger btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
+  </div>
+
+</main>
+<div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+
+<script src="scripts/app.js"></script>
+<script>
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+async function logout(){
+  if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
+  try {
+    if (window.tabibi && window.tabibi.auth) {
+      await window.tabibi.auth.signOut();
+    } else if (window.tabibi && window.tabibi.supabase) {
+      await window.tabibi.supabase.auth.signOut();
+    }
+  } catch(e) {}
+  try {
+    localStorage.removeItem("tabibi_user");
+    localStorage.removeItem("tabibi_role");
+    sessionStorage.setItem("tabibi_just_logged_out", "1");
+  } catch(e) {}
+  location.href="index.html";
+}
+
+const USERS=[
+  {n:"Karim Benali",e:"karim@email.dz",r:"patient",d:"2025-04-15",s:"active",p:"0555 123 456"},
+  {n:"Lina Khelifi",e:"lina@email.dz",r:"patient",d:"2025-04-28",s:"active",p:"0666 234 567"},
+  {n:"Salim Ouzir",e:"salim@email.dz",r:"patient",d:"2025-04-22",s:"active",p:"0772 456 789"},
+  {n:"Mohamed Tabet",e:"mohamed@email.dz",r:"patient",d:"2025-04-30",s:"active",p:"0555 999 111"},
+  {n:"Saïda Rahmani",e:"saida@email.dz",r:"patient",d:"2025-05-01",s:"active",p:"0666 888 222"},
+  {n:"Dr. Amina Hadj",e:"amina@tabibi.dz",r:"medecin",d:"2025-04-10",s:"active",p:"0661 234 567",spec:"Cardiologie"},
+  {n:"Dr. Yacine Bouali",e:"yacine@tabibi.dz",r:"medecin",d:"2025-04-25",s:"pending",p:"0772 345 678",spec:"Dermatologie"},
+  {n:"Dr. Karim Benali",e:"k.benali@tabibi.dz",r:"medecin",d:"2025-03-12",s:"active",p:"0555 234 567",spec:"Cardiologie"},
+  {n:"Dr. Nadia Saïd",e:"n.said@tabibi.dz",r:"medecin",d:"2025-04-18",s:"pending",p:"0666 345 678",spec:"Gynécologie"},
+  {n:"Admin Tabibi",e:"contact@tabibi.doctor",r:"admin",d:"2026-05-13",s:"active",p:""}
+];
+const PAYS=[
+  {ref:"TX-001",amt:2500,m:"edahabia",s:"success",d:"2025-04-30 14:23",u:"Karim B.",doc:"Dr. Karim Benali"},
+  {ref:"TX-002",amt:3000,m:"cib",s:"success",d:"2025-04-30 11:08",u:"Lina K.",doc:"Dr. Nadia Saïd"},
+  {ref:"TX-003",amt:1800,m:"cash",s:"pending",d:"2025-04-29 16:45",u:"Salim O.",doc:"Dr. Yacine Djalout"},
+  {ref:"TX-004",amt:4500,m:"paymee",s:"success",d:"2025-04-29 09:12",u:"Mohamed T.",doc:"Dr. Mourad Khelifi"},
+  {ref:"TX-005",amt:2000,m:"edahabia",s:"success",d:"2025-04-28 15:30",u:"Saïda R.",doc:"Dr. Amira Kaci"},
+  {ref:"TX-006",amt:2800,m:"cib",s:"success",d:"2025-04-27 10:45",u:"Karim B.",doc:"Dr. Omar Hadj"},
+  {ref:"TX-007",amt:1200,m:"cash",s:"refunded",d:"2025-04-25 14:00",u:"Lina K.",doc:"Dr. Rachid Tlemceni"}
+];
+let currentRoleFilt="all", currentPayFilt="all";
+
+function sw(tab,btn){
+  try {
+    console.log('[admin-dashboard] tab switched to:', tab);
+    document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+    const target = document.getElementById("tab-"+tab);
+    if(target) target.classList.add("active");
+    document.querySelectorAll(".dash-tabs .dash-tab").forEach(b=>b.classList.remove("active"));
+    if(btn) btn.classList.add("active");
+    if(tab==="overview") { try { renderOverview(); } catch(e){ console.warn('[admin-dashboard] renderOverview:', e); } }
+    if(tab==="users") { try { renderU(); } catch(e){ console.warn('[admin-dashboard] renderU:', e); } }
+    if(tab==="doctors") {
+      try {
+        if (typeof loadDoctorsFromSupabase === 'function') {
+          loadDoctorsFromSupabase().then(() => { try { renderD(); } catch(e){ console.warn('[admin-dashboard] renderD:', e); } }).catch(e => console.warn('[admin-dashboard] loadDoctorsFromSupabase:', e));
+        } else {
+          renderD();
+        }
+      } catch(e){ console.warn('[admin-dashboard] doctors tab:', e); }
+    }
+    if(tab==="rdv") { try { renderRdv(); } catch(e){ console.warn('[admin-dashboard] renderRdv:', e); } }
+    if(tab==="payments") { try { renderPay(); } catch(e){ console.warn('[admin-dashboard] renderPay:', e); } }
+  } catch(e) { console.warn('[admin-dashboard] sw() top-level:', e); }
+}
+
+function renderOverview(){
+  const kpi=[
+    {n:"1 247",l:"Patients",c:"var(--blue)",ic:"fa-user"},
+    {n:"183",l:"Médecins",c:"var(--green)",ic:"fa-user-doctor"},
+    {n:"3 426",l:"RDV total",c:"#f59e0b",ic:"fa-calendar-check"},
+    {n:"2.8M DA",l:"Revenus",c:"#7c3aed",ic:"fa-money-bill-wave"}
+  ];
+  document.getElementById("adm-kpi").innerHTML=kpi.map(s=>`<div class="card kpi-card" style="border-left-color:${s.c}"><div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-size:18px;font-weight:800;color:${s.c}">${s.n}</div><div style="font-size:11px;color:var(--text3)">${s.l}</div></div><i class="fa ${s.ic}" style="font-size:24px;color:${s.c};opacity:.4"></i></div></div>`).join("");
+  document.getElementById("recent-act").innerHTML=[
+    {ic:"fa-user-plus",t:"Nouveau patient inscrit",s:"Lina Khelifi · lina@email.dz",d:"il y a 2h",c:"var(--blue)"},
+    {ic:"fa-calendar-check",t:"RDV confirmé",s:"Karim B. → Dr. Amina H.",d:"il y a 4h",c:"var(--green)"},
+    {ic:"fa-coins",t:"Paiement Edahabia",s:"2 500 DA — TX-001",d:"il y a 5h",c:"#f59e0b"},
+    {ic:"fa-user-doctor",t:"Médecin en attente",s:"Dr. Yacine Bouali",d:"il y a 1 j",c:"#7c3aed"},
+    {ic:"fa-flag",t:"Signalement",s:"Avis inapproprié signalé",d:"il y a 2 j",c:"var(--red)"}
+  ].map(a=>`<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--bg2)">
+    <div style="width:36px;height:36px;border-radius:10px;background:${a.c}22;color:${a.c};display:flex;align-items:center;justify-content:center"><i class="fa ${a.ic}"></i></div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:600">${a.t}</div><div style="font-size:11px;color:var(--text3)">${a.s}</div></div>
+    <div style="font-size:10px;color:var(--text4)">${a.d}</div></div>`).join("");
+  document.getElementById("city-bars").innerHTML=[
+    ["Alger",420,"#0F7560"],["Oran",180,"#10b981"],["Constantine",140,"#f59e0b"],["Annaba",95,"#7c3aed"],["Blida",80,"#ef4444"]
+  ].map(([n,v,c])=>{const p=Math.round(v/420*100);return `<div style="display:grid;grid-template-columns:80px 1fr 60px;gap:8px;align-items:center;margin-bottom:8px"><div style="font-size:12px;font-weight:600">${n}</div><div style="background:var(--bg2);height:20px;border-radius:5px;overflow:hidden"><div style="width:${p}%;height:100%;background:${c}"></div></div><div style="font-size:11px;text-align:right;color:var(--text3)">${v}</div></div>`;}).join("");
+}
+
+function filtU(r,btn){currentRoleFilt=r;document.querySelectorAll("[data-r]").forEach(b=>b.classList.remove("active"));if(btn) btn.classList.add("active");renderU();}
+function renderU(){
+  const q=(document.getElementById("usearch")?.value||"").toLowerCase();
+  let list=USERS.filter(u=>{
+    if(currentRoleFilt!=="all" && u.r!==currentRoleFilt) return false;
+    if(q && !(u.n.toLowerCase().includes(q)||u.e.toLowerCase().includes(q))) return false;
+    return true;
+  });
+  document.getElementById("ucount").textContent=list.length;
+  // [WAVE4-XSS] Escape user-controlled fields (name/email/spec/role/status).
+  const _esc = (window.tabibiSec && window.tabibiSec.escapeHtml) || (window.esc) || (s => String(s==null?'':s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])));
+  document.getElementById("users-list").innerHTML=list.map(u=>{
+    const initials = (u.n||'').split(" ").map(x=>x[0]||'').slice(0,2).join("");
+    return `<div class="adm-row">
+    <div style="width:42px;height:42px;border-radius:50%;background:${u.r==="medecin"?"#dcfce7":u.r==="admin"?"#f3e8ff":"#dcfce7"};color:${u.r==="medecin"?"#166534":u.r==="admin"?"#7c3aed":"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-weight:700">${_esc(initials)}</div>
+    <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">${_esc(u.n)}</div><div style="font-size:11px;color:var(--text3)">${_esc(u.e)}${u.spec?' · '+_esc(u.spec):''}</div></div>
+    <span class="badge ${u.r==="medecin"?"badge-green":u.r==="admin"?"badge-red":"badge-blue"}">${_esc(u.r)}</span>
+    <span class="badge ${u.s==="active"?"badge-green":"badge-amber"}" style="font-size:9px">${_esc(u.s)}</span>
+  </div>`;}).join("");
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// VALIDATION MÉDECIN v10 — Supabase réel + emails Brevo automatiques
+// ═══════════════════════════════════════════════════════════════════════
+let DOCTORS_REAL = [];  // Cache des médecins depuis Supabase
+
+async function loadDoctorsFromSupabase() {
+  if (!window.tabibi || !window.tabibi.supabase) {
+    console.warn("[admin] Supabase indisponible, fallback mock data");
+    return;
+  }
+  try {
+    const { data, error } = await window.tabibi.supabase
+      .from('users')
+      .select('id, email, first_name, last_name, phone, status, role, created_at, verified_at, specialty_fr, ordre_number')
+      .in('role', ['medecin', 'doctor'])
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    DOCTORS_REAL = data || [];
+  } catch (err) {
+    console.error("[admin] loadDoctors error:", err);
+    DOCTORS_REAL = [];
+  }
+}
+
+function renderD(){
+  // Si on a des vraies données Supabase, on les utilise
+  const meds = DOCTORS_REAL.length > 0 ? DOCTORS_REAL.map(d => ({
+    id: d.id,
+    n: ((d.first_name||'') + ' ' + (d.last_name||'')).trim() || d.email,
+    e: d.email,
+    p: d.phone || '',
+    spec: d.specialty_fr || '',
+    s: d.status === 'pending_verification' ? 'pending' : (d.status || 'active'),
+    ordre: d.ordre_number || ''
+  })) : USERS.filter(u=>u.r==="medecin");
+
+  const pend = meds.filter(d => d.s === 'pending' || d.s === 'pending_verification');
+  const active = meds.filter(d => d.s === 'active');
+  const rejected = meds.filter(d => d.s === 'rejected');
+
+  document.getElementById("pend-count").innerHTML = `<i class="fa fa-clock"></i> ${pend.length} en attente`;
+
+  // Section TOP : médecins en attente (prioritaires)
+  const pendingSection = pend.length > 0 ? `
+    <div style="margin-bottom:20px">
+      <h3 style="font-size:14px;font-weight:700;color:#f59e0b;margin-bottom:10px;display:flex;align-items:center;gap:6px">
+        <i class="fa fa-clock"></i> ${pend.length} médecin${pend.length>1?'s':''} en attente de validation
+      </h3>
+      ${pend.map(d => doctorCard(d, true)).join("")}
+    </div>` : '';
+
+  // Section médecins actifs (sobre)
+  const activeSection = active.length > 0 ? `
+    <div style="margin-top:20px">
+      <h3 style="font-size:13px;font-weight:600;color:var(--text3);margin-bottom:10px">
+        ${active.length} médecin${active.length>1?'s actifs':' actif'}
+      </h3>
+      ${active.slice(0, 20).map(d => doctorCard(d, false)).join("")}
+      ${active.length > 20 ? `<p style="text-align:center;color:var(--text3);font-size:12px;padding:8px">+ ${active.length - 20} autres…</p>` : ''}
+    </div>` : '';
+
+  document.getElementById("doctors-list").innerHTML = pendingSection + activeSection;
+}
+
+function doctorCard(d, isPending) {
+  const initials = d.n.split(" ").slice(-2).map(x=>x[0]||'').join("").toUpperCase() || '?';
+  const bg = isPending ? '#fff7ed' : '#dcfce7';
+  const tc = isPending ? '#92400e' : '#166534';
+  const badge = isPending
+    ? '<span class="badge badge-amber">⏳ Pending</span>'
+    : (d.s === 'rejected' ? '<span class="badge badge-red">✗ Rejeté</span>' : '<span class="badge badge-green">✓ Actif</span>');
+
+  const actions = isPending
+    ? `<div style="display:flex;gap:8px;margin-top:10px">
+         <button class="btn btn-success btn-sm" style="flex:1" onclick="validateDoctor('${d.id||d.e}','${escAttr(d.e)}','${escAttr(d.n)}')">
+           <i class="fa fa-check"></i> Valider
+         </button>
+         <button class="btn btn-ghost btn-sm" style="flex:1;color:var(--red);border-color:var(--red-l)" onclick="rejectDoctor('${d.id||d.e}','${escAttr(d.e)}','${escAttr(d.n)}')">
+           <i class="fa fa-xmark"></i> Rejeter
+         </button>
+       </div>`
+    : '';
+
+  return `<div class="card" style="padding:14px;margin-bottom:10px;${isPending?'border-left:3px solid #f59e0b':''}">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:48px;height:48px;border-radius:12px;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-weight:700">${initials}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:700">${esc(d.n)}</div>
+        <div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+          ${esc(d.spec||"Spécialité non renseignée")} · ${esc(d.e)}
+        </div>
+        <div style="font-size:11px;color:var(--text3)">
+          <i class="fa fa-phone fa-xs"></i> ${esc(d.p||"-")}${d.ordre?' · N° Ordre: '+esc(d.ordre):''}
+        </div>
+      </div>
+      ${badge}
+    </div>
+    ${actions}
+  </div>`;
+}
+
+function escAttr(s) {
+  return String(s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+async function validateDoctor(doctorId, email, name) {
+  if (!confirm(`Valider le médecin ${name} ?\n\nIl recevra un email automatique.`)) return;
+
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toastM(tabibiT('toast_supabase_unavailable',"Erreur: Supabase indisponible"), "error");
+    return;
+  }
+
+  try {
+    const { data, error } = await window.tabibi.supabase.rpc('admin_validate_doctor', {
+      p_doctor_id: doctorId,
+      p_action: 'validate',
+      p_notes: 'Validé via admin dashboard'
+    });
+
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+
+    // Récupérer la langue préférée du médecin
+    let docLang = 'fr';
+    try {
+      const { data: udata } = await window.tabibi.supabase
+        .from('users')
+        .select('preferred_language')
+        .eq('id', doctorId)
+        .single();
+      if (udata && udata.preferred_language && ['fr','ar','en'].includes(udata.preferred_language)) {
+        docLang = udata.preferred_language;
+      }
+    } catch(e){}
+
+    if (window.tabibiBrevo) {
+      try {
+        const firstName = name.split(' ')[0].replace('Dr.', '').replace('Dr', '').trim() || name;
+        await window.tabibiBrevo.sendEmail('medecin_validated', email, { firstName, lang: docLang });
+      } catch (e) {
+        console.warn('[admin] Email validation failed');
+      }
+    }
+
+    toastM(`✓ ${name} validé. Email envoyé.`, "success");
+    await loadDoctorsFromSupabase();
+    renderD();
+
+  } catch (err) {
+    console.error('[admin] validateDoctor');
+    toastM(tabibiT('toast_error_prefix','Erreur: ') + (err.message || tabibiT('toast_validation_failed',"validation échouée")), "error");
+  }
+}
+
+async function rejectDoctor(doctorId, email, name) {
+  const reason = prompt(`Raison du rejet pour ${name} :\n(Ce message sera envoyé par email)`);
+  if (!reason || reason.trim().length < 5) {
+    toastM(tabibiT('toast_reason_too_short',"Raison trop courte (min 5 caractères)"), "error");
+    return;
+  }
+
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toastM(tabibiT('toast_supabase_unavailable',"Erreur: Supabase indisponible"), "error");
+    return;
+  }
+
+  try {
+    const { data, error } = await window.tabibi.supabase.rpc('admin_validate_doctor', {
+      p_doctor_id: doctorId,
+      p_action: 'reject',
+      p_reason: reason,
+      p_notes: 'Rejeté via admin dashboard'
+    });
+
+    if (error) throw error;
+    if (data && data.error) throw new Error(data.error);
+
+    // Langue du médecin
+    let docLang = 'fr';
+    try {
+      const { data: udata } = await window.tabibi.supabase
+        .from('users')
+        .select('preferred_language')
+        .eq('id', doctorId)
+        .single();
+      if (udata && udata.preferred_language && ['fr','ar','en'].includes(udata.preferred_language)) {
+        docLang = udata.preferred_language;
+      }
+    } catch(e){}
+
+    if (window.tabibiBrevo) {
+      try {
+        const firstName = name.split(' ')[0].replace('Dr.', '').replace('Dr', '').trim() || name;
+        await window.tabibiBrevo.sendEmail('medecin_rejected', email, { firstName, reason, lang: docLang });
+      } catch (e) {
+        console.warn('[admin] Email rejection failed');
+      }
+    }
+
+    toastM(`${name} rejeté. Email envoyé.`, "info");
+    await loadDoctorsFromSupabase();
+    renderD();
+
+  } catch (err) {
+    console.error('[admin] rejectDoctor');
+    toastM(tabibiT('toast_error_prefix','Erreur: ') + (err.message || tabibiT('toast_rejection_failed',"rejet échoué")), "error");
+  }
+}
+
+// Anciens noms pour compat (au cas où)
+function approveDoc(e){const d=DOCTORS_REAL.find(x=>x.email===e);if(d) validateDoctor(d.id, d.email, ((d.first_name||'')+' '+(d.last_name||'')).trim());}
+function rejectDoc(e){const d=DOCTORS_REAL.find(x=>x.email===e);if(d) rejectDoctor(d.id, d.email, ((d.first_name||'')+' '+(d.last_name||'')).trim());}
+
+function renderRdv(){
+  document.getElementById("rdv-stats").innerHTML=[
+    {n:"3 426",l:"Total",c:"var(--blue)"},{n:"212",l:"Cette semaine",c:"var(--green)"},{n:"42",l:"Aujourd'hui",c:"#f59e0b"}
+  ].map(s=>`<div class="card" style="padding:12px;border-left:3px solid ${s.c};text-align:center"><div style="font-size:20px;font-weight:800;color:${s.c}">${s.n}</div><div style="font-size:11px;color:var(--text3)">${s.l}</div></div>`).join("");
+  const recent=[
+    {p:"Karim B.",d:"Dr. Amina H.",dt:"02/05 09:00",s:"Confirmed",a:2500},
+    {p:"Lina K.",d:"Dr. Nadia S.",dt:"02/05 10:30",s:"Confirmed",a:3000},
+    {p:"Salim O.",d:"Dr. Yacine D.",dt:"01/05 14:30",s:"Completed",a:1800},
+    {p:"Mohamed T.",d:"Dr. Mourad K.",dt:"01/05 11:00",s:"Cancelled",a:0},
+    {p:"Saïda R.",d:"Dr. Amira K.",dt:"30/04 15:00",s:"Completed",a:2000}
+  ];
+  document.getElementById("rdv-list").innerHTML=recent.map(r=>`<div class="tx-row"><div><div style="font-weight:600">${r.p} → ${r.d}</div><div style="font-size:11px;color:var(--text3)">${r.dt}</div></div><div style="text-align:right"><div style="font-weight:700">${r.a?r.a.toLocaleString()+' DA':'-'}</div><span class="badge ${r.s==='Confirmed'?'badge-blue':r.s==='Completed'?'badge-green':'badge-red'}" style="font-size:9px">${r.s}</span></div></div>`).join("");
+}
+
+function filtPay(m,btn){currentPayFilt=m;document.querySelectorAll("[data-pm]").forEach(b=>b.classList.remove("active"));if(btn) btn.classList.add("active");renderPay();}
+function renderPay(){
+  const total=PAYS.filter(p=>p.s==="success").reduce((a,b)=>a+b.amt,0);
+  const succ=PAYS.filter(p=>p.s==="success").length;
+  const pend=PAYS.filter(p=>p.s==="pending").length;
+  const com=Math.round(total*0.05);
+  document.getElementById("pay-kpi").innerHTML=[
+    {n:total.toLocaleString()+" DA",l:"Encaissé",c:"var(--green)"},
+    {n:com.toLocaleString()+" DA",l:"Commission (5%)",c:"#7c3aed"},
+    {n:succ,l:"Réussis",c:"var(--blue)"},
+    {n:pend,l:"En attente",c:"#f59e0b"}
+  ].map(s=>`<div class="card" style="padding:12px;border-left:3px solid ${s.c}"><div style="font-size:16px;font-weight:800;color:${s.c}">${s.n}</div><div style="font-size:11px;color:var(--text3)">${s.l}</div></div>`).join("");
+  let list=PAYS;
+  if(currentPayFilt!=="all") list=PAYS.filter(p=>p.m===currentPayFilt);
+  document.getElementById("pay-list").innerHTML=list.map(p=>`<div class="tx-row">
+    <div><div style="font-weight:600">${p.ref} · ${p.u}</div><div style="font-size:11px;color:var(--text3)">${p.doc} · ${p.m} · ${p.d}</div></div>
+    <div style="text-align:right"><div style="font-weight:700">${p.amt.toLocaleString()} DA</div><span class="badge ${p.s==='success'?'badge-green':p.s==='pending'?'badge-amber':'badge-red'}" style="font-size:9px">${p.s}</span></div>
+  </div>`).join("");
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  // ─── v10.6 : Attendre que le bridge synchronise tabibi_user ───
+  async function waitForUser(maxMs){
+    const t0 = Date.now();
+    while (Date.now() - t0 < maxMs){
+      let u = null;
+      try { u = JSON.parse(localStorage.getItem("tabibi_user")||"null"); } catch(e){}
+      if (u && u.role) return u;
+      if (window.tabibi && window.tabibi.auth) {
+        try {
+          const session = await window.tabibi.auth.getSession();
+          if (session) {
+            const su = await window.tabibi.auth.getUser();
+            if (su) {
+              const fn = su.first_name || '';
+              const ln = su.last_name || '';
+              const name = (fn + ' ' + ln).trim() || (su.email||'').split('@')[0];
+              const parts = name.split(/\s+/);
+              const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+              const role = (su.role === 'doctor' || su.role === 'medecin') ? 'medecin' : (su.role === 'admin' ? 'admin' : 'patient');
+              const userObj = { id: su.id, email: su.email, role, name, initials, firstName: fn, lastName: ln };
+              localStorage.setItem('tabibi_user', JSON.stringify(userObj));
+              return userObj;
+            }
+          } else { return null; }
+        } catch(e){}
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return null;
+  }
+
+  const u = await waitForUser(3000);
+  if (!u || u.role !== "admin") {
+    location.href = "login.html";
+    return;
+  }
+
+  // Check Supabase serveur (sécurité)
+  try {
+    if (window.tabibi && window.tabibi.auth) {
+      const session = await window.tabibi.auth.getSession();
+      if (!session) {
+        localStorage.removeItem("tabibi_user");
+        localStorage.removeItem("tabibi_role");
+        location.href = "login.html";
+        return;
+      }
+      const serverUser = await window.tabibi.auth.getUser();
+      if (!serverUser || serverUser.role !== "admin" || serverUser.status !== "active") {
+        await window.tabibi.auth.signOut();
+        location.href = "login.html";
+        return;
+      }
+    }
+  } catch (e) {
+    console.warn("[admin] Server check failed");
+    location.href = "login.html";
+    return;
+  }
+
+  document.getElementById("user-init").textContent = u.initials || "AT";
+  renderOverview();
+});
+</script>
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-brevo.js"></script>
+<script>
+// Badge "avis en attente" sur l'onglet Modération
+(async function() {
+  if (!window.tabibi || !window.tabibi.supabase) return;
+  try {
+    const { count } = await window.tabibi.supabase
+      .from('reviews')
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['pending', 'flagged']);
+    const b = document.getElementById('adm-rev-pending');
+    if (b && count && count > 0) {
+      b.textContent = count;
+      b.style.display = 'inline-block';
+    }
+  } catch(e) { /* RLS non admin -> silent */ }
+})();
+</script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

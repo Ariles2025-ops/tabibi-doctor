@@ -1,0 +1,33 @@
+{
+  "id": "tabibi-sandbox-env",
+  "name": "Tabibi Partner API — Sandbox",
+  "values": [
+    { "key": "base_url",                "value": "https://sandbox.tabibi.doctor/api/v1", "enabled": true, "type": "default" },
+    { "key": "api_key_id",              "value": "tbk_sand_REPLACE_ME",                  "enabled": true, "type": "secret"  },
+    { "key": "api_secret",              "value": "tbs_sand_REPLACE_ME",                  "enabled": true, "type": "secret"  },
+
+    { "key": "sample_doctor_id",        "value": "doc_REPLACE_ME",                       "enabled": true, "type": "default" },
+    { "key": "sample_appointment_id",   "value": "apt_REPLACE_ME",                       "enabled": true, "type": "default" },
+    { "key": "sample_prescription_id",  "value": "rx_REPLACE_ME",                        "enabled": true, "type": "default" },
+    { "key": "sample_patient_id",       "value": "pat_REPLACE_ME",                       "enabled": true, "type": "default" },
+
+    { "key": "key_no_scope_id",         "value": "tbk_sand_NOSCOPE_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_no_scope_secret",     "value": "tbs_sand_NOSCOPE_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_revoked_id",          "value": "tbk_sand_REVOKED_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_revoked_secret",      "value": "tbs_sand_REVOKED_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_expired_id",          "value": "tbk_sand_EXPIRED_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_expired_secret",      "value": "tbs_sand_EXPIRED_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_ip_restricted_id",    "value": "tbk_sand_IPLOCK_REPLACE",              "enabled": true, "type": "secret"  },
+    { "key": "key_ip_restricted_secret","value": "tbs_sand_IPLOCK_REPLACE",              "enabled": true, "type": "secret"  },
+    { "key": "key_low_rate_id",         "value": "tbk_sand_RATE10_REPLACE",              "enabled": true, "type": "secret"  },
+    { "key": "key_low_rate_secret",     "value": "tbs_sand_RATE10_REPLACE",              "enabled": true, "type": "secret"  },
+    { "key": "key_low_daily_id",        "value": "tbk_sand_DAY10_REPLACE",               "enabled": true, "type": "secret"  },
+    { "key": "key_low_daily_secret",    "value": "tbs_sand_DAY10_REPLACE",               "enabled": true, "type": "secret"  },
+    { "key": "key_doctors_only_id",     "value": "tbk_sand_DOCONLY_REPLACE",             "enabled": true, "type": "secret"  },
+    { "key": "key_doctors_only_secret", "value": "tbs_sand_DOCONLY_REPLACE",             "enabled": true, "type": "secret"  },
+
+    { "key": "disallowed_origin",       "value": "https://evil.example.com",             "enabled": true, "type": "default" },
+    { "key": "allowed_origin",          "value": "https://sandbox.tabibi.doctor",        "enabled": true, "type": "default" }
+  ],
+  "_postman_variable_scope": "environment"
+}

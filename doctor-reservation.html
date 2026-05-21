@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Réservation médecin.">
+<link rel="canonical" href="https://tabibi.doctor/doctor-reservation.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_doctor_reservation_self">
+<title>Réservation médecin | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='doctor-dashboard.html'" aria-label="Retour au tableau de bord"><i class="fa fa-arrow-left"></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Mes disponibilités</div><div class="app-bar-sub">Gérer vos créneaux</div></div>
+  <button class="btn btn-success btn-sm" onclick="openAdd()"><i class="fa fa-plus"></i> Ajouter</button>
+
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="window._noti=!window._noti;document.getElementById('mini-noti').classList.toggle('hidden')" title="Notifications" style="position:relative">
+    <i class="fa fa-bell"></i><span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;display:flex;align-items:center;justify-content:center">2</span>
+  </button>
+  <div id="mini-noti" class="hidden" style="position:absolute;top:54px;right:50px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:280px;padding:12px;z-index:300">
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px"><i class="fa fa-bell"></i> Notifications</div>
+    <div style="font-size:12px;padding:8px;background:var(--blue-l);border-radius:8px;margin-bottom:6px"><strong>Nouveau RDV</strong><br><span style="color:var(--text3)">Patient ajouté à votre agenda</span></div>
+    <div style="font-size:12px;padding:8px;background:var(--bg2);border-radius:8px"><strong>Rappel</strong><br><span style="color:var(--text3)">Consultation dans 1h</span></div>
+  </div>
+  <button class="btn btn-icon btn-icon-sm" onclick="window._um=!window._um;document.getElementById('mini-menu').classList.toggle('hidden')" title="Mon compte" style="background:var(--blue-l);color:var(--blue);font-weight:700" id="user-pill"><span id="user-init">?</span></button>
+  <div id="mini-menu" class="hidden" style="position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:240px;z-index:300;overflow:hidden">
+    <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;text-decoration:none;color:var(--text);font-size:13px;border-bottom:1px solid var(--bg2)"><i class="fa fa-user" style="color:var(--blue);width:20px"></i> Mon profil</a>
+    <a href="patient-profile.html#sec-notif" style="display:none"></a>
+    <button onclick="alert("Pour toute question, contactez-nous : contact@tabibi.doctor")" style="display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> Aide & FAQ</button>
+    <button onclick="if(confirm(tabibiT('confirm_logout_short','Se déconnecter ?'))){localStorage.removeItem('tabibi_user');location.href='index.html'}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> Se déconnecter</button>
+  </div>
+<button type="button" class="btn btn-icon btn-icon-sm" onclick="if(confirm(tabibiT('confirm_logout_short','Se d\u00e9connecter ?'))){localStorage.removeItem('tabibi_user');location.href='index.html'}" title="Se déconnecter" aria-label="Se déconnecter" style="background:var(--red-l);color:var(--red);margin-left:4px"><i class="fa fa-right-from-bracket"></i></button>
+</header>
+<main class="page" style="padding:16px">
+  <div class="card" style="margin-bottom:14px">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fa fa-calendar-week" style="color:var(--blue)"></i> Cette semaine</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px" id="week-grid"></div>
+    <div id="day-slots" style="display:flex;flex-direction:column;gap:8px"></div>
+  </div>
+  <div class="card">
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fa fa-clock-rotate-left"></i> Modèles de récurrence</div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Définissez vos horaires habituels pour générer automatiquement vos créneaux.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-soft btn-sm" onclick="applyTpl('matin')">Matin (8h-12h)</button>
+      <button class="btn btn-soft btn-sm" onclick="applyTpl('aprem')">Après-midi (14h-18h)</button>
+      <button class="btn btn-soft btn-sm" onclick="applyTpl('full')">Journée complète</button>
+    </div>
+  </div>
+</main>
+
+<!-- ADD MODAL -->
+<div class="modal-bg hidden" id="add-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-hdr"><div class="modal-title">Ajouter des créneaux</div><button class="modal-close" onclick="closeAdd()">×</button></div>
+    <div class="modal-body" style="padding-bottom:20px">
+      <div class="form-group"><label class="form-label">Date</label><input class="form-control" type="date" id="ad-date"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Heure début</label><input class="form-control" type="time" id="ad-start" value="09:00"></div>
+        <div class="form-group"><label class="form-label">Heure fin</label><input class="form-control" type="time" id="ad-end" value="12:00"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Durée par RDV (min)</label>
+        <select class="form-control" id="ad-dur"><option>15</option><option>20</option><option selected>30</option><option>45</option><option>60</option></select></div>
+      <div class="form-group"><label class="form-label">Récurrence</label>
+        <select class="form-control" id="ad-rep"><option value="once">Une seule fois</option><option value="weekly">Toutes les semaines (4 sem.)</option></select></div>
+      <button class="btn btn-success btn-full btn-xl" onclick="saveSlots()"><i class="fa fa-check"></i> Générer les créneaux</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+<script src="scripts/app.js"></script>
+<script>
+const DAYS=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+let currentDay=new Date().getDay()===0?6:new Date().getDay()-1;
+function getSlots(){return JSON.parse(localStorage.getItem("tabibi_doc_slots")||"[]");}
+function saveSlotsArr(s){localStorage.setItem("tabibi_doc_slots",JSON.stringify(s));}
+function renderWeek(){
+  const today=new Date();
+  const monday=new Date(today); monday.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
+  document.getElementById("week-grid").innerHTML=DAYS.map((d,i)=>{
+    const date=new Date(monday); date.setDate(monday.getDate()+i);
+    const iso=date.toISOString().split("T")[0];
+    const count=getSlots().filter(s=>s.date===iso).length;
+    return `<button onclick="selDay(${i},'${iso}')" class="day-pill ${i===currentDay?'active':''}" style="padding:10px 4px;border-radius:10px;border:1.5px solid ${i===currentDay?'var(--blue)':'var(--border)'};background:${i===currentDay?'var(--blue-l)':'#fff'};color:${i===currentDay?'var(--blue)':'var(--text2)'};font-weight:700;font-size:11px">
+      <div>${d}</div><div style="font-size:14px;margin-top:2px">${date.getDate()}</div>
+      ${count?`<div style="margin-top:3px"><span class="badge badge-green" style="font-size:9px;padding:1px 5px">${count}</span></div>`:""}
+    </button>`;
+  }).join("");
+  renderDay();
+}
+function selDay(i,iso){currentDay=i;window._selIso=iso;renderWeek();}
+function renderDay(){
+  const today=new Date();
+  const monday=new Date(today); monday.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
+  const date=new Date(monday); date.setDate(monday.getDate()+currentDay);
+  const iso=window._selIso||date.toISOString().split("T")[0];
+  const slots=getSlots().filter(s=>s.date===iso).sort((a,b)=>a.time.localeCompare(b.time));
+  const box=document.getElementById("day-slots");
+  if(!slots.length){box.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px"><i class="fa fa-calendar-xmark" style="font-size:32px;margin-bottom:8px;display:block"></i>Aucun créneau pour ce jour</div>`;return;}
+  box.innerHTML=slots.map((s,idx)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:${s.booked?"var(--red-l)":"var(--green-l)"};border-radius:10px">
+    <i class="fa ${s.booked?"fa-lock":"fa-clock"}" style="color:${s.booked?"var(--red)":"var(--green)"}"></i>
+    <div style="flex:1"><div style="font-weight:700;font-size:14px">${s.time} (${s.duration||30} min)</div>
+      <div style="font-size:11px;color:var(--text3)">${s.booked?"Réservé par "+(s.patient||"patient"):"Disponible"}</div></div>
+    ${!s.booked?`<button type="button" class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="delSlot('${iso}','${s.time}')" aria-label="Supprimer ce créneau"><i class="fa fa-trash"></i></button>`:""}
+  </div>`).join("");
+}
+function openAdd(){document.getElementById("add-modal").classList.remove("hidden");document.body.style.overflow="hidden";}
+function closeAdd(){document.getElementById("add-modal").classList.add("hidden");document.body.style.overflow="";}
+function saveSlots(){
+  const date=ad_date.value, start=ad_start.value, end=ad_end.value, dur=parseInt(ad_dur.value);
+  const rep=ad_rep.value;
+  if(!date||!start||!end){toastM(tabibiT('toast_fill_all_fields_short',"Remplissez tous les champs"),"error");return;}
+  const generate=(d)=>{
+    const slots=getSlots();
+    const [sh,sm]=start.split(":").map(Number),[eh,em]=end.split(":").map(Number);
+    let cur=sh*60+sm, endM=eh*60+em;
+    while(cur+dur<=endM){
+      const h=String(Math.floor(cur/60)).padStart(2,"0"),m=String(cur%60).padStart(2,"0");
+      slots.push({date:d,time:`${h}:${m}`,duration:dur,booked:false});
+      cur+=dur;
+    }
+    saveSlotsArr(slots);
+  };
+  generate(date);
+  if(rep==="weekly"){
+    for(let w=1;w<=3;w++){
+      const d=new Date(date); d.setDate(d.getDate()+w*7);
+      generate(d.toISOString().split("T")[0]);
+    }
+  }
+  toastM(tabibiT('toast_slots_added',"Créneaux ajoutés !"),"success");
+  closeAdd(); renderWeek();
+}
+function delSlot(date,time){
+  if(!confirm(tabibiT('confirm_delete_slot',"Supprimer ce créneau ?")))return;
+  const slots=getSlots().filter(s=>!(s.date===date&&s.time===time));
+  saveSlotsArr(slots); renderWeek();
+}
+function applyTpl(tpl){
+  const map={matin:["09:00","12:00"],aprem:["14:00","18:00"],full:["09:00","17:00"]};
+  ad_date.valueAsDate=new Date();
+  [ad_start.value,ad_end.value]=map[tpl];
+  ad_rep.value="weekly";
+  openAdd();
+}
+function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+document.addEventListener("DOMContentLoaded",()=>{
+  const u=JSON.parse(localStorage.getItem("tabibi_user")||"null");
+  if(!u||u.role!=="medecin"){location.href="login.html";return;}
+  ad_date.valueAsDate=new Date();
+  renderWeek();
+});
+window.openAdd=openAdd;window.closeAdd=closeAdd;window.saveSlots=saveSlots;window.delSlot=delSlot;window.applyTpl=applyTpl;window.selDay=selDay;
+</script>
+</div><script>document.addEventListener("DOMContentLoaded",()=>{var u=JSON.parse(localStorage.getItem("tabibi_user")||"null");if(u)document.getElementById("user-init").textContent=u.initials||"?";document.addEventListener("click",e=>{if(!e.target.closest("[id^='mini-']") && !e.target.closest("button[title='Notifications']") && !e.target.closest("#user-pill")){document.getElementById("mini-noti")?.classList.add("hidden");document.getElementById("mini-menu")?.classList.add("hidden");}});});</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Réservation en cours.">
+<link rel="canonical" href="https://tabibi.doctor/reservation.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_reservation_ongoing">
+<title>Réservation en cours | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);window.addEventListener("error",k);})();</script>
+
+<div class="app-root">
+<div class="loading-screen" id="loading"><div class="spinner"></div></div>
+
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Confirmer le RDV</div></div>
+  <div id="uarea-desk"></div>
+</header>
+
+<!-- STEP INDICATOR -->
+<div style="display:flex;border-bottom:2px solid var(--border);background:#fff" role="tablist" aria-label="Étapes">
+  <div class="auth-tab active" id="si1" style="flex:1;border-bottom:2px solid var(--blue);color:var(--blue)" role="tab" aria-selected="true">1 · Détails</div>
+  <div class="auth-tab" id="si2" style="flex:1" role="tab" aria-selected="false">2 · Paiement</div>
+  <div class="auth-tab" id="si3" style="flex:1" role="tab" aria-selected="false">3 · Confirmation</div>
+</div>
+
+<main class="page" role="main">
+
+  <!-- ── STEP 1: DETAILS ── -->
+  <div id="step1" style="padding:16px">
+    <!-- Doctor summary -->
+    <div class="card" style="margin-bottom:14px;display:flex;gap:12px;align-items:center" aria-label="Médecin sélectionné">
+      <div id="a-ava" style="width:52px;height:52px;border-radius:var(--r12);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;background:#EEF4FB;color:#1557A0">?</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700" id="a-name">...</div>
+        <div style="font-size:12px;color:var(--text3)" id="a-spec"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+          <span id="a-slot" style="background:var(--blue-l);color:var(--blue);padding:3px 10px;border-radius:var(--rfull);font-size:12px;font-weight:600">--:--</span>
+          <span id="a-prix" style="font-size:13px;font-weight:700;color:var(--blue)">— DA</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="reason">Motif de consultation <span style="color:var(--red)">*</span></label>
+      <textarea class="form-control" id="reason" placeholder="Décrivez brièvement vos symptômes ou le motif de votre visite..." data-i18n-placeholder="ph_visit_reason" rows="3" required></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="ctype">Type de consultation</label>
+      <select class="form-control" id="ctype">
+        <option value="premiere">Première consultation</option>
+        <option value="suivi">Consultation de suivi</option>
+        <option value="urgence">Urgence</option>
+        <option value="controle">Contrôle résultats</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label" for="notes">Notes supplémentaires</label>
+      <textarea class="form-control" id="notes" placeholder="Allergies connues, médicaments en cours, antécédents importants..." data-i18n-placeholder="ph_medical_notes" rows="2"></textarea>
+    </div>
+    <button class="btn btn-primary btn-full btn-xl" onclick="toStep(2)">Continuer <i class='fa fa-arrow-right'></i></button>
+  </div>
+
+  <!-- ── STEP 2: PAYMENT ── -->
+  <div id="step2" class="hidden" style="padding:16px">
+    <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:14px" data-i18n="pay_title">Mode de paiement</div>
+    <div id="pay-methods"></div>
+    <div style="background:var(--bg2);border-radius:var(--r12);padding:12px 14px;font-size:12px;color:var(--text3);margin-top:4px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class='fa fa-shield-halved fa-sm' style='color:var(--blue)'></i>
+      Paiement 100% sécurisé · Données chiffrées SSL/TLS
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-lg" onclick="toStep(1)" style="flex:1"><i class='fa fa-arrow-left'></i> Retour</button>
+      <button class="btn btn-success btn-xl" onclick="confirmRDV()" style="flex:2"><i class='fa fa-calendar-check'></i> <span data-i18n="confirm_rdv">Confirmer le RDV</span></button>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: SUCCESS ── -->
+  <div id="step3" class="hidden" style="padding:24px;text-align:center">
+    <div style="width:80px;height:80px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;animation:fadeup .4s ease" aria-hidden="true"><i class='fa fa-circle-check' style='color:var(--green)'></i></div>
+    <h1 style="font-size:20px;font-weight:800;margin-bottom:8px" data-i18n="rdv_ok">RDV confirmé !</h1>
+    <p style="font-size:14px;color:var(--text3);margin-bottom:20px">Un SMS de confirmation a été envoyé à votre numéro de téléphone algérien.</p>
+    <div class="card" id="confirm-summary" style="text-align:left;margin-bottom:16px"></div>
+    <div style="background:var(--green-l);border-radius:var(--r12);padding:12px 14px;font-size:13px;color:var(--green-d);display:flex;align-items:center;gap:8px;margin-bottom:24px">
+      <i class='fa fa-bell'></i><span data-i18n="sms_ok">Confirmation SMS envoyée <i class='fa fa-check'></i></span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <a href="patient-dashboard.html" class="btn btn-primary btn-full btn-lg"><i class='fa fa-calendar'></i> Voir mes rendez-vous</a>
+      <a href="index.html" class="btn btn-ghost btn-full btn-lg"><i class='fa fa-home'></i> Retour à l'accueil</a>
+    </div>
+  </div>
+
+</main>
+<nav class="tab-bar" id="tab-bar"></nav>
+<div id="uarea-mob" class="hidden"></div>
+
+<script src="scripts/app.js"></script>
+<script src="scripts/payments.js"></script>
+<script>
+let doctorId=getParam("doctorId")||"d1";
+let slot=getParam("slot")||"09:00";
+let doctorName=decodeURIComponent(getParam("doctorName")||"");
+let prix=parseInt(getParam("prix")||2500);
+let specName=decodeURIComponent(getParam("spec")||"");
+let payMethod="cash";
+
+function init(){
+  if(!requireAuth()) return;
+  loadUser(); setLang(lang);
+  const d=DOCTORS.find(x=>x.id===doctorId)||DOCTORS[0];
+  const n=doctorName||dname(d);
+  specName=specName||dspec(d);
+
+  const ava=document.getElementById("a-ava");
+  ava.textContent=d.in; ava.style.background=d.bg; ava.style.color=d.tc;
+  document.getElementById("a-name").textContent=n;
+  document.getElementById("a-spec").textContent=specName+" · "+dcity(d);
+  document.getElementById("a-slot").textContent="<i class='fa fa-calendar-days'></i> Mer 7 Mai 2025 — "+slot;
+  document.getElementById("a-prix").textContent=prix.toLocaleString()+" DA";
+
+  document.getElementById("pay-methods").innerHTML=renderPayMethods("cash");
+  window._pay="cash";
+  renderUserUI(); initTabBar("rdv"); hideLoading();
+}
+
+function toStep(n){
+  if(n===2){
+    const reason=document.getElementById("reason")?.value.trim();
+    if(!reason){toast(T("reason_req"),"error");return;}
+  }
+  [1,2,3].forEach(i=>{
+    document.getElementById("step"+i).classList.toggle("hidden",i!==n);
+    const si=document.getElementById("si"+i);
+    si.classList.toggle("active",i===n);
+    si.style.color=i===n?"var(--blue)":"";
+    si.style.borderBottomColor=i===n?"var(--blue)":"transparent";
+    si.setAttribute("aria-selected",i===n);
+  });
+  if(n!==3) window.scrollTo(0,0);
+}
+
+async function confirmRDV(){
+  const reason = document.getElementById("reason")?.value.trim()||"";
+  const notes  = document.getElementById("notes")?.value.trim()||"";
+  const ctype  = document.getElementById("ctype")?.value||"premiere";
+  payMethod = window._pay||"cash";
+
+  // Construire la date/heure du RDV
+  const today = new Date();
+  const [hh,mm] = slot.split(":");
+  today.setHours(parseInt(hh), parseInt(mm), 0, 0);
+  const scheduledAt = today.toISOString();
+
+  const doctorNameFinal = doctorName || (DOCTORS.find(x=>x.id===doctorId) ? dname(DOCTORS.find(x=>x.id===doctorId)) : "");
+
+  // Désactiver le bouton pendant l'envoi
+  const btn = document.querySelector("#step2 .btn-success");
+  if(btn){ btn.disabled=true; btn.innerHTML="<i class='fa fa-spinner fa-spin'></i> Enregistrement..."; }
+
+  try {
+    // ── Sauvegarder dans Supabase ──────────────────────────────
+    const SB_URL = window.TABIBI_CONFIG?.SUPABASE_URL || 'https://pudugodhiofqrctcdwfl.supabase.co';
+    const SB_KEY = window.TABIBI_CONFIG?.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+
+    // Récupérer la session utilisateur connecté
+    let accessToken = SB_KEY;
+    if(window.tabibi?.supabase){
+      const { data:{ session } } = await window.tabibi.supabase.auth.getSession();
+      if(session?.access_token) accessToken = session.access_token;
+    }
+
+    const payload = {
+      doctor_id:    doctorId,
+      scheduled_at: scheduledAt,
+      duration_minutes: 30,
+      reason:       reason,
+      notes_patient: notes,
+      status:       'pending',
+      consult_type: ctype,
+      pay_method:   payMethod,
+      prix:         prix
+    };
+
+    const res = await fetch(SB_URL + '/rest/v1/appointments', {
+      method: 'POST',
+      headers: {
+        'apikey':        SB_KEY,
+        'Authorization': 'Bearer ' + accessToken,
+        'Content-Type':  'application/json',
+        'Prefer':        'return=representation'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if(!res.ok){
+      const err = await res.json().catch(()=>({}));
+      console.error('[Tabibi] Erreur RDV:', err);
+      // Si la table n'existe pas encore, on continue quand même (fallback local)
+      if(res.status !== 404 && res.status !== 409){
+        toast("Erreur lors de l'enregistrement. Veuillez réessayer.", "error");
+        if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+        return;
+      }
+    } else {
+      /* [FIX-PROD-2026-05-19] console.log retiré (contenait du HTML inutile) */
+    }
+
+    // Aussi sauvegarder en local pour l'affichage immédiat dans le dashboard
+    const appt = {
+      doctorId, doctorName: doctorNameFinal,
+      spec: specName, slot, date: today.toLocaleDateString('fr-DZ'),
+      time: slot, reason, notes, consultType: ctype,
+      payMethod, prix, status: "Confirmed",
+      patientName: user?.name, patientEmail: user?.email,
+      createdAt: new Date().toISOString()
+    };
+    const saved = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
+    saved.push(appt);
+    localStorage.setItem("tabibi_rdv", JSON.stringify(saved));
+
+    // Passer à l'étape 3 — succès
+    toStep(3);
+    document.getElementById("confirm-summary").innerHTML=[
+      ["Médecin",   doctorNameFinal],
+      ["Date",      today.toLocaleDateString('fr-DZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'})],
+      ["Heure",     slot],
+      ["Spécialité",specName],
+      ["Motif",     reason],
+      ["Paiement",  PAY_METHODS[payMethod]?T(PAY_METHODS[payMethod].key):payMethod],
+      ["Montant",   prix.toLocaleString()+" DA"],
+      ["Patient",   user?.name||""]
+    ].map(([k,v])=>`
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:13px">
+        <span style="color:var(--text3)">${k}</span>
+        <span style="font-weight:600;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis">${v}</span>
+      </div>`).join("");
+
+  } catch(e) {
+    console.error('[Tabibi] Erreur confirmRDV:', e);
+    toast("Problème de connexion. Vérifiez votre réseau.", "error");
+    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+  }
+}
+
+function goBackSafe(){
+  if(document.referrer) history.back();
+  else window.location.href="index.html";
+}
+
+document.addEventListener("DOMContentLoaded",init);
+window.toStep=toStep; window.confirmRDV=confirmRDV; window.goBackSafe=goBackSafe;
+</script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/doctors-display.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

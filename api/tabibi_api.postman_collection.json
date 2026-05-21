@@ -1,0 +1,276 @@
+{
+  "info": {
+    "name": "Tabibi Partner API v1",
+    "_postman_id": "c0a1e2b3-4567-89ab-cdef-0123456789ab",
+    "description": "Collection officielle pour partenaires Tabibi (CNAS, mutuelles, pharmacies, intégrateurs SI hospitaliers). Configurez les variables d'env `base_url`, `api_key_id` et `api_secret` avant utilisation.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url",        "value": "https://sandbox.tabibi.doctor/api/v1", "type": "string" },
+    { "key": "api_key_id",      "value": "tbk_sand_REPLACE_ME",                  "type": "string" },
+    { "key": "api_secret",      "value": "tbs_sand_REPLACE_ME",                  "type": "string" },
+    { "key": "sample_doctor_id",      "value": "doc_REPLACE_ME", "type": "string" },
+    { "key": "sample_appointment_id", "value": "apt_REPLACE_ME", "type": "string" },
+    { "key": "sample_prescription_id","value": "rx_REPLACE_ME",  "type": "string" },
+    { "key": "sample_patient_id",     "value": "pat_REPLACE_ME", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{api_key_id}}:{{api_secret}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if (pm.collectionVariables.get('api_key_id') === 'tbk_sand_REPLACE_ME') {",
+          "  console.warn('⚠ Configure api_key_id and api_secret in the collection variables.');",
+          "}",
+          "pm.request.headers.upsert({ key: 'X-Request-Id', value: 'pm-' + Math.random().toString(36).slice(2,10) });"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.test('Response has X-Request-Id header', () => {",
+          "  pm.expect(pm.response.headers.get('X-Request-Id')).to.be.a('string');",
+          "});",
+          "pm.test('Content-Type is JSON', () => {",
+          "  pm.expect(pm.response.headers.get('Content-Type') || '').to.include('application/json');",
+          "});"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": { "raw": "{{base_url}}/health", "host": ["{{base_url}}"], "path": ["health"] }
+          },
+          "event": [{
+            "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Status ok', () => pm.expect(pm.response.json().data.status).to.eql('ok'));"
+            ]}
+          }]
+        }
+      ]
+    },
+    {
+      "name": "Reference data",
+      "item": [
+        {
+          "name": "GET /wilayas",
+          "request": {
+            "method": "GET",
+            "auth": { "type": "noauth" },
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/wilayas?limit=10",
+              "host": ["{{base_url}}"], "path": ["wilayas"],
+              "query": [{ "key": "limit", "value": "10" }]
+            }
+          },
+          "event": [{
+            "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('200 OK', () => pm.response.to.have.status(200));",
+              "pm.test('Data is array', () => pm.expect(pm.response.json().data).to.be.an('array'));"
+            ]}
+          }]
+        },
+        {
+          "name": "GET /specialties",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/specialties", "host": ["{{base_url}}"], "path": ["specialties"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Doctors",
+      "item": [
+        {
+          "name": "GET /doctors (list)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/doctors?limit=10&wilaya=16",
+              "host": ["{{base_url}}"], "path": ["doctors"],
+              "query": [
+                { "key": "limit",     "value": "10" },
+                { "key": "wilaya",    "value": "16" },
+                { "key": "specialty", "value": "cardiologie", "disabled": true },
+                { "key": "q",         "value": "Bouzid",      "disabled": true }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('Pagination meta present', () => {",
+            "  const m = pm.response.json().meta;",
+            "  pm.expect(m).to.have.property('pagination');",
+            "  pm.expect(m.pagination).to.have.keys('total','limit','offset','has_more','next_offset');",
+            "});",
+            "// Capture first doctor id for next requests",
+            "const data = pm.response.json().data;",
+            "if (data && data.length > 0) {",
+            "  pm.collectionVariables.set('sample_doctor_id', data[0].id);",
+            "  console.log('Saved sample_doctor_id =', data[0].id);",
+            "}"
+          ]}}]
+        },
+        {
+          "name": "GET /doctors/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/doctors/{{sample_doctor_id}}",
+              "host": ["{{base_url}}"], "path": ["doctors", "{{sample_doctor_id}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));"
+          ]}}]
+        },
+        {
+          "name": "GET /doctors/{id}/availability",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/doctors/{{sample_doctor_id}}/availability?from=2026-05-20T00:00:00Z&to=2026-05-27T00:00:00Z",
+              "host": ["{{base_url}}"],
+              "path": ["doctors", "{{sample_doctor_id}}", "availability"],
+              "query": [
+                { "key": "from", "value": "2026-05-20T00:00:00Z" },
+                { "key": "to",   "value": "2026-05-27T00:00:00Z" }
+              ]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 OK', () => pm.response.to.have.status(200));",
+            "pm.test('busy_slots is array', () => pm.expect(pm.response.json().data.busy_slots).to.be.an('array'));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Appointments",
+      "item": [
+        {
+          "name": "POST /appointments",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"doctor_id\":       \"{{sample_doctor_id}}\",\n  \"patient_id\":      \"{{sample_patient_id}}\",\n  \"scheduled_at\":    \"2026-05-21T09:00:00Z\",\n  \"duration_minutes\": 30,\n  \"reason\":          \"Suivi tensionnel\",\n  \"pay_method\":      \"cnas\",\n  \"consult_type\":    \"cabinet\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/appointments", "host": ["{{base_url}}"], "path": ["appointments"] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('201 Created or 4xx with valid error code', () => {",
+            "  if (pm.response.code !== 201) {",
+            "    const e = pm.response.json().errors;",
+            "    pm.expect(e).to.be.an('array');",
+            "    return;",
+            "  }",
+            "  pm.expect(pm.response.code).to.eql(201);",
+            "  const id = pm.response.json().data.id;",
+            "  pm.collectionVariables.set('sample_appointment_id', id);",
+            "  console.log('Saved sample_appointment_id =', id);",
+            "});"
+          ]}}]
+        },
+        {
+          "name": "GET /appointments/{id}",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{sample_appointment_id}}",
+              "host": ["{{base_url}}"], "path": ["appointments", "{{sample_appointment_id}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('Response has status', () => {",
+            "  pm.expect([200,404]).to.include(pm.response.code);",
+            "});"
+          ]}}]
+        },
+        {
+          "name": "DELETE /appointments/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/appointments/{{sample_appointment_id}}",
+              "host": ["{{base_url}}"], "path": ["appointments", "{{sample_appointment_id}}"]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 / 404', () => pm.expect([200,404]).to.include(pm.response.code));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Prescriptions",
+      "item": [
+        {
+          "name": "GET /prescriptions/{id}/verify",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/prescriptions/{{sample_prescription_id}}/verify?sig=REPLACE_WITH_QR_SIG",
+              "host": ["{{base_url}}"], "path": ["prescriptions", "{{sample_prescription_id}}", "verify"],
+              "query": [{ "key": "sig", "value": "REPLACE_WITH_QR_SIG" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 / 404 / 501', () => pm.expect([200,404,501]).to.include(pm.response.code));"
+          ]}}]
+        }
+      ]
+    },
+    {
+      "name": "Cabinets",
+      "item": [
+        {
+          "name": "GET /cabinets",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/cabinets?limit=25",
+              "host": ["{{base_url}}"], "path": ["cabinets"],
+              "query": [{ "key": "limit", "value": "25" }]
+            }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+            "pm.test('200 / 501', () => pm.expect([200,501]).to.include(pm.response.code));"
+          ]}}]
+        }
+      ]
+    }
+  ]
+}

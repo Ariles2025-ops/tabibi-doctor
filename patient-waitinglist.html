@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Tabibi arrive en septembre 2026 : prenez vos RDV medicaux en ligne avec votre medecin algerien. Inscrivez-vous a la liste d'attente.">
+<link rel="canonical" href="https://tabibi.doctor/patient-waitinglist.html">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tabibi arrive en septembre | Prenez vos RDV medicaux en ligne">
+<meta property="og:description" content="Inscrivez-vous a la liste d'attente Tabibi. Recevez une invitation des l'ouverture dans votre wilaya.">
+<meta property="og:image" content="https://tabibi.doctor/assets/og-patient.jpg">
+<meta property="og:locale" content="fr_DZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Tabibi arrive en septembre | Liste d'attente patients</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  body { background: #f8fafc; min-height:100vh; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 32px 16px; }
+  .lang-bar { display:flex; gap:6px; justify-content:flex-end; margin-bottom: 18px; }
+  .lang-btn { background:#fff; border:1px solid #e2e8f0; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; }
+  .lang-btn.active { background:#2E8B57; color:#fff; border-color:#2E8B57; }
+  .hero { background: linear-gradient(135deg, #2E8B57 0%, #0F7560 100%); color:#fff; border-radius:20px; padding: 48px 28px; margin-bottom:24px; text-align:center; box-shadow: 0 16px 48px rgba(46,139,87,0.18); }
+  .hero .countdown { font-size: 14px; background: rgba(255,255,255,0.18); display: inline-block; padding: 8px 16px; border-radius: 999px; margin-bottom: 14px; font-weight: 600; }
+  .hero h1 { font-size: 30px; font-weight: 800; margin: 0 0 12px; line-height: 1.2; }
+  .hero p { font-size: 16px; margin: 0 auto; max-width: 540px; opacity: 0.95; }
+  .card { background: #fff; border-radius: 16px; padding: 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); margin-bottom: 20px; }
+  .card h2 { font-size: 18px; font-weight: 700; margin: 0 0 14px; color: #0f172a; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 480px) { .form-row { grid-template-columns: 1fr; } }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 600; color: #334155; display: block; margin-bottom: 6px; }
+  .form-control { width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+  .form-control:focus { outline: 2px solid #2E8B57; outline-offset: 1px; border-color: #2E8B57; }
+  .check-row { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #475569; margin: 8px 0; line-height: 1.5; }
+  .btn-primary { background: #2E8B57; color: #fff; border: 0; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; }
+  .btn-primary:hover:not(:disabled) { background: #267347; }
+  .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .msg-ok { background: #dcfce7; color: #166534; padding: 16px; border-radius: 10px; font-size: 14px; display: none; margin-top: 16px; }
+  .msg-err { background: #fee2e2; color: #991b1b; padding: 16px; border-radius: 10px; font-size: 13px; display: none; margin-top: 16px; }
+  .perks { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-top: 18px; }
+  @media (max-width: 600px) { .perks { grid-template-columns: 1fr; } }
+  .perk { background: #f8fafc; padding: 14px; border-radius: 10px; text-align: center; }
+  .perk i { font-size: 22px; color: #2E8B57; margin-bottom: 6px; }
+  .perk div { font-size: 12px; color: #334155; font-weight: 600; margin-top: 4px; }
+  .share { display: flex; gap: 12px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .share a { background: #f1f5f9; padding: 10px 18px; border-radius: 8px; text-decoration: none; color: #475569; font-size: 13px; font-weight: 600; }
+  .footer { text-align: center; font-size: 12px; color: #64748b; padding: 20px 0; }
+  .footer a { color: #0F7560; text-decoration: none; }
+  body[dir="rtl"] .hero { text-align: center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang-bar">
+    <button class="lang-btn active" data-lang="fr">Français</button>
+    <button class="lang-btn" data-lang="ar">العربية</button>
+  </div>
+
+  <section class="hero">
+    <div class="countdown" id="cd">Lancement le 7 septembre 2026</div>
+    <h1 id="h-title">Vos RDV médicaux, en ligne, en Algérie</h1>
+    <p id="h-sub">Tabibi vous permettra de prendre rendez-vous avec votre médecin en quelques clics. Inscrivez-vous : nous vous prévenons dès l'ouverture dans votre wilaya.</p>
+  </section>
+
+  <div class="card">
+    <h2 id="form-title">Recevoir une invitation au lancement</h2>
+    <form id="wl-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="f_email" id="l_email">Votre email</label>
+        <input class="form-control" id="f_email" type="email" required autocomplete="email" placeholder="vous@email.dz">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="f_wilaya" id="l_wilaya">Votre wilaya</label>
+          <select class="form-control" id="f_wilaya" required>
+            <option value="">-- Choisir --</option>
+            <option value="16">Alger</option>
+            <option value="31">Oran</option>
+            <option value="25">Constantine</option>
+            <option value="23">Annaba</option>
+            <option value="9">Blida</option>
+            <option value="19">Sétif</option>
+            <option value="13">Tlemcen</option>
+            <option value="5">Batna</option>
+            <option value="6">Béjaïa</option>
+            <option value="15">Tizi Ouzou</option>
+            <option value="48">Relizane</option>
+            <option value="2">Chlef</option>
+            <option value="autre">Autre wilaya</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_phone" id="l_phone">Téléphone (optionnel)</label>
+          <input class="form-control" id="f_phone" type="tel" autocomplete="tel" placeholder="+213 ...">
+        </div>
+      </div>
+      <label class="check-row">
+        <input type="checkbox" id="f_consent" required>
+        <span id="l_consent">J'accepte de recevoir un email d'invitation à l'ouverture de Tabibi dans ma wilaya. Pas de spam, désinscription en 1 clic.</span>
+      </label>
+      <button class="btn-primary" type="submit" id="submit-btn">
+        <i class="fa fa-bell"></i> <span id="btn-txt">Me prévenir au lancement</span>
+      </button>
+      <div class="msg-ok" id="msg-ok"></div>
+      <div class="msg-err" id="msg-err"></div>
+    </form>
+
+    <div id="thank-you" style="display:none;text-align:center;padding:20px 0">
+      <div style="font-size:48px;color:#2E8B57;margin-bottom:12px">✓</div>
+      <h2 style="margin:0 0 8px" id="ty-title">Merci !</h2>
+      <p style="font-size:14px;color:#475569;margin:0 0 16px" id="ty-sub">Vous serez prévenu·e dès l'ouverture dans votre wilaya. En attendant, partagez Tabibi avec vos proches.</p>
+      <div class="share">
+        <a href="#" id="sh-wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+        <a href="#" id="sh-fb" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-f"></i> Facebook</a>
+        <a href="#" id="sh-tw" target="_blank" rel="noopener"><i class="fa-brands fa-twitter"></i> X</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 id="perks-title">Ce que vous pourrez faire avec Tabibi</h2>
+    <div class="perks">
+      <div class="perk"><i class="fa fa-calendar-check"></i><div id="p1">Prendre RDV 24h/24</div></div>
+      <div class="perk"><i class="fa fa-bell-concierge"></i><div id="p2">Recevoir rappels SMS</div></div>
+      <div class="perk"><i class="fa fa-language"></i><div id="p3">Français / العربية</div></div>
+      <div class="perk"><i class="fa fa-credit-card"></i><div id="p4">Edahabia, CIB, espèces</div></div>
+      <div class="perk"><i class="fa fa-shield-halved"></i><div id="p5">Données chiffrées</div></div>
+      <div class="perk"><i class="fa fa-mobile-screen"></i><div id="p6">App mobile + web</div></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Tabibi — La santé à portée de clic.<br>
+    <a href="confidentialite.html">Politique de confidentialité</a> ·
+    <a href="cgu.html">CGU</a> ·
+    <a href="mentions-legales.html">Mentions légales</a></p>
+  </div>
+</div>
+
+<script>
+var I18N = {
+  fr: {
+    cd:"Lancement le 7 septembre 2026",
+    h_title:"Vos RDV médicaux, en ligne, en Algérie",
+    h_sub:"Tabibi vous permettra de prendre rendez-vous avec votre médecin en quelques clics. Inscrivez-vous : nous vous prévenons dès l'ouverture dans votre wilaya.",
+    form_title:"Recevoir une invitation au lancement",
+    l_email:"Votre email", l_wilaya:"Votre wilaya", l_phone:"Téléphone (optionnel)",
+    l_consent:"J'accepte de recevoir un email d'invitation à l'ouverture de Tabibi dans ma wilaya. Pas de spam, désinscription en 1 clic.",
+    btn_txt:"Me prévenir au lancement",
+    ty_title:"Merci !",
+    ty_sub:"Vous serez prévenu·e dès l'ouverture dans votre wilaya. En attendant, partagez Tabibi avec vos proches.",
+    perks_title:"Ce que vous pourrez faire avec Tabibi",
+    p1:"Prendre RDV 24h/24", p2:"Recevoir rappels SMS", p3:"Français / العربية",
+    p4:"Edahabia, CIB, espèces", p5:"Données chiffrées", p6:"App mobile + web",
+    err_email:"Email invalide.", err_wilaya:"Choisissez votre wilaya.",
+    err_consent:"Merci d'accepter le consentement.",
+    err_dup:"Merci, votre inscription a deja ete prise en compte.",
+    err_server:"Erreur reseau. Reessayez."
+  },
+  ar: {
+    cd:"الافتتاح في 7 سبتمبر 2026",
+    h_title:"مواعيدكم الطبية، عبر الإنترنت، في الجزائر",
+    h_sub:"طبيبي يتيح لكم حجز موعد مع طبيبكم في بضع نقرات. سجلوا الآن لنخبركم عند الافتتاح في ولايتكم.",
+    form_title:"احصلوا على دعوة للافتتاح",
+    l_email:"البريد الإلكتروني", l_wilaya:"الولاية", l_phone:"الهاتف (اختياري)",
+    l_consent:"أوافق على استلام رسالة الدعوة لافتتاح طبيبي في ولايتي. لا رسائل مزعجة، إلغاء الاشتراك بنقرة واحدة.",
+    btn_txt:"أبلغوني عند الافتتاح",
+    ty_title:"شكراً !",
+    ty_sub:"سنخبركم فور الافتتاح في ولايتكم. شاركوا طبيبي مع المقربين منكم في انتظار ذلك.",
+    perks_title:"ما يمكنكم القيام به مع طبيبي",
+    p1:"حجز موعد 24/24", p2:"تذكير عبر SMS", p3:"بالعربية والفرنسية",
+    p4:"Edahabia، CIB، نقداً", p5:"بيانات مشفّرة", p6:"تطبيق هاتف + ويب",
+    err_email:"البريد الإلكتروني غير صالح.", err_wilaya:"اختاروا الولاية.",
+    err_consent:"يرجى الموافقة على الشروط.",
+    err_dup:"شكراً، تسجيلكم تم استلامه مسبقاً.",
+    err_server:"خطأ في الشبكة. أعد المحاولة."
+  }
+};
+
+function applyLang(lang) {
+  var t = I18N[lang] || I18N.fr;
+  document.documentElement.lang = lang;
+  document.body.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+  var bind = {
+    'cd':'cd','h-title':'h_title','h-sub':'h_sub','form-title':'form_title',
+    'l_email':'l_email','l_wilaya':'l_wilaya','l_phone':'l_phone','l_consent':'l_consent',
+    'btn-txt':'btn_txt','ty-title':'ty_title','ty-sub':'ty_sub','perks-title':'perks_title',
+    'p1':'p1','p2':'p2','p3':'p3','p4':'p4','p5':'p5','p6':'p6'
+  };
+  Object.keys(bind).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.textContent = t[bind[id]];
+  });
+  try { localStorage.setItem('tabibi_lang', lang); } catch(e){}
+}
+
+document.querySelectorAll('.lang-btn').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.lang-btn').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    applyLang(b.dataset.lang);
+  });
+});
+
+try {
+  var saved = localStorage.getItem('tabibi_lang');
+  if (saved === 'ar') document.querySelector('[data-lang="ar"]').click();
+  else if ((navigator.language || '').toLowerCase().startsWith('ar')) document.querySelector('[data-lang="ar"]').click();
+} catch(e){}
+
+function getUtm() {
+  var p = new URLSearchParams(location.search);
+  return {
+    utm_source: p.get('utm_source') || null,
+    utm_medium: p.get('utm_medium') || null,
+    utm_campaign: p.get('utm_campaign') || null,
+    source: p.get('utm_source') || 'direct'
+  };
+}
+
+document.getElementById('wl-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  var lang = document.documentElement.lang === 'ar' ? 'ar' : 'fr';
+  var t = I18N[lang];
+  var ok = document.getElementById('msg-ok');
+  var err = document.getElementById('msg-err');
+  ok.style.display = 'none';
+  err.style.display = 'none';
+
+  var email = document.getElementById('f_email').value.trim().toLowerCase();
+  var phone = document.getElementById('f_phone').value.trim();
+  var wilaya= document.getElementById('f_wilaya').value;
+  var consent = document.getElementById('f_consent').checked;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    err.textContent = t.err_email; err.style.display = 'block'; return;
+  }
+  if (!wilaya) {
+    err.textContent = t.err_wilaya; err.style.display = 'block'; return;
+  }
+  if (!consent) {
+    err.textContent = t.err_consent; err.style.display = 'block'; return;
+  }
+
+  var btn = document.getElementById('submit-btn');
+  var orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ...';
+
+  var utm = getUtm();
+  var payload = {
+    email: email,
+    phone: phone || null,
+    role: 'patient',
+    wilaya: wilaya,
+    source: utm.source,
+    utm_campaign: utm.utm_campaign,
+    utm_source: utm.utm_source,
+    utm_medium: utm.utm_medium,
+    user_agent: navigator.userAgent.slice(0, 200),
+    lang: lang,
+    consent_marketing: consent
+  };
+
+  try {
+    var sb = window.tabibi && window.tabibi.supabase;
+    if (!sb) throw new Error('client_not_ready');
+    var r = await sb.from('waiting_list').insert(payload);
+    if (r.error) {
+      if (r.error.code === '23505' || (r.error.message || '').includes('duplicate')) {
+        err.textContent = t.err_dup;
+      } else {
+        err.textContent = t.err_server;
+        if (window.Sentry) window.Sentry.captureException(r.error);
+      }
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      return;
+    }
+    document.getElementById('wl-form').style.display = 'none';
+    document.getElementById('thank-you').style.display = 'block';
+    var shareUrl = encodeURIComponent('https://tabibi.doctor/patient-waitinglist.html');
+    var shareText = encodeURIComponent(lang === 'ar' ? 'طبيبي يفتتح في سبتمبر — مواعيد طبية عبر الإنترنت في الجزائر' : 'Tabibi ouvre en septembre — prenez vos RDV médicaux en ligne en Algérie');
+    document.getElementById('sh-wa').href = 'https://wa.me/?text=' + shareText + '%20' + shareUrl;
+    document.getElementById('sh-fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + shareUrl;
+    document.getElementById('sh-tw').href = 'https://twitter.com/intent/tweet?text=' + shareText + '&url=' + shareUrl;
+  } catch (e2) {
+    console.error('[waitinglist] submit', e2);
+    err.textContent = t.err_server;
+    err.style.display = 'block';
+    if (window.Sentry) window.Sentry.captureException(e2);
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="tabibi-page-key" content="title_onboarding_long">
+<title>Devenir médecin Tabibi — Inscription</title>
+<meta name="description" content="Inscription médecin certifié sur Tabibi — Plateforme médicale algérienne.">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://tabibi.doctor/onboarding-medecin.html">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#0F7560;--blue-d:#0a4d3e;--blue-l:#dcfce7;--green:#10b981;--green-l:#d1fae5;--text:#0f172a;--text2:#475569;--text3:#64748b;--border:#e2e8f0;--bg:#f8fafc;--card:#fff;--warn:#fef3c7;--warn-b:#f59e0b;--danger:#dc2626}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+.hdr{background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;padding:24px 16px 16px;text-align:center}
+.hdr h1{font-size:22px;font-weight:800;margin-bottom:4px}
+.hdr p{font-size:13px;opacity:.85}
+.stepper{display:flex;gap:4px;max-width:520px;margin:18px auto 0;padding:0 16px}
+.step-dot{flex:1;height:6px;background:rgba(255,255,255,.25);border-radius:3px;transition:.3s}
+.step-dot.done{background:var(--green)}
+.step-dot.active{background:#fff}
+.step-label{text-align:center;font-size:11px;color:rgba(255,255,255,.7);margin-top:6px;font-weight:600}
+.step-label b{color:#fff}
+.container{max-width:520px;margin:24px auto 80px;padding:0 16px}
+.card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+h2{font-size:18px;font-weight:800;margin-bottom:6px;color:var(--text);display:flex;align-items:center;gap:8px}
+.subtitle{font-size:13px;color:var(--text3);margin-bottom:18px}
+.field{margin-bottom:14px}
+label.lbl{display:block;font-weight:600;font-size:13px;color:var(--text);margin-bottom:6px}
+.required::after{content:" *";color:var(--danger)}
+input,select,textarea{width:100%;padding:11px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:14px;background:#fff;color:var(--text)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,144,255,.15)}
+textarea{min-height:80px;resize:vertical}
+.hint{font-size:11px;color:var(--text3);margin-top:4px}
+.upload-zone{border:2px dashed var(--border);border-radius:12px;padding:18px;text-align:center;cursor:pointer;transition:.2s;background:#fafbfc}
+.upload-zone:hover{border-color:var(--blue);background:var(--blue-l)}
+.upload-zone i{font-size:28px;color:var(--text3);margin-bottom:8px;display:block}
+.upload-zone .uz-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.upload-zone .uz-sub{font-size:11px;color:var(--text3)}
+.upload-zone.uploaded{border-style:solid;border-color:var(--green);background:var(--green-l)}
+.upload-zone.uploaded i{color:var(--green)}
+.upload-zone input[type=file]{display:none}
+.actions{display:flex;gap:10px;margin-top:20px}
+.btn{padding:12px 18px;border-radius:10px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;border:none;display:inline-flex;align-items:center;justify-content:center;gap:8px;flex:1;transition:.2s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:var(--blue-d)}
+.btn-secondary{background:var(--bg);color:var(--text);border:1px solid var(--border)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.alert{background:var(--warn);border-left:4px solid var(--warn-b);padding:12px 14px;border-radius:8px;font-size:13px;color:#92400e;margin-bottom:14px}
+.success-box{text-align:center;padding:30px 20px}
+.success-box i{font-size:60px;color:var(--green);margin-bottom:14px}
+.success-box h3{font-size:20px;margin-bottom:8px}
+.success-box p{color:var(--text2);font-size:14px;line-height:1.6;margin-bottom:18px}
+.plans{display:grid;grid-template-columns:1fr;gap:12px;margin:14px 0}
+.plan{border:2px solid var(--border);border-radius:12px;padding:16px;cursor:pointer;transition:.2s;background:#fff}
+.plan:hover{border-color:var(--blue)}
+.plan.selected{border-color:var(--blue);background:var(--blue-l)}
+.plan-name{font-weight:800;font-size:15px;color:var(--blue-d);margin-bottom:4px}
+.plan-price{font-size:20px;font-weight:800;color:var(--text);margin-bottom:8px}
+.plan-price small{font-size:12px;font-weight:500;color:var(--text3)}
+.plan ul{margin:6px 0 0 16px;font-size:12px;color:var(--text2);padding:0}
+.plan li{margin:3px 0}
+.plan .badge{display:inline-block;background:var(--green);color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;margin-left:6px}
+.consent-box{background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);margin:14px 0}
+.consent-box label{display:flex;gap:8px;align-items:flex-start;margin-bottom:8px;cursor:pointer}
+.consent-box input{margin-top:3px;width:auto;flex-shrink:0}
+@media(min-width:600px){.plans{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <h1><i class="fa fa-user-doctor"></i> Devenir médecin Tabibi</h1>
+  <p>Inscription gratuite en 4 étapes — environ 5 minutes</p>
+  <div class="stepper">
+    <div class="step-dot active" id="d1"></div>
+    <div class="step-dot" id="d2"></div>
+    <div class="step-dot" id="d3"></div>
+    <div class="step-dot" id="d4"></div>
+  </div>
+  <div class="step-label">Étape <b id="step-num">1</b>/4 — <span id="step-name">Informations personnelles</span></div>
+</header>
+
+<main class="container">
+
+  <!-- ═══════════ ÉTAPE 1 : INFOS PERSO ═══════════ -->
+  <section class="card" id="step-1">
+    <h2><i class="fa fa-id-card" style="color:var(--blue)"></i> Informations personnelles</h2>
+    <p class="subtitle">Vos coordonnées d'identité civile.</p>
+
+    <div class="field"><label class="lbl required">Prénom</label><input id="f-firstname" placeholder="Ahmed" data-i18n-placeholder="ph_first_name_example" required></div>
+    <div class="field"><label class="lbl required">Nom</label><input id="f-lastname" placeholder="Benali" data-i18n-placeholder="ph_last_name_example" required></div>
+    <div class="field"><label class="lbl required">Email professionnel</label><input id="f-email" type="email" placeholder="dr.benali@gmail.com" data-i18n-placeholder="ph_email_pro_example" required><div class="hint">Idéalement votre email pro. Servira de login.</div></div>
+    <div class="field"><label class="lbl required">Téléphone (DZ)</label><input id="f-phone" type="tel" placeholder="+213 555 12 34 56" data-i18n-placeholder="ph_phone_dz_example" required></div>
+    <div class="field"><label class="lbl required">Date de naissance</label><input id="f-bd" type="date" required></div>
+    <div class="field"><label class="lbl required">Mot de passe</label><input id="f-pw" type="password" minlength="8" placeholder="Minimum 8 caractères" data-i18n-placeholder="ph_password_8_min" required></div>
+
+    <div class="actions">
+      <button class="btn btn-primary" onclick="goStep(2)">Continuer <i class="fa fa-arrow-right"></i></button>
+    </div>
+  </section>
+
+  <!-- ═══════════ ÉTAPE 2 : JUSTIFICATIFS ═══════════ -->
+  <section class="card" id="step-2" style="display:none">
+    <h2><i class="fa fa-file-shield" style="color:var(--blue)"></i> Justificatifs professionnels</h2>
+    <p class="subtitle">Conformément au Code de déontologie médicale algérien. Vos documents sont chiffrés et vérifiés sous 48h.</p>
+
+    <div class="alert"><i class="fa fa-circle-info"></i> <b>Documents acceptés :</b> JPG, PNG, PDF — max 5 Mo chacun.</div>
+
+    <div class="field">
+      <label class="lbl required">Diplôme de Doctorat en Médecine</label>
+      <label class="upload-zone" id="up-diploma">
+        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-diploma', this)">
+        <i class="fa fa-cloud-arrow-up"></i>
+        <div class="uz-title">Téléverser le diplôme</div>
+        <div class="uz-sub">JPG, PNG ou PDF</div>
+      </label>
+    </div>
+
+    <div class="field">
+      <label class="lbl required">Attestation d'inscription au Conseil de l'Ordre</label>
+      <label class="upload-zone" id="up-ordre">
+        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-ordre', this)">
+        <i class="fa fa-cloud-arrow-up"></i>
+        <div class="uz-title">Téléverser l'attestation</div>
+        <div class="uz-sub">En cours de validité</div>
+      </label>
+    </div>
+
+    <div class="field">
+      <label class="lbl required">Numéro d'inscription au Conseil de l'Ordre</label>
+      <input id="f-ordre-num" placeholder="CO-XXXX-XXXXX">
+    </div>
+
+    <div class="field">
+      <label class="lbl">Carte d'identité ou passeport (recommandé)</label>
+      <label class="upload-zone" id="up-id">
+        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-id', this)">
+        <i class="fa fa-id-badge"></i>
+        <div class="uz-title">Téléverser la pièce d'identité</div>
+        <div class="uz-sub">Accélère la vérification</div>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="goStep(1)"><i class="fa fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-primary" onclick="goStep(3)">Continuer <i class="fa fa-arrow-right"></i></button>
+    </div>
+  </section>
+
+  <!-- ═══════════ ÉTAPE 3 : CABINET ═══════════ -->
+  <section class="card" id="step-3" style="display:none">
+    <h2><i class="fa fa-stethoscope" style="color:var(--blue)"></i> Activité et cabinet</h2>
+    <p class="subtitle">Ces informations apparaîtront sur votre profil public Tabibi.</p>
+
+    <div class="field">
+      <label class="lbl required">Spécialité principale</label>
+      <select id="f-spec" required>
+        <option value="">Sélectionnez...</option>
+        <option>Médecine Générale</option><option>Cardiologie</option><option>Dermatologie</option>
+        <option>Pédiatrie</option><option>Gynécologie-Obstétrique</option><option>Ophtalmologie</option>
+        <option>ORL</option><option>Neurologie</option><option>Psychiatrie</option>
+        <option>Orthopédie</option><option>Dentisterie</option><option>Endocrinologie</option>
+        <option>Gastro-entérologie</option><option>Pneumologie</option><option>Urologie</option>
+        <option>Rhumatologie</option><option>Néphrologie</option><option>Chirurgie générale</option>
+      </select>
+    </div>
+
+    <div class="field"><label class="lbl">Sous-spécialités (séparées par virgules)</label><input id="f-subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties"></div>
+    <div class="field"><label class="lbl">Année de début d'exercice</label><input id="f-startyear" type="number" min="1980" max="2026" placeholder="2018"></div>
+
+    <div class="field">
+      <label class="lbl required">Wilaya d'exercice</label>
+      <select id="f-wilaya" required>
+        <option value="">Sélectionnez...</option>
+        <option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option>
+        <option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option>
+        <option>Batna</option><option>Tizi Ouzou</option><option>Mostaganem</option><option>Sidi Bel Abbès</option>
+      </select>
+    </div>
+
+    <div class="field"><label class="lbl required">Adresse complète du cabinet</label><textarea id="f-addr" placeholder="12 Rue Didouche Mourad, Alger Centre" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
+    <div class="field"><label class="lbl">Nom du cabinet ou de la clinique (optionnel)</label><input id="f-cabinet" placeholder="Cabinet Dr. Benali" data-i18n-placeholder="ph_cabinet_name_alt"></div>
+    <div class="field"><label class="lbl">Tarif consultation (DA)</label><input id="f-price" type="number" min="0" step="100" placeholder="2500"></div>
+
+    <div class="field">
+      <label class="lbl">Langues parlées</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label style="display:flex;gap:6px;align-items:center;padding:8px;background:#f8fafc;border-radius:8px;cursor:pointer"><input type="checkbox" id="lg-fr" checked style="width:auto"> 🇫🇷 Français</label>
+        <label style="display:flex;gap:6px;align-items:center;padding:8px;background:#f8fafc;border-radius:8px;cursor:pointer"><input type="checkbox" id="lg-ar" checked style="width:auto"> 🇩🇿 العربية</label>
+        <label style="display:flex;gap:6px;align-items:center;padding:8px;background:#f8fafc;border-radius:8px;cursor:pointer"><input type="checkbox" id="lg-en" style="width:auto"> 🇬🇧 English</label>
+        <label style="display:flex;gap:6px;align-items:center;padding:8px;background:#f8fafc;border-radius:8px;cursor:pointer"><input type="checkbox" id="lg-kab" style="width:auto"> Tamazight</label>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="goStep(2)"><i class="fa fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-primary" onclick="goStep(4)">Continuer <i class="fa fa-arrow-right"></i></button>
+    </div>
+  </section>
+
+  <!-- ═══════════ ÉTAPE 4 : PLAN + CONSENTEMENTS ═══════════ -->
+  <section class="card" id="step-4" style="display:none">
+    <h2><i class="fa fa-circle-check" style="color:var(--blue)"></i> Choisissez votre formule</h2>
+    <p class="subtitle">Conformément à l'art. 17 du décret 92-276, Tabibi ne perçoit aucune commission sur vos honoraires.</p>
+
+    <div class="plans">
+      <div class="plan selected" data-plan="discovery" onclick="selectPlan('discovery', this)">
+        <div class="plan-name">Découverte <span class="badge">Gratuit</span></div>
+        <div class="plan-price">0 DA<small>/mois</small></div>
+        <ul>
+          <li>Profil public</li>
+          <li>20 RDV/mois</li>
+          <li>Agenda basique</li>
+          <li>Support email</li>
+        </ul>
+      </div>
+      <div class="plan" data-plan="pro" onclick="selectPlan('pro', this)">
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">2 900 DA<small>/mois</small></div>
+        <ul>
+          <li>RDV illimités</li>
+          <li>SMS rappels auto</li>
+          <li>Statistiques</li>
+          <li>Mise en avant</li>
+        </ul>
+      </div>
+      <div class="plan" data-plan="premium" onclick="selectPlan('premium', this)">
+        <div class="plan-name">Premium</div>
+        <div class="plan-price">5 900 DA<small>/mois</small></div>
+        <ul>
+          <li>Tout Pro inclus</li>
+          <li>Téléconsultation</li>
+          <li>Dossier patient</li>
+          <li>Support téléphonique</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="consent-box">
+      <label>
+        <input type="checkbox" id="c-cgu" required>
+        <span>J'accepte les <a href="cgu.html" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">CGU</a> et le <a href="#" style="color:var(--blue)">Contrat d'Adhésion Médecin</a> de Tabibi.</span>
+      </label>
+      <label>
+        <input type="checkbox" id="c-privacy" required>
+        <span>Je consens au traitement de mes données selon la <a href="confidentialite.html" target="_blank" rel="noopener noreferrer" style="color:var(--blue)">Politique de confidentialité</a> (loi 18-07).</span>
+      </label>
+      <label>
+        <input type="checkbox" id="c-ethics" required>
+        <span>Je m'engage à respecter le Code de déontologie médicale algérien et le secret professionnel.</span>
+      </label>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" onclick="goStep(3)"><i class="fa fa-arrow-left"></i> Retour</button>
+      <button class="btn btn-primary" onclick="submitAll()"><i class="fa fa-paper-plane"></i> Envoyer ma demande</button>
+    </div>
+  </section>
+
+  <!-- ═══════════ SUCCÈS ═══════════ -->
+  <section class="card" id="step-done" style="display:none">
+    <div class="success-box">
+      <i class="fa fa-circle-check"></i>
+      <h3>Demande envoyée !</h3>
+      <p>Merci Dr. <span id="success-name">—</span>.<br>Notre équipe vérifie vos justificatifs et vous contactera <b>sous 48 heures ouvrées</b> par email à <span id="success-email" style="color:var(--blue)">—</span>.</p>
+      <p style="font-size:12px;color:var(--text3)">En cas de question : <a href="mailto:contact@tabibi.doctor" style="color:var(--blue)">contact@tabibi.doctor</a></p>
+      <a href="index.html" class="btn btn-primary" style="max-width:260px;margin:14px auto 0">Retour à l'accueil</a>
+    </div>
+  </section>
+
+</main>
+
+<script>
+let currentStep = 1;
+let selectedPlan = 'discovery';
+
+const STEPS = {
+  1: { name: "Informations personnelles" },
+  2: { name: "Justificatifs professionnels" },
+  3: { name: "Activité et cabinet" },
+  4: { name: "Formule et engagement" }
+};
+
+function validateStep(step) {
+  if (step === 1) {
+    const required = ['f-firstname', 'f-lastname', 'f-email', 'f-phone', 'f-bd', 'f-pw'];
+    for (const id of required) {
+      const v = document.getElementById(id).value.trim();
+      if (!v) { alert("Champ obligatoire manquant : " + document.getElementById(id).previousElementSibling.textContent); return false; }
+    }
+    if (document.getElementById('f-pw').value.length < 8) { alert(tabibiT('alert_password_min_8',"Mot de passe : minimum 8 caractères")); return false; }
+  }
+  if (step === 2) {
+    if (!document.querySelector('#up-diploma').classList.contains('uploaded')) { alert(tabibiT('alert_diploma_required',"Le diplôme est obligatoire")); return false; }
+    if (!document.querySelector('#up-ordre').classList.contains('uploaded')) { alert("L'attestation du Conseil de l'Ordre est obligatoire"); return false; }
+    if (!document.getElementById('f-ordre-num').value.trim()) { alert(tabibiT('alert_ordre_required',"Numéro d'inscription au Conseil de l'Ordre obligatoire")); return false; }
+  }
+  if (step === 3) {
+    if (!document.getElementById('f-spec').value) { alert(tabibiT('alert_spec_required',"Spécialité obligatoire")); return false; }
+    if (!document.getElementById('f-wilaya').value) { alert("Wilaya obligatoire"); return false; }
+    if (!document.getElementById('f-addr').value.trim()) { alert("Adresse du cabinet obligatoire"); return false; }
+  }
+  return true;
+}
+
+function goStep(target) {
+  if (target > currentStep && !validateStep(currentStep)) return;
+  document.getElementById('step-' + currentStep).style.display = 'none';
+  document.getElementById('step-' + target).style.display = 'block';
+  currentStep = target;
+  // MAJ stepper
+  for (let i = 1; i <= 4; i++) {
+    const dot = document.getElementById('d' + i);
+    dot.classList.remove('done', 'active');
+    if (i < currentStep) dot.classList.add('done');
+    if (i === currentStep) dot.classList.add('active');
+  }
+  document.getElementById('step-num').textContent = currentStep;
+  document.getElementById('step-name').textContent = STEPS[currentStep].name;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function markUploaded(zoneId, input) {
+  if (!input.files || !input.files[0]) return;
+  const f = input.files[0];
+  if (f.size > 5 * 1024 * 1024) { alert("Fichier trop volumineux (max 5 Mo)"); input.value = ''; return; }
+  const z = document.getElementById(zoneId);
+  z.classList.add('uploaded');
+  z.querySelector('.uz-title').textContent = '✓ ' + f.name;
+  z.querySelector('.uz-sub').textContent = (f.size / 1024).toFixed(0) + ' Ko — Cliquez pour changer';
+}
+
+function selectPlan(plan, el) {
+  selectedPlan = plan;
+  document.querySelectorAll('.plan').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function submitAll() {
+  if (!document.getElementById('c-cgu').checked) { alert("Acceptez les CGU"); return; }
+  if (!document.getElementById('c-privacy').checked) { alert(tabibiT('alert_privacy_consent_required',"Consentez à la politique de confidentialité")); return; }
+  if (!document.getElementById('c-ethics').checked) { alert(tabibiT('alert_ethics_required',"Engagez-vous sur le code de déontologie")); return; }
+
+  const data = {
+    firstname: document.getElementById('f-firstname').value.trim(),
+    lastname: document.getElementById('f-lastname').value.trim(),
+    email: document.getElementById('f-email').value.trim().toLowerCase(),
+    phone: document.getElementById('f-phone').value.trim(),
+    date_of_birth: document.getElementById('f-bd').value,
+    password: document.getElementById('f-pw').value,
+    ordre_num: document.getElementById('f-ordre-num').value.trim(),
+    specialty: document.getElementById('f-spec').value,
+    subspecialty: document.getElementById('f-subspec').value.trim(),
+    start_year: document.getElementById('f-startyear').value,
+    wilaya: document.getElementById('f-wilaya').value,
+    address: document.getElementById('f-addr').value.trim(),
+    cabinet: document.getElementById('f-cabinet').value.trim(),
+    price: document.getElementById('f-price').value,
+    languages: {
+      fr: document.getElementById('lg-fr').checked,
+      ar: document.getElementById('lg-ar').checked,
+      en: document.getElementById('lg-en').checked,
+      kab: document.getElementById('lg-kab').checked
+    },
+    plan: selectedPlan,
+    consents: {
+      cgu_at: new Date().toISOString(),
+      privacy_at: new Date().toISOString(),
+      ethics_at: new Date().toISOString(),
+      version: '1.0'
+    },
+    submitted_at: new Date().toISOString(),
+    status: 'pending_verification'
+  };
+
+  // TODO : envoyer à Supabase (créer table `doctor_applications`)
+  // Pour l'instant : stockage localStorage + envoi email manuel
+  try {
+    const apps = JSON.parse(localStorage.getItem('tabibi_doctor_applications') || '[]');
+    apps.push(data);
+    localStorage.setItem('tabibi_doctor_applications', JSON.stringify(apps));
+  } catch(e) {}
+
+  // Affichage succès
+  document.getElementById('step-' + currentStep).style.display = 'none';
+  document.getElementById('step-done').style.display = 'block';
+  document.getElementById('success-name').textContent = data.firstname + ' ' + data.lastname;
+  document.getElementById('success-email').textContent = data.email;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+<script src="js/tabibi-cookies.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+</body>
+</html>

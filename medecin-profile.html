@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-avatar.js"></script>
+<script src="js/tabibi-2fa.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Profil médecin privé Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/medecin-profile.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#10B981">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_doctor_profile_self">
+<title>Profil médecin | Tabibi</title>
+<!-- Wave 4 SEO: Physician JSON-LD (dynamic injection from Supabase) -->
+<script type="application/ld+json" id="tabibi-physician-schema">
+{
+  "@context": "https://schema.org",
+  "@type": "Physician",
+  "name": "Médecin Tabibi",
+  "medicalSpecialty": "PrimaryCare",
+  "address": {"@type":"PostalAddress","addressLocality":"Alger","addressCountry":"DZ"},
+  "aggregateRating": {"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"0"}
+}
+</script>
+<script>
+// Wave 4 SEO: Inject real Physician schema once profile loads from Supabase.
+// Listens for window event 'tabibi:doctor-profile-loaded' fired by profile loader.
+(function(){
+  function injectSchema(detail){
+    try {
+      var specMap = {
+        "Cardiologie":"Cardiovascular","Dentisterie":"Dentistry","Pédiatrie":"Pediatric",
+        "Gynécologie":"Gynecologic","Dermatologie":"Dermatologic",
+        "Ophtalmologie":"Ophthalmologic","ORL":"Otolaryngologic","Neurologie":"Neurologic",
+        "Psychiatrie":"Psychiatric","Orthopédie":"Orthopedic","Médecine Générale":"PrimaryCare"
+      };
+      var schema = {
+        "@context":"https://schema.org",
+        "@type":"Physician",
+        "name": detail.name || "Médecin Tabibi",
+        "medicalSpecialty": specMap[detail.specialty] || "PrimaryCare",
+        "address": {
+          "@type":"PostalAddress",
+          "addressLocality": detail.city || "Alger",
+          "addressRegion": detail.wilaya || "",
+          "addressCountry":"DZ"
+        },
+        "url": location.href
+      };
+      if (detail.rating && detail.reviewCount) {
+        schema.aggregateRating = {
+          "@type":"AggregateRating",
+          "ratingValue": String(detail.rating),
+          "reviewCount": String(detail.reviewCount)
+        };
+      }
+      var node = document.getElementById('tabibi-physician-schema');
+      if (node) node.textContent = JSON.stringify(schema);
+    } catch(e) { /* silent: SEO non-blocking */ }
+  }
+  window.addEventListener('tabibi:doctor-profile-loaded', function(e){
+    if (e && e.detail) injectSchema(e.detail);
+  });
+})();
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+.section-card { margin-bottom: 14px; }
+.sec-title-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+.sec-title-bar i { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.sec-title-bar .lbl { font-size:14px; font-weight:700; color:var(--text); }
+.sec-title-bar .desc { font-size:11px; color:var(--text3); }
+.toggle-switch { position:relative; width:44px; height:24px; background:var(--border); border-radius:12px; cursor:pointer; transition:.2s; }
+.toggle-switch.on { background:var(--green); }
+.toggle-switch::after { content:""; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.2s; box-shadow:var(--s1); }
+.toggle-switch.on::after { left:22px; }
+.row-setting { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--bg2); }
+.row-setting:last-child { border-bottom:none; }
+.row-setting .info { flex:1; }
+.row-setting .name { font-size:13px; font-weight:600; }
+.row-setting .desc { font-size:11px; color:var(--text3); margin-top:2px; }
+.tag-input { display:flex; flex-wrap:wrap; gap:6px; padding:8px; border:1.5px solid var(--border); border-radius:12px; min-height:42px; background:#fff; }
+.tag { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:var(--blue-l); color:var(--blue); border-radius:14px; font-size:12px; font-weight:600; }
+.tag button { background:none; border:none; color:inherit; cursor:pointer; padding:0; font-size:14px; }
+</style>
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='doctor-dashboard.html'" aria-label="Retour au tableau de bord"><i class="fa fa-arrow-left"></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Profil médecin</div><div class="app-bar-sub">Compte professionnel</div></div>
+  <button class="btn btn-success btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> Sauver</button>
+</header>
+<main class="page" style="padding:0 0 80px">
+  <!-- COVER -->
+  <div style="background:linear-gradient(135deg,#047857,#10b981,#34d399);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
+    <div id="ava" style="width:88px;height:88px;border-radius:24px;background:#fff;color:#047857;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;margin:0 auto 12px;border:4px solid rgba(255,255,255,.3)">?</div>
+    <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
+    <p id="pspec" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
+    <span class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:inline-block"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
+  </div>
+  <div style="padding:16px 16px 0">
+    <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;padding:16px 8px">
+      <div><div id="rdv-month" style="font-size:20px;font-weight:800;color:var(--blue);line-height:1.1">28</div><div style="font-size:10px;color:var(--text3);margin-top:4px">RDV ce mois</div></div>
+      <div><div id="patients-count" style="font-size:20px;font-weight:800;color:var(--green);line-height:1.1">142</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="tab_patients">Patients</div></div>
+      <div><div id="rating" style="font-size:20px;font-weight:800;color:#f59e0b;line-height:1.1">4.8</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="rating">Note</div></div>
+      <div><div id="reviews-count" style="font-size:20px;font-weight:800;color:#7c3aed;line-height:1.1">87</div><div style="font-size:10px;color:var(--text3);margin-top:4px">Avis</div></div>
+    </div>
+  </div>
+  <div style="padding:16px">
+
+    <!-- 1. INFOS PERSO -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:var(--blue-l);color:var(--blue)"><i class="fa fa-id-card"></i></i>
+        <div><div class="lbl">Informations personnelles</div><div class="desc">Identité civile</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label" data-i18n="first_name">Prénom</label><input class="form-control" id="f_first"></div>
+        <div class="form-group"><label class="form-label" data-i18n="last_name">Nom</label><input class="form-control" id="f_last"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email professionnel</label><input class="form-control" id="f_email" disabled></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Téléphone perso</label><input class="form-control" id="f_phone_perso" type="tel"></div>
+        <div class="form-group"><label class="form-label">Date naissance</label><input class="form-control" id="f_bd" type="date"></div>
+      </div>
+    </div>
+
+    <!-- 2. INFOS PROFESSIONNELLES -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:var(--green-l);color:var(--green)"><i class="fa fa-user-doctor"></i></i>
+        <div><div class="lbl">Informations professionnelles</div><div class="desc">Identifiant médical</div></div></div>
+      <div class="form-group"><label class="form-label">Spécialité principale</label>
+        <select class="form-control" id="f_spec"><option>Cardiologie</option><option>Dermatologie</option><option>Pédiatrie</option><option>Gynécologie</option><option>Médecine Générale</option><option>Dentisterie</option><option>Ophtalmologie</option><option>ORL</option><option>Neurologie</option><option>Psychiatrie</option><option>Orthopédie</option></select></div>
+      <div class="form-group"><label class="form-label">Sous-spécialités (séparées par des virgules)</label>
+        <input class="form-control" id="f_subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties"></div>
+      <div class="form-group"><label class="form-label">N° Conseil National de l'Ordre</label><input class="form-control" id="f_ordre" placeholder="CO-2025-XXXX" data-i18n-placeholder="ph_ordre_number"></div>
+      <div class="form-group"><label class="form-label">Numéro RPPS / Identifiant médecin</label><input class="form-control" id="f_rpps"></div>
+      <div class="form-group"><label class="form-label">Année de début d'exercice</label><input class="form-control" id="f_start_year" type="number" min="1980" max="2026"></div>
+      <div class="form-group"><label class="form-label">Bio professionnelle (visible aux patients)</label>
+        <textarea class="form-control" id="f_bio" rows="4" placeholder="Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha..." data-i18n-placeholder="ph_doctor_bio"></textarea>
+        <div class="form-hint">Cette bio apparaît sur votre profil public.</div>
+      </div>
+    </div>
+
+    <!-- 3. DIPLÔMES & CERTIFICATIONS -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#fef3c7;color:#92400e"><i class="fa fa-graduation-cap"></i></i>
+        <div><div class="lbl">Diplômes & certifications</div><div class="desc">Parcours académique</div></div></div>
+      <div id="diploma-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button class="btn btn-soft btn-full" onclick="addDiploma()"><i class="fa fa-plus"></i> Ajouter un diplôme</button>
+    </div>
+
+    <!-- 4. LANGUES -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#ccfbf1;color:#0f766e"><i class="fa fa-language"></i></i>
+        <div><div class="lbl">Langues parlées</div><div class="desc">Visible aux patients pour le filtre</div></div></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="lang_fr" checked> 🇫🇷 Français</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="lang_ar" checked> 🇩🇿 العربية</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="lang_en"> 🇬🇧 English</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="lang_kab"> Tamazight</label>
+      </div>
+    </div>
+
+    <!-- 5. CABINET / ADRESSE -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-location-dot"></i></i>
+        <div><div class="lbl">Cabinet / Lieu d'exercice</div><div class="desc">Adresse visible aux patients</div></div></div>
+      <div class="form-group"><label class="form-label">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Cabinet Dr. Hadj" data-i18n-placeholder="ph_cabinet_name"></div>
+      <div class="form-group"><label class="form-label">Adresse complète</label><textarea class="form-control" id="f_addr" rows="2" placeholder="12 Rue Didouche Mourad, Alger Centre" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label" data-i18n="wilaya">Wilaya</label>
+          <select class="form-control" id="f_city"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option></select></div>
+        <div class="form-group"><label class="form-label">Code postal</label><input class="form-control" id="f_postal"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Téléphone cabinet</label><input class="form-control" id="f_phone_cab" type="tel" placeholder="0661 234 567" data-i18n-placeholder="ph_phone_dz"></div>
+      <div class="form-group"><label class="form-label">Site web (optionnel)</label><input class="form-control" id="f_web" type="url" placeholder="https://..."></div>
+    </div>
+
+    <!-- 6. TARIFS & TYPES DE CONSULTATION -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#fed7aa;color:#9a3412"><i class="fa fa-coins"></i></i>
+        <div><div class="lbl">Tarifs & types de consultation</div><div class="desc">Visible aux patients</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Tarif consultation (DA)</label><input class="form-control" id="f_price" type="number" placeholder="2500"></div>
+        <div class="form-group"><label class="form-label">Tarif suivi (DA)</label><input class="form-control" id="f_price_followup" type="number" placeholder="1800"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Tarif urgence (DA)</label><input class="form-control" id="f_price_urgent" type="number" placeholder="3500"></div>
+        <div class="form-group"><label class="form-label">Durée moyenne (min)</label><input class="form-control" id="f_duration" type="number" placeholder="30"></div>
+      </div>
+      <div class="row-setting"><div class="info"><div class="name">Téléconsultation disponible</div><div class="desc">RDV en visioconférence</div></div><div class="toggle-switch" data-key="telemedicine" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Visites à domicile</div><div class="desc">Pour patients non-mobiles</div></div><div class="toggle-switch" data-key="home_visits" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Urgences 24h/24</div><div class="desc">Disponible pour les urgences</div></div><div class="toggle-switch" data-key="urgent_24" onclick="toggleSwitch(this)"></div></div>
+    </div>
+
+    <!-- 7. ASSURANCES ACCEPTÉES -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:var(--green-l);color:var(--green)"><i class="fa fa-shield"></i></i>
+        <div><div class="lbl">Assurances & tiers payant acceptés</div><div class="desc">Conventionnement</div></div></div>
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="ins_cnas" checked> CNAS</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="ins_casnos" checked> CASNOS</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="ins_chifa" checked> Carte CHIFA</label>
+        <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="ins_private"> Mutuelles privées</label>
+      </div>
+    </div>
+
+    <!-- 8. HORAIRES PAR DÉFAUT -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#dcfce7;color:#0a4d3e"><i class="fa fa-clock"></i></i>
+        <div><div class="lbl">Horaires d'ouverture par défaut</div><div class="desc">Modèle pour générer vos créneaux</div></div></div>
+      <div id="schedule-rows"></div>
+      <a href="doctor-reservation.html" class="btn btn-soft btn-full" style="margin-top:8px"><i class="fa fa-calendar-week"></i> Gérer mes créneaux en détail</a>
+    </div>
+
+    <!-- 9. ABONNEMENT -->
+    <div class="card section-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b">
+      <div class="sec-title-bar" style="border-bottom-color:rgba(0,0,0,.1)"><i style="background:#f59e0b;color:#fff"><i class="fa fa-crown"></i></i>
+        <div><div class="lbl">Mon abonnement Tabibi PRO</div><div class="desc">Plan actuel</div></div></div>
+      <div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div><div style="font-size:18px;font-weight:800;color:#92400e">Plan PRO</div><div style="font-size:12px;color:var(--text3)">5 000 DA / mois</div></div>
+          <span class="badge badge-green"><i class="fa fa-check"></i> Actif</span>
+        </div>
+        <div style="font-size:12px;color:var(--text3)">Renouvellement automatique le <strong style="color:var(--text)">28 mai 2026</strong></div>
+      </div>
+      <button class="btn btn-ghost btn-full" style="margin-bottom:6px"><i class="fa fa-file-invoice"></i> Voir mes factures</button>
+      <button class="btn btn-ghost btn-full" style="color:var(--red);border-color:#fca5a5"><i class="fa fa-xmark"></i> Annuler l'abonnement</button>
+    </div>
+
+    <!-- 10. NOTIFICATIONS -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#fce7f3;color:#9d174d"><i class="fa fa-bell"></i></i>
+        <div><div class="lbl" data-i18n="notifications">Notifications</div><div class="desc">Alertes professionnelles</div></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Nouveau RDV pris</div><div class="desc">SMS + Email</div></div><div class="toggle-switch on" data-key="notif_new_rdv" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Annulation par patient</div><div class="desc">Email immédiat</div></div><div class="toggle-switch on" data-key="notif_cancel" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Récapitulatif quotidien</div><div class="desc">Email à 8h chaque jour</div></div><div class="toggle-switch on" data-key="notif_daily" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Rappel paiement reçu</div><div class="desc">Notif après chaque paiement</div></div><div class="toggle-switch" data-key="notif_pay" onclick="toggleSwitch(this)"></div></div>
+    </div>
+
+    <!-- 11. SÉCURITÉ -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-lock"></i></i>
+        <div><div class="lbl">Sécurité du compte</div><div class="desc">Protection professionnelle</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="changePassword()"><i class="fa fa-key"></i> Changer le mot de passe</button>
+      <div class="row-setting"><div class="info"><div class="name">2FA obligatoire (recommandé)</div><div class="desc">SMS de vérification à chaque connexion</div></div><div class="toggle-switch on" data-key="sec_2fa" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Verrouillage automatique</div><div class="desc">Après 15 min d'inactivité</div></div><div class="toggle-switch on" data-key="sec_lock" onclick="toggleSwitch(this)"></div></div>
+    </div>
+
+    <!-- SÉCURITÉ : 2FA -->
+    <div class="card section-card" style="border-left:3px solid #0F7560">
+      <div class="sec-title-bar" style="border-bottom-color:#dcfce7"><i style="background:#0F7560;color:#fff"><i class="fa fa-shield-halved"></i></i>
+        <div><div class="lbl" style="color:#0a4d3e">Sécurité du compte</div><div class="desc">Double authentification (2FA)</div></div></div>
+      <div id="twofa-status" style="margin-bottom:12px"></div>
+      <button id="twofa-toggle-btn" class="btn btn-primary btn-full" onclick="open2FASetup()"><i class="fa fa-lock"></i> Configurer la 2FA</button>
+    </div>
+
+    <!-- MODAL 2FA -->
+    <div id="twofa-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)close2FASetup()">
+      <div style="background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:92dvh;overflow-y:auto">
+        <div style="padding:18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-shield-halved" style="color:#0F7560"></i> Activer la 2FA</div>
+          <button onclick="close2FASetup()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
+        </div>
+        <div id="twofa-step-content" style="padding:18px"></div>
+      </div>
+    </div>
+
+    <!-- 12. ZONE DANGER -->
+    <div class="card section-card" style="background:var(--red-l);border-left:3px solid var(--red)">
+      <div class="sec-title-bar" style="border-bottom-color:#fca5a5"><i style="background:var(--red);color:#fff"><i class="fa fa-triangle-exclamation"></i></i>
+        <div><div class="lbl" style="color:var(--red)">Zone de danger</div><div class="desc">Désactivation du compte</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px;color:#92400e;border-color:#fde68a" onclick="alert('Compte mis en pause — vos patients voient un message')"><i class="fa fa-pause"></i> Mettre en pause (vacances)</button>
+      <button class="btn btn-danger btn-full" style="justify-content:flex-start" onclick="if(confirm(tabibiT('confirm_delete_doctor_account','Supprimer définitivement votre compte médecin ?')))alert(tabibiT('alert_account_deleted','Compte supprimé'))"><i class="fa fa-trash"></i> Supprimer mon compte</button>
+    </div>
+
+    <button class="btn btn-success btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> Sauvegarder toutes les modifications</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
+  </div>
+</main>
+<div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+<script>
+function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+
+const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+function renderSchedule(){
+  const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  const sched=u.schedule||{Lundi:["09:00","17:00",true],Mardi:["09:00","17:00",true],Mercredi:["09:00","17:00",true],Jeudi:["09:00","17:00",true],Vendredi:["09:00","13:00",true],Samedi:["09:00","13:00",false],Dimanche:["","",false]};
+  document.getElementById("schedule-rows").innerHTML=DAYS.map(d=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2)">
+      <label style="display:flex;align-items:center;gap:6px;width:120px;font-size:13px;font-weight:600">
+        <input type="checkbox" data-day="${d}" data-fld="enabled" ${sched[d][2]?"checked":""}> ${d}</label>
+      <input type="time" class="form-control" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="start" value="${sched[d][0]}">
+      <span style="font-size:12px;color:var(--text3)">→</span>
+      <input type="time" class="form-control" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="end" value="${sched[d][1]}">
+    </div>`).join("");
+}
+
+function getDiplomas(){return JSON.parse(localStorage.getItem("tabibi_diplomas")||'[]');}
+function setDiplomas(d){localStorage.setItem("tabibi_diplomas",JSON.stringify(d));}
+function renderDiplomas(){
+  let d=getDiplomas();
+  if(!d.length){d=["Doctorat en Médecine — Université d'Alger (2008)","Spécialisation Cardiologie — CHU Mustapha (2013)"];setDiplomas(d);}
+  document.getElementById("diploma-list").innerHTML=d.map((v,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px">
+    <i class="fa fa-certificate" style="color:#f59e0b"></i>
+    <div style="flex:1;font-size:13px">${v}</div>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fee2e2" onclick="rmDiploma(${i})" aria-label="Supprimer ce diplôme"><i class="fa fa-trash"></i></button>
+  </div>`).join("");
+}
+function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (ex: Doctorat en Médecine — Université d'Alger (2008))"));if(!v)return;const d=getDiplomas();d.push(v);setDiplomas(d);renderDiplomas();toastM(tabibiT('toast_diploma_added',"Diplôme ajouté"),"success");}
+function rmDiploma(i){if(!confirm("Retirer ?"))return;const d=getDiplomas();d.splice(i,1);setDiplomas(d);renderDiplomas();}
+
+function loadProfile(){
+  let u=null;
+  try{u=JSON.parse(localStorage.getItem("tabibi_user")||"null");}catch(e){}
+  if(!u||u.role!=="medecin"){
+    if(!window._tabibiProfileRetried){
+      window._tabibiProfileRetried=true;
+      setTimeout(loadProfile,800);
+      return;
+    }
+    location.href="login.html";return;
+  }
+  // Avatar : photo si disponible, sinon initiales
+  if (window.TabibiAvatar) {
+    TabibiAvatar.init({
+      containerId: 'ava',
+      photoUrl: u.photo_url || null,
+      fallbackText: u.initials || 'AH',
+      fallbackBg: '#fff',
+      fallbackColor: '#047857',
+      allowUpload: true
+    });
+  } else {
+    document.getElementById("ava").textContent=u.initials||"AH";
+  }
+  document.getElementById("pname").textContent=u.name||"Dr. Médecin";
+  document.getElementById("pspec").textContent=(u.specialty||"Cardiologue")+" · "+(u.ville||"Alger");
+  const parts=(u.name||"Dr. Amina Hadj").replace(/^Dr\.?\s+/,"").split(" ");
+  f_first.value=parts[0]||"Amina"; f_last.value=parts.slice(1).join(" ")||"Hadj";
+  f_email.value=u.email||""; f_phone_perso.value=u.phone_perso||""; f_bd.value=u.birthDate||"1980-05-15";
+  f_spec.value=u.specialty||"Cardiologie"; f_subspec.value=u.subspec||"Rythmologie, Échocardiographie";
+  f_ordre.value=u.ordre||"CO-2010-3421"; f_rpps.value=u.rpps||"DZ-CARD-21345";
+  f_start_year.value=u.start_year||"2010";
+  f_bio.value=u.bio||"Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha. Spécialiste en maladies coronariennes, rythmologie et insuffisance cardiaque.";
+  lang_fr.checked=u.lang_fr!==false; lang_ar.checked=u.lang_ar!==false; lang_en.checked=!!u.lang_en; lang_kab.checked=!!u.lang_kab;
+  f_cabinet.value=u.cabinet||"Cabinet Dr. Hadj — Cardiologie";
+  f_addr.value=u.addr||"12 Rue Didouche Mourad, Alger Centre";
+  f_city.value=u.ville||"Alger"; f_postal.value=u.postal||"16000";
+  f_phone_cab.value=u.phone||"0661 234 567"; f_web.value=u.web||"";
+  f_price.value=u.price||"2500"; f_price_followup.value=u.price_followup||"1800";
+  f_price_urgent.value=u.price_urgent||"3500"; f_duration.value=u.duration||"30";
+  ins_cnas.checked=u.ins_cnas!==false; ins_casnos.checked=u.ins_casnos!==false;
+  ins_chifa.checked=u.ins_chifa!==false; ins_private.checked=!!u.ins_private;
+  Object.keys(u.settings||{}).forEach(k=>{const el=document.querySelector(`[data-key="${k}"]`);if(el)el.classList.toggle("on",!!u.settings[k]);});
+  renderSchedule();
+  renderDiplomas();
+}
+function toggleSwitch(el){el.classList.toggle("on");}
+
+// ─── 2FA TOTP ─────────────────────────────────────────────────────
+function render2FAStatus(){
+  const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  const enabled = u.totp_enabled === true;
+  const statusEl = document.getElementById("twofa-status");
+  const btn = document.getElementById("twofa-toggle-btn");
+  if (!statusEl || !btn) return;
+  if (enabled) {
+    statusEl.innerHTML = '<div style="background:#d1fae5;color:#065f46;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600"><i class="fa fa-circle-check"></i> 2FA activée — vos connexions sont sécurisées</div>';
+    btn.innerHTML = '<i class="fa fa-circle-xmark"></i> Désactiver la 2FA';
+    btn.className = 'btn btn-ghost btn-full';
+    btn.style.color = 'var(--red)';
+    btn.onclick = disable2FA;
+  } else {
+    statusEl.innerHTML = '<div style="background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;font-size:13px"><i class="fa fa-warning"></i> 2FA non activée. Recommandé pour protéger les données de vos patients.</div>';
+    btn.innerHTML = '<i class="fa fa-lock"></i> Configurer la 2FA';
+    btn.className = 'btn btn-primary btn-full';
+    btn.style.color = '';
+    btn.onclick = open2FASetup;
+  }
+}
+
+let _2faSecret = null;
+let _2faBackupCodes = null;
+
+async function open2FASetup(){
+  if (!window.tabibi2FA) { toastM(tabibiT('toast_2fa_module_not_loaded',"Module 2FA non chargé"), "error"); return; }
+  const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  _2faSecret = window.tabibi2FA.generateSecret();
+  const uri = window.tabibi2FA.buildOtpAuthUri(_2faSecret, u.email || 'medecin@tabibi.doctor', 'Tabibi');
+  const qrUrl = window.tabibi2FA.buildQrCodeImageUrl(uri, 220);
+  document.getElementById("twofa-step-content").innerHTML = `
+    <div style="text-align:center;font-size:13px;color:var(--text2);margin-bottom:12px">
+      <strong>Étape 1/2 :</strong> Scannez ce QR code avec votre application d'authentification (Google Authenticator, Authy, Microsoft Authenticator…)
+    </div>
+    <div style="display:flex;justify-content:center;margin:16px 0">
+      <img src="${esc(qrUrl)}" alt="QR Code 2FA" style="border-radius:12px;border:1px solid var(--border)" width="220" height="220" loading="lazy">
+    </div>
+    <details style="font-size:12px;color:var(--text3);margin-bottom:14px">
+      <summary style="cursor:pointer;color:var(--blue);font-weight:600">Pas de QR scanner ? Cliquez pour saisir manuellement</summary>
+      <div style="background:var(--bg);padding:10px 12px;border-radius:8px;margin-top:8px;font-family:monospace;word-break:break-all;font-size:11px">${esc(_2faSecret)}</div>
+    </details>
+    <div style="font-size:13px;font-weight:600;margin-bottom:6px"><strong>Étape 2/2 :</strong> Entrez le code à 6 chiffres généré</div>
+    <input type="text" id="twofa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="width:100%;padding:14px;border:2px solid var(--border);border-radius:10px;font-size:22px;text-align:center;letter-spacing:8px;font-family:monospace;margin-bottom:10px">
+    <div id="twofa-err" style="color:var(--red);font-size:12px;margin-bottom:8px;display:none"></div>
+    <button class="btn btn-primary btn-full btn-lg" onclick="verify2FACode()"><i class="fa fa-circle-check"></i> Activer la 2FA</button>
+  `;
+  document.getElementById("twofa-modal").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("twofa-code-input")?.focus(),300);
+}
+
+async function verify2FACode(){
+  const code = (document.getElementById("twofa-code-input")?.value || "").trim();
+  const errEl = document.getElementById("twofa-err");
+  if (!/^\d{6}$/.test(code)) {
+    errEl.textContent = "Le code doit contenir 6 chiffres";
+    errEl.style.display = "block";
+    return;
+  }
+  const ok = await window.tabibi2FA.validateTotp(_2faSecret, code);
+  if (!ok) {
+    errEl.textContent = "Code incorrect. Vérifiez l'heure de votre téléphone.";
+    errEl.style.display = "block";
+    return;
+  }
+  // Code OK → générer codes de secours
+  _2faBackupCodes = window.tabibi2FA.generateBackupCodes(10);
+  document.getElementById("twofa-step-content").innerHTML = `
+    <div style="text-align:center;padding:8px 0">
+      <i class="fa fa-circle-check" style="font-size:48px;color:var(--green);margin-bottom:10px"></i>
+      <div style="font-size:17px;font-weight:800;color:var(--green);margin-bottom:6px">2FA activée avec succès</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px">Sauvegardez ces codes de secours dans un endroit sûr. Vous pourrez les utiliser si vous perdez votre téléphone.</div>
+    </div>
+    <div style="background:var(--bg);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:monospace;font-size:14px;font-weight:600">
+        ${_2faBackupCodes.map(c => '<div style="text-align:center;padding:6px;background:#fff;border-radius:6px">'+esc(c)+'</div>').join('')}
+      </div>
+    </div>
+    <button class="btn btn-ghost btn-full" onclick="copyBackupCodes()" style="margin-bottom:8px"><i class="fa fa-copy"></i> Copier tous les codes</button>
+    <button class="btn btn-success btn-full btn-lg" onclick="save2FAToProfile()"><i class="fa fa-floppy-disk"></i> J'ai sauvegardé mes codes</button>
+  `;
+}
+
+function copyBackupCodes(){
+  if (!_2faBackupCodes) return;
+  navigator.clipboard.writeText(_2faBackupCodes.join('\n')).then(()=> toastM(tabibiT('toast_codes_copied','Codes copiés'), 'success'));
+}
+
+async function save2FAToProfile(){
+  const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  u.totp_enabled = true;
+  // Hash des codes de secours (jamais en clair)
+  const hashes = [];
+  for (const c of _2faBackupCodes) hashes.push(await window.tabibi2FA.hashBackupCode(c));
+  u._totp_secret_temp = _2faSecret; // En attendant l'envoi à Supabase
+  u._totp_backup_hashes = hashes;
+  localStorage.setItem("tabibi_user", JSON.stringify(u));
+
+  // TODO Edge Function : envoyer _2faSecret + hashes à Supabase via Edge Function
+  // (le secret ne doit jamais transiter via REST avec l'anon key)
+  // Pour l'instant on simule la persistance en local. À brancher quand Edge Function créée.
+
+  close2FASetup();
+  render2FAStatus();
+  toastM(tabibiT('toast_2fa_enabled','2FA activée ✓'), 'success');
+}
+
+function close2FASetup(){
+  document.getElementById("twofa-modal").classList.add("hidden");
+  _2faSecret = null;
+  _2faBackupCodes = null;
+}
+
+function disable2FA(){
+  if (!confirm(tabibiT('confirm_disable_2fa',"Désactiver la 2FA réduit la sécurité de votre compte. Continuer ?"))) return;
+  const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  delete u.totp_enabled;
+  delete u._totp_secret_temp;
+  delete u._totp_backup_hashes;
+  localStorage.setItem("tabibi_user", JSON.stringify(u));
+  render2FAStatus();
+  toastM(tabibiT('toast_2fa_disabled','2FA désactivée'), 'info');
+}
+
+function saveAll(){
+  const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  u.name="Dr. "+f_first.value+" "+f_last.value;
+  u.initials=(f_first.value[0]+(f_last.value[0]||"")).toUpperCase();
+  u.phone_perso=f_phone_perso.value; u.birthDate=f_bd.value;
+  u.specialty=f_spec.value; u.subspec=f_subspec.value;
+  u.ordre=f_ordre.value; u.rpps=f_rpps.value; u.start_year=f_start_year.value; u.bio=f_bio.value;
+  u.lang_fr=lang_fr.checked; u.lang_ar=lang_ar.checked; u.lang_en=lang_en.checked; u.lang_kab=lang_kab.checked;
+  u.cabinet=f_cabinet.value; u.addr=f_addr.value; u.ville=f_city.value; u.postal=f_postal.value;
+  u.phone=f_phone_cab.value; u.web=f_web.value;
+  u.price=f_price.value; u.price_followup=f_price_followup.value;
+  u.price_urgent=f_price_urgent.value; u.duration=f_duration.value;
+  u.ins_cnas=ins_cnas.checked; u.ins_casnos=ins_casnos.checked;
+  u.ins_chifa=ins_chifa.checked; u.ins_private=ins_private.checked;
+  // Schedule
+  const sched={};
+  DAYS.forEach(d=>{
+    const en=document.querySelector(`[data-day="${d}"][data-fld="enabled"]`);
+    const st=document.querySelector(`[data-day="${d}"][data-fld="start"]`);
+    const ed=document.querySelector(`[data-day="${d}"][data-fld="end"]`);
+    sched[d]=[st?.value||"",ed?.value||"",en?.checked||false];
+  });
+  u.schedule=sched;
+  u.settings={};
+  document.querySelectorAll("[data-key]").forEach(el=>u.settings[el.dataset.key]=el.classList.contains("on"));
+  localStorage.setItem("tabibi_user",JSON.stringify(u));
+  toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"),"success");
+}
+function changePassword(){const o=prompt(tabibiT('prompt_old_password',"Ancien mot de passe :"));if(!o)return;const n=prompt(tabibiT('prompt_new_password',"Nouveau (min 8) :"));if(!n||n.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}toastM(tabibiT('toast_password_changed',"Mot de passe changé"),"success");}
+function logout(){localStorage.removeItem("tabibi_user");location.href="index.html";}
+document.addEventListener("DOMContentLoaded",function(){
+  loadProfile();
+  try { render2FAStatus(); } catch(e) {}
+});
+</script>
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/doctors-display.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

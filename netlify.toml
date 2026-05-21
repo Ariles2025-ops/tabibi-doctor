@@ -1,0 +1,161 @@
+# ═══════════════════════════════════════════════════════════════════════
+#   Tabibi — Configuration Netlify avec headers de sécurité OWASP
+# ═══════════════════════════════════════════════════════════════════════
+
+[build]
+  publish = "."
+
+# ────────────────────────────────────────────────────────────────────────
+# HEADERS GLOBAUX (s'appliquent à tout, ensuite affinés par règle)
+# ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # HSTS : force HTTPS pour 1 an, incluant sous-domaines, + préchargement
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+
+    # Empêche l'embedding dans des iframes tierces (clickjacking)
+    X-Frame-Options = "DENY"
+
+    # Empêche le browser de deviner le MIME type (anti-MIME sniffing)
+    X-Content-Type-Options = "nosniff"
+
+    # Bloque les vieux navigateurs avec XSS Auditor (legacy mais inoffensif)
+    X-XSS-Protection = "1; mode=block"
+
+    # Politique referrer : envoie l'origine seulement aux sites HTTPS
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+    # Permissions Policy : bloque toutes les APIs sensibles par défaut
+    # (caméra/micro/géo activés uniquement quand le code en a besoin sur tabibi.doctor)
+    Permissions-Policy = "geolocation=(self), camera=(self), microphone=(self), payment=(self), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()"
+
+    # Cross-Origin Embedder/Opener/Resource — anti Spectre + isolement
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Resource-Policy = "same-origin"
+
+    # Content Security Policy — la plus grosse défense XSS
+    # Note : 'unsafe-inline' nécessaire car beaucoup de styles/scripts inline dans le code actuel
+    # À durcir progressivement en passant aux nonces
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+
+# ────────────────────────────────────────────────────────────────────────
+# HTML — pas de cache (mises à jour immédiates)
+# ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+    Expires = "0"
+
+# ────────────────────────────────────────────────────────────────────────
+# Service Worker — pas de cache + scope
+# ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Service-Worker-Allowed = "/"
+
+# ────────────────────────────────────────────────────────────────────────
+# Assets statiques — long cache (immutables)
+# ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# ────────────────────────────────────────────────────────────────────────
+# JavaScript de l'app — cache court avec revalidation
+# ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/js/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+[[headers]]
+  for = "/scripts/*"
+  [headers.values]
+    Cache-Control = "public, max-age=3600, must-revalidate"
+
+# ────────────────────────────────────────────────────────────────────────
+# Fichiers sensibles — protéger contre accès direct
+# ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/*.sql"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# [RGPD 2026-05-21] Garde-fou temporaire : noindex sur les 490 pages SEO
+# tant que les vrais noms de medecins n'ont pas ete anonymises server-side.
+# A retirer apres regeneration via scripts/generate_seo_pages.py patche.
+# Cf. RGPD_STRATEGIE_TABIBI.md plan 3-stages.
+[[headers]]
+  for = "/seo/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
+
+[[redirects]]
+  from = "/SUPABASE_SECURITY.sql"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_REVIEWS.sql"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_STORAGE_AVATARS.sql"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_v10_SECURITE_COMPTES.sql"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/SUPABASE_*.sql"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/GUIDE-INTEGRATION-AVIS.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README*.md"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.env*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/*.csv"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/IMMATRICULATION*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+# ────────────────────────────────────────────────────────────────────────
+# Pas de SPA fallback : on a de vrais fichiers HTML
+# ────────────────────────────────────────────────────────────────────────

@@ -1,0 +1,362 @@
+{
+  "$schema": "https://design-tokens.org/draft/2024/format",
+  "$description": "Tabibi Design Tokens v2 — W3C Design Tokens Community Group format. Source de vérité du rebrand vert/or. Remplace DESIGN_TOKENS.json v1. À synchroniser avec styles/app.css avant tout déploiement.",
+  "$metadata": {
+    "name": "Tabibi",
+    "version": "2.0.0",
+    "lastUpdated": "2026-05-19",
+    "owner": "brand@tabibi.dz",
+    "replaces": "DESIGN_TOKENS.json v1.0.0",
+    "baseline": "SANTÉ · CONFIANCE · ALGÉRIE"
+  },
+  "color": {
+    "brand": {
+      "green": {
+        "50": {
+          "$value": "#E6F3F0",
+          "$type": "color",
+          "$description": "Fond ultra-doux vert. Hover sur surface blanche. Toast info."
+        },
+        "100": {
+          "$value": "#C2E3DA",
+          "$type": "color",
+          "$description": "Fond de badge vérifié léger. Bande d'accent."
+        },
+        "300": {
+          "$value": "#5FA899",
+          "$type": "color",
+          "$description": "Bordure de focus accessible. Tag médecin actif."
+        },
+        "500": {
+          "$value": "#1A8A73",
+          "$type": "color",
+          "$description": "Vert clair pour hover sur fond foncé. Interdit pour texte sur blanc (contraste insuffisant)."
+        },
+        "700": {
+          "$value": "#0F7560",
+          "$type": "color",
+          "$description": "PRIMAIRE OFFICIEL. Logo, boutons primary, liens, header."
+        },
+        "800": {
+          "$value": "#0A5A4A",
+          "$type": "color",
+          "$description": "État :hover du primaire."
+        },
+        "900": {
+          "$value": "#075145",
+          "$type": "color",
+          "$description": "État :active du primaire. Texte vert sur fond clair."
+        }
+      },
+      "gold": {
+        "50": {
+          "$value": "#FBF3DE",
+          "$type": "color",
+          "$description": "Fond de badge Vérifié. Toast confirmation premium."
+        },
+        "300": {
+          "$value": "#E6C170",
+          "$type": "color",
+          "$description": "Skeleton or, halo de focus sur élément or."
+        },
+        "500": {
+          "$value": "#D4A437",
+          "$type": "color",
+          "$description": "ACCENT OFFICIEL. Étoile DZ du logo, badge Médecin vérifié, `i` final du wordmark."
+        },
+        "700": {
+          "$value": "#A07E26",
+          "$type": "color",
+          "$description": "Texte or sur fond blanc (lisible AA). État :active de l'accent."
+        },
+        "900": {
+          "$value": "#6E561A",
+          "$type": "color",
+          "$description": "Texte or sur fond clair pour mentions légales premium."
+        }
+      },
+      "red": {
+        "50": {
+          "$value": "#FFF0F0",
+          "$type": "color",
+          "$description": "Fond de message d'erreur, toast danger."
+        },
+        "500": {
+          "$value": "#D21010",
+          "$type": "color",
+          "$description": "Erreur, annulation, suppression, urgence. JAMAIS décoratif. Seule nuance rouge autorisée."
+        }
+      }
+    },
+    "neutral": {
+      "50": {
+        "$value": "#FAFAFA",
+        "$type": "color",
+        "$description": "Fond d'application par défaut. Remplace --bg v1."
+      },
+      "100": {
+        "$value": "#F3F3F3",
+        "$type": "color",
+        "$description": "Fond secondaire, séparateurs doux."
+      },
+      "200": {
+        "$value": "#E5E5E5",
+        "$type": "color",
+        "$description": "Bordures de cards et inputs."
+      },
+      "300": {
+        "$value": "#D4D4D4",
+        "$type": "color",
+        "$description": "Bordures actives, séparateurs visibles."
+      },
+      "500": {
+        "$value": "#666666",
+        "$type": "color",
+        "$description": "Texte secondaire, baseline du logo, métadonnées."
+      },
+      "700": {
+        "$value": "#404040",
+        "$type": "color",
+        "$description": "Texte courant (body)."
+      },
+      "900": {
+        "$value": "#1A1A1A",
+        "$type": "color",
+        "$description": "Texte principal, titres, 'Tab' et 'b' du wordmark."
+      },
+      "white": {
+        "$value": "#FFFFFF",
+        "$type": "color",
+        "$description": "Surface des cards, fond des inputs, caducée du logo."
+      }
+    }
+  },
+  "componentColor": {
+    "primary": {
+      "$value": "{color.brand.green.700}",
+      "$type": "color",
+      "$description": "Couleur des boutons primary, liens, éléments interactifs principaux."
+    },
+    "primaryHover": {
+      "$value": "{color.brand.green.800}",
+      "$type": "color"
+    },
+    "primaryActive": {
+      "$value": "{color.brand.green.900}",
+      "$type": "color"
+    },
+    "accent": {
+      "$value": "{color.brand.gold.500}",
+      "$type": "color",
+      "$description": "Badge Médecin vérifié, étoile DZ. JAMAIS un CTA principal."
+    },
+    "accentText": {
+      "$value": "{color.brand.gold.700}",
+      "$type": "color",
+      "$description": "Texte or sur fond blanc, contraste AA."
+    },
+    "danger": {
+      "$value": "{color.brand.red.500}",
+      "$type": "color",
+      "$description": "Erreur, annulation, suppression."
+    },
+    "dangerBg": {
+      "$value": "{color.brand.red.50}",
+      "$type": "color"
+    },
+    "background": {
+      "$value": "{color.neutral.50}",
+      "$type": "color"
+    },
+    "surface": {
+      "$value": "{color.neutral.white}",
+      "$type": "color"
+    },
+    "border": {
+      "$value": "{color.neutral.200}",
+      "$type": "color"
+    },
+    "text": {
+      "$value": "{color.neutral.900}",
+      "$type": "color"
+    },
+    "textBody": {
+      "$value": "{color.neutral.700}",
+      "$type": "color"
+    },
+    "textMuted": {
+      "$value": "{color.neutral.500}",
+      "$type": "color"
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "latin": {
+        "$value": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif",
+        "$type": "fontFamily",
+        "$description": "Inter remplace Plus Jakarta Sans pour cohérence avec le wordmark du logo."
+      },
+      "arabic": {
+        "$value": "'IBM Plex Sans Arabic', 'Geeza Pro', 'Segoe UI Arabic', 'Tahoma', sans-serif",
+        "$type": "fontFamily",
+        "$description": "Inchangé vs v1."
+      }
+    },
+    "fontSize": {
+      "display": { "$value": "28px", "$type": "dimension" },
+      "h1": { "$value": "22px", "$type": "dimension" },
+      "h2": { "$value": "18px", "$type": "dimension" },
+      "h3": { "$value": "16px", "$type": "dimension" },
+      "bodyLarge": { "$value": "15px", "$type": "dimension" },
+      "body": { "$value": "14px", "$type": "dimension" },
+      "caption": { "$value": "13px", "$type": "dimension" },
+      "small": { "$value": "12px", "$type": "dimension" },
+      "micro": { "$value": "11px", "$type": "dimension" }
+    },
+    "fontWeight": {
+      "regular": { "$value": "400", "$type": "fontWeight" },
+      "medium": { "$value": "500", "$type": "fontWeight" },
+      "semibold": { "$value": "600", "$type": "fontWeight", "$description": "Poids du wordmark Tabibi." },
+      "bold": { "$value": "700", "$type": "fontWeight" },
+      "black": { "$value": "800", "$type": "fontWeight", "$description": "Réservé Display unique au-dessus du fold." }
+    },
+    "lineHeight": {
+      "tight": { "$value": "1.15", "$type": "number" },
+      "snug": { "$value": "1.30", "$type": "number" },
+      "normal": { "$value": "1.45", "$type": "number" },
+      "relaxed": { "$value": "1.55", "$type": "number" }
+    },
+    "letterSpacing": {
+      "tight": { "$value": "-0.3px", "$type": "dimension", "$description": "Titres H1/H2/Display." },
+      "normal": { "$value": "0", "$type": "dimension" },
+      "wide": { "$value": "0.3px", "$type": "dimension", "$description": "form-label UPPERCASE." },
+      "logoBaseline": { "$value": "4px", "$type": "dimension", "$description": "Baseline 'SANTÉ · CONFIANCE · ALGÉRIE' du logo." }
+    }
+  },
+  "spacing": {
+    "xs": { "$value": "4px", "$type": "dimension" },
+    "sm": { "$value": "8px", "$type": "dimension" },
+    "md": { "$value": "12px", "$type": "dimension" },
+    "lg": { "$value": "16px", "$type": "dimension", "$description": "Gouttière standard entre cards." },
+    "xl": { "$value": "24px", "$type": "dimension", "$description": "Padding modale, gap entre sections." },
+    "xxl": { "$value": "32px", "$type": "dimension" },
+    "xxxl": { "$value": "48px", "$type": "dimension" }
+  },
+  "radius": {
+    "sm": { "$value": "8px", "$type": "dimension", "$description": "Petits éléments (chips fins)." },
+    "md": { "$value": "12px", "$type": "dimension", "$description": "Inputs, boutons standard." },
+    "lg": { "$value": "16px", "$type": "dimension", "$description": "Cards principales." },
+    "xl": { "$value": "20px", "$type": "dimension", "$description": "Conteneurs hero. Aussi rayon du carré du logo-mark." },
+    "xxl": { "$value": "24px", "$type": "dimension" },
+    "full": { "$value": "999px", "$type": "dimension", "$description": "Pills, badges, avatars." }
+  },
+  "shadow": {
+    "s1": {
+      "$value": "0 1px 4px rgba(0, 0, 0, 0.06)",
+      "$type": "shadow",
+      "$description": "Cards reposées."
+    },
+    "s2": {
+      "$value": "0 4px 14px rgba(0, 0, 0, 0.09)",
+      "$type": "shadow",
+      "$description": "Éléments survolés."
+    },
+    "s3": {
+      "$value": "0 8px 28px rgba(0, 0, 0, 0.12)",
+      "$type": "shadow",
+      "$description": "Éléments flottants (hero search)."
+    },
+    "s4": {
+      "$value": "0 16px 48px rgba(0, 0, 0, 0.16)",
+      "$type": "shadow",
+      "$description": "Modales."
+    },
+    "primary": {
+      "$value": "0 4px 14px rgba(15, 117, 96, 0.22)",
+      "$type": "shadow",
+      "$description": "Bouton primaire actif, focus. REMPLACE shadow.blue v1."
+    },
+    "accent": {
+      "$value": "0 4px 14px rgba(212, 164, 55, 0.28)",
+      "$type": "shadow",
+      "$description": "Badge or actif. Usage rare."
+    }
+  },
+  "transition": {
+    "fast": {
+      "$value": "150ms ease",
+      "$type": "duration",
+      "$description": "Hovers, focus."
+    },
+    "base": {
+      "$value": "200ms ease",
+      "$type": "duration",
+      "$description": "Transitions standard de boutons et cards."
+    },
+    "slow": {
+      "$value": "250ms ease",
+      "$type": "duration",
+      "$description": "Animations de panneaux et modales."
+    }
+  },
+  "gradient": {
+    "hero": {
+      "$value": "linear-gradient(155deg, #0A5A4A 0%, #0F7560 52%, #1A8A73 100%)",
+      "$type": "gradient",
+      "$description": "Seul gradient autorisé pour header / hero / splash. REMPLACE gradient.hero v1 (bleu)."
+    },
+    "docCardAccent": {
+      "$value": "linear-gradient(90deg, #0F7560, #D4A437)",
+      "$type": "gradient",
+      "$description": "Bande accent fine 3px sur doc-card au hover. Vert primaire → or accent. REMPLACE gradient bleu→vert v1."
+    }
+  },
+  "zIndex": {
+    "base": { "$value": "0", "$type": "number" },
+    "appBar": { "$value": "200", "$type": "number" },
+    "tabBar": { "$value": "200", "$type": "number" },
+    "modal": { "$value": "1000", "$type": "number" },
+    "toast": { "$value": "2000", "$type": "number" },
+    "splash": { "$value": "9999", "$type": "number" }
+  },
+  "breakpoint": {
+    "mobile": { "$value": "320px", "$type": "dimension" },
+    "mobileLarge": { "$value": "480px", "$type": "dimension" },
+    "tablet": { "$value": "768px", "$type": "dimension" },
+    "desktop": { "$value": "1024px", "$type": "dimension" },
+    "desktopLarge": { "$value": "1280px", "$type": "dimension" }
+  },
+  "component": {
+    "navBar": {
+      "height": { "$value": "56px", "$type": "dimension" }
+    },
+    "tabBar": {
+      "height": { "$value": "64px", "$type": "dimension" }
+    },
+    "button": {
+      "heightSm": { "$value": "36px", "$type": "dimension" },
+      "heightMd": { "$value": "44px", "$type": "dimension" },
+      "heightLg": { "$value": "52px", "$type": "dimension" }
+    },
+    "input": {
+      "height": { "$value": "48px", "$type": "dimension" },
+      "paddingX": { "$value": "14px", "$type": "dimension" },
+      "focusRing": {
+        "$value": "0 0 0 3px rgba(15, 117, 96, 0.15)",
+        "$type": "shadow",
+        "$description": "Halo de focus vert. REMPLACE halo bleu v1."
+      }
+    },
+    "avatar": {
+      "xs": { "$value": "24px", "$type": "dimension" },
+      "sm": { "$value": "32px", "$type": "dimension" },
+      "md": { "$value": "42px", "$type": "dimension" },
+      "lg": { "$value": "56px", "$type": "dimension" },
+      "xl": { "$value": "88px", "$type": "dimension" }
+    },
+    "logo": {
+      "minWidthFull": { "$value": "200px", "$type": "dimension", "$description": "Sous cette taille, basculer sur logo-mark seul." },
+      "minSizeMark": { "$value": "24px", "$type": "dimension" }
+    }
+  }
+}

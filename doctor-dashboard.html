@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-avatar.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Espace médecin privé Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/doctor-dashboard.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#10b981">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_doctor_dashboard">
+<title>Espace médecin | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+.appt-card { background:#fff; border-radius:12px; padding:14px; box-shadow:var(--s1); margin-bottom:10px; border-left:4px solid var(--green); }
+.appt-card.urgent { border-left-color:var(--red); background:#fef2f2; }
+.appt-card.pending { border-left-color:#f59e0b; background:#fffbeb; }
+.appt-card.completed { border-left-color:var(--text4); opacity:.7; }
+.cal-week { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:14px; }
+.cal-day { padding:10px 4px; text-align:center; border-radius:10px; border:1.5px solid var(--border); background:#fff; cursor:pointer; }
+.cal-day.today { background:var(--green-l); border-color:var(--green); color:var(--green-d); font-weight:700; }
+.cal-day.has-rdv::after { content:""; display:block; width:6px; height:6px; background:var(--blue); border-radius:50%; margin:4px auto 0; }
+.bar-row { display:grid; grid-template-columns:80px 1fr; gap:10px; align-items:center; margin-bottom:8px; }
+.bar-track { background:var(--bg2); height:24px; border-radius:6px; overflow:hidden; position:relative; }
+.bar-fill { height:100%; display:flex; align-items:center; justify-content:flex-end; padding:0 8px; color:#fff; font-weight:700; font-size:11px; border-radius:6px; }
+.patient-row { display:flex; align-items:center; gap:12px; padding:12px; background:#fff; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:.15s; }
+.patient-row:hover { background:var(--bg2); }
+@keyframes bell-ring{0%,50%,100%{transform:rotate(0)}10%,30%{transform:rotate(-12deg)}20%,40%{transform:rotate(12deg)}}
+</style>
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <a href="index.html" title="Retour à l'accueil" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,.04);color:var(--text2);text-decoration:none;flex-shrink:0;transition:.15s" onmouseover="this.style.background='var(--blue-l)';this.style.color='var(--blue)'" onmouseout="this.style.background='rgba(0,0,0,.04)';this.style.color='var(--text2)'"><i class="fa fa-house"></i></a>
+  <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0">
+    <div style="width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,#2E8B57,#166534);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;box-shadow:0 2px 8px rgba(46,139,87,.3)">
+      <i class="fa fa-user-doctor"></i>
+    </div>
+    <div style="flex:1;min-width:0">
+      <div class="app-bar-title" id="hdr-title" data-i18n-skip style="font-size:15px;font-weight:800;color:var(--text);line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Espace médecin</div>
+      <div class="app-bar-sub" id="hdr-sub" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:2px"><i class="fa fa-stethoscope fa-xs" style="color:var(--green)"></i> Praticien · Tabibi PRO</div>
+    </div>
+  </div>
+  <button class="btn btn-icon btn-icon-sm" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
+    <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
+  </button>
+  <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#2E8B57,#166534);color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(46,139,87,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">DR</span></button>
+  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
+</header>
+
+<div class="dropdown-menu hidden" id="notif-drop" style="position:absolute;top:54px;right:54px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:300px;z-index:300">
+  <div style="padding:12px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px"><i class="fa fa-bell"></i> Notifications</div>
+  <div id="med-notif-list" style="max-height:300px;overflow-y:auto"></div>
+</div>
+<div class="dropdown-menu hidden" id="user-drop" style="position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:240px;z-index:300;overflow:hidden">
+  <div style="padding:14px;background:linear-gradient(135deg,#d1fae5,#a7f3d0)"><div style="font-weight:700;font-size:13px" id="menu-name">--</div><div style="font-size:11px;color:var(--text3)" id="menu-spec">--</div></div>
+  <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-user" style="color:var(--green);width:20px"></i> Mon profil</a>
+  <a href="doctor-reservation.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-calendar-week" style="color:var(--blue);width:20px"></i> Mes disponibilités</a>
+  <!-- [FIX-AUDIT-2026-05] #2 : guillemets internes simples pour ne pas casser l'attribut onclick -->
+  <button onclick="alert(tabibiT('alert_support_24h','Support : contact@tabibi.doctor — réponse sous 24h'))" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> Aide</button>
+  <button onclick="logout()" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> Se déconnecter</button>
+</div>
+
+<div class="dash-tabs" style="position:sticky;top:var(--nav-h);z-index:150;background:#fff;border-bottom:1px solid var(--border)">
+  <button class="dash-tab active" onclick="sw('today',this)"><i class="fa fa-clock"></i> <span data-i18n="tab_today">Aujourd'hui</span></button>
+  <button class="dash-tab" onclick="sw('agenda',this)"><i class="fa fa-calendar-week"></i> <span data-i18n="tab_agenda">Agenda</span></button>
+  <button class="dash-tab" onclick="sw('rdv',this)"><i class="fa fa-list"></i> <span data-i18n="tab_rdv">RDV</span></button>
+  <button class="dash-tab" onclick="sw('patients',this)"><i class="fa fa-users"></i> <span data-i18n="tab_patients">Patients</span></button>
+  <button class="dash-tab" onclick="location.href='doctor-analytics.html'"><i class="fa fa-chart-line"></i> <span data-i18n="tab_stats">Stats</span></button>
+  <button class="dash-tab" onclick="sw('profile',this)"><i class="fa fa-user-doctor"></i> <span data-i18n="tab_profile">Profil</span></button>
+</div>
+
+<main class="page" role="main">
+
+  <!-- ═════ AUJOURD'HUI ═════ -->
+  <div id="tab-today" class="tab-panel active">
+    <div style="background:linear-gradient(135deg,#047857,#10b981);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
+      <div style="font-size:13px;opacity:.85" id="med-greet">Bonjour, Dr. <i class="fa fa-user-doctor"></i></div>
+      <div style="font-size:22px;font-weight:800;margin-top:4px" id="med-name">--</div>
+      <div style="font-size:12px;opacity:.85" id="med-spec-info">--</div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+        <a href="doctor-reservation.html" class="btn btn-white btn-sm"><i class="fa fa-plus" aria-hidden="true"></i> Ajouter créneaux</a>
+        <a href="medecin-ordonnance.html" class="btn btn-white btn-sm" data-i18n-title="new_prescription" title="Nouvelle ordonnance"><i class="fa fa-file-prescription" aria-hidden="true"></i> <span data-i18n="new_prescription_short">Ordonnance</span></a>
+        <a href="teleconsultation.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-video" aria-hidden="true"></i> <span data-i18n="teleconsult_short">Téléconsult.</span></a>
+        <a href="admin-cabinet.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-building" aria-hidden="true"></i> <span data-i18n="my_cabinet">Mon cabinet</span></a>
+        <a href="medecin-profile.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-eye" aria-hidden="true"></i> Mon profil</a>
+      </div>
+    </div>
+    <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div class="card" style="padding:12px;border-left:3px solid var(--blue)"><div id="kpi-today" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)">RDV aujourd'hui</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">28</div><div style="font-size:11px;color:var(--text3)">Ce mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">140k DA</div><div style="font-size:11px;color:var(--text3)">Revenus mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">4.8 ★</div><div style="font-size:11px;color:var(--text3)">Note moyenne</div></div>
+    </div>
+    <div style="padding:0 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700"><i class="fa fa-clock" style="color:var(--blue)"></i> Consultations du jour</div>
+        <span class="badge badge-blue" id="today-count">0 RDV</span>
+      </div>
+      <div id="today-list"></div>
+    </div>
+  </div>
+
+  <!-- ═════ AGENDA SEMAINE ═════ -->
+  <div id="tab-agenda" class="tab-panel" style="padding:14px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700">Agenda — semaine</div>
+      <button onclick="openScheduleConfig()" class="btn btn-success btn-sm"><i class="fa fa-gear"></i> Mes horaires</button>
+    </div>
+    <div class="cal-week" id="cal-week"></div>
+    <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:10px" id="day-lbl" data-i18n="today_appointments">RDV du jour</div>
+    <div id="day-rdv-list"></div>
+
+    <!-- Modal configuration horaires -->
+    <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
+      <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
+        <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> Configurer mes horaires</div>
+          <button onclick="closeScheduleConfig()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
+        </div>
+        <div style="padding:18px;font-size:13px;color:var(--text3);line-height:1.5">
+          Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.
+        </div>
+        <div id="schedule-days-config" style="padding:0 18px"></div>
+        <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
+          <div style="display:flex;gap:8px">
+            <button onclick="closeScheduleConfig()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
+            <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> Enregistrer mes horaires</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════ TOUS LES RDV ═════ -->
+  <div id="tab-rdv" class="tab-panel" style="padding:14px 16px">
+    <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none">
+      <button class="chip active" data-fr="all" onclick="filtMRdv('all',this)">Tous</button>
+      <button class="chip" data-fr="today" onclick="filtMRdv('today',this)" data-i18n="tab_today">Aujourd'hui</button>
+      <button class="chip" data-fr="Pending" onclick="filtMRdv('Pending',this)">En attente</button>
+      <button class="chip" data-fr="Confirmed" onclick="filtMRdv('Confirmed',this)" data-i18n="confirmed_rdv">Confirmés</button>
+      <button class="chip" data-fr="Completed" onclick="filtMRdv('Completed',this)" data-i18n="completed_rdv">Terminés</button>
+    </div>
+    <div id="rdv-full-list"></div>
+  </div>
+
+  <!-- ═════ PATIENTS ═════ -->
+  <div id="tab-patients" class="tab-panel" style="padding:14px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700" data-i18n="my_patients">Mes patients</div>
+      <input id="patient-search" oninput="renderPatients()" placeholder="Rechercher..." data-i18n-placeholder="ph_search_short" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;width:140px">
+    </div>
+    <div id="patients-list"></div>
+  </div>
+
+  <!-- ═════ STATISTIQUES ═════ -->
+  <div id="tab-stats" class="tab-panel" style="padding:14px 16px">
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px"><i class="fa fa-chart-column" style="color:var(--blue)"></i> Statistiques mensuelles</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="stats-cards"></div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins" style="color:#f59e0b"></i> Revenus par semaine (DA)</div>
+      <div id="rev-bars"></div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-stethoscope" style="color:var(--blue)"></i> Types de consultations</div>
+      <div id="type-bars"></div>
+    </div>
+    <div class="card">
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-credit-card" style="color:#7c3aed"></i> Modes de paiement</div>
+      <div id="pay-bars"></div>
+    </div>
+  </div>
+
+  <!-- ═════ PROFIL ═════ -->
+  <div id="tab-profile" class="tab-panel" style="padding:14px 16px">
+    <div class="card" style="text-align:center;padding:24px">
+      <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
+      <div style="font-size:18px;font-weight:700" id="prof-name">--</div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:6px" id="prof-spec">--</div>
+      <span class="badge badge-green"><i class="fa fa-check"></i> Certifié Tabibi</span>
+      <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px">
+        <a href="medecin-profile.html" class="btn btn-success btn-full btn-lg"><i class="fa fa-pen"></i> Modifier mon profil</a>
+        <a href="medecin-profile.html#sec-pricing" class="btn btn-soft btn-full"><i class="fa fa-coins"></i> Tarifs & types consultation</a>
+        <a href="doctor-reservation.html" class="btn btn-soft btn-full"><i class="fa fa-calendar-week"></i> Mes disponibilités</a>
+        <a href="medecin-profile.html#sec-notif" class="btn btn-soft btn-full"><i class="fa fa-bell"></i> Notifications</a>
+        <a href="medecin-profile.html#sec-sec" class="btn btn-soft btn-full"><i class="fa fa-lock"></i> Sécurité</a>
+        <button class="btn btn-danger btn-full" onclick="logout()" style="margin-top:8px"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
+      </div>
+    </div>
+  </div>
+
+</main>
+<div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+<script src="scripts/app.js"></script>
+<script>
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+async function logout(){
+  if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
+  // 1. Déconnexion Supabase (vraie session)
+  try {
+    if (window.tabibi && window.tabibi.auth) {
+      await window.tabibi.auth.signOut();
+    } else if (window.tabibi && window.tabibi.supabase) {
+      await window.tabibi.supabase.auth.signOut();
+    }
+  } catch(e) { console.warn('[logout] Supabase signOut:', e); }
+  // 2. Nettoyer localStorage
+  try {
+    localStorage.removeItem("tabibi_user");
+    localStorage.removeItem("tabibi_role");
+    // Flag temporaire pour empêcher index.html de re-rediriger
+    sessionStorage.setItem("tabibi_just_logged_out", "1");
+  } catch(e) {}
+  toastM(tabibiT('toast_logout_success',"Déconnexion réussie"),"success");
+  setTimeout(()=>location.href="index.html",500);
+}
+function toggleNotif(){document.getElementById("notif-drop").classList.toggle("hidden");document.getElementById("user-drop").classList.add("hidden");renderNotifs();}
+function toggleMenu(){document.getElementById("user-drop").classList.toggle("hidden");document.getElementById("notif-drop").classList.add("hidden");}
+document.addEventListener("click",e=>{if(!e.target.closest(".dropdown-menu") && !e.target.closest("#user-pill") && !e.target.closest("button[title='Notifications']")){document.getElementById("notif-drop")?.classList.add("hidden");document.getElementById("user-drop")?.classList.add("hidden");}});
+
+let currentDay = new Date().toISOString().split("T")[0];
+
+function sw(tab,btn){
+  try {
+    console.log('[doctor-dashboard] tab switched to:', tab);
+    document.querySelectorAll(".tab-panel").forEach(p=>p.classList.remove("active"));
+    const target = document.getElementById("tab-"+tab);
+    if(target) target.classList.add("active");
+    document.querySelectorAll(".dash-tabs .dash-tab").forEach(b=>b.classList.remove("active"));
+    if(btn) btn.classList.add("active");
+    if(tab==="today") { try { renderToday(); } catch(e){ console.warn('[doctor-dashboard] renderToday:', e); } }
+    if(tab==="agenda") { try { renderAgenda(); } catch(e){ console.warn('[doctor-dashboard] renderAgenda:', e); } }
+    if(tab==="rdv") { try { filtMRdv("all",document.querySelector("[data-fr='all']")); } catch(e){ console.warn('[doctor-dashboard] filtMRdv:', e); } }
+    if(tab==="patients") { try { renderPatients(); } catch(e){ console.warn('[doctor-dashboard] renderPatients:', e); } }
+    if(tab==="stats") { try { renderStats(); } catch(e){ console.warn('[doctor-dashboard] renderStats:', e); } }
+    if(tab==="profile") { try { renderProfile(); } catch(e){ console.warn('[doctor-dashboard] renderProfile:', e); } }
+  } catch(e) { console.warn('[doctor-dashboard] sw() top-level:', e); }
+}
+
+function getDocRdvs(){return JSON.parse(localStorage.getItem("tabibi_doc_rdv")||"[]");}
+
+// ─── CONFIGURATION HORAIRES DE TRAVAIL DU MÉDECIN ───
+// [I18N-UNIFY-2026] Jours multilingues — était DAYS_FR hardcodé, désormais selon langue active
+// On expose toujours la constante DAYS_FR pour rétrocompat, mais elle est rebuildée à chaque accès.
+function getDaysLabels(){
+  const t = (window.tabibiI18n && window.tabibiI18n.t) || (k => null);
+  return [
+    {key:'mon', label: t('day_monday') || 'Lundi'},
+    {key:'tue', label: t('day_tuesday') || 'Mardi'},
+    {key:'wed', label: t('day_wednesday') || 'Mercredi'},
+    {key:'thu', label: t('day_thursday') || 'Jeudi'},
+    {key:'fri', label: t('day_friday') || 'Vendredi'},
+    {key:'sat', label: t('day_saturday') || 'Samedi'},
+    {key:'sun', label: t('day_sunday') || 'Dimanche'}
+  ];
+}
+// Getter dynamique pour rétrocompatibilité : DAYS_FR reste accessible
+Object.defineProperty(window, 'DAYS_FR', { get: function(){ return getDaysLabels(); } });
+
+function getDefaultSchedule(){
+  // Par défaut : Lun-Jeu et Sam, 8h-12h et 14h-17h. Vendredi et Dimanche off.
+  return {
+    mon: { on:true,  start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' },
+    tue: { on:true,  start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' },
+    wed: { on:true,  start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' },
+    thu: { on:true,  start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' },
+    fri: { on:false, start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' },
+    sat: { on:true,  start1:'08:00', end1:'12:00', start2:'',      end2:''      },
+    sun: { on:false, start1:'08:00', end1:'12:00', start2:'',      end2:''      },
+    durationMin: 30
+  };
+}
+
+function getDoctorSchedule(){
+  try {
+    const s = JSON.parse(localStorage.getItem('tabibi_doctor_schedule') || 'null');
+    return s || getDefaultSchedule();
+  } catch(e) { return getDefaultSchedule(); }
+}
+
+function openScheduleConfig(){
+  const sched = getDoctorSchedule();
+  const container = document.getElementById('schedule-days-config');
+  container.innerHTML = DAYS_FR.map(d => {
+    const s = sched[d.key] || { on:false, start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' };
+    return `
+      <div style="background:var(--bg);border-radius:12px;padding:12px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${s.on?'10px':'0'}">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer">
+            <input type="checkbox" ${s.on?'checked':''} onchange="toggleScheduleDay('${d.key}',this.checked)" style="width:18px;height:18px;accent-color:var(--green)">
+            <span style="font-weight:700;font-size:14px">${d.label}</span>
+          </label>
+          ${!s.on ? '<span style="font-size:11px;color:var(--text3);font-weight:600">Fermé</span>' : ''}
+        </div>
+        <div id="sched-${d.key}-times" style="${s.on?'':'display:none'}">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px">
+            <span style="min-width:60px;color:var(--text3)">Matin :</span>
+            <input type="time" value="${s.start1||''}" onchange="updateScheduleTime('${d.key}','start1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <span>—</span>
+            <input type="time" value="${s.end1||''}" onchange="updateScheduleTime('${d.key}','end1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px">
+            <span style="min-width:60px;color:var(--text3)">A-midi :</span>
+            <input type="time" value="${s.start2||''}" onchange="updateScheduleTime('${d.key}','start2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <span>—</span>
+            <input type="time" value="${s.end2||''}" onchange="updateScheduleTime('${d.key}','end2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">(optionnel)</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('') + `
+    <div style="background:var(--blue-l);border-radius:12px;padding:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-weight:700;font-size:14px;flex:1">Durée d'une consultation</span>
+        <select onchange="window._tempSchedule.durationMin=parseInt(this.value)" style="padding:6px 10px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-weight:600;background:#fff;color:var(--blue)">
+          <option value="15" ${sched.durationMin===15?'selected':''}>15 min</option>
+          <option value="20" ${sched.durationMin===20?'selected':''}>20 min</option>
+          <option value="30" ${sched.durationMin===30?'selected':''}>30 min</option>
+          <option value="45" ${sched.durationMin===45?'selected':''}>45 min</option>
+          <option value="60" ${sched.durationMin===60?'selected':''}>60 min</option>
+        </select>
+      </div>
+    </div>`;
+  window._tempSchedule = JSON.parse(JSON.stringify(sched));
+  document.getElementById('schedule-modal').classList.remove('hidden');
+}
+
+function closeScheduleConfig(){
+  document.getElementById('schedule-modal').classList.add('hidden');
+}
+
+function toggleScheduleDay(dayKey, on){
+  if (!window._tempSchedule) window._tempSchedule = getDoctorSchedule();
+  if (!window._tempSchedule[dayKey]) window._tempSchedule[dayKey] = { on:false, start1:'08:00', end1:'12:00', start2:'14:00', end2:'17:00' };
+  window._tempSchedule[dayKey].on = on;
+  const times = document.getElementById('sched-'+dayKey+'-times');
+  if (times) times.style.display = on ? '' : 'none';
+}
+
+function updateScheduleTime(dayKey, field, value){
+  if (!window._tempSchedule) window._tempSchedule = getDoctorSchedule();
+  if (!window._tempSchedule[dayKey]) window._tempSchedule[dayKey] = { on:true };
+  window._tempSchedule[dayKey][field] = value;
+}
+
+function saveScheduleConfig(){
+  if (!window._tempSchedule) return closeScheduleConfig();
+  localStorage.setItem('tabibi_doctor_schedule', JSON.stringify(window._tempSchedule));
+  closeScheduleConfig();
+  toastM(tabibiT('toast_schedule_saved','Horaires enregistrés'), 'success');
+  try { renderAgenda(); } catch(e) {}
+}
+
+// Charge les RDV du médecin connecté depuis Supabase
+async function fetchDoctorRdvsFromSupabase(){
+  try {
+    const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+
+    let token = SB_KEY;
+    let userId = null;
+    if (window.tabibi && window.tabibi.supabase) {
+      const { data: { session } } = await window.tabibi.supabase.auth.getSession();
+      if (session && session.access_token) {
+        token = session.access_token;
+        userId = session.user && session.user.id;
+      }
+    }
+    if (!userId) return null;
+
+    // RDV où ce médecin est le destinataire
+    const url = SB_URL + '/rest/v1/appointments?select=*&doctor_id=eq.' + encodeURIComponent(userId) + '&order=scheduled_at.asc';
+    const res = await fetch(url, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token } });
+    if (!res.ok) {
+      console.warn('[Tabibi/doctor] fetchDoctorRdvs HTTP', res.status);
+      return null;
+    }
+    const rows = await res.json();
+    if (!Array.isArray(rows)) return null;
+
+    // Pour chaque RDV, on essaie de récupérer le nom du patient depuis la table users
+    // (un seul appel groupé via in.(...))
+    const patientIds = [...new Set(rows.map(r => r.patient_id).filter(Boolean))];
+    let patientsMap = {};
+    if (patientIds.length > 0) {
+      try {
+        const idsParam = patientIds.map(encodeURIComponent).join(',');
+        const ures = await fetch(SB_URL + '/rest/v1/users?select=id,first_name,last_name,phone&id=in.(' + idsParam + ')', {
+          headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token }
+        });
+        if (ures.ok) {
+          const users = await ures.json();
+          (users || []).forEach(u => {
+            patientsMap[u.id] = {
+              name: ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Patient',
+              phone: u.phone || ''
+            };
+          });
+        }
+      } catch(e) { /* RLS peut bloquer, on continue sans */ }
+    }
+
+    const STATUS_MAP = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled' };
+    const list = rows.map(r => {
+      const dt = new Date(r.scheduled_at);
+      const date = dt.toISOString().split('T')[0];
+      const time = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      const p = patientsMap[r.patient_id] || { name: 'Patient', phone: '' };
+      return {
+        id: r.id,
+        sbId: r.id,
+        _sb: true,
+        date, time, slot: time,
+        patientName: p.name,
+        patientPhone: p.phone,
+        motif: r.reason || 'Consultation',
+        status: STATUS_MAP[String(r.status||'').toLowerCase()] || 'Pending',
+        urgent: r.consult_type === 'urgence',
+        consultType: r.consult_type,
+        payMethod: r.pay_method,
+        prix: r.prix,
+      };
+    });
+
+    localStorage.setItem('tabibi_doc_rdv', JSON.stringify(list));
+    /* [FIX-PROD-2026-05-19] log retiré */
+    return list;
+  } catch(e) {
+    console.warn('[Tabibi/doctor] fetchDoctorRdvs erreur:', e && e.message);
+    return null;
+  }
+}
+
+// Charge depuis Supabase au démarrage et re-render dès qu'on a les données
+function refreshDoctorRdvs(){
+  fetchDoctorRdvsFromSupabase().then(list => {
+    if (list) {
+      try { renderToday(); } catch(e) {}
+      try { if (typeof renderAgenda === 'function') renderAgenda(); } catch(e) {}
+      try {
+        const activeBtn = document.querySelector('[data-fr].active');
+        const f = activeBtn ? activeBtn.dataset.fr : 'all';
+        if (typeof filtMRdv === 'function') filtMRdv(f, activeBtn);
+      } catch(e) {}
+    }
+  });
+}
+
+function renderToday(){
+  const rdvs = getDocRdvs();
+  const today = new Date().toISOString().split("T")[0];
+  const todays = rdvs.filter(r=>r.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+  document.getElementById("kpi-today").textContent = todays.length;
+  document.getElementById("today-count").textContent = todays.length+" RDV";
+  if(!todays.length){
+    document.getElementById("today-list").innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-day" style="font-size:42px;margin-bottom:12px;display:block;opacity:.4"></i>Aucun RDV aujourd'hui</div>`;
+    return;
+  }
+  document.getElementById("today-list").innerHTML = todays.map(r=>`
+    <div class="appt-card ${r.urgent?'urgent':r.status==='Pending'?'pending':r.status==='Completed'?'completed':''}">
+      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
+        <div style="flex:1"><div style="font-size:18px;font-weight:800;color:var(--blue)">${r.time}</div>
+          <div style="font-weight:700;font-size:14px;margin-top:4px">${esc(r.patientName)} ${r.urgent?'<span class="badge badge-red" style="font-size:9px"><i class="fa fa-bolt" style="color:#f59e0b"></i> URGENT</span>':''}</div>
+          <div style="font-size:12px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${esc(r.patientPhone||"")}</div></div>
+        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${r.status==='Confirmed'?'Confirmé':r.status==='Pending'?'En attente':'Terminé'}</span>
+      </div>
+      <div style="font-size:12px;font-style:italic;color:var(--text2);padding:6px 8px;background:rgba(255,255,255,.5);border-radius:6px;margin-bottom:8px">"${esc(r.motif)}"</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${r.status==="Pending"?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> Confirmer</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${r.id}')"><i class="fa fa-xmark"></i> Refuser</button>`:""}
+        ${r.status==="Confirmed"?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> Marquer terminé</button>`:""}
+        ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${esc(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> Appeler</a>`:""}
+        <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${r.id}')"><i class="fa fa-envelope"></i> Email</button>
+        <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${esc(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${esc(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${r.duree||30} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> Détails</button>
+      </div>
+    </div>`).join("");
+}
+
+function renderAgenda(){
+  const today = new Date();
+  const monday = new Date(today); monday.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
+  const rdvs = getDocRdvs();
+  const days = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  document.getElementById("cal-week").innerHTML = days.map((d,i)=>{
+    const dt=new Date(monday);dt.setDate(monday.getDate()+i);
+    const iso=dt.toISOString().split("T")[0];
+    const cnt=rdvs.filter(r=>r.date===iso).length;
+    const isToday=iso===today.toISOString().split("T")[0];
+    const isSel=iso===currentDay;
+    return `<button class="cal-day ${isToday?'today':''} ${cnt>0?'has-rdv':''}" style="${isSel?'background:var(--blue);color:#fff;border-color:var(--blue)':''}" onclick="selDay('${iso}')">
+      <div style="font-size:10px">${d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${dt.getDate()}</div>
+      ${cnt>0?`<div style="font-size:9px;margin-top:2px">${cnt} RDV</div>`:''}
+    </button>`;
+  }).join("");
+  const dayRdvs = rdvs.filter(r=>r.date===currentDay).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
+  const dlb = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(currentDay), {weekday:"long",day:"numeric",month:"long"}) : new Date(currentDay).toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long"}));
+  document.getElementById("day-lbl").textContent = "RDV du "+dlb+" ("+dayRdvs.length+")";
+  if(!dayRdvs.length){document.getElementById("day-rdv-list").innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Aucun RDV ce jour</div>`;return;}
+  document.getElementById("day-rdv-list").innerHTML = dayRdvs.map(r=>`
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:10px;margin-bottom:8px;border-left:3px solid ${r.status==='Confirmed'?'var(--blue)':r.status==='Pending'?'#f59e0b':'var(--green)'}">
+      <div style="font-size:16px;font-weight:800;color:var(--blue);width:54px">${r.time}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(r.patientName)}</div><div style="font-size:11px;color:var(--text3)">${esc(r.motif)}</div></div>
+      <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}" style="font-size:10px">${r.status==='Confirmed'?'OK':r.status==='Pending'?'?':'✓'}</span>
+    </div>`).join("");
+}
+function selDay(iso){currentDay=iso;renderAgenda();}
+
+function filtMRdv(f,btn){
+  document.querySelectorAll("[data-fr]").forEach(b=>b.classList.remove("active"));
+  if(btn) btn.classList.add("active");
+  let list = getDocRdvs();
+  const today = new Date().toISOString().split("T")[0];
+  if(f==="today") list = list.filter(r=>r.date===today);
+  else if(f!=="all") list = list.filter(r=>r.status===f);
+  if(!list.length){document.getElementById("rdv-full-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-xmark" style="font-size:48px;opacity:.3;margin-bottom:14px;display:block"></i>Aucun rendez-vous</div>`;return;}
+  document.getElementById("rdv-full-list").innerHTML = list.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).map(r=>{
+    const dlb = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(r.date), {weekday:"short",day:"numeric",month:"short"}) : new Date(r.date).toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short"}));
+    return `<div class="appt-card ${r.urgent?'urgent':''}">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div><div style="font-weight:700;font-size:14px">${esc(r.patientName)}</div>
+          <div style="font-size:11px;color:var(--text3)">${dlb} · ${r.time} · ${r.duree||30}min</div></div>
+        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${r.status}</span>
+      </div>
+      <div style="font-size:12px;color:var(--text2)">"${esc(r.motif)}"</div>
+    </div>`;
+  }).join("");
+}
+
+function contactPatientByEmail(rdvId){
+  const r = getDocRdvs().find(x => x.id === rdvId);
+  if (!r) return;
+  const u = JSON.parse(localStorage.getItem('tabibi_user') || '{}');
+  const doctorName = u.name || 'Votre médecin';
+  // Format de date FR pour le mail
+  let dateLbl = r.date;
+  try { dateLbl = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(r.date+'T'+r.time), {weekday:'long',day:'numeric',month:'long',year:'numeric'}) : new Date(r.date+'T'+r.time).toLocaleDateString("fr-FR", {weekday:'long',day:'numeric',month:'long',year:'numeric'})); } catch(e){}
+  const subject = encodeURIComponent('Votre rendez-vous du ' + dateLbl + ' — Tabibi');
+  const body = encodeURIComponent(
+    'Bonjour ' + (r.patientName || '') + ',\n\n' +
+    'Je vous confirme votre rendez-vous :\n' +
+    '  • Date : ' + dateLbl + '\n' +
+    '  • Heure : ' + r.time + '\n' +
+    '  • Motif : ' + (r.motif || 'Consultation') + '\n\n' +
+    'Merci de me prévenir en cas d\'empêchement.\n\n' +
+    'Cordialement,\n' +
+    doctorName + '\n' +
+    '(Envoyé via Tabibi — tabibi.doctor)'
+  );
+  // Le médecin ouvrira son client mail et complètera le destinataire
+  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+}
+
+async function updateRdvStatusInSupabase(sbId, status){
+  if (!sbId) return;
+  try {
+    const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    let token = SB_KEY;
+    if (window.tabibi && window.tabibi.supabase) {
+      const { data: { session } } = await window.tabibi.supabase.auth.getSession();
+      if (session && session.access_token) token = session.access_token;
+    }
+    const url = SB_URL + '/rest/v1/appointments?id=eq.' + encodeURIComponent(sbId);
+    await fetch(url, {
+      method: 'PATCH',
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ status: status })
+    });
+  } catch(e) {
+    console.warn('[Tabibi/doctor] updateRdvStatus erreur:', e && e.message);
+  }
+}
+
+function confRdv(id){
+  const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
+  if(i>-1){r[i].status="Confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'confirmed');}
+  toastM(tabibiT('toast_rdv_confirmed',"RDV confirmé"),"success");renderToday();
+}
+function cancRdv(id){
+  if(!confirm("Refuser ce RDV ?"))return;
+  const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
+  if(i>-1){r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'cancelled');}
+  toastM(tabibiT('toast_rdv_refused',"RDV refusé"),"info");renderToday();
+}
+function markDone(id){
+  const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
+  if(i>-1){r[i].status="Completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'completed');}
+  toastM(tabibiT('toast_rdv_completed',"RDV terminé"),"success");renderToday();
+}
+
+function renderPatients(){
+  const rdvs = getDocRdvs();
+  const map={};
+  rdvs.forEach(r=>{if(!map[r.patientName])map[r.patientName]={name:r.patientName,phone:r.patientPhone,visits:0,lastDate:""};map[r.patientName].visits++;if(r.date>map[r.patientName].lastDate)map[r.patientName].lastDate=r.date;});
+  let list = Object.values(map);
+  const q = (document.getElementById("patient-search")?.value||"").toLowerCase();
+  if(q) list = list.filter(p=>p.name.toLowerCase().includes(q));
+  if(!list.length){document.getElementById("patients-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-users" style="font-size:42px;opacity:.3;margin-bottom:12px;display:block"></i>Aucun patient</div>`;return;}
+  document.getElementById("patients-list").innerHTML = list.map(p=>`
+    <div class="patient-row" onclick="alert(tabibiT('label_patient_file_colon','Dossier patient : ')+'${p.name}\\n${p.visits} '+tabibiT('label_consultations','consultation(s)')+'\\n'+tabibiT('label_last_colon','Dernière : ')+'${p.lastDate}')">
+      <div style="width:42px;height:42px;border-radius:50%;background:#dcfce7;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700">${p.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${p.phone||"--"} · ${p.visits} consultation(s)</div></div>
+      <div style="font-size:10px;color:var(--text3)">Dernier : ${p.lastDate}</div>
+      <i class="fa fa-chevron-right" style="color:var(--text4)"></i>
+    </div>`).join("");
+}
+
+function renderStats(){
+  document.getElementById("stats-cards").innerHTML = [
+    {n:"28",l:"Total RDV",c:"var(--blue)"},{n:"94%",l:"Taux présence",c:"var(--green)"},
+    {n:"140 000 DA",l:"Revenus",c:"#f59e0b"},{n:"4.8 ★",l:"Note moy.",c:"#7c3aed"}
+  ].map(s=>`<div class="card" style="padding:12px;border-left:3px solid ${s.c}"><div style="font-size:18px;font-weight:800;color:${s.c}">${s.n}</div><div style="font-size:11px;color:var(--text3)">${s.l}</div></div>`).join("");
+  const mk=(id,d,col="var(--blue)")=>{document.getElementById(id).innerHTML=d.map(([l,p,v])=>`<div class="bar-row"><div style="font-size:11px;font-weight:600">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${col}">${v}</div></div></div>`).join("");};
+  mk("rev-bars",[["Sem 1",60,"24 000 DA"],["Sem 2",85,"34 000 DA"],["Sem 3",55,"22 000 DA"],["Sem 4",100,"40 000 DA"]],"#f59e0b");
+  mk("type-bars",[["Premier RDV",65,"18"],["Suivi",40,"11"],["Urgence",25,"7"],["Contrôle",10,"3"]],"var(--blue)");
+  mk("pay-bars",[["Espèces",55,"15 RDV"],["Edahabia",25,"7"],["CIB",15,"4"],["CNAS",5,"2"]],"#7c3aed");
+}
+
+function renderProfile(){
+  const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  document.getElementById("prof-ava").textContent=u.initials||"DR";
+  document.getElementById("prof-name").textContent=u.name||"Dr. --";
+  document.getElementById("prof-spec").textContent=(u.specialty||"Médecin")+" · "+(u.ville||"Alger");
+}
+
+function renderNotifs(){
+  const list=[
+    {ic:"fa-calendar-plus",col:"var(--blue)",t:"Nouveau RDV pris",m:"Mohamed Tabet — demain à 09:30",time:"il y a 30min"},
+    {ic:"fa-bell",col:"#f59e0b",t:"Rappel : RDV dans 1h",m:"Karim Benali à 09:00",time:"il y a 2h"},
+    {ic:"fa-money-bill",col:"var(--green)",t:"Paiement reçu",m:"+2 500 DA — Karim B.",time:"hier"}
+  ];
+  document.getElementById("med-notif-list").innerHTML=list.map(n=>`<div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid var(--bg2)">
+    <div style="width:32px;height:32px;border-radius:8px;background:${n.col}22;color:${n.col};display:flex;align-items:center;justify-content:center"><i class="fa ${n.ic}"></i></div>
+    <div style="flex:1"><div style="font-weight:700;font-size:12px">${n.t}</div><div style="font-size:11px;color:var(--text3)">${n.m}</div><div style="font-size:10px;color:var(--text4);margin-top:2px">${n.time}</div></div></div>`).join("");
+}
+
+document.addEventListener("DOMContentLoaded", async ()=>{
+  // ─── v10.6 : Attendre que le bridge synchronise tabibi_user ───
+  async function waitForUser(maxMs){
+    const t0 = Date.now();
+    while (Date.now() - t0 < maxMs){
+      let u = null;
+      try { u = JSON.parse(localStorage.getItem("tabibi_user")||"null"); } catch(e){}
+      if (u && (u.role === 'medecin' || u.role === 'doctor')) return u;
+      if (window.tabibi && window.tabibi.auth) {
+        try {
+          const session = await window.tabibi.auth.getSession();
+          if (session) {
+            const su = await window.tabibi.auth.getUser();
+            if (su) {
+              const fn = su.first_name || '';
+              const ln = su.last_name || '';
+              const name = (fn + ' ' + ln).trim() || (su.email||'').split('@')[0];
+              const parts = name.split(/\s+/);
+              const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+              const role = (su.role === 'doctor' || su.role === 'medecin') ? 'medecin' : (su.role === 'admin' ? 'admin' : 'patient');
+              const userObj = { id: su.id, email: su.email, role, name, initials, firstName: fn, lastName: ln, specialty: su.specialty_fr||'', ville: su.wilaya_fr||'', phone: su.phone||'' };
+              localStorage.setItem('tabibi_user', JSON.stringify(userObj));
+              if (role === 'medecin') return userObj;
+            }
+          } else { return null; }
+        } catch(e){}
+      }
+      await new Promise(r => setTimeout(r, 100));
+    }
+    return null;
+  }
+
+  const u = await waitForUser(3000);
+  if (!u || u.role !== "medecin") {
+    location.href = "login.html";
+    return;
+  }
+
+  document.getElementById("user-init").textContent = u.initials || "DR";
+    // Photo de profil dans le pill header
+    if (u.photo_url) {
+      const pill = document.getElementById("user-pill");
+      if (pill) {
+        pill.style.background = 'transparent';
+        pill.style.backgroundImage = 'url("' + u.photo_url + '")';
+        pill.style.backgroundSize = 'cover';
+        pill.style.backgroundPosition = 'center';
+        const initSpan = document.getElementById("user-init");
+        if (initSpan) initSpan.style.display = 'none';
+      }
+    }
+    document.getElementById("menu-name").textContent=u.name||"";
+    document.getElementById("menu-spec").textContent=(u.specialty||"")+" · "+(u.ville||"");
+    document.getElementById("med-name").textContent=u.name||"Dr. --";
+    document.getElementById("med-spec-info").textContent=(u.specialty||"")+" · "+(u.ville||"");
+    // Salutations multilingues - fonction réutilisable au changement de langue
+    window._refreshDoctorGreet = function() {
+      const _t = (window.tabibiI18n && window.tabibiI18n.T) || (k=>({hello:'Bonjour',good_morning:'Bonjour, Dr.',good_afternoon:'Bon après-midi, Dr.',good_evening:'Bonsoir, Dr.'})[k]);
+      const _firstName = (u.name||"").replace("Dr. ","").split(" ")[0];
+      const hdr = document.getElementById("hdr-title");
+      if (hdr) hdr.textContent = _t('hello') + ', ' + _firstName;
+      const h2=new Date().getHours();
+      const greet = document.getElementById("med-greet");
+      if (greet) greet.innerHTML = h2<12 ? (_t('good_morning') + " <i class='fa fa-sun'></i>") : h2<18 ? _t('good_afternoon') : (_t('good_evening') + " <i class='fa fa-moon'></i>");
+    };
+    window._refreshDoctorGreet();
+    // Re-render au changement de langue
+    document.addEventListener('tabibi:lang-change', window._refreshDoctorGreet);
+    renderToday();
+    renderNotifs();
+    // Charger les vrais RDV depuis Supabase et re-render
+    refreshDoctorRdvs();
+});
+</script>
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-network.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

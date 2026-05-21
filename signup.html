@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<!-- [FIX 2026-05-18] Turnstile site key lue depuis js/config.js (TURNSTILE_SITE_KEY).
+     Meta tag conservee comme override eventuel par page. Decommenter et editer si besoin: -->
+<!-- <meta name="turnstile-sitekey" content="0x4AAA..."> -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Inscrivez-vous gratuitement sur Tabibi pour prendre RDV avec un médecin en Algérie. Compte patient ou médecin, 100% gratuit, sans engagement.">
+<link rel="canonical" href="https://tabibi.doctor/signup.html">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tabibi.doctor/signup.html">
+<meta property="og:title" content="Inscription Tabibi — Créez votre compte gratuitement">
+<meta property="og:description" content="Inscrivez-vous gratuitement sur Tabibi pour prendre RDV avec un médecin en Algérie. Compte patient ou médecin, 100% gratuit, sans engagement.">
+<meta property="og:image" content="https://tabibi.doctor/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tabibi — Plateforme médicale algérienne">
+<meta property="og:site_name" content="Tabibi">
+<meta property="og:locale" content="fr_DZ">
+<meta property="og:locale:alternate" content="ar_DZ">
+<meta property="og:locale:alternate" content="en_US">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Inscription Tabibi — Créez votre compte gratuitement">
+<meta name="twitter:description" content="Inscrivez-vous gratuitement sur Tabibi pour prendre RDV avec un médecin en Algérie. Compte patient ou médecin, 100% gratuit, sans engagement.">
+<meta name="twitter:image" content="https://tabibi.doctor/assets/og-image.jpg">
+<meta name="twitter:image:alt" content="Tabibi — Trouvez votre médecin en Algérie">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_signup_long">
+<title>Inscription Tabibi | Créer un compte patient ou médecin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Aller au contenu</a>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='login.html'" aria-label="Retour à la connexion"><i class="fa fa-arrow-left"></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Inscription</div><div class="app-bar-sub">Créez votre compte</div></div>
+</header>
+<main id="main" class="page" style="padding:20px 16px 40px" role="main">
+  <div style="text-align:center;margin-bottom:20px">
+    <div class="logo-mark" style="margin:0 auto 12px"></div>
+    <h2 style="font-size:22px;font-weight:800">Rejoindre Tabibi</h2>
+  </div>
+  <div class="card" style="max-width:400px;margin:0 auto 16px">
+    <div id="role-picker-label" style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px" data-i18n="i_am">Je suis :</div>
+    <div role="radiogroup" aria-labelledby="role-picker-label" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <button type="button" role="radio" aria-checked="true" class="role-btn active" onclick="selRole('patient',this)" style="padding:14px;border:2px solid var(--blue);border-radius:12px;background:var(--blue-l);color:var(--blue);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <i class="fa fa-user" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_patient">Patient</span></button>
+      <button type="button" role="radio" aria-checked="false" class="role-btn" onclick="selRole('medecin',this)" style="padding:14px;border:2px solid var(--border);border-radius:12px;background:#fff;color:var(--text2);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <i class="fa fa-user-doctor" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_doctor">Médecin</span></button>
+      <button type="button" role="radio" aria-checked="false" class="role-btn" onclick="selRole('secretaire',this)" style="padding:14px;border:2px solid var(--border);border-radius:12px;background:#fff;color:var(--text2);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
+        <i class="fa fa-headset" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_secretaire">Secrétariat</span></button>
+    </div>
+  </div>
+  <div class="card" style="max-width:400px;margin:0 auto">
+    <form onsubmit="doSignup(event)">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label" for="sf">Prénom *</label><input class="form-control" id="sf" required autocomplete="given-name"></div>
+        <div class="form-group"><label class="form-label" for="sl">Nom *</label><input class="form-control" id="sl" required autocomplete="family-name"></div>
+      </div>
+      <div class="form-group"><label class="form-label" for="se">Email *</label>
+        <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i><input class="form-control" id="se" type="email" required style="padding-left:42px" autocomplete="email"></div></div>
+      <div class="form-group"><label class="form-label" for="sp">Téléphone *</label>
+        <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i><input class="form-control" id="sp" type="tel" required style="padding-left:42px" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" autocomplete="tel"></div></div>
+      <div class="form-group"><label class="form-label" for="sw" data-i18n="wilaya">Wilaya</label>
+        <select class="form-control" id="sw"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option></select></div>
+      <div id="medecin-fields" class="hidden">
+        <div class="form-group"><label class="form-label" for="ssp">Spécialité *</label>
+          <select class="form-control" id="ssp"><option value="">— Sélectionnez —</option><option>Cardiologue</option><option>Dermatologue</option><option>Pédiatre</option><option>Gynécologue</option><option data-i18n="generalist">Généraliste</option><option>Dentiste</option><option>Ophtalmologue</option><option>ORL</option></select></div>
+        <div class="form-group"><label class="form-label" for="sord">N° Conseil de l'Ordre *</label><input class="form-control" id="sord" placeholder="CO-2025-XXXX" data-i18n-placeholder="ph_ordre_number"></div>
+      </div>
+      <div id="cabinet-fields" class="hidden">
+        <div class="form-group">
+          <label class="form-label" for="scab" data-i18n="cabinet_invite_code">Code invitation cabinet *</label>
+          <div class="input-wrap">
+            <i class="fa fa-key ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="scab" placeholder="cab_xxxxxxxx-xxxx-xxxx" maxlength="50" style="padding-left:42px" autocomplete="off">
+          </div>
+          <small style="color:var(--text3);font-size:11px">
+            <span data-i18n="cabinet_invite_help">Demandez ce code à l'administrateur du cabinet qui vous a invité.</span>
+          </small>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label" for="spw">Mot de passe *</label>
+        <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+          <input class="form-control" id="spw" type="password" required minlength="8" style="padding-left:42px" placeholder="Min. 8 caractères" data-i18n-placeholder="ph_password_8_min_short" autocomplete="new-password">
+          <button type="button" class="ii-r" onclick="togglePw('spw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div></div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:14px">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="cgu" required style="margin-top:3px;flex-shrink:0">
+          <span>J'accepte les <a href="cgu.html" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-weight:600">Conditions Générales d'Utilisation</a> de Tabibi.</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:10px;cursor:pointer">
+          <input type="checkbox" id="privacy" required style="margin-top:3px;flex-shrink:0">
+          <span>Je consens au traitement de mes données personnelles selon la <a href="confidentialite.html" target="_blank" rel="noopener noreferrer" style="color:var(--blue);font-weight:600">Politique de confidentialité</a>, conforme à la loi algérienne 18-07.</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:6px;cursor:pointer">
+          <input type="checkbox" id="medical-consent" required style="margin-top:3px;flex-shrink:0">
+          <span><b>Consentement données de santé :</b> J'autorise expressément le traitement de mes données médicales sensibles aux seules fins de la prise de rendez-vous (art. 18 loi 18-07).</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:11px;color:var(--text3);cursor:pointer">
+          <input type="checkbox" id="marketing-consent" style="margin-top:3px;flex-shrink:0">
+          <span>(Optionnel) J'accepte de recevoir des conseils santé et offres Tabibi par email. Désabonnement en 1 clic.</span>
+        </label>
+      </div>
+      <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-plus"></i> Créer mon compte</button>
+    </form>
+    <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text3)">
+      Déjà inscrit ? <a href="login.html" style="color:var(--blue);font-weight:700" data-i18n="sign_in">Se connecter</a>
+    </div>
+  </div>
+</main>
+<div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+<script>
+let cur="patient";
+function selRole(r,btn){
+  cur=r;
+  document.querySelectorAll(".role-btn").forEach(b=>{
+    b.style.borderColor="var(--border)";b.style.background="#fff";b.style.color="var(--text2)";
+    b.classList.remove("active");
+    b.setAttribute("aria-checked","false");
+  });
+  btn.classList.add("active");
+  btn.style.borderColor="var(--blue)";btn.style.background="var(--blue-l)";btn.style.color="var(--blue)";
+  btn.setAttribute("aria-checked","true");
+  document.getElementById("medecin-fields").classList.toggle("hidden",r!=="medecin");
+  var cabEl=document.getElementById("cabinet-fields");
+  if(cabEl) cabEl.classList.toggle("hidden", r!=="secretaire" && r!=="admin_cabinet");
+}
+function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
+
+async function doSignup(e){
+  e.preventDefault();
+  const fn=sf.value.trim(),ln=sl.value.trim(),em=se.value.trim().toLowerCase(),ph=sp.value.trim(),wi=sw.value,pw=spw.value;
+
+  // ─── VALIDATIONS ───
+  if(pw.length<8){toastM(tabibiT('toast_password_too_short',"Mot de passe trop court (8 caractères minimum)"),"error");return;}
+  if(!fn || !ln){toastM(tabibiT('toast_firstname_lastname_required',"Prénom et nom obligatoires"),"error");return;}
+  if(!em || !em.includes('@')){toastM(tabibiT('toast_email_invalid',"Email invalide"),"error");return;}
+  if(!cgu.checked){toastM(tabibiT('toast_cgu_required',"Vous devez accepter les CGU pour créer un compte"),"error");return;}
+  if(!document.getElementById("privacy").checked){toastM(tabibiT('toast_privacy_required',"Vous devez consentir à la politique de confidentialité"),"error");return;}
+  if(!document.getElementById("medical-consent").checked){toastM(tabibiT('toast_health_consent_required',"Le consentement au traitement des données de santé est obligatoire"),"error");return;}
+  if(cur==="medecin"&&(!ssp.value||!sord.value.trim())){toastM(tabibiT('toast_spec_ordre_required',"Spécialité et N° d'Ordre obligatoires"),"error");return;}
+
+  // ─── SÉCURITÉ : empêcher toute tentative d'inscription en tant qu'admin global ───
+  // Wave 4 (2026-05-19) : on autorise le rôle "secretaire" (multi-cabinet).
+  // "admin_cabinet" reste réservé à une promotion serveur via accept_cabinet_invitation.
+  if (cur !== "patient" && cur !== "medecin" && cur !== "secretaire") {
+    toastM(tabibiT('toast_role_invalid',"Rôle invalide"), "error");
+    return;
+  }
+
+  // ─── VALIDATION CODE CABINET (secrétariat) ───
+  var cabCode = "";
+  if (cur === "secretaire") {
+    var scabEl = document.getElementById("scab");
+    cabCode = scabEl ? scabEl.value.trim() : "";
+    if (!cabCode || cabCode.length < 10) {
+      toastM(tabibiT('toast_cabinet_code_required',"Le code d'invitation cabinet est obligatoire pour ce rôle."), "error");
+      return;
+    }
+  }
+
+  // Horodatage des consentements (preuve loi 18-07)
+  const consents={
+    cgu_accepted_at:new Date().toISOString(),
+    privacy_accepted_at:new Date().toISOString(),
+    medical_data_accepted_at:new Date().toISOString(),
+    marketing_accepted_at:document.getElementById("marketing-consent").checked?new Date().toISOString():null,
+    consents_version:"1.0"
+  };
+
+  const btn = e.target.querySelector('button[type="submit"]');
+  const origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Création en cours...'; }
+
+  // ─── INSCRIPTION VIA SUPABASE AUTH ───
+  try {
+    if (!window.tabibi || !window.tabibi.auth || !window.tabibi.supabase) {
+      throw new Error("Service d'authentification indisponible");
+    }
+
+    // 1. Créer le compte Supabase Auth
+    const signupResult = await window.tabibi.auth.signUp(em, pw, cur);
+
+    if (!signupResult || !signupResult.user) {
+      throw new Error("Erreur lors de la création du compte");
+    }
+
+    // 2. Créer/compléter le profil dans public.profiles
+    //    NOTE : le trigger set_profile_status mettra status='pending_verification' pour les médecins
+    const profileData = {
+      id: signupResult.user.id,
+      email: em,
+      first_name: fn,
+      last_name: ln,
+      full_name: fn + " " + ln,
+      role: cur,
+      phone: ph,
+      wilaya_fr: wi,
+      consents: consents,
+      is_test: false
+    };
+
+    if (cur === "medecin") {
+      profileData.specialty_fr = ssp.value;
+      profileData.ordre_number = sord.value.trim();
+    }
+    if (cur === "secretaire") {
+      profileData.cabinet_invite_code = cabCode; // trace côté users (champ optionnel)
+    }
+
+    const { error: profileError } = await window.tabibi.supabase
+      .from('users')
+      .upsert(profileData, { onConflict: 'id' });
+
+    if (profileError) {
+      console.warn("[signup] profile upsert error:", profileError.message);
+      // Ne pas bloquer : le profil peut être complété au prochain login
+    }
+
+    // 2.bis Si rôle secrétariat : vérifier puis rattacher au cabinet via RPC.
+    //       En V1 le code = UUID direct du cabinet ; une future EF tabibi-resolve-cabinet-code
+    //       pourra résoudre des codes courts. Si la RPC échoue on bloque la suite.
+    if (cur === "secretaire") {
+      try {
+        var validateRes = null;
+        // Optionnel : vérification douce si la RPC validate_cabinet_invitation existe
+        try {
+          validateRes = await window.tabibi.supabase
+            .rpc("validate_cabinet_invitation", { p_code: cabCode });
+        } catch(_v) { validateRes = null; }
+        const acceptRes = await window.tabibi.supabase
+          .rpc("accept_cabinet_invitation", { p_cabinet_id: cabCode });
+        if (acceptRes && acceptRes.error) {
+          console.warn("[signup] accept_cabinet_invitation:", acceptRes.error.message);
+          toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"), "error");
+          if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+          return;
+        }
+      } catch(rpcErr) {
+        console.warn("[signup] cabinet RPC error:", rpcErr && rpcErr.message);
+        toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"), "error");
+        if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+        return;
+      }
+      // Connexion conservée, redirection dashboard secrétariat
+      const userData = {
+        id: signupResult.user.id,
+        email: em,
+        role: "secretaire",
+        status: "active",
+        name: fn + " " + ln,
+        initials: ((fn[0]||"")+(ln[0]||"")).toUpperCase(),
+        firstName: fn, lastName: ln, phone: ph, ville: wi,
+        consents: consents, fromSupabase: true
+      };
+      try { localStorage.setItem("tabibi_user", JSON.stringify(userData)); } catch(e){}
+      try { localStorage.setItem("tabibi_role", "secretaire"); } catch(e){}
+      toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"), "success");
+      setTimeout(()=>location.href="secretaire-dashboard.html", 800);
+      return;
+    }
+
+    // 3. Gérer la redirection selon le rôle
+    if (cur === "medecin") {
+      // MÉDECIN : compte en attente de validation manuelle
+      // Déconnexion immédiate + message clair
+      try { await window.tabibi.auth.signOut(); } catch(e){}
+      localStorage.removeItem("tabibi_user");
+      localStorage.removeItem("tabibi_role");
+
+      // Afficher la modale de confirmation
+      showMedecinPendingModal(em, fn);
+      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+      return;
+    } else {
+      // PATIENT : compte actif immédiatement
+      const userData = {
+        id: signupResult.user.id,
+        email: em,
+        role: "patient",
+        status: "active",
+        name: fn + " " + ln,
+        initials: ((fn[0]||"")+(ln[0]||"")).toUpperCase(),
+        firstName: fn,
+        lastName: ln,
+        phone: ph,
+        ville: wi,
+        consents: consents,
+        fromSupabase: true
+      };
+      localStorage.setItem("tabibi_user", JSON.stringify(userData));
+      localStorage.setItem("tabibi_role", "patient");
+      toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"), "success");
+      setTimeout(()=>location.href="patient-dashboard.html", 800);
+    }
+
+  } catch(err) {
+    console.error("[signup] error:", err);
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    const msg = (err && err.message) || "Erreur lors de l'inscription";
+    if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("exists")) {
+      toastM(tabibiT('toast_email_already_used',"Cet email est déjà utilisé. Connectez-vous."), "error");
+    } else {
+      toastM(msg, "error");
+    }
+  }
+}
+
+function showMedecinPendingModal(email, prenom) {
+  const modal = document.createElement('div');
+  modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:32px 24px;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,0.2)">
+      <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#0a4d3e,#0F7560);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+        <i class="fa fa-user-doctor" style="font-size:36px;color:#fff"></i>
+      </div>
+      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">Bienvenue Dr ${prenom} !</h2>
+      <p style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:20px">
+        Votre inscription a bien été enregistrée.
+        <br><br>
+        Notre équipe va vérifier vos qualifications (diplôme + Conseil de l'Ordre) sous <strong>48h ouvrées maximum</strong>.
+        <br><br>
+        Vous recevrez un email à <strong>${email}</strong> dès que votre compte sera activé.
+      </p>
+      <div style="background:#f0f9ff;border-radius:10px;padding:14px;margin-bottom:20px;text-align:left;font-size:13px;color:#0a4d3e">
+        <strong>📋 Prochaine étape :</strong>
+        <br>Préparez vos documents (diplôme + attestation Ordre) pour les envoyer à <strong>contact@tabibi.doctor</strong>
+      </div>
+      <button onclick="location.href='index.html'" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
+        Retour à l'accueil
+      </button>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+</script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-brevo.js"></script>
+<script src="js/tabibi-turnstile.js"></script>
+<script src="js/tabibi-sms.js"></script>
+<script src="js/login-handler.js"></script>
+<script src="js/tabibi-cookies.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

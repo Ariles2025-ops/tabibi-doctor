@@ -1,0 +1,346 @@
+/* ================================================================
+   TABIBI — Design Tokens v2.0 (Rebrand Vert/Or)
+   ----------------------------------------------------------------
+   Source de vérité CSS pour la nouvelle identité de marque Tabibi.
+   À charger AVANT components-v2.css.
+   ----------------------------------------------------------------
+   - Palette : vert primaire (#0F7560) + or accent (#D4A437)
+   - Neutres : repris de DESIGN_TOKENS.json v1 pour préserver
+     la cohérence avec les pages non encore migrées.
+   - Rétrocompat : les anciennes variables (--blue, --green, ...)
+     restent disponibles mais pointent désormais sur les nouvelles
+     teintes pour éviter de casser app.css / components.css v1
+     pendant la phase de migration.
+   ================================================================ */
+
+:root {
+
+  /* ──────────────────────────────────────────────────────────────
+     1. BRAND COLORS — Échelles complètes (50 → 900)
+     ────────────────────────────────────────────────────────────── */
+
+  /* Vert primaire — médical, confiance, vérification */
+  --brand-green-50:  #f0fdf4;
+  --brand-green-100: #dcfce7;
+  --brand-green-200: #bbf7d0;
+  --brand-green-300: #7fcdb6;
+  --brand-green-400: #4caf8e;
+  --brand-green-500: #2E8B57;   /* succès, vérifié */
+  --brand-green-600: #1f7a4e;
+  --brand-green-700: #0F7560;   /* PRIMARY — boutons d'action */
+  --brand-green-800: #0c5e4d;
+  --brand-green-900: #0a4d3e;   /* hover/pressed */
+
+  /* Or accent — premium, distinction, CTA spéciaux */
+  --brand-gold-50:   #fffbeb;
+  --brand-gold-100:  #fef3c7;
+  --brand-gold-200:  #fde68a;
+  --brand-gold-300:  #fcd34d;
+  --brand-gold-400:  #e6b649;
+  --brand-gold-500:  #D4A437;   /* ACCENT — pricing, Pro, premium */
+  --brand-gold-600:  #b88d2d;
+  --brand-gold-700:  #a17a1f;   /* hover */
+  --brand-gold-800:  #7a5d18;
+  --brand-gold-900:  #523f10;
+
+  /* Rouge — erreur, suppression, urgence (jamais décoratif) */
+  --brand-red-50:    #fff0f0;
+  --brand-red-100:   #ffe0e0;
+  --brand-red-500:   #D21010;
+  --brand-red-700:   #a40c0c;
+
+  /* Ambre — avertissement, en attente */
+  --brand-amber-50:  #fffbeb;
+  --brand-amber-500: #F59E0B;
+  --brand-amber-700: #92400e;
+
+  /* ──────────────────────────────────────────────────────────────
+     2. ALIASES SÉMANTIQUES — à utiliser par les composants
+     ────────────────────────────────────────────────────────────── */
+
+  --color-primary:        var(--brand-green-700);
+  --color-primary-hover:  var(--brand-green-900);
+  --color-primary-active: var(--brand-green-900);
+  --color-primary-light:  var(--brand-green-100);
+  --color-primary-50:     var(--brand-green-50);
+  --color-primary-on:     #ffffff;
+
+  --color-accent:         var(--brand-gold-500);
+  --color-accent-hover:   var(--brand-gold-700);
+  --color-accent-light:   var(--brand-gold-50);
+  --color-accent-on:      #1A1A1A;
+
+  --color-danger:         var(--brand-red-500);
+  --color-danger-hover:   var(--brand-red-700);
+  --color-danger-light:   var(--brand-red-50);
+  --color-danger-on:      #ffffff;
+
+  --color-success:        var(--brand-green-500);
+  --color-success-hover:  var(--brand-green-600);
+  --color-success-light:  var(--brand-green-50);
+  --color-success-on:     #ffffff;
+
+  --color-warning:        var(--brand-amber-500);
+  --color-warning-light:  var(--brand-amber-50);
+  --color-warning-on:     var(--brand-amber-700);
+
+  --color-info:           var(--brand-green-700);
+  --color-info-light:     var(--brand-green-50);
+
+  /* ──────────────────────────────────────────────────────────────
+     3. NEUTRES, TEXTE, FONDS
+     ────────────────────────────────────────────────────────────── */
+
+  --text:    #1A1A1A;   /* titres, texte principal */
+  --text2:   #475569;   /* texte courant */
+  --text3:   #64748b;   /* métadonnées */
+  --text4:   #94a3b8;   /* placeholders, désactivé */
+  --text-on-primary: #ffffff;
+  --text-on-accent:  #1A1A1A;
+
+  --bg:      #f8fafc;   /* fond d'application */
+  --bg2:     #f1f5f9;   /* séparateurs, fonds doux */
+  --bg3:     #e2e8f0;   /* fond hover discret */
+  --card:    #ffffff;
+  --surface: #ffffff;
+  --overlay: rgba(15, 117, 96, 0.55);   /* overlay modal teinté brand */
+
+  --border:        #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-focus:  var(--color-primary);
+
+  /* ──────────────────────────────────────────────────────────────
+     4. TYPOGRAPHIE
+     ────────────────────────────────────────────────────────────── */
+
+  --font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-ar: 'IBM Plex Sans Arabic', 'Cairo', 'Geeza Pro', 'Segoe UI Arabic', sans-serif;
+  --font-family-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  --fs-display: 28px;
+  --fs-h1:      22px;
+  --fs-h2:      18px;
+  --fs-h3:      16px;
+  --fs-body-l:  15px;
+  --fs-body:    14px;
+  --fs-caption: 13px;
+  --fs-small:   12px;
+  --fs-micro:   11px;
+
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-black:    800;
+
+  --lh-tight:   1.15;
+  --lh-snug:    1.30;
+  --lh-normal:  1.45;
+  --lh-relaxed: 1.55;
+
+  /* ──────────────────────────────────────────────────────────────
+     5. ESPACEMENTS (échelle 4px)
+     ────────────────────────────────────────────────────────────── */
+
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3:  12px;
+  --sp-4:  16px;
+  --sp-5:  20px;
+  --sp-6:  24px;
+  --sp-8:  32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* ──────────────────────────────────────────────────────────────
+     6. RAYONS
+     ────────────────────────────────────────────────────────────── */
+
+  --r4:    4px;
+  --r8:    8px;
+  --r12:   12px;
+  --r16:   16px;
+  --r20:   20px;
+  --r24:   24px;
+  --rfull: 999px;
+
+  /* ──────────────────────────────────────────────────────────────
+     7. OMBRES
+     ────────────────────────────────────────────────────────────── */
+
+  --s1: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --s2: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --s3: 0 12px 36px rgba(0, 0, 0, 0.08);
+  --s4: 0 24px 64px rgba(0, 0, 0, 0.12);
+
+  /* Ombres colorées brand */
+  --shadow-primary: 0 4px 14px rgba(15, 117, 96, 0.24);
+  --shadow-accent:  0 4px 14px rgba(212, 164, 55, 0.28);
+  --shadow-danger:  0 4px 14px rgba(210, 16, 16, 0.22);
+
+  /* Focus ring */
+  --ring-primary: 0 0 0 3px rgba(15, 117, 96, 0.18);
+  --ring-accent:  0 0 0 3px rgba(212, 164, 55, 0.22);
+  --ring-danger:  0 0 0 3px rgba(210, 16, 16, 0.18);
+
+  /* ──────────────────────────────────────────────────────────────
+     8. TRANSITIONS & ANIMATIONS
+     ────────────────────────────────────────────────────────────── */
+
+  --t-fast:  150ms ease;
+  --t-base:  200ms ease;
+  --t-slow:  300ms ease;
+  --ease:    cubic-bezier(.4, 0, .2, 1);
+
+  /* ──────────────────────────────────────────────────────────────
+     9. Z-INDEX
+     ────────────────────────────────────────────────────────────── */
+
+  --z-base:    0;
+  --z-sticky:  100;
+  --z-appbar:  200;
+  --z-dropdown:300;
+  --z-overlay: 900;
+  --z-modal:   1000;
+  --z-toast:   2000;
+  --z-splash:  9999;
+
+  /* ──────────────────────────────────────────────────────────────
+     10. BREAKPOINTS (informatifs — utilisés via @media)
+     ────────────────────────────────────────────────────────────── */
+
+  --bp-sm:  480px;
+  --bp-md:  720px;
+  --bp-lg:  1024px;
+  --bp-xl:  1280px;
+
+  /* ──────────────────────────────────────────────────────────────
+     11. DIMENSIONS COMPOSANTS
+     ────────────────────────────────────────────────────────────── */
+
+  --nav-h: 56px;
+  --tab-h: 64px;
+
+  --btn-h-sm: 36px;
+  --btn-h-md: 44px;
+  --btn-h-lg: 52px;
+  --btn-h-xl: 56px;
+
+  --input-h:        48px;
+  --input-padding:  14px;
+
+  --avatar-xs: 24px;
+  --avatar-sm: 32px;
+  --avatar-md: 42px;
+  --avatar-lg: 56px;
+  --avatar-xl: 88px;
+
+  /* Safe areas iOS */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+
+  /* ──────────────────────────────────────────────────────────────
+     12. RÉTROCOMPATIBILITÉ v1 — NE PAS UTILISER POUR NOUVEAU CODE
+     ----------------------------------------------------------------
+     Ces alias permettent à app.css / components.css v1 de continuer
+     à fonctionner pendant la migration. À supprimer une fois 100%
+     des pages migrées sur components-v2.css.
+     ────────────────────────────────────────────────────────────── */
+
+  --blue:    var(--color-primary);       /* ex bleu → vert */
+  --blue-d:  var(--color-primary-hover);
+  --blue-l:  var(--color-primary-light);
+  --blue-xl: var(--color-primary-50);
+
+  --green:   var(--brand-green-500);
+  --green-d: var(--brand-green-700);
+  --green-l: var(--brand-green-50);
+
+  --red:     var(--color-danger);
+  --red-l:   var(--color-danger-light);
+
+  --amber:   var(--color-warning);
+  --amber-l: var(--color-warning-light);
+
+  --white:   #ffffff;
+  --sb:      var(--shadow-primary);
+  --sg:      var(--shadow-primary);
+
+  --t1: var(--t-fast);
+  --t2: var(--t-base);
+  --t3: var(--t-slow);
+
+  --r24:    24px;
+  --rfull:  999px;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   THÈME V2 OPT-IN — activable via <html data-theme="v2"> ou
+   ?theme=v2 (script léger dans la page). Permet un A/B visuel
+   sans toucher au DOM.
+   ────────────────────────────────────────────────────────────── */
+
+[data-theme="v2"] {
+  /* Le simple fait de charger ce fichier active déjà v2.
+     Ce sélecteur reste disponible pour des overrides futurs
+     spécifiques (ex: thème sombre v2). */
+}
+
+/* ──────────────────────────────────────────────────────────────
+   MOTION : respect des préférences utilisateur
+   ────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 0ms;
+    --t-base: 0ms;
+    --t-slow: 0ms;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   A11Y QUICK WINS — WCAG 2.4.7 Focus Visible + 2.4.1 Bypass Blocks
+   Patch Wave 4 (2026-05-19). Idempotent : ne casse rien si app.css
+   définit déjà ces sélecteurs.
+   ────────────────────────────────────────────────────────────── */
+
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible,
+summary:focus-visible {
+  outline: 3px solid var(--color-primary, #0F7560);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+a:focus:not(:focus-visible),
+button:focus:not(:focus-visible),
+input:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 8px;
+  z-index: 10000;
+  background: var(--color-primary, #0F7560);
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 8px;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}

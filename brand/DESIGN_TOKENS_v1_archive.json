@@ -1,0 +1,230 @@
+{
+  "$schema": "https://design-tokens.org/draft/2024/format",
+  "$description": "Tabibi Design Tokens — W3C Design Tokens Community Group format. Source of truth for couleurs, typographie, espacements, rayons, ombres, transitions. À synchroniser avec styles/app.css.",
+  "$metadata": {
+    "name": "Tabibi",
+    "version": "1.0.0",
+    "lastUpdated": "2026-05-19",
+    "owner": "brand@tabibi.dz"
+  },
+  "color": {
+    "brand": {
+      "blue": {
+        "base": {
+          "$value": "#1E90FF",
+          "$type": "color",
+          "$description": "Couleur primaire. Logo, boutons d'action principale, liens actifs."
+        },
+        "dark": {
+          "$value": "#1D4ED8",
+          "$type": "color",
+          "$description": "État pressé du bleu primaire. Header gradient."
+        },
+        "light": {
+          "$value": "#EFF6FF",
+          "$type": "color",
+          "$description": "Fond doux info, hover sur surfaces blanches."
+        },
+        "extraLight": {
+          "$value": "#F8FAFF",
+          "$type": "color",
+          "$description": "Fond de section quasi-blanc."
+        }
+      },
+      "green": {
+        "base": {
+          "$value": "#2E8B57",
+          "$type": "color",
+          "$description": "Succès, RDV confirmé, médecin vérifié."
+        },
+        "dark": {
+          "$value": "#007A22",
+          "$type": "color",
+          "$description": "Texte vert sur fond clair, état pressé."
+        },
+        "light": {
+          "$value": "#F0FDF4",
+          "$type": "color",
+          "$description": "Fond de badge succès."
+        }
+      },
+      "red": {
+        "base": {
+          "$value": "#D21010",
+          "$type": "color",
+          "$description": "Erreur, annulation, suppression, urgence. Jamais décoratif."
+        },
+        "light": {
+          "$value": "#FFF0F0",
+          "$type": "color",
+          "$description": "Fond de message d'erreur."
+        }
+      }
+    },
+    "neutral": {
+      "white": { "$value": "#FFFFFF", "$type": "color" },
+      "bg": { "$value": "#F3F5FA", "$type": "color", "$description": "Fond d'application." },
+      "bg2": { "$value": "#E8ECF4", "$type": "color", "$description": "Séparateurs et fonds secondaires." },
+      "border": { "$value": "#E0E4EF", "$type": "color", "$description": "Bordures de cards et inputs." }
+    },
+    "text": {
+      "primary": { "$value": "#0D1117", "$type": "color", "$description": "Texte principal, titres." },
+      "secondary": { "$value": "#374151", "$type": "color", "$description": "Texte courant, labels." },
+      "tertiary": { "$value": "#6B7280", "$type": "color", "$description": "Texte secondaire, métadonnées." },
+      "disabled": { "$value": "#A0A8BB", "$type": "color", "$description": "Texte désactivé, placeholders." }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": {
+        "$value": "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+        "$type": "fontFamily"
+      },
+      "arabic": {
+        "$value": "'IBM Plex Sans Arabic', 'Geeza Pro', 'Segoe UI Arabic', sans-serif",
+        "$type": "fontFamily"
+      }
+    },
+    "fontSize": {
+      "display": { "$value": "28px", "$type": "dimension" },
+      "h1": { "$value": "22px", "$type": "dimension" },
+      "h2": { "$value": "18px", "$type": "dimension" },
+      "h3": { "$value": "16px", "$type": "dimension" },
+      "bodyLarge": { "$value": "15px", "$type": "dimension" },
+      "body": { "$value": "14px", "$type": "dimension" },
+      "caption": { "$value": "13px", "$type": "dimension" },
+      "small": { "$value": "12px", "$type": "dimension" },
+      "micro": { "$value": "11px", "$type": "dimension" }
+    },
+    "fontWeight": {
+      "regular": { "$value": "400", "$type": "fontWeight" },
+      "medium": { "$value": "500", "$type": "fontWeight" },
+      "semibold": { "$value": "600", "$type": "fontWeight" },
+      "bold": { "$value": "700", "$type": "fontWeight" },
+      "black": { "$value": "800", "$type": "fontWeight" }
+    },
+    "lineHeight": {
+      "tight": { "$value": "1.15", "$type": "number" },
+      "snug": { "$value": "1.30", "$type": "number" },
+      "normal": { "$value": "1.45", "$type": "number" },
+      "relaxed": { "$value": "1.55", "$type": "number" }
+    },
+    "letterSpacing": {
+      "tight": { "$value": "-0.3px", "$type": "dimension", "$description": "Pour titres H1/H2/Display" },
+      "normal": { "$value": "0", "$type": "dimension" },
+      "wide": { "$value": "0.3px", "$type": "dimension", "$description": "Pour form-label UPPERCASE" }
+    }
+  },
+  "spacing": {
+    "xs": { "$value": "4px", "$type": "dimension" },
+    "sm": { "$value": "8px", "$type": "dimension" },
+    "md": { "$value": "12px", "$type": "dimension" },
+    "lg": { "$value": "16px", "$type": "dimension", "$description": "Gouttière standard entre cards" },
+    "xl": { "$value": "24px", "$type": "dimension", "$description": "Padding modale, gap entre sections" },
+    "xxl": { "$value": "32px", "$type": "dimension" },
+    "xxxl": { "$value": "48px", "$type": "dimension" }
+  },
+  "radius": {
+    "sm": { "$value": "8px", "$type": "dimension", "$description": "Petits éléments (chips fins)" },
+    "md": { "$value": "12px", "$type": "dimension", "$description": "Inputs, boutons standard" },
+    "lg": { "$value": "16px", "$type": "dimension", "$description": "Cards principales" },
+    "xl": { "$value": "20px", "$type": "dimension", "$description": "Conteneurs hero" },
+    "xxl": { "$value": "24px", "$type": "dimension" },
+    "full": { "$value": "999px", "$type": "dimension", "$description": "Pills, badges, avatars" }
+  },
+  "shadow": {
+    "s1": {
+      "$value": "0 1px 4px rgba(0, 0, 0, 0.06)",
+      "$type": "shadow",
+      "$description": "Cards reposées."
+    },
+    "s2": {
+      "$value": "0 4px 14px rgba(0, 0, 0, 0.09)",
+      "$type": "shadow",
+      "$description": "Éléments survolés."
+    },
+    "s3": {
+      "$value": "0 8px 28px rgba(0, 0, 0, 0.12)",
+      "$type": "shadow",
+      "$description": "Éléments flottants (hero search)."
+    },
+    "s4": {
+      "$value": "0 16px 48px rgba(0, 0, 0, 0.16)",
+      "$type": "shadow",
+      "$description": "Modales."
+    },
+    "blue": {
+      "$value": "0 4px 14px rgba(30, 144, 255, 0.2)",
+      "$type": "shadow",
+      "$description": "Bouton primaire actif, focus."
+    }
+  },
+  "transition": {
+    "fast": {
+      "$value": "150ms ease",
+      "$type": "duration",
+      "$description": "Hovers, focus."
+    },
+    "base": {
+      "$value": "200ms ease",
+      "$type": "duration",
+      "$description": "Transitions standard de boutons et cards."
+    },
+    "slow": {
+      "$value": "250ms ease",
+      "$type": "duration",
+      "$description": "Animations de panneaux et modales."
+    }
+  },
+  "gradient": {
+    "hero": {
+      "$value": "linear-gradient(155deg, #1034A6 0%, #1E90FF 52%, #1479D8 100%)",
+      "$type": "gradient",
+      "$description": "Seul gradient autorisé. Hero header, splash screen."
+    },
+    "docCardAccent": {
+      "$value": "linear-gradient(90deg, #1E90FF, #2E8B57)",
+      "$type": "gradient",
+      "$description": "Bande accent fine 3px sur doc-card au hover. Usage exclusif."
+    }
+  },
+  "zIndex": {
+    "base": { "$value": "0", "$type": "number" },
+    "appBar": { "$value": "200", "$type": "number" },
+    "tabBar": { "$value": "200", "$type": "number" },
+    "modal": { "$value": "1000", "$type": "number" },
+    "toast": { "$value": "2000", "$type": "number" },
+    "splash": { "$value": "9999", "$type": "number" }
+  },
+  "breakpoint": {
+    "mobile": { "$value": "320px", "$type": "dimension" },
+    "mobileLarge": { "$value": "480px", "$type": "dimension" },
+    "tablet": { "$value": "768px", "$type": "dimension" },
+    "desktop": { "$value": "1024px", "$type": "dimension" },
+    "desktopLarge": { "$value": "1280px", "$type": "dimension" }
+  },
+  "component": {
+    "navBar": {
+      "height": { "$value": "56px", "$type": "dimension" }
+    },
+    "tabBar": {
+      "height": { "$value": "64px", "$type": "dimension" }
+    },
+    "button": {
+      "heightSm": { "$value": "36px", "$type": "dimension" },
+      "heightMd": { "$value": "44px", "$type": "dimension" },
+      "heightLg": { "$value": "52px", "$type": "dimension" }
+    },
+    "input": {
+      "height": { "$value": "48px", "$type": "dimension" },
+      "paddingX": { "$value": "14px", "$type": "dimension" }
+    },
+    "avatar": {
+      "xs": { "$value": "24px", "$type": "dimension" },
+      "sm": { "$value": "32px", "$type": "dimension" },
+      "md": { "$value": "42px", "$type": "dimension" },
+      "lg": { "$value": "56px", "$type": "dimension" },
+      "xl": { "$value": "88px", "$type": "dimension" }
+    }
+  }
+}

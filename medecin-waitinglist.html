@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Médecin algérien : réservez votre profil Tabibi avant le grand public. 3 mois Pro gratuits, démo offerte en cabinet.">
+<link rel="canonical" href="https://tabibi.doctor/medecin-waitinglist.html">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Réservez votre profil Tabibi avant le lancement | Médecins DZ">
+<meta property="og:description" content="3 mois Pro gratuits + demo offerte en cabinet. Lancement 7 septembre 2026.">
+<meta property="og:image" content="https://tabibi.doctor/assets/og-medecin.jpg">
+<meta property="og:locale" content="fr_DZ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Réservez votre profil Tabibi | Espace médecin algérien</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  body { background: #f8fafc; min-height:100vh; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 32px 16px; }
+  .lang-bar { display:flex; gap:6px; justify-content:flex-end; margin-bottom: 18px; }
+  .lang-btn { background:#fff; border:1px solid #e2e8f0; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; }
+  .lang-btn.active { background:#0F7560; color:#fff; border-color:#0F7560; }
+  .hero { background: linear-gradient(135deg, #0F7560 0%, #0a5a4a 100%); color:#fff; border-radius:20px; padding: 44px 32px; margin-bottom:24px; text-align:center; box-shadow: 0 16px 48px rgba(15,117,96,0.18); }
+  .hero h1 { font-size: 30px; font-weight: 800; margin: 0 0 12px; line-height: 1.2; }
+  .hero p { font-size: 16px; margin: 0; opacity: 0.95; }
+  .hero .badges { display: inline-flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
+  .hero .badge { background: rgba(255,255,255,0.18); padding: 8px 14px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
+  @media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: #fff; border-radius: 16px; padding: 26px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+  .card h2 { font-size: 18px; font-weight: 700; margin: 0 0 14px; color: #0f172a; }
+  .benefits li { font-size: 14px; color: #334155; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+  .benefits li:last-child { border: 0; }
+  .benefits i { color: #2E8B57; margin-right: 8px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { font-size: 13px; font-weight: 600; color: #334155; display: block; margin-bottom: 6px; }
+  .form-control { width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; font-family: inherit; box-sizing: border-box; }
+  .form-control:focus { outline: 2px solid #0F7560; outline-offset: 1px; border-color: #0F7560; }
+  .check-row { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #475569; margin: 8px 0; line-height: 1.5; }
+  .btn-primary { background: #0F7560; color: #fff; border: 0; padding: 14px 24px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; width: 100%; transition: background 0.15s; }
+  .btn-primary:hover:not(:disabled) { background: #0a5a4a; }
+  .btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+  .msg-ok { background: #dcfce7; color: #166534; padding: 16px; border-radius: 10px; font-size: 14px; display: none; margin-top: 16px; }
+  .msg-err { background: #fee2e2; color: #991b1b; padding: 16px; border-radius: 10px; font-size: 13px; display: none; margin-top: 16px; }
+  .share { display: flex; gap: 12px; justify-content: center; margin-top: 16px; }
+  .share a { background: #f1f5f9; padding: 10px 16px; border-radius: 8px; text-decoration: none; color: #475569; font-size: 13px; font-weight: 600; }
+  .footer { text-align: center; font-size: 12px; color: #64748b; padding: 20px 0; }
+  .footer a { color: #0F7560; text-decoration: none; }
+  body[dir="rtl"] .hero, body[dir="rtl"] .benefits li { text-align: right; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="lang-bar">
+    <button class="lang-btn active" data-lang="fr">Français</button>
+    <button class="lang-btn" data-lang="ar">العربية</button>
+  </div>
+
+  <section class="hero">
+    <h1 id="h-title">Réservez votre profil Tabibi avant le grand public</h1>
+    <p id="h-sub">Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 7 septembre 2026. Inscrivez-vous maintenant et bénéficiez d'avantages réservés aux pionniers.</p>
+    <div class="badges">
+      <span class="badge"><i class="fa fa-gift"></i> <span id="b1">3 mois Pro gratuits</span></span>
+      <span class="badge"><i class="fa fa-handshake"></i> <span id="b2">Démo offerte en cabinet</span></span>
+      <span class="badge"><i class="fa fa-shield-halved"></i> <span id="b3">Hébergement Algérie</span></span>
+    </div>
+  </section>
+
+  <div class="grid">
+    <div class="card">
+      <h2 id="why-title">Pourquoi rejoindre tôt ?</h2>
+      <ul class="benefits" style="list-style:none;padding:0;margin:0">
+        <li><i class="fa fa-check-circle"></i> <span id="why1"><strong>Profil prioritaire</strong> dans les résultats de recherche de votre spécialité</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why2"><strong>3 mois Pro offerts</strong> dès le lancement (valeur 13 500 DA)</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why3"><strong>Démo en cabinet</strong> par notre équipe terrain (Alger d'abord)</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why4"><strong>Onboarding personnalisé</strong> de votre fiche, horaires, tarifs</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why5"><strong>Tarif Pro stabilisé</strong> au prix de lancement pendant 1 an</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2 id="form-title">Je réserve ma place</h2>
+      <form id="wl-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="f_email" id="l_email">Email professionnel</label>
+          <input class="form-control" id="f_email" type="email" required autocomplete="email" placeholder="vous@cabinet.dz">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_phone" id="l_phone">Téléphone (optionnel)</label>
+          <input class="form-control" id="f_phone" type="tel" autocomplete="tel" placeholder="+213 5xx xx xx xx">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_spec" id="l_spec">Spécialité</label>
+          <select class="form-control" id="f_spec" required>
+            <option value="">-- Choisir --</option>
+            <option value="generaliste">Médecine générale</option>
+            <option value="cardiologie">Cardiologie</option>
+            <option value="dentisterie">Dentisterie</option>
+            <option value="pediatrie">Pédiatrie</option>
+            <option value="gynecologie">Gynécologie</option>
+            <option value="dermatologie">Dermatologie</option>
+            <option value="ophtalmologie">Ophtalmologie</option>
+            <option value="orl">ORL</option>
+            <option value="psychiatrie">Psychiatrie</option>
+            <option value="orthopedie">Orthopédie</option>
+            <option value="urologie">Urologie</option>
+            <option value="rhumatologie">Rhumatologie</option>
+            <option value="endocrinologie">Endocrinologie</option>
+            <option value="radiologie">Radiologie / Imagerie</option>
+            <option value="chirurgie">Chirurgie</option>
+            <option value="laboratoire">Laboratoire d'analyse</option>
+            <option value="pharmacie">Pharmacie</option>
+            <option value="autre">Autre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="f_wilaya" id="l_wilaya">Wilaya d'exercice</label>
+          <select class="form-control" id="f_wilaya" required>
+            <option value="">-- Choisir --</option>
+            <option value="16">Alger</option>
+            <option value="31">Oran</option>
+            <option value="25">Constantine</option>
+            <option value="23">Annaba</option>
+            <option value="9">Blida</option>
+            <option value="19">Sétif</option>
+            <option value="13">Tlemcen</option>
+            <option value="5">Batna</option>
+            <option value="6">Béjaïa</option>
+            <option value="15">Tizi Ouzou</option>
+            <option value="34">Bordj Bou Arreridj</option>
+            <option value="autre">Autre wilaya</option>
+          </select>
+        </div>
+        <label class="check-row">
+          <input type="checkbox" id="f_consent" required>
+          <span id="l_consent">J'accepte que Tabibi me contacte une seule fois pour confirmer mon inscription. Aucun message commercial avant le lancement officiel.</span>
+        </label>
+        <button class="btn-primary" type="submit" id="submit-btn" style="margin-top:8px">
+          <i class="fa fa-paper-plane"></i> <span id="btn-txt">Réserver ma place</span>
+        </button>
+        <div class="msg-ok" id="msg-ok"></div>
+        <div class="msg-err" id="msg-err"></div>
+      </form>
+
+      <div id="thank-you" style="display:none;text-align:center;padding:20px 0">
+        <div style="font-size:48px;color:#2E8B57;margin-bottom:12px">✓</div>
+        <h2 style="margin:0 0 8px" id="ty-title">C'est noté !</h2>
+        <p style="font-size:14px;color:#475569;margin:0 0 16px" id="ty-sub">Vous figurez dans la liste prioritaire. Nous vous contactons en août pour caler la démo en cabinet.</p>
+        <div class="share">
+          <a href="#" id="sh-wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
+          <a href="#" id="sh-fb" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-f"></i> Facebook</a>
+          <a href="#" id="sh-tw" target="_blank" rel="noopener"><i class="fa-brands fa-twitter"></i> X</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <p>Tabibi — La santé à portée de clic.<br>
+    <a href="confidentialite.html">Politique de confidentialité</a> ·
+    <a href="cgu.html">CGU</a> ·
+    <a href="mentions-legales.html">Mentions légales</a></p>
+  </div>
+</div>
+
+<script>
+// ---- Mini i18n local FR/AR ----
+var I18N = {
+  fr: {
+    h_title:"Réservez votre profil Tabibi avant le grand public",
+    h_sub:"Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 7 septembre 2026. Inscrivez-vous maintenant et bénéficiez d'avantages réservés aux pionniers.",
+    b1:"3 mois Pro gratuits", b2:"Démo offerte en cabinet", b3:"Hébergement Algérie",
+    why_title:"Pourquoi rejoindre tôt ?",
+    why1:"<strong>Profil prioritaire</strong> dans les résultats de recherche de votre spécialité",
+    why2:"<strong>3 mois Pro offerts</strong> dès le lancement (valeur 13 500 DA)",
+    why3:"<strong>Démo en cabinet</strong> par notre équipe terrain (Alger d'abord)",
+    why4:"<strong>Onboarding personnalisé</strong> de votre fiche, horaires, tarifs",
+    why5:"<strong>Tarif Pro stabilisé</strong> au prix de lancement pendant 1 an",
+    form_title:"Je réserve ma place",
+    l_email:"Email professionnel", l_phone:"Téléphone (optionnel)",
+    l_spec:"Spécialité", l_wilaya:"Wilaya d'exercice",
+    l_consent:"J'accepte que Tabibi me contacte une seule fois pour confirmer mon inscription. Aucun message commercial avant le lancement officiel.",
+    btn_txt:"Réserver ma place",
+    ty_title:"C'est noté !",
+    ty_sub:"Vous figurez dans la liste prioritaire. Nous vous contactons en août pour caler la démo en cabinet.",
+    err_invalid:"Veuillez verifier vos informations.",
+    err_email:"Email invalide.",
+    err_consent:"Merci d'accepter le consentement.",
+    err_dup:"Merci, votre inscription a deja ete prise en compte.",
+    err_server:"Erreur reseau. Reessayez."
+  },
+  ar: {
+    h_title:"احجز ملفك على طبيبي قبل الافتتاح العام",
+    h_sub:"طبيبي، منصة جزائرية لحجز المواعيد الطبية عبر الإنترنت، تفتح أبوابها للأطباء في 7 سبتمبر 2026. سجل الآن واستفد من امتيازات حصرية للرواد.",
+    b1:"3 أشهر Pro مجاناً", b2:"عرض توضيحي مجاني في العيادة", b3:"استضافة في الجزائر",
+    why_title:"لماذا الانضمام مبكراً؟",
+    why1:"<strong>أولوية الظهور</strong> في نتائج البحث لتخصصكم",
+    why2:"<strong>3 أشهر Pro مجاناً</strong> منذ الافتتاح (بقيمة 13 500 د.ج)",
+    why3:"<strong>عرض في العيادة</strong> من فريقنا الميداني (الجزائر العاصمة أولاً)",
+    why4:"<strong>تخصيص الملف</strong> بياناتكم، أوقاتكم، أسعاركم",
+    why5:"<strong>تثبيت سعر Pro</strong> بسعر الافتتاح لمدة عام كامل",
+    form_title:"أحجز مكاني",
+    l_email:"البريد المهني", l_phone:"الهاتف (اختياري)",
+    l_spec:"التخصص", l_wilaya:"ولاية الممارسة",
+    l_consent:"أوافق أن يتواصل معي طبيبي مرة واحدة لتأكيد التسجيل. لا رسائل تجارية قبل الافتتاح الرسمي.",
+    btn_txt:"حجز مكاني",
+    ty_title:"تم التسجيل !",
+    ty_sub:"اسمكم على القائمة ذات الأولوية. سنتصل بكم في أوت لترتيب العرض في العيادة.",
+    err_invalid:"يرجى التحقق من معلوماتكم.",
+    err_email:"البريد الإلكتروني غير صالح.",
+    err_consent:"يرجى الموافقة على شروط التواصل.",
+    err_dup:"شكراً، تسجيلكم تم استلامه مسبقاً.",
+    err_server:"خطأ في الشبكة. أعد المحاولة."
+  }
+};
+
+function applyLang(lang) {
+  var t = I18N[lang] || I18N.fr;
+  document.documentElement.lang = lang;
+  document.body.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+  var bind = {
+    'h-title':'h_title','h-sub':'h_sub','b1':'b1','b2':'b2','b3':'b3',
+    'why-title':'why_title','why1':'why1','why2':'why2','why3':'why3','why4':'why4','why5':'why5',
+    'form-title':'form_title','l_email':'l_email','l_phone':'l_phone','l_spec':'l_spec','l_wilaya':'l_wilaya',
+    'l_consent':'l_consent','btn-txt':'btn_txt','ty-title':'ty_title','ty-sub':'ty_sub'
+  };
+  Object.keys(bind).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = t[bind[id]];
+  });
+  try { localStorage.setItem('tabibi_lang', lang); } catch(e){}
+}
+
+document.querySelectorAll('.lang-btn').forEach(function(b){
+  b.addEventListener('click', function(){
+    document.querySelectorAll('.lang-btn').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    applyLang(b.dataset.lang);
+  });
+});
+
+// Init langue
+try {
+  var saved = localStorage.getItem('tabibi_lang');
+  if (saved && (saved === 'fr' || saved === 'ar')) {
+    document.querySelector('[data-lang="'+saved+'"]').click();
+  } else if ((navigator.language || '').toLowerCase().startsWith('ar')) {
+    document.querySelector('[data-lang="ar"]').click();
+  }
+} catch(e){}
+
+// ---- Tracking UTM ----
+function getUtm() {
+  var p = new URLSearchParams(location.search);
+  return {
+    utm_source: p.get('utm_source') || null,
+    utm_medium: p.get('utm_medium') || null,
+    utm_campaign: p.get('utm_campaign') || null,
+    source: p.get('utm_source') || 'direct'
+  };
+}
+
+// ---- Submit ----
+document.getElementById('wl-form').addEventListener('submit', async function(e){
+  e.preventDefault();
+  var lang = document.documentElement.lang === 'ar' ? 'ar' : 'fr';
+  var t = I18N[lang];
+  var ok = document.getElementById('msg-ok');
+  var err = document.getElementById('msg-err');
+  ok.style.display = 'none';
+  err.style.display = 'none';
+
+  var email = document.getElementById('f_email').value.trim().toLowerCase();
+  var phone = document.getElementById('f_phone').value.trim();
+  var spec  = document.getElementById('f_spec').value;
+  var wilaya= document.getElementById('f_wilaya').value;
+  var consent = document.getElementById('f_consent').checked;
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    err.textContent = t.err_email; err.style.display = 'block'; return;
+  }
+  if (!spec || !wilaya) {
+    err.textContent = t.err_invalid; err.style.display = 'block'; return;
+  }
+  if (!consent) {
+    err.textContent = t.err_consent; err.style.display = 'block'; return;
+  }
+
+  var btn = document.getElementById('submit-btn');
+  var orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ...';
+
+  var utm = getUtm();
+  var payload = {
+    email: email,
+    phone: phone || null,
+    role: 'medecin',
+    wilaya: wilaya,
+    specialite: spec,
+    source: utm.source,
+    utm_campaign: utm.utm_campaign,
+    utm_source: utm.utm_source,
+    utm_medium: utm.utm_medium,
+    user_agent: navigator.userAgent.slice(0, 200),
+    lang: lang,
+    consent_marketing: consent
+  };
+
+  try {
+    var sb = window.tabibi && window.tabibi.supabase;
+    if (!sb) throw new Error('client_not_ready');
+    var r = await sb.from('waiting_list').insert(payload);
+    if (r.error) {
+      if (r.error.code === '23505' || (r.error.message || '').includes('duplicate')) {
+        err.textContent = t.err_dup;
+      } else {
+        err.textContent = t.err_server;
+        if (window.Sentry) window.Sentry.captureException(r.error);
+      }
+      err.style.display = 'block';
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      return;
+    }
+    // Success
+    document.getElementById('wl-form').style.display = 'none';
+    var ty = document.getElementById('thank-you');
+    ty.style.display = 'block';
+    // Share links
+    var shareUrl = encodeURIComponent('https://tabibi.doctor/medecin-waitinglist.html');
+    var shareText = encodeURIComponent(lang === 'ar' ? 'احجز ملف طبيبي قبل الافتتاح ✨' : 'Réservez votre profil Tabibi avant le grand public ✨');
+    document.getElementById('sh-wa').href = 'https://wa.me/?text=' + shareText + '%20' + shareUrl;
+    document.getElementById('sh-fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + shareUrl;
+    document.getElementById('sh-tw').href = 'https://twitter.com/intent/tweet?text=' + shareText + '&url=' + shareUrl;
+  } catch (e2) {
+    console.error('[waitinglist] submit', e2);
+    err.textContent = t.err_server;
+    err.style.display = 'block';
+    if (window.Sentry) window.Sentry.captureException(e2);
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

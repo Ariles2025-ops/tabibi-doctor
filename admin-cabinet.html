@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-avatar.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Administration de votre cabinet medical sur Tabibi : equipe, abonnement, statistiques.">
+<link rel="canonical" href="https://tabibi.doctor/admin-cabinet.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_admin_cabinet">
+<title>Administration cabinet | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/tokens-v2.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/components-v2.css">
+<style>
+.cab-section { background:#fff; border-radius:14px; padding:18px; box-shadow:var(--s1, 0 1px 3px rgba(0,0,0,.06)); margin-bottom:16px; }
+.cab-h { font-size:16px; font-weight:800; color:var(--text); margin:0 0 12px; display:flex; align-items:center; gap:10px; }
+.cab-h i { color:var(--color-primary, #0F7560); }
+.member-row { display:grid; grid-template-columns:42px 1fr auto; gap:12px; align-items:center; padding:10px; border:1px solid var(--border, #e2e8f0); border-radius:10px; margin-bottom:8px; background:#fff; }
+.avatar-mini { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, var(--brand-green-700,#0F7560), var(--brand-green-900,#0a4d3e)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; }
+.role-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+.role-pill.owner       { background:var(--brand-gold-50,#fffbeb);   color:var(--brand-gold-700,#a17a1f); }
+.role-pill.doctor      { background:var(--brand-green-50,#f0fdf4); color:var(--brand-green-700,#0F7560); }
+.role-pill.secretaire  { background:#eef6ff;                       color:#1f4e9e; }
+.role-pill.admin       { background:#fdf2f8;                       color:#a21caf; }
+.stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; }
+.stat-tile { padding:14px; border-radius:12px; background:linear-gradient(135deg, #f0fdf4, #ecfdf5); border:1px solid var(--brand-green-200,#bbf7d0); }
+.stat-tile .v { font-size:22px; font-weight:800; color:var(--brand-green-900,#0a4d3e); }
+.stat-tile .l { font-size:11px; color:var(--text3,#64748b); text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+.tier-badge { display:inline-block; padding:4px 10px; border-radius:8px; font-size:12px; font-weight:800; letter-spacing:.3px; }
+.tier-badge.solo       { background:#f1f5f9; color:#475569; }
+.tier-badge.pro        { background:var(--brand-green-100,#dcfce7); color:var(--brand-green-900,#0a4d3e); }
+.tier-badge.cabinet    { background:var(--brand-gold-100,#fef3c7); color:var(--brand-gold-700,#a17a1f); }
+.tier-badge.enterprise { background:linear-gradient(135deg,#1e1b4b,#312e81); color:#fff; }
+.toast { background:#fff; border-radius:12px; padding:14px 18px; box-shadow:0 12px 30px rgba(0,0,0,.15); margin-bottom:10px; font-weight:600; max-width:360px; }
+.toast.success { border-left:4px solid var(--color-success, #2E8B57); color:var(--text); }
+.toast.error   { border-left:4px solid var(--color-danger,  #D21010); color:var(--text); }
+.toast.info    { border-left:4px solid var(--color-primary, #0F7560); color:var(--text); }
+[dir="rtl"] .member-row { grid-template-columns:auto 1fr 42px; }
+</style>
+</head>
+<body>
+<script>(function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");})();</script>
+
+<div class="app-root">
+  <header class="app-bar">
+    <a href="doctor-dashboard.html" class="btn btn-icon btn-ghost" aria-label="Retour" data-i18n-title="back" title="Retour"><i class="fa fa-arrow-left"></i></a>
+    <div class="app-bar-body">
+      <div class="app-bar-title" data-i18n="admin_cabinet_title">Administration cabinet</div>
+      <div class="app-bar-sub" id="cabinet-name-sub">--</div>
+    </div>
+    <button onclick="window.location='doctor-dashboard.html'" class="btn btn-icon btn-ghost" data-i18n-title="back_to_dashboard" title="Tableau de bord"><i class="fa fa-table-columns"></i></button>
+  </header>
+
+  <main class="page" role="main" style="padding:16px;max-width:960px;margin:0 auto">
+
+    <!-- Section 1 : Cabinet selector (si plusieurs cabinets) -->
+    <section class="cab-section" id="sec-selector" style="display:none">
+      <h2 class="cab-h"><i class="fa fa-building"></i> <span data-i18n="active_cabinet">Cabinet actif</span></h2>
+      <select id="cab-selector" class="form-control" onchange="onCabinetChange(this.value)"></select>
+    </section>
+
+    <!-- Section 2 : Infos cabinet -->
+    <section class="cab-section">
+      <h2 class="cab-h"><i class="fa fa-circle-info"></i> <span data-i18n="cabinet_info">Informations du cabinet</span></h2>
+      <form onsubmit="saveCabinetInfo(event)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="form-group"><label class="form-label" data-i18n="name">Nom *</label>
+            <input class="form-control" id="cab-name" required maxlength="200"></div>
+          <div class="form-group"><label class="form-label" data-i18n="legal_form">Forme juridique</label>
+            <select class="form-control" id="cab-legal">
+              <option value="">--</option>
+              <option value="Independant" data-i18n="legal_independant">Independant</option>
+              <option value="EURL">EURL</option>
+              <option value="SARL">SARL</option>
+              <option value="Cabinet de groupe" data-i18n="legal_group">Cabinet de groupe</option>
+              <option value="SPA">SPA</option>
+              <option value="Association">Association</option>
+              <option value="Autre" data-i18n="other">Autre</option>
+            </select></div>
+          <div class="form-group"><label class="form-label">RC</label>
+            <input class="form-control" id="cab-rc" maxlength="50"></div>
+          <div class="form-group"><label class="form-label">NIF</label>
+            <input class="form-control" id="cab-nif" maxlength="50"></div>
+          <div class="form-group" style="grid-column:1/-1"><label class="form-label" data-i18n="address">Adresse</label>
+            <input class="form-control" id="cab-address" maxlength="500"></div>
+          <div class="form-group"><label class="form-label" data-i18n="wilaya">Wilaya</label>
+            <input class="form-control" id="cab-wilaya" maxlength="60"></div>
+          <div class="form-group"><label class="form-label" data-i18n="commune">Commune</label>
+            <input class="form-control" id="cab-commune" maxlength="60"></div>
+          <div class="form-group"><label class="form-label" data-i18n="phone">Telephone</label>
+            <input class="form-control" id="cab-phone" type="tel" maxlength="30"></div>
+          <div class="form-group"><label class="form-label">Email</label>
+            <input class="form-control" id="cab-email" type="email"></div>
+        </div>
+        <button class="btn btn-primary" type="submit"><i class="fa fa-save"></i> <span data-i18n="save">Enregistrer</span></button>
+      </form>
+    </section>
+
+    <!-- Section 3 : Equipe -->
+    <section class="cab-section">
+      <h2 class="cab-h"><i class="fa fa-users"></i> <span data-i18n="team_members">Equipe du cabinet</span></h2>
+      <div id="members-list" style="margin-bottom:14px"></div>
+      <button class="btn btn-secondary" onclick="openInviteModal()"><i class="fa fa-user-plus"></i> <span data-i18n="invite_member">Inviter un membre</span></button>
+    </section>
+
+    <!-- Section 4 : Abonnement -->
+    <section class="cab-section">
+      <h2 class="cab-h"><i class="fa fa-credit-card"></i> <span data-i18n="subscription">Abonnement</span></h2>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;flex-wrap:wrap">
+        <span data-i18n="current_tier">Formule actuelle :</span>
+        <span id="tier-badge" class="tier-badge solo">--</span>
+        <span id="tier-status" style="font-size:13px;color:var(--text3)"></span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px">
+        <div style="padding:12px;border:1px solid var(--border);border-radius:10px">
+          <div style="font-weight:800">Solo</div>
+          <div style="font-size:22px;font-weight:800;color:var(--brand-green-700)">Gratuit</div>
+          <div style="font-size:11px;color:var(--text3)">1 medecin, sans secretaire</div>
+        </div>
+        <div style="padding:12px;border:2px solid var(--brand-green-700);border-radius:10px;background:var(--brand-green-50)">
+          <div style="font-weight:800">Pro</div>
+          <div style="font-size:22px;font-weight:800;color:var(--brand-green-900)">4 500 DA<small>/mois</small></div>
+          <div style="font-size:11px;color:var(--text3)">1 medecin + 1 secretaire</div>
+        </div>
+        <div style="padding:12px;border:1px solid var(--brand-gold-300);border-radius:10px;background:var(--brand-gold-50)">
+          <div style="font-weight:800">Cabinet</div>
+          <div style="font-size:22px;font-weight:800;color:var(--brand-gold-700)">12 000 DA<small>/mois</small></div>
+          <div style="font-size:11px;color:var(--text3)">3-8 medecins + secretariat</div>
+        </div>
+        <div style="padding:12px;border:1px solid #312e81;border-radius:10px;background:#f5f3ff">
+          <div style="font-weight:800">Enterprise</div>
+          <div style="font-size:22px;font-weight:800;color:#312e81">Sur devis</div>
+          <div style="font-size:11px;color:var(--text3)">9+ medecins, multi-sites</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:12px;background:#f8fafc;border-radius:10px;font-size:12px;color:var(--text3)" data-i18n="billing_coming_soon">
+        Portail de facturation Stripe-like en cours d'integration. V1 : MRR affiche en mode lecture.
+      </div>
+    </section>
+
+    <!-- Section 5 : Stats -->
+    <section class="cab-section">
+      <h2 class="cab-h"><i class="fa fa-chart-line"></i> <span data-i18n="cabinet_stats">Statistiques du cabinet</span></h2>
+      <div class="stat-grid" id="stats-grid">
+        <div class="stat-tile"><div class="v" id="stat-members">0</div><div class="l" data-i18n="members">membres</div></div>
+        <div class="stat-tile"><div class="v" id="stat-doctors">0</div><div class="l" data-i18n="doctors">medecins</div></div>
+        <div class="stat-tile"><div class="v" id="stat-rdv">0</div><div class="l" data-i18n="rdv_this_month">RDV ce mois</div></div>
+        <div class="stat-tile"><div class="v" id="stat-completed">0</div><div class="l" data-i18n="completed_this_month">honores</div></div>
+        <div class="stat-tile"><div class="v" id="stat-noshow">0</div><div class="l" data-i18n="no_show">no-show</div></div>
+        <div class="stat-tile"><div class="v" id="stat-revenue">0 DA</div><div class="l" data-i18n="revenue_this_month">revenus</div></div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- Modal Invite member -->
+<div id="invite-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:14px;max-width:440px;width:100%;padding:22px">
+    <h3 style="margin:0 0 12px"><i class="fa fa-user-plus"></i> <span data-i18n="invite_member">Inviter un membre</span></h3>
+    <div class="form-group"><label class="form-label">Email *</label>
+      <input class="form-control" id="inv-email" type="email" required></div>
+    <div class="form-group"><label class="form-label" data-i18n="role">Role *</label>
+      <select class="form-control" id="inv-role">
+        <option value="doctor" data-i18n="role_doctor">Medecin</option>
+        <option value="secretaire" data-i18n="role_secretaire">Secretaire</option>
+        <option value="admin_cabinet" data-i18n="role_admin_cabinet">Administrateur cabinet</option>
+      </select></div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px" data-i18n="invite_help">
+      L'invite doit deja avoir un compte Tabibi. Sinon, partagez-lui le lien d'inscription et son email recevra ensuite la notification.
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeInviteModal()" data-i18n="cancel">Annuler</button>
+      <button class="btn btn-primary" onclick="submitInvite()"><i class="fa fa-paper-plane"></i> <span data-i18n="send_invitation">Envoyer</span></button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999"></div>
+
+<script>
+let CURRENT_CABINET_ID = null;
+let CURRENT_USER_ID = null;
+let CURRENT_USER_ROLE_IN_CABINET = null;
+
+function toast(msg, type){
+  type = type || "info";
+  const c = document.getElementById("toast-container");
+  const d = document.createElement("div"); d.className = "toast " + type; d.textContent = msg;
+  c.appendChild(d); setTimeout(()=>d.remove(), 3500);
+}
+
+async function getSupabase(){
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toast("Service Supabase indisponible", "error"); return null;
+  }
+  return window.tabibi.supabase;
+}
+
+async function loadMyCabinets(){
+  const sb = await getSupabase(); if (!sb) return;
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { window.location = "login.html"; return; }
+  CURRENT_USER_ID = session.user.id;
+
+  const { data, error } = await sb.rpc("get_my_cabinets");
+  if (error) { toast("Erreur chargement cabinets: " + error.message, "error"); return; }
+  if (!data || !data.length) {
+    toast("Vous n'etes membre d'aucun cabinet. Creez-en un.", "info");
+    return;
+  }
+
+  // si plus d'un cabinet, afficher selecteur
+  if (data.length > 1) {
+    const sel = document.getElementById("cab-selector");
+    sel.innerHTML = data.map(c => `<option value="${c.cabinet_id}">${c.name} (${c.role})</option>`).join("");
+    document.getElementById("sec-selector").style.display = "block";
+    CURRENT_CABINET_ID = data[0].cabinet_id;
+    CURRENT_USER_ROLE_IN_CABINET = data[0].role;
+  } else {
+    CURRENT_CABINET_ID = data[0].cabinet_id;
+    CURRENT_USER_ROLE_IN_CABINET = data[0].role;
+  }
+  await refreshAll();
+}
+
+async function onCabinetChange(id){
+  CURRENT_CABINET_ID = id;
+  await refreshAll();
+}
+
+async function refreshAll(){
+  await Promise.all([ loadCabinetInfo(), loadMembers(), loadStats() ]);
+}
+
+async function loadCabinetInfo(){
+  const sb = await getSupabase(); if (!sb || !CURRENT_CABINET_ID) return;
+  const { data, error } = await sb.from("cabinets")
+    .select("*").eq("id", CURRENT_CABINET_ID).single();
+  if (error) { toast("Erreur chargement: " + error.message, "error"); return; }
+  document.getElementById("cabinet-name-sub").textContent = data.name;
+  document.getElementById("cab-name").value     = data.name || "";
+  document.getElementById("cab-legal").value    = data.legal_form || "";
+  document.getElementById("cab-rc").value       = data.rc_number || "";
+  document.getElementById("cab-nif").value      = data.nif || "";
+  document.getElementById("cab-address").value  = data.address || "";
+  document.getElementById("cab-wilaya").value   = data.wilaya || "";
+  document.getElementById("cab-commune").value  = data.commune || "";
+  document.getElementById("cab-phone").value    = data.phone || "";
+  document.getElementById("cab-email").value    = data.email || "";
+
+  const tier = data.subscription_tier || "solo";
+  const b = document.getElementById("tier-badge");
+  b.className = "tier-badge " + tier; b.textContent = tier.toUpperCase();
+  const st = document.getElementById("tier-status");
+  if (data.subscription_active) {
+    st.textContent = data.subscription_expires_at
+      ? "actif jusqu'au " + new Date(data.subscription_expires_at).toLocaleDateString()
+      : "actif";
+    st.style.color = "var(--brand-green-700)";
+  } else {
+    st.textContent = "inactif";
+    st.style.color = "var(--brand-red-500)";
+  }
+}
+
+async function saveCabinetInfo(e){
+  e.preventDefault();
+  const sb = await getSupabase(); if (!sb || !CURRENT_CABINET_ID) return;
+  const payload = {
+    name:       document.getElementById("cab-name").value.trim(),
+    legal_form: document.getElementById("cab-legal").value || null,
+    rc_number:  document.getElementById("cab-rc").value.trim() || null,
+    nif:        document.getElementById("cab-nif").value.trim() || null,
+    address:    document.getElementById("cab-address").value.trim() || null,
+    wilaya:     document.getElementById("cab-wilaya").value.trim() || null,
+    commune:    document.getElementById("cab-commune").value.trim() || null,
+    phone:      document.getElementById("cab-phone").value.trim() || null,
+    email:      document.getElementById("cab-email").value.trim() || null
+  };
+  const { error } = await sb.from("cabinets").update(payload).eq("id", CURRENT_CABINET_ID);
+  if (error) { toast("Erreur: " + error.message, "error"); return; }
+  toast("Cabinet mis a jour.", "success");
+  document.getElementById("cabinet-name-sub").textContent = payload.name;
+}
+
+async function loadMembers(){
+  const sb = await getSupabase(); if (!sb || !CURRENT_CABINET_ID) return;
+  const { data, error } = await sb.from("cabinet_members_directory_view")
+    .select("*").eq("cabinet_id", CURRENT_CABINET_ID);
+  if (error) { toast("Erreur membres: " + error.message, "error"); return; }
+  const html = (data || []).map(m => {
+    const ini = ((m.first_name||"?")[0] + (m.last_name||"")[0]).toUpperCase();
+    const role = m.role; const pillClass = role === 'admin_cabinet' ? 'admin' : role;
+    const pendingTag = m.accepted ? "" : ` <span style="font-size:10px;color:#92400e;background:#fef3c7;padding:1px 6px;border-radius:6px">EN ATTENTE</span>`;
+    const removeBtn = (m.user_id === CURRENT_USER_ID || role === 'owner') ? ""
+      : `<button class="btn btn-icon btn-icon-sm" style="background:#fee2e2;color:#dc2626" onclick="removeMember('${m.user_id}','${(m.full_name||'').replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`;
+    return `
+      <div class="member-row">
+        <div class="avatar-mini">${ini}</div>
+        <div>
+          <div style="font-weight:700">${m.full_name||"--"}${pendingTag}</div>
+          <div style="font-size:12px;color:var(--text3)">${m.specialty_fr||""}</div>
+          <span class="role-pill ${pillClass}"><i class="fa fa-shield"></i> ${role}</span>
+        </div>
+        <div>${removeBtn}</div>
+      </div>`;
+  }).join("");
+  document.getElementById("members-list").innerHTML = html || "<div style='color:var(--text3)'>Aucun membre.</div>";
+}
+
+async function removeMember(userId, name){
+  if (!confirm("Retirer " + name + " du cabinet ?")) return;
+  const sb = await getSupabase(); if (!sb) return;
+  const { data, error } = await sb.rpc("remove_cabinet_member",
+    { p_cabinet_id: CURRENT_CABINET_ID, p_user_id: userId });
+  if (error) { toast(error.message, "error"); return; }
+  if (data && data.error) { toast(data.error, "error"); return; }
+  toast("Membre retire.", "success"); loadMembers();
+}
+
+function openInviteModal(){ document.getElementById("invite-modal").style.display = "flex"; }
+function closeInviteModal(){ document.getElementById("invite-modal").style.display = "none"; }
+
+async function submitInvite(){
+  const sb = await getSupabase(); if (!sb) return;
+  const email = document.getElementById("inv-email").value.trim().toLowerCase();
+  const role  = document.getElementById("inv-role").value;
+  if (!email) { toast("Email obligatoire", "error"); return; }
+
+  // Recherche du user_id depuis email (via vue users restreinte)
+  // L'invitation directe par email passe par l'EF tabibi-invite-cabinet-member
+  // qui peut soit creer un user soit le retrouver.
+  // V1 : on appelle simplement la RPC apres lookup public.
+  const { data: u, error: ulookErr } = await sb.from("users")
+    .select("id").eq("email", email).limit(1).maybeSingle();
+  if (ulookErr || !u) {
+    toast("Aucun compte Tabibi avec cet email. Invitez-le a s'inscrire d'abord.", "error"); return;
+  }
+  const { data, error } = await sb.rpc("invite_cabinet_member", {
+    p_cabinet_id: CURRENT_CABINET_ID, p_target_user_id: u.id, p_role: role
+  });
+  if (error) { toast(error.message, "error"); return; }
+  if (data && data.error) { toast(data.error, "error"); return; }
+  toast("Invitation envoyee.", "success"); closeInviteModal(); loadMembers();
+}
+
+async function loadStats(){
+  const sb = await getSupabase(); if (!sb || !CURRENT_CABINET_ID) return;
+  const { data, error } = await sb.from("cabinet_stats_view")
+    .select("*").eq("cabinet_id", CURRENT_CABINET_ID).maybeSingle();
+  if (error || !data) return;
+  document.getElementById("stat-members").textContent   = data.members_count || 0;
+  document.getElementById("stat-doctors").textContent   = data.doctors_count || 0;
+  document.getElementById("stat-rdv").textContent       = data.appointments_this_month || 0;
+  document.getElementById("stat-completed").textContent = data.completed_this_month || 0;
+  document.getElementById("stat-noshow").textContent    = data.no_show_this_month || 0;
+  document.getElementById("stat-revenue").textContent   = (data.revenue_this_month_da || 0) + " DA";
+}
+
+document.addEventListener("DOMContentLoaded", loadMyCabinets);
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

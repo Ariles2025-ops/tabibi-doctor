@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Exercez vos droits RGPD sur Tabibi: acces, export, rectification, suppression de vos donnees.">
+<link rel="canonical" href="https://tabibi.doctor/rgpd-droits.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Mes droits RGPD | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  body { background:#f8fafc; min-height:100vh; }
+  .wrap { max-width:760px; margin:32px auto; padding:0 16px; }
+  .hd { background:linear-gradient(135deg,#0F7560 0%,#0a5a4a 100%); color:#fff; border-radius:16px; padding:28px 24px; margin-bottom:20px; }
+  .hd h1 { margin:0 0 8px; font-size:24px; font-weight:800; }
+  .hd p { margin:0; font-size:14px; opacity:.92; }
+  .card { background:#fff; border-radius:14px; padding:22px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
+  .card-hd { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
+  .card-ico { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:18px; }
+  .ico-blue { background:#dcfce7; color:#0a4d3e; }
+  .ico-amber { background:#fef3c7; color:#b45309; }
+  .ico-red { background:#fee2e2; color:#b91c1c; }
+  .ico-green { background:#dcfce7; color:#15803d; }
+  .card h2 { margin:0; font-size:16px; font-weight:700; color:var(--text); }
+  .card .desc { font-size:13px; color:var(--text3); margin:6px 0 14px; line-height:1.55; }
+  .auth-required { background:#fef3c7; color:#92400e; padding:14px 16px; border-radius:10px; font-size:13px; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+  .out-box { display:none; background:#0f172a; color:#e2e8f0; padding:14px; border-radius:10px; font-size:11px; max-height:240px; overflow:auto; margin-top:10px; font-family:monospace; white-space:pre-wrap; word-break:break-all; }
+  .legal-link { font-size:12px; color:var(--text3); }
+  .footnote { font-size:11px; color:var(--text3); margin-top:8px; }
+  .danger { color:#b91c1c; font-weight:600; }
+</style>
+</head>
+<body>
+<div id="toast-container" style="position:fixed;top:16px;right:16px;z-index:9999"></div>
+
+<div class="wrap">
+  <div class="hd">
+    <h1><i class="fa fa-shield-halved"></i> Mes droits RGPD</h1>
+    <p>Vous pouvez exercer à tout moment les droits suivants sur vos données personnelles, conformément au RGPD et à la loi algérienne 18-07.</p>
+  </div>
+
+  <div id="auth-warn" class="auth-required" style="display:none">
+    <i class="fa fa-circle-exclamation"></i>
+    <div>Connectez-vous pour exercer vos droits. <a href="login.html?next=rgpd-droits.html" style="color:#92400e;font-weight:700;text-decoration:underline">Connexion</a>.</div>
+  </div>
+
+  <!-- DROIT D'ACCES + EXPORT -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ico ico-blue"><i class="fa fa-download"></i></div>
+      <h2>Accéder à mes données / Exporter</h2>
+    </div>
+    <div class="desc">
+      Téléchargez l'intégralité des données associées à votre compte Tabibi au format JSON (lisible par tout outil).
+      Cela inclut profil, RDV, données médicales (déchiffrées), avis, favoris.
+    </div>
+    <button class="btn btn-primary" id="btn-export" disabled>
+      <i class="fa fa-file-export"></i> Télécharger mes données (JSON)
+    </button>
+    <div class="footnote">Le fichier reste sur votre appareil — nous n'envoyons rien par email.</div>
+    <pre class="out-box" id="export-preview"></pre>
+  </div>
+
+  <!-- DROIT DE RECTIFICATION -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ico ico-green"><i class="fa fa-pen"></i></div>
+      <h2>Rectifier mes données</h2>
+    </div>
+    <div class="desc">
+      Vous pouvez modifier vos informations directement depuis votre profil.
+    </div>
+    <a href="patient-profile.html" class="btn btn-secondary"><i class="fa fa-user-gear"></i> Modifier mon profil</a>
+  </div>
+
+  <!-- DROIT D'OPPOSITION (marketing) -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ico ico-amber"><i class="fa fa-ban"></i></div>
+      <h2>M'opposer à la prospection</h2>
+    </div>
+    <div class="desc">
+      Désactivez les notifications commerciales (emails, SMS, WhatsApp) en un clic.
+      Vous continuerez à recevoir les messages opérationnels indispensables (rappel de RDV, etc.).
+    </div>
+    <button class="btn btn-secondary" id="btn-optout" disabled>
+      <i class="fa fa-bell-slash"></i> Désactiver toute prospection
+    </button>
+  </div>
+
+  <!-- DROIT A LA SUPPRESSION -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ico ico-red"><i class="fa fa-trash"></i></div>
+      <h2>Supprimer mon compte</h2>
+    </div>
+    <div class="desc">
+      <span class="danger">⚠ Action irréversible.</span>
+      Votre compte, vos RDV, vos données médicales et toutes les données associées seront supprimés
+      définitivement sous <strong>30 jours</strong> (délai légal pour conservation des journaux d'authentification).
+      Les médecins que vous avez consultés conservent les données médicales obligatoires
+      (dossier médical) selon la loi DZ.
+    </div>
+    <button class="btn btn-danger" id="btn-delete" disabled>
+      <i class="fa fa-user-slash"></i> Demander la suppression de mon compte
+    </button>
+    <div class="footnote">Vous recevrez un email de confirmation. La suppression effective intervient sous 7 jours ouvrés.</div>
+  </div>
+
+  <!-- DROIT A LA PORTABILITE -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ico ico-blue"><i class="fa fa-arrow-right-arrow-left"></i></div>
+      <h2>Portabilité</h2>
+    </div>
+    <div class="desc">
+      Vos données exportées (bouton ci-dessus) sont au format JSON standard — directement réutilisables
+      par toute autre plateforme médicale qui supporte ce format. Pour une transmission directe à un
+      tiers, contactez le DPO.
+    </div>
+  </div>
+
+  <!-- CONTACT DPO -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-ico ico-blue"><i class="fa fa-envelope"></i></div>
+      <h2>Contacter le Délégué à la Protection des Données (DPO)</h2>
+    </div>
+    <div class="desc">
+      Pour toute question relative au traitement de vos données ou pour exercer vos droits par voie postale :
+      <ul style="margin:10px 0 0;padding-left:18px;font-size:13px">
+        <li>Email : <a href="mailto:dpo@tabibi.doctor">dpo@tabibi.doctor</a></li>
+        <li>Courrier : Tabibi SARL — [adresse à compléter] — Alger, Algérie</li>
+        <li>Réponse sous <strong>30 jours</strong> maximum (article 12 RGPD, article 38 loi DZ 18-07).</li>
+      </ul>
+    </div>
+    <p class="legal-link">
+      Vous pouvez également déposer une réclamation auprès de l'<strong>ANPDP</strong>
+      (Autorité Nationale de Protection des Données Personnelles, Algérie).
+    </p>
+  </div>
+
+  <p style="text-align:center;margin:20px 0">
+    <a href="confidentialite.html" class="legal-link"><i class="fa fa-shield"></i> Politique de confidentialité</a>
+    &nbsp; · &nbsp;
+    <a href="cgu.html" class="legal-link"><i class="fa fa-file-contract"></i> CGU</a>
+    &nbsp; · &nbsp;
+    <a href="cookies.html" class="legal-link"><i class="fa fa-cookie-bite"></i> Cookies</a>
+  </p>
+</div>
+
+<script>
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{d.parentNode&&d.parentNode.removeChild(d)},3500);}
+
+function waitForSupabase() {
+  return new Promise(function(resolve){
+    var tries = 0;
+    var iv = setInterval(function(){
+      if (window.tabibi && window.tabibi.supabase) { clearInterval(iv); resolve(true); }
+      else if (++tries > 40) { clearInterval(iv); resolve(false); }
+    }, 80);
+  });
+}
+
+(async function init() {
+  var ready = await waitForSupabase();
+  if (!ready) { toastM('Erreur chargement client', 'error'); return; }
+  var sb = window.tabibi.supabase;
+
+  var session = await sb.auth.getSession();
+  var user = session && session.data && session.data.session && session.data.session.user;
+  if (!user) {
+    document.getElementById('auth-warn').style.display = 'flex';
+    return;
+  }
+  document.getElementById('btn-export').disabled = false;
+  document.getElementById('btn-optout').disabled = false;
+  document.getElementById('btn-delete').disabled = false;
+})();
+
+document.getElementById('btn-export').addEventListener('click', async function() {
+  var sb = window.tabibi && window.tabibi.supabase;
+  if (!sb) return;
+  var session = await sb.auth.getSession();
+  var user = session.data.session && session.data.session.user;
+  if (!user) { toastM('Connectez-vous', 'error'); return; }
+
+  var btn = this;
+  var orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Generation...';
+
+  var payload = {
+    exportedAt: new Date().toISOString(),
+    account: {
+      id: user.id,
+      email: user.email,
+      createdAt: user.created_at,
+      lastSignIn: user.last_sign_in_at
+    },
+    medical: null,
+    appointments: [],
+    favorites: [],
+    reviews: [],
+    errors: []
+  };
+
+  // Donnees medicales
+  try {
+    var med = await sb.rpc('get_patient_medical_data');
+    if (med.error) payload.errors.push('medical: ' + med.error.message);
+    else payload.medical = (med.data && med.data[0]) || null;
+  } catch (e) { payload.errors.push('medical: ' + e.message); }
+
+  // RDV (table rdv si elle existe, sinon localStorage en fallback)
+  try {
+    var rdv = await sb.from('appointments').select('*').eq('patient_id', user.id);
+    if (rdv.error) {
+      // Fallback localStorage
+      try { payload.appointments = JSON.parse(localStorage.getItem('tabibi_rdv') || '[]'); } catch (e) {}
+    } else {
+      payload.appointments = rdv.data || [];
+    }
+  } catch (e) { payload.errors.push('rdv: ' + e.message); }
+
+  // Favoris (localStorage seulement pour le moment)
+  try { payload.favorites = JSON.parse(localStorage.getItem('tabibi_favs') || '[]'); } catch (e) {}
+
+  // Avis
+  try {
+    var rev = await sb.from('reviews').select('*').eq('patient_id', user.id);
+    if (!rev.error) payload.reviews = rev.data || [];
+  } catch (e) {}
+
+  var json = JSON.stringify(payload, null, 2);
+  var blob = new Blob([json], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'tabibi-mes-donnees-' + new Date().toISOString().slice(0,10) + '.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+
+  var prev = document.getElementById('export-preview');
+  prev.style.display = 'block';
+  prev.textContent = json.length > 2000 ? json.slice(0,2000) + '\n...[tronque, fichier complet telecharge]' : json;
+
+  toastM('Export telecharge', 'success');
+  btn.disabled = false;
+  btn.innerHTML = orig;
+});
+
+document.getElementById('btn-optout').addEventListener('click', async function() {
+  if (!confirm('Désactiver toute prospection commerciale ? Vous continuerez à recevoir les messages opérationnels (rappels RDV, etc.).')) return;
+  var sb = window.tabibi && window.tabibi.supabase;
+  var session = await sb.auth.getSession();
+  var user = session.data.session && session.data.session.user;
+  if (!user) return;
+
+  try {
+    var r = await sb.from('user_preferences').upsert({
+      user_id: user.id,
+      marketing_email: false,
+      marketing_sms: false,
+      marketing_whatsapp: false,
+      opt_out_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (r.error) {
+      console.warn('[opt-out] preferences error, fallback localStorage', r.error);
+      localStorage.setItem('tabibi_marketing_optout', '1');
+    }
+    toastM('Prospection commerciale desactivee.', 'success');
+  } catch (e) {
+    localStorage.setItem('tabibi_marketing_optout', '1');
+    toastM('Prospection commerciale desactivee (local).', 'success');
+  }
+});
+
+document.getElementById('btn-delete').addEventListener('click', async function() {
+  if (!confirm('⚠ SUPPRIMER VOTRE COMPTE ?\n\nCette action est IRREVERSIBLE.\nVos RDV, donnees medicales et historique seront effacees sous 7 jours ouvres.')) return;
+  var confirm2 = prompt('Pour confirmer, tapez exactement: SUPPRIMER');
+  if (confirm2 !== 'SUPPRIMER') { toastM('Annule', 'info'); return; }
+
+  var sb = window.tabibi && window.tabibi.supabase;
+  var session = await sb.auth.getSession();
+  var user = session.data.session && session.data.session.user;
+  if (!user) return;
+
+  var btn = this;
+  var orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi...';
+
+  // Strategie:
+  // 1. Marquer la demande dans une table account_deletion_requests (a creer)
+  // 2. Une Edge Function (cron) traite les demandes apres 7 jours
+  // 3. Notification email DPO en parallele
+  try {
+    var r = await sb.from('account_deletion_requests').insert({
+      user_id: user.id,
+      requested_at: new Date().toISOString(),
+      status: 'pending',
+      reason: 'user_request_rgpd'
+    });
+    if (r.error) {
+      // Table peut ne pas exister encore. Fallback: appel Edge Function
+      console.warn('[delete] insert failed, trying edge fn', r.error);
+      var ef = await sb.functions.invoke('request-account-deletion', { body: { reason: 'user_request_rgpd' } });
+      if (ef.error) throw ef.error;
+    }
+    toastM('Demande enregistree. Vous recevrez un email de confirmation.', 'success');
+    // Purger localement
+    try { localStorage.clear(); } catch (e) {}
+    await sb.auth.signOut();
+    setTimeout(function(){ location.href = 'index.html'; }, 2000);
+  } catch (e) {
+    console.error('[delete] error', e);
+    toastM('Echec. Contactez dpo@tabibi.doctor', 'error');
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-cookies.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

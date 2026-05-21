@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="tabibi-page-key" content="title_404">
+<title>Page introuvable | Tabibi</title>
+<meta name="description" content="La page demandée n'existe pas. Retournez à l'accueil Tabibi ou cherchez un médecin en Algérie.">
+<meta name="robots" content="noindex,follow">
+<link rel="canonical" href="https://tabibi.doctor/404.html">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc;min-height:100vh;color:#0f172a;-webkit-font-smoothing:antialiased}
+.hdr{background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;padding:40px 20px 80px;text-align:center;position:relative;overflow:hidden}
+.hdr::before{content:"404";position:absolute;font-size:280px;font-weight:900;opacity:.08;top:-40px;left:50%;transform:translateX(-50%);letter-spacing:-10px}
+.hdr-content{position:relative;z-index:2}
+.hdr h1{font-size:28px;font-weight:800;margin-bottom:10px}
+.hdr p{font-size:15px;opacity:.9;max-width:480px;margin:0 auto}
+.container{max-width:680px;margin:-50px auto 40px;padding:0 16px;position:relative;z-index:3}
+.card{background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 20px rgba(0,0,0,.08);margin-bottom:16px}
+.card h2{font-size:17px;font-weight:800;margin-bottom:14px;color:#0a4d3e;display:flex;align-items:center;gap:10px}
+.actions{display:grid;grid-template-columns:1fr;gap:10px}
+.action{display:flex;align-items:center;gap:14px;padding:14px;background:#f8fafc;border-radius:12px;text-decoration:none;color:#0f172a;border:1px solid #e2e8f0;transition:all .2s}
+.action:hover{border-color:#0F7560;background:#dcfce7;transform:translateY(-1px)}
+.action i.ico{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:#dcfce7;color:#0a4d3e}
+.action .txt{flex:1}
+.action .ttl{font-weight:700;font-size:14px;margin-bottom:2px}
+.action .sub{font-size:12px;color:#64748b}
+.action .arr{color:#cbd5e1}
+.urgency{background:linear-gradient(135deg,#fee2e2,#fecaca);border-left:4px solid #dc2626;padding:16px;border-radius:12px;margin-bottom:16px}
+.urgency .num{font-size:32px;font-weight:900;color:#991b1b;line-height:1}
+.urgency .lbl{font-size:12px;color:#7f1d1d;font-weight:700;margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.search-form{display:flex;gap:8px;margin-top:8px}
+.search-form input{flex:1;padding:11px 14px;border:1px solid #e2e8f0;border-radius:10px;font-family:inherit;font-size:14px}
+.search-form input:focus{outline:none;border-color:#0F7560;box-shadow:0 0 0 3px rgba(15,117,96,.15)}
+.search-form button{padding:11px 18px;background:#0F7560;color:#fff;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-family:inherit;font-size:14px}
+.tiny{font-size:11px;color:#64748b;text-align:center;padding:20px;font-family:monospace} /* [FIX-DESIGN-2026-05-19] WCAG AA contrast */
+@media(min-width:600px){.actions{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-content">
+    <h1><i class="fa fa-compass-drafting"></i> Page introuvable</h1>
+    <p>La page que vous cherchez n'existe pas ou a été déplacée. Pas d'inquiétude, voici comment continuer.</p>
+  </div>
+</header>
+
+<main class="container">
+
+  <div class="urgency" role="alert">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="text-align:center;flex-shrink:0">
+        <div class="num"><i class="fa fa-phone" style="font-size:20px"></i> 14</div>
+        <div class="lbl">Urgence</div>
+      </div>
+      <div style="flex:1;font-size:12px;color:#7f1d1d;line-height:1.5"><b>En cas d'urgence vitale</b>, composez immédiatement le <b>14</b> (Protection Civile algérienne) ou rendez-vous au service d'urgences le plus proche.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><i class="fa fa-magnifying-glass"></i> Que cherchez-vous ?</h2>
+    <form class="search-form" onsubmit="goSearch(event)">
+      <input type="search" id="q" placeholder="Cardiologue Alger, dermatologue Oran..." data-i18n-placeholder="ph_404_search" autofocus aria-label="Recherche médecin">
+      <button type="submit"><i class="fa fa-arrow-right"></i></button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2><i class="fa fa-arrows-to-circle"></i> Liens utiles</h2>
+    <div class="actions">
+      <a href="index.html" class="action">
+        <i class="fa fa-house ico"></i>
+        <div class="txt"><div class="ttl">Accueil Tabibi</div><div class="sub">Page principale</div></div>
+        <i class="fa fa-chevron-right arr"></i>
+      </a>
+      <a href="login.html" class="action">
+        <i class="fa fa-right-to-bracket ico"></i>
+        <div class="txt"><div class="ttl">Se connecter</div><div class="sub">Patient ou médecin</div></div>
+        <i class="fa fa-chevron-right arr"></i>
+      </a>
+      <a href="signup.html" class="action">
+        <i class="fa fa-user-plus ico"></i>
+        <div class="txt"><div class="ttl">Créer un compte</div><div class="sub">Gratuit en 2 minutes</div></div>
+        <i class="fa fa-chevron-right arr"></i>
+      </a>
+      <a href="patient-dashboard.html" class="action">
+        <i class="fa fa-calendar-check ico"></i>
+        <div class="txt"><div class="ttl">Mes rendez-vous</div><div class="sub">Patient connecté</div></div>
+        <i class="fa fa-chevron-right arr"></i>
+      </a>
+      <a href="mailto:contact@tabibi.doctor" class="action">
+        <i class="fa fa-envelope ico"></i>
+        <div class="txt"><div class="ttl">Nous contacter</div><div class="sub">Réponse sous 24h</div></div>
+        <i class="fa fa-chevron-right arr"></i>
+      </a>
+      <a href="cgu.html" class="action">
+        <i class="fa fa-scale-balanced ico"></i>
+        <div class="txt"><div class="ttl">Informations légales</div><div class="sub">CGU, confidentialité</div></div>
+        <i class="fa fa-chevron-right arr"></i>
+      </a>
+    </div>
+  </div>
+
+  <div class="tiny">
+    Code <code>404</code> · URL : <code id="bad-url">—</code>
+  </div>
+
+</main>
+
+<script>
+function goSearch(e){
+  e.preventDefault();
+  const q=document.getElementById("q").value.trim();
+  location.href = q ? ("index.html?q="+encodeURIComponent(q)) : "index.html";
+}
+try { document.getElementById("bad-url").textContent = location.pathname + location.search; } catch(e) {}
+</script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+</body>
+</html>

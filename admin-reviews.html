@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="tabibi-page-key" content="title_admin_reviews">
+<title>Modération des avis | Tabibi Admin</title>
+<meta name="description" content="Interface de modération des avis patients sur les médecins Tabibi.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#0F7560;--blue-d:#0a4d3e;--text:#0f172a;--text2:#475569;--text3:#64748b;--border:#e2e8f0;--bg:#f8fafc;--card:#fff;--ok:#10b981;--ok-l:#d1fae5;--warn:#f59e0b;--warn-l:#fef3c7;--danger:#dc2626;--danger-l:#fee2e2}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased}
+.hdr{background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;padding:24px 16px}
+.hdr-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hdr h1{font-size:22px;font-weight:800;display:flex;align-items:center;gap:10px}
+.hdr a{color:rgba(255,255,255,.85);text-decoration:none;font-size:13px;font-weight:600}
+.container{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+.tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:12px 18px;background:none;border:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tab.active{color:var(--blue-d);border-bottom-color:var(--blue)}
+.tab .badge{background:var(--danger);color:#fff;border-radius:10px;padding:2px 8px;font-size:11px;margin-left:6px}
+.review-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.review-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.review-meta{font-size:12px;color:var(--text3)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase}
+.status-pending{background:var(--warn-l);color:#92400e}
+.status-flagged{background:var(--danger-l);color:#991b1b}
+.status-published{background:var(--ok-l);color:#065f46}
+.status-rejected{background:#f1f5f9;color:#475569}
+.rating-line{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap}
+.review-comment{background:var(--bg);padding:12px 14px;border-radius:8px;font-size:14px;color:#334155;white-space:pre-wrap;margin:10px 0}
+.criteria{display:flex;gap:14px;font-size:12px;color:var(--text3);flex-wrap:wrap}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.btn{padding:8px 14px;border-radius:8px;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-publish{background:var(--ok);color:#fff}
+.btn-reject{background:var(--danger);color:#fff}
+.btn-archive{background:#475569;color:#fff}
+.btn:hover{opacity:.9}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty i{font-size:48px;color:#cbd5e1;margin-bottom:12px}
+.report-info{background:#fff7ed;border-left:4px solid var(--warn);padding:10px 14px;border-radius:8px;font-size:13px;margin-bottom:10px}
+.report-info strong{color:#9a3412}
+.stars{color:#fbbf24}
+@media(max-width:600px){.review-head{flex-direction:column}}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <div class="hdr-inner">
+    <h1><i class="fa fa-gavel"></i> Modération des avis</h1>
+    <a href="admin-dashboard.html"><i class="fa fa-arrow-left"></i> Retour admin</a>
+  </div>
+</header>
+
+<main class="container">
+  <div class="tabs">
+    <button class="tab active" data-tab="pending" onclick="loadTab('pending')">
+      <i class="fa fa-clock"></i> En attente <span class="badge" id="b-pending">0</span>
+    </button>
+    <button class="tab" data-tab="flagged" onclick="loadTab('flagged')">
+      <i class="fa fa-flag"></i> Signalés <span class="badge" id="b-flagged">0</span>
+    </button>
+    <button class="tab" data-tab="published" onclick="loadTab('published')">
+      <i class="fa fa-check"></i> Publiés
+    </button>
+    <button class="tab" data-tab="rejected" onclick="loadTab('rejected')">
+      <i class="fa fa-xmark"></i> Refusés
+    </button>
+  </div>
+
+  <div id="list-container">
+    <div class="empty">
+      <i class="fa fa-spinner fa-spin"></i>
+      <p>Chargement…</p>
+    </div>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-reviews.js"></script>
+
+<script>
+(async function() {
+  // Vérification du rôle admin
+  const user = await window.tabibi.auth.requireAuth(['admin']);
+  if (!user) return;
+
+  let currentTab = 'pending';
+
+  function fmtDate(d) {
+    const dt = new Date(d);
+    return dt.toLocaleDateString('fr-DZ', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderReview(r) {
+    const stars = window.tabibiReviewsUI.renderStars(r.rating_overall, { size: 14 });
+    const status = `<span class="status-badge status-${esc(r.status)}">${esc(r.status)}</span>`;
+    const verified = r.is_verified ? `<span style="background:var(--ok-l);color:#065f46;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px"><i class="fa fa-check-circle"></i> Vérifié RDV</span>` : `<span style="background:#f1f5f9;color:#475569;font-size:11px;padding:2px 8px;border-radius:10px"><i class="fa fa-question-circle"></i> Non vérifié</span>`;
+
+    const reportInfo = r.report_count > 0
+      ? `<div class="report-info"><strong><i class="fa fa-triangle-exclamation"></i> ${r.report_count} signalement(s)</strong> — dernier le ${fmtDate(r.last_reported_at)}</div>`
+      : '';
+
+    let actions = '';
+    if (r.status === 'pending' || r.status === 'flagged') {
+      actions = `
+        <button class="btn btn-publish" onclick="moderate('${esc(r.id)}', 'published')"><i class="fa fa-check"></i> Publier</button>
+        <button class="btn btn-reject" onclick="moderate('${esc(r.id)}', 'rejected')"><i class="fa fa-xmark"></i> Refuser</button>
+      `;
+    } else if (r.status === 'published') {
+      actions = `<button class="btn btn-archive" onclick="moderate('${esc(r.id)}', 'rejected')"><i class="fa fa-eye-slash"></i> Masquer</button>`;
+    }
+
+    const crits = [];
+    if (r.rating_punctuality) crits.push(`<span><i class="fa fa-clock"></i> Ponctualité: <b>${r.rating_punctuality}/5</b></span>`);
+    if (r.rating_listening) crits.push(`<span><i class="fa fa-ear-listen"></i> Écoute: <b>${r.rating_listening}/5</b></span>`);
+    if (r.rating_expertise) crits.push(`<span><i class="fa fa-user-doctor"></i> Expertise: <b>${r.rating_expertise}/5</b></span>`);
+
+    return `
+      <div class="review-card" id="rv-${esc(r.id)}">
+        ${reportInfo}
+        <div class="review-head">
+          <div>
+            <div class="rating-line">${stars} <b>${r.rating_overall}/5</b> ${verified} ${status}</div>
+            <div class="review-meta">
+              <i class="fa fa-id-card"></i> Patient: ${esc(r.patient_id?.substring(0,8) || '?')}… &nbsp;|&nbsp;
+              <i class="fa fa-user-doctor"></i> Médecin: ${esc(r.doctor_id?.substring(0,8) || '?')}… &nbsp;|&nbsp;
+              <i class="fa fa-calendar"></i> ${fmtDate(r.created_at)} &nbsp;|&nbsp;
+              <i class="fa fa-language"></i> ${esc(r.language || 'fr').toUpperCase()}
+            </div>
+          </div>
+        </div>
+        ${r.comment ? `<div class="review-comment">${esc(r.comment)}</div>` : '<div style="color:#64748b;font-style:italic;font-size:13px;margin:10px 0">Pas de commentaire</div>'}
+        <div class="criteria">${crits.join('')}</div>
+        ${r.rejection_reason ? `<div style="margin-top:10px;font-size:12px;color:#991b1b"><b>Motif refus :</b> ${esc(r.rejection_reason)}</div>` : ''}
+        <div class="actions">${actions}</div>
+      </div>
+    `;
+  }
+
+  async function loadTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+    const cont = document.getElementById('list-container');
+    cont.innerHTML = '<div class="empty"><i class="fa fa-spinner fa-spin"></i><p>Chargement…</p></div>';
+
+    const { data, error } = await window.tabibi.supabase
+      .from('reviews')
+      .select('*')
+      .eq('status', tab)
+      .order('created_at', { ascending: tab === 'pending' || tab === 'flagged' });
+
+    if (error) {
+      cont.innerHTML = `<div class="empty"><i class="fa fa-circle-exclamation"></i><p>Erreur : ${esc(error.message)}</p></div>`;
+      return;
+    }
+    if (!data || !data.length) {
+      cont.innerHTML = `<div class="empty"><i class="fa fa-check-circle"></i><p>Aucun avis dans cette catégorie</p></div>`;
+      return;
+    }
+    cont.innerHTML = data.map(renderReview).join('');
+  }
+
+  async function refreshBadges() {
+    const counts = {};
+    for (const s of ['pending', 'flagged']) {
+      const { count } = await window.tabibi.supabase
+        .from('reviews')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', s);
+      counts[s] = count || 0;
+    }
+    document.getElementById('b-pending').textContent = counts.pending;
+    document.getElementById('b-flagged').textContent = counts.flagged;
+  }
+
+  window.moderate = async function(id, newStatus) {
+    let reason = null;
+    if (newStatus === 'rejected') {
+      reason = prompt('Motif de refus (optionnel mais recommandé) :');
+      if (reason === null) return; // user cancelled
+    }
+    try {
+      await window.tabibi.reviews.moderate(id, newStatus, reason);
+      const card = document.getElementById('rv-' + id);
+      if (card) card.style.opacity = '0.4';
+      setTimeout(() => { loadTab(currentTab); refreshBadges(); }, 400);
+    } catch (e) {
+      alert('Erreur : ' + (e.message || 'inconnue'));
+    }
+  };
+
+  window.loadTab = loadTab;
+
+  // Init
+  await refreshBadges();
+  await loadTab('pending');
+})();
+</script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

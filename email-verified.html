@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Email Tabibi verifie avec succes.">
+<link rel="canonical" href="https://tabibi.doctor/email-verified.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Email vérifié | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  body { background:linear-gradient(135deg,#dcfce7 0%,#f0fdf4 100%); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .card { background:#fff; border-radius:18px; padding:38px 28px; max-width:440px; text-align:center; box-shadow:0 12px 36px rgba(0,0,0,.08); }
+  .ico { width:80px; height:80px; border-radius:50%; background:#dcfce7; color:#15803d; display:flex; align-items:center; justify-content:center; font-size:36px; margin:0 auto 18px; }
+  h1 { font-size:22px; font-weight:800; margin:0 0 8px; color:var(--text); }
+  p { font-size:14px; color:var(--text3); margin:0 0 22px; line-height:1.55; }
+  .err { color:#b91c1c; background:#fee2e2; padding:12px; border-radius:10px; font-size:13px; margin-bottom:18px; display:none; }
+  .ok { color:#166534; background:#dcfce7; padding:12px; border-radius:10px; font-size:13px; margin-bottom:18px; display:none; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="ico" id="ico"><i class="fa fa-circle-check"></i></div>
+  <h1 id="title">Vérification en cours...</h1>
+  <p id="sub">Validation de votre lien email.</p>
+  <div class="ok" id="ok-box"></div>
+  <div class="err" id="err-box"></div>
+  <a id="cta" href="login.html" class="btn btn-primary btn-full btn-lg" style="display:none">
+    <i class="fa fa-right-to-bracket"></i> Se connecter
+  </a>
+</div>
+
+<script>
+function waitForSupabase() {
+  return new Promise(function(resolve){
+    var tries = 0;
+    var iv = setInterval(function(){
+      if (window.tabibi && window.tabibi.supabase) { clearInterval(iv); resolve(true); }
+      else if (++tries > 40) { clearInterval(iv); resolve(false); }
+    }, 80);
+  });
+}
+
+(async function(){
+  var title = document.getElementById('title');
+  var sub = document.getElementById('sub');
+  var ico = document.getElementById('ico');
+  var okBox = document.getElementById('ok-box');
+  var errBox = document.getElementById('err-box');
+  var cta = document.getElementById('cta');
+
+  var ready = await waitForSupabase();
+  if (!ready) {
+    title.textContent = 'Erreur';
+    sub.textContent = 'Client non charge.';
+    return;
+  }
+  var sb = window.tabibi.supabase;
+
+  // Supabase poste les tokens dans le hash. Si presents, on consume la session.
+  try {
+    var hash = (window.location.hash || '').replace(/^#/, '');
+    var params = new URLSearchParams(hash);
+    var access = params.get('access_token');
+    var refresh = params.get('refresh_token');
+    var error = params.get('error_description') || params.get('error');
+
+    if (error) {
+      title.textContent = 'Lien invalide';
+      sub.textContent = '';
+      ico.style.background = '#fee2e2';
+      ico.style.color = '#b91c1c';
+      ico.innerHTML = '<i class="fa fa-circle-xmark"></i>';
+      errBox.textContent = decodeURIComponent(error);
+      errBox.style.display = 'block';
+      cta.href = 'login.html';
+      cta.textContent = '← Retour connexion';
+      cta.style.display = 'inline-block';
+      return;
+    }
+
+    if (access && refresh) {
+      var setRes = await sb.auth.setSession({ access_token: access, refresh_token: refresh });
+      if (setRes.error) throw setRes.error;
+      history.replaceState(null, '', window.location.pathname);
+    }
+
+    // Verifier
+    var s = await sb.auth.getSession();
+    if (s && s.data && s.data.session && s.data.session.user) {
+      title.textContent = 'Email vérifié !';
+      sub.textContent = 'Votre compte est maintenant actif.';
+      okBox.textContent = 'Bienvenue sur Tabibi. Vous pouvez vous connecter et commencer à prendre des RDV.';
+      okBox.style.display = 'block';
+      cta.style.display = 'inline-block';
+      // Sign out: on force a se reconnecter explicitement (UX claire)
+      await sb.auth.signOut();
+    } else {
+      title.textContent = 'Lien expiré';
+      sub.textContent = '';
+      ico.style.background = '#fef3c7';
+      ico.style.color = '#b45309';
+      ico.innerHTML = '<i class="fa fa-triangle-exclamation"></i>';
+      errBox.textContent = 'Le lien a expire ou a deja ete utilise.';
+      errBox.style.display = 'block';
+      cta.href = 'login.html';
+      cta.textContent = 'Renvoyer un lien';
+      cta.style.display = 'inline-block';
+    }
+  } catch (e) {
+    console.error('[email-verified] error', e);
+    title.textContent = 'Erreur';
+    sub.textContent = '';
+    ico.style.background = '#fee2e2';
+    ico.style.color = '#b91c1c';
+    ico.innerHTML = '<i class="fa fa-circle-xmark"></i>';
+    errBox.textContent = (e && e.message) || 'Erreur inattendue';
+    errBox.style.display = 'block';
+    cta.href = 'login.html';
+    cta.textContent = 'Retour connexion';
+    cta.style.display = 'inline-block';
+  }
+})();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Tabibi — Verification d'authenticite d'une ordonnance medicale. Outil destine aux pharmacies.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<title>Verification d'ordonnance | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/tokens-v2.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-family);
+         min-height: 100vh; display: flex; flex-direction: column; }
+
+  .topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 14px 20px;
+            display: flex; align-items: center; gap: 14px; }
+  .topbar .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-primary); }
+  .topbar .logo img { width: 32px; height: 32px; }
+  .topbar .logo b { font-size: 18px; font-weight: 800; letter-spacing: -0.3px; }
+  .topbar h1 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text2); flex: 1; }
+  .lang-bar { display: flex; gap: 4px; }
+  .lang-btn { background: transparent; border: 1px solid var(--border); padding: 5px 10px; border-radius: var(--r8);
+              cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text2); }
+  .lang-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  .main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+  .card { background: var(--card); max-width: 560px; width: 100%; border-radius: var(--r16);
+          padding: 36px 32px; box-shadow: var(--s2); text-align: center; }
+
+  .status-badge { width: 96px; height: 96px; border-radius: 50%; margin: 0 auto 20px; display: flex;
+                  align-items: center; justify-content: center; font-size: 48px; color: #fff; }
+  .status-badge.ok    { background: var(--color-success); box-shadow: 0 8px 24px rgba(46,139,87,0.32); }
+  .status-badge.warn  { background: var(--color-warning); box-shadow: 0 8px 24px rgba(245,158,11,0.32); }
+  .status-badge.err   { background: var(--color-danger); box-shadow: 0 8px 24px rgba(210,16,16,0.32); }
+  .status-badge.load  { background: var(--bg3); color: var(--text3); }
+
+  .verdict { font-size: 22px; font-weight: 800; margin: 0 0 6px; color: var(--text); }
+  .verdict.ok   { color: var(--color-success-hover); }
+  .verdict.warn { color: var(--color-warning-on); }
+  .verdict.err  { color: var(--color-danger); }
+  .verdict-sub { font-size: 14px; color: var(--text2); margin: 0 0 26px; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 20px; text-align: left;
+               background: var(--bg2); padding: 18px 20px; border-radius: var(--r12); margin-bottom: 22px; }
+  .info-grid .lbl { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px; }
+  .info-grid .val { font-size: 14px; font-weight: 600; color: var(--text); word-break: break-word; }
+  @media (max-width: 480px) { .info-grid { grid-template-columns: 1fr; } }
+
+  .alert { padding: 14px 16px; border-radius: var(--r8); font-size: 13px; text-align: left; margin-bottom: 18px; }
+  .alert i { margin-right: 8px; }
+  .alert-warn { background: var(--color-warning-light); color: var(--color-warning-on); border-left: 3px solid var(--color-warning); }
+  .alert-err  { background: var(--color-danger-light);  color: var(--color-danger);     border-left: 3px solid var(--color-danger); }
+  .alert-info { background: var(--color-primary-light); color: var(--color-primary-hover); border-left: 3px solid var(--color-primary); }
+
+  .help { font-size: 12px; color: var(--text3); margin-top: 16px; line-height: 1.5; }
+  .help a { color: var(--color-primary); text-decoration: none; }
+
+  .footer { text-align: center; padding: 18px; font-size: 12px; color: var(--text3); border-top: 1px solid var(--border); background: var(--card); }
+  .footer a { color: var(--color-primary); text-decoration: none; }
+
+  .skeleton-line { background: var(--bg3); border-radius: 4px; height: 14px; margin: 8px 0; animation: pulse 1.5s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="https://tabibi.doctor" class="logo">
+    <img src="images/logo-mark.svg" alt="Tabibi">
+    <b>Tabibi</b>
+  </a>
+  <h1 id="t-pagetitle">Verification d'ordonnance</h1>
+  <div class="lang-bar">
+    <button class="lang-btn active" data-lang="fr">FR</button>
+    <button class="lang-btn" data-lang="ar">العربية</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="card" id="result-card">
+    <div class="status-badge load" id="badge">
+      <i class="fa fa-spinner fa-spin"></i>
+    </div>
+    <h2 class="verdict" id="verdict">Verification en cours...</h2>
+    <p class="verdict-sub" id="verdict-sub">Veuillez patienter.</p>
+    <div class="info-grid" id="info-grid" style="display:none"></div>
+    <div id="alert-slot"></div>
+    <p class="help" id="help">
+      Outil de verification pour les pharmacies et les patients. Saisir le QR code ou le lien depuis l'ordonnance.<br>
+      <a href="https://tabibi.doctor">tabibi.doctor</a>
+    </p>
+  </div>
+</div>
+
+<div class="footer">
+  Tabibi — La sante plus simple en Algerie. <a href="https://tabibi.doctor/mentions-legales.html">Mentions legales</a>.
+</div>
+
+<script src="js/config.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+
+  // i18n
+  const I18N = {
+    fr: {
+      pagetitle: 'Verification d\'ordonnance',
+      loading: 'Verification en cours...', loadingSub: 'Veuillez patienter.',
+      valid: 'Ordonnance authentique', validSub: 'Cette ordonnance a bien ete emise par un medecin verifie sur Tabibi.',
+      expired: 'Ordonnance EXPIREE', expiredSub: 'Authentique, mais sa duree de validite est depassee.',
+      cancelled: 'Ordonnance ANNULEE', cancelledSub: 'Cette ordonnance a ete revoquee par le medecin prescripteur.',
+      invalid: 'Ordonnance INVALIDE', invalidSub: 'La signature ne correspond pas. Possible fraude ou alteration.',
+      notFound: 'Ordonnance INTROUVABLE', notFoundSub: 'Aucune ordonnance avec cet identifiant.',
+      paramsRequired: 'Lien incomplet', paramsRequiredSub: 'Le QR code ou le lien semble incomplet (id et signature requis).',
+      serverErr: 'Erreur serveur', serverErrSub: 'Reessayer dans quelques instants.',
+      labDoctor: 'Medecin', labSpecialty: 'Specialite', labPatient: 'Patient', labNumber: 'No ordonnance',
+      labIssue: 'Date d\'emission', labExpiry: 'Validite', labStatus: 'Statut',
+      expWarn: 'Cette ordonnance n\'est plus valable. Verifier avec le patient s\'il en possede une plus recente.',
+      cancelInfo: 'Le medecin a annule cette prescription. Ne pas delivrer.',
+      help: 'Outil de verification pour les pharmacies et les patients. Saisir le QR code ou le lien depuis l\'ordonnance.',
+    },
+    ar: {
+      pagetitle: 'التحقق من الوصفة الطبية',
+      loading: 'جاري التحقق...', loadingSub: 'يرجى الانتظار.',
+      valid: 'وصفة طبية موثقة', validSub: 'هذه الوصفة صادرة عن طبيب موثق على منصة طبيبي.',
+      expired: 'وصفة منتهية الصلاحية', expiredSub: 'موثقة، لكن مدة صلاحيتها انتهت.',
+      cancelled: 'وصفة ملغاة', cancelledSub: 'تم إلغاء هذه الوصفة من قبل الطبيب.',
+      invalid: 'وصفة غير صالحة', invalidSub: 'التوقيع غير مطابق. احتمال تزوير أو تعديل.',
+      notFound: 'الوصفة غير موجودة', notFoundSub: 'لا توجد وصفة بهذا المعرف.',
+      paramsRequired: 'رابط غير مكتمل', paramsRequiredSub: 'يبدو أن رمز QR أو الرابط غير مكتمل.',
+      serverErr: 'خطأ في الخادم', serverErrSub: 'يرجى المحاولة لاحقاً.',
+      labDoctor: 'الطبيب', labSpecialty: 'التخصص', labPatient: 'المريض', labNumber: 'رقم الوصفة',
+      labIssue: 'تاريخ الإصدار', labExpiry: 'الصلاحية حتى', labStatus: 'الحالة',
+      expWarn: 'هذه الوصفة لم تعد سارية. تحقق مع المريض من وجود وصفة أحدث.',
+      cancelInfo: 'ألغى الطبيب هذه الوصفة. لا تصرف الدواء.',
+      help: 'أداة تحقق للصيدليات والمرضى. أدخل رمز QR أو الرابط من الوصفة.',
+    }
+  };
+  let lang = 'fr';
+  function t() { return I18N[lang] || I18N.fr; }
+  function applyLang(l) {
+    lang = l;
+    const tt = t();
+    document.documentElement.lang = l;
+    document.documentElement.dir = (l === 'ar') ? 'rtl' : 'ltr';
+    document.body.dir = document.documentElement.dir;
+    $('#t-pagetitle').textContent = tt.pagetitle;
+    $('#help').innerHTML = tt.help + '<br><a href="https://tabibi.doctor">tabibi.doctor</a>';
+    $$('.lang-bar .lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === l));
+    try { localStorage.setItem('tabibi.lang', l); } catch (e) {}
+  }
+
+  function render(state, data) {
+    const tt = t();
+    const badge = $('#badge');
+    const verdict = $('#verdict');
+    const sub = $('#verdict-sub');
+    const grid = $('#info-grid');
+    const slot = $('#alert-slot');
+    verdict.classList.remove('ok', 'warn', 'err');
+    badge.classList.remove('ok', 'warn', 'err', 'load');
+    grid.style.display = 'none';
+    slot.innerHTML = '';
+
+    if (state === 'valid') {
+      badge.classList.add('ok');
+      badge.innerHTML = '<i class="fa fa-check"></i>';
+      verdict.classList.add('ok');
+      verdict.textContent = tt.valid;
+      sub.textContent = tt.validSub;
+    } else if (state === 'expired') {
+      badge.classList.add('warn');
+      badge.innerHTML = '<i class="fa fa-clock"></i>';
+      verdict.classList.add('warn');
+      verdict.textContent = tt.expired;
+      sub.textContent = tt.expiredSub;
+      slot.innerHTML = `<div class="alert alert-warn"><i class="fa fa-triangle-exclamation"></i>${tt.expWarn}</div>`;
+    } else if (state === 'cancelled') {
+      badge.classList.add('err');
+      badge.innerHTML = '<i class="fa fa-ban"></i>';
+      verdict.classList.add('err');
+      verdict.textContent = tt.cancelled;
+      sub.textContent = tt.cancelledSub;
+      slot.innerHTML = `<div class="alert alert-err"><i class="fa fa-circle-xmark"></i>${tt.cancelInfo}</div>`;
+    } else if (state === 'invalid') {
+      badge.classList.add('err');
+      badge.innerHTML = '<i class="fa fa-xmark"></i>';
+      verdict.classList.add('err');
+      verdict.textContent = tt.invalid;
+      sub.textContent = tt.invalidSub;
+    } else if (state === 'not_found') {
+      badge.classList.add('err');
+      badge.innerHTML = '<i class="fa fa-magnifying-glass"></i>';
+      verdict.classList.add('err');
+      verdict.textContent = tt.notFound;
+      sub.textContent = tt.notFoundSub;
+    } else if (state === 'params_required') {
+      badge.classList.add('warn');
+      badge.innerHTML = '<i class="fa fa-link-slash"></i>';
+      verdict.classList.add('warn');
+      verdict.textContent = tt.paramsRequired;
+      sub.textContent = tt.paramsRequiredSub;
+    } else {
+      // server / other
+      badge.classList.add('err');
+      badge.innerHTML = '<i class="fa fa-server"></i>';
+      verdict.classList.add('err');
+      verdict.textContent = tt.serverErr;
+      sub.textContent = tt.serverErrSub;
+    }
+
+    if (data) {
+      const items = [
+        [tt.labDoctor,     data.doctor_name],
+        [tt.labSpecialty,  data.doctor_specialty || '—'],
+        [tt.labNumber,     data.prescription_number],
+        [tt.labPatient,    data.patient_initials || '—'],
+        [tt.labIssue,      data.issue_date],
+        [tt.labExpiry,     data.expiry_date],
+        [tt.labStatus,     data.status],
+      ];
+      grid.innerHTML = items.map(([lbl, val]) =>
+        `<div><div class="lbl">${escapeHtml(lbl)}</div><div class="val">${escapeHtml(val)}</div></div>`
+      ).join('');
+      grid.style.display = '';
+    }
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  async function verify() {
+    const params = new URLSearchParams(location.search);
+    const id  = params.get('id');
+    const sig = params.get('sig');
+    if (!id || !sig) {
+      render('params_required');
+      return;
+    }
+
+    try {
+      const url = `${window.TABIBI_CONFIG.SUPABASE_URL}/functions/v1/verify-prescription?id=${encodeURIComponent(id)}&sig=${encodeURIComponent(sig)}`;
+      const resp = await fetch(url, { method: 'GET' });
+      const payload = await resp.json();
+
+      if (payload.error === 'not_found')        return render('not_found');
+      if (payload.error === 'invalid_signature') return render('invalid');
+      if (payload.error === 'not_signed')        return render('invalid');
+      if (payload.error === 'invalid_params')    return render('params_required');
+      if (payload.error)                         return render('server');
+
+      if (payload.cancelled) return render('cancelled', payload);
+      if (payload.expired)   return render('expired',   payload);
+      if (payload.valid)     return render('valid',     payload);
+      return render('invalid', payload);
+    } catch (e) {
+      console.error('[verify]', e);
+      render('server');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    $$('.lang-bar .lang-btn').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.lang)));
+    const saved = (function() { try { return localStorage.getItem('tabibi.lang'); } catch (e) { return null; } })();
+    if (saved) applyLang(saved);
+    verify();
+  });
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,59 @@
+<!--
+  Tabibi - Email transactionnel
+  Template : Confirmation RDV patient
+  Subject  : Rendez-vous confirmé avec Dr {{nom_medecin}} le {{date_rdv}}
+  Preheader: {{date_rdv}} à {{heure_rdv}} - {{adresse_cabinet}}
+-->
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<title>Confirmation de votre rendez-vous</title>
+</head>
+<body style="font-family:Arial,sans-serif;color:#222;line-height:1.6;max-width:600px;margin:0 auto;padding:24px">
+
+<h1 style="color:#2E8B57">Votre rendez-vous est confirmé</h1>
+
+<p>Bonjour {{prenom_patient}},</p>
+
+<p>Votre rendez-vous est bien enregistré. Voici le récapitulatif :</p>
+
+<h2 style="color:#0F7560">{{specialite}} &middot; Dr {{nom_medecin}}</h2>
+
+<ul>
+<li><strong>Date :</strong> {{date_rdv}}</li>
+<li><strong>Heure :</strong> {{heure_rdv}}</li>
+<li><strong>Adresse :</strong> {{adresse_cabinet}}</li>
+<li><strong>Motif :</strong> {{motif_consultation}}</li>
+<li><strong>Tarif indicatif :</strong> {{tarif_consultation}} DA</li>
+</ul>
+
+<p><a href="{{lien_ajout_calendrier}}" style="background:#0F7560;color:#fff;padding:12px 22px;text-decoration:none;border-radius:6px;display:inline-block">Ajouter à mon calendrier</a></p>
+
+<h2 style="color:#2E8B57">Pensez à apporter</h2>
+
+<ul>
+<li>Votre pièce d'identité</li>
+<li>Votre carte Chifa (si vous en avez une, vérifiez sa validité)</li>
+<li>Vos comptes rendus d'examens récents</li>
+<li>La liste de vos traitements en cours</li>
+</ul>
+
+<h2 style="color:#2E8B57">Un imprévu ?</h2>
+
+<p>Si vous ne pouvez plus vous rendre à ce rendez-vous, merci d'annuler ou de le déplacer dès que possible. Un autre patient pourra ainsi prendre votre créneau.</p>
+
+<p><a href="{{lien_gestion_rdv}}">Modifier ou annuler ce rendez-vous</a></p>
+
+<p>À bientôt,<br>
+<strong>L'équipe Tabibi</strong></p>
+
+<hr style="border:none;border-top:1px solid #eee;margin:32px 0">
+
+<p style="font-size:12px;color:#666">
+Tabibi &middot; La santé plus simple en Algérie<br>
+<a href="https://tabibi.doctor" style="color:#666">tabibi.doctor</a> &middot; <a href="{{lien_desinscription}}" style="color:#666">Gérer mes notifications</a>
+</p>
+
+</body>
+</html>

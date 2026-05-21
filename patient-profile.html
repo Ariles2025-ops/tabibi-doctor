@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-avatar.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Profil patient privé Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/patient-profile.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_patient_profile">
+<title>Mon profil | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+.section-card { margin-bottom: 14px; }
+.sec-title-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+.sec-title-bar i { width:32px; height:32px; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+.sec-title-bar .lbl { font-size:14px; font-weight:700; color:var(--text); }
+.sec-title-bar .desc { font-size:11px; color:var(--text3); }
+.toggle-switch { position:relative; width:44px; height:24px; background:var(--border); border-radius:12px; cursor:pointer; transition:.2s; }
+.toggle-switch.on { background:var(--green); }
+.toggle-switch::after { content:""; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:.2s; box-shadow:var(--s1); }
+.toggle-switch.on::after { left:22px; }
+.row-setting { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--bg2); }
+.row-setting:last-child { border-bottom:none; }
+.row-setting .info { flex:1; }
+.row-setting .name { font-size:13px; font-weight:600; color:var(--text); }
+.row-setting .desc { font-size:11px; color:var(--text3); margin-top:2px; }
+.danger-card { background:var(--red-l); border-left:3px solid var(--red); }
+</style>
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='patient-dashboard.html'" aria-label="Retour au tableau de bord"><i class="fa fa-arrow-left"></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Mon profil</div><div class="app-bar-sub">Patient · Compte personnel</div></div>
+  <button class="btn btn-soft btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> Sauver</button>
+</header>
+<main class="page" style="padding:0 0 80px">
+  <!-- COVER -->
+  <div style="background:linear-gradient(135deg,#0a4d3e,#0F7560,#1a8a73);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
+    <div style="position:relative;width:88px;height:88px;margin:0 auto 12px">
+      <div id="ava" style="width:88px;height:88px;border-radius:50%;background:#fff;color:#0F7560;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:4px solid rgba(255,255,255,.3)">?</div>
+      <button onclick="changeAvatar()" style="position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;border:3px solid #fff;font-size:12px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center" aria-label="Changer la photo"><i class="fa fa-camera"></i></button>
+    </div>
+    <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
+    <p id="pemail" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
+    <span class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:inline-block"><i class="fa fa-user"></i> Patient · membre depuis <span id="member-since">2025</span></span>
+  </div>
+  <div style="padding:16px 16px 0">
+    <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;padding:16px 8px">
+      <div><div id="rdv-count" style="font-size:20px;font-weight:800;color:var(--blue);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">RDV total</div></div>
+      <div><div id="upcoming-count" style="font-size:20px;font-weight:800;color:var(--green);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">À venir</div></div>
+      <div><div id="fav-count" style="font-size:20px;font-weight:800;color:var(--red);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">Favoris</div></div>
+      <div><div id="rev-count" style="font-size:20px;font-weight:800;color:#f59e0b;line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">Avis</div></div>
+    </div>
+  </div>
+  <div style="padding:16px">
+
+    
+    <!-- 0. CARTE SANTÉ VISUELLE (inspirée Apple Health / MyChart) -->
+    <div class="card section-card" style="margin-bottom:14px;background:linear-gradient(135deg,#eff6ff,#fef3c7);border:1px solid #dcfce7">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;color:#0F7560;font-weight:700;text-transform:uppercase;letter-spacing:.5px"><i class="fa fa-id-card-clip"></i> Carte de santé numérique</div>
+          <div style="font-size:13px;color:var(--text2);margin-top:2px">N° Patient Tabibi <strong id="qr-patient-id">TBB-2025-001247</strong></div>
+        </div>
+        <div id="health-qr" style="width:56px;height:56px;background:#fff;border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text)"><i class="fa fa-qrcode"></i></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-blood" style="font-size:18px;font-weight:800;color:#dc2626">A+</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase">Sang</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-imc" style="font-size:18px;font-weight:800;color:#16a34a">23.7</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase">IMC</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-age" style="font-size:18px;font-weight:800;color:#0F7560">35 ans</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase">Âge</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-allergies" style="font-size:14px;font-weight:800;color:#f59e0b;line-height:1.6">⚠ 1</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase">Allergie</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center"><i class="fa fa-shield"></i> Affichez ce QR aux médecins pour un accès rapide à votre dossier</div>
+    </div>
+
+    <!-- INDICATEURS SANTÉ -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#fee2e2;color:#dc2626"><i class="fa fa-heart-pulse"></i></i>
+        <div><div class="lbl">Indicateurs santé</div><div class="desc">Suivi mensuel</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div style="padding:10px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b"><div style="font-size:11px;color:#92400e;font-weight:700;text-transform:uppercase">Tension</div><div style="font-size:18px;font-weight:800">12/8</div><div style="font-size:10px;color:var(--text3)">Normale</div></div>
+        <div style="padding:10px;background:#dcfce7;border-radius:8px;border-left:3px solid #16a34a"><div style="font-size:11px;color:#166534;font-weight:700;text-transform:uppercase">Glycémie</div><div style="font-size:18px;font-weight:800">0.9 g/L</div><div style="font-size:10px;color:var(--text3)">Normale</div></div>
+        <div style="padding:10px;background:#dcfce7;border-radius:8px;border-left:3px solid #0F7560"><div style="font-size:11px;color:#0a4d3e;font-weight:700;text-transform:uppercase">Cholestérol</div><div style="font-size:18px;font-weight:800">1.8 g/L</div><div style="font-size:10px;color:var(--text3)">Optimal</div></div>
+        <div style="padding:10px;background:#f3e8ff;border-radius:8px;border-left:3px solid #7c3aed"><div style="font-size:11px;color:#6b21a8;font-weight:700;text-transform:uppercase">Pouls</div><div style="font-size:18px;font-weight:800">72 bpm</div><div style="font-size:10px;color:var(--text3)">Au repos</div></div>
+      </div>
+      <button class="btn btn-soft btn-full btn-sm" onclick="alert(tabibiT('alert_module_measures_soon','Module mesures · Bientôt disponible'))"><i class="fa fa-plus"></i> Ajouter une mesure</button>
+    </div>
+
+    <!-- VACCINATIONS VISUELLES -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#dcfce7;color:#166534"><i class="fa fa-syringe"></i></i>
+        <div><div class="lbl">Carnet de vaccinations</div><div class="desc">À jour</div></div></div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#dcfce7;border-radius:8px"><div style="width:32px;height:32px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fa fa-check"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">COVID-19 (rappel)</div><div style="font-size:11px;color:var(--text3)">Pfizer · 12 mars 2024</div></div><span class="badge badge-green" style="font-size:10px">À jour</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#dcfce7;border-radius:8px"><div style="width:32px;height:32px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fa fa-check"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">Tétanos / Diphtérie</div><div style="font-size:11px;color:var(--text3)">8 juin 2022 · Rappel dans 8 ans</div></div><span class="badge badge-green" style="font-size:10px">À jour</span></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fef3c7;border-radius:8px"><div style="width:32px;height:32px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fa fa-clock"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">Grippe saisonnière</div><div style="font-size:11px;color:var(--text3)">Recommandé avant novembre</div></div><span class="badge badge-amber" style="font-size:10px">À faire</span></div>
+      </div>
+      <button class="btn btn-soft btn-full btn-sm" style="margin-top:10px" onclick="alert('Prendre RDV vaccination')"><i class="fa fa-calendar-plus"></i> Prendre RDV vaccination</button>
+    </div>
+
+    <!-- TIMELINE VISITES -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#dcfce7;color:#0a4d3e"><i class="fa fa-timeline"></i></i>
+        <div><div class="lbl">Historique médical récent</div><div class="desc">3 dernières visites</div></div></div>
+      <div style="position:relative;padding-left:24px">
+        <div style="position:absolute;left:8px;top:8px;bottom:8px;width:2px;background:var(--border)"></div>
+        <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-24px;top:0;width:18px;height:18px;border-radius:50%;background:#0F7560;border:3px solid #fff;box-shadow:0 0 0 1px var(--border)"></div>
+          <div style="font-size:11px;color:var(--text3)">il y a 2 semaines</div>
+          <div style="font-weight:700;font-size:13px">Dr. Karim Benali · Cardiologie</div>
+          <div style="font-size:12px;color:var(--text2)">Bilan annuel · ECG normal</div></div>
+        <div style="position:relative;margin-bottom:14px"><div style="position:absolute;left:-24px;top:0;width:18px;height:18px;border-radius:50%;background:#16a34a;border:3px solid #fff;box-shadow:0 0 0 1px var(--border)"></div>
+          <div style="font-size:11px;color:var(--text3)">il y a 1 mois</div>
+          <div style="font-weight:700;font-size:13px">Dr. Yacine Djalout · Pédiatrie</div>
+          <div style="font-size:12px;color:var(--text2)">Bilan annuel enfant · OK</div></div>
+        <div style="position:relative"><div style="position:absolute;left:-24px;top:0;width:18px;height:18px;border-radius:50%;background:#7c3aed;border:3px solid #fff;box-shadow:0 0 0 1px var(--border)"></div>
+          <div style="font-size:11px;color:var(--text3)">il y a 2 mois</div>
+          <div style="font-weight:700;font-size:13px">Dr. Amira Kaci · Dermatologie</div>
+          <div style="font-size:12px;color:var(--text2)">Examen cutané · RAS</div></div>
+      </div>
+    </div>
+
+    <!-- 1. INFOS PERSO -->
+    <div class="card section-card" id="sec-perso">
+      <div class="sec-title-bar"><i style="background:var(--blue-l);color:var(--blue)"><i class="fa fa-id-card"></i></i>
+        <div><div class="lbl">Informations personnelles</div><div class="desc">Identité, contact, adresse</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Prénom</label><input class="form-control" id="f_first"></div>
+        <div class="form-group"><label class="form-label">Nom</label><input class="form-control" id="f_last"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="f_email" type="email" disabled></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Téléphone</label><input class="form-control" id="f_phone" type="tel" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt"></div>
+        <div class="form-group"><label class="form-label">Date de naissance</label><input class="form-control" id="f_bd" type="date"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Genre</label><select class="form-control" id="f_gender"><option>Homme</option><option>Femme</option><option>Préfère ne pas dire</option></select></div>
+        <div class="form-group"><label class="form-label">Wilaya</label>
+          <select class="form-control" id="f_city"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option><option>Batna</option><option>Tizi Ouzou</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Adresse</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, code postal..." data-i18n-placeholder="ph_address_full"></textarea></div>
+    </div>
+
+    <!-- 2. DOSSIER MÉDICAL -->
+    <div class="card section-card" id="sec-med">
+      <div class="sec-title-bar"><i style="background:var(--red-l);color:var(--red)"><i class="fa fa-heart-pulse"></i></i>
+        <div><div class="lbl">Dossier médical</div><div class="desc">Informations vitales accessibles aux médecins</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Groupe sanguin</label><select class="form-control" id="f_blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+        <div class="form-group"><label class="form-label">Taille (cm)</label><input class="form-control" id="f_height" type="number"></div>
+        <div class="form-group"><label class="form-label">Poids (kg)</label><input class="form-control" id="f_weight" type="number"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Allergies connues</label><textarea class="form-control" rows="2" id="f_allergy" placeholder="Pénicilline, arachides, lactose..." data-i18n-placeholder="ph_allergies"></textarea></div>
+      <div class="form-group"><label class="form-label">Antécédents médicaux</label><textarea class="form-control" rows="3" id="f_history" placeholder="Hypertension, diabète, opérations chirurgicales..." data-i18n-placeholder="ph_medical_history"></textarea></div>
+      <div class="form-group"><label class="form-label">Médicaments en cours</label><textarea class="form-control" rows="2" id="f_meds" placeholder="Aspirine 100mg/j, Metformine 500mg..." data-i18n-placeholder="ph_current_meds"></textarea></div>
+      <div class="form-group"><label class="form-label">Antécédents familiaux</label><textarea class="form-control" rows="2" id="f_family_hist" placeholder="Diabète (père), cancer (mère)..." data-i18n-placeholder="ph_family_history"></textarea></div>
+      <div class="form-group"><label class="form-label">Vaccinations</label><textarea class="form-control" rows="2" id="f_vacc" placeholder="COVID-19 (rappel 2024), Tétanos (2022)..." data-i18n-placeholder="ph_vaccinations"></textarea></div>
+      <label style="display:flex;gap:8px;font-size:13px;align-items:center"><input type="checkbox" id="f_smoker"> Je fume / ai fumé régulièrement</label>
+      <label style="display:flex;gap:8px;font-size:13px;align-items:center;margin-top:8px"><input type="checkbox" id="f_drinker"> Consommation d'alcool régulière</label>
+    </div>
+
+    <!-- 3. ASSURANCE -->
+    <div class="card section-card" id="sec-ins">
+      <div class="sec-title-bar"><i style="background:var(--green-l);color:var(--green)"><i class="fa fa-shield"></i></i>
+        <div><div class="lbl">Assurance & Sécurité Sociale</div><div class="desc">Tiers payant et remboursements</div></div></div>
+      <div class="form-group"><label class="form-label">Type d'assurance</label>
+        <select class="form-control" id="f_ins"><option>CNAS (Salariés)</option><option>CASNOS (Indépendants)</option><option>Mutuelle privée</option><option>Aucune</option></select></div>
+      <div class="form-group"><label class="form-label">N° matricule</label><input class="form-control" id="f_matricule" placeholder="XX-XXXX-XXXXXXX"></div>
+      <div class="form-group"><label class="form-label">N° carte CHIFA</label><input class="form-control" id="f_chifa" placeholder="Numéro de carte CHIFA" data-i18n-placeholder="ph_chifa_card"></div>
+      <div class="form-group"><label class="form-label">Mutuelle complémentaire (optionnel)</label><input class="form-control" id="f_mutual" placeholder="Nom de la mutuelle" data-i18n-placeholder="ph_mutual_name"></div>
+    </div>
+
+    <!-- 4. CONTACT D'URGENCE -->
+    <div class="card section-card" id="sec-urg">
+      <div class="sec-title-bar"><i style="background:#fee2e2;color:#dc2626"><i class="fa fa-truck-medical"></i></i>
+        <div><div class="lbl">Contact d'urgence</div><div class="desc">Personne à prévenir en cas d'urgence</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Nom complet</label><input class="form-control" id="f_emerg_name"></div>
+        <div class="form-group"><label class="form-label">Lien de parenté</label>
+          <select class="form-control" id="f_emerg_rel"><option>Conjoint(e)</option><option>Parent</option><option>Enfant</option><option>Frère/Sœur</option><option>Ami(e)</option><option>Autre</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Téléphone</label><input class="form-control" id="f_emerg_phone" type="tel"></div>
+    </div>
+
+    <!-- 5. FAMILLE -->
+    <div class="card section-card" id="sec-fam">
+      <div class="sec-title-bar"><i style="background:#fef3c7;color:#d97706"><i class="fa fa-people-roof"></i></i>
+        <div><div class="lbl">Membres de la famille</div><div class="desc">Gérez les RDV de vos proches depuis votre compte</div></div></div>
+      <div id="family-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button class="btn btn-soft btn-full" onclick="addFamily()"><i class="fa fa-plus"></i> Ajouter un membre</button>
+    </div>
+
+    <!-- 6. NOTIFICATIONS -->
+    <div class="card section-card" id="sec-notif">
+      <div class="sec-title-bar"><i style="background:#dcfce7;color:#0a4d3e"><i class="fa fa-bell"></i></i>
+        <div><div class="lbl">Notifications</div><div class="desc">Comment voulez-vous être prévenu ?</div></div></div>
+      <div class="row-setting"><div class="info"><div class="name">SMS de confirmation</div><div class="desc">Recevoir un SMS pour chaque RDV confirmé</div></div><div class="toggle-switch on" data-key="notif_sms_confirm" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Rappel 24h avant le RDV</div><div class="desc">SMS + Email la veille</div></div><div class="toggle-switch on" data-key="notif_remind_24" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Rappel 1h avant le RDV</div><div class="desc">Notification push</div></div><div class="toggle-switch on" data-key="notif_remind_1" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Newsletter santé</div><div class="desc">Conseils santé hebdomadaires par email</div></div><div class="toggle-switch" data-key="notif_news" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Promotions Tabibi</div><div class="desc">Offres et nouveautés</div></div><div class="toggle-switch" data-key="notif_promo" onclick="toggleSwitch(this)"></div></div>
+    </div>
+
+    <!-- 7. SÉCURITÉ -->
+    <div class="card section-card" id="sec-sec">
+      <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-lock"></i></i>
+        <div><div class="lbl">Sécurité du compte</div><div class="desc">Mot de passe et authentification</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="changePassword()"><i class="fa fa-key"></i> Changer le mot de passe</button>
+      <div class="row-setting"><div class="info"><div class="name">Authentification 2FA (SMS)</div><div class="desc">Code de vérification par SMS</div></div><div class="toggle-switch" data-key="sec_2fa" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Connexion biométrique</div><div class="desc">Face ID / Touch ID si disponible</div></div><div class="toggle-switch on" data-key="sec_bio" onclick="toggleSwitch(this)"></div></div>
+      <button class="btn btn-soft btn-full" style="justify-content:flex-start;margin-top:8px" onclick="viewSessions()"><i class="fa fa-clock-rotate-left"></i> Voir mes sessions actives</button>
+    </div>
+
+    <!-- 8. CONFIDENTIALITÉ -->
+    <div class="card section-card" id="sec-priv">
+      <div class="sec-title-bar"><i style="background:#f3e8ff;color:#6b21a8"><i class="fa fa-eye"></i></i>
+        <div><div class="lbl">Confidentialité</div><div class="desc">Qui peut voir vos infos ?</div></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Profil visible aux médecins</div><div class="desc">Les médecins peuvent voir vos infos médicales lors d'un RDV</div></div><div class="toggle-switch on" data-key="priv_doc" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Partage anonyme des données</div><div class="desc">Aide à améliorer Tabibi (anonymisé)</div></div><div class="toggle-switch on" data-key="priv_share" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name">Cookies analytiques</div><div class="desc">Suivi d'usage</div></div><div class="toggle-switch" data-key="priv_cookies" onclick="toggleSwitch(this)"></div></div>
+    </div>
+
+    <!-- 9. LANGUE & RÉGION -->
+    <div class="card section-card" id="sec-lang">
+      <div class="sec-title-bar"><i style="background:#ccfbf1;color:#0f766e"><i class="fa fa-globe"></i></i>
+        <div><div class="lbl">Langue & Région</div><div class="desc">Affichage et fuseau</div></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="form-group"><label class="form-label">Langue</label><select class="form-control" id="f_lang"><option value="fr">🇫🇷 Français</option><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option></select></div>
+        <div class="form-group"><label class="form-label">Devise</label><select class="form-control" id="f_currency"><option>DA (Dinar)</option><option>EUR</option></select></div>
+      </div>
+      <div class="form-group"><label class="form-label">Fuseau horaire</label><select class="form-control" id="f_tz"><option>Africa/Algiers (UTC+1)</option></select></div>
+    </div>
+
+    <!-- 10. MOYENS DE PAIEMENT -->
+    <div class="card section-card" id="sec-pay">
+      <div class="sec-title-bar"><i style="background:#fed7aa;color:#9a3412"><i class="fa fa-credit-card"></i></i>
+        <div><div class="lbl">Moyens de paiement</div><div class="desc">Cartes enregistrées et préférences</div></div></div>
+      <div id="pay-cards" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <button class="btn btn-soft btn-full" onclick="addCard()"><i class="fa fa-plus"></i> Ajouter une carte</button>
+      <div class="form-group" style="margin-top:14px"><label class="form-label">Mode de paiement par défaut</label>
+        <select class="form-control" id="f_default_pay"><option value="cash">Espèces au cabinet</option><option value="edahabia">Edahabia</option><option value="cib">CIB</option><option value="paymee">Paymee</option><option value="cnas">CNAS / CASNOS</option></select></div>
+    </div>
+
+    <!-- 11. EXPORT / DONNÉES -->
+    <div class="card section-card" id="sec-data">
+      <div class="sec-title-bar"><i style="background:#f3f4f6;color:var(--text2)"><i class="fa fa-download"></i></i>
+        <div><div class="lbl">Mes données</div><div class="desc">Exporter ou télécharger vos informations</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="exportData()"><i class="fa fa-file-export"></i> Exporter mon dossier (PDF)</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="exportData('json')"><i class="fa fa-file-code"></i> Télécharger toutes mes données (JSON)</button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start" onclick="alert(tabibiT('alert_rgpd_request_sent','Demande envoyée — réponse sous 30 jours (RGPD)'))"><i class="fa fa-envelope"></i> Demander une copie complète</button>
+    </div>
+
+    <!-- 12. ZONE DANGER -->
+    <div class="card section-card danger-card" id="sec-danger">
+      <div class="sec-title-bar" style="border-bottom-color:#fca5a5"><i style="background:var(--red);color:#fff"><i class="fa fa-triangle-exclamation"></i></i>
+        <div><div class="lbl" style="color:var(--red)">Zone de danger</div><div class="desc">Actions irréversibles</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px;color:#92400e;border-color:#fde68a" onclick="if(confirm(tabibiT('confirm_suspend_account','Suspendre votre compte temporairement ?')))alert(tabibiT('alert_account_suspended','Compte suspendu — réactivez via support'))"><i class="fa fa-pause"></i> Suspendre mon compte</button>
+      <button class="btn btn-danger btn-full" style="justify-content:flex-start" onclick="deleteAccount()"><i class="fa fa-trash"></i> Supprimer définitivement mon compte</button>
+    </div>
+
+    <!-- BOUTONS GLOBAUX -->
+    <button class="btn btn-primary btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> Sauvegarder toutes les modifications</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
+  </div>
+</main>
+<div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+<script>
+function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText=`background:${col[t]||col.info};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+
+function loadProfile(){
+  let u=null;
+  try{u=JSON.parse(localStorage.getItem("tabibi_user")||"null");}catch(e){}
+  // Si pas d'utilisateur ou pas un patient, attendre 1s pour laisser le bridge Supabase finir
+  if(!u||u.role!=="patient"){
+    if(!window._tabibiProfileRetried){
+      window._tabibiProfileRetried=true;
+      setTimeout(loadProfile,800);
+      return;
+    }
+    location.href="login.html";return;
+  }
+  // Avatar : photo si disponible, sinon initiales
+  if (window.TabibiAvatar) {
+    TabibiAvatar.init({
+      containerId: 'ava',
+      photoUrl: u.photo_url || null,
+      fallbackText: u.initials || '?',
+      fallbackBg: '#fff',
+      fallbackColor: '#0F7560',
+      allowUpload: true
+    });
+  } else {
+    document.getElementById("ava").textContent=u.initials||"?";
+  }
+  document.getElementById("pname").textContent=u.name||"";
+  document.getElementById("pemail").textContent=u.email||"";
+  const parts=(u.name||"").split(" ");
+  f_first.value=parts[0]||""; f_last.value=parts.slice(1).join(" ")||"";
+  f_email.value=u.email||""; f_phone.value=u.phone||"";
+  f_bd.value=u.birthDate||""; f_gender.value=u.gender||"Homme";
+  f_city.value=u.ville||"Alger"; f_addr.value=u.address||"";
+  // [FIX 2026-05-18] PII medicales chargees depuis Supabase (cf. tabibi-pii-migration.js).
+  // localStorage encore lu en fallback transitoire le temps que la migration s'execute.
+  f_blood.value=u.bloodType||"A+"; f_height.value=u.height||"";
+  f_weight.value=u.weight||""; f_allergy.value=u.allergies||"";
+  f_history.value=u.history||""; f_meds.value=u.meds||"";
+  f_family_hist.value=u.familyHistory||""; f_vacc.value=u.vaccinations||"";
+  f_smoker.checked=u.smoker||false; f_drinker.checked=u.drinker||false;
+  f_ins.value=u.insurance||"CNAS (Salariés)"; f_matricule.value=u.matricule||"";
+  f_chifa.value=u.chifa||""; f_mutual.value=u.mutual||"";
+  f_emerg_name.value=u.emerg_name||""; f_emerg_rel.value=u.emerg_rel||"Conjoint(e)"; f_emerg_phone.value=u.emerg_phone||"";
+
+  // Surcharge avec Supabase (source de verite)
+  if (window.tabibiPII && typeof window.tabibiPII.load === 'function') {
+    window.tabibiPII.load().then(function (med) {
+      if (!med) return;
+      if (med.blood_type) f_blood.value = med.blood_type;
+      if (med.height_cm != null) f_height.value = med.height_cm;
+      if (med.weight_kg != null) f_weight.value = med.weight_kg;
+      if (med.allergies != null) f_allergy.value = med.allergies;
+      if (med.medical_history != null) f_history.value = med.medical_history;
+      if (med.current_medications != null) f_meds.value = med.current_medications;
+      if (med.family_history != null) f_family_hist.value = med.family_history;
+      if (med.vaccinations != null) f_vacc.value = med.vaccinations;
+      f_smoker.checked = !!med.smoker;
+      f_drinker.checked = !!med.drinker;
+      if (med.insurance) f_ins.value = med.insurance;
+      if (med.matricule != null) f_matricule.value = med.matricule;
+      if (med.chifa_card != null) f_chifa.value = med.chifa_card;
+      if (med.mutual != null) f_mutual.value = med.mutual;
+      if (med.emergency_name != null) f_emerg_name.value = med.emergency_name;
+      if (med.emergency_relation) f_emerg_rel.value = med.emergency_relation;
+      if (med.emergency_phone != null) f_emerg_phone.value = med.emergency_phone;
+    }).catch(function(e){ console.warn('[Tabibi] load PII failed', e); });
+  }
+  f_lang.value=u.lang||"fr"; f_currency.value=u.currency||"DA (Dinar)";
+  f_default_pay.value=u.default_pay||"cash";
+
+  // Toggles
+  Object.keys(u.settings||{}).forEach(k=>{
+    const el=document.querySelector(`[data-key="${k}"]`);
+    if(el) el.classList.toggle("on", !!u.settings[k]);
+  });
+
+  // Stats
+  const rdvs=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
+  const elRdv=document.getElementById("rdv-count");if(elRdv)elRdv.textContent=rdvs.length;
+  const elUp=document.getElementById("upcoming-count");if(elUp)elUp.textContent=rdvs.filter(r=>r.status==="Confirmed"||r.status==="Pending").length;
+  const favs=JSON.parse(localStorage.getItem("tabibi_favs")||"[]");
+  const elFav=document.getElementById("fav-count");if(elFav)elFav.textContent=favs.length;
+  const elRev=document.getElementById("rev-count");if(elRev)elRev.textContent=rdvs.filter(r=>r.reviewed).length;
+
+  // Famille
+  renderFamily();
+  // Cartes
+  renderCards();
+}
+
+function toggleSwitch(el){ el.classList.toggle("on"); }
+
+async function saveAll(){
+  // [FIX 2026-05-18] Split identite (localStorage OK) / PII medicales (Supabase only).
+  const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  u.name=(f_first.value+" "+f_last.value).trim();
+  u.initials=(f_first.value[0]+(f_last.value[0]||"")).toUpperCase();
+  u.phone=f_phone.value; u.birthDate=f_bd.value; u.gender=f_gender.value;
+  u.ville=f_city.value; u.address=f_addr.value;
+  u.lang=f_lang.value; u.currency=f_currency.value; u.default_pay=f_default_pay.value;
+
+  // PII medicales -> Supabase via RPC (jamais en localStorage)
+  if (window.tabibiPII && typeof window.tabibiPII.save === 'function') {
+    const piiPayload = {
+      blood_type:          f_blood.value || null,
+      height_cm:           f_height.value || null,
+      weight_kg:           f_weight.value || null,
+      allergies:           f_allergy.value || null,
+      medical_history:     f_history.value || null,
+      current_medications: f_meds.value || null,
+      family_history:      f_family_hist.value || null,
+      vaccinations:        f_vacc.value || null,
+      smoker:              !!f_smoker.checked,
+      drinker:             !!f_drinker.checked,
+      insurance:           f_ins.value || null,
+      mutual:              f_mutual.value || null,
+      matricule:           f_matricule.value || null,
+      chifa_card:          f_chifa.value || null,
+      emergency_name:      f_emerg_name.value || null,
+      emergency_relation:  f_emerg_rel.value || null,
+      emergency_phone:     f_emerg_phone.value || null
+    };
+    const r = await window.tabibiPII.save(piiPayload);
+    if (r && r.error) {
+      console.error('[Tabibi] save PII failed', r.error);
+      toastM(tabibiT('toast_medical_save_failed',"Echec sauvegarde donnees medicales"), "error");
+      return;
+    }
+    // Purge defensive de localStorage au cas ou un ancien client aurait re-ecrit
+    window.tabibiPII.purgeLocal();
+  } else {
+    toastM(tabibiT('toast_pii_module_missing',"Module PII non charge — donnees medicales non sauvegardees"), "error");
+    return;
+  }
+
+  // Toggles
+  u.settings={};
+  document.querySelectorAll("[data-key]").forEach(el=>{ u.settings[el.dataset.key]=el.classList.contains("on"); });
+  localStorage.setItem("tabibi_user",JSON.stringify(u));
+  toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"),"success");
+}
+
+function changePassword(){
+  const old=prompt("Ancien mot de passe :"); if(!old)return;
+  const nw=prompt(tabibiT('prompt_new_password_long',"Nouveau mot de passe (min. 8 car.) :")); if(!nw||nw.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}
+  const conf=prompt(tabibiT('prompt_confirm_short',"Confirmer :")); if(nw!==conf){toastM(tabibiT('toast_passwords_mismatch',"Ne correspondent pas"),"error");return;}
+  toastM(tabibiT('toast_password_changed',"Mot de passe changé !"),"success");
+}
+function viewSessions(){alert(tabibiT('alert_active_sessions_demo',"Sessions actives :\n• Cet appareil (Mac · Chrome) — actuel\n• iPhone 15 (Safari) — il y a 2 jours\n\nDéconnectez-vous des autres sessions depuis l'admin."));}
+function changeAvatar(){alert(tabibiT('alert_change_avatar_demo',"Choisissez une image (à brancher avec un input file dans la version production)"));}
+function exportData(format){
+  const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
+  const rdvs=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
+  const data={user:u,rdvs,exportedAt:new Date().toISOString()};
+  if(format==='json'){
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="tabibi-mes-donnees.json"; a.click();
+  } else { window.print(); }
+}
+function deleteAccount(){
+  if(!confirm(tabibiT('confirm_delete_account_warning',"⚠️ Supprimer DÉFINITIVEMENT votre compte ?\nTous vos RDV, favoris et données médicales seront effacés.\nCette action est IRRÉVERSIBLE."))) return;
+  if(prompt('Tapez "SUPPRIMER" pour confirmer :')!=="SUPPRIMER"){toastM(tabibiT('toast_cancelled_short',"Annulé"),"info");return;}
+  localStorage.clear();
+  alert(tabibiT('alert_account_deleted_bye',"Compte supprimé. Au revoir."));
+  location.href="index.html";
+}
+function logout(){localStorage.removeItem("tabibi_user");location.href="index.html";}
+
+/* FAMILLE */
+function getFamily(){return JSON.parse(localStorage.getItem("tabibi_family")||"[]");}
+function setFamily(f){localStorage.setItem("tabibi_family",JSON.stringify(f));}
+function renderFamily(){
+  const fam=getFamily();
+  const box=document.getElementById("family-list");
+  if(!fam.length){box.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px">Aucun membre ajouté</div>';return;}
+  box.innerHTML=fam.map((f,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px">
+    <div style="width:36px;height:36px;border-radius:50%;background:#dcfce7;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${(f.name||"?")[0]}</div>
+    <div style="flex:1"><div style="font-weight:600;font-size:13px">${f.name}</div><div style="font-size:11px;color:var(--text3)">${f.relation} · ${f.birthDate||""}</div></div>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fee2e2" onclick="removeFamily(${i})" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>
+  </div>`).join("");
+}
+function addFamily(){
+  const name=prompt("Nom complet du proche :"); if(!name)return;
+  const relation=prompt("Lien de parenté (Conjoint(e), Enfant, Parent...) :"); if(!relation)return;
+  const birthDate=prompt("Date de naissance (AAAA-MM-JJ) — optionnel :")||"";
+  const fam=getFamily(); fam.push({name,relation,birthDate}); setFamily(fam);
+  renderFamily(); toastM(tabibiT('toast_member_added',"Membre ajouté"),"success");
+}
+function removeFamily(i){if(!confirm("Retirer ce membre ?"))return;const f=getFamily();f.splice(i,1);setFamily(f);renderFamily();}
+
+/* CARTES */
+function getCards(){return JSON.parse(localStorage.getItem("tabibi_cards")||"[]");}
+function setCards(c){localStorage.setItem("tabibi_cards",JSON.stringify(c));}
+function renderCards(){
+  const cards=getCards();
+  const box=document.getElementById("pay-cards");
+  if(!cards.length){box.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px">Aucune carte enregistrée</div>';return;}
+  box.innerHTML=cards.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border-radius:12px">
+    <i class="fa fa-credit-card" style="font-size:20px"></i>
+    <div style="flex:1"><div style="font-weight:700;font-size:13px">${c.brand} •••• ${c.last4}</div><div style="font-size:11px;opacity:.8">Expire ${c.exp}</div></div>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="removeCard(${i})" aria-label="Supprimer cette carte"><i class="fa fa-trash"></i></button>
+  </div>`).join("");
+}
+function addCard(){
+  const num=prompt(tabibiT('prompt_card_number',"Numéro de carte (16 chiffres) :")); if(!num||num.replace(/\s/g,"").length<13){toastM(tabibiT('toast_card_number_invalid',"Numéro invalide"),"error");return;}
+  const exp=prompt("Expiration (MM/AA) :"); if(!exp){return;}
+  const brand=num[0]==="4"?"Visa":num[0]==="5"?"Mastercard":num[0]==="6"?"Edahabia":"CIB";
+  const cards=getCards(); cards.push({brand,last4:num.replace(/\s/g,"").slice(-4),exp}); setCards(cards);
+  renderCards(); toastM(tabibiT('toast_card_added',"Carte ajoutée"),"success");
+}
+function removeCard(i){if(!confirm("Retirer cette carte ?"))return;const c=getCards();c.splice(i,1);setCards(c);renderCards();}
+
+document.addEventListener("DOMContentLoaded",loadProfile);
+</script>
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-pii-migration.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>

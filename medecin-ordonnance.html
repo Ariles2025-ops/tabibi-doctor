@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Tabibi — Redaction d'ordonnance medicale numerique avec signature electronique.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Nouvelle ordonnance | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/tokens-v2.css">
+<link rel="stylesheet" href="styles/components-v2.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-family); }
+
+  .topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 20px;
+            display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: var(--z-sticky); }
+  .topbar .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-primary); }
+  .topbar .logo img { width: 28px; height: 28px; }
+  .topbar .logo b { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+  .topbar h1 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text2); flex: 1; }
+  .lang-bar { display: flex; gap: 4px; }
+  .lang-btn { background: transparent; border: 1px solid var(--border); padding: 5px 10px; border-radius: var(--r8);
+              cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text2); }
+  .lang-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  .wrap { max-width: 1200px; margin: 0 auto; padding: 20px; display: grid; grid-template-columns: 1fr 480px; gap: 20px; }
+  @media (max-width: 980px) { .wrap { grid-template-columns: 1fr; } .preview-pane { order: -1; max-height: 320px; overflow: auto; } }
+
+  .card { background: var(--card); border-radius: var(--r16); padding: 24px; box-shadow: var(--s1); border: 1px solid var(--border); }
+  .card + .card { margin-top: 16px; }
+  .card h2 { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .card h2 i { color: var(--color-primary); }
+
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 11px 12px; border: 1px solid var(--border-strong); border-radius: var(--r8);
+    font-size: 14px; font-family: inherit; background: #fff; color: var(--text);
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    outline: 0; border-color: var(--color-primary); box-shadow: var(--ring-primary);
+  }
+  .field textarea { resize: vertical; min-height: 70px; }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .field-row-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; }
+  .field-row-4 { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; }
+  @media (max-width: 720px) { .field-row, .field-row-3, .field-row-4 { grid-template-columns: 1fr; } }
+
+  .med-row { background: var(--bg2); border-radius: var(--r12); padding: 14px; margin-bottom: 12px; position: relative; }
+  .med-row .med-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .med-row .med-num { font-size: 12px; font-weight: 700; color: var(--color-primary); background: var(--color-primary-light); padding: 4px 10px; border-radius: var(--rfull); }
+  .med-row .med-del { background: transparent; border: 0; color: var(--color-danger); cursor: pointer; font-size: 13px; }
+  .med-row .med-del:hover { text-decoration: underline; }
+
+  .btn { padding: 11px 18px; border-radius: var(--r8); border: 0; font-size: 14px; font-weight: 600; cursor: pointer;
+         display: inline-flex; align-items: center; gap: 8px; font-family: inherit; transition: background 0.15s; }
+  .btn-primary { background: var(--color-primary); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+  .btn-primary:disabled { background: var(--text4); cursor: not-allowed; }
+  .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border-strong); }
+  .btn-secondary:hover { background: var(--bg3); }
+  .btn-ghost { background: transparent; color: var(--color-primary); padding: 8px 12px; }
+  .btn-ghost:hover { background: var(--color-primary-light); }
+  .btn-accent { background: var(--color-accent); color: var(--color-accent-on); }
+  .btn-accent:hover { background: var(--color-accent-hover); color: #fff; }
+  .btn-full { width: 100%; justify-content: center; }
+
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+           background: var(--text); color: #fff; padding: 12px 20px; border-radius: var(--r12);
+           font-size: 14px; box-shadow: var(--s3); z-index: var(--z-toast); display: none; }
+  .toast.ok { background: var(--color-primary); }
+  .toast.err { background: var(--color-danger); }
+
+  .preview-pane { background: #f4f6f9; border-radius: var(--r16); padding: 16px; position: sticky; top: 80px; max-height: calc(100vh - 100px); overflow: auto; }
+  .preview-paper { background: #fff; padding: 28px 26px; border-radius: var(--r8); box-shadow: var(--s2); font-size: 12px; line-height: 1.45; color: var(--text); }
+  .preview-paper .ph-head { background: var(--color-primary); color: #fff; margin: -28px -26px 16px; padding: 14px 22px; border-radius: var(--r8) var(--r8) 0 0; display: flex; justify-content: space-between; align-items: center; }
+  .preview-paper .ph-head .brand { font-size: 18px; font-weight: 800; }
+  .preview-paper .ph-head .doctype { font-size: 11px; font-weight: 700; opacity: 0.9; }
+  .preview-paper .doc-info, .preview-paper .pat-info { margin-bottom: 14px; }
+  .preview-paper .label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+  .preview-paper .value { font-size: 13px; font-weight: 600; color: var(--text); }
+  .preview-paper hr { border: 0; border-top: 1px solid var(--border); margin: 12px 0; }
+  .preview-paper .ph-rx { font-size: 22px; font-weight: 800; color: var(--color-primary); display: inline-block; margin-right: 8px; }
+  .preview-paper .ph-med { background: var(--color-primary-light); padding: 10px 12px; border-radius: var(--r8); margin-bottom: 8px; }
+  .preview-paper .ph-med .name { font-weight: 700; color: var(--text); }
+  .preview-paper .ph-med .meta { font-size: 11px; color: var(--text2); margin-top: 3px; }
+  .preview-paper .ph-foot { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 10px; font-size: 10px; color: var(--text3); text-align: center; }
+
+  .alert { padding: 12px 14px; border-radius: var(--r8); font-size: 13px; margin-bottom: 14px; }
+  .alert-info { background: var(--color-primary-light); color: var(--color-primary-hover); border-left: 3px solid var(--color-primary); }
+  .alert-warn { background: var(--color-warning-light); color: var(--color-warning-on); border-left: 3px solid var(--color-warning); }
+
+  body[dir="rtl"] .preview-paper .ph-head { flex-direction: row-reverse; }
+  body[dir="rtl"] .topbar { flex-direction: row-reverse; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">Aller au contenu</a>
+
+<div class="topbar">
+  <a href="doctor-dashboard.html" class="logo" title="Retour tableau de bord">
+    <img src="images/logo-mark.svg" alt="Tabibi">
+    <b>Tabibi</b>
+  </a>
+  <h1 id="t-pagetitle">Nouvelle ordonnance medicale</h1>
+  <div class="lang-bar">
+    <button class="lang-btn active" data-lang="fr">FR</button>
+    <button class="lang-btn" data-lang="ar">العربية</button>
+  </div>
+</div>
+
+<main id="main" class="wrap" role="main">
+
+  <div>
+
+    <div class="card">
+      <h2><i class="fa fa-user-injured"></i> <span id="t-patient">Patient</span></h2>
+      <div id="patient-display" class="alert alert-info" style="display:none">
+        <strong id="patient-name"></strong>
+        <span style="float:right;font-size:11px;color:var(--text3)" id="patient-meta"></span>
+      </div>
+      <div class="field" id="patient-picker-wrap">
+        <label for="f_patient_id" id="l-patient">UUID Patient (provisoire — picker a venir)</label>
+        <input id="f_patient_id" type="text" placeholder="ex: 00000000-0000-0000-0000-000000000000" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="f_appointment_id" id="l-appt">UUID Rendez-vous (optionnel — lie l'ordonnance a un RDV)</label>
+        <input id="f_appointment_id" type="text" placeholder="laisser vide si ordonnance hors-RDV" autocomplete="off">
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><i class="fa fa-pills"></i> <span id="t-meds">Medicaments</span></h2>
+      <p style="margin:0 0 12px;font-size:12px;color:var(--text3)" id="t-meds-help">
+        Saisissez chaque medicament avec sa posologie. Maximum 30 medicaments.
+        Les stupefiants et psychotropes doivent etre prescrits sur le carnet a souches conforme (cadre legal separe DZ).
+      </p>
+      <div id="meds-list"></div>
+      <button type="button" class="btn btn-ghost" id="btn-add-med">
+        <i class="fa fa-plus"></i> <span id="t-add-med">Ajouter un medicament</span>
+      </button>
+    </div>
+
+    <div class="card">
+      <h2><i class="fa fa-stethoscope"></i> <span id="t-diag">Diagnostic et notes</span></h2>
+      <div class="field">
+        <label for="f_diagnosis" id="l-diag">Diagnostic (optionnel)</label>
+        <textarea id="f_diagnosis" maxlength="2000" placeholder="ex: Angine bacterienne, otite moyenne aigue droite..."></textarea>
+      </div>
+      <div class="field">
+        <label for="f_notes" id="l-notes">Notes cliniques (optionnel)</label>
+        <textarea id="f_notes" maxlength="4000" placeholder="Conseils, recommandations, instructions complementaires..."></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="f_validity" id="l-valid">Validite (jours)</label>
+          <input id="f_validity" type="number" min="1" max="365" value="30">
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button type="button" class="btn btn-secondary" id="btn-save-draft">
+        <i class="fa fa-floppy-disk"></i> <span id="t-save">Sauvegarder brouillon</span>
+      </button>
+      <button type="button" class="btn btn-primary" id="btn-sign">
+        <i class="fa fa-pen-nib"></i> <span id="t-sign">Signer et generer le PDF</span>
+      </button>
+      <button type="button" class="btn btn-ghost" id="btn-cancel" onclick="history.back()">
+        <span id="t-cancel">Annuler</span>
+      </button>
+    </div>
+
+    <div id="signed-result" class="card" style="display:none;border-color:var(--color-success);background:var(--color-success-light)">
+      <h2 style="color:var(--color-success-hover)"><i class="fa fa-circle-check"></i> <span id="t-signed">Ordonnance signee !</span></h2>
+      <p style="margin:0 0 10px;font-size:14px"><strong id="signed-number"></strong></p>
+      <div class="actions">
+        <a id="signed-download" href="#" target="_blank" class="btn btn-primary"><i class="fa fa-download"></i> Telecharger le PDF</a>
+        <a id="signed-verify" href="#" target="_blank" class="btn btn-secondary"><i class="fa fa-shield-halved"></i> Lien de verification</a>
+      </div>
+      <p style="margin:12px 0 0;font-size:11px;color:var(--text3)">
+        SHA256 : <code id="signed-hash" style="font-size:10px"></code>
+      </p>
+    </div>
+
+  </div>
+
+  <aside class="preview-pane">
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Apercu en temps reel</div>
+    <div class="preview-paper" id="preview">
+      <div class="ph-head">
+        <div class="brand">Tabibi</div>
+        <div class="doctype">ORDONNANCE MEDICALE</div>
+      </div>
+      <div class="doc-info">
+        <div class="label">Medecin</div>
+        <div class="value" id="pv-doc">Dr ...</div>
+        <div style="font-size:11px;color:var(--text3)" id="pv-spec">...</div>
+      </div>
+      <div class="pat-info">
+        <div class="label">Patient</div>
+        <div class="value" id="pv-pat">—</div>
+      </div>
+      <hr>
+      <div><span class="ph-rx">Rx</span><strong>Traitement prescrit</strong></div>
+      <div id="pv-meds" style="margin-top:10px"></div>
+      <div id="pv-diag-wrap" style="display:none;margin-top:10px">
+        <div class="label">Diagnostic</div>
+        <div id="pv-diag" style="font-size:12px"></div>
+      </div>
+      <div id="pv-notes-wrap" style="display:none;margin-top:10px">
+        <div class="label">Notes cliniques</div>
+        <div id="pv-notes" style="font-size:12px"></div>
+      </div>
+      <div class="ph-foot" id="pv-foot">Document genere electroniquement par Tabibi</div>
+    </div>
+  </aside>
+
+</main>
+
+<div class="toast" id="toast" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications"></div>
+
+<!-- Supabase + config -->
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  // ── Catalogue medicaments DZ courants V1 (autocomplete simple) ───────
+  const COMMON_MEDS_DZ = [
+    'Doliprane 1000mg', 'Doliprane 500mg', 'Efferalgan 1g', 'Paracetamol 500mg',
+    'Augmentin 1g', 'Augmentin 500mg', 'Amoxicilline 500mg', 'Clamoxyl 1g',
+    'Ventoline (Salbutamol)', 'Ventoline aerosol', 'Symbicort', 'Pulmicort',
+    'Ibuprofene 400mg', 'Nurofen 400mg', 'Brufen 600mg',
+    'Spasfon', 'Phloroglucinol 80mg', 'Spasfon Lyoc',
+    'Smecta', 'Tiorfan', 'Imodium',
+    'Inexium 40mg', 'Inipomp 40mg', 'Omeprazole 20mg',
+    'Levothyrox', 'Glucophage 850', 'Metformine 500',
+    'Aspirine 100mg', 'Kardegic 75mg', 'Plavix',
+    'Lasilix 40mg', 'Loxen 20', 'Coversyl 5mg', 'Amlor 5mg',
+    'Forlax', 'Lactulose', 'Microlax',
+    'Solupred 20mg', 'Cortancyl 5mg', 'Celestene',
+    'Vitamine D3', 'Tardyferon', 'Speciafoldine'
+  ];
+
+  const FREQ_PRESETS = [
+    '1 fois par jour', '2 fois par jour', '3 fois par jour', '4 fois par jour',
+    'Matin', 'Soir', 'Matin et soir', 'Avant chaque repas', 'Apres chaque repas',
+    'Au coucher', 'Si douleur', 'Si fievre'
+  ];
+
+  // ── State ────────────────────────────────────────────────────────────
+  let currentDoctor = null;
+  let currentPrescriptionId = null;  // set when draft is saved
+
+  // ── DOM ──────────────────────────────────────────────────────────────
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  const medsList = $('#meds-list');
+  const toast = $('#toast');
+
+  // ── Toast helper ─────────────────────────────────────────────────────
+  function showToast(msg, kind) {
+    toast.className = 'toast ' + (kind || 'ok');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+  }
+
+  // ── Render medication row ───────────────────────────────────────────
+  function renderMedRow(idx, data) {
+    data = data || {};
+    const row = document.createElement('div');
+    row.className = 'med-row';
+    row.dataset.idx = idx;
+    row.innerHTML = `
+      <div class="med-head">
+        <span class="med-num">No ${idx + 1}</span>
+        <button type="button" class="med-del"><i class="fa fa-xmark"></i> Supprimer</button>
+      </div>
+      <div class="field">
+        <label>Nom du medicament *</label>
+        <input class="m-name" list="meds-datalist" type="text" placeholder="ex: Doliprane 1000mg" value="${data.name || ''}" maxlength="200" required>
+      </div>
+      <div class="field-row-3">
+        <div class="field">
+          <label>Posologie</label>
+          <input class="m-dosage" type="text" placeholder="ex: 1 comprime" value="${data.dosage || ''}" maxlength="80">
+        </div>
+        <div class="field">
+          <label>Frequence</label>
+          <input class="m-frequency" list="freq-datalist" type="text" placeholder="ex: 3 fois par jour" value="${data.frequency || ''}" maxlength="80">
+        </div>
+        <div class="field">
+          <label>Duree</label>
+          <input class="m-duration" type="text" placeholder="ex: 7 jours" value="${data.duration || ''}" maxlength="60">
+        </div>
+      </div>
+      <div class="field">
+        <label>Note (optionnel)</label>
+        <input class="m-notes" type="text" placeholder="ex: a prendre apres repas" value="${data.notes || ''}" maxlength="200">
+      </div>
+    `;
+    row.querySelector('.med-del').addEventListener('click', () => {
+      row.remove();
+      renumberRows();
+      updatePreview();
+    });
+    row.querySelectorAll('input').forEach((inp) => inp.addEventListener('input', updatePreview));
+    medsList.appendChild(row);
+    updatePreview();
+  }
+
+  function renumberRows() {
+    $$('.med-row').forEach((r, i) => {
+      r.dataset.idx = i;
+      r.querySelector('.med-num').textContent = 'No ' + (i + 1);
+    });
+  }
+
+  function collectMedications() {
+    const meds = [];
+    $$('.med-row').forEach((r) => {
+      const name = r.querySelector('.m-name').value.trim();
+      if (!name) return;
+      meds.push({
+        name,
+        dosage:    r.querySelector('.m-dosage').value.trim()    || null,
+        frequency: r.querySelector('.m-frequency').value.trim() || null,
+        duration:  r.querySelector('.m-duration').value.trim()  || null,
+        notes:     r.querySelector('.m-notes').value.trim()     || null,
+      });
+    });
+    return meds;
+  }
+
+  // ── Preview live ─────────────────────────────────────────────────────
+  function updatePreview() {
+    const meds = collectMedications();
+    const diag = $('#f_diagnosis').value.trim();
+    const notes = $('#f_notes').value.trim();
+
+    const medsHtml = meds.length ? meds.map((m, i) => `
+      <div class="ph-med">
+        <div class="name">${i + 1}. ${escapeHtml(m.name)}</div>
+        <div class="meta">${[m.dosage, m.frequency, m.duration].filter(Boolean).map(escapeHtml).join(' — ') || '—'}</div>
+        ${m.notes ? `<div class="meta"><em>${escapeHtml(m.notes)}</em></div>` : ''}
+      </div>
+    `).join('') : '<div style="font-size:12px;color:var(--text3);font-style:italic">Aucun medicament saisi</div>';
+
+    $('#pv-meds').innerHTML = medsHtml;
+    $('#pv-diag-wrap').style.display = diag ? '' : 'none';
+    $('#pv-diag').textContent = diag;
+    $('#pv-notes-wrap').style.display = notes ? '' : 'none';
+    $('#pv-notes').textContent = notes;
+    $('#pv-foot').textContent = 'Document genere electroniquement par Tabibi le ' + new Date().toISOString().slice(0, 10);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  // ── Datalists for autocomplete ──────────────────────────────────────
+  function injectDatalists() {
+    const dl = document.createElement('datalist');
+    dl.id = 'meds-datalist';
+    COMMON_MEDS_DZ.forEach((m) => { const o = document.createElement('option'); o.value = m; dl.appendChild(o); });
+    document.body.appendChild(dl);
+
+    const df = document.createElement('datalist');
+    df.id = 'freq-datalist';
+    FREQ_PRESETS.forEach((f) => { const o = document.createElement('option'); o.value = f; df.appendChild(o); });
+    document.body.appendChild(df);
+  }
+
+  // ── Load doctor profile ─────────────────────────────────────────────
+  async function loadDoctor() {
+    const supa = window.tabibi && window.tabibi.supabase;
+    if (!supa) return;
+    const { data: { user } } = await supa.auth.getUser();
+    if (!user) {
+      showToast('Connexion requise', 'err');
+      setTimeout(() => location.href = 'login.html', 1200);
+      return;
+    }
+    const { data, error } = await supa.from('users').select('first_name, last_name, specialty_fr, role, is_verified').eq('id', user.id).maybeSingle();
+    if (error || !data || (data.role !== 'medecin' && data.role !== 'doctor')) {
+      showToast('Acces medecin requis', 'err');
+      setTimeout(() => location.href = 'login.html', 1500);
+      return;
+    }
+    if (!data.is_verified) {
+      showToast('Compte non verifie : impossible de prescrire', 'err');
+      $('#btn-sign').disabled = true;
+    }
+    currentDoctor = { id: user.id, ...data };
+    $('#pv-doc').textContent = `Dr ${data.first_name || ''} ${data.last_name || ''}`.trim();
+    $('#pv-spec').textContent = data.specialty_fr || 'Medecin';
+  }
+
+  // ── Pre-fill appointment_id from URL ────────────────────────────────
+  function prefillFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const appt = params.get('appointment_id');
+    const pid  = params.get('patient_id');
+    if (appt) $('#f_appointment_id').value = appt;
+    if (pid)  $('#f_patient_id').value = pid;
+    refreshPatientDisplay();
+  }
+
+  async function refreshPatientDisplay() {
+    const pid = $('#f_patient_id').value.trim();
+    if (!pid) { $('#patient-display').style.display = 'none'; $('#pv-pat').textContent = '—'; return; }
+    const supa = window.tabibi && window.tabibi.supabase;
+    if (!supa) return;
+    const { data } = await supa.from('users').select('first_name, last_name').eq('id', pid).maybeSingle();
+    if (data) {
+      const name = `${data.first_name || ''} ${data.last_name || ''}`.trim() || pid.slice(0, 8) + '...';
+      $('#patient-name').textContent = name;
+      $('#patient-display').style.display = '';
+      $('#pv-pat').textContent = name;
+    } else {
+      $('#patient-display').style.display = 'none';
+      $('#pv-pat').textContent = pid.slice(0, 8) + '...';
+    }
+  }
+
+  // ── Save draft ──────────────────────────────────────────────────────
+  async function saveDraft() {
+    const supa = window.tabibi && window.tabibi.supabase;
+    if (!supa) { showToast('Supabase indisponible', 'err'); return; }
+
+    const pid  = $('#f_patient_id').value.trim();
+    const appt = $('#f_appointment_id').value.trim() || null;
+    const meds = collectMedications();
+    const diag = $('#f_diagnosis').value.trim() || null;
+    const notes = $('#f_notes').value.trim() || null;
+    const validity = parseInt($('#f_validity').value, 10) || 30;
+
+    if (!pid)        { showToast('Patient requis', 'err'); return; }
+    if (!meds.length) { showToast('Au moins un medicament requis', 'err'); return; }
+
+    $('#btn-save-draft').disabled = true;
+    try {
+      if (currentPrescriptionId) {
+        // Update existing draft
+        const { error } = await supa.rpc('update_prescription_draft', {
+          p_prescription_id: currentPrescriptionId,
+          p_medications: meds,
+          p_diagnosis: diag,
+          p_clinical_notes: notes,
+          p_validity_days: validity,
+        });
+        if (error) throw error;
+        showToast('Brouillon mis a jour', 'ok');
+      } else {
+        const { data, error } = await supa.rpc('create_prescription_draft', {
+          p_patient_id: pid,
+          p_appointment_id: appt,
+          p_medications: meds,
+          p_diagnosis: diag,
+          p_clinical_notes: notes,
+          p_validity_days: validity,
+        });
+        if (error) throw error;
+        currentPrescriptionId = data;
+        showToast('Brouillon enregistre', 'ok');
+      }
+    } catch (e) {
+      console.error('[save-draft]', e);
+      showToast(e.message || 'Erreur lors de la sauvegarde', 'err');
+    } finally {
+      $('#btn-save-draft').disabled = false;
+    }
+  }
+
+  // ── Sign (calls Edge Function) ──────────────────────────────────────
+  async function signPrescription() {
+    const supa = window.tabibi && window.tabibi.supabase;
+    if (!supa) { showToast('Supabase indisponible', 'err'); return; }
+    if (!currentPrescriptionId) {
+      await saveDraft();
+      if (!currentPrescriptionId) return;
+    }
+
+    if (!confirm('Apres signature, cette ordonnance sera IMMUABLE.\n\nConfirmer la signature electronique ?')) return;
+
+    $('#btn-sign').disabled = true;
+    $('#btn-sign').innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signature en cours...';
+    try {
+      const { error: gateErr } = await supa.rpc('request_prescription_signature', { p_prescription_id: currentPrescriptionId });
+      if (gateErr) throw gateErr;
+
+      const { data: { session } } = await supa.auth.getSession();
+      const resp = await fetch(`${window.TABIBI_CONFIG.SUPABASE_URL}/functions/v1/generate-prescription-pdf`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json',
+          'apikey': window.TABIBI_CONFIG.SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ prescription_id: currentPrescriptionId }),
+      });
+      const payload = await resp.json();
+      if (!resp.ok || !payload.success) {
+        throw new Error(payload.error || 'Erreur generation PDF');
+      }
+
+      $('#signed-number').textContent = `Numero : ${payload.prescription_number}`;
+      $('#signed-download').href = payload.pdf_url_signed_24h;
+      $('#signed-verify').href = payload.verify_url;
+      $('#signed-hash').textContent = payload.pdf_sha256;
+      $('#signed-result').style.display = '';
+      $('#btn-sign').style.display = 'none';
+      $('#btn-save-draft').style.display = 'none';
+
+      showToast('Ordonnance signee et PDF genere', 'ok');
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    } catch (e) {
+      console.error('[sign]', e);
+      showToast(e.message || 'Erreur lors de la signature', 'err');
+      $('#btn-sign').disabled = false;
+      $('#btn-sign').innerHTML = '<i class="fa fa-pen-nib"></i> Signer et generer le PDF';
+    }
+  }
+
+  // ── i18n minimal FR/AR ──────────────────────────────────────────────
+  const I18N = {
+    fr: {
+      pagetitle: 'Nouvelle ordonnance medicale', patient: 'Patient', meds: 'Medicaments',
+      add: 'Ajouter un medicament', diag: 'Diagnostic et notes', save: 'Sauvegarder brouillon',
+      sign: 'Signer et generer le PDF', cancel: 'Annuler', signed: 'Ordonnance signee !',
+    },
+    ar: {
+      pagetitle: 'وصفة طبية جديدة', patient: 'المريض', meds: 'الأدوية',
+      add: 'إضافة دواء', diag: 'التشخيص والملاحظات', save: 'حفظ مسودة',
+      sign: 'توقيع وإنشاء PDF', cancel: 'إلغاء', signed: 'تم توقيع الوصفة!',
+    }
+  };
+  function applyLang(lang) {
+    const t = I18N[lang] || I18N.fr;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+    document.body.dir = document.documentElement.dir;
+    $('#t-pagetitle').textContent = t.pagetitle;
+    $('#t-patient').textContent = t.patient;
+    $('#t-meds').textContent = t.meds;
+    $('#t-add-med').textContent = t.add;
+    $('#t-diag').textContent = t.diag;
+    $('#t-save').textContent = t.save;
+    $('#t-sign').textContent = t.sign;
+    $('#t-cancel').textContent = t.cancel;
+    $('#t-signed').textContent = t.signed;
+    $$('.lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === lang));
+    try { localStorage.setItem('tabibi.lang', lang); } catch (e) {}
+  }
+
+  // ── Init ────────────────────────────────────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    injectDatalists();
+    renderMedRow(0, {});  // start with one empty med row
+
+    $('#btn-add-med').addEventListener('click', () => {
+      const idx = $$('.med-row').length;
+      if (idx >= 30) { showToast('Maximum 30 medicaments', 'err'); return; }
+      renderMedRow(idx, {});
+    });
+
+    $('#btn-save-draft').addEventListener('click', saveDraft);
+    $('#btn-sign').addEventListener('click', signPrescription);
+
+    ['f_diagnosis', 'f_notes'].forEach((id) => $('#' + id).addEventListener('input', updatePreview));
+    $('#f_patient_id').addEventListener('change', refreshPatientDisplay);
+
+    $$('.lang-bar .lang-btn').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.lang)));
+
+    const savedLang = (function() { try { return localStorage.getItem('tabibi.lang'); } catch (e) { return null; } })();
+    if (savedLang) applyLang(savedLang);
+
+    loadDoctor().then(prefillFromUrl);
+  });
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
+<meta name="theme-color" content="#0F7560">
+<meta name="tabibi-page-key" content="title_waiting_list_long">
+<title>Liste d'attente Tabibi — Santé Algérie 🇩🇿</title>
+<link rel="canonical" href="https://tabibi.doctor/waiting-list.html">
+<meta name="description" content="Rejoignez la liste d'attente Tabibi, la 1ère plateforme algérienne de prise de RDV médical en ligne. Inscription gratuite. Notification au lancement.">
+<meta name="turnstile-sitekey" content="YOUR_TURNSTILE_SITE_KEY_HERE">
+
+<!-- OG/Twitter -->
+<meta property="og:title" content="Liste d'attente Tabibi — Lancement Été 2026">
+<meta property="og:description" content="Soyez les premiers à découvrir Tabibi, la santé algérienne digitale.">
+<meta property="og:image" content="https://tabibi.doctor/images/og-waiting-list.png">
+<meta property="og:url" content="https://tabibi.doctor/waiting-list.html">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="fr_DZ">
+<meta property="og:locale:alternate" content="ar_DZ">
+<meta property="og:locale:alternate" content="en_US">
+
+<!-- Hreflang pour SEO multilingue -->
+<link rel="alternate" hreflang="fr" href="https://tabibi.doctor/waiting-list.html?lang=fr">
+<link rel="alternate" hreflang="ar" href="https://tabibi.doctor/waiting-list.html?lang=ar">
+<link rel="alternate" hreflang="en" href="https://tabibi.doctor/waiting-list.html?lang=en">
+<link rel="alternate" hreflang="x-default" href="https://tabibi.doctor/waiting-list.html">
+
+<!-- Fonts (Latin + Arabe) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+
+<style>
+:root {
+  --blue: #0F7560;
+  --blue-dark: #0a4d3e;
+  --blue-l: #f0f9ff;
+  --green: #2E8B57;
+  --red: #D21010;
+  --text: #0f172a;
+  --text2: #334155;   /* AMÉLIORÉ : était #475569, meilleur contraste */
+  --text3: #64748b;   /* AMÉLIORÉ : était #94a3b8, accessibilité WCAG AA */
+  --border: #e2e8f0;
+  --bg: #f8fafc;
+  --r12: 12px;
+  --r16: 16px;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
+  --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.1);
+  --focus-ring: 0 0 0 4px rgba(30, 144, 255, 0.25);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f8fafc 100%);
+  min-height: 100vh;
+  color: var(--text);
+  line-height: 1.6;
+  font-size: 16px;  /* Base lisible */
+}
+
+/* Arabic RTL support */
+html[dir="rtl"] body { font-family: 'Cairo', 'Inter', sans-serif; }
+html[dir="rtl"] .header { flex-direction: row-reverse; }
+html[dir="rtl"] .back-link { flex-direction: row-reverse; }
+html[dir="rtl"] .submit-btn { flex-direction: row-reverse; }
+
+/* Focus visible — Accessibilité clavier */
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: 8px;
+}
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  box-shadow: var(--focus-ring);
+}
+
+.container { max-width: 720px; margin: 0 auto; padding: 24px 20px; }
+
+/* Header */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 0; margin-bottom: 32px;
+}
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: var(--text);
+}
+.logo-icon {
+  width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+  display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 22px;
+  box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+}
+.logo-text { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
+.logo-text .dz-d { color: var(--green); }
+.logo-text .dz-z { color: var(--red); }
+
+.lang-switcher {
+  display: flex; gap: 4px; background: #fff;
+  border-radius: 100px; padding: 4px;
+  border: 1px solid var(--border);
+}
+.lang-btn {
+  padding: 6px 12px; border: none; background: transparent;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+  border-radius: 100px; color: var(--text3);
+  font-family: inherit;
+  min-height: 32px; min-width: 38px;  /* Touch target */
+  transition: all .2s;
+}
+.lang-btn.active {
+  background: var(--blue); color: #fff;
+}
+
+/* Hero */
+.hero { text-align: center; padding: 24px 0 32px; }
+.badge {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(46, 139, 87, 0.12); color: var(--green);
+  border-radius: 100px; font-size: 13px; font-weight: 700;
+  letter-spacing: .3px; margin-bottom: 18px;
+  border: 1px solid rgba(46, 139, 87, 0.25);
+}
+.hero h1 {
+  font-size: clamp(28px, 5vw, 42px);
+  font-weight: 900; letter-spacing: -1px;
+  line-height: 1.15; margin-bottom: 16px;
+}
+.hero h1 .highlight {
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero p {
+  font-size: 17px; color: var(--text2);
+  max-width: 540px; margin: 0 auto;
+}
+
+/* Stats counter */
+.stats {
+  display: flex; gap: 12px; justify-content: center;
+  margin: 32px 0; flex-wrap: wrap;
+}
+.stat-card {
+  flex: 1; min-width: 130px;
+  background: #fff; border-radius: var(--r12);
+  padding: 18px 14px; text-align: center;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+.stat-num {
+  font-size: 30px; font-weight: 900; color: var(--blue);
+  letter-spacing: -.5px; line-height: 1;
+}
+.stat-label {
+  font-size: 12px; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .5px;
+  margin-top: 8px; font-weight: 700;
+}
+.stat-skeleton {
+  display: inline-block;
+  width: 60px; height: 32px;
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Form card */
+.form-card {
+  background: #fff; border-radius: 20px;
+  padding: 32px 28px;
+  box-shadow: var(--shadow-md);
+  border: 1px solid var(--border);
+}
+.form-card h2 {
+  font-size: 22px; font-weight: 800; margin-bottom: 8px;
+}
+.form-card .subtitle {
+  color: var(--text2); font-size: 14px; margin-bottom: 24px;
+}
+.form-group { margin-bottom: 18px; }
+.form-group label {
+  display: block; font-size: 12px; font-weight: 700;
+  color: var(--text); margin-bottom: 8px;
+  text-transform: uppercase; letter-spacing: .5px;
+}
+.form-control {
+  width: 100%; padding: 14px 16px;
+  background: var(--bg); border: 2px solid var(--border);
+  border-radius: var(--r12); font-size: 15px;
+  font-family: inherit; color: var(--text);
+  transition: all .2s;
+  min-height: 50px;  /* Touch target iOS */
+}
+.form-control:focus {
+  outline: none; border-color: var(--blue);
+  background: #fff;
+  box-shadow: var(--focus-ring);
+}
+.form-control.error {
+  border-color: var(--red);
+  background: #fef2f2;
+}
+.form-error-text {
+  font-size: 12px; color: var(--red);
+  margin-top: 6px; font-weight: 600;
+}
+
+.submit-btn {
+  width: 100%; padding: 16px;
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+  color: #fff; border: none; border-radius: var(--r12);
+  font-size: 16px; font-weight: 700; cursor: pointer;
+  transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 4px 16px rgba(30, 144, 255, 0.3);
+  margin-top: 8px;
+  min-height: 56px;  /* Touch target large */
+  font-family: inherit;
+}
+.submit-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(30, 144, 255, 0.4);
+}
+.submit-btn:disabled {
+  opacity: .65; cursor: not-allowed;
+  transform: none;
+}
+.submit-btn .spinner {
+  display: none; width: 18px; height: 18px;
+  border: 2.5px solid rgba(255,255,255,.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+}
+.submit-btn.loading .spinner { display: inline-block; }
+.submit-btn.loading .submit-icon { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.privacy-note {
+  font-size: 12px; color: var(--text2);  /* AMÉLIORÉ contraste */
+  text-align: center; margin-top: 16px; line-height: 1.6;
+}
+.privacy-note a { color: var(--blue); text-decoration: none; font-weight: 600; }
+.privacy-note a:hover { text-decoration: underline; }
+
+/* Success state */
+.success-state {
+  text-align: center; padding: 32px 16px; display: none;
+}
+.success-state.show { display: block; }
+.success-icon {
+  width: 84px; height: 84px; margin: 0 auto 20px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #fff; font-size: 42px;
+  animation: bounce .6s ease;
+  box-shadow: 0 8px 24px rgba(16, 185, 129, .3);
+}
+@keyframes bounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+.success-state h2 {
+  font-size: 24px; font-weight: 800; margin-bottom: 10px;
+}
+.success-state p { color: var(--text2); font-size: 15px; line-height: 1.6; }
+.share-buttons {
+  display: flex; gap: 8px; justify-content: center;
+  margin-top: 28px; flex-wrap: wrap;
+}
+.share-btn {
+  padding: 11px 18px; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--r12);
+  font-size: 13px; font-weight: 700; color: var(--text);
+  text-decoration: none; transition: all .2s;
+  display: flex; align-items: center; gap: 6px;
+  min-height: 44px;  /* Touch target */
+  font-family: inherit;
+}
+.share-btn:hover { transform: translateY(-1px); }
+.share-btn.wa { background: #25D366; color: #fff; border-color: #25D366; }
+.share-btn.fb { background: #1877F2; color: #fff; border-color: #1877F2; }
+.share-btn.ig { background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366); color: #fff; border: none; }
+
+/* Features grid */
+.features {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px; margin: 40px 0;
+}
+.feature {
+  background: #fff; border-radius: var(--r12);
+  padding: 20px; border: 1px solid var(--border);
+  text-align: center;
+}
+.feature-icon {
+  width: 52px; height: 52px; margin: 0 auto 12px;
+  background: var(--blue-l); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--blue); font-size: 22px;
+}
+.feature h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.feature p { font-size: 13px; color: var(--text2); }  /* AMÉLIORÉ contraste */
+
+/* Footer */
+.footer {
+  text-align: center; padding: 32px 0 16px;
+  font-size: 13px; color: var(--text2);  /* AMÉLIORÉ contraste */
+}
+.footer a { color: var(--text2); text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Toast */
+.toast-container {
+  position: fixed; top: 20px; right: 20px; z-index: 9999;
+  pointer-events: none;
+}
+html[dir="rtl"] .toast-container { right: auto; left: 20px; }
+.toast {
+  background: var(--text); color: #fff;
+  padding: 12px 18px; border-radius: var(--r12);
+  font-size: 14px; font-weight: 600;
+  margin-bottom: 8px;
+  box-shadow: 0 8px 28px rgba(0,0,0,.2);
+  animation: slideIn .3s ease;
+}
+.toast.error { background: var(--red); }
+.toast.success { background: #10b981; }
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .container { padding: 16px; }
+  .form-card { padding: 24px 20px; }
+  .hero h1 { font-size: 28px; }
+  .stat-card { min-width: 105px; padding: 14px 10px; }
+  .stat-num { font-size: 24px; }
+  .stat-label { font-size: 11px; }
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+<style>
+/* [I18N-UNIFY-2026] Cache le switcher global flottant — cette page a son propre switcher local */
+#tabibi-lang-switcher { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header avec sélecteur de langue -->
+  <header class="header">
+    <a href="index.html" class="logo" aria-label="Tabibi DZ — Retour à l'accueil">
+      <div class="logo-icon"><i class="fa fa-plus" aria-hidden="true"></i></div>
+      <div class="logo-text">Tabibi <span class="dz-d">D</span><span class="dz-z">Z</span></div>
+    </a>
+    <div class="lang-switcher" role="group" aria-label="Langue">
+      <button class="lang-btn active" data-lang="fr" onclick="setLang('fr')" aria-pressed="true">FR</button>
+      <button class="lang-btn" data-lang="ar" onclick="setLang('ar')" aria-pressed="false">AR</button>
+      <button class="lang-btn" data-lang="en" onclick="setLang('en')" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge" data-i18n="badge">🇩🇿 LANCEMENT ÉTÉ 2026</div>
+    <h1 data-i18n-html="title">
+      Soyez parmi les <span class="highlight">1ers</span><br>
+      à découvrir Tabibi
+    </h1>
+    <p data-i18n="subtitle">
+      Rejoignez la liste d'attente exclusive et recevez un <strong>accès prioritaire</strong> dès le lancement de la 1ère plateforme algérienne de prise de RDV médical.
+    </p>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num" id="stat-total"><span class="stat-skeleton"></span></div>
+      <div class="stat-label" data-i18n="stat_signups">Inscrits</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">1500+</div>
+      <div class="stat-label" data-i18n="stat_doctors">Médecins prévus</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num">48</div>
+      <div class="stat-label" data-i18n="stat_wilayas">Wilayas</div>
+    </div>
+  </div>
+
+  <!-- Form Card -->
+  <div class="form-card" id="form-section">
+    <h2 data-i18n="form_title">Inscription gratuite</h2>
+    <p class="subtitle" data-i18n="form_subtitle">⚡ Notification prioritaire dès l'ouverture</p>
+
+    <form id="waiting-form" autocomplete="on" novalidate>
+      <div class="form-group">
+        <label for="email" data-i18n="label_email">Votre email</label>
+        <input
+          type="email"
+          id="email"
+          class="form-control"
+          placeholder="votre@email.com"
+          data-i18n-placeholder="placeholder_email"
+          required
+          maxlength="254"
+          autocomplete="email"
+          spellcheck="false"
+          aria-describedby="email-error">
+        <div id="email-error" class="form-error-text" style="display:none"></div>
+      </div>
+
+      <div class="form-group">
+        <label for="wilaya" data-i18n="label_wilaya">Votre wilaya</label>
+        <select id="wilaya" class="form-control" required>
+          <option value="" data-i18n="wilaya_choose">Sélectionner votre wilaya...</option>
+          <option value="Alger" data-i18n-multi="wilaya_alger">Alger (16)</option>
+          <option value="Oran" data-i18n-multi="wilaya_oran">Oran (31)</option>
+          <option value="Constantine" data-i18n-multi="wilaya_constantine">Constantine (25)</option>
+          <option value="Annaba" data-i18n-multi="wilaya_annaba">Annaba (23)</option>
+          <option value="Blida" data-i18n-multi="wilaya_blida">Blida (09)</option>
+          <option value="Setif" data-i18n-multi="wilaya_setif">Sétif (19)</option>
+          <option value="Tizi Ouzou" data-i18n-multi="wilaya_tiziouzou">Tizi Ouzou (15)</option>
+          <option value="Tlemcen" data-i18n-multi="wilaya_tlemcen">Tlemcen (13)</option>
+          <option value="Bejaia" data-i18n-multi="wilaya_bejaia">Béjaïa (06)</option>
+          <option value="Batna" data-i18n-multi="wilaya_batna">Batna (05)</option>
+          <option value="Sidi Bel Abbes" data-i18n-multi="wilaya_sba">Sidi Bel Abbès (22)</option>
+          <option value="Mostaganem" data-i18n-multi="wilaya_mosta">Mostaganem (27)</option>
+          <option value="Bordj Bou Arreridj" data-i18n-multi="wilaya_bba">Bordj Bou Arreridj (34)</option>
+          <option value="Tamanrasset" data-i18n-multi="wilaya_taman">Tamanrasset (11)</option>
+          <option value="Ouargla" data-i18n-multi="wilaya_ouargla">Ouargla (30)</option>
+          <option value="Autre" data-i18n-multi="wilaya_other">Autre wilaya</option>
+        </select>
+      </div>
+
+      <!-- Triple Honeypot anti-bot -->
+      <div aria-hidden="true" style="position:absolute;left:-99999px;top:-99999px;width:1px;height:1px;overflow:hidden;opacity:0">
+        <label for="wl_url_check">Site web (laissez vide)</label>
+        <input type="url" id="wl_url_check" name="url" tabindex="-1" autocomplete="off" value="">
+        <input type="text" id="wl_name_check" name="full-name" tabindex="-1" autocomplete="off" value="">
+      </div>
+      <input type="hidden" id="wl_form_loaded" name="form_loaded" value="">
+
+      <!-- Turnstile widget container -->
+      <div id="turnstile-container" style="margin:16px 0;display:flex;justify-content:center"></div>
+
+      <button type="submit" class="submit-btn" id="submit-btn" aria-label="Rejoindre la liste d'attente">
+        <span class="spinner" aria-hidden="true"></span>
+        <i class="fa fa-rocket submit-icon" aria-hidden="true"></i>
+        <span id="submit-text" data-i18n="btn_submit">Rejoindre la liste</span>
+      </button>
+
+      <p class="privacy-note" data-i18n-html="privacy">
+        En vous inscrivant, vous acceptez notre
+        <a href="confidentialite.html">politique de confidentialité</a>.
+        Aucun spam — uniquement notre lancement.
+      </p>
+    </form>
+  </div>
+
+  <!-- Success state (caché par défaut) -->
+  <div class="form-card success-state" id="success-section" role="status" aria-live="polite">
+    <div class="success-icon" aria-hidden="true">✓</div>
+    <h2 data-i18n="success_title">Vous êtes inscrit !</h2>
+    <p data-i18n-html="success_msg">Vous recevrez un email dès le lancement.<br>Merci de faire partie de l'aventure Tabibi 🇩🇿</p>
+
+    <div class="share-buttons">
+      <a href="#" onclick="shareWA();return false;" class="share-btn wa">
+        <i class="fab fa-whatsapp" aria-hidden="true"></i>
+        <span data-i18n="share">Partager</span>
+      </a>
+      <a href="#" onclick="shareFB();return false;" class="share-btn fb">
+        <i class="fab fa-facebook-f" aria-hidden="true"></i>
+        <span data-i18n="share">Partager</span>
+      </a>
+      <a href="https://instagram.com/tabibi.dz" target="_blank" rel="noopener noreferrer" class="share-btn ig">
+        <i class="fab fa-instagram" aria-hidden="true"></i>
+        <span data-i18n="follow">Suivre</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Features -->
+  <section class="features">
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true"><i class="fa fa-clock"></i></div>
+      <h3 data-i18n="feature1_title">RDV en 30 sec</h3>
+      <p data-i18n="feature1_text">Trouvez et réservez en quelques clics</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true"><i class="fa fa-bell"></i></div>
+      <h3 data-i18n="feature2_title">Rappels auto</h3>
+      <p data-i18n="feature2_text">SMS + email avant chaque RDV</p>
+    </div>
+    <div class="feature">
+      <div class="feature-icon" aria-hidden="true"><i class="fa fa-shield-halved"></i></div>
+      <h3 data-i18n="feature3_title">100% sécurisé</h3>
+      <p data-i18n="feature3_text">Conforme loi 18-07 DZ</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p data-i18n-html="footer">
+      © 2026 Tabibi · Alger, Algérie ·
+      <a href="mentions-legales.html">Mentions légales</a> ·
+      <a href="confidentialite.html">Confidentialité</a>
+    </p>
+  </footer>
+
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container" aria-live="assertive"></div>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/[email protected]"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-brevo.js"></script>
+<script src="js/tabibi-turnstile.js"></script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════
+   I18N — Traductions FR/AR/EN
+   ═══════════════════════════════════════════════════════════════ */
+const I18N = {
+  fr: {
+    badge: "🇩🇿 LANCEMENT ÉTÉ 2026",
+    title: "Soyez parmi les <span class='highlight'>1ers</span><br>à découvrir Tabibi",
+    subtitle: "Rejoignez la liste d'attente exclusive et recevez un <strong>accès prioritaire</strong> dès le lancement de la 1ère plateforme algérienne de prise de RDV médical.",
+    stat_signups: "Inscrits",
+    stat_doctors: "Médecins prévus",
+    stat_wilayas: "Wilayas",
+    form_title: "Inscription gratuite",
+    form_subtitle: "⚡ Notification prioritaire dès l'ouverture",
+    label_email: "Votre email",
+    placeholder_email: "votre@email.com",
+    label_wilaya: "Votre wilaya",
+    wilaya_choose: "Sélectionner votre wilaya...",
+    wilaya_alger: "Alger (16)", wilaya_oran: "Oran (31)", wilaya_constantine: "Constantine (25)",
+    wilaya_annaba: "Annaba (23)", wilaya_blida: "Blida (09)", wilaya_setif: "Sétif (19)",
+    wilaya_tiziouzou: "Tizi Ouzou (15)", wilaya_tlemcen: "Tlemcen (13)", wilaya_bejaia: "Béjaïa (06)",
+    wilaya_batna: "Batna (05)", wilaya_sba: "Sidi Bel Abbès (22)", wilaya_mosta: "Mostaganem (27)",
+    wilaya_bba: "Bordj Bou Arreridj (34)", wilaya_taman: "Tamanrasset (11)", wilaya_ouargla: "Ouargla (30)",
+    wilaya_other: "Autre wilaya",
+    btn_submit: "Rejoindre la liste",
+    btn_loading: "Inscription en cours...",
+    privacy: "En vous inscrivant, vous acceptez notre <a href='confidentialite.html'>politique de confidentialité</a>. Aucun spam — uniquement notre lancement.",
+    success_title: "Vous êtes inscrit !",
+    success_msg: "Vous recevrez un email dès le lancement.<br>Merci de faire partie de l'aventure Tabibi 🇩🇿",
+    success_msg_already: "Vous étiez déjà inscrit !<br>Vous recevrez un email dès le lancement.",
+    share: "Partager",
+    follow: "Suivre",
+    feature1_title: "RDV en 30 sec", feature1_text: "Trouvez et réservez en quelques clics",
+    feature2_title: "Rappels auto", feature2_text: "SMS + email avant chaque RDV",
+    feature3_title: "100% sécurisé", feature3_text: "Conforme loi 18-07 DZ",
+    footer: "© 2026 Tabibi · Alger, Algérie · <a href='mentions-legales.html'>Mentions légales</a> · <a href='confidentialite.html'>Confidentialité</a>",
+    error_email_invalid: "Email invalide",
+    error_wilaya_missing: "Sélectionnez votre wilaya",
+    error_generic: "Erreur, réessayez",
+    error_service: "Service indisponible",
+    share_text: "Découvrez Tabibi, la 1ère plateforme algérienne de RDV médical en ligne ! Inscrivez-vous gratuitement : "
+  },
+  ar: {
+    badge: "🇩🇿 الإطلاق صيف 2026",
+    title: "كن من <span class='highlight'>الأوائل</span><br>لاكتشاف طبيبي",
+    subtitle: "انضم إلى قائمة الانتظار الحصرية واحصل على <strong>وصول ذي أولوية</strong> منذ إطلاق المنصة الأولى في الجزائر لحجز المواعيد الطبية.",
+    stat_signups: "المسجلون",
+    stat_doctors: "أطباء متوقعون",
+    stat_wilayas: "ولاية",
+    form_title: "تسجيل مجاني",
+    form_subtitle: "⚡ إشعار فوري عند الإطلاق",
+    label_email: "بريدك الإلكتروني",
+    placeholder_email: "البريد@example.com",
+    label_wilaya: "ولايتك",
+    wilaya_choose: "اختر ولايتك...",
+    wilaya_alger: "الجزائر (16)", wilaya_oran: "وهران (31)", wilaya_constantine: "قسنطينة (25)",
+    wilaya_annaba: "عنابة (23)", wilaya_blida: "البليدة (09)", wilaya_setif: "سطيف (19)",
+    wilaya_tiziouzou: "تيزي وزو (15)", wilaya_tlemcen: "تلمسان (13)", wilaya_bejaia: "بجاية (06)",
+    wilaya_batna: "باتنة (05)", wilaya_sba: "سيدي بلعباس (22)", wilaya_mosta: "مستغانم (27)",
+    wilaya_bba: "برج بوعريريج (34)", wilaya_taman: "تمنراست (11)", wilaya_ouargla: "ورقلة (30)",
+    wilaya_other: "ولاية أخرى",
+    btn_submit: "انضم للقائمة",
+    btn_loading: "جاري التسجيل...",
+    privacy: "بالتسجيل، أنت توافق على <a href='confidentialite.html'>سياسة الخصوصية</a>. لا رسائل مزعجة — فقط إخطار الإطلاق.",
+    success_title: "تم تسجيلك !",
+    success_msg: "ستتلقى بريدًا إلكترونيًا عند الإطلاق.<br>شكرًا لانضمامك إلى مغامرة طبيبي 🇩🇿",
+    success_msg_already: "أنت مسجل بالفعل !<br>ستتلقى بريدًا عند الإطلاق.",
+    share: "مشاركة",
+    follow: "متابعة",
+    feature1_title: "موعد في 30 ثانية", feature1_text: "ابحث واحجز في بضع نقرات",
+    feature2_title: "تذكير تلقائي", feature2_text: "SMS + بريد قبل كل موعد",
+    feature3_title: "آمن 100٪", feature3_text: "متوافق مع قانون 18-07 الجزائري",
+    footer: "© 2026 طبيبي · الجزائر · <a href='mentions-legales.html'>إشعار قانوني</a> · <a href='confidentialite.html'>الخصوصية</a>",
+    error_email_invalid: "بريد إلكتروني غير صالح",
+    error_wilaya_missing: "اختر ولايتك",
+    error_generic: "خطأ، حاول مرة أخرى",
+    error_service: "الخدمة غير متاحة",
+    share_text: "اكتشف طبيبي، المنصة الجزائرية الأولى لحجز المواعيد الطبية ! سجل مجانًا : "
+  },
+  en: {
+    badge: "🇩🇿 LAUNCHING SUMMER 2026",
+    title: "Be among the <span class='highlight'>1st</span><br>to discover Tabibi",
+    subtitle: "Join the exclusive waiting list and get <strong>priority access</strong> at the launch of Algeria's 1st medical appointment booking platform.",
+    stat_signups: "Sign-ups",
+    stat_doctors: "Doctors expected",
+    stat_wilayas: "Wilayas",
+    form_title: "Free sign-up",
+    form_subtitle: "⚡ Priority notification on launch day",
+    label_email: "Your email",
+    placeholder_email: "your@email.com",
+    label_wilaya: "Your wilaya",
+    wilaya_choose: "Select your wilaya...",
+    wilaya_alger: "Algiers (16)", wilaya_oran: "Oran (31)", wilaya_constantine: "Constantine (25)",
+    wilaya_annaba: "Annaba (23)", wilaya_blida: "Blida (09)", wilaya_setif: "Setif (19)",
+    wilaya_tiziouzou: "Tizi Ouzou (15)", wilaya_tlemcen: "Tlemcen (13)", wilaya_bejaia: "Bejaia (06)",
+    wilaya_batna: "Batna (05)", wilaya_sba: "Sidi Bel Abbes (22)", wilaya_mosta: "Mostaganem (27)",
+    wilaya_bba: "Bordj Bou Arreridj (34)", wilaya_taman: "Tamanrasset (11)", wilaya_ouargla: "Ouargla (30)",
+    wilaya_other: "Other wilaya",
+    btn_submit: "Join the list",
+    btn_loading: "Signing up...",
+    privacy: "By signing up, you agree to our <a href='confidentialite.html'>privacy policy</a>. No spam — only our launch.",
+    success_title: "You're signed up!",
+    success_msg: "You'll receive an email at launch.<br>Thanks for being part of the Tabibi adventure 🇩🇿",
+    success_msg_already: "You were already signed up!<br>You'll get an email at launch.",
+    share: "Share",
+    follow: "Follow",
+    feature1_title: "Book in 30 sec", feature1_text: "Find and book in a few clicks",
+    feature2_title: "Auto reminders", feature2_text: "SMS + email before every appointment",
+    feature3_title: "100% secure", feature3_text: "Compliant with DZ law 18-07",
+    footer: "© 2026 Tabibi · Algiers, Algeria · <a href='mentions-legales.html'>Legal notice</a> · <a href='confidentialite.html'>Privacy</a>",
+    error_email_invalid: "Invalid email",
+    error_wilaya_missing: "Select your wilaya",
+    error_generic: "Error, try again",
+    error_service: "Service unavailable",
+    share_text: "Discover Tabibi, Algeria's 1st medical appointment booking platform! Sign up free: "
+  }
+};
+
+let currentLang = 'fr';
+
+function setLang(lang) {
+  if (!I18N[lang]) lang = 'fr';
+  currentLang = lang;
+
+  // Mettre à jour dir et lang
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+
+  // Mettre à jour les boutons
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    const isActive = b.getAttribute('data-lang') === lang;
+    b.classList.toggle('active', isActive);
+    b.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+  });
+
+  // Traduire tous les éléments avec data-i18n
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    if (I18N[lang][key]) el.textContent = I18N[lang][key];
+  });
+
+  // Traduire HTML (autorise les balises)
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    if (I18N[lang][key]) el.innerHTML = I18N[lang][key];
+  });
+
+  // Traduire placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (I18N[lang][key]) el.setAttribute('placeholder', I18N[lang][key]);
+  });
+
+  // Traduire options select avec data-i18n-multi
+  document.querySelectorAll('[data-i18n-multi]').forEach(el => {
+    const key = el.getAttribute('data-i18n-multi');
+    if (I18N[lang][key]) el.textContent = I18N[lang][key];
+  });
+
+  // Mettre à jour le bouton selon état loading
+  const btn = document.getElementById('submit-btn');
+  if (btn && !btn.classList.contains('loading')) {
+    const span = document.getElementById('submit-text');
+    if (span) span.textContent = I18N[lang].btn_submit;
+  }
+
+  // Sauvegarder dans localStorage (best effort)
+  try { localStorage.setItem('tabibi_lang', lang); } catch (e) {}
+
+  // [I18N-UNIFY-2026] Propager au système global (système A) pour cohérence
+  // sur tout le site (notifications, header, footer auto-injectés).
+  try {
+    if (window.tabibiLang && typeof window.tabibiLang.set === 'function') {
+      // Évite la boucle : on ne re-déclenche que si la valeur diffère
+      if (window.tabibiLang.get() !== lang) window.tabibiLang.set(lang);
+    }
+  } catch (e) {}
+}
+
+// [I18N-UNIFY-2026] Si la langue change ailleurs (header global, autre onglet),
+// re-rendre la page avec le dictionnaire I18N local.
+document.addEventListener('tabibi:lang-change', function (e) {
+  try {
+    const newLang = (e && e.detail && e.detail.lang) || (window.tabibiLang && window.tabibiLang.get()) || 'fr';
+    if (newLang !== currentLang) setLang(newLang);
+  } catch (err) {}
+});
+
+function T(key) {
+  return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.fr && I18N.fr[key]) || key;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANTI-BOT + FORM LOGIC
+   ═══════════════════════════════════════════════════════════════ */
+let turnstileToken = null;
+let turnstileWidgetId = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Détecter langue préférée
+  let preferredLang = 'fr';
+  try {
+    preferredLang = localStorage.getItem('tabibi_lang') || preferredLang;
+  } catch (e) {}
+
+  // Si pas de pref, détecter via URL ?lang= ou navigator
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlLang = urlParams.get('lang');
+  if (urlLang && I18N[urlLang]) preferredLang = urlLang;
+  else if (!localStorage.getItem('tabibi_lang')) {
+    const navLang = (navigator.language || 'fr').slice(0, 2);
+    if (I18N[navLang]) preferredLang = navLang;
+  }
+
+  setLang(preferredLang);
+
+  // Time-based honeypot
+  const tsEl = document.getElementById('wl_form_loaded');
+  if (tsEl) tsEl.value = String(Date.now());
+
+  // Charger stats
+  loadStats();
+
+  // Turnstile
+  if (window.tabibiTurnstile && window.tabibiTurnstile.isEnabled()) {
+    try {
+      turnstileWidgetId = await window.tabibiTurnstile.renderWidget('#turnstile-container', {
+        callback: (token) => { turnstileToken = token; },
+        errorCallback: () => { turnstileToken = null; },
+        expiredCallback: () => { turnstileToken = null; }
+      });
+    } catch (err) {
+      console.warn('[Turnstile] Init failed');
+    }
+  }
+
+  document.getElementById('waiting-form').addEventListener('submit', handleSubmit);
+});
+
+async function loadStats() {
+  try {
+    if (!window.tabibi || !window.tabibi.supabase) {
+      document.getElementById('stat-total').textContent = '500+';
+      return;
+    }
+    const { data } = await window.tabibi.supabase
+      .from('waiting_list_count')
+      .select('total_count')
+      .single();
+    if (data && data.total_count != null) {
+      document.getElementById('stat-total').textContent = formatNumber(data.total_count);
+    } else {
+      document.getElementById('stat-total').textContent = '500+';
+    }
+  } catch (e) {
+    document.getElementById('stat-total').textContent = '500+';
+  }
+}
+
+function formatNumber(n) {
+  if (n < 100) return '50+';
+  if (n < 1000) return Math.floor(n / 100) * 100 + '+';
+  return (n / 1000).toFixed(1).replace('.0', '') + 'k+';
+}
+
+async function handleSubmit(e) {
+  e.preventDefault();
+
+  const btn = document.getElementById('submit-btn');
+  const btnText = document.getElementById('submit-text');
+  const emailInput = document.getElementById('email');
+  const wilayaSelect = document.getElementById('wilaya');
+  const emailError = document.getElementById('email-error');
+
+  const email = emailInput.value.trim().toLowerCase();
+  const wilaya = wilayaSelect.value;
+  const honeypotUrl = document.getElementById('wl_url_check').value;
+  const honeypotName = document.getElementById('wl_name_check').value;
+  const formLoadedAt = parseInt(document.getElementById('wl_form_loaded').value || '0', 10);
+  const submitTime = Date.now();
+
+  // Reset errors
+  emailInput.classList.remove('error');
+  emailError.style.display = 'none';
+
+  // Anti-bot : honeypot
+  if (honeypotUrl || honeypotName) {
+    showSuccess(false);
+    return;
+  }
+
+  // Anti-bot : time-based
+  if (formLoadedAt && (submitTime - formLoadedAt) < 3000) {
+    showSuccess(false);
+    return;
+  }
+
+  // Validation
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    emailInput.classList.add('error');
+    emailError.textContent = T('error_email_invalid');
+    emailError.style.display = 'block';
+    emailInput.focus();
+    return;
+  }
+  if (!wilaya) {
+    showToast(T('error_wilaya_missing'), 'error');
+    wilayaSelect.focus();
+    return;
+  }
+
+  // UI loading
+  btn.disabled = true;
+  btn.classList.add('loading');
+  btnText.textContent = T('btn_loading');
+
+  try {
+    if (window.tabibiTurnstile && window.tabibiTurnstile.isEnabled() && turnstileToken) {
+      const verify = await window.tabibiTurnstile.verifyToken(turnstileToken);
+      if (!verify.valid) throw new Error('Vérification anti-bot échouée');
+    }
+
+    if (!window.tabibi || !window.tabibi.supabase) {
+      throw new Error(T('error_service'));
+    }
+
+    const { data, error } = await window.tabibi.supabase
+      .from('waiting_list')
+      .insert([{
+        email: email,
+        wilaya: wilaya,
+        source: 'waiting-list-page',
+        language: currentLang,
+        user_agent: navigator.userAgent.substring(0, 200)
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      if (error.code === '23505' || /duplicate|unique/i.test(error.message)) {
+        showSuccess(true);
+        return;
+      }
+      throw error;
+    }
+
+    // Email Brevo (best effort)
+    if (window.tabibiBrevo) {
+      try {
+        await window.tabibiBrevo.sendEmail('waiting_list_welcome', email, {
+          count: formatNumber(500),
+          lang: currentLang
+        });
+        if (data && data.id) {
+          await window.tabibi.supabase
+            .from('waiting_list')
+            .update({ email_sent: true, email_sent_at: new Date().toISOString() })
+            .eq('id', data.id);
+        }
+      } catch (e) {
+        // best effort, no-op
+      }
+    }
+
+    showSuccess(false);
+  } catch (err) {
+    showToast(err.message || T('error_generic'), 'error');
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btnText.textContent = T('btn_submit');
+  }
+}
+
+function showSuccess(alreadyExisted) {
+  document.getElementById('form-section').style.display = 'none';
+  const success = document.getElementById('success-section');
+  success.classList.add('show');
+  const msgEl = success.querySelector('p');
+  if (msgEl) {
+    msgEl.innerHTML = alreadyExisted ? T('success_msg_already') : T('success_msg');
+  }
+  setTimeout(loadStats, 500);
+}
+
+function showToast(msg, type) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (type ? ' ' + type : '');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 4000);
+}
+
+function shareWA() {
+  const text = encodeURIComponent(T('share_text') + 'https://tabibi.doctor/waiting-list.html');
+  window.open('https://wa.me/?text=' + text, '_blank', 'noopener');
+}
+function shareFB() {
+  const url = encodeURIComponent('https://tabibi.doctor/waiting-list.html');
+  window.open('https://www.facebook.com/sharer/sharer.php?u=' + url, '_blank', 'noopener');
+}
+</script>
+
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

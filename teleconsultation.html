@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Tabibi — Teleconsultation video securisee, vie privee garantie.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="canonical" href="https://tabibi.doctor/teleconsultation.html">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_teleconsultation">
+<title>Teleconsultation | Tabibi</title>
+
+<!-- Permissions explicit -->
+<meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), display-capture=(self)">
+
+<!-- Styles -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/tokens-v2.css">
+<link rel="stylesheet" href="styles/components-v2.css">
+
+<style>
+  :root {
+    --tc-radius: 16px;
+    --tc-shadow: 0 8px 28px rgba(0,0,0,.12);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--brand-green-50, #f0fdf4); font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1A1A1A; min-height: 100vh; }
+  html[dir="rtl"] body { font-family: 'IBM Plex Sans Arabic', 'Geeza Pro', 'Segoe UI Arabic', Tahoma, sans-serif; }
+
+  .tc-shell { max-width: 980px; margin: 0 auto; padding: 16px; }
+
+  /* Hero */
+  .tc-hero {
+    background: linear-gradient(155deg, #0A5A4A 0%, #0F7560 52%, #1A8A73 100%);
+    color: #fff; border-radius: var(--tc-radius); padding: 24px;
+    box-shadow: var(--tc-shadow); position: relative; overflow: hidden;
+  }
+  .tc-hero::before {
+    content: ""; position: absolute; inset: -40% -10% auto auto;
+    width: 280px; height: 280px; border-radius: 50%;
+    background: rgba(212, 164, 55, .18); filter: blur(40px);
+  }
+  .tc-hero h1 { margin: 0 0 4px; font-size: 22px; font-weight: 700; letter-spacing: -0.3px; position: relative; }
+  .tc-hero .tc-sub { margin: 0; opacity: .92; font-size: 14px; position: relative; }
+  .tc-hero .tc-meta { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 8px; position: relative; }
+  .tc-chip { background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.25); border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 6px; }
+  .tc-chip i { font-size: 11px; }
+
+  /* Card */
+  .tc-card {
+    background: #fff; border-radius: var(--tc-radius); padding: 20px;
+    margin-top: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    border: 1px solid #E5E5E5;
+  }
+
+  .tc-row { display: flex; gap: 12px; align-items: center; }
+  .tc-row + .tc-row { margin-top: 10px; }
+  .tc-label { font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 0.3px; font-weight: 600; }
+  .tc-val   { font-size: 14px; color: #1A1A1A; font-weight: 500; }
+
+  /* Consent block */
+  .tc-consent {
+    background: #FBF3DE; border: 1px solid #E6C170; border-radius: 12px;
+    padding: 14px; margin-top: 14px; font-size: 13px; color: #6E561A;
+  }
+  .tc-consent label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+  .tc-consent input[type="checkbox"] { margin-top: 3px; transform: scale(1.2); accent-color: #0F7560; }
+  .tc-consent .tc-consent-detail { display: block; margin-top: 6px; font-size: 12px; opacity: .85; }
+
+  /* Buttons */
+  .tc-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    height: 52px; padding: 0 22px; border-radius: 12px; border: none;
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: 200ms ease; font-family: inherit;
+  }
+  .tc-btn-primary { background: #0F7560; color: #fff; box-shadow: 0 4px 14px rgba(15,117,96,.22); width: 100%; }
+  .tc-btn-primary:hover:not(:disabled) { background: #0A5A4A; }
+  .tc-btn-primary:disabled { background: #D4D4D4; color: #fff; cursor: not-allowed; box-shadow: none; }
+  .tc-btn-secondary { background: #fff; color: #0F7560; border: 1.5px solid #0F7560; }
+  .tc-btn-secondary:hover { background: #E6F3F0; }
+  .tc-btn-danger { background: #fff; color: #D21010; border: 1.5px solid #D21010; }
+
+  /* Status / errors */
+  .tc-status {
+    padding: 12px 16px; border-radius: 12px; margin-top: 14px;
+    font-size: 13px; display: flex; align-items: center; gap: 10px;
+  }
+  .tc-status.info   { background: #E6F3F0; color: #075145; border: 1px solid #C2E3DA; }
+  .tc-status.warn   { background: #FBF3DE; color: #6E561A; border: 1px solid #E6C170; }
+  .tc-status.error  { background: #FFF0F0; color: #a40c0c; border: 1px solid #ffcfcf; }
+
+  /* Spinner */
+  .tc-spinner { width: 36px; height: 36px; border: 3px solid #E5E5E5; border-top-color: #0F7560; border-radius: 50%; animation: tc-spin 1s linear infinite; margin: 0 auto; }
+  @keyframes tc-spin { to { transform: rotate(360deg); } }
+
+  /* Daily iframe */
+  #tc-frame-wrap {
+    margin-top: 16px; background: #000; border-radius: var(--tc-radius);
+    overflow: hidden; box-shadow: var(--tc-shadow);
+    aspect-ratio: 16 / 9; min-height: 320px; position: relative;
+  }
+  #tc-frame-wrap iframe { width: 100% !important; height: 100% !important; border: 0; }
+
+  /* Mobile full-screen */
+  @media (max-width: 640px) {
+    .tc-shell { padding: 8px; }
+    #tc-frame-wrap.is-active { position: fixed; inset: 0; z-index: 9999; border-radius: 0; aspect-ratio: auto; }
+  }
+
+  /* Hidden helper */
+  .tc-hidden { display: none !important; }
+
+  /* RTL adjustments */
+  html[dir="rtl"] .tc-hero::before { left: -10%; right: auto; }
+
+  /* Footer */
+  .tc-footer { margin-top: 20px; padding: 14px; text-align: center; font-size: 12px; color: #666; }
+  .tc-footer a { color: #0F7560; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="tc-shell">
+
+  <!-- ECRAN 1 : Chargement -->
+  <section id="tc-loading" class="tc-card" style="text-align:center; padding: 40px 20px;">
+    <div class="tc-spinner" aria-hidden="true"></div>
+    <p style="margin-top: 16px; color: #666; font-size: 14px;" data-i18n-key="tc_loading">
+      Chargement de votre teleconsultation...
+    </p>
+  </section>
+
+  <!-- ECRAN 2 : Erreur (auth, session, expire, etc.) -->
+  <section id="tc-error" class="tc-card tc-hidden" style="text-align:center;">
+    <i class="fa-solid fa-circle-exclamation" style="font-size: 42px; color: #D21010;"></i>
+    <h2 style="margin: 16px 0 6px; font-size: 18px;" data-i18n-key="tc_error_title">Impossible de demarrer la consultation</h2>
+    <p id="tc-error-msg" style="color: #666; font-size: 14px; margin: 0 0 18px;"></p>
+    <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+      <button id="tc-error-retry" class="tc-btn tc-btn-secondary" data-i18n-key="tc_btn_retry">
+        <i class="fa-solid fa-rotate-right"></i> Reessayer
+      </button>
+      <a href="/patient-dashboard.html" class="tc-btn tc-btn-secondary" data-i18n-key="tc_btn_back">
+        <i class="fa-solid fa-arrow-left"></i> Retour au tableau de bord
+      </a>
+    </div>
+  </section>
+
+  <!-- ECRAN 3 : Pre-join (infos + consentement + bouton rejoindre) -->
+  <section id="tc-prejoin" class="tc-hidden">
+    <div class="tc-hero">
+      <h1 id="tc-hero-title" data-i18n-key="tc_hero_title">Teleconsultation</h1>
+      <p class="tc-sub" id="tc-hero-sub"></p>
+      <div class="tc-meta">
+        <span class="tc-chip"><i class="fa-solid fa-calendar"></i> <span id="tc-meta-date"></span></span>
+        <span class="tc-chip"><i class="fa-solid fa-clock"></i> <span id="tc-meta-time"></span></span>
+        <span class="tc-chip"><i class="fa-solid fa-shield-halved"></i> <span data-i18n-key="tc_meta_secure">Connexion chiffree</span></span>
+      </div>
+    </div>
+
+    <div class="tc-card">
+      <div class="tc-row">
+        <i class="fa-solid fa-user-doctor" style="color:#0F7560; font-size:18px; width:24px;"></i>
+        <div>
+          <div class="tc-label" id="tc-other-label">Medecin</div>
+          <div class="tc-val" id="tc-other-name">--</div>
+        </div>
+      </div>
+      <div class="tc-row" id="tc-row-reason">
+        <i class="fa-solid fa-notes-medical" style="color:#0F7560; font-size:18px; width:24px;"></i>
+        <div>
+          <div class="tc-label" data-i18n-key="tc_label_reason">Motif</div>
+          <div class="tc-val" id="tc-reason">--</div>
+        </div>
+      </div>
+
+      <!-- Consent recording (visible UNIQUEMENT pour le patient) -->
+      <div id="tc-consent-block" class="tc-consent tc-hidden">
+        <label>
+          <input type="checkbox" id="tc-consent-check">
+          <span>
+            <strong data-i18n-key="tc_consent_title">J'accepte l'enregistrement de ma consultation</strong>
+            <span class="tc-consent-detail" data-i18n-key="tc_consent_detail">
+              Optionnel. Vous pouvez refuser sans impacter la consultation. L'enregistrement est conserve 30 jours puis supprime. Vous pouvez demander sa suppression a tout moment via votre tableau de bord. Conforme RGPD art. 9 (donnees de sante) et loi DZ 18-07.
+            </span>
+          </span>
+        </label>
+      </div>
+
+      <div id="tc-prejoin-status" class="tc-hidden"></div>
+
+      <div style="margin-top: 18px;">
+        <button id="tc-join-btn" class="tc-btn tc-btn-primary" disabled>
+          <i class="fa-solid fa-video"></i>
+          <span data-i18n-key="tc_btn_join">Rejoindre la consultation</span>
+        </button>
+      </div>
+
+      <p style="margin: 12px 0 0; font-size: 11px; color: #666; text-align: center;" data-i18n-key="tc_btn_join_hint">
+        Le bouton s'active 15 minutes avant l'heure du rendez-vous.
+      </p>
+    </div>
+  </section>
+
+  <!-- ECRAN 4 : En consultation (iframe Daily.co) -->
+  <section id="tc-incall" class="tc-hidden">
+    <div id="tc-frame-wrap"></div>
+    <div style="text-align:center; margin-top:14px;">
+      <button id="tc-leave-btn" class="tc-btn tc-btn-danger">
+        <i class="fa-solid fa-phone-slash"></i>
+        <span data-i18n-key="tc_btn_leave">Quitter la consultation</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ECRAN 5 : Termine -->
+  <section id="tc-ended" class="tc-card tc-hidden" style="text-align:center;">
+    <i class="fa-solid fa-circle-check" style="font-size: 42px; color: #1f7a4e;"></i>
+    <h2 style="margin: 16px 0 6px; font-size: 18px;" data-i18n-key="tc_ended_title">Consultation terminee</h2>
+    <p style="color: #666; font-size: 14px; margin: 0 0 18px;" data-i18n-key="tc_ended_sub">Merci d'avoir utilise Tabibi. Vous pouvez retourner a votre tableau de bord.</p>
+    <a href="/patient-dashboard.html" class="tc-btn tc-btn-primary" style="display:inline-flex; width:auto;">
+      <i class="fa-solid fa-arrow-right"></i> <span data-i18n-key="tc_btn_dashboard">Tableau de bord</span>
+    </a>
+  </section>
+
+  <div class="tc-footer">
+    <span data-i18n-key="tc_footer_brand">Tabibi -- Sante. Confiance. Algerie.</span>
+    -- <a href="/confidentialite.html" data-i18n-key="tc_footer_privacy">Confidentialite</a>
+  </div>
+
+</div>
+
+<!-- SDK Supabase + config -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+
+<!-- Daily.co JS SDK (avec SRI: a verifier au build, version pinnee) -->
+<script
+  src="https://unpkg.com/@daily-co/daily-js@0.66.1/dist/daily-iframe.js"
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------------
+  // Utils
+  // ---------------------------------------------------------------------
+
+  function $ (id) { return document.getElementById(id); }
+  function show (id) { var el = $(id); if (el) el.classList.remove('tc-hidden'); }
+  function hide (id) { var el = $(id); if (el) el.classList.add('tc-hidden'); }
+  function setText (id, txt) { var el = $(id); if (el) el.textContent = txt == null ? '' : String(txt); }
+
+  function captureErr (e, ctx) {
+    try {
+      if (window.Sentry && Sentry.captureException) {
+        Sentry.captureException(e, { tags: { feature: 'teleconsult' }, extra: ctx || {} });
+      }
+    } catch (_) {}
+    console.error('[teleconsult]', e, ctx);
+  }
+
+  function showError (msg) {
+    hide('tc-loading'); hide('tc-prejoin'); hide('tc-incall'); hide('tc-ended');
+    setText('tc-error-msg', msg || 'Erreur inconnue');
+    show('tc-error');
+  }
+
+  function showPrejoinStatus (level, msg) {
+    var el = $('tc-prejoin-status');
+    if (!el) return;
+    el.className = 'tc-status ' + (level || 'info');
+    el.textContent = msg;
+    el.classList.remove('tc-hidden');
+  }
+
+  function formatDateTime (iso) {
+    try {
+      var d = new Date(iso);
+      var dateStr = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      var timeStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      return { date: dateStr, time: timeStr };
+    } catch (_) { return { date: '--', time: '--' }; }
+  }
+
+  // ---------------------------------------------------------------------
+  // Etat
+  // ---------------------------------------------------------------------
+
+  var state = {
+    sessionId: null,
+    session: null,    // { my_token, role, daily_room_url, scheduled_at, ... }
+    callFrame: null,
+    joinedAt: null,
+  };
+
+  // ---------------------------------------------------------------------
+  // 1. Recup session_id depuis URL
+  // ---------------------------------------------------------------------
+
+  function parseSessionId () {
+    var params = new URLSearchParams(window.location.search);
+    var id = params.get('session_id');
+    if (!id) return null;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+    return id;
+  }
+
+  // ---------------------------------------------------------------------
+  // 2. Auth Supabase
+  // ---------------------------------------------------------------------
+
+  async function requireAuth () {
+    if (!window.tabibi || !window.tabibi.supabase) {
+      throw new Error('Supabase non initialise');
+    }
+    var sb = window.tabibi.supabase;
+    var sess = await sb.auth.getSession();
+    if (!sess.data || !sess.data.session) {
+      // Redirect vers login en conservant l'URL
+      var back = encodeURIComponent(window.location.pathname + window.location.search);
+      window.location.href = '/login.html?redirect=' + back;
+      return null;
+    }
+    return sess.data.session;
+  }
+
+  // ---------------------------------------------------------------------
+  // 3. Charger la session video (RPC get_video_session)
+  // ---------------------------------------------------------------------
+
+  async function loadSession (sessionId) {
+    var sb = window.tabibi.supabase;
+    var res = await sb.rpc('get_video_session', { p_session_id: sessionId });
+    if (res.error) throw res.error;
+    var data = res.data;
+    if (!data || data.error) {
+      throw new Error('Session inaccessible : ' + (data && data.error ? data.error : 'inconnue'));
+    }
+    return data;
+  }
+
+  // ---------------------------------------------------------------------
+  // 4. Demander la creation/regeneration de la room (Edge Function)
+  // ---------------------------------------------------------------------
+
+  async function requestRoom (sessionId, appointmentId) {
+    var sb = window.tabibi.supabase;
+    var sess = await sb.auth.getSession();
+    var jwt = sess.data && sess.data.session ? sess.data.session.access_token : null;
+    if (!jwt) throw new Error('Session expiree');
+
+    var url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) + '/functions/v1/create-video-room';
+    var res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + jwt,
+        'apikey': window.TABIBI_CONFIG.SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ appointment_id: appointmentId }),
+    });
+
+    var body;
+    try { body = await res.json(); } catch (_) { body = {}; }
+
+    if (!res.ok || body.error) {
+      var err = new Error(body.error || ('HTTP ' + res.status));
+      err.status = res.status;
+      throw err;
+    }
+    return body; // { ok, session_id, role, room_url, my_token, expires_at }
+  }
+
+  // ---------------------------------------------------------------------
+  // 5. Affichage prejoin
+  // ---------------------------------------------------------------------
+
+  function renderPrejoin (session) {
+    var isPatient = session.role === 'patient';
+
+    // Hero
+    if (isPatient) {
+      setText('tc-hero-sub', 'Avec ' + (session.other_first_name || '') + ' ' + (session.other_last_name || ''));
+      setText('tc-other-label', 'Medecin');
+      setText('tc-other-name', 'Dr ' + (session.other_first_name || '') + ' ' + (session.other_last_name || '') +
+        (session.other_specialty_fr ? ' -- ' + session.other_specialty_fr : ''));
+    } else {
+      setText('tc-hero-sub', 'Avec votre patient ' + (session.other_first_name || ''));
+      setText('tc-other-label', 'Patient');
+      setText('tc-other-name', (session.other_first_name || '') + ' ' + (session.other_last_name || ''));
+    }
+
+    var dt = formatDateTime(session.scheduled_at);
+    setText('tc-meta-date', dt.date);
+    setText('tc-meta-time', dt.time);
+
+    if (session.reason) {
+      setText('tc-reason', session.reason);
+    } else {
+      hide('tc-row-reason');
+    }
+
+    // Consent block: visible UNIQUEMENT pour le patient et si session pas demarree
+    if (isPatient && session.status === 'scheduled') {
+      show('tc-consent-block');
+      var cb = $('tc-consent-check');
+      if (cb) {
+        cb.checked = !!session.consent_patient_recording;
+        cb.addEventListener('change', async function () {
+          try {
+            var sb = window.tabibi.supabase;
+            var r = await sb.rpc('set_video_recording_consent', {
+              p_session_id: state.sessionId,
+              p_consent: cb.checked,
+            });
+            if (r.error || (r.data && r.data.error)) {
+              cb.checked = !cb.checked;
+              showPrejoinStatus('warn', 'Impossible d\'enregistrer votre choix.');
+            }
+          } catch (e) { captureErr(e, { step: 'consent' }); cb.checked = !cb.checked; }
+        });
+      }
+    }
+
+    // Activation du bouton join : 15 min avant l'heure
+    var joinBtn = $('tc-join-btn');
+    var scheduledMs = Date.parse(session.scheduled_at);
+    var nowMs = Date.now();
+    var windowMs = 15 * 60 * 1000;
+
+    if (session.status === 'completed' || session.status === 'cancelled') {
+      joinBtn.disabled = true;
+      showPrejoinStatus('info', 'Cette consultation est ' + (session.status === 'completed' ? 'terminee' : 'annulee') + '.');
+    } else if (nowMs < scheduledMs - windowMs) {
+      joinBtn.disabled = true;
+      var minBefore = Math.ceil((scheduledMs - windowMs - nowMs) / 60000);
+      showPrejoinStatus('info', 'Vous pourrez rejoindre la consultation dans ' + minBefore + ' minutes.');
+      // Reactiver auto a l'heure
+      setTimeout(function () { joinBtn.disabled = false; showPrejoinStatus('info', 'Vous pouvez rejoindre la consultation.'); }, Math.max(0, scheduledMs - windowMs - nowMs));
+    } else {
+      joinBtn.disabled = false;
+    }
+
+    hide('tc-loading');
+    show('tc-prejoin');
+  }
+
+  // ---------------------------------------------------------------------
+  // 6. Join (cree room via Edge Function + monte iframe)
+  // ---------------------------------------------------------------------
+
+  async function joinCall () {
+    var joinBtn = $('tc-join-btn');
+    joinBtn.disabled = true;
+    showPrejoinStatus('info', 'Connexion en cours...');
+
+    try {
+      // Re-charge la session pour avoir l'etat consentement a jour
+      var session = await loadSession(state.sessionId);
+      state.session = session;
+
+      // Demande la room (idempotent cote serveur)
+      var roomInfo = await requestRoom(state.sessionId, session.appointment_id);
+
+      if (!window.DailyIframe) {
+        throw new Error('SDK Daily.co indisponible. Verifiez votre connexion.');
+      }
+
+      var wrap = $('tc-frame-wrap');
+      wrap.classList.add('is-active');
+
+      var frame = window.DailyIframe.createFrame(wrap, {
+        showLeaveButton: true,
+        showFullscreenButton: true,
+        iframeStyle: { width: '100%', height: '100%', border: '0' },
+      });
+
+      state.callFrame = frame;
+
+      frame.on('joined-meeting', function () {
+        state.joinedAt = Date.now();
+        // Marquer started cote serveur
+        window.tabibi.supabase.rpc('mark_video_session_started', { p_session_id: state.sessionId })
+          .catch(function (e) { captureErr(e, { step: 'mark_started' }); });
+      });
+
+      frame.on('participant-joined', function (ev) {
+        console.log('[teleconsult] participant joined:', ev.participant && ev.participant.user_name);
+      });
+
+      frame.on('participant-left', function (ev) {
+        console.log('[teleconsult] participant left:', ev.participant && ev.participant.user_name);
+      });
+
+      frame.on('left-meeting', async function () {
+        await onLeaveCall();
+      });
+
+      frame.on('error', function (err) {
+        captureErr(err, { step: 'daily_frame_error' });
+        showError(err && err.errorMsg ? err.errorMsg : 'Erreur de connexion video.');
+      });
+
+      hide('tc-prejoin');
+      show('tc-incall');
+
+      await frame.join({ url: roomInfo.room_url, token: roomInfo.my_token });
+
+    } catch (e) {
+      captureErr(e, { step: 'joinCall', sessionId: state.sessionId });
+      joinBtn.disabled = false;
+      var msg = e.message || 'Erreur de connexion.';
+      if (e.status === 429) {
+        msg = 'Trop de tentatives. Reessayez dans 2 minutes.';
+      } else if (msg.indexOf('appointment_not_confirmed') >= 0) {
+        msg = 'Ce rendez-vous n\'est pas confirme. Contactez le medecin.';
+      } else if (msg.indexOf('forbidden') >= 0) {
+        msg = 'Vous n\'etes pas autorise a rejoindre cette consultation.';
+      }
+      showPrejoinStatus('error', msg);
+    }
+  }
+
+  // ---------------------------------------------------------------------
+  // 7. Quitter
+  // ---------------------------------------------------------------------
+
+  async function onLeaveCall () {
+    var duration = state.joinedAt ? Math.floor((Date.now() - state.joinedAt) / 1000) : null;
+
+    try {
+      await window.tabibi.supabase.rpc('mark_video_session_ended', {
+        p_session_id: state.sessionId,
+        p_duration: duration,
+      });
+    } catch (e) { captureErr(e, { step: 'mark_ended' }); }
+
+    try {
+      if (state.callFrame) {
+        state.callFrame.destroy();
+        state.callFrame = null;
+      }
+    } catch (_) {}
+
+    var wrap = $('tc-frame-wrap');
+    if (wrap) wrap.classList.remove('is-active');
+
+    hide('tc-incall');
+    show('tc-ended');
+
+    // Redirect dashboard apres 3s
+    setTimeout(function () {
+      var role = state.session && state.session.role;
+      window.location.href = role === 'doctor' ? '/doctor-dashboard.html' : '/patient-dashboard.html';
+    }, 3000);
+  }
+
+  // ---------------------------------------------------------------------
+  // 8. Bootstrap
+  // ---------------------------------------------------------------------
+
+  async function init () {
+    try {
+      var sid = parseSessionId();
+      if (!sid) {
+        showError('Lien invalide. Verifiez l\'URL ou retournez a votre tableau de bord.');
+        return;
+      }
+      state.sessionId = sid;
+
+      var auth = await requireAuth();
+      if (!auth) return; // redirige vers login
+
+      var session = await loadSession(sid);
+      state.session = session;
+
+      renderPrejoin(session);
+
+    } catch (e) {
+      captureErr(e, { step: 'init' });
+      showError(e.message || 'Impossible de charger la consultation.');
+    }
+  }
+
+  // Click handlers
+  document.addEventListener('DOMContentLoaded', function () {
+    var joinBtn = $('tc-join-btn');
+    if (joinBtn) joinBtn.addEventListener('click', joinCall);
+
+    var leaveBtn = $('tc-leave-btn');
+    if (leaveBtn) leaveBtn.addEventListener('click', function () {
+      if (state.callFrame) {
+        state.callFrame.leave().catch(function () { onLeaveCall(); });
+      } else {
+        onLeaveCall();
+      }
+    });
+
+    var retryBtn = $('tc-error-retry');
+    if (retryBtn) retryBtn.addEventListener('click', function () {
+      hide('tc-error'); show('tc-loading'); init();
+    });
+
+    init();
+  });
+
+  // Anti-perte accidentelle pendant l'appel
+  window.addEventListener('beforeunload', function (e) {
+    if (state.callFrame) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+})();
+</script>
+
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+</body>
+</html>

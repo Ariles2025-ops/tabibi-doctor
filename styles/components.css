@@ -1,0 +1,72 @@
+/* ================================================================
+   TABIBI — components.css
+   Composants réutilisables : pay-method, role-btn, day-pill, etc.
+   Complète app.css sans rien y modifier.
+   ================================================================ */
+
+/* PAY METHOD ROW (utilisée dans appointment.html / reservation.html) */
+.pay-method {
+  display:flex; align-items:center; gap:12px;
+  padding:14px;
+  border:2px solid var(--border);
+  border-radius:var(--r12);
+  background:#fff;
+  margin-bottom:8px;
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.pay-method:hover { border-color:var(--blue); background:var(--blue-l); }
+.pay-method.selected { box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+.pay-method input[type=radio] { accent-color:var(--blue); width:18px; height:18px; }
+
+/* ROLE BUTTON (signup.html) */
+.role-btn {
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.role-btn:hover { transform:translateY(-2px); box-shadow:var(--s2); }
+.role-btn.active { box-shadow:0 4px 14px rgba(37,99,235,.2); }
+
+/* DAY PILL (doctor-reservation.html) */
+.day-pill {
+  cursor:pointer;
+  transition:all .15s ease;
+  font-family:inherit;
+}
+.day-pill:hover { transform:translateY(-1px); }
+.day-pill.active { box-shadow:var(--sb); }
+
+/* TOAST animation */
+@keyframes fadeup { from { transform:translateY(-10px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+/* CARD avec hover */
+.card-tap {
+  cursor:pointer;
+  transition:all .2s ease;
+}
+.card-tap:hover { transform:translateY(-2px); box-shadow:var(--s3); }
+.card-tap:active { transform:translateY(0); }
+
+/* RECEIPT (success.html) */
+.receipt-row {
+  display:flex; justify-content:space-between;
+  padding:8px 0;
+  border-bottom:1px solid var(--bg2);
+  font-size:13px;
+}
+.receipt-row:last-child { border-bottom:none; }
+.receipt-row span:first-child { color:var(--text3); }
+.receipt-row span:last-child { font-weight:600; }
+
+/* AVATAR variants */
+.avatar-xl { width:88px; height:88px; border-radius:50%; font-size:32px; font-weight:800; }
+.avatar-lg { width:56px; height:56px; border-radius:50%; font-size:20px; font-weight:800; }
+.avatar-md { width:42px; height:42px; border-radius:50%; font-size:15px; font-weight:700; }
+.avatar-sm { width:32px; height:32px; border-radius:50%; font-size:13px; font-weight:700; }
+
+/* PRINTABLE — masque la nav lors de l'impression du reçu */
+@media print {
+  .app-bar, .tab-bar, .dash-tabs, .btn { display:none !important; }
+  body { background:#fff; }
+  .card { box-shadow:none; border:1px solid var(--border); }
+}

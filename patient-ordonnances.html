@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Mes ordonnances medicales numeriques sur Tabibi.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Mes ordonnances | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/tokens-v2.css">
+<link rel="stylesheet" href="styles/components-v2.css">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-family); min-height: 100vh; }
+
+  .topbar { background: var(--card); border-bottom: 1px solid var(--border); padding: 12px 20px;
+            display: flex; align-items: center; gap: 14px; position: sticky; top: 0; z-index: var(--z-sticky); }
+  .topbar .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-primary); }
+  .topbar .logo img { width: 28px; height: 28px; }
+  .topbar .logo b { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+  .topbar h1 { margin: 0; font-size: 14px; font-weight: 600; color: var(--text2); flex: 1; }
+  .lang-bar { display: flex; gap: 4px; }
+  .lang-btn { background: transparent; border: 1px solid var(--border); padding: 5px 10px; border-radius: var(--r8);
+              cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text2); }
+  .lang-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px; }
+
+  .header-card { background: linear-gradient(135deg, var(--color-primary) 0%, var(--brand-green-900) 100%);
+                 color: #fff; padding: 26px 24px; border-radius: var(--r16); margin-bottom: 22px; box-shadow: var(--shadow-primary); }
+  .header-card h2 { margin: 0 0 6px; font-size: 22px; font-weight: 700; }
+  .header-card p { margin: 0; opacity: 0.92; font-size: 14px; }
+
+  .tabs { display: flex; gap: 6px; background: var(--card); padding: 4px; border-radius: var(--rfull); margin-bottom: 18px; border: 1px solid var(--border); }
+  .tab { flex: 1; background: transparent; border: 0; padding: 10px 14px; border-radius: var(--rfull);
+         font-size: 13px; font-weight: 600; color: var(--text2); cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .tab.active { background: var(--color-primary); color: #fff; }
+  .tab-count { background: rgba(255,255,255,0.25); padding: 1px 8px; border-radius: var(--rfull); font-size: 11px; margin-left: 4px; }
+  .tab:not(.active) .tab-count { background: var(--bg2); color: var(--text2); }
+
+  .list { display: flex; flex-direction: column; gap: 12px; }
+  .presc-card { background: var(--card); border-radius: var(--r12); padding: 18px; border: 1px solid var(--border);
+                box-shadow: var(--s1); transition: box-shadow 0.15s; }
+  .presc-card:hover { box-shadow: var(--s2); }
+  .presc-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px; }
+  .presc-doctor { font-weight: 700; font-size: 15px; color: var(--text); }
+  .presc-specialty { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .presc-number { font-family: var(--font-family-mono); font-size: 11px; color: var(--text3); margin-top: 2px; }
+  .status { padding: 4px 10px; border-radius: var(--rfull); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; white-space: nowrap; }
+  .status.signed     { background: var(--color-success-light); color: var(--color-success-hover); }
+  .status.delivered  { background: var(--color-success-light); color: var(--color-success-hover); }
+  .status.draft      { background: var(--bg2); color: var(--text2); }
+  .status.cancelled  { background: var(--color-danger-light); color: var(--color-danger); }
+  .status.expired    { background: var(--color-warning-light); color: var(--color-warning-on); }
+
+  .presc-dates { display: flex; gap: 18px; font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+  .presc-dates strong { color: var(--text2); }
+
+  .meds-preview { background: var(--bg2); border-radius: var(--r8); padding: 10px 12px; font-size: 13px; color: var(--text); margin-bottom: 12px; }
+  .meds-preview .pill { display: inline-block; background: var(--color-primary-light); color: var(--color-primary-hover);
+                        padding: 3px 9px; border-radius: var(--rfull); font-size: 11px; font-weight: 600; margin: 2px 4px 2px 0; }
+
+  .presc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn { padding: 9px 14px; border-radius: var(--r8); border: 0; font-size: 13px; font-weight: 600; cursor: pointer;
+         display: inline-flex; align-items: center; gap: 6px; font-family: inherit; text-decoration: none; transition: background 0.15s; }
+  .btn-primary { background: var(--color-primary); color: #fff; }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-secondary { background: var(--bg2); color: var(--text); border: 1px solid var(--border-strong); }
+  .btn-secondary:hover { background: var(--bg3); }
+  .btn-whatsapp { background: #25D366; color: #fff; }
+  .btn-whatsapp:hover { background: #1ea952; }
+
+  .empty { text-align: center; padding: 60px 20px; color: var(--text3); }
+  .empty i { font-size: 48px; color: var(--text4); margin-bottom: 14px; }
+  .empty h3 { margin: 0 0 6px; font-size: 16px; color: var(--text2); }
+
+  .skeleton { background: linear-gradient(90deg, var(--bg2) 0%, var(--bg3) 50%, var(--bg2) 100%); background-size: 200% 100%;
+              animation: sh 1.5s infinite; border-radius: var(--r8); height: 80px; margin-bottom: 12px; }
+  @keyframes sh { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .pagination { display: flex; justify-content: center; gap: 8px; margin-top: 24px; }
+  .page-btn { padding: 8px 14px; border-radius: var(--r8); background: var(--card); border: 1px solid var(--border-strong);
+              cursor: pointer; font-size: 13px; font-family: inherit; color: var(--text2); }
+  .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .page-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  .modal { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: center; justify-content: center; z-index: var(--z-modal); padding: 16px; }
+  .modal.open { display: flex; }
+  .modal-content { background: var(--card); max-width: 520px; width: 100%; border-radius: var(--r16); padding: 24px; box-shadow: var(--s4); max-height: 90vh; overflow: auto; }
+  .modal h3 { margin: 0 0 12px; font-size: 17px; }
+  .meds-detail { list-style: none; padding: 0; margin: 0; }
+  .meds-detail li { padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .meds-detail li:last-child { border-bottom: 0; }
+  .meds-detail .mname { font-weight: 700; font-size: 14px; color: var(--text); }
+  .meds-detail .mmeta { font-size: 12px; color: var(--text2); margin-top: 4px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+           background: var(--text); color: #fff; padding: 12px 20px; border-radius: var(--r12); font-size: 14px; z-index: var(--z-toast); display: none; }
+  .toast.ok { background: var(--color-primary); }
+  .toast.err { background: var(--color-danger); }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a href="patient-dashboard.html" class="logo">
+    <img src="images/logo-mark.svg" alt="Tabibi">
+    <b>Tabibi</b>
+  </a>
+  <h1 id="t-pagetitle">Mes ordonnances</h1>
+  <div class="lang-bar">
+    <button class="lang-btn active" data-lang="fr">FR</button>
+    <button class="lang-btn" data-lang="ar">العربية</button>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="header-card">
+    <h2 id="t-title">Mes ordonnances numeriques</h2>
+    <p id="t-sub">Toutes vos ordonnances signees electroniquement, accessibles a tout moment.</p>
+  </div>
+
+  <div class="tabs" role="tablist">
+    <button class="tab active" data-filter="active" role="tab">
+      <span id="t-tab-active">Actives</span> <span class="tab-count" id="cnt-active">0</span>
+    </button>
+    <button class="tab" data-filter="expired" role="tab">
+      <span id="t-tab-expired">Expirees</span> <span class="tab-count" id="cnt-expired">0</span>
+    </button>
+    <button class="tab" data-filter="cancelled" role="tab">
+      <span id="t-tab-cancelled">Annulees</span> <span class="tab-count" id="cnt-cancelled">0</span>
+    </button>
+    <button class="tab" data-filter="all" role="tab">
+      <span id="t-tab-all">Toutes</span> <span class="tab-count" id="cnt-all">0</span>
+    </button>
+  </div>
+
+  <div class="list" id="list">
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+    <div class="skeleton"></div>
+  </div>
+
+  <div class="pagination" id="pagination" style="display:none"></div>
+
+</div>
+
+<!-- Modal details -->
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="modal-content">
+    <h3 id="m-title">Detail de l'ordonnance</h3>
+    <div id="m-body"></div>
+    <div style="text-align:right;margin-top:20px">
+      <button class="btn btn-secondary" onclick="document.getElementById('modal').classList.remove('open')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+
+<script>
+(function() {
+  'use strict';
+
+  const PAGE_SIZE = 10;
+  let state = { filter: 'active', page: 0, all: [] };
+
+  const $ = (s) => document.querySelector(s);
+  const $$ = (s) => Array.from(document.querySelectorAll(s));
+  const toast = $('#toast');
+
+  function showToast(msg, kind) {
+    toast.className = 'toast ' + (kind || 'ok');
+    toast.textContent = msg;
+    toast.style.display = 'block';
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(() => { toast.style.display = 'none'; }, 3500);
+  }
+
+  function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    catch (e) { return iso; }
+  }
+
+  function isActive(p) {
+    if (p.status === 'cancelled') return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return p.expiry_date >= today;
+  }
+  function isExpired(p) {
+    if (p.status === 'cancelled') return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return p.expiry_date < today;
+  }
+
+  function statusBadge(p) {
+    if (p.status === 'cancelled') return '<span class="status cancelled">Annulee</span>';
+    if (isExpired(p))             return '<span class="status expired">Expiree</span>';
+    if (p.status === 'delivered') return '<span class="status delivered">Recue</span>';
+    if (p.status === 'signed')    return '<span class="status signed">Active</span>';
+    return '<span class="status draft">Brouillon</span>';
+  }
+
+  async function downloadPdf(prescriptionId) {
+    const supa = window.tabibi.supabase;
+    try {
+      const { data: presc } = await supa.from('prescriptions').select('pdf_storage_path').eq('id', prescriptionId).maybeSingle();
+      if (!presc || !presc.pdf_storage_path) { showToast('PDF indisponible', 'err'); return; }
+      const { data, error } = await supa.storage.from('prescriptions').createSignedUrl(presc.pdf_storage_path, 60 * 60 * 24);
+      if (error) throw error;
+
+      window.open(data.signedUrl, '_blank', 'noopener');
+      await supa.rpc('mark_prescription_delivered', { p_prescription_id: prescriptionId, p_channel: 'download' });
+    } catch (e) {
+      console.error(e);
+      showToast('Erreur telechargement', 'err');
+    }
+  }
+
+  async function shareWhatsApp(prescriptionId, doctorName) {
+    const supa = window.tabibi.supabase;
+    try {
+      const { data: presc } = await supa.from('prescriptions').select('pdf_storage_path, prescription_number').eq('id', prescriptionId).maybeSingle();
+      if (!presc || !presc.pdf_storage_path) { showToast('PDF indisponible', 'err'); return; }
+      const { data } = await supa.storage.from('prescriptions').createSignedUrl(presc.pdf_storage_path, 60 * 60 * 24);
+      const text = encodeURIComponent(`Ordonnance ${presc.prescription_number} de ${doctorName} via Tabibi : ${data.signedUrl}`);
+      window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
+      await supa.rpc('mark_prescription_delivered', { p_prescription_id: prescriptionId, p_channel: 'whatsapp' });
+    } catch (e) {
+      console.error(e);
+      showToast('Erreur partage', 'err');
+    }
+  }
+
+  function openDetail(p) {
+    const meds = Array.isArray(p.medications) ? p.medications : [];
+    const html = `
+      <div style="margin-bottom:14px;font-size:12px;color:var(--text3)">
+        ${escapeHtml(p.prescription_number)} — emise le ${fmtDate(p.issue_date)} par
+        <strong>Dr ${escapeHtml(p.doctor_first_name || '')} ${escapeHtml(p.doctor_last_name || '')}</strong>
+      </div>
+      <ul class="meds-detail">
+        ${meds.map((m, i) => `
+          <li>
+            <div class="mname">${i + 1}. ${escapeHtml(m.name)}</div>
+            <div class="mmeta">${[m.dosage, m.frequency, m.duration].filter(Boolean).map(escapeHtml).join(' — ') || '—'}</div>
+            ${m.notes ? `<div class="mmeta"><em>${escapeHtml(m.notes)}</em></div>` : ''}
+          </li>
+        `).join('')}
+      </ul>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)">
+        Hash d'integrite : <code style="font-size:10px;word-break:break-all">${escapeHtml(p.pdf_sha256 || '—')}</code>
+      </div>
+    `;
+    $('#m-body').innerHTML = html;
+    $('#modal').classList.add('open');
+  }
+
+  function renderCard(p) {
+    const meds = Array.isArray(p.medications) ? p.medications : [];
+    const pills = meds.slice(0, 4).map((m) => `<span class="pill">${escapeHtml(m.name)}</span>`).join('');
+    const more = meds.length > 4 ? `<span class="pill" style="background:var(--bg3);color:var(--text2)">+${meds.length - 4}</span>` : '';
+    const doctorName = `Dr ${(p.doctor_first_name || '').trim()} ${(p.doctor_last_name || '').trim()}`.trim();
+    const canDownload = !!p.pdf_storage_path && p.status !== 'cancelled';
+
+    return `
+      <div class="presc-card">
+        <div class="presc-head">
+          <div>
+            <div class="presc-doctor">${escapeHtml(doctorName)}</div>
+            <div class="presc-specialty">${escapeHtml(p.doctor_specialty || 'Medecin')}</div>
+            <div class="presc-number">${escapeHtml(p.prescription_number)}</div>
+          </div>
+          ${statusBadge(p)}
+        </div>
+        <div class="presc-dates">
+          <div><strong>Emise :</strong> ${fmtDate(p.issue_date)}</div>
+          <div><strong>Valide jusqu'au :</strong> ${fmtDate(p.expiry_date)}</div>
+        </div>
+        <div class="meds-preview">${pills || '—'}${more}</div>
+        <div class="presc-actions">
+          <button class="btn btn-secondary" data-act="detail" data-id="${p.id}"><i class="fa fa-eye"></i> Detail</button>
+          ${canDownload ? `<button class="btn btn-primary" data-act="download" data-id="${p.id}"><i class="fa fa-download"></i> PDF</button>` : ''}
+          ${canDownload ? `<button class="btn btn-whatsapp" data-act="whatsapp" data-id="${p.id}" data-doc="${escapeHtml(doctorName)}"><i class="fa-brands fa-whatsapp"></i> Partager</button>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  function applyFilter() {
+    const f = state.filter;
+    const items = state.all.filter((p) => {
+      if (f === 'all')        return true;
+      if (f === 'active')     return isActive(p) && p.status !== 'cancelled';
+      if (f === 'expired')    return isExpired(p);
+      if (f === 'cancelled')  return p.status === 'cancelled';
+      return true;
+    });
+    const start = state.page * PAGE_SIZE;
+    const slice = items.slice(start, start + PAGE_SIZE);
+
+    if (!slice.length) {
+      $('#list').innerHTML = `
+        <div class="empty">
+          <i class="fa fa-file-prescription"></i>
+          <h3>Aucune ordonnance ${f === 'active' ? 'active' : f === 'expired' ? 'expiree' : f === 'cancelled' ? 'annulee' : ''}</h3>
+          <p>Vos ordonnances signees apparaitront ici.</p>
+        </div>`;
+    } else {
+      $('#list').innerHTML = slice.map(renderCard).join('');
+    }
+
+    // Pagination
+    const totalPages = Math.ceil(items.length / PAGE_SIZE);
+    const pag = $('#pagination');
+    if (totalPages <= 1) { pag.style.display = 'none'; } else {
+      pag.style.display = '';
+      pag.innerHTML = Array.from({ length: totalPages }, (_, i) =>
+        `<button class="page-btn ${i === state.page ? 'active' : ''}" data-page="${i}">${i + 1}</button>`
+      ).join('');
+      pag.querySelectorAll('.page-btn').forEach((b) => b.addEventListener('click', () => {
+        state.page = parseInt(b.dataset.page, 10);
+        applyFilter();
+      }));
+    }
+
+    // Counts
+    $('#cnt-active').textContent    = state.all.filter((p) => isActive(p) && p.status !== 'cancelled').length;
+    $('#cnt-expired').textContent   = state.all.filter(isExpired).length;
+    $('#cnt-cancelled').textContent = state.all.filter((p) => p.status === 'cancelled').length;
+    $('#cnt-all').textContent       = state.all.length;
+
+    // Wire card actions
+    $$('[data-act]').forEach((el) => {
+      const act = el.dataset.act;
+      const id  = el.dataset.id;
+      if (act === 'detail')   el.addEventListener('click', () => { const p = state.all.find((x) => x.id === id); if (p) openDetail(p); });
+      if (act === 'download') el.addEventListener('click', () => downloadPdf(id));
+      if (act === 'whatsapp') el.addEventListener('click', () => shareWhatsApp(id, el.dataset.doc));
+    });
+  }
+
+  async function load() {
+    const supa = window.tabibi && window.tabibi.supabase;
+    if (!supa) { showToast('Supabase indisponible', 'err'); return; }
+    const { data: { user } } = await supa.auth.getUser();
+    if (!user) { location.href = 'login.html'; return; }
+
+    const { data, error } = await supa.from('my_prescriptions')
+      .select('*')
+      .order('issue_date', { ascending: false })
+      .limit(500);
+    if (error) {
+      console.error(error);
+      $('#list').innerHTML = `<div class="empty"><i class="fa fa-triangle-exclamation"></i><h3>Erreur de chargement</h3><p>${escapeHtml(error.message)}</p></div>`;
+      return;
+    }
+    state.all = (data || []).filter((p) => p.status !== 'draft');
+    applyFilter();
+  }
+
+  // Tabs
+  document.addEventListener('DOMContentLoaded', () => {
+    $$('.tab').forEach((t) => t.addEventListener('click', () => {
+      $$('.tab').forEach((x) => x.classList.remove('active'));
+      t.classList.add('active');
+      state.filter = t.dataset.filter;
+      state.page = 0;
+      applyFilter();
+    }));
+
+    // i18n minimal
+    const I18N = {
+      fr: { pagetitle: 'Mes ordonnances', title: 'Mes ordonnances numeriques',
+            sub: 'Toutes vos ordonnances signees electroniquement, accessibles a tout moment.',
+            active: 'Actives', expired: 'Expirees', cancelled: 'Annulees', all: 'Toutes' },
+      ar: { pagetitle: 'وصفاتي الطبية', title: 'وصفاتي الطبية الرقمية',
+            sub: 'جميع وصفاتك الموقعة إلكترونياً، متاحة في أي وقت.',
+            active: 'سارية', expired: 'منتهية', cancelled: 'ملغاة', all: 'الكل' }
+    };
+    function applyLang(lang) {
+      const t = I18N[lang] || I18N.fr;
+      document.documentElement.lang = lang;
+      document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
+      document.body.dir = document.documentElement.dir;
+      $('#t-pagetitle').textContent = t.pagetitle;
+      $('#t-title').textContent = t.title;
+      $('#t-sub').textContent = t.sub;
+      $('#t-tab-active').textContent = t.active;
+      $('#t-tab-expired').textContent = t.expired;
+      $('#t-tab-cancelled').textContent = t.cancelled;
+      $('#t-tab-all').textContent = t.all;
+      $$('.lang-bar .lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === lang));
+      try { localStorage.setItem('tabibi.lang', lang); } catch (e) {}
+    }
+    $$('.lang-bar .lang-btn').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.lang)));
+    const saved = (function() { try { return localStorage.getItem('tabibi.lang'); } catch (e) { return null; } })();
+    if (saved) applyLang(saved);
+
+    // Modal close on backdrop click
+    $('#modal').addEventListener('click', (e) => {
+      if (e.target === $('#modal')) $('#modal').classList.remove('open');
+    });
+
+    load();
+  });
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,33 @@
+/* ================================================================
+   TABIBI — responsive.css
+   Breakpoints tablette + desktop (mobile-first conservé)
+   ================================================================ */
+
+/* TABLETTE — 768px+ */
+@media (min-width: 768px) {
+  .container { max-width: 720px; }
+  .page { padding-bottom: 24px; }
+  .stats-row { grid-template-columns: repeat(4, 1fr) !important; }
+  .doc-card { max-width: 100%; }
+}
+
+/* DESKTOP — 1024px+ */
+@media (min-width: 1024px) {
+  .container, .page { max-width: 960px; margin: 0 auto; }
+  .app-bar { max-width: 960px; margin: 0 auto; padding-left: 24px; padding-right: 24px; }
+  .dash-tabs { max-width: 960px; margin: 0 auto; }
+  .tab-bar { display: none; } /* pas de nav mobile en desktop */
+}
+
+/* GRID DASHBOARD desktop */
+@media (min-width: 1200px) {
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 20px;
+  }
+}
+
+/* RTL adjustments */
+[dir="rtl"] .day-pill { font-family: 'Cairo', sans-serif; }
+[dir="rtl"] .receipt-row { direction: rtl; }

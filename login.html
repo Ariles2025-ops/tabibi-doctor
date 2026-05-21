@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-2fa.js"></script>
+<!-- [FIX 2026-05-18] Turnstile site key lue depuis js/config.js (TURNSTILE_SITE_KEY).
+     Meta tag conservee comme override eventuel par page. Decommenter et editer si besoin: -->
+<!-- <meta name="turnstile-sitekey" content="0x4AAA..."> -->
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- SEO -->
+<meta name="description" content="Connectez-vous à votre espace Tabibi pour gérer vos rendez-vous médicaux en Algérie. Accès patient, médecin et professionnel de santé.">
+<link rel="canonical" href="https://tabibi.doctor/login.html">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tabibi.doctor/login.html">
+<meta property="og:title" content="Connexion Tabibi — Accédez à votre espace santé">
+<meta property="og:description" content="Connectez-vous à votre espace Tabibi pour gérer vos rendez-vous médicaux en Algérie. Accès patient, médecin et professionnel de santé.">
+<meta property="og:image" content="https://tabibi.doctor/assets/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Tabibi — Plateforme médicale algérienne">
+<meta property="og:site_name" content="Tabibi">
+<meta property="og:locale" content="fr_DZ">
+<meta property="og:locale:alternate" content="ar_DZ">
+<meta property="og:locale:alternate" content="en_US">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Connexion Tabibi — Accédez à votre espace santé">
+<meta name="twitter:description" content="Connectez-vous à votre espace Tabibi pour gérer vos rendez-vous médicaux en Algérie. Accès patient, médecin et professionnel de santé.">
+<meta name="twitter:image" content="https://tabibi.doctor/assets/og-image.jpg">
+<meta name="twitter:image:alt" content="Tabibi — Trouvez votre médecin en Algérie">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_login_long">
+<title>Connexion à Tabibi | Espace patient et médecin</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+</head>
+<body>
+<a class="skip-link" href="#main">Aller au contenu</a>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
+<div class="app-root">
+<header class="app-bar">
+  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='index.html'" aria-label="Retour à l'accueil"><i class="fa fa-arrow-left"></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Connexion</div><div class="app-bar-sub">Accédez à votre espace</div></div>
+</header>
+<main id="main" class="page" style="padding:20px 16px 40px" role="main">
+  <div style="text-align:center;margin-bottom:24px">
+    <div class="logo-mark" style="margin:0 auto 12px"></div>
+    <h2 style="font-size:22px;font-weight:800">Tabibi <span style="font-weight:800"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></h2>
+    <p style="color:var(--text3);font-size:13px;margin-top:3px">La santé à portée de clic</p>
+  </div>
+  <div class="card" style="max-width:400px;margin:0 auto">
+    <form onsubmit="doLogin(event)">
+      <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
+        <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
+          <input class="form-control" id="le" type="email" required style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
+      <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
+        <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+          <input class="form-control" id="lp" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+          <button type="button" class="ii-r" onclick="togglePw('lp',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+        <div style="text-align:right;margin-top:6px">
+          <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
+    </form>
+    <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text3)">
+      Pas de compte ? <a href="signup.html" style="color:var(--blue);font-weight:700" data-i18n="create_account">Créer un compte</a>
+    </div>
+  </div>
+</main>
+<div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
+<script>
+function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
+
+// ═══════════════════════════════════════════════════════════════════
+// SÉCURITÉ v10 : COMPTES DÉMO HARDCODÉS SUPPRIMÉS
+// ═══════════════════════════════════════════════════════════════════
+// L'authentification se fait exclusivement via Supabase Auth.
+// Les anciens comptes de démo ont été retirés du code source.
+// Tous les comptes (admin, patient test, médecin test) sont stockés
+// uniquement dans la base de données Supabase, jamais en clair dans le code.
+// ═══════════════════════════════════════════════════════════════════
+
+function normalizeRole(r){
+  if(!r) return "patient";
+  const s=String(r).toLowerCase().trim();
+  if(s==="doctor"||s==="médecin"||s==="medecin") return "medecin";
+  if(s==="admin"||s==="administrator") return "admin";
+  return "patient";
+}
+
+function redirectFor(role){
+  const r=normalizeRole(role);
+  if(r==="medecin") return "doctor-dashboard.html";
+  if(r==="admin")   return "admin-dashboard.html";
+  return "patient-dashboard.html";
+}
+
+async function doLogin(e){
+  e.preventDefault();
+  const email=document.getElementById("le").value.trim().toLowerCase();
+  const pw=document.getElementById("lp").value;
+  if(!email||!pw){toastM(tabibiT('toast_fill_all_fields','Veuillez remplir tous les champs'),"error");return;}
+
+  // ─── PROTECTION BRUTE-FORCE : max 5 tentatives par 60s par email ───
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    const limit = window.tabibiSec.rateLimit('login:' + email, 5, 60000);
+    if (!limit.allowed) {
+      toastM(limit.reason, "error");
+      return;
+    }
+  }
+
+  // ─── VALIDATION ENTRÉES ───
+  if (window.tabibiSec) {
+    if (!window.tabibiSec.validateEmail(email)) {
+      toastM(tabibiT('toast_email_format_invalid',"Format d'email invalide"), "error");
+      return;
+    }
+    if (pw.length < 6 || pw.length > 128) {
+      toastM(tabibiT('toast_password_invalid',"Mot de passe invalide"), "error");
+      return;
+    }
+  }
+
+  const btn=e.target.querySelector('button[type="submit"]');
+  const origText=btn?btn.innerHTML:"";
+  if(btn){btn.disabled=true;btn.innerHTML='<i class="fa fa-circle-notch fa-spin"></i> Connexion...';}
+
+  // ─── 1. AUTHENTIFICATION SUPABASE (unique méthode v10) ───
+  try {
+    if (!window.tabibi || !window.tabibi.auth || !window.tabibi.supabase) {
+      if(btn){btn.disabled=false;btn.innerHTML=origText;}
+      toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."), "error");
+      return;
+    }
+
+    await window.tabibi.auth.signIn(email, pw);
+
+    // Récupérer le profil depuis la base
+    const user = await window.tabibi.auth.getUser();
+    if (!user) {
+      if(btn){btn.disabled=false;btn.innerHTML=origText;}
+      toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error");
+      return;
+    }
+
+    // ─── VÉRIFICATION DU STATUT (v10) ───
+    // Si médecin en attente de validation manuelle → bloquer la connexion
+    const userStatus = user.status || 'active';
+    const userRole = normalizeRole(user.role);
+
+    if (userRole === 'medecin' && userStatus === 'pending_verification') {
+      // Déconnecter immédiatement
+      try { await window.tabibi.auth.signOut(); } catch(e){}
+      if(btn){btn.disabled=false;btn.innerHTML=origText;}
+      toastM(tabibiT('toast_doctor_pending',"Votre compte médecin est en cours de vérification (48h max). Vous serez notifié par email."), "info");
+      return;
+    }
+
+    if (userStatus === 'suspended') {
+      try { await window.tabibi.auth.signOut(); } catch(e){}
+      if(btn){btn.disabled=false;btn.innerHTML=origText;}
+      toastM(tabibiT('toast_account_suspended',"Compte suspendu. Contactez contact@tabibi.doctor"), "error");
+      return;
+    }
+
+    if (userStatus === 'rejected') {
+      try { await window.tabibi.auth.signOut(); } catch(e){}
+      if(btn){btn.disabled=false;btn.innerHTML=origText;}
+      toastM(tabibiT('toast_signup_rejected',"Inscription rejetée. Contactez contact@tabibi.doctor"), "error");
+      return;
+    }
+
+    // ─── CONNEXION RÉUSSIE ───
+    const fName = user.first_name || "";
+    const lName = user.last_name || "";
+    let displayName = (fName + " " + lName).trim() || user.full_name || "";
+    if (!displayName) displayName = email.split("@")[0];
+    const initials = ((fName[0]||displayName[0]||"?") + (lName[0]||"")).toUpperCase();
+
+    const userData = {
+      id: user.id,
+      email: user.email || email,
+      role: userRole,
+      status: userStatus,
+      name: displayName,
+      initials: initials,
+      firstName: fName,
+      lastName: lName,
+      specialty: user.specialty_fr || user.specialty || "",
+      ville: user.wilaya_fr || user.ville || "Alger",
+      phone: user.phone || "",
+      isTest: !!user.is_test,
+      fromSupabase: true
+    };
+    localStorage.setItem("tabibi_user", JSON.stringify(userData));
+    localStorage.setItem("tabibi_role", userRole);
+
+    const successMsg = userData.isTest
+      ? "Connexion réussie (compte test)"
+      : "Connexion réussie !";
+    toastM(successMsg, "success");
+    setTimeout(()=>location.href=redirectFor(userRole), 400);
+    return;
+
+  } catch(err) {
+    console.warn("[login] Auth failed:", err && err.message);
+    if(btn){btn.disabled=false;btn.innerHTML=origText;}
+    // Message générique (ne pas révéler si c'est l'email ou le mdp qui est faux)
+    toastM(tabibiT('toast_login_failed',"Email ou mot de passe incorrect"), "error");
+    return;
+  }
+}
+
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{if(d.remove)d.remove();else if(d.parentNode)d.parentNode.removeChild(d);},3000);}
+</script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-brevo.js"></script>
+<script src="js/tabibi-turnstile.js"></script>
+<script src="js/tabibi-sms.js"></script>
+<script src="js/tabibi-cookies.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body></html>
