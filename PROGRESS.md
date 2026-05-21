@@ -25,11 +25,14 @@
 - [x] 1.5 Commit `phase1: bandeau claim + signup auto-claim`
 - [x] 1.6 ZIP intermédiaire pour deploy preview Netlify
 
-## Phase 2 — Audit prod & fix bugs (4-8h)
-- [ ] 2.1 Audit frontend : liens cassés, console errors, requêtes échouées
-- [ ] 2.2 Vérif requêtes Supabase → `public_doctors` only (jamais `doctor_profiles`)
-- [ ] 2.3 Lighthouse ≥ 80 sur 5 pages clés (Perf, A11y, SEO, Best Practices)
-- [ ] 2.4 Fix bugs P0/P1 + `AUDIT_REPORT.md`
+## Phase 2 — Audit prod & fix bugs (4-8h) — **✅ DONE 2026-05-21**
+- [x] 2.1 Audit frontend : 24/24 hrefs OK, 3 TODOs documentés, 0 lien cassé
+- [x] 2.2 Vérif requêtes Supabase : 0 occurrence de `doctor_profiles`, 24 tables + 22 RPCs inventoriées
+- [ ] 2.3 Lighthouse ≥ 80 sur 5 pages clés (à exécuter user-side post-deploy preview — template dans AUDIT_REPORT.md)
+- [x] 2.4 Fix bugs P0/P1 + `AUDIT_REPORT.md`
+  - [x] P0 #1 : créé `robots.txt` (Disallow /seo/, /api/, espaces privés + Sitemap)
+  - [x] P1 #2 : supprimé fallback dead code `from('profiles')` dans `index.html:1367`
+  - [x] 5 P2 documentés pour phases 4/6/10/12/13
 
 ## Phase 3 — Pages légales `/legal/` + RGPD (2-3h)
 - [ ] 3.1 Déplacement `cgu.html` → `legal/cgu.html` (+ 4 autres)

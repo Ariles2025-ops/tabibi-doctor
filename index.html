@@ -1359,15 +1359,12 @@ async function handleSignup(e) {
       role: role,
       is_test: false
     };
+    // [Phase 2 2026-05-21] Table canonique = 'users'. La table 'profiles'
+    // n'existe pas en base : on supprime le fallback dead-code (cf. audit P2).
     try {
       await window.tabibi.supabase.from('users').upsert(profileData, { onConflict: 'id' });
     } catch(pErr) {
-      // Fallback si la table s'appelle "profiles"
-      try {
-        await window.tabibi.supabase.from('profiles').upsert(profileData, { onConflict: 'id' });
-      } catch(uErr) {
-        console.warn('[signup] profile insert skipped:', uErr?.message);
-      }
+      console.warn('[signup] users upsert failed:', pErr?.message);
     }
 
     // 3. Si médecin → déconnexion + message d'attente

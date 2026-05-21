@@ -1,0 +1,59 @@
+# =====================================================================
+# Tabibi.doctor - robots.txt
+# =====================================================================
+# Phase 2 (PROGRESS.md) - 2026-05-21
+#
+# RGPD garde-fou : on bloque l'indexation des pages SEO locales tant
+# que les 14 509 noms de medecins n'ont pas ete anonymises server-side
+# (cf. RGPD_STRATEGIE_TABIBI.md - plan 3-stages).
+# A retirer manuellement apres regeneration des pages SEO en Phase 10.
+# =====================================================================
+
+User-agent: *
+
+# Espaces utilisateurs prives (ne doivent jamais etre indexes)
+Disallow: /patient-dashboard.html
+Disallow: /doctor-dashboard.html
+Disallow: /secretaire-dashboard.html
+Disallow: /admin-dashboard.html
+Disallow: /admin-api-keys.html
+Disallow: /admin-cabinet.html
+Disallow: /admin-reviews.html
+Disallow: /patient-profile.html
+Disallow: /medecin-profile.html
+Disallow: /patient-ordonnances.html
+Disallow: /medecin-ordonnance.html
+Disallow: /doctor-analytics.html
+Disallow: /teleconsultation.html
+Disallow: /reset-password.html
+Disallow: /forgot-password.html
+
+# Pages SEO non-anonymisees (RGPD garde-fou, sera leve en Phase 10)
+Disallow: /seo/
+
+# Fichiers SQL exposes accidentellement (devraient etre 404 via netlify.toml)
+Disallow: /*.sql$
+
+# API et fichiers internes
+Disallow: /api/
+Disallow: /tests/
+Disallow: /migrations/
+
+# Autorise explicitement le contenu public marketing + blog + sitemaps
+Allow: /
+Allow: /blog/
+Allow: /sitemaps/
+Allow: /index.html
+Allow: /about.html
+Allow: /cgu.html
+Allow: /confidentialite.html
+Allow: /cookies.html
+Allow: /mentions-legales.html
+Allow: /rgpd-droits.html
+Allow: /signup.html
+Allow: /login.html
+
+# Sitemaps
+Sitemap: https://tabibi.doctor/sitemap.xml
+Sitemap: https://tabibi.doctor/sitemaps/sitemap-static.xml
+Sitemap: https://tabibi.doctor/sitemaps/sitemap-blog.xml
