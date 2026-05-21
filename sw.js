@@ -1,10 +1,10 @@
 /**
- * Tabibi Service Worker v10 — Production
+ * Tabibi Service Worker v11 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
- * Bump v10 : Phase 4.B.2-hotfix (getMyProfile normalise les row composites
- *            tout-NULL retournés par PostgREST sur RETURNS row_type vide)
+ * Bump v11 : Phase 4.B.3 (doctor-dashboard agenda + blocages exceptionnels
+ *            CRUD doctor_unavailable_slots, helpers list/add/delete)
  */
-const CACHE_VERSION = 'tabibi-v10-2026-05-21';
+const CACHE_VERSION = 'tabibi-v11-2026-05-21';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 

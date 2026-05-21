@@ -137,6 +137,74 @@
         </div>
       </div>
     </div>
+
+    <!-- ═════ [Phase 4.B.3] BLOCAGES EXCEPTIONNELS ═════ -->
+    <!-- Section sous l'onglet Agenda, en surcouche du working_hours hebdo.
+         CRUD direct sur doctor_unavailable_slots (4 RLS Phase 4.A scopent
+         par doctor_profiles.user_id = auth.uid()). -->
+    <div style="margin-top:24px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:700"><i class="fa fa-ban" style="color:#f59e0b"></i> Blocages exceptionnels</div>
+        <button id="btn-add-unavail" onclick="openUnavailModal()" class="btn btn-soft btn-sm"><i class="fa fa-plus"></i> Bloquer un créneau</button>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+        Vacances, formation, fermeture exceptionnelle… Ces blocages s'ajoutent à vos horaires normaux ci-dessus.
+      </div>
+      <!-- Mini-bandeau "pas claim" — visible uniquement si médecin pas encore réclamé -->
+      <div id="unavail-not-claimed" class="hidden" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <i class="fa fa-circle-info" aria-hidden="true"></i>
+        <span>Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités. <a href="medecin-profile.html" style="color:#78350f;font-weight:700;text-decoration:underline">Aller à mon profil</a></span>
+      </div>
+      <div id="unavail-list">
+        <div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">Chargement...</div>
+      </div>
+    </div>
+
+    <!-- Modal "Bloquer un créneau" (réutilise le pattern visuel de #schedule-modal) -->
+    <div id="unavail-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeUnavailModal()">
+      <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
+        <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-ban" style="color:#f59e0b"></i> Bloquer un créneau</div>
+          <button onclick="closeUnavailModal()" aria-label="Fermer" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
+        </div>
+        <div style="padding:18px">
+          <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer;margin-bottom:14px;font-size:13px;font-weight:600">
+            <input type="checkbox" id="un-allday" onchange="toggleUnavailAllDay()"> Toute la journée (cache les heures)
+          </label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group">
+              <label class="form-label" for="un-start-date">Du (date) *</label>
+              <input class="form-control" type="date" id="un-start-date" required>
+            </div>
+            <div class="form-group un-time-field">
+              <label class="form-label" for="un-start-time">Heure début *</label>
+              <input class="form-control" type="time" id="un-start-time" value="09:00" required>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="form-group">
+              <label class="form-label" for="un-end-date">Au (date) *</label>
+              <input class="form-control" type="date" id="un-end-date" required>
+            </div>
+            <div class="form-group un-time-field">
+              <label class="form-label" for="un-end-time">Heure fin *</label>
+              <input class="form-control" type="time" id="un-end-time" value="18:00" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="un-reason">Raison (optionnel)</label>
+            <input class="form-control" id="un-reason" placeholder="Vacances famille, formation continue, congrès…" maxlength="200">
+          </div>
+          <div id="un-error" class="hidden" role="alert" style="background:#fee2e2;border:1px solid #dc2626;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:12px;margin-top:8px"></div>
+        </div>
+        <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
+          <div style="display:flex;gap:8px">
+            <button type="button" onclick="closeUnavailModal()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)">Annuler</button>
+            <button type="button" id="btn-save-unavail" onclick="saveUnavailSlot()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> Bloquer ce créneau</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- ═════ TOUS LES RDV ═════ -->
@@ -713,7 +781,189 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     renderNotifs();
     // Charger les vrais RDV depuis Supabase et re-render
     refreshDoctorRdvs();
+    // [Phase 4.B.3] Charger les blocages exceptionnels (no-op si pas auth/pas claim)
+    setTimeout(loadUnavailSlots, 600);
 });
+
+// ════════════════════════════════════════════════════════════════════
+// [Phase 4.B.3] Blocages exceptionnels — CRUD via tabibiDoctor
+// ════════════════════════════════════════════════════════════════════
+
+// Formatage date FR "Lun 15 juin 09:00" / "Lun 15 juin" (all_day)
+function _fmtSlotDate(iso, allDay) {
+  try {
+    var d = new Date(iso);
+    var opts = allDay
+      ? { weekday: 'short', day: 'numeric', month: 'long' }
+      : { weekday: 'short', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' };
+    if (typeof window.tabibiFormatDate === 'function') return window.tabibiFormatDate(d, opts);
+    return d.toLocaleString('fr-FR', opts).replace(',', '');
+  } catch (e) { return String(iso); }
+}
+
+// Hook sur switch d'onglet : reload des slots quand on entre dans Agenda
+(function () {
+  var origSw = window.sw;
+  if (typeof origSw !== 'function') return;
+  window.sw = function (which, btn) {
+    var r = origSw.apply(this, arguments);
+    if (which === 'agenda') { setTimeout(loadUnavailSlots, 100); }
+    return r;
+  };
+})();
+
+async function loadUnavailSlots() {
+  var list = document.getElementById('unavail-list');
+  if (!list) return;
+  if (!window.tabibiDoctor) {
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">Service indisponible.</div>';
+    return;
+  }
+  // Affiche le mini-bandeau si pas claim (getMyDoctorId renvoie null dans ce cas)
+  var docId = await window.tabibiDoctor.getMyDoctorId();
+  var notClaimed = document.getElementById('unavail-not-claimed');
+  var btnAdd = document.getElementById('btn-add-unavail');
+  if (!docId) {
+    if (notClaimed) notClaimed.classList.remove('hidden');
+    if (btnAdd) btnAdd.disabled = true;
+    list.innerHTML = '';
+    return;
+  }
+  if (notClaimed) notClaimed.classList.add('hidden');
+  if (btnAdd) btnAdd.disabled = false;
+
+  var slots = await window.tabibiDoctor.listUnavailableSlots();
+  if (!slots.length) {
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;background:var(--bg);border-radius:10px"><i class="fa fa-circle-check" style="color:var(--green)"></i> Aucun blocage. Vous êtes disponible selon vos horaires hebdomadaires.</div>';
+    return;
+  }
+  list.innerHTML = slots.map(function (s) {
+    var rangeStr = _fmtSlotDate(s.starts_at, s.all_day) + ' → ' + _fmtSlotDate(s.ends_at, s.all_day);
+    var reasonStr = s.reason ? '<div style="font-size:12px;color:var(--text3);margin-top:4px"><i class="fa fa-tag fa-xs"></i> ' + _esc(s.reason) + '</div>' : '';
+    var allDayBadge = s.all_day ? '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;margin-left:6px">Toute la journée</span>' : '';
+    return '<div class="appt-card pending" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+      +    '<div style="flex:1;min-width:0">'
+      +      '<div style="font-weight:700;font-size:13px"><i class="fa fa-calendar-xmark" style="color:#f59e0b"></i> ' + _esc(rangeStr) + allDayBadge + '</div>'
+      +      reasonStr
+      +    '</div>'
+      +    '<button onclick="deleteUnavail(\'' + s.id + '\')" class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" aria-label="Supprimer ce blocage" title="Supprimer"><i class="fa fa-trash"></i></button>'
+      +  '</div>';
+  }).join('');
+}
+
+function _esc(str) {
+  return String(str || '').replace(/[&<>"']/g, function (c) {
+    return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
+  });
+}
+
+function openUnavailModal() {
+  var m = document.getElementById('unavail-modal');
+  if (!m) return;
+  // Pré-remplit avec demain par défaut (date début = date fin = demain)
+  var tomorrow = new Date(Date.now() + 24*60*60*1000);
+  var iso = tomorrow.toISOString().split('T')[0];
+  document.getElementById('un-start-date').value = iso;
+  document.getElementById('un-end-date').value = iso;
+  document.getElementById('un-start-time').value = '09:00';
+  document.getElementById('un-end-time').value = '18:00';
+  document.getElementById('un-reason').value = '';
+  document.getElementById('un-allday').checked = false;
+  toggleUnavailAllDay();
+  document.getElementById('un-error').classList.add('hidden');
+  m.classList.remove('hidden');
+}
+
+function closeUnavailModal() {
+  document.getElementById('unavail-modal')?.classList.add('hidden');
+}
+
+function toggleUnavailAllDay() {
+  var on = document.getElementById('un-allday')?.checked;
+  document.querySelectorAll('#unavail-modal .un-time-field').forEach(function (el) {
+    el.style.display = on ? 'none' : '';
+  });
+}
+
+function _showUnavailError(msg) {
+  var el = document.getElementById('un-error');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.remove('hidden');
+}
+
+async function saveUnavailSlot() {
+  var startDate = document.getElementById('un-start-date').value;
+  var endDate   = document.getElementById('un-end-date').value;
+  var allDay    = document.getElementById('un-allday').checked;
+  var reason    = document.getElementById('un-reason').value.trim();
+  var startTime, endTime;
+
+  if (!startDate || !endDate) {
+    _showUnavailError('Les dates de début et fin sont obligatoires.');
+    return;
+  }
+  if (allDay) {
+    startTime = '00:00';
+    endTime   = '23:59';
+  } else {
+    startTime = document.getElementById('un-start-time').value;
+    endTime   = document.getElementById('un-end-time').value;
+    if (!startTime || !endTime) {
+      _showUnavailError('Les heures de début et fin sont obligatoires.');
+      return;
+    }
+  }
+
+  // Construit ISO local (sans TZ pour respecter l'heure du cabinet)
+  var startsAt = new Date(startDate + 'T' + startTime);
+  var endsAt   = new Date(endDate   + 'T' + endTime);
+
+  if (isNaN(startsAt.getTime()) || isNaN(endsAt.getTime())) {
+    _showUnavailError('Date ou heure invalide.');
+    return;
+  }
+  if (endsAt <= startsAt) {
+    _showUnavailError('La date/heure de fin doit être strictement après le début.');
+    return;
+  }
+
+  // Désactiver le bouton + indicateur loading
+  var btn = document.getElementById('btn-save-unavail');
+  var origHtml = btn ? btn.innerHTML : '';
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Enregistrement...'; }
+
+  var res = await window.tabibiDoctor.addUnavailableSlot(startsAt, endsAt, reason || null, allDay);
+
+  if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
+
+  if (res.ok) {
+    closeUnavailModal();
+    toastM('Blocage enregistré ✓', 'success');
+    loadUnavailSlots();
+  } else {
+    var msg = res.error === 'profile_not_found_or_not_claimed' ? "Réclamez votre fiche d'abord (voir le mini-bandeau)."
+            : res.error === 'invalid_range_end_before_start'   ? 'La date de fin doit être après le début.'
+            : res.error === 'rls_denied'                        ? "Permission refusée. Vous n'êtes peut-être pas le propriétaire de cette fiche."
+            : res.error === 'check_violation_chrono'            ? "Plage horaire invalide (fin avant début)."
+            : res.error === 'doctor_not_found'                  ? "Fiche médecin introuvable."
+            : 'Erreur : ' + res.error;
+    _showUnavailError(msg);
+  }
+}
+
+async function deleteUnavail(id) {
+  if (!id) return;
+  if (!confirm('Supprimer ce blocage ? Les patients pourront à nouveau prendre RDV sur ce créneau.')) return;
+  var res = await window.tabibiDoctor.deleteUnavailableSlot(id);
+  if (res.ok) {
+    toastM('Blocage supprimé ✓', 'success');
+    loadUnavailSlots();
+  } else {
+    var msg = res.error === 'rls_denied' ? "Permission refusée." : 'Erreur : ' + res.error;
+    toastM(msg, 'error');
+  }
+}
 </script>
 </div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>

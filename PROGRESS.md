@@ -88,7 +88,16 @@
   - sw.js : CACHE_VERSION v8 → **v9-2026-05-21** + ajout `/js/tabibi-doctor-dashboard.js` au `PRECACHE_URLS`
   - Aucune régression : API publique identique, page-specific (loadProfile/saveAll/handlers DOM) inchangées
   - **Hotfix appliqué** : `getMyProfile()` normalise les row composites vides à null — bug PostgREST latent corrigé. Garde `!r.data.id` ajoutée (PK NOT NULL → l'absence d'id signale forcément absence de row). Sans ce fix, le bandeau "Réclamer ma fiche" ne se déclenchait pas quand PostgREST renvoyait `{id:null, user_id:null, ...}` au lieu de `null` pur. sw.js bump v9 → **v10-2026-05-21**.
-- [ ] 4.B.3 `doctor-dashboard.html` : ajout section "Blocages exceptionnels" + CRUD `doctor_unavailable_slots`
+- [x] 4.B.3 `doctor-dashboard.html` : ajout section "Blocages exceptionnels" + CRUD `doctor_unavailable_slots` (commit 2026-05-21)
+  - `js/tabibi-doctor-dashboard.js` : +3 helpers (`listUnavailableSlots`, `addUnavailableSlot`, `deleteUnavailableSlot`) + cache `getMyDoctorId`
+  - Section insérée sous l'onglet Agenda (avant `</div>` ligne 140), 100 % additive — pattern card `.appt-card.pending`
+  - Modal "Bloquer un créneau" réutilise le pattern visuel de `#schedule-modal` (bottom-sheet 520px max-width)
+  - Checkbox **"Toute la journée"** (mappée sur col `all_day`) : cache les inputs heure + force 00:00→23:59 au submit
+  - Validation client : `ends_at > starts_at` instant + 5 codes erreur RLS mappés en messages FR (rls_denied, check_violation_chrono, doctor_not_found, profile_not_found_or_not_claimed, invalid_range)
+  - Mini-bandeau "Réclamez votre fiche d'abord" affiché si médecin pas claim (lien vers `medecin-profile.html`)
+  - Hook sur `sw('agenda')` : reload des slots à chaque entrée d'onglet
+  - Format date : `_fmtSlotDate()` utilise `window.tabibiFormatDate` si dispo, fallback `toLocaleString('fr-FR')` — affichage "Lun 15 juin 09:00 → Jeu 18 juin 18:00"
+  - sw.js : CACHE_VERSION v10 → **v11-2026-05-21**
 - [ ] 4.B.4 Fixtures `fixtures/test_doctor.sql` + `tests/manual/DOCTOR_DASHBOARD_TESTS.md` + ZIP intermédiaire
 
 ### 🔖 TODOs ouverts pour Phase 12 (monitoring & sécurité)

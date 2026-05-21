@@ -188,14 +188,107 @@
     return m ? m[1] : null;
   }
 
+  // ─── [Phase 4.B.3] CRUD doctor_unavailable_slots ────────────────────
+  // Les 4 RLS Phase 4.A scopent automatiquement par doctor_profiles.user_id
+  // = auth.uid() pour insert/update/delete (et SELECT public pour lecture).
+  // On ne fait jamais d'erreur SQL crue côté UI : on retourne toujours
+  // { ok, data?, error? } avec error string lisible.
+
+  // Cache interne du doctor_id du médecin connecté (évite n appels getMyProfile)
+  var _cachedDoctorId = null;
+  async function getMyDoctorId() {
+    if (_cachedDoctorId) return _cachedDoctorId;
+    var p = await getMyProfile();
+    _cachedDoctorId = (p && p.id) || null;
+    return _cachedDoctorId;
+  }
+
+  // listUnavailableSlots() : renvoie [{id, doctor_id, starts_at, ends_at, reason, all_day}, ...]
+  // Retourne [] si pas authentifié OU pas de fiche réclamée OU erreur réseau.
+  async function listUnavailableSlots() {
+    var s = sb(); if (!s) return [];
+    try {
+      var docId = await getMyDoctorId();
+      if (!docId) return [];
+      var r = await s.from('doctor_unavailable_slots')
+        .select('id, doctor_id, starts_at, ends_at, reason, all_day, created_at')
+        .eq('doctor_id', docId)
+        .order('starts_at', { ascending: true });
+      if (r.error) { console.warn('[tabibiDoctor] list slots', r.error); return []; }
+      return r.data || [];
+    } catch (e) {
+      console.warn('[tabibiDoctor] listUnavailableSlots exception', e);
+      return [];
+    }
+  }
+
+  // addUnavailableSlot(startsAt, endsAt, reason, allDay)
+  // startsAt/endsAt : ISO strings ou Date objects. La RLS dus_insert_owner
+  // exige que doctor_id matche une fiche dont user_id = auth.uid().
+  async function addUnavailableSlot(startsAt, endsAt, reason, allDay) {
+    var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
+    try {
+      var docId = await getMyDoctorId();
+      if (!docId) return { ok: false, error: 'profile_not_found_or_not_claimed' };
+      var startIso = (startsAt instanceof Date) ? startsAt.toISOString() : String(startsAt);
+      var endIso   = (endsAt   instanceof Date) ? endsAt.toISOString()   : String(endsAt);
+      if (new Date(endIso) <= new Date(startIso)) {
+        return { ok: false, error: 'invalid_range_end_before_start' };
+      }
+      var r = await s.from('doctor_unavailable_slots').insert({
+        doctor_id: docId,
+        starts_at: startIso,
+        ends_at:   endIso,
+        reason:    reason || null,
+        all_day:   !!allDay
+      }).select().single();
+      if (r.error) {
+        var code = r.error.code || '';
+        // 42501 = RLS violation, 23514 = CHECK violation (chrono), 23503 = FK violation
+        var hint = code === '42501' ? 'rls_denied'
+                 : code === '23514' ? 'check_violation_chrono'
+                 : code === '23503' ? 'doctor_not_found'
+                 : (r.error.message || 'insert_failed');
+        console.warn('[tabibiDoctor] addUnavailableSlot', r.error);
+        return { ok: false, error: hint, raw: r.error };
+      }
+      return { ok: true, data: r.data };
+    } catch (e) {
+      return { ok: false, error: 'network_error', raw: e };
+    }
+  }
+
+  // deleteUnavailableSlot(id) : RLS dus_delete_owner protège implicitement
+  async function deleteUnavailableSlot(id) {
+    var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
+    if (!id) return { ok: false, error: 'no_id' };
+    try {
+      var r = await s.from('doctor_unavailable_slots').delete().eq('id', id);
+      if (r.error) {
+        var code = r.error.code || '';
+        var hint = code === '42501' ? 'rls_denied' : (r.error.message || 'delete_failed');
+        console.warn('[tabibiDoctor] deleteUnavailableSlot', r.error);
+        return { ok: false, error: hint, raw: r.error };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: 'network_error', raw: e };
+    }
+  }
+
   window.tabibiDoctor = window.tabibiDoctor || {
     DAYS_FR: DAYS_FR, DAYS_EN: DAYS_EN,
     hasSession: hasSession,
     getMyProfile: getMyProfile,
+    getMyDoctorId: getMyDoctorId,
     updateMyProfile: updateMyProfile,
     serializeSchedule: serializeSchedule,
     parseSchedule: parseSchedule,
     uploadPhoto: uploadPhoto,
     extractStoragePath: extractStoragePath,
+    // [Phase 4.B.3] CRUD blocages exceptionnels
+    listUnavailableSlots: listUnavailableSlots,
+    addUnavailableSlot: addUnavailableSlot,
+    deleteUnavailableSlot: deleteUnavailableSlot,
   };
 })();
