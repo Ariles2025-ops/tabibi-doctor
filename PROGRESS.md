@@ -53,14 +53,28 @@
   - 11 sections : préambule, objet/durée, données, obligations, mesures sécurité, sous-traitants ultérieurs, transferts internationaux, violations, droit d'audit, durées de conservation, droit applicable, contacts
   - Article 28 RGPD + loi DZ 18-07 + ANPDP référencés
 
-## Phase 4 — Dashboard médecin complet (8-12h)
-- [ ] 4.1 Vue d'ensemble (prochains RDV, demandes, stats)
-- [ ] 4.2 Édition fiche complète (photo, bio, langues, tarif, chifa/cb, horaires JSONB)
-- [ ] 4.3 Gestion disponibilités (slots libres/bloqués 30 jours)
-- [ ] 4.4 Liste RDV (à venir / passés / annulés)
-- [ ] 4.5 Téléconsultation toggle + paramètres
-- [ ] 4.6 Upload photo via Supabase Storage `doctor-photos` (RLS strict)
-- [ ] 4.7 RLS policies : médecin édite QUE sa fiche
+## Phase 4 — Dashboard médecin complet (8-12h) — **4.A DONE, 4.B en attente validation user**
+
+### Phase 4.A — Migrations SQL (livrées 2026-05-21, à exécuter user-side)
+- [x] 4.A.1 Fichier `migrations/PHASE4_doctor_dashboard.sql` (11 sections, idempotent)
+  - Section 0 : DISCOVERY (read-only, optionnel)
+  - Section 1 : 10 colonnes éditables sur `public_doctors_master` (bio, languages[], accepts_chifa/cb/cash, weekly_schedule JSONB, telehealth_enabled, telehealth_fee, photo_url, updated_at)
+  - Section 2 : table `doctor_unavailable_slots` NEW (PK UUID, FK ON DELETE CASCADE, CHECK chrono, 2 index)
+  - Section 3 : 4 policies RLS sur `public_doctors_master` (select public, update own, insert/delete bloqués client)
+  - Section 4 : 4 policies RLS sur `doctor_unavailable_slots` (select public, insert/update/delete owner only)
+  - Section 5 : vue `public_doctor_full` NEW (additive — ne touche pas `public_doctors`)
+  - Section 6 : bucket storage `doctor-photos` (public, 2 MB, JPEG/PNG/WebP)
+  - Section 7 : 4 policies RLS sur `storage.objects` pour `doctor-photos` (folder `<auth.uid()>/...`)
+  - Section 8 : trigger auto-bump `updated_at`
+  - Section 9 : 2 RPCs (`get_my_doctor_profile`, `update_my_doctor_profile` avec validation + 5 codes erreur)
+  - Section 10 : 9 requêtes de vérification post-migration (intégrité de `claim_my_doctor_profile` + `public_doctors` confirmée)
+  - Section 11 : rollback complet (commenté)
+
+### Phase 4.B — Frontend dashboard (à livrer après "OK go 4.B")
+- [ ] 4.B.1 Page `doctor-dashboard.html` complète (vue d'ensemble, édition fiche, dispos, RDV, téléconsult toggle)
+- [ ] 4.B.2 Upload photo via bucket `doctor-photos` (helper JS partagé)
+- [ ] 4.B.3 Fixtures de test (compte médecin demo + données seed)
+- [ ] 4.B.4 Tests manuels E2E dans `tests/manual/DOCTOR_DASHBOARD_TESTS.md`
 
 ## Phase 5 — Système de RDV bout-en-bout (10-15h)
 - [ ] 5.1 Page `recherche.html` (filtres : spé, wilaya, chifa, dispo, paiement)
