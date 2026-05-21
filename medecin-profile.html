@@ -98,13 +98,33 @@
   <div class="app-bar-body"><div class="app-bar-title">Profil médecin</div><div class="app-bar-sub">Compte professionnel</div></div>
   <button class="btn btn-success btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> Sauver</button>
 </header>
+
+<!-- [Phase 4.B.1] Bandeau "Vous n'avez pas encore réclamé votre fiche" — affiché si get_my_doctor_profile() retourne null OU si update_my_doctor_profile retourne 'profile_not_found_or_not_claimed' -->
+<div id="not-claimed-banner" class="hidden" role="alert" aria-live="polite" style="margin:12px 16px 0;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:14px 16px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+  <i class="fa fa-circle-info" aria-hidden="true" style="font-size:20px;color:#b45309"></i>
+  <div style="flex:1;min-width:200px">
+    <div style="font-weight:700;color:#78350f;margin-bottom:4px">Votre fiche médecin n'est pas encore liée à votre compte</div>
+    <div>Tabibi contient déjà votre fiche dans l'annuaire des 14&nbsp;508 médecins. Recherchez-vous dans l'annuaire et cliquez « Réclamer ma fiche » sur votre profil pour pouvoir l'éditer ici.</div>
+  </div>
+  <a href="index.html" class="btn btn-sm" style="background:#f59e0b;color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:700;white-space:nowrap">
+    <i class="fa fa-search" aria-hidden="true"></i> Rechercher ma fiche
+  </a>
+</div>
 <main class="page" style="padding:0 0 80px">
   <!-- COVER -->
   <div style="background:linear-gradient(135deg,#047857,#10b981,#34d399);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
-    <div id="ava" style="width:88px;height:88px;border-radius:24px;background:#fff;color:#047857;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;margin:0 auto 12px;border:4px solid rgba(255,255,255,.3)">?</div>
+    <div style="position:relative;display:inline-block;margin:0 auto 12px">
+      <div id="ava" style="width:88px;height:88px;border-radius:24px;background:#fff;color:#047857;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:4px solid rgba(255,255,255,.3);background-size:cover;background-position:center">?</div>
+      <!-- [Phase 4.B.1] Bouton upload photo (bucket doctor-photos, RLS folder <auth.uid()>/) -->
+      <button type="button" id="photo-btn" onclick="document.getElementById('photo-input').click()" aria-label="Changer ma photo" title="Changer ma photo" style="position:absolute;bottom:-6px;right:-6px;width:32px;height:32px;border-radius:50%;background:#fff;color:#047857;border:2px solid #d1fae5;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+        <i class="fa fa-camera" aria-hidden="true"></i>
+      </button>
+      <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" hidden onchange="onPhotoSelected(event)">
+    </div>
     <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
     <p id="pspec" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
     <span class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:inline-block"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
+    <div id="photo-upload-status" class="hidden" style="margin-top:10px;font-size:12px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:8px;display:inline-block"></div>
   </div>
   <div style="padding:16px 16px 0">
     <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;padding:16px 8px">
@@ -143,8 +163,11 @@
       <div class="form-group"><label class="form-label">Numéro RPPS / Identifiant médecin</label><input class="form-control" id="f_rpps"></div>
       <div class="form-group"><label class="form-label">Année de début d'exercice</label><input class="form-control" id="f_start_year" type="number" min="1980" max="2026"></div>
       <div class="form-group"><label class="form-label">Bio professionnelle (visible aux patients)</label>
-        <textarea class="form-control" id="f_bio" rows="4" placeholder="Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha..." data-i18n-placeholder="ph_doctor_bio"></textarea>
-        <div class="form-hint">Cette bio apparaît sur votre profil public.</div>
+        <textarea class="form-control" id="f_bio" rows="4" maxlength="2000" oninput="updateBioCounter()" placeholder="Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha..." data-i18n-placeholder="ph_doctor_bio"></textarea>
+        <div class="form-hint" style="display:flex;justify-content:space-between;align-items:center">
+          <span>Cette bio apparaît sur votre profil public.</span>
+          <span id="f_bio_counter" style="font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums">0 / 2000</span>
+        </div>
       </div>
     </div>
 
@@ -220,6 +243,26 @@
       <a href="doctor-reservation.html" class="btn btn-soft btn-full" style="margin-top:8px"><i class="fa fa-calendar-week"></i> Gérer mes créneaux en détail</a>
     </div>
 
+    <!-- [Phase 4.B.1] 8.bis TÉLÉCONSULTATION -->
+    <div class="card section-card">
+      <div class="sec-title-bar"><i style="background:#ede9fe;color:#6d28d9"><i class="fa fa-video"></i></i>
+        <div><div class="lbl">Téléconsultation vidéo</div><div class="desc">Daily.co — patients à distance</div></div></div>
+      <div class="row-setting">
+        <div class="info">
+          <div class="name">Activer la téléconsultation</div>
+          <div class="desc">Les patients pourront prendre RDV en visio</div>
+        </div>
+        <div id="t_telehealth" class="toggle-switch" data-key="telehealth_enabled" onclick="toggleTelehealth(this)" role="switch" aria-checked="false" tabindex="0"></div>
+      </div>
+      <div id="tele-fee-wrap" class="hidden" style="margin-top:10px">
+        <div class="form-group">
+          <label class="form-label" for="f_telehealth_fee">Tarif téléconsultation (DA)</label>
+          <input class="form-control" id="f_telehealth_fee" type="number" min="0" placeholder="2000">
+          <div class="form-hint">Laissez vide pour utiliser le tarif consultation classique.</div>
+        </div>
+      </div>
+    </div>
+
     <!-- 9. ABONNEMENT -->
     <div class="card section-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b">
       <div class="sec-title-bar" style="border-bottom-color:rgba(0,0,0,.1)"><i style="background:#f59e0b;color:#fff"><i class="fa fa-crown"></i></i>
@@ -289,6 +332,241 @@
 <script>
 function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 
+// ════════════════════════════════════════════════════════════════════
+// [Phase 4.B.1 — 2026-05-21] tabibiDoctor : helpers RPC + photo + schedule
+// Sera EXTRAIT vers js/tabibi-doctor-dashboard.js en Phase 4.B.2.
+// Garde le mode dégradé localStorage si pas de session Supabase.
+// ════════════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+  var DAYS_FR = ["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+  var DAYS_EN = ["mon","tue","wed","thu","fri","sat","sun"];
+  // Index : Lundi -> 0 -> "mon", etc.
+  function frToEn(d) { return DAYS_EN[DAYS_FR.indexOf(d)] || null; }
+  function enToFr(d) { return DAYS_FR[DAYS_EN.indexOf(d)] || null; }
+
+  function sb() { return (window.tabibi && window.tabibi.supabase) || null; }
+
+  // hasSession() : true si une session Supabase active existe
+  async function hasSession() {
+    var s = sb(); if (!s) return false;
+    try {
+      var r = await s.auth.getSession();
+      return !!(r && r.data && r.data.session);
+    } catch (e) { return false; }
+  }
+
+  // get_my_doctor_profile() : retourne le row doctor_profiles du connecté
+  // Convention : null si pas auth OU si pas de fiche réclamée.
+  async function getMyProfile() {
+    var s = sb(); if (!s) return null;
+    try {
+      var r = await s.rpc('get_my_doctor_profile');
+      if (r.error) { console.warn('[tabibiDoctor] get_my_doctor_profile', r.error); return null; }
+      // RPC RETURNS doctor_profiles → null si pas de row
+      return r.data || null;
+    } catch (e) {
+      console.warn('[tabibiDoctor] getMyProfile exception', e);
+      return null;
+    }
+  }
+
+  // update_my_doctor_profile() : update partiel sécurisé
+  // Renvoie { ok, data?, error? } avec error string parmi : not_authenticated,
+  // invalid_fee, bio_too_long, working_hours_not_object, profile_not_found_or_not_claimed
+  async function updateMyProfile(params) {
+    var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
+    try {
+      var r = await s.rpc('update_my_doctor_profile', params);
+      if (r.error) {
+        var code = (r.error.message || '').replace(/^.*?:\s*/, ''); // strip pgcode prefix éventuel
+        return { ok: false, error: code || 'rpc_error', raw: r.error };
+      }
+      return { ok: true, data: r.data };
+    } catch (e) {
+      return { ok: false, error: 'network_error', raw: e };
+    }
+  }
+
+  // ─── Sérialiseur / parser working_hours ─────────────────────────────
+  //
+  // UI legacy (localStorage) :
+  //   { "Lundi": ["09:00","17:00",true], ..., "Dimanche":["","",false] }
+  //   = tuple [start, end, enabled] mono-créneau
+  //
+  // DB JSONB (Phase 4 docs SQL) :
+  //   { "mon":[{"open":"09:00","close":"17:00"}], ..., "sun":[] }
+  //   = array d'objets multi-créneaux. Vide = jour fermé.
+
+  function serializeSchedule(uiSched) {
+    var out = {};
+    DAYS_EN.forEach(function (en) { out[en] = []; });
+    if (!uiSched || typeof uiSched !== 'object') return out;
+    DAYS_FR.forEach(function (fr, i) {
+      var slot = uiSched[fr];
+      if (!Array.isArray(slot)) return;
+      var start = slot[0], end = slot[1], enabled = slot[2];
+      // règle : enabled true + horaires présents et valides + close > open
+      if (enabled && start && end && /^\d{2}:\d{2}$/.test(start) && /^\d{2}:\d{2}$/.test(end) && end > start) {
+        out[DAYS_EN[i]] = [{ open: start, close: end }];
+      } else {
+        out[DAYS_EN[i]] = [];
+      }
+    });
+    return out;
+  }
+
+  function parseSchedule(dbSched) {
+    var out = {};
+    DAYS_FR.forEach(function (fr) { out[fr] = ["09:00", "17:00", false]; });
+    if (!dbSched || typeof dbSched !== 'object') return out;
+    DAYS_EN.forEach(function (en, i) {
+      var fr = DAYS_FR[i];
+      var arr = dbSched[en];
+      if (Array.isArray(arr) && arr.length > 0 && arr[0].open && arr[0].close) {
+        // V1 : on prend le 1er créneau, l'UI mono-créneau actuelle ne supporte pas le split.
+        // [TODO Phase 4.B.3] UI multi-créneaux pause midi
+        out[fr] = [arr[0].open, arr[0].close, true];
+      } else {
+        out[fr] = ["09:00", "17:00", false];
+      }
+    });
+    return out;
+  }
+
+  // ─── Photo upload (commit-then-purge) ────────────────────────────────
+  // Returns { ok, publicUrl?, error? }
+  async function uploadPhoto(file, currentPhotoUrl) {
+    var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
+    if (!file) return { ok: false, error: 'no_file' };
+    if (file.size > 2 * 1024 * 1024) return { ok: false, error: 'file_too_large' };
+    if (['image/jpeg','image/png','image/webp'].indexOf(file.type) === -1) {
+      return { ok: false, error: 'invalid_mime' };
+    }
+    try {
+      var u = await s.auth.getUser();
+      var user = u && u.data && u.data.user;
+      if (!user) return { ok: false, error: 'not_authenticated' };
+
+      var ext = file.type === 'image/png' ? 'png' : file.type === 'image/webp' ? 'webp' : 'jpg';
+      var newPath = user.id + '/photo-' + Date.now() + '.' + ext;
+
+      // 1. Upload nouveau (upsert=false : si conflit improbable, on échoue propre)
+      var up = await s.storage.from('doctor-photos').upload(newPath, file, { upsert: false, contentType: file.type });
+      if (up.error) return { ok: false, error: 'upload_failed', raw: up.error };
+
+      // 2. Récupère URL publique + update RPC
+      var pub = s.storage.from('doctor-photos').getPublicUrl(newPath);
+      var publicUrl = pub && pub.data && pub.data.publicUrl;
+      if (!publicUrl) {
+        await s.storage.from('doctor-photos').remove([newPath]);
+        return { ok: false, error: 'no_public_url' };
+      }
+      var rpc = await updateMyProfile({ p_photo_url: publicUrl });
+      if (!rpc.ok) {
+        // Rollback : nouveau fichier orphan, ancien intact
+        await s.storage.from('doctor-photos').remove([newPath]);
+        return { ok: false, error: rpc.error };
+      }
+
+      // 3. Succès → purge ancien (best-effort, n'invalide pas le succès)
+      // [TODO Phase 12] Cron purge des orphans si suppression échoue silencieusement
+      var oldPath = extractStoragePath(currentPhotoUrl);
+      if (oldPath && oldPath !== newPath) {
+        s.storage.from('doctor-photos').remove([oldPath]).catch(function () {});
+      }
+      return { ok: true, publicUrl: publicUrl, newPath: newPath };
+    } catch (e) {
+      console.warn('[tabibiDoctor] uploadPhoto exception', e);
+      return { ok: false, error: 'network_error', raw: e };
+    }
+  }
+
+  function extractStoragePath(publicUrl) {
+    var m = String(publicUrl || '').match(/\/doctor-photos\/(.+)$/);
+    return m ? m[1] : null;
+  }
+
+  window.tabibiDoctor = {
+    DAYS_FR: DAYS_FR, DAYS_EN: DAYS_EN,
+    hasSession: hasSession,
+    getMyProfile: getMyProfile,
+    updateMyProfile: updateMyProfile,
+    serializeSchedule: serializeSchedule,
+    parseSchedule: parseSchedule,
+    uploadPhoto: uploadPhoto,
+    extractStoragePath: extractStoragePath,
+  };
+})();
+
+// Bandeau "pas encore réclamé"
+function showNotClaimedBanner() {
+  var el = document.getElementById('not-claimed-banner');
+  if (el) el.classList.remove('hidden');
+}
+function hideNotClaimedBanner() {
+  var el = document.getElementById('not-claimed-banner');
+  if (el) el.classList.add('hidden');
+}
+
+// Téléconsultation toggle
+function toggleTelehealth(el) {
+  el.classList.toggle('on');
+  var on = el.classList.contains('on');
+  el.setAttribute('aria-checked', on ? 'true' : 'false');
+  document.getElementById('tele-fee-wrap').classList.toggle('hidden', !on);
+}
+
+// Compteur bio 2000 chars
+function updateBioCounter() {
+  var bio = document.getElementById('f_bio');
+  var cnt = document.getElementById('f_bio_counter');
+  if (!bio || !cnt) return;
+  var n = (bio.value || '').length;
+  cnt.textContent = n + ' / 2000';
+  cnt.style.color = n > 1800 ? '#dc2626' : 'var(--text3)';
+}
+
+// Photo upload handler
+async function onPhotoSelected(event) {
+  var file = event.target.files && event.target.files[0];
+  if (!file) return;
+  var statusEl = document.getElementById('photo-upload-status');
+  var avaEl = document.getElementById('ava');
+  if (statusEl) { statusEl.classList.remove('hidden'); statusEl.textContent = 'Envoi en cours...'; }
+
+  // Preview locale optimiste pendant l'upload
+  var localUrl = URL.createObjectURL(file);
+  if (avaEl) { avaEl.style.backgroundImage = 'url(' + localUrl + ')'; avaEl.textContent = ''; }
+
+  if (!window.tabibiDoctor) {
+    if (statusEl) statusEl.textContent = 'Module non chargé';
+    return;
+  }
+  // Tentative upload Supabase
+  var u = JSON.parse(localStorage.getItem('tabibi_user') || '{}');
+  var res = await window.tabibiDoctor.uploadPhoto(file, u.photo_url || null);
+  if (res.ok) {
+    u.photo_url = res.publicUrl;
+    try { localStorage.setItem('tabibi_user', JSON.stringify(u)); } catch (e) {}
+    if (statusEl) { statusEl.textContent = '✓ Photo mise à jour'; setTimeout(function(){ statusEl.classList.add('hidden'); }, 2500); }
+    toastM('Photo de profil mise à jour ✓', 'success');
+  } else {
+    // Rollback preview
+    if (avaEl) { avaEl.style.backgroundImage = ''; avaEl.textContent = u.initials || '?'; }
+    var msg = res.error === 'profile_not_found_or_not_claimed' ? 'Réclamez votre fiche d\'abord (voir bandeau)'
+            : res.error === 'file_too_large' ? 'Image trop lourde (max 2 MB)'
+            : res.error === 'invalid_mime' ? 'Format invalide (JPEG/PNG/WebP)'
+            : res.error === 'not_authenticated' ? 'Vous devez être connecté'
+            : 'Erreur upload : ' + res.error;
+    if (statusEl) { statusEl.textContent = '⚠ ' + msg; setTimeout(function(){ statusEl.classList.add('hidden'); }, 4000); }
+    if (res.error === 'profile_not_found_or_not_claimed') showNotClaimedBanner();
+    toastM(msg, 'error');
+  }
+  // Reset input pour permettre re-sélection du même fichier
+  event.target.value = '';
+}
+
 const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
 function renderSchedule(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
@@ -317,7 +595,7 @@ function renderDiplomas(){
 function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (ex: Doctorat en Médecine — Université d'Alger (2008))"));if(!v)return;const d=getDiplomas();d.push(v);setDiplomas(d);renderDiplomas();toastM(tabibiT('toast_diploma_added',"Diplôme ajouté"),"success");}
 function rmDiploma(i){if(!confirm("Retirer ?"))return;const d=getDiplomas();d.splice(i,1);setDiplomas(d);renderDiplomas();}
 
-function loadProfile(){
+async function loadProfile(){
   let u=null;
   try{u=JSON.parse(localStorage.getItem("tabibi_user")||"null");}catch(e){}
   if(!u||u.role!=="medecin"){
@@ -328,7 +606,47 @@ function loadProfile(){
     }
     location.href="login.html";return;
   }
-  // Avatar : photo si disponible, sinon initiales
+
+  // [Phase 4.B.1] Si session Supabase active, on PRIVILÉGIE les vraies données
+  // depuis doctor_profiles via get_my_doctor_profile() (RPC SECURITY DEFINER).
+  // Sinon on garde le comportement localStorage legacy (mode démo).
+  var dbProfile = null;
+  try {
+    if (window.tabibiDoctor && await window.tabibiDoctor.hasSession()) {
+      dbProfile = await window.tabibiDoctor.getMyProfile();
+      if (!dbProfile) {
+        // Auth OK mais aucune ligne doctor_profiles liée → bandeau "Réclamer ma fiche"
+        showNotClaimedBanner();
+      } else {
+        // Fusion : la DB gagne sur les champs gérés Phase 4, localStorage garde le reste
+        if (dbProfile.bio != null) u.bio = dbProfile.bio;
+        if (dbProfile.phone != null) u.phone = dbProfile.phone;
+        if (dbProfile.address != null) u.addr = dbProfile.address;
+        if (dbProfile.consultation_fee_dzd != null) u.price = String(dbProfile.consultation_fee_dzd);
+        if (Array.isArray(dbProfile.languages)) {
+          u.lang_fr = dbProfile.languages.indexOf('FR') !== -1;
+          u.lang_ar = dbProfile.languages.indexOf('AR') !== -1;
+          u.lang_en = dbProfile.languages.indexOf('EN') !== -1;
+        }
+        if (typeof dbProfile.accepts_chifa === 'boolean') u.ins_chifa = dbProfile.accepts_chifa;
+        if (dbProfile.photo_url) u.photo_url = dbProfile.photo_url;
+        if (dbProfile.working_hours) {
+          u.schedule = window.tabibiDoctor.parseSchedule(dbProfile.working_hours);
+        }
+        u._telehealth_enabled = !!dbProfile.telehealth_enabled;
+        u._telehealth_fee_dzd = dbProfile.telehealth_fee_dzd;
+        u._accepts_card = !!dbProfile.accepts_card;
+        u._accepts_cash = dbProfile.accepts_cash !== false; // default true
+        u._db_doctor_id = dbProfile.id;
+        u._db_full_name = dbProfile.full_name;
+        try { localStorage.setItem("tabibi_user", JSON.stringify(u)); } catch (e) {}
+      }
+    }
+  } catch (e) {
+    console.warn('[medecin-profile] DB preload failed (fallback localStorage)', e);
+  }
+
+  // Avatar : photo Supabase Storage si disponible, sinon initiales
   if (window.TabibiAvatar) {
     TabibiAvatar.init({
       containerId: 'ava',
@@ -336,12 +654,15 @@ function loadProfile(){
       fallbackText: u.initials || 'AH',
       fallbackBg: '#fff',
       fallbackColor: '#047857',
-      allowUpload: true
+      allowUpload: false  // [Phase 4.B.1] On gère l'upload via notre bouton dédié
     });
+  } else if (u.photo_url) {
+    var av = document.getElementById("ava");
+    if (av) { av.style.backgroundImage = "url(" + u.photo_url + ")"; av.textContent = ""; }
   } else {
     document.getElementById("ava").textContent=u.initials||"AH";
   }
-  document.getElementById("pname").textContent=u.name||"Dr. Médecin";
+  document.getElementById("pname").textContent=u._db_full_name || u.name || "Dr. Médecin";
   document.getElementById("pspec").textContent=(u.specialty||"Cardiologue")+" · "+(u.ville||"Alger");
   const parts=(u.name||"Dr. Amina Hadj").replace(/^Dr\.?\s+/,"").split(" ");
   f_first.value=parts[0]||"Amina"; f_last.value=parts.slice(1).join(" ")||"Hadj";
@@ -350,6 +671,7 @@ function loadProfile(){
   f_ordre.value=u.ordre||"CO-2010-3421"; f_rpps.value=u.rpps||"DZ-CARD-21345";
   f_start_year.value=u.start_year||"2010";
   f_bio.value=u.bio||"Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha. Spécialiste en maladies coronariennes, rythmologie et insuffisance cardiaque.";
+  updateBioCounter();
   lang_fr.checked=u.lang_fr!==false; lang_ar.checked=u.lang_ar!==false; lang_en.checked=!!u.lang_en; lang_kab.checked=!!u.lang_kab;
   f_cabinet.value=u.cabinet||"Cabinet Dr. Hadj — Cardiologie";
   f_addr.value=u.addr||"12 Rue Didouche Mourad, Alger Centre";
@@ -360,6 +682,17 @@ function loadProfile(){
   ins_cnas.checked=u.ins_cnas!==false; ins_casnos.checked=u.ins_casnos!==false;
   ins_chifa.checked=u.ins_chifa!==false; ins_private.checked=!!u.ins_private;
   Object.keys(u.settings||{}).forEach(k=>{const el=document.querySelector(`[data-key="${k}"]`);if(el)el.classList.toggle("on",!!u.settings[k]);});
+
+  // [Phase 4.B.1] Préfill section Téléconsultation
+  var tEl = document.getElementById('t_telehealth');
+  if (tEl) {
+    if (u._telehealth_enabled) { tEl.classList.add('on'); tEl.setAttribute('aria-checked', 'true'); }
+    else { tEl.classList.remove('on'); tEl.setAttribute('aria-checked', 'false'); }
+    document.getElementById('tele-fee-wrap').classList.toggle('hidden', !u._telehealth_enabled);
+  }
+  var feeEl = document.getElementById('f_telehealth_fee');
+  if (feeEl && u._telehealth_fee_dzd != null) feeEl.value = String(u._telehealth_fee_dzd);
+
   renderSchedule();
   renderDiplomas();
 }
@@ -489,7 +822,7 @@ function disable2FA(){
   toastM(tabibiT('toast_2fa_disabled','2FA désactivée'), 'info');
 }
 
-function saveAll(){
+async function saveAll(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   u.name="Dr. "+f_first.value+" "+f_last.value;
   u.initials=(f_first.value[0]+(f_last.value[0]||"")).toUpperCase();
@@ -503,7 +836,7 @@ function saveAll(){
   u.price_urgent=f_price_urgent.value; u.duration=f_duration.value;
   u.ins_cnas=ins_cnas.checked; u.ins_casnos=ins_casnos.checked;
   u.ins_chifa=ins_chifa.checked; u.ins_private=ins_private.checked;
-  // Schedule
+  // Schedule (format UI legacy : { Lundi: [start, end, enabled], ... })
   const sched={};
   DAYS.forEach(d=>{
     const en=document.querySelector(`[data-day="${d}"][data-fld="enabled"]`);
@@ -512,10 +845,81 @@ function saveAll(){
     sched[d]=[st?.value||"",ed?.value||"",en?.checked||false];
   });
   u.schedule=sched;
+
+  // [Phase 4.B.1] Section Téléconsultation
+  var teleOn = document.getElementById('t_telehealth')?.classList.contains('on') || false;
+  var teleFeeRaw = document.getElementById('f_telehealth_fee')?.value;
+  var teleFee = teleFeeRaw ? parseInt(teleFeeRaw, 10) : null;
+  u._telehealth_enabled = teleOn;
+  u._telehealth_fee_dzd = (teleFee && !isNaN(teleFee) && teleFee >= 0) ? teleFee : null;
+
   u.settings={};
   document.querySelectorAll("[data-key]").forEach(el=>u.settings[el.dataset.key]=el.classList.contains("on"));
-  localStorage.setItem("tabibi_user",JSON.stringify(u));
-  toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"),"success");
+
+  // [Phase 4.B.1] Si session Supabase active, pousser vers la DB via RPC.
+  // Sinon : comportement localStorage-only legacy.
+  var didDbSave = false;
+  try {
+    if (window.tabibiDoctor && await window.tabibiDoctor.hasSession()) {
+      // Mapping form -> params RPC update_my_doctor_profile
+      var langs = [];
+      if (lang_fr.checked) langs.push('FR');
+      if (lang_ar.checked) langs.push('AR');
+      if (lang_en.checked) langs.push('EN');
+      var workingHours = window.tabibiDoctor.serializeSchedule(sched);
+      var feeInt = parseInt(f_price.value, 10);
+      var params = {
+        p_bio: f_bio.value || null,
+        p_languages: langs.length ? langs : null,
+        p_consultation_fee: (!isNaN(feeInt) && feeInt >= 0) ? feeInt : null,
+        p_accepts_chifa: ins_chifa.checked,
+        p_accepts_card: !!u._accepts_card,   // pas d'UI dédiée → garde la valeur DB
+        p_accepts_cash: u._accepts_cash !== false,
+        p_working_hours: workingHours,
+        p_telehealth_enabled: teleOn,
+        p_telehealth_fee: u._telehealth_fee_dzd,
+        p_photo_url: u.photo_url || null,
+        p_phone: f_phone_cab.value || null,
+        p_address: f_addr.value || null
+      };
+      var res = await window.tabibiDoctor.updateMyProfile(params);
+      if (res.ok) {
+        didDbSave = true;
+        hideNotClaimedBanner();
+      } else if (res.error === 'profile_not_found_or_not_claimed') {
+        // Cas critique (cf. Ajustement 2) : user authentifié mais pas de fiche claim
+        showNotClaimedBanner();
+        toastM("Vous devez d'abord réclamer votre fiche dans l'annuaire avant de pouvoir l'éditer.", "error");
+        return;
+      } else if (res.error === 'bio_too_long') {
+        toastM("Bio trop longue (max 2000 caractères).", "error");
+        return;
+      } else if (res.error === 'invalid_fee' || res.error === 'invalid_telehealth_fee') {
+        toastM("Tarif invalide (doit être ≥ 0).", "error");
+        return;
+      } else if (res.error === 'working_hours_not_object') {
+        toastM("Format des horaires invalide.", "error");
+        return;
+      } else if (res.error === 'not_authenticated') {
+        toastM("Session expirée. Reconnectez-vous.", "error");
+        return;
+      } else {
+        // Erreur réseau / inconnue : on continue vers le fallback localStorage
+        console.warn('[saveAll] DB save failed, fallback localStorage:', res.error);
+        toastM("Sauvegarde DB échouée — copie locale gardée. Réessayez plus tard.", "error");
+      }
+    }
+  } catch (e) {
+    console.warn('[saveAll] DB save exception (fallback localStorage)', e);
+  }
+
+  // Cache localStorage TOUJOURS (single source of truth pour mode démo + cache UI)
+  localStorage.setItem("tabibi_user", JSON.stringify(u));
+  if (didDbSave) {
+    toastM(tabibiT('toast_profile_saved',"Profil sauvegardé ✓") + " (Tabibi DB)", "success");
+  } else {
+    toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"), "success");
+  }
 }
 function changePassword(){const o=prompt(tabibiT('prompt_old_password',"Ancien mot de passe :"));if(!o)return;const n=prompt(tabibiT('prompt_new_password',"Nouveau (min 8) :"));if(!n||n.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}toastM(tabibiT('toast_password_changed',"Mot de passe changé"),"success");}
 function logout(){localStorage.removeItem("tabibi_user");location.href="index.html";}

@@ -71,11 +71,26 @@
   - Section 10 : rollback commenté
 - [x] 4.A.3 Cleanup cohérence : `tests/manual/CLAIM_FLOW_TESTS.md` corrigé (`public_doctors_master` → `doctor_profiles`, `claimed_by_user_id` → `user_id`, suppression mention `public.users.claimed_legacy_id` non vérifié)
 
-### Phase 4.B — Frontend dashboard (à livrer après "OK go 4.B")
-- [ ] 4.B.1 Page `doctor-dashboard.html` complète (vue d'ensemble, édition fiche, dispos, RDV, téléconsult toggle)
-- [ ] 4.B.2 Upload photo via bucket `doctor-photos` (helper JS partagé)
-- [ ] 4.B.3 Fixtures de test (compte médecin demo + données seed)
-- [ ] 4.B.4 Tests manuels E2E dans `tests/manual/DOCTOR_DASHBOARD_TESTS.md`
+### Phase 4.B — Frontend dashboard
+- [x] 4.B.1 Wire `medecin-profile.html` → RPCs Phase 4 + télémédecine + upload photo (commit unique fusionné, 2026-05-21)
+  - Mini-migration SQL `migrations/PHASE4B_doc_working_hours_comment.sql` : COMMENT ON COLUMN documente le format JSONB
+  - Bandeau "Réclamer ma fiche" affiché si `get_my_doctor_profile()` retourne null OU si update renvoie `profile_not_found_or_not_claimed`
+  - Section "Téléconsultation" : toggle `telehealth_enabled` + input `telehealth_fee_dzd` (visible si toggle ON)
+  - Upload photo bucket `doctor-photos` : commit-then-purge (upload nouveau → update RPC → delete ancien best-effort), MIME-derived ext, 2 MB max, preview optimiste
+  - Sérialiseur `working_hours` : tabibiDoctor.serializeSchedule (UI Lundi/Mardi tuple → DB mon/tue array d'objets {open,close}) + parseSchedule inverse
+  - Compteur 2000 chars sur bio (UI + validation RPC)
+  - Mode dégradé localStorage préservé si pas de session Supabase
+  - sw.js : CACHE_VERSION bumpée v7 → v8-2026-05-21
+- [ ] 4.B.2 Extraire helpers `tabibiDoctor` inline → `js/tabibi-doctor-dashboard.js` partagé
+- [ ] 4.B.3 `doctor-dashboard.html` : ajout section "Blocages exceptionnels" + CRUD `doctor_unavailable_slots`
+- [ ] 4.B.4 Fixtures `fixtures/test_doctor.sql` + `tests/manual/DOCTOR_DASHBOARD_TESTS.md` + ZIP intermédiaire
+
+### 🔖 TODOs ouverts pour Phase 12 (monitoring & sécurité)
+- [ ] **DB hygiène** : nettoyer le doublon `claim_my_doctor_profile()` sans arguments (vestige antérieur détecté par user en validation 4.A.9 — 2 rows au lieu de 1)
+- [ ] **Storage** : cron purge des photos orphan dans `doctor-photos` (cas où la suppression post-update échoue silencieusement dans le pattern commit-then-purge de tabibiDoctor.uploadPhoto)
+- [ ] **DB sécurité** : aligner `public_doctors` et `public_doctor_full` sur `security_invoker=true` (AJ1 Phase 4.A v2)
+- [ ] **Storage** : durcir `doctor_photos_select_public` pour empêcher l'énumération anonyme des paths (AJ2 Phase 4.A v2)
+- [ ] **Audit log** : tracer les changements de `phone` et `address` via `update_my_doctor_profile` (risque fraude, D5 Phase 4.A v2)
 
 ## Phase 5 — Système de RDV bout-en-bout (10-15h)
 - [ ] 5.1 Page `recherche.html` (filtres : spé, wilaya, chifa, dispo, paiement)

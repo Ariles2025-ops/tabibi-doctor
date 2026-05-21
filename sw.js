@@ -1,8 +1,9 @@
 /**
- * Tabibi Service Worker v7 — Production
+ * Tabibi Service Worker v8 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
+ * Bump v8 : Phase 4.B.1 (wire medecin-profile aux RPCs + télémédecine + upload photo)
  */
-const CACHE_VERSION = 'tabibi-v7-2026-05-13';
+const CACHE_VERSION = 'tabibi-v8-2026-05-21';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
