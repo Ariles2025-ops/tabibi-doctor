@@ -8,21 +8,22 @@
 
 ---
 
-## Phase 1 — Patch bandeau claim + signup médecin (4-6h) — **EN COURS**
+## Phase 1 — Patch bandeau claim + signup médecin (4-6h) — **✅ DONE 2026-05-21**
 
 - [x] 1.0 Baseline `_mapSupabaseDoctor` + `_renderNotFound` (livré session précédente v3)
-- [ ] 1.1 `doctor-profile.html` : bandeau interactif câblé sur RPC `claim_my_doctor_profile`
-  - [ ] Mapper `legacy_id` dans `_mapSupabaseDoctor`
-  - [ ] Remplacer `<a href>` par `<button onclick>` avec routing 3 cas
-  - [ ] Inclure `js/tabibi-claim.js`
-- [ ] 1.2 `signup.html` : auto-claim post-signup si `?claim_legacy_id=` présent
-  - [ ] Lecture query string
-  - [ ] Appel RPC AVANT signOut médecin
-  - [ ] Fallback `localStorage.tabibi_pending_claim_legacy_id` si fail
-- [ ] 1.3 `js/tabibi-claim.js` (nouveau) : logique partagée 3 cas + handler erreurs
-- [ ] 1.4 `tests/manual/CLAIM_FLOW_TESTS.md` : 4 scénarios E2E à exécuter user-side
-- [ ] 1.5 Commit `phase1: bandeau claim + signup auto-claim`
-- [ ] 1.6 ZIP intermédiaire pour deploy preview Netlify
+- [x] 1.1 `doctor-profile.html` : bandeau interactif câblé sur RPC `claim_my_doctor_profile`
+  - [x] Mapper `legacy_id` dans `_mapSupabaseDoctor`
+  - [x] Remplacer `<a href>` par `<button onclick>` avec routing 3 cas
+  - [x] Inclure `js/tabibi-claim.js`
+- [x] 1.2 `signup.html` : auto-claim post-signup si `?claim_legacy_id=` présent
+  - [x] Lecture query string (`_getClaimLegacyIdFromUrl`)
+  - [x] Appel RPC AVANT signOut médecin
+  - [x] Fallback `localStorage.tabibi_pending_claim_legacy_id` si fail
+  - [x] Auto-sélection rôle médecin + bandeau bleu info au chargement
+- [x] 1.3 `js/tabibi-claim.js` (nouveau) : logique partagée 3 cas + handler erreurs + `consumePending()`
+- [x] 1.4 `tests/manual/CLAIM_FLOW_TESTS.md` : 4 scénarios E2E à exécuter user-side
+- [x] 1.5 Commit `phase1: bandeau claim + signup auto-claim`
+- [x] 1.6 ZIP intermédiaire pour deploy preview Netlify
 
 ## Phase 2 — Audit prod & fix bugs (4-8h)
 - [ ] 2.1 Audit frontend : liens cassés, console errors, requêtes échouées

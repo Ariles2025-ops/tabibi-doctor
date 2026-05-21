@@ -216,6 +216,7 @@ function _mapSupabaseDoctor(row){
 
   return {
     id: row.id,
+    legacy_id: (row.legacy_id != null ? parseInt(row.legacy_id, 10) : null), // [Phase 1] requis par RPC claim_my_doctor_profile
     in: avatar.in,
     bg: avatar.bg,
     tc: avatar.tc,
@@ -333,18 +334,31 @@ async function loadDoc(){
     console.warn('[doctor-profile] render', e);
   }
 
-  // [FIX 2026-05-21] Si fiche non-revendiquee : afficher un bandeau
-  if (d._claimable) {
+  // [Phase 1 2026-05-21] Bandeau interactif "Reclamer ma fiche"
+  // Câblé sur RPC claim_my_doctor_profile via window.tabibiClaim.handle(legacy_id)
+  // Routage 3 cas : non-auth -> signup, medecin -> claim direct, patient -> erreur
+  if (d._claimable && d.legacy_id) {
     try {
       var hdr = document.querySelector('.profile-header, main') || document.body;
       var banner = document.createElement('div');
       banner.id = 'claim-banner';
       banner.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:12px 16px;border-radius:10px;margin:12px 0;font-size:13px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap';
       banner.innerHTML = '<div><i class="fa fa-circle-info"></i> Vous etes ce medecin ? Reclamez votre fiche pour la completer.</div>'
-        + '<a href="signup.html?role=medecin&claim=' + encodeURIComponent(d.id) + '" class="btn btn-sm" style="background:#f59e0b;color:#fff;text-decoration:none;padding:6px 12px;border-radius:8px;font-weight:700">Reclamer ma fiche</a>';
+        + '<button type="button" id="claim-btn" data-legacy-id="' + d.legacy_id + '" class="btn btn-sm" style="background:#f59e0b;color:#fff;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;font-weight:700">Reclamer ma fiche</button>';
       if (hdr.firstChild) hdr.insertBefore(banner, hdr.firstChild);
       else hdr.appendChild(banner);
-    } catch (e) {}
+      var btn = document.getElementById('claim-btn');
+      if (btn) {
+        btn.addEventListener('click', function () {
+          if (window.tabibiClaim && typeof window.tabibiClaim.handle === 'function') {
+            window.tabibiClaim.handle(d.legacy_id);
+          } else {
+            // Fallback : si le script n'est pas chargé, fallback vers signup avec param
+            window.location.href = 'signup.html?role=medecin&claim_legacy_id=' + encodeURIComponent(d.legacy_id);
+          }
+        });
+      }
+    } catch (e) { console.warn('[doctor-profile] claim banner', e); }
   }
 
   // Avis : chargement Supabase
@@ -399,6 +413,7 @@ document.addEventListener("DOMContentLoaded", loadDoc);
 <script src="js/tabibi-bridge.js"></script>
 <script src="js/doctors-display.js"></script>
 <script src="js/tabibi-reviews.js"></script>
+<script src="js/tabibi-claim.js"></script>
 <script>
 // ═══════════════════════════════════════════════════════════════════════
 // Tabibi — Chargement des VRAIS avis depuis Supabase

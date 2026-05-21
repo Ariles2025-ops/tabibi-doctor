@@ -123,6 +123,24 @@
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <script>
 let cur="patient";
+
+// [Phase 1 2026-05-21] Lecture query string pour auto-claim post-signup
+// URL ex: signup.html?role=medecin&claim_legacy_id=1234
+function _getClaimLegacyIdFromUrl(){
+  try {
+    var u = new URL(window.location.href);
+    var raw = u.searchParams.get('claim_legacy_id');
+    if (!raw) return null;
+    var n = parseInt(raw, 10);
+    if (!n || isNaN(n) || n < 1) return null;
+    return n;
+  } catch (e) { return null; }
+}
+function _getRoleFromUrl(){
+  try { return (new URL(window.location.href)).searchParams.get('role') || null; }
+  catch (e) { return null; }
+}
+
 function selRole(r,btn){
   cur=r;
   document.querySelectorAll(".role-btn").forEach(b=>{
@@ -275,6 +293,33 @@ async function doSignup(e){
     // 3. Gérer la redirection selon le rôle
     if (cur === "medecin") {
       // MÉDECIN : compte en attente de validation manuelle
+      //
+      // [Phase 1 2026-05-21] AUTO-CLAIM AVANT signOut
+      // Si l'utilisateur vient d'un bandeau "Réclamer ma fiche" (URL ?claim_legacy_id=...),
+      // on appelle la RPC claim_my_doctor_profile MAINTENANT, tant que la session Supabase
+      // est encore active. Si ça échoue (réseau, RLS), tabibiClaim.autoClaim() stocke le
+      // legacy_id dans localStorage.tabibi_pending_claim_legacy_id et le retry se fera
+      // au prochain login médecin (cf. js/tabibi-claim.js -> consumePending()).
+      var claimLegacyId = _getClaimLegacyIdFromUrl();
+      if (claimLegacyId && window.tabibiClaim && typeof window.tabibiClaim.autoClaim === 'function') {
+        try {
+          var claimRes = await window.tabibiClaim.autoClaim(claimLegacyId);
+          if (claimRes && claimRes.ok) {
+            console.log('[signup] auto-claim OK legacy_id=' + claimLegacyId);
+          } else {
+            console.warn('[signup] auto-claim failed:', claimRes && claimRes.error,
+                         '-> stored for retry at next login');
+          }
+        } catch (claimErr) {
+          console.warn('[signup] auto-claim exception:', claimErr);
+          // fallback dur : stocker manuellement si le module a buggé
+          try { localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); } catch(_){}
+        }
+      } else if (claimLegacyId) {
+        // Module pas chargé -> fallback localStorage pur
+        try { localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); } catch(_){}
+      }
+
       // Déconnexion immédiate + message clair
       try { await window.tabibi.auth.signOut(); } catch(e){}
       localStorage.removeItem("tabibi_user");
@@ -347,6 +392,31 @@ function showMedecinPendingModal(email, prenom) {
 }
 
 function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+
+// [Phase 1 2026-05-21] Auto-sélectionne le rôle médecin si l'utilisateur arrive
+// depuis le bandeau "Réclamer ma fiche" (URL ?role=medecin&claim_legacy_id=N).
+// Affiche aussi un bandeau info en haut du form pour confirmer la démarche.
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    var claimLegacyId = _getClaimLegacyIdFromUrl();
+    var roleParam = _getRoleFromUrl();
+    if (claimLegacyId && (roleParam === 'medecin' || roleParam == null)) {
+      // Sélectionne le bouton médecin programmatiquement
+      var medBtn = document.querySelector('.role-btn[onclick*="medecin"]');
+      if (medBtn) {
+        try { selRole('medecin', medBtn); } catch (e) {}
+      }
+      // Bandeau info clair
+      var form = document.querySelector('form') || document.querySelector('main');
+      if (form) {
+        var info = document.createElement('div');
+        info.style.cssText = 'background:#dbeafe;border:1px solid #2563eb;color:#1e3a8a;padding:12px 16px;border-radius:10px;margin:0 0 16px;font-size:13px;display:flex;align-items:center;gap:10px';
+        info.innerHTML = '<i class="fa fa-circle-info"></i> <span>Vous réclamez la fiche médecin <strong>#' + claimLegacyId + '</strong>. Créez votre compte médecin : la fiche vous sera automatiquement attribuée après validation.</span>';
+        form.insertBefore(info, form.firstChild);
+      }
+    }
+  } catch (e) { console.warn('[signup] claim-init', e); }
+});
 </script>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -355,6 +425,7 @@ function toastM(m,t){const c=document.getElementById("toast-container");const co
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-claim.js"></script>
 <script src="js/tabibi-brevo.js"></script>
 <script src="js/tabibi-turnstile.js"></script>
 <script src="js/tabibi-sms.js"></script>
