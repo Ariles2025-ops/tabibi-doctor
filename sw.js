@@ -1,9 +1,10 @@
 /**
- * Tabibi Service Worker v8 — Production
+ * Tabibi Service Worker v9 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
- * Bump v8 : Phase 4.B.1 (wire medecin-profile aux RPCs + télémédecine + upload photo)
+ * Bump v9 : Phase 4.B.2 (js/tabibi-doctor-dashboard.js extrait, partagé entre
+ *           medecin-profile.html et doctor-dashboard.html)
  */
-const CACHE_VERSION = 'tabibi-v8-2026-05-21';
+const CACHE_VERSION = 'tabibi-v9-2026-05-21';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -11,7 +12,10 @@ const PRECACHE_URLS = [
   '/', '/index.html', '/login.html', '/signup.html',
   '/offline.html', '/404.html', '/manifest.json', '/favicon.ico',
   '/styles/app.css', '/styles/components.css',
-  '/images/icon-192.png', '/images/icon-512.png'
+  '/images/icon-192.png', '/images/icon-512.png',
+  // [Phase 4.B.2] helpers médecin partagés (cache-first via runtime suffit,
+  // mais on précache pour zéro latence au 1er affichage du dashboard)
+  '/js/tabibi-doctor-dashboard.js'
 ];
 
 self.addEventListener('install', event => {

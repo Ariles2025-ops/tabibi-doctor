@@ -13,7 +13,7 @@
 -- =====================================================================
 
 COMMENT ON COLUMN public.doctor_profiles.working_hours IS
-$$Format JSONB documenté Phase 4.B.1 (2026-05-21) :
+$$Format JSONB documenté Phase 4.B.1 (2026-05-21) :a
 
   {
     "mon": [{"open":"HH:MM","close":"HH:MM"}, ...],

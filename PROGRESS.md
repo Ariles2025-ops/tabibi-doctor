@@ -81,7 +81,12 @@
   - Compteur 2000 chars sur bio (UI + validation RPC)
   - Mode dégradé localStorage préservé si pas de session Supabase
   - sw.js : CACHE_VERSION bumpée v7 → v8-2026-05-21
-- [ ] 4.B.2 Extraire helpers `tabibiDoctor` inline → `js/tabibi-doctor-dashboard.js` partagé
+- [x] 4.B.2 Extraire helpers `tabibiDoctor` inline → `js/tabibi-doctor-dashboard.js` partagé (commit 2026-05-21)
+  - Fichier NEW `js/tabibi-doctor-dashboard.js` (193 lignes) — IIFE idempotente avec garde `window.tabibiDoctor && typeof === 'function'`
+  - Suppression de l'IIFE inline (~166 lignes) dans `medecin-profile.html` → remplacée par 5 lignes de commentaire
+  - Inclusion `<script src="js/tabibi-doctor-dashboard.js"></script>` après `tabibi-bridge.js` dans `medecin-profile.html` ET `doctor-dashboard.html` (juste include, pas wire)
+  - sw.js : CACHE_VERSION v8 → **v9-2026-05-21** + ajout `/js/tabibi-doctor-dashboard.js` au `PRECACHE_URLS`
+  - Aucune régression : API publique identique, page-specific (loadProfile/saveAll/handlers DOM) inchangées
 - [ ] 4.B.3 `doctor-dashboard.html` : ajout section "Blocages exceptionnels" + CRUD `doctor_unavailable_slots`
 - [ ] 4.B.4 Fixtures `fixtures/test_doctor.sql` + `tests/manual/DOCTOR_DASHBOARD_TESTS.md` + ZIP intermédiaire
 
