@@ -1,0 +1,63 @@
+# =====================================================================
+# Tabibi.doctor — .gitignore
+# =====================================================================
+# CRITIQUE : ne JAMAIS committer PII medecins ni secrets.
+
+# --- PII / SCRAPING (RGPD critique) ---
+**/medecins*.csv
+**/outbound*.csv
+**/prospects*.csv
+data/private/**
+data/cleaned/**
+data/raw/**
+
+# --- Secrets / credentials ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*_secret*
+secrets.json
+supabase/.env
+supabase/.temp/
+
+# --- Backups DB ---
+*.sql.gz
+*.dump
+backup_*.sql
+pg_dump_*
+
+# --- Logs / OS / Editor ---
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*~
+
+# --- Build / Cache ---
+node_modules/
+dist/
+build/
+.netlify/
+.cache/
+
+# --- ZIPs de deploy locaux (pas a versionner) ---
+tabibi-deploy-*.zip
+tabibi-FINAL-*.zip
+_deploy_clean/
+
+# --- Tests / coverage ---
+coverage/
+test-results/
+playwright-report/
+
+# --- PDFs generes en local ---
+test-prescriptions/
+*_test.pdf
+
+# --- Whitelist : on garde les SVG, JSON brand, fichiers de structure ---
+!images/*.svg
+!brand/*.json
