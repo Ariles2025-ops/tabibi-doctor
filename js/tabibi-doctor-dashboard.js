@@ -58,8 +58,13 @@
     try {
       var r = await s.rpc('get_my_doctor_profile');
       if (r.error) { console.warn('[tabibiDoctor] get_my_doctor_profile', r.error); return null; }
-      // RPC RETURNS doctor_profiles → null si pas de row
-      return r.data || null;
+      // [Phase 4.B.2-hotfix] PostgREST peut retourner null (cas idéal) OU un row
+      // composite tout-NULL selon version/config quand RETURNS row_type ne match
+      // aucune ligne. id étant PK NOT NULL dans doctor_profiles, son absence
+      // signale forcément "pas de row" — on normalise sur null pour l'appelant
+      // (sinon showNotClaimedBanner ne se déclenche jamais).
+      if (!r.data || !r.data.id) return null;
+      return r.data;
     } catch (e) {
       console.warn('[tabibiDoctor] getMyProfile exception', e);
       return null;

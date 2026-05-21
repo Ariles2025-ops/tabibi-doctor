@@ -87,6 +87,7 @@
   - Inclusion `<script src="js/tabibi-doctor-dashboard.js"></script>` après `tabibi-bridge.js` dans `medecin-profile.html` ET `doctor-dashboard.html` (juste include, pas wire)
   - sw.js : CACHE_VERSION v8 → **v9-2026-05-21** + ajout `/js/tabibi-doctor-dashboard.js` au `PRECACHE_URLS`
   - Aucune régression : API publique identique, page-specific (loadProfile/saveAll/handlers DOM) inchangées
+  - **Hotfix appliqué** : `getMyProfile()` normalise les row composites vides à null — bug PostgREST latent corrigé. Garde `!r.data.id` ajoutée (PK NOT NULL → l'absence d'id signale forcément absence de row). Sans ce fix, le bandeau "Réclamer ma fiche" ne se déclenchait pas quand PostgREST renvoyait `{id:null, user_id:null, ...}` au lieu de `null` pur. sw.js bump v9 → **v10-2026-05-21**.
 - [ ] 4.B.3 `doctor-dashboard.html` : ajout section "Blocages exceptionnels" + CRUD `doctor_unavailable_slots`
 - [ ] 4.B.4 Fixtures `fixtures/test_doctor.sql` + `tests/manual/DOCTOR_DASHBOARD_TESTS.md` + ZIP intermédiaire
 
