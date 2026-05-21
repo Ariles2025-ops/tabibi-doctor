@@ -36,6 +36,7 @@ Thumbs.db
 .idea/
 *.swp
 *~
+~$*
 
 # --- Build / Cache ---
 node_modules/
