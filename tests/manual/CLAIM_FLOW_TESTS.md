@@ -37,7 +37,7 @@
 
 - Console : `[signup] auto-claim OK legacy_id=42`
 - Modale « Bienvenue Dr ... » s'affiche (compte en attente de validation manuelle).
-- En base : `public_doctors` ligne avec `legacy_id=42` est désormais `is_claimed=true` et `claimed_by_user_id=<id du nouveau médecin>`.
+- En base : ligne `doctor_profiles` avec `legacy_id=42` est désormais `is_claimed=true`, `user_id=<auth.uid() du nouveau médecin>`, et `claimed_at` rempli.
 - `localStorage.tabibi_pending_claim_legacy_id` est **absent** (clean).
 
 ### Échec attendu (sous-cas)
@@ -53,7 +53,7 @@
 ### Pré-requis spécifique
 
 - Un compte médecin **actif** (`status='active'`) qui n'a **pas encore** réclamé de fiche
-  (`claimed_legacy_id IS NULL` dans `public.users`).
+  (aucune ligne dans `doctor_profiles` n'a `user_id = <auth.uid() du médecin>`).
 
 ### Étapes
 
@@ -145,14 +145,17 @@ Si on force malgré tout `signup.html?role=medecin&claim_legacy_id=42` avec un n
 ## Cleanup SQL (post-tests)
 
 ```sql
--- Annuler une réclamation faite par erreur durant les tests
-update public.public_doctors_master
+-- Annuler une réclamation faite par erreur durant les tests.
+-- Table cible : doctor_profiles (cf. Phase 4.A v2 — la table public_doctors_master
+-- mentionnée dans la v1 obsolète n'existe pas).
+update public.doctor_profiles
    set is_claimed = false,
        claimed_at = null,
-       claimed_by_user_id = null
+       user_id    = null
  where legacy_id in (42, 43);  -- adapter aux ids testés
-
-update public.users
-   set claimed_legacy_id = null
- where email like '%@example-test.tabibi%';  -- adapter au pattern de tes emails de test
 ```
+
+Note : la table `public.users` n'a pas (à ce stade) de colonne miroir du
+claim. La RPC `claim_my_doctor_profile` ne touche qu'à `doctor_profiles`.
+Si une telle colonne est ajoutée plus tard, un second `UPDATE` viendra
+ici.

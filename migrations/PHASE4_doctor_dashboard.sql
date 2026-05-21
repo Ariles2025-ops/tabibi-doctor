@@ -1,7 +1,17 @@
 -- =====================================================================
--- TABIBI.DOCTOR — PHASE 4.A : MIGRATIONS DASHBOARD MÉDECIN
+-- ⚠️⚠️⚠️ FICHIER OBSOLÈTE — NE PAS EXÉCUTER ⚠️⚠️⚠️
 -- =====================================================================
--- Fichier : migrations/PHASE4_doctor_dashboard.sql
+-- Ce fichier (v1) ciblait une table `public_doctors_master` HALLUCINÉE
+-- qui n'existe pas dans la base réelle.
+--
+-- ➡️  UTILISE À LA PLACE : PHASE4_doctor_dashboard_v2.sql
+--     (cible la vraie table doctor_profiles, vérifiée par discovery user)
+--
+-- Conservé dans le repo uniquement pour traçabilité historique.
+-- =====================================================================
+-- TABIBI.DOCTOR — PHASE 4.A : MIGRATIONS DASHBOARD MÉDECIN  [v1 OBSOLÈTE]
+-- =====================================================================
+-- Fichier : migrations/PHASE4_doctor_dashboard.sql  [OBSOLÈTE]
 -- Date    : 2026-05-21
 -- Auteur  : Phase 4.A du master prompt 13 phases (cf. PROGRESS.md)
 -- Cible   : Supabase Pro EU (postgres 15+)

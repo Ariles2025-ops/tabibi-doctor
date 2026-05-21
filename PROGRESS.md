@@ -55,20 +55,21 @@
 
 ## Phase 4 — Dashboard médecin complet (8-12h) — **4.A DONE, 4.B en attente validation user**
 
-### Phase 4.A — Migrations SQL (livrées 2026-05-21, à exécuter user-side)
-- [x] 4.A.1 Fichier `migrations/PHASE4_doctor_dashboard.sql` (11 sections, idempotent)
-  - Section 0 : DISCOVERY (read-only, optionnel)
-  - Section 1 : 10 colonnes éditables sur `public_doctors_master` (bio, languages[], accepts_chifa/cb/cash, weekly_schedule JSONB, telehealth_enabled, telehealth_fee, photo_url, updated_at)
-  - Section 2 : table `doctor_unavailable_slots` NEW (PK UUID, FK ON DELETE CASCADE, CHECK chrono, 2 index)
-  - Section 3 : 4 policies RLS sur `public_doctors_master` (select public, update own, insert/delete bloqués client)
-  - Section 4 : 4 policies RLS sur `doctor_unavailable_slots` (select public, insert/update/delete owner only)
-  - Section 5 : vue `public_doctor_full` NEW (additive — ne touche pas `public_doctors`)
-  - Section 6 : bucket storage `doctor-photos` (public, 2 MB, JPEG/PNG/WebP)
-  - Section 7 : 4 policies RLS sur `storage.objects` pour `doctor-photos` (folder `<auth.uid()>/...`)
-  - Section 8 : trigger auto-bump `updated_at`
-  - Section 9 : 2 RPCs (`get_my_doctor_profile`, `update_my_doctor_profile` avec validation + 5 codes erreur)
-  - Section 10 : 9 requêtes de vérification post-migration (intégrité de `claim_my_doctor_profile` + `public_doctors` confirmée)
-  - Section 11 : rollback complet (commenté)
+### Phase 4.A — Migrations SQL (livrées 2026-05-21)
+- [~] 4.A.1 v1 `migrations/PHASE4_doctor_dashboard.sql` — **OBSOLÈTE** (ciblait `public_doctors_master` halluciné). Conservée pour traçabilité avec en-tête OBSOLETE explicite.
+- [x] 4.A.2 v2 `migrations/PHASE4_doctor_dashboard_v2.sql` (10 sections, idempotent, en attente d'exécution user-side)
+  - Section 0 : DISCOVERY pré-flight (3 vérifs rapides)
+  - Section 1 : **3 colonnes seulement** (`telehealth_enabled`, `telehealth_fee_dzd`, `accepts_cash`) — vérifié contre les 35 cols existantes
+  - Section 2 : table `doctor_unavailable_slots` NEW (FK sur `doctor_profiles(id)` ON DELETE CASCADE)
+  - Section 3 : 4 policies RLS sur `doctor_unavailable_slots` UNIQUEMENT (les 3 RLS existantes sur `doctor_profiles` INTACTES)
+  - Section 4 : vue `public_doctor_full` NEW additive — **JOIN sur `public_doctors`** (hérite l'anonymisation existante, pas de duplication). AJ1 : pas de `security_invoker=true` (alignement v1 Phase 0, à durcir Phase 12)
+  - Section 5 : bucket storage `doctor-photos` (public, 2 MB, JPEG/PNG/WebP)
+  - Section 6 : 4 policies RLS sur `storage.objects` (AJ2 : TODO Phase 12 durcir énumération anonyme)
+  - Section 7 : trigger auto-bump `updated_at` **conditionnel** (à exécuter si section 0.2 retourne vide)
+  - Section 8 : 2 RPCs (`get_my_doctor_profile`, `update_my_doctor_profile` 12 params — scope via `user_id = auth.uid()`, cohérent avec policy existante). TODO Phase 12 : audit log sur changements phone/address (D5)
+  - Section 9 : 10 vérifications dont 2 critiques (`claim_my_doctor_profile` + `public_doctors` intacts) + 1 critique (policies `doctor_profiles` inchangées)
+  - Section 10 : rollback commenté
+- [x] 4.A.3 Cleanup cohérence : `tests/manual/CLAIM_FLOW_TESTS.md` corrigé (`public_doctors_master` → `doctor_profiles`, `claimed_by_user_id` → `user_id`, suppression mention `public.users.claimed_legacy_id` non vérifié)
 
 ### Phase 4.B — Frontend dashboard (à livrer après "OK go 4.B")
 - [ ] 4.B.1 Page `doctor-dashboard.html` complète (vue d'ensemble, édition fiche, dispos, RDV, téléconsult toggle)
