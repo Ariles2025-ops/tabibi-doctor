@@ -238,11 +238,18 @@
         console.warn('[tabibiDoctor] addUnavailableSlot: no docId (fiche non réclamée pour ce user)');
         return { ok: false, error: 'profile_not_found_or_not_claimed' };
       }
-      var startIso = (startsAt instanceof Date) ? startsAt.toISOString() : String(startsAt);
-      var endIso   = (endsAt   instanceof Date) ? endsAt.toISOString()   : String(endsAt);
-      if (new Date(endIso) <= new Date(startIso)) {
+      // [Phase 4.B.3-fix2] Comparer DIRECTEMENT les Date (millisecondes UTC
+      // internes), sans repasser par toISOString + new Date qui peut
+      // ré-introduire de l'ambiguïté. La validation chronologique côté
+      // frontend (saveUnavailSlot) reste la source de vérité ; ce check
+      // n'est qu'un garde-fou si le helper est appelé hors du flow UI.
+      var startMs = (startsAt instanceof Date) ? startsAt.getTime() : new Date(startsAt).getTime();
+      var endMs   = (endsAt   instanceof Date) ? endsAt.getTime()   : new Date(endsAt).getTime();
+      if (isNaN(startMs) || isNaN(endMs) || endMs <= startMs) {
         return { ok: false, error: 'invalid_range_end_before_start' };
       }
+      var startIso = new Date(startMs).toISOString();
+      var endIso   = new Date(endMs).toISOString();
       var payload = {
         doctor_id: docId,
         starts_at: startIso,

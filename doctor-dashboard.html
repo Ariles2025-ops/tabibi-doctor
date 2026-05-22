@@ -875,12 +875,46 @@ function _esc(str) {
   });
 }
 
+// [Phase 4.B.3-fix2] Construit une Date LOCALE à partir des composants YYYY-MM-DD + HH:MM
+// → évite l'ambiguïté de new Date("YYYY-MM-DDTHH:mm") qui peut être interprété
+// comme UTC sur certains Safari (et comme local sur Chrome). Cette fonction
+// utilise le constructeur Date(year, month, day, hour, minute) qui est GARANTI
+// local dans toutes les implémentations ECMAScript depuis ES1.
+function _buildLocalDate(yyyymmdd, hhmm) {
+  if (!yyyymmdd || !hhmm) return null;
+  var dp = String(yyyymmdd).split('-');
+  var tp = String(hhmm).split(':');
+  if (dp.length !== 3 || tp.length < 2) return null;
+  var y = parseInt(dp[0], 10), mo = parseInt(dp[1], 10), d = parseInt(dp[2], 10);
+  var h = parseInt(tp[0], 10), mi = parseInt(tp[1], 10);
+  if (isNaN(y) || isNaN(mo) || isNaN(d) || isNaN(h) || isNaN(mi)) return null;
+  return new Date(y, mo - 1, d, h, mi, 0, 0);
+}
+
+// [Phase 4.B.3-fix2] Renvoie la date locale d'aujourd'hui au format YYYY-MM-DD
+// → utilise getFullYear/getMonth/getDate (composantes locales) plutôt que
+// toISOString().split('T')[0] qui shift en UTC (bug près de minuit côté Algérie).
+function _todayLocalIso() {
+  var d = new Date();
+  var y = d.getFullYear();
+  var mo = String(d.getMonth() + 1).padStart(2, '0');
+  var da = String(d.getDate()).padStart(2, '0');
+  return y + '-' + mo + '-' + da;
+}
+function _tomorrowLocalIso() {
+  var d = new Date();
+  d.setDate(d.getDate() + 1);
+  var y = d.getFullYear();
+  var mo = String(d.getMonth() + 1).padStart(2, '0');
+  var da = String(d.getDate()).padStart(2, '0');
+  return y + '-' + mo + '-' + da;
+}
+
 function openUnavailModal() {
   var m = document.getElementById('unavail-modal');
   if (!m) return;
-  // Pré-remplit avec demain par défaut (date début = date fin = demain)
-  var tomorrow = new Date(Date.now() + 24*60*60*1000);
-  var iso = tomorrow.toISOString().split('T')[0];
+  // [Phase 4.B.3-fix2] Pré-remplit avec DEMAIN en heure LOCALE (pas UTC).
+  var iso = _tomorrowLocalIso();
   document.getElementById('un-start-date').value = iso;
   document.getElementById('un-end-date').value = iso;
   document.getElementById('un-start-time').value = '09:00';
@@ -921,9 +955,23 @@ async function saveUnavailSlot() {
     _showUnavailError('Les dates de début et fin sont obligatoires.');
     return;
   }
+
+  // [Phase 4.B.3-fix2] Branche allDay : on FORCE jour entier 00:00:00 → 23:59:59
+  // (logique métier : bloquer la journée entière, pas une fenêtre arbitraire).
+  // Validation séparée : comparer juste les chaînes YYYY-MM-DD (tri lexicographique
+  // = tri chronologique pour ce format) → simple, sans piège de timezone.
+  var startsAt, endsAt;
   if (allDay) {
-    startTime = '00:00';
-    endTime   = '23:59';
+    if (endDate < startDate) {
+      _showUnavailError('La date de fin doit être ≥ à la date de début.');
+      return;
+    }
+    startsAt = _buildLocalDate(startDate, '00:00');
+    endsAt   = _buildLocalDate(endDate,   '23:59');
+    console.info('[unavail-validate] allDay branch',
+      { startDate: startDate, endDate: endDate,
+        startsAt: startsAt && startsAt.toString(),
+        endsAt:   endsAt   && endsAt.toString() });
   } else {
     startTime = document.getElementById('un-start-time').value;
     endTime   = document.getElementById('un-end-time').value;
@@ -931,18 +979,31 @@ async function saveUnavailSlot() {
       _showUnavailError('Les heures de début et fin sont obligatoires.');
       return;
     }
+    // [Phase 4.B.3-fix2] Construction explicite local (composants), JAMAIS via
+    // parsing de string `new Date("YYYY-MM-DDTHH:mm")` — ce parsing était la
+    // source du bug fix2 : sur certains Safari il interprétait comme UTC,
+    // créant des comparaisons faussées.
+    startsAt = _buildLocalDate(startDate, startTime);
+    endsAt   = _buildLocalDate(endDate,   endTime);
+    console.info('[unavail-validate] timed branch',
+      { startDate: startDate, startTime: startTime,
+        endDate: endDate, endTime: endTime,
+        startsAt: startsAt && startsAt.toString(),
+        endsAt:   endsAt   && endsAt.toString(),
+        startsAtMs: startsAt && startsAt.getTime(),
+        endsAtMs:   endsAt   && endsAt.getTime() });
+    if (!startsAt || !endsAt || isNaN(startsAt.getTime()) || isNaN(endsAt.getTime())) {
+      _showUnavailError('Date ou heure invalide.');
+      return;
+    }
+    if (endsAt <= startsAt) {
+      _showUnavailError('La date/heure de fin doit être strictement après le début.');
+      return;
+    }
   }
-
-  // Construit ISO local (sans TZ pour respecter l'heure du cabinet)
-  var startsAt = new Date(startDate + 'T' + startTime);
-  var endsAt   = new Date(endDate   + 'T' + endTime);
-
-  if (isNaN(startsAt.getTime()) || isNaN(endsAt.getTime())) {
+  // Sanity check final commun aux 2 branches
+  if (!startsAt || !endsAt || isNaN(startsAt.getTime()) || isNaN(endsAt.getTime())) {
     _showUnavailError('Date ou heure invalide.');
-    return;
-  }
-  if (endsAt <= startsAt) {
-    _showUnavailError('La date/heure de fin doit être strictement après le début.');
     return;
   }
 
