@@ -1,10 +1,11 @@
 /**
- * Tabibi Service Worker v11 — Production
+ * Tabibi Service Worker v12 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
- * Bump v11 : Phase 4.B.3 (doctor-dashboard agenda + blocages exceptionnels
- *            CRUD doctor_unavailable_slots, helpers list/add/delete)
+ * Bump v12 : Phase 4.B.3-fix1 (robustness blocages : cache invalidation,
+ *            logs console explicites, always-toast, retry sur session pas prête,
+ *            garde res.data null pour edge case PostgREST)
  */
-const CACHE_VERSION = 'tabibi-v11-2026-05-21';
+const CACHE_VERSION = 'tabibi-v12-2026-05-22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 

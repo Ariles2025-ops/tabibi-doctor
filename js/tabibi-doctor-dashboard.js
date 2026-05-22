@@ -195,13 +195,16 @@
   // { ok, data?, error? } avec error string lisible.
 
   // Cache interne du doctor_id du médecin connecté (évite n appels getMyProfile)
+  // [Phase 4.B.3-fix1] Param forceRefresh pour bypasser le cache après mutations
+  // ou en cas de session restaurée tardivement.
   var _cachedDoctorId = null;
-  async function getMyDoctorId() {
-    if (_cachedDoctorId) return _cachedDoctorId;
+  async function getMyDoctorId(forceRefresh) {
+    if (!forceRefresh && _cachedDoctorId) return _cachedDoctorId;
     var p = await getMyProfile();
     _cachedDoctorId = (p && p.id) || null;
     return _cachedDoctorId;
   }
+  function invalidateDoctorIdCache() { _cachedDoctorId = null; }
 
   // listUnavailableSlots() : renvoie [{id, doctor_id, starts_at, ends_at, reason, all_day}, ...]
   // Retourne [] si pas authentifié OU pas de fiche réclamée OU erreur réseau.
@@ -225,23 +228,31 @@
   // addUnavailableSlot(startsAt, endsAt, reason, allDay)
   // startsAt/endsAt : ISO strings ou Date objects. La RLS dus_insert_owner
   // exige que doctor_id matche une fiche dont user_id = auth.uid().
+  // [Phase 4.B.3-fix1] Logs console explicites + garde res.data null
   async function addUnavailableSlot(startsAt, endsAt, reason, allDay) {
-    var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
+    var s = sb(); if (!s) { console.warn('[tabibiDoctor] addUnavailableSlot: no supabase client'); return { ok: false, error: 'no_supabase_client' }; }
     try {
-      var docId = await getMyDoctorId();
-      if (!docId) return { ok: false, error: 'profile_not_found_or_not_claimed' };
+      // Force refresh du cache : la session peut avoir été restaurée APRÈS le 1er load
+      var docId = await getMyDoctorId(true);
+      if (!docId) {
+        console.warn('[tabibiDoctor] addUnavailableSlot: no docId (fiche non réclamée pour ce user)');
+        return { ok: false, error: 'profile_not_found_or_not_claimed' };
+      }
       var startIso = (startsAt instanceof Date) ? startsAt.toISOString() : String(startsAt);
       var endIso   = (endsAt   instanceof Date) ? endsAt.toISOString()   : String(endsAt);
       if (new Date(endIso) <= new Date(startIso)) {
         return { ok: false, error: 'invalid_range_end_before_start' };
       }
-      var r = await s.from('doctor_unavailable_slots').insert({
+      var payload = {
         doctor_id: docId,
         starts_at: startIso,
         ends_at:   endIso,
         reason:    reason || null,
         all_day:   !!allDay
-      }).select().single();
+      };
+      console.info('[tabibiDoctor] INSERT doctor_unavailable_slots payload=', payload);
+      var r = await s.from('doctor_unavailable_slots').insert(payload).select().single();
+      console.info('[tabibiDoctor] INSERT response : data=', r.data, ' error=', r.error);
       if (r.error) {
         var code = r.error.code || '';
         // 42501 = RLS violation, 23514 = CHECK violation (chrono), 23503 = FK violation
@@ -249,11 +260,19 @@
                  : code === '23514' ? 'check_violation_chrono'
                  : code === '23503' ? 'doctor_not_found'
                  : (r.error.message || 'insert_failed');
-        console.warn('[tabibiDoctor] addUnavailableSlot', r.error);
+        console.warn('[tabibiDoctor] addUnavailableSlot ERROR', code, r.error);
         return { ok: false, error: hint, raw: r.error };
+      }
+      // [Phase 4.B.3-fix1] Garde explicite : si pas d'erreur mais data null/undefined,
+      // c'est qu'on n'a RIEN inséré (edge case PostgREST). On le signale au lieu de
+      // retourner ok:true silencieusement.
+      if (!r.data || !r.data.id) {
+        console.warn('[tabibiDoctor] addUnavailableSlot SILENT FAILURE : pas d''erreur mais aucune data retournée');
+        return { ok: false, error: 'insert_returned_no_data', raw: r };
       }
       return { ok: true, data: r.data };
     } catch (e) {
+      console.warn('[tabibiDoctor] addUnavailableSlot EXCEPTION', e);
       return { ok: false, error: 'network_error', raw: e };
     }
   }
@@ -263,15 +282,18 @@
     var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
     if (!id) return { ok: false, error: 'no_id' };
     try {
+      console.info('[tabibiDoctor] DELETE doctor_unavailable_slots id=', id);
       var r = await s.from('doctor_unavailable_slots').delete().eq('id', id);
+      console.info('[tabibiDoctor] DELETE response : error=', r.error);
       if (r.error) {
         var code = r.error.code || '';
         var hint = code === '42501' ? 'rls_denied' : (r.error.message || 'delete_failed');
-        console.warn('[tabibiDoctor] deleteUnavailableSlot', r.error);
+        console.warn('[tabibiDoctor] deleteUnavailableSlot ERROR', code, r.error);
         return { ok: false, error: hint, raw: r.error };
       }
       return { ok: true };
     } catch (e) {
+      console.warn('[tabibiDoctor] deleteUnavailableSlot EXCEPTION', e);
       return { ok: false, error: 'network_error', raw: e };
     }
   }
@@ -281,6 +303,7 @@
     hasSession: hasSession,
     getMyProfile: getMyProfile,
     getMyDoctorId: getMyDoctorId,
+    invalidateDoctorIdCache: invalidateDoctorIdCache,
     updateMyProfile: updateMyProfile,
     serializeSchedule: serializeSchedule,
     parseSchedule: parseSchedule,

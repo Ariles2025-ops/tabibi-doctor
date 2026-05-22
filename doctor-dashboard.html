@@ -812,43 +812,61 @@ function _fmtSlotDate(iso, allDay) {
   };
 })();
 
-async function loadUnavailSlots() {
+// [Phase 4.B.3-fix1] loadUnavailSlots robuste : retry 1x si session pas prête,
+// logs console explicites, jamais d'état UI silencieux (toujours un message).
+async function loadUnavailSlots(_isRetry) {
   var list = document.getElementById('unavail-list');
   if (!list) return;
   if (!window.tabibiDoctor) {
-    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">Service indisponible.</div>';
+    console.warn('[unavail] loadUnavailSlots: tabibiDoctor NOT LOADED (vérifier <script src> dans le HTML)');
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Service indisponible (recharger la page).</div>';
     return;
   }
-  // Affiche le mini-bandeau si pas claim (getMyDoctorId renvoie null dans ce cas)
-  var docId = await window.tabibiDoctor.getMyDoctorId();
-  var notClaimed = document.getElementById('unavail-not-claimed');
-  var btnAdd = document.getElementById('btn-add-unavail');
-  if (!docId) {
-    if (notClaimed) notClaimed.classList.remove('hidden');
-    if (btnAdd) btnAdd.disabled = true;
-    list.innerHTML = '';
-    return;
-  }
-  if (notClaimed) notClaimed.classList.add('hidden');
-  if (btnAdd) btnAdd.disabled = false;
+  try {
+    // Au 1er essai on force-refresh pour éviter un cache stale (session restaurée tardivement)
+    var docId = await window.tabibiDoctor.getMyDoctorId(!_isRetry);
+    console.info('[unavail] loadUnavailSlots docId=', docId, '_isRetry=', _isRetry);
+    var notClaimed = document.getElementById('unavail-not-claimed');
+    var btnAdd = document.getElementById('btn-add-unavail');
+    if (!docId) {
+      // Pas de docId : peut-être que la session n'est pas encore prête → retry 1x après 1.5s
+      if (!_isRetry) {
+        console.info('[unavail] docId null au 1er essai → retry dans 1.5s');
+        list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px"><i class="fa fa-circle-notch fa-spin"></i> Vérification de votre fiche...</div>';
+        setTimeout(function () { loadUnavailSlots(true); }, 1500);
+        return;
+      }
+      // Après retry : vraiment pas de fiche claim → bandeau jaune visible
+      if (notClaimed) notClaimed.classList.remove('hidden');
+      if (btnAdd) btnAdd.disabled = true;
+      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">— (réclamez votre fiche pour activer cette section)</div>';
+      return;
+    }
+    if (notClaimed) notClaimed.classList.add('hidden');
+    if (btnAdd) btnAdd.disabled = false;
 
-  var slots = await window.tabibiDoctor.listUnavailableSlots();
-  if (!slots.length) {
-    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;background:var(--bg);border-radius:10px"><i class="fa fa-circle-check" style="color:var(--green)"></i> Aucun blocage. Vous êtes disponible selon vos horaires hebdomadaires.</div>';
-    return;
+    var slots = await window.tabibiDoctor.listUnavailableSlots();
+    console.info('[unavail] slots loaded count=', slots.length);
+    if (!slots.length) {
+      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;background:var(--bg);border-radius:10px"><i class="fa fa-circle-check" style="color:var(--green)"></i> Aucun blocage. Vous êtes disponible selon vos horaires hebdomadaires.</div>';
+      return;
+    }
+    list.innerHTML = slots.map(function (s) {
+      var rangeStr = _fmtSlotDate(s.starts_at, s.all_day) + ' → ' + _fmtSlotDate(s.ends_at, s.all_day);
+      var reasonStr = s.reason ? '<div style="font-size:12px;color:var(--text3);margin-top:4px"><i class="fa fa-tag fa-xs"></i> ' + _esc(s.reason) + '</div>' : '';
+      var allDayBadge = s.all_day ? '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;margin-left:6px">Toute la journée</span>' : '';
+      return '<div class="appt-card pending" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
+        +    '<div style="flex:1;min-width:0">'
+        +      '<div style="font-weight:700;font-size:13px"><i class="fa fa-calendar-xmark" style="color:#f59e0b"></i> ' + _esc(rangeStr) + allDayBadge + '</div>'
+        +      reasonStr
+        +    '</div>'
+        +    '<button onclick="deleteUnavail(\'' + s.id + '\')" class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" aria-label="Supprimer ce blocage" title="Supprimer"><i class="fa fa-trash"></i></button>'
+        +  '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('[unavail] loadUnavailSlots EXCEPTION', e);
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
   }
-  list.innerHTML = slots.map(function (s) {
-    var rangeStr = _fmtSlotDate(s.starts_at, s.all_day) + ' → ' + _fmtSlotDate(s.ends_at, s.all_day);
-    var reasonStr = s.reason ? '<div style="font-size:12px;color:var(--text3);margin-top:4px"><i class="fa fa-tag fa-xs"></i> ' + _esc(s.reason) + '</div>' : '';
-    var allDayBadge = s.all_day ? '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;margin-left:6px">Toute la journée</span>' : '';
-    return '<div class="appt-card pending" style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">'
-      +    '<div style="flex:1;min-width:0">'
-      +      '<div style="font-weight:700;font-size:13px"><i class="fa fa-calendar-xmark" style="color:#f59e0b"></i> ' + _esc(rangeStr) + allDayBadge + '</div>'
-      +      reasonStr
-      +    '</div>'
-      +    '<button onclick="deleteUnavail(\'' + s.id + '\')" class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" aria-label="Supprimer ce blocage" title="Supprimer"><i class="fa fa-trash"></i></button>'
-      +  '</div>';
-  }).join('');
 }
 
 function _esc(str) {
@@ -933,34 +951,66 @@ async function saveUnavailSlot() {
   var origHtml = btn ? btn.innerHTML : '';
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Enregistrement...'; }
 
-  var res = await window.tabibiDoctor.addUnavailableSlot(startsAt, endsAt, reason || null, allDay);
+  // [Phase 4.B.3-fix1] Try/catch englobant + log explicite du res + always-toast.
+  // Invalider le cache docId AVANT pour forcer un fetch frais si la session a
+  // été restaurée tardivement (cas typique : signup → confirm email → login).
+  if (window.tabibiDoctor && typeof window.tabibiDoctor.invalidateDoctorIdCache === 'function') {
+    window.tabibiDoctor.invalidateDoctorIdCache();
+  }
+
+  var res;
+  try {
+    res = await window.tabibiDoctor.addUnavailableSlot(startsAt, endsAt, reason || null, allDay);
+    console.info('[unavail] saveUnavailSlot res=', res);
+  } catch (e) {
+    console.error('[unavail] saveUnavailSlot EXCEPTION', e);
+    res = { ok: false, error: 'exception', raw: e };
+  }
 
   if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
 
-  if (res.ok) {
+  if (res && res.ok) {
     closeUnavailModal();
     toastM('Blocage enregistré ✓', 'success');
     loadUnavailSlots();
   } else {
-    var msg = res.error === 'profile_not_found_or_not_claimed' ? "Réclamez votre fiche d'abord (voir le mini-bandeau)."
-            : res.error === 'invalid_range_end_before_start'   ? 'La date de fin doit être après le début.'
-            : res.error === 'rls_denied'                        ? "Permission refusée. Vous n'êtes peut-être pas le propriétaire de cette fiche."
-            : res.error === 'check_violation_chrono'            ? "Plage horaire invalide (fin avant début)."
-            : res.error === 'doctor_not_found'                  ? "Fiche médecin introuvable."
-            : 'Erreur : ' + res.error;
+    var errCode = (res && res.error) || 'unknown';
+    var msg = errCode === 'profile_not_found_or_not_claimed' ? "Vous devez d'abord réclamer votre fiche médecin dans l'annuaire avant de gérer vos blocages."
+            : errCode === 'invalid_range_end_before_start'   ? 'La date de fin doit être strictement après le début.'
+            : errCode === 'rls_denied'                        ? "Permission refusée par la base. Vérifiez que vous êtes bien le propriétaire de votre fiche."
+            : errCode === 'check_violation_chrono'            ? "Plage horaire invalide (fin avant début)."
+            : errCode === 'doctor_not_found'                  ? "Fiche médecin introuvable. Reconnectez-vous puis réessayez."
+            : errCode === 'insert_returned_no_data'           ? "L'insertion n'a pas été persistée par la base. Vérifiez votre session puis réessayez."
+            : errCode === 'network_error'                      ? "Erreur réseau. Vérifiez votre connexion et réessayez."
+            : errCode === 'exception'                          ? "Erreur inattendue. Détails dans la console DevTools (F12)."
+            : 'Erreur inconnue : ' + errCode;
     _showUnavailError(msg);
+    // Toast aussi visible — l'erreur inline peut être hors viewport sur petit écran
+    toastM('Blocage non enregistré — ' + msg, 'error');
   }
 }
 
+// [Phase 4.B.3-fix1] Try/catch + log res + always-toast
 async function deleteUnavail(id) {
   if (!id) return;
   if (!confirm('Supprimer ce blocage ? Les patients pourront à nouveau prendre RDV sur ce créneau.')) return;
-  var res = await window.tabibiDoctor.deleteUnavailableSlot(id);
-  if (res.ok) {
+  var res;
+  try {
+    res = await window.tabibiDoctor.deleteUnavailableSlot(id);
+    console.info('[unavail] deleteUnavail res=', res);
+  } catch (e) {
+    console.error('[unavail] deleteUnavail EXCEPTION', e);
+    res = { ok: false, error: 'exception' };
+  }
+  if (res && res.ok) {
     toastM('Blocage supprimé ✓', 'success');
     loadUnavailSlots();
   } else {
-    var msg = res.error === 'rls_denied' ? "Permission refusée." : 'Erreur : ' + res.error;
+    var errCode = (res && res.error) || 'unknown';
+    var msg = errCode === 'rls_denied' ? "Permission refusée."
+            : errCode === 'network_error' ? "Erreur réseau. Réessayez."
+            : errCode === 'exception' ? "Erreur inattendue (console F12 pour détails)."
+            : 'Erreur : ' + errCode;
     toastM(msg, 'error');
   }
 }

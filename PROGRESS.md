@@ -89,6 +89,7 @@
   - Aucune régression : API publique identique, page-specific (loadProfile/saveAll/handlers DOM) inchangées
   - **Hotfix appliqué** : `getMyProfile()` normalise les row composites vides à null — bug PostgREST latent corrigé. Garde `!r.data.id` ajoutée (PK NOT NULL → l'absence d'id signale forcément absence de row). Sans ce fix, le bandeau "Réclamer ma fiche" ne se déclenchait pas quand PostgREST renvoyait `{id:null, user_id:null, ...}` au lieu de `null` pur. sw.js bump v9 → **v10-2026-05-21**.
 - [x] 4.B.3 `doctor-dashboard.html` : ajout section "Blocages exceptionnels" + CRUD `doctor_unavailable_slots` (commit 2026-05-21)
+  - **Hotfix fix1 (2026-05-22)** : robustesse + diagnostic — `getMyDoctorId(forceRefresh)` + `invalidateDoctorIdCache()` exportée, garde `r.data null` après `.insert().select().single()` (edge case PostgREST), retry 1.5s dans `loadUnavailSlots` si session pas prête, try/catch englobant dans `saveUnavailSlot`/`deleteUnavail` + toast d'erreur visible, console.info à chaque étape (payload, response, errors). sw.js bump v11 → **v12-2026-05-22**.
   - `js/tabibi-doctor-dashboard.js` : +3 helpers (`listUnavailableSlots`, `addUnavailableSlot`, `deleteUnavailableSlot`) + cache `getMyDoctorId`
   - Section insérée sous l'onglet Agenda (avant `</div>` ligne 140), 100 % additive — pattern card `.appt-card.pending`
   - Modal "Bloquer un créneau" réutilise le pattern visuel de `#schedule-modal` (bottom-sheet 520px max-width)
