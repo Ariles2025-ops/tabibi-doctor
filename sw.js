@@ -1,12 +1,14 @@
 /**
- * Tabibi Service Worker v16 — Production
+ * Tabibi Service Worker v17 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
- * Bump v16 : Phase 5.2.2 (bouton "Prendre RDV" dans doctor-profile.html
- *            wire vers reservation.html?doctor_id=... Option A — visible
- *            tous, désactivé si fiche non-claim, mention "Connexion requise
- *            pour confirmer" si pas auth)
+ * Bump v17 : Phase 5.2.3 (reservation.html refactor wizard 4 steps :
+ *            NEW Step 1 calendrier 90j + cache Map<dateISO,slots> + fetch
+ *            on-demand + TZ Africa/Algiers. INSERT via tabibiBooking
+ *            createAppointment() avec mapping ERR_* + refresh auto sur
+ *            ERR_SLOT_TAKEN + auth-wall sur ERR_AUTH_REQUIRED. Précache
+ *            js/tabibi-booking.js pour latence zéro 1er booking.)
  */
-const CACHE_VERSION = 'tabibi-v16-2026-05-22';
+const CACHE_VERSION = 'tabibi-v17-2026-05-22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -17,7 +19,10 @@ const PRECACHE_URLS = [
   '/images/icon-192.png', '/images/icon-512.png',
   // [Phase 4.B.2] helpers médecin partagés (cache-first via runtime suffit,
   // mais on précache pour zéro latence au 1er affichage du dashboard)
-  '/js/tabibi-doctor-dashboard.js'
+  '/js/tabibi-doctor-dashboard.js',
+  // [Phase 5.2.3] helpers booking patient (Phase 5.2.1) — précache pour
+  // zéro latence au 1er chargement de reservation.html
+  '/js/tabibi-booking.js'
 ];
 
 self.addEventListener('install', event => {

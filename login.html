@@ -94,6 +94,30 @@ function normalizeRole(r){
   return "patient";
 }
 
+// [Phase 5.2.3] Support du param ?next= pour retour post-login.
+// Utilisé par reservation.html auth-wall (ERR_AUTH_REQUIRED) pour
+// renvoyer l'user sur sa page de booking après authentification.
+// Validation stricte : whitelist redirections internes uniquement
+// (open-redirect = vecteur phishing). Refuse :
+//   - URLs absolues (http://, https://, javascript:, data:, etc.)
+//   - URLs protocol-relative (//evil.com)
+//   - URLs contenant backslash (\\evil.com sur certains navigateurs)
+// Accepte :
+//   - paths commençant par '/' (ex: /reservation.html?doctor_id=...)
+//   - paths relatifs sans schéma (ex: reservation.html?doctor_id=...)
+function _safeNext(){
+  try {
+    var u = new URL(location.href);
+    var n = u.searchParams.get('next');
+    if (!n) return null;
+    if (n.indexOf('://') !== -1) return null;       // absolute scheme
+    if (n.charAt(0) === '/' && n.charAt(1) === '/') return null; // //evil.com
+    if (n.indexOf('\\') !== -1) return null;        // backslash trick
+    if (/^\s*(javascript|data|vbscript):/i.test(n)) return null;
+    return n;
+  } catch(e) { return null; }
+}
+
 function redirectFor(role){
   const r=normalizeRole(role);
   if(r==="medecin") return "doctor-dashboard.html";
@@ -206,7 +230,10 @@ async function doLogin(e){
       ? "Connexion réussie (compte test)"
       : "Connexion réussie !";
     toastM(successMsg, "success");
-    setTimeout(()=>location.href=redirectFor(userRole), 400);
+    // [Phase 5.2.3] Si ?next= défini et safe → redirige dessus (cas
+    // auth-wall reservation.html). Sinon → redirect par défaut selon rôle.
+    const nextUrl = _safeNext() || redirectFor(userRole);
+    setTimeout(()=>location.href=nextUrl, 400);
     return;
 
   } catch(err) {

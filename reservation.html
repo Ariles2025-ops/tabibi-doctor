@@ -14,6 +14,33 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [Phase 5.2.3] Styles inline pour calendrier + slots — pas la peine de
+     polluer app.css pour 1 page. À migrer en Phase 12 si réutilisé. -->
+<style>
+  .rdv-cal-wrap { background:#fff; border-radius:var(--r12); padding:12px; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .rdv-cal-head { display:flex;align-items:center;justify-content:space-between;margin-bottom:10px; }
+  .rdv-cal-head .month { font-weight:700;font-size:15px;text-transform:capitalize; }
+  .rdv-cal-nav { background:transparent;border:0;padding:6px 10px;border-radius:var(--r8);cursor:pointer;color:var(--blue);font-size:16px; }
+  .rdv-cal-nav:disabled { color:var(--text3);cursor:not-allowed;opacity:.4; }
+  .rdv-cal-dow { display:grid;grid-template-columns:repeat(7,1fr);gap:2px;font-size:11px;color:var(--text3);text-align:center;text-transform:uppercase;margin-bottom:4px; }
+  .rdv-cal-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:4px; }
+  .rdv-cal-day { aspect-ratio:1;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:var(--r8);background:#fff;font-size:14px;font-weight:600;cursor:pointer;padding:0;color:var(--text1);transition:all .12s; }
+  .rdv-cal-day:hover:not(:disabled) { border-color:var(--blue);background:var(--blue-l); }
+  .rdv-cal-day.is-today { border-color:var(--blue);color:var(--blue); }
+  .rdv-cal-day.is-selected { background:var(--blue);color:#fff;border-color:var(--blue); }
+  .rdv-cal-day.is-empty { background:var(--bg2);color:var(--text3);cursor:not-allowed;text-decoration:line-through;text-decoration-thickness:1px; }
+  .rdv-cal-day:disabled { opacity:.35;cursor:not-allowed;background:#fafafa; }
+  .rdv-cal-day.is-other-month { visibility:hidden; }
+  .rdv-slots-panel { margin-top:14px;min-height:60px; }
+  .rdv-slots-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px; }
+  .rdv-slot-pill { padding:10px 6px;border:1.5px solid var(--border);background:#fff;border-radius:var(--r8);font-weight:600;font-size:14px;cursor:pointer;color:var(--text1);transition:all .12s; }
+  .rdv-slot-pill:hover { border-color:var(--blue);background:var(--blue-l); }
+  .rdv-slot-pill.active { background:var(--blue);color:#fff;border-color:var(--blue); }
+  .rdv-slots-msg { padding:14px;text-align:center;color:var(--text3);font-size:13px;background:var(--bg2);border-radius:var(--r8); }
+  .rdv-slots-msg.is-error { background:#FFEEEC;color:var(--red); }
+  .rdv-auth-wall { background:#FFF7E6;border:1px solid #FFD580;border-radius:var(--r12);padding:14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start; }
+  .rdv-auth-wall i { color:#B07000;margin-top:2px; }
+</style>
 </head>
 <body>
 <script src="scripts/seed.js"></script>
@@ -28,29 +55,67 @@
   <div id="uarea-desk"></div>
 </header>
 
-<!-- STEP INDICATOR -->
+<!-- STEP INDICATOR — [Phase 5.2.3] passé de 3 à 4 steps (Date+Slot ajouté) -->
 <div style="display:flex;border-bottom:2px solid var(--border);background:#fff" role="tablist" aria-label="Étapes">
-  <div class="auth-tab active" id="si1" style="flex:1;border-bottom:2px solid var(--blue);color:var(--blue)" role="tab" aria-selected="true">1 · Détails</div>
-  <div class="auth-tab" id="si2" style="flex:1" role="tab" aria-selected="false">2 · Paiement</div>
-  <div class="auth-tab" id="si3" style="flex:1" role="tab" aria-selected="false">3 · Confirmation</div>
+  <div class="auth-tab active" id="si1" style="flex:1;border-bottom:2px solid var(--blue);color:var(--blue);font-size:13px" role="tab" aria-selected="true">1 · Date</div>
+  <div class="auth-tab" id="si2" style="flex:1;font-size:13px" role="tab" aria-selected="false">2 · Détails</div>
+  <div class="auth-tab" id="si3" style="flex:1;font-size:13px" role="tab" aria-selected="false">3 · Paiement</div>
+  <div class="auth-tab" id="si4" style="flex:1;font-size:13px" role="tab" aria-selected="false">4 · OK</div>
 </div>
 
 <main class="page" role="main">
 
-  <!-- ── STEP 1: DETAILS ── -->
-  <div id="step1" style="padding:16px">
-    <!-- Doctor summary -->
-    <div class="card" style="margin-bottom:14px;display:flex;gap:12px;align-items:center" aria-label="Médecin sélectionné">
-      <div id="a-ava" style="width:52px;height:52px;border-radius:var(--r12);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;background:#EEF4FB;color:#1557A0">?</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:15px;font-weight:700" id="a-name">...</div>
-        <div style="font-size:12px;color:var(--text3)" id="a-spec"></div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
-          <span id="a-slot" style="background:var(--blue-l);color:var(--blue);padding:3px 10px;border-radius:var(--rfull);font-size:12px;font-weight:600">--:--</span>
-          <span id="a-prix" style="font-size:13px;font-weight:700;color:var(--blue)">— DA</span>
-        </div>
+  <!-- Doctor summary partagé (visible steps 1-3) -->
+  <div id="doctor-summary-card" class="card" style="margin:14px 16px 0;display:flex;gap:12px;align-items:center" aria-label="Médecin sélectionné">
+    <div id="a-ava" style="width:52px;height:52px;border-radius:var(--r12);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;background:#EEF4FB;color:#1557A0">?</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:15px;font-weight:700" id="a-name">...</div>
+      <div style="font-size:12px;color:var(--text3)" id="a-spec"></div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
+        <span id="a-slot" style="background:var(--blue-l);color:var(--blue);padding:3px 10px;border-radius:var(--rfull);font-size:12px;font-weight:600">Choisissez un créneau</span>
+        <span id="a-prix" style="font-size:13px;font-weight:700;color:var(--blue)">— DA</span>
       </div>
     </div>
+  </div>
+
+  <!-- ── STEP 1: DATE + SLOT ── [Phase 5.2.3 NEW] -->
+  <div id="step1" style="padding:16px">
+    <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:10px">
+      <i class='fa fa-calendar-days' style='color:var(--blue);margin-right:6px'></i>
+      Choisissez un jour et un créneau
+    </div>
+
+    <!-- Calendrier 90 jours, lazy fetch on click -->
+    <div class="rdv-cal-wrap">
+      <div class="rdv-cal-head">
+        <button class="rdv-cal-nav" id="cal-prev" onclick="calNav(-1)" aria-label="Mois précédent">‹</button>
+        <div class="month" id="cal-month-label">—</div>
+        <button class="rdv-cal-nav" id="cal-next" onclick="calNav(1)" aria-label="Mois suivant">›</button>
+      </div>
+      <div class="rdv-cal-dow" aria-hidden="true">
+        <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+      </div>
+      <div class="rdv-cal-grid" id="cal-grid" role="grid"></div>
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">
+        Disponibilité chargée à la sélection · 90 jours max
+      </div>
+    </div>
+
+    <!-- Créneaux du jour sélectionné -->
+    <div class="rdv-slots-panel" id="slots-panel" aria-live="polite">
+      <div class="rdv-slots-msg">
+        <i class='fa fa-hand-pointer' style='margin-right:6px'></i>
+        Cliquez sur un jour ci-dessus pour voir les créneaux.
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-xl" id="btn-step1-next" onclick="toStep(2)" disabled style="margin-top:14px;opacity:.5">
+      Continuer <i class='fa fa-arrow-right'></i>
+    </button>
+  </div>
+
+  <!-- ── STEP 2: DETAILS ── (anciennement Step 1) -->
+  <div id="step2" class="hidden" style="padding:16px">
     <div class="form-group">
       <label class="form-label" for="reason">Motif de consultation <span style="color:var(--red)">*</span></label>
       <textarea class="form-control" id="reason" placeholder="Décrivez brièvement vos symptômes ou le motif de votre visite..." data-i18n-placeholder="ph_visit_reason" rows="3" required></textarea>
@@ -68,11 +133,24 @@
       <label class="form-label" for="notes">Notes supplémentaires</label>
       <textarea class="form-control" id="notes" placeholder="Allergies connues, médicaments en cours, antécédents importants..." data-i18n-placeholder="ph_medical_notes" rows="2"></textarea>
     </div>
-    <button class="btn btn-primary btn-full btn-xl" onclick="toStep(2)">Continuer <i class='fa fa-arrow-right'></i></button>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-ghost btn-lg" onclick="toStep(1)" style="flex:1"><i class='fa fa-arrow-left'></i> Retour</button>
+      <button class="btn btn-primary btn-xl" onclick="toStep(3)" style="flex:2">Continuer <i class='fa fa-arrow-right'></i></button>
+    </div>
   </div>
 
-  <!-- ── STEP 2: PAYMENT ── -->
-  <div id="step2" class="hidden" style="padding:16px">
+  <!-- ── STEP 3: PAYMENT ── (anciennement Step 2) -->
+  <div id="step3" class="hidden" style="padding:16px">
+    <!-- [Phase 5.2.3] Auth-wall affiché ici uniquement si anon clique Confirmer.
+         Masqué par défaut, populé par confirmRDV() au retour ERR_AUTH_REQUIRED. -->
+    <div id="auth-wall" class="rdv-auth-wall hidden" role="alert">
+      <i class='fa fa-circle-info'></i>
+      <div style="flex:1;font-size:13px">
+        <div style="font-weight:700;margin-bottom:4px">Connexion requise pour confirmer</div>
+        <div style="color:var(--text2);margin-bottom:8px">Créez un compte ou connectez-vous — vos choix de RDV seront conservés.</div>
+        <a id="auth-wall-login" href="#" class="btn btn-primary btn-sm"><i class='fa fa-right-to-bracket'></i> Se connecter / S'inscrire</a>
+      </div>
+    </div>
     <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:14px" data-i18n="pay_title">Mode de paiement</div>
     <div id="pay-methods"></div>
     <div style="background:var(--bg2);border-radius:var(--r12);padding:12px 14px;font-size:12px;color:var(--text3);margin-top:4px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
@@ -80,22 +158,19 @@
       Paiement 100% sécurisé · Données chiffrées SSL/TLS
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost btn-lg" onclick="toStep(1)" style="flex:1"><i class='fa fa-arrow-left'></i> Retour</button>
-      <button class="btn btn-success btn-xl" onclick="confirmRDV()" style="flex:2"><i class='fa fa-calendar-check'></i> <span data-i18n="confirm_rdv">Confirmer le RDV</span></button>
+      <button class="btn btn-ghost btn-lg" onclick="toStep(2)" style="flex:1"><i class='fa fa-arrow-left'></i> Retour</button>
+      <button class="btn btn-success btn-xl" id="btn-confirm" onclick="confirmRDV()" style="flex:2"><i class='fa fa-calendar-check'></i> <span data-i18n="confirm_rdv">Confirmer le RDV</span></button>
     </div>
   </div>
 
-  <!-- ── STEP 3: SUCCESS ── -->
-  <div id="step3" class="hidden" style="padding:24px;text-align:center">
+  <!-- ── STEP 4: SUCCESS ── (anciennement Step 3) -->
+  <div id="step4" class="hidden" style="padding:24px;text-align:center">
     <div style="width:80px;height:80px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;animation:fadeup .4s ease" aria-hidden="true"><i class='fa fa-circle-check' style='color:var(--green)'></i></div>
     <h1 style="font-size:20px;font-weight:800;margin-bottom:8px" data-i18n="rdv_ok">RDV confirmé !</h1>
-    <p style="font-size:14px;color:var(--text3);margin-bottom:20px">Un SMS de confirmation a été envoyé à votre numéro de téléphone algérien.</p>
+    <p style="font-size:14px;color:var(--text3);margin-bottom:20px">Votre RDV a été enregistré. Vous recevrez une confirmation par SMS prochainement.</p>
     <div class="card" id="confirm-summary" style="text-align:left;margin-bottom:16px"></div>
-    <div style="background:var(--green-l);border-radius:var(--r12);padding:12px 14px;font-size:13px;color:var(--green-d);display:flex;align-items:center;gap:8px;margin-bottom:24px">
-      <i class='fa fa-bell'></i><span data-i18n="sms_ok">Confirmation SMS envoyée <i class='fa fa-check'></i></span>
-    </div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <a href="patient-dashboard.html" class="btn btn-primary btn-full btn-lg"><i class='fa fa-calendar'></i> Voir mes rendez-vous</a>
+      <a href="mes-rdv.html" class="btn btn-primary btn-full btn-lg"><i class='fa fa-calendar'></i> Voir mes rendez-vous</a>
       <a href="index.html" class="btn btn-ghost btn-full btn-lg"><i class='fa fa-home'></i> Retour à l'accueil</a>
     </div>
   </div>
@@ -107,158 +182,390 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/payments.js"></script>
 <script>
-let doctorId=getParam("doctorId")||"d1";
-let slot=getParam("slot")||"09:00";
-let doctorName=decodeURIComponent(getParam("doctorName")||"");
-let prix=parseInt(getParam("prix")||2500);
-let specName=decodeURIComponent(getParam("spec")||"");
-let payMethod="cash";
+// ========================================================================
+// [Phase 5.2.3] Refactor reservation.html : wizard 4 steps
+// ------------------------------------------------------------------------
+// • Step 1 (NEW) : calendrier 90 jours, cache Map<dateISO, slots[]>,
+//   fetch on-demand au clic, jours sans slot grisés APRÈS fetch.
+// • TZ : Africa/Algiers (UTC+1, pas de DST).
+// • URL params snake_case alignés sur doctor-profile.html commit 0673f25 :
+//   doctor_id, doctor_name, prix, spec.
+// • INSERT via window.tabibiBooking.createAppointment() (Phase 5.2.1).
+// • ERR_SLOT_TAKEN : refresh auto des slots du jour sélectionné + retour Step 1.
+// • ERR_AUTH_REQUIRED : affiche auth-wall + link login.html?next=...
+// ========================================================================
 
-function init(){
-  if(!requireAuth()) return;
-  loadUser(); setLang(lang);
-  const d=DOCTORS.find(x=>x.id===doctorId)||DOCTORS[0];
-  const n=doctorName||dname(d);
-  specName=specName||dspec(d);
+// ── State ───────────────────────────────────────────────────────────────
+var doctorId    = getParam("doctor_id") || "";
+var doctorName  = decodeURIComponent(getParam("doctor_name") || "");
+var prix        = parseInt(getParam("prix") || "0", 10) || 0;
+var specName    = decodeURIComponent(getParam("spec") || "");
+var payMethod   = "cash";
 
-  const ava=document.getElementById("a-ava");
-  ava.textContent=d.in; ava.style.background=d.bg; ava.style.color=d.tc;
-  document.getElementById("a-name").textContent=n;
-  document.getElementById("a-spec").textContent=specName+" · "+dcity(d);
-  document.getElementById("a-slot").textContent="<i class='fa fa-calendar-days'></i> Mer 7 Mai 2025 — "+slot;
-  document.getElementById("a-prix").textContent=prix.toLocaleString()+" DA";
+var selectedDate = null;          // 'YYYY-MM-DD' (Algiers)
+var selectedSlot = null;          // {slot_start, slot_end} from RPC
+var slotsCache   = new Map();     // dateISO → slots[]
+var calMonth     = null;          // Date pointing to 1st of currently viewed month
 
-  document.getElementById("pay-methods").innerHTML=renderPayMethods("cash");
-  window._pay="cash";
-  renderUserUI(); initTabBar("rdv"); hideLoading();
+// ── Date helpers (TZ Algiers, alignés sur tabibi-booking.js) ────────────
+var _DF_ALGIERS = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Africa/Algiers', year:'numeric', month:'2-digit', day:'2-digit'
+});
+function _isoDay(d){ return _DF_ALGIERS.format(d); }
+function _todayIso(){ return _isoDay(new Date()); }
+function _addDaysIso(iso, n){
+  var p = iso.split('-');
+  var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), 12, 0, 0);
+  d.setDate(d.getDate() + n);
+  return _isoDay(d);
+}
+function _maxIso(){ return _addDaysIso(_todayIso(), 90); }
+function _formatDayFr(iso){
+  // 'YYYY-MM-DD' → 'mer. 22 mai 2026'
+  var p = iso.split('-');
+  var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), 12, 0, 0);
+  return new Intl.DateTimeFormat('fr-FR', {
+    weekday:'short', day:'numeric', month:'long', year:'numeric',
+    timeZone:'Africa/Algiers'
+  }).format(d);
+}
+function _formatTimeFr(isoTs){
+  // ISO timestamptz → 'HH:MM' Algiers
+  return new Intl.DateTimeFormat('fr-FR', {
+    hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Africa/Algiers'
+  }).format(new Date(isoTs));
 }
 
-function toStep(n){
-  if(n===2){
-    const reason=document.getElementById("reason")?.value.trim();
-    if(!reason){toast(T("reason_req"),"error");return;}
+// ── Doctor summary ──────────────────────────────────────────────────────
+function _initials(name){
+  if(!name) return '?';
+  var parts = name.replace(/^Dr\.?\s+/i,'').trim().split(/\s+/);
+  return ((parts[0]||'')[0]||'?').toUpperCase()
+       + ((parts[1]||'')[0]||'').toUpperCase();
+}
+function renderDoctorSummary(){
+  var ava = document.getElementById("a-ava");
+  ava.textContent = _initials(doctorName);
+  document.getElementById("a-name").textContent = doctorName || "Médecin";
+  document.getElementById("a-spec").textContent = specName || "";
+  document.getElementById("a-prix").textContent =
+    (prix>0 ? prix.toLocaleString() : "—") + " DA";
+  refreshSlotPill();
+}
+function refreshSlotPill(){
+  var pill = document.getElementById("a-slot");
+  if(selectedDate && selectedSlot){
+    pill.innerHTML = "<i class='fa fa-calendar-day'></i> "
+                   + _formatDayFr(selectedDate) + " · "
+                   + _formatTimeFr(selectedSlot.slot_start);
+  } else {
+    pill.textContent = "Choisissez un créneau";
   }
-  [1,2,3].forEach(i=>{
-    document.getElementById("step"+i).classList.toggle("hidden",i!==n);
-    const si=document.getElementById("si"+i);
-    si.classList.toggle("active",i===n);
-    si.style.color=i===n?"var(--blue)":"";
-    si.style.borderBottomColor=i===n?"var(--blue)":"transparent";
-    si.setAttribute("aria-selected",i===n);
-  });
-  if(n!==3) window.scrollTo(0,0);
 }
 
-async function confirmRDV(){
-  const reason = document.getElementById("reason")?.value.trim()||"";
-  const notes  = document.getElementById("notes")?.value.trim()||"";
-  const ctype  = document.getElementById("ctype")?.value||"premiere";
-  payMethod = window._pay||"cash";
+// ── Calendar ────────────────────────────────────────────────────────────
+function _monthLabel(d){
+  return new Intl.DateTimeFormat('fr-FR', {
+    month:'long', year:'numeric', timeZone:'Africa/Algiers'
+  }).format(d);
+}
+function renderCalendar(){
+  var todayIso = _todayIso();
+  var maxIso   = _maxIso();
+  var y = calMonth.getFullYear();
+  var m = calMonth.getMonth();
+  document.getElementById("cal-month-label").textContent = _monthLabel(calMonth);
 
-  // Construire la date/heure du RDV
-  const today = new Date();
-  const [hh,mm] = slot.split(":");
-  today.setHours(parseInt(hh), parseInt(mm), 0, 0);
-  const scheduledAt = today.toISOString();
+  // Disable nav buttons at bounds
+  var prevMonth = new Date(y, m-1, 1);
+  var nextMonth = new Date(y, m+1, 1);
+  // Min month = month of today
+  var tParts = todayIso.split('-');
+  var minMonthDate = new Date(parseInt(tParts[0],10), parseInt(tParts[1],10)-1, 1);
+  // Max month = month containing day +90
+  var xParts = maxIso.split('-');
+  var maxMonthDate = new Date(parseInt(xParts[0],10), parseInt(xParts[1],10)-1, 1);
+  document.getElementById("cal-prev").disabled = (calMonth <= minMonthDate);
+  document.getElementById("cal-next").disabled = (calMonth >= maxMonthDate);
 
-  const doctorNameFinal = doctorName || (DOCTORS.find(x=>x.id===doctorId) ? dname(DOCTORS.find(x=>x.id===doctorId)) : "");
-
-  // Désactiver le bouton pendant l'envoi
-  const btn = document.querySelector("#step2 .btn-success");
-  if(btn){ btn.disabled=true; btn.innerHTML="<i class='fa fa-spinner fa-spin'></i> Enregistrement..."; }
-
-  try {
-    // ── Sauvegarder dans Supabase ──────────────────────────────
-    const SB_URL = window.TABIBI_CONFIG?.SUPABASE_URL || 'https://pudugodhiofqrctcdwfl.supabase.co';
-    const SB_KEY = window.TABIBI_CONFIG?.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
-
-    // Récupérer la session utilisateur connecté
-    let accessToken = SB_KEY;
-    if(window.tabibi?.supabase){
-      const { data:{ session } } = await window.tabibi.supabase.auth.getSession();
-      if(session?.access_token) accessToken = session.access_token;
-    }
-
-    const payload = {
-      doctor_id:    doctorId,
-      scheduled_at: scheduledAt,
-      duration_minutes: 30,
-      reason:       reason,
-      notes_patient: notes,
-      status:       'pending',
-      consult_type: ctype,
-      pay_method:   payMethod,
-      prix:         prix
-    };
-
-    const res = await fetch(SB_URL + '/rest/v1/appointments', {
-      method: 'POST',
-      headers: {
-        'apikey':        SB_KEY,
-        'Authorization': 'Bearer ' + accessToken,
-        'Content-Type':  'application/json',
-        'Prefer':        'return=representation'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if(!res.ok){
-      const err = await res.json().catch(()=>({}));
-      console.error('[Tabibi] Erreur RDV:', err);
-      // Si la table n'existe pas encore, on continue quand même (fallback local)
-      if(res.status !== 404 && res.status !== 409){
-        toast("Erreur lors de l'enregistrement. Veuillez réessayer.", "error");
-        if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
-        return;
-      }
+  // Grid : align Lundi=1ère colonne
+  // JS getDay() : 0=Dim, 1=Lun, ..., 6=Sam → on remappe pour que Lun=0
+  var firstDow = new Date(y, m, 1).getDay();   // 0-6
+  var lundiOffset = (firstDow === 0 ? 6 : firstDow - 1);
+  var daysInMonth = new Date(y, m+1, 0).getDate();
+  var grid = document.getElementById("cal-grid");
+  var html = '';
+  // Cells avant le 1er du mois (vides)
+  for(var i=0; i<lundiOffset; i++){
+    html += '<div class="rdv-cal-day is-other-month" aria-hidden="true"></div>';
+  }
+  // Jours du mois
+  for(var day=1; day<=daysInMonth; day++){
+    var dIso = y + '-' + String(m+1).padStart(2,'0') + '-' + String(day).padStart(2,'0');
+    var cls = 'rdv-cal-day';
+    var disabled = '';
+    if(dIso < todayIso || dIso > maxIso){
+      disabled = 'disabled';
     } else {
-      /* [FIX-PROD-2026-05-19] console.log retiré (contenait du HTML inutile) */
+      if(dIso === todayIso) cls += ' is-today';
+      if(dIso === selectedDate) cls += ' is-selected';
+      if(slotsCache.has(dIso) && slotsCache.get(dIso).length === 0){
+        cls += ' is-empty';
+        disabled = 'disabled';
+      }
     }
-
-    // Aussi sauvegarder en local pour l'affichage immédiat dans le dashboard
-    const appt = {
-      doctorId, doctorName: doctorNameFinal,
-      spec: specName, slot, date: today.toLocaleDateString('fr-DZ'),
-      time: slot, reason, notes, consultType: ctype,
-      payMethod, prix, status: "Confirmed",
-      patientName: user?.name, patientEmail: user?.email,
-      createdAt: new Date().toISOString()
-    };
-    const saved = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
-    saved.push(appt);
-    localStorage.setItem("tabibi_rdv", JSON.stringify(saved));
-
-    // Passer à l'étape 3 — succès
-    toStep(3);
-    document.getElementById("confirm-summary").innerHTML=[
-      ["Médecin",   doctorNameFinal],
-      ["Date",      today.toLocaleDateString('fr-DZ',{weekday:'long',day:'numeric',month:'long',year:'numeric'})],
-      ["Heure",     slot],
-      ["Spécialité",specName],
-      ["Motif",     reason],
-      ["Paiement",  PAY_METHODS[payMethod]?T(PAY_METHODS[payMethod].key):payMethod],
-      ["Montant",   prix.toLocaleString()+" DA"],
-      ["Patient",   user?.name||""]
-    ].map(([k,v])=>`
-      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:13px">
-        <span style="color:var(--text3)">${k}</span>
-        <span style="font-weight:600;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis">${v}</span>
-      </div>`).join("");
-
-  } catch(e) {
-    console.error('[Tabibi] Erreur confirmRDV:', e);
-    toast("Problème de connexion. Vérifiez votre réseau.", "error");
-    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+    html += '<button type="button" class="'+cls+'" '+disabled
+          + ' onclick="onDayClick(\''+dIso+'\')" aria-label="'+dIso+'">'+day+'</button>';
   }
+  grid.innerHTML = html;
+}
+function calNav(delta){
+  var y = calMonth.getFullYear();
+  var m = calMonth.getMonth();
+  calMonth = new Date(y, m+delta, 1);
+  renderCalendar();
+}
+
+// ── Slots fetch + render ────────────────────────────────────────────────
+async function onDayClick(dateIso){
+  var todayIso = _todayIso();
+  if(dateIso < todayIso || dateIso > _maxIso()) return;
+
+  selectedDate = dateIso;
+  selectedSlot = null;
+  updateContinueBtn();
+  renderCalendar();          // highlight selected
+  refreshSlotPill();
+
+  var panel = document.getElementById("slots-panel");
+
+  // Si déjà en cache → render direct
+  if(slotsCache.has(dateIso)){
+    renderSlotsFromCache(dateIso);
+    return;
+  }
+
+  // Loading
+  panel.innerHTML = '<div class="rdv-slots-msg"><i class="fa fa-spinner fa-spin"></i> Chargement des créneaux…</div>';
+
+  if(!window.tabibiBooking){
+    panel.innerHTML = '<div class="rdv-slots-msg is-error">Erreur : module de réservation indisponible. Rechargez la page.</div>';
+    return;
+  }
+
+  var r = await window.tabibiBooking.getAvailableSlots(doctorId, dateIso, 30);
+  if(!r.ok){
+    panel.innerHTML = '<div class="rdv-slots-msg is-error">'
+                    + window.tabibiBooking.errorMessage(r.error) + '</div>';
+    return;
+  }
+  slotsCache.set(dateIso, r.data || []);
+  renderSlotsFromCache(dateIso);
+}
+
+function renderSlotsFromCache(dateIso){
+  var slots = slotsCache.get(dateIso) || [];
+  var panel = document.getElementById("slots-panel");
+  if(slots.length === 0){
+    panel.innerHTML = '<div class="rdv-slots-msg"><i class="fa fa-circle-info"></i> Aucun créneau disponible ce jour. Choisissez un autre jour.</div>';
+    renderCalendar();        // re-render pour griser la case
+    return;
+  }
+  var pills = slots.map(function(s, idx){
+    return '<button type="button" class="rdv-slot-pill" data-idx="'+idx
+         + '" onclick="onSlotClick('+idx+')">'+_formatTimeFr(s.slot_start)+'</button>';
+  }).join('');
+  panel.innerHTML = '<div style="font-size:12px;color:var(--text3);margin-bottom:8px">'
+                  + _formatDayFr(dateIso) + ' — ' + slots.length + ' créneau(x)</div>'
+                  + '<div class="rdv-slots-grid">'+pills+'</div>';
+}
+
+function onSlotClick(idx){
+  var slots = slotsCache.get(selectedDate) || [];
+  if(!slots[idx]) return;
+  selectedSlot = slots[idx];
+  Array.from(document.querySelectorAll('.rdv-slot-pill')).forEach(function(b){ b.classList.remove('active'); });
+  var el = document.querySelector('.rdv-slot-pill[data-idx="'+idx+'"]');
+  if(el) el.classList.add('active');
+  updateContinueBtn();
+  refreshSlotPill();
+}
+
+function updateContinueBtn(){
+  var btn = document.getElementById("btn-step1-next");
+  if(!btn) return;
+  var ok = !!(selectedDate && selectedSlot);
+  btn.disabled = !ok;
+  btn.style.opacity = ok ? '' : '.5';
+}
+
+// ── Wizard nav ──────────────────────────────────────────────────────────
+function toStep(n){
+  // Validations transitions
+  if(n === 2){
+    if(!selectedDate || !selectedSlot){
+      toast("Choisissez un jour et un créneau.", "error");
+      return;
+    }
+  }
+  if(n === 3){
+    var reason = document.getElementById("reason")?.value.trim();
+    if(!reason){
+      toast(typeof T==='function' ? T("reason_req") : "Indiquez un motif de consultation.", "error");
+      return;
+    }
+  }
+  [1,2,3,4].forEach(function(i){
+    document.getElementById("step"+i).classList.toggle("hidden", i!==n);
+    var si = document.getElementById("si"+i);
+    if(!si) return;
+    si.classList.toggle("active", i===n);
+    si.style.color = (i===n ? "var(--blue)" : "");
+    si.style.borderBottomColor = (i===n ? "var(--blue)" : "transparent");
+    si.setAttribute("aria-selected", i===n);
+  });
+  // Hide doctor summary on step 4 (success — info reprise dans confirm-summary)
+  var sum = document.getElementById("doctor-summary-card");
+  if(sum) sum.classList.toggle("hidden", n===4);
+  if(n !== 4) window.scrollTo(0,0);
+}
+
+// ── Confirm RDV (INSERT via tabibiBooking) ──────────────────────────────
+async function confirmRDV(){
+  if(!selectedSlot || !selectedDate){
+    toast("Créneau manquant. Revenez à l'étape 1.", "error");
+    return;
+  }
+  if(!window.tabibiBooking){
+    toast("Module de réservation indisponible. Rechargez la page.", "error");
+    return;
+  }
+
+  var reason = document.getElementById("reason")?.value.trim() || "";
+  var notes  = document.getElementById("notes")?.value.trim() || "";
+  var ctype  = document.getElementById("ctype")?.value || "premiere";
+  payMethod  = window._pay || "cash";
+
+  // scheduledAt = slot_start ISO (déjà en TZ Africa/Algiers via RPC)
+  var scheduledAt = selectedSlot.slot_start;
+
+  var btn = document.getElementById("btn-confirm");
+  if(btn){
+    btn.disabled = true;
+    btn.innerHTML = "<i class='fa fa-spinner fa-spin'></i> Enregistrement…";
+  }
+
+  var r = await window.tabibiBooking.createAppointment({
+    doctorId:        doctorId,
+    scheduledAt:     scheduledAt,
+    durationMinutes: 30,
+    reason:          reason,
+    notesPatient:    notes,
+    consultType:     ctype,
+    payMethod:       payMethod,
+    prix:            prix
+  });
+
+  if(r.ok){
+    // Succès → Step 4
+    toStep(4);
+    document.getElementById("confirm-summary").innerHTML = [
+      ["Médecin",    doctorName || "—"],
+      ["Spécialité", specName || "—"],
+      ["Date",       _formatDayFr(selectedDate)],
+      ["Heure",      _formatTimeFr(selectedSlot.slot_start)],
+      ["Motif",      reason],
+      ["Paiement",   (typeof PAY_METHODS!=='undefined' && PAY_METHODS[payMethod] && typeof T==='function')
+                       ? T(PAY_METHODS[payMethod].key) : payMethod],
+      ["Montant",    (prix>0 ? prix.toLocaleString() : "—") + " DA"]
+    ].map(function(kv){
+      return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:13px">'
+           + '<span style="color:var(--text3)">'+kv[0]+'</span>'
+           + '<span style="font-weight:600;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis">'+kv[1]+'</span>'
+           + '</div>';
+    }).join("");
+    return;
+  }
+
+  // ── Erreurs ───────────────────────────────────────────────────────────
+  var msg = window.tabibiBooking.errorMessage(r.error);
+
+  // ERR_AUTH_REQUIRED / ERR_SESSION_EXPIRED → auth-wall
+  if(r.error === 'ERR_AUTH_REQUIRED' || r.error === 'ERR_SESSION_EXPIRED'){
+    var wall = document.getElementById("auth-wall");
+    var login = document.getElementById("auth-wall-login");
+    if(wall){ wall.classList.remove("hidden"); }
+    if(login){
+      // Préserve la query string courante pour retour au booking après login
+      var current = location.pathname + location.search;
+      login.href = "login.html?next=" + encodeURIComponent(current);
+    }
+    toast(msg, "warning");
+    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+    return;
+  }
+
+  // ERR_SLOT_TAKEN → refresh auto des slots du jour + retour Step 1
+  if(r.error === 'ERR_SLOT_TAKEN'){
+    toast("Ce créneau vient d'être pris. Voici les créneaux mis à jour.", "warning");
+    slotsCache.delete(selectedDate);   // invalide cache pour fresh fetch
+    var dateToRefresh = selectedDate;
+    selectedSlot = null;
+    refreshSlotPill();
+    updateContinueBtn();
+    toStep(1);
+    // Re-fetch (async)
+    onDayClick(dateToRefresh);
+    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+    return;
+  }
+
+  // Autres erreurs (ERR_INVALID_INPUT, ERR_RLS_DENIED, ERR_NETWORK,
+  // ERR_TIMEOUT, ERR_RATE_LIMIT, ERR_DOCTOR_NOT_CLAIMED, ERR_UNKNOWN…)
+  toast(msg, "error");
+  if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+}
+
+// ── Init ────────────────────────────────────────────────────────────────
+function init(){
+  // [Phase 5.2.3] PAS de requireAuth() ici — anon doit pouvoir naviguer
+  // Steps 1-3 puis se voir proposer le signup-wall au Confirm.
+  if(typeof loadUser === 'function') loadUser();
+  if(typeof setLang === 'function') setLang(lang);
+
+  // Validation params URL
+  if(!doctorId){
+    toast("Lien invalide : médecin manquant.", "error");
+    setTimeout(function(){ location.href = "index.html"; }, 1500);
+    return;
+  }
+
+  // Calendrier sur le mois courant (TZ Algiers)
+  var todayParts = _todayIso().split('-');
+  calMonth = new Date(parseInt(todayParts[0],10), parseInt(todayParts[1],10)-1, 1);
+
+  renderDoctorSummary();
+  renderCalendar();
+  document.getElementById("pay-methods").innerHTML = renderPayMethods("cash");
+  window._pay = "cash";
+
+  if(typeof renderUserUI === 'function') renderUserUI();
+  if(typeof initTabBar === 'function') initTabBar("rdv");
+  if(typeof hideLoading === 'function') hideLoading();
 }
 
 function goBackSafe(){
   if(document.referrer) history.back();
-  else window.location.href="index.html";
+  else window.location.href = "index.html";
 }
 
-document.addEventListener("DOMContentLoaded",init);
-window.toStep=toStep; window.confirmRDV=confirmRDV; window.goBackSafe=goBackSafe;
+document.addEventListener("DOMContentLoaded", init);
+window.toStep = toStep;
+window.confirmRDV = confirmRDV;
+window.goBackSafe = goBackSafe;
+window.calNav = calNav;
+window.onDayClick = onDayClick;
+window.onSlotClick = onSlotClick;
 </script>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -267,6 +574,8 @@ window.toStep=toStep; window.confirmRDV=confirmRDV; window.goBackSafe=goBackSafe
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<!-- [Phase 5.2.3] Helpers booking patient (Phase 5.2.1) -->
+<script src="js/tabibi-booking.js"></script>
 <script src="js/doctors-display.js"></script>
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
