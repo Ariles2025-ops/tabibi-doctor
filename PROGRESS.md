@@ -105,6 +105,19 @@
   - sw.js : CACHE_VERSION v10 → **v11-2026-05-21**
 - [ ] 4.B.4 Fixtures `fixtures/test_doctor.sql` + `tests/manual/DOCTOR_DASHBOARD_TESTS.md` + ZIP intermédiaire
 
+### 🌱 Seeds prod appliqués
+
+Liste résumée des migrations/seeds qui doivent être exécutés **manuellement** côté Supabase prod (un commit Git ne lance pas le SQL automatiquement). Source de vérité détaillée : [`docs/PROD_SEEDS_REGISTRY.md`](docs/PROD_SEEDS_REGISTRY.md).
+
+| Fichier | Commit | Date exec prod | Status |
+|---|---|---|---|
+| `migrations/PHASE4_doctor_dashboard_v2.sql` | `05c69c1` | 2026-05-21 | ✅ Aghiles |
+| `migrations/PHASE4B_doc_working_hours_comment.sql` | `912b9be` | 2026-05-21 | ✅ Aghiles |
+| `migrations/PHASE4B_seed_claim_test_doctor.sql` | `87773c7` | 2026-05-22 (équivalent UPDATE manuel) | ✅ Aghiles |
+| `migrations/PHASE4B_AUDIT_claim_rpc.sql` | `0bec15a` | 2026-05-22 | ✅ Aghiles (read-only) |
+
+→ Procédure complète d'exécution + format d'entrée dans `docs/PROD_SEEDS_REGISTRY.md`.
+
 ### 🔖 TODOs ouverts pour Phase 12 (monitoring & sécurité)
 - [ ] **DB hygiène** : nettoyer le doublon `claim_my_doctor_profile()` sans arguments (vestige antérieur détecté par user en validation 4.A.9 — 2 rows au lieu de 1)
 - [ ] **Storage** : cron purge des photos orphan dans `doctor-photos` (cas où la suppression post-update échoue silencieusement dans le pattern commit-then-purge de tabibiDoctor.uploadPhoto)
