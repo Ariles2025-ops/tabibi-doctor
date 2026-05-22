@@ -141,14 +141,29 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [ ] **DB sécurité** : aligner `public_doctors` et `public_doctor_full` sur `security_invoker=true` (AJ1 Phase 4.A v2)
 - [ ] **Storage** : durcir `doctor_photos_select_public` pour empêcher l'énumération anonyme des paths (AJ2 Phase 4.A v2)
 - [ ] **Audit log** : tracer les changements de `phone` et `address` via `update_my_doctor_profile` (risque fraude, D5 Phase 4.A v2)
+- [ ] **Convention codes erreur** : aligner Phase 4.B.3-fix3 (`'timeout'`, `'rls_denied'`, `'profile_not_found_or_not_claimed'` lowercase_snake) sur le format Phase 5.2.1 (`ERR_*` UPPER_SNAKE, plus standard industrie type Stripe/AWS)
+- [ ] **i18n booking** : migrer `ERR_MSG_FR` de `js/tabibi-booking.js` vers `js/tabibi-i18n.js` pour préparer support `ar`/`en` (actuellement FR-only, hardcodé inline)
 
 ## Phase 5 — Système de RDV bout-en-bout (10-15h)
-- [ ] 5.1 Page `recherche.html` (filtres : spé, wilaya, chifa, dispo, paiement)
-- [ ] 5.2 Fiche médecin publique + calendrier 7 jours + bouton RDV
-- [ ] 5.3 Flow booking 3 étapes (créneau → coordonnées → confirmation)
-- [ ] 5.4 SQL : table `appointments` (créer si absent) + RLS strict patient/médecin
-- [ ] 5.5 Annulation RDV (patient/médecin) + raison + templates email
-- [ ] 5.6 Rappels J-1 (code Edge Function ou pg_cron, désactivé par défaut)
+
+### Phase 5.1bis — Schema + RPC (DONE 2026-05-22, tag `phase5-1bis-done`, commit `79a66a0`)
+- [x] Schema appointments aligné prod : colonnes `starts_at`/`ends_at` via trigger `trg_appointments_sync_slot_times`
+- [x] 6 policies RLS propres (cleanup 5 polluées dont 3 buggées `auth.uid()=doctor_id`)
+- [x] RPC `public.get_available_slots(doctor_id UUID, target_date DATE, slot_duration INT)` testée 10/10 (T1-T4 fonctionnels + G1-G6 garde-fous incluant anti-énumération `is_claimed=true`)
+- [x] Fixture `working_hours` pour medecin.test (pattern Alger : dim-mer 09-13+14-18, jeu 9-13, ven-sam fermé)
+
+### Phase 5.2 — Frontend booking patient (en cours)
+- [x] **5.2.1** `js/tabibi-booking.js` (NEW) — helpers `window.tabibiBooking.{getAvailableSlots, createAppointment, listMyAppointments, cancelMyAppointment, errorMessage, CODES}` avec pattern Phase 4.B.3-fix3 (timeouts 8s/10s + try/catch + always-return `{ok, data?, error?}`). 14 codes erreur typés ERR_* + mapping FR. Validation client pré-flight (UUID, date range J+90, slot duration [5,240]). Tests doc `tests/manual/PHASE5_2_1_BOOKING_HELPERS_TESTS.md` (12 scénarios). **Non inclus dans aucun HTML en 5.2.1** (inclusion 5.2.3).
+- [ ] 5.2.2 `doctor-profile.html` : bouton "Prendre RDV" sticky (Option A : visible tous + "Connexion requise pour confirmer")
+- [ ] 5.2.3 `reservation.html` refactor 4 steps (Date+Slot → Détails → Paiement → Confirmation) — calendrier 90 jours, utilise `tabibiBooking`
+- [ ] 5.2.4 `mes-rdv.html` (NEW) — liste RDV patient + annulation
+- [ ] 5.2.5 Neutraliser booking legacy `patient-dashboard.html` + sw.js bump + tests E2E + ZIP
+
+### Phase 5.3-5.6 (à venir)
+- [ ] 5.3 Page `recherche.html` (filtres : spé, wilaya, chifa, dispo, paiement)
+- [ ] 5.4 Annulation médecin (UPDATE dashboard agenda Phase 4.B.3)
+- [ ] 5.5 Templates email (Brevo) confirmation/annulation/rappel
+- [ ] 5.6 Rappels J-1 (Edge Function ou pg_cron, feature flag OFF par défaut)
 
 ## Phase 6 — Dashboard patient + historique (4-6h)
 - [ ] 6.1 Page `patient-dashboard.html` (prochains RDV, historique, ordonnances, favoris)
