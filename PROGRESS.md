@@ -53,7 +53,7 @@
   - 11 sections : préambule, objet/durée, données, obligations, mesures sécurité, sous-traitants ultérieurs, transferts internationaux, violations, droit d'audit, durées de conservation, droit applicable, contacts
   - Article 28 RGPD + loi DZ 18-07 + ANPDP référencés
 
-## Phase 4 — Dashboard médecin complet (8-12h) — **4.A DONE, 4.B en attente validation user**
+## Phase 4 — Dashboard médecin complet (8-12h) — **✅ DONE 2026-05-22**
 
 ### Phase 4.A — Migrations SQL (livrées 2026-05-21)
 - [~] 4.A.1 v1 `migrations/PHASE4_doctor_dashboard.sql` — **OBSOLÈTE** (ciblait `public_doctors_master` halluciné). Conservée pour traçabilité avec en-tête OBSOLETE explicite.
@@ -103,7 +103,24 @@
   - Hook sur `sw('agenda')` : reload des slots à chaque entrée d'onglet
   - Format date : `_fmtSlotDate()` utilise `window.tabibiFormatDate` si dispo, fallback `toLocaleString('fr-FR')` — affichage "Lun 15 juin 09:00 → Jeu 18 juin 18:00"
   - sw.js : CACHE_VERSION v10 → **v11-2026-05-21**
-- [ ] 4.B.4 Fixtures `fixtures/test_doctor.sql` + `tests/manual/DOCTOR_DASHBOARD_TESTS.md` + ZIP intermédiaire
+- [x] 4.B.4 Audit + hygiène + fixtures + tests E2E (livré 2026-05-22, 6 sous-tâches)
+  - [x] **4.B.4.0a** Audit RPC `claim_my_doctor_profile` (read-only) — commit `0bec15a` — verdict : ✅ RPC OK (UPDATE complet user_id + is_claimed + claimed_at + updated_at). Doublon vestige `claim_my_doctor_profile()` sans args flag pour Phase 12. Livrables : `migrations/PHASE4B_AUDIT_claim_rpc.sql` (4 requêtes discovery) + `docs/AUDIT_claim_rpc.md` (7 sections remplies).
+  - [x] **4.B.4.0b** Documenter process exécution seeds prod — commit `a55e375` — root cause bug data 4.B.3 identifié : seed commité mais jamais exécuté en prod (gap process, pas code). Livrables : `docs/PROD_SEEDS_REGISTRY.md` (NEW, source de vérité 4 seeds Phase 4) + section "🌱 Seeds prod appliqués" dans ce PROGRESS.md.
+  - [x] **4.B.4.0c** Pipeline `scripts/build-zip.sh` anti-régression syntaxe JS — commit `4107a7f` — refuse de générer le .zip si `node --check` détecte ≥1 SyntaxError. Couvre 28 fichiers `.js` + inline JS de `doctor-dashboard.html` (829 lignes) et `medecin-profile.html` (474 lignes). Motivé par perte d'1 itération en 4.B.3-fix2 (apostrophe FR mal échappée). Livrables : `scripts/build-zip.sh` (exécutable) + `scripts/README.md`.
+  - [x] **4.B.4.1** Fixtures démo blocages — commit `881d236` — 3 cas représentatifs sur la fiche test (a) passé all_day "Vacances de Pâques" 2026-04-15→04-22, (b) futur timed "Formation cardiologie" 2026-06-10 09:00→17:00, (c) weekend all_day "Indisponible weekend" 2026-05-30→05-31. Idempotent (DELETE+INSERT). Livrable : `fixtures/test_doctor_blocages.sql` + entrée registry.
+  - [x] **4.B.4.2** Checklist E2E manuelle doctor-dashboard — commit `3f016b2` — 7 scénarios reproductibles (T1 login, T2 agenda+3 fixtures, T3 create timed, T4 create all_day, T5 delete, T6 error invalide, T7 non-claim bandeau) avec résultats KO connus référençant les hotfixes Phase 4.B.3 (fix1/fix2/fix3). ~10-15 min de validation. Livrable : `tests/manual/DOCTOR_DASHBOARD_TESTS.md` (309 lignes).
+  - [x] **4.B.4.3** Clôture Phase 4 — ce commit — ZIP cumulatif final `dist/tabibi-deploy-FINAL-v6-phase4B-complete.zip` généré via `scripts/build-zip.sh` (donc auto-validé syntaxe JS) + tag git annoté `phase4-done` + cette section PROGRESS.md mise à jour.
+
+---
+
+### 🏁 Phase 4 close
+
+**Date clôture** : 2026-05-22
+**Périmètre livré** : migrations SQL doctor_profiles + dashboard édition fiche médecin (medecin-profile.html) + télémédecine toggle + upload photo bucket doctor-photos + CRUD blocages exceptionnels (doctor-dashboard.html) + 4 hotfixes Phase 4.B.3 (fix1 cache+logs, fix2 timezone Date, fix2-hotpatch syntax, fix3 anti-hang timeouts) + audit RPC + pipeline anti-régression + fixtures + checklist E2E.
+
+**Prochaine phase** : **Phase 5 — Système de RDV bout-en-bout** (estimé 10-15h de travail).
+
+---
 
 ### 🌱 Seeds prod appliqués
 
