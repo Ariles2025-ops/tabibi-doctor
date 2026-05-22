@@ -42,6 +42,21 @@
 
   function sb() { return (window.tabibi && window.tabibi.supabase) || null; }
 
+  // [Phase 4.B.3-fix3] Wrap toute promise avec un timeout (Promise.race).
+  // Si la promise ne resolve/reject pas en `ms` millisecondes, on rejette
+  // avec une Error('timeout:<label>'). Indispensable car un await Supabase
+  // peut rester pending indéfiniment si le token est expiré silencieusement,
+  // si CORS Safari muet, ou si le réseau coupe sans envoyer FIN.
+  function _withTimeout(promise, ms, label) {
+    var timer;
+    var t = new Promise(function (_, reject) {
+      timer = setTimeout(function () {
+        reject(new Error('timeout:' + (label || 'unknown')));
+      }, ms);
+    });
+    return Promise.race([promise, t]).finally(function () { clearTimeout(timer); });
+  }
+
   // hasSession() : true si une session Supabase active existe
   async function hasSession() {
     var s = sb(); if (!s) return false;
@@ -53,10 +68,11 @@
 
   // get_my_doctor_profile() : retourne le row doctor_profiles du connecté
   // Convention : null si pas auth OU si pas de fiche réclamée.
+  // [Phase 4.B.3-fix3] Timeout 5s pour éviter pending infini (session expirée).
   async function getMyProfile() {
     var s = sb(); if (!s) return null;
     try {
-      var r = await s.rpc('get_my_doctor_profile');
+      var r = await _withTimeout(s.rpc('get_my_doctor_profile'), 5000, 'get_my_doctor_profile');
       if (r.error) { console.warn('[tabibiDoctor] get_my_doctor_profile', r.error); return null; }
       // [Phase 4.B.2-hotfix] PostgREST peut retourner null (cas idéal) OU un row
       // composite tout-NULL selon version/config quand RETURNS row_type ne match
@@ -66,7 +82,7 @@
       if (!r.data || !r.data.id) return null;
       return r.data;
     } catch (e) {
-      console.warn('[tabibiDoctor] getMyProfile exception', e);
+      console.warn('[tabibiDoctor] getMyProfile exception/timeout', e && e.message);
       return null;
     }
   }
@@ -208,19 +224,21 @@
 
   // listUnavailableSlots() : renvoie [{id, doctor_id, starts_at, ends_at, reason, all_day}, ...]
   // Retourne [] si pas authentifié OU pas de fiche réclamée OU erreur réseau.
+  // [Phase 4.B.3-fix3] Timeout 8s pour éviter pending infini.
   async function listUnavailableSlots() {
     var s = sb(); if (!s) return [];
     try {
       var docId = await getMyDoctorId();
       if (!docId) return [];
-      var r = await s.from('doctor_unavailable_slots')
+      var query = s.from('doctor_unavailable_slots')
         .select('id, doctor_id, starts_at, ends_at, reason, all_day, created_at')
         .eq('doctor_id', docId)
         .order('starts_at', { ascending: true });
+      var r = await _withTimeout(query, 8000, 'list_unavailable_slots');
       if (r.error) { console.warn('[tabibiDoctor] list slots', r.error); return []; }
       return r.data || [];
     } catch (e) {
-      console.warn('[tabibiDoctor] listUnavailableSlots exception', e);
+      console.warn('[tabibiDoctor] listUnavailableSlots exception/timeout', e && e.message);
       return [];
     }
   }
@@ -258,7 +276,9 @@
         all_day:   !!allDay
       };
       console.info('[tabibiDoctor] INSERT doctor_unavailable_slots payload=', payload);
-      var r = await s.from('doctor_unavailable_slots').insert(payload).select().single();
+      // [Phase 4.B.3-fix3] Timeout 10s pour éviter pending infini sur INSERT.
+      var insertQuery = s.from('doctor_unavailable_slots').insert(payload).select().single();
+      var r = await _withTimeout(insertQuery, 10000, 'insert_unavailable_slot');
       console.info('[tabibiDoctor] INSERT response : data=', r.data, ' error=', r.error);
       if (r.error) {
         var code = r.error.code || '';
@@ -280,17 +300,21 @@
       return { ok: true, data: r.data };
     } catch (e) {
       console.warn('[tabibiDoctor] addUnavailableSlot EXCEPTION', e);
-      return { ok: false, error: 'network_error', raw: e };
+      // [Phase 4.B.3-fix3] Distingue timeout réseau d'autres erreurs réseau
+      var isTimeout = e && /^timeout:/.test(String(e.message || ''));
+      return { ok: false, error: isTimeout ? 'timeout' : 'network_error', raw: e };
     }
   }
 
   // deleteUnavailableSlot(id) : RLS dus_delete_owner protège implicitement
+  // [Phase 4.B.3-fix3] Timeout 8s pour éviter pending infini.
   async function deleteUnavailableSlot(id) {
     var s = sb(); if (!s) return { ok: false, error: 'no_supabase_client' };
     if (!id) return { ok: false, error: 'no_id' };
     try {
       console.info('[tabibiDoctor] DELETE doctor_unavailable_slots id=', id);
-      var r = await s.from('doctor_unavailable_slots').delete().eq('id', id);
+      var deleteQuery = s.from('doctor_unavailable_slots').delete().eq('id', id);
+      var r = await _withTimeout(deleteQuery, 8000, 'delete_unavailable_slot');
       console.info('[tabibiDoctor] DELETE response : error=', r.error);
       if (r.error) {
         var code = r.error.code || '';
@@ -301,7 +325,8 @@
       return { ok: true };
     } catch (e) {
       console.warn('[tabibiDoctor] deleteUnavailableSlot EXCEPTION', e);
-      return { ok: false, error: 'network_error', raw: e };
+      var isTimeout = e && /^timeout:/.test(String(e.message || ''));
+      return { ok: false, error: isTimeout ? 'timeout' : 'network_error', raw: e };
     }
   }
 

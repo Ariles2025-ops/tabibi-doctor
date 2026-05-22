@@ -812,8 +812,9 @@ function _fmtSlotDate(iso, allDay) {
   };
 })();
 
-// [Phase 4.B.3-fix1] loadUnavailSlots robuste : retry 1x si session pas prête,
-// logs console explicites, jamais d'état UI silencieux (toujours un message).
+// [Phase 4.B.3-fix1+fix3] loadUnavailSlots robuste : retry 1x si session pas prête,
+// logs console explicites, finally{} garantit qu'on ne reste JAMAIS bloqué sur
+// "Chargement..." (même si une exception/timeout silencieux survient).
 async function loadUnavailSlots(_isRetry) {
   var list = document.getElementById('unavail-list');
   if (!list) return;
@@ -822,6 +823,11 @@ async function loadUnavailSlots(_isRetry) {
     list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Service indisponible (recharger la page).</div>';
     return;
   }
+  // [Phase 4.B.3-fix3] Sentinelle : on track si l'UI a été mise à jour pendant
+  // ce run. Si finally voit qu'on est resté sur "Chargement..." c'est qu'on
+  // a hang quelque part → on remet un état d'erreur visible.
+  var _renderedSomething = false;
+  function _setList(html) { list.innerHTML = html; _renderedSomething = true; }
   try {
     // Au 1er essai on force-refresh pour éviter un cache stale (session restaurée tardivement)
     var docId = await window.tabibiDoctor.getMyDoctorId(!_isRetry);
@@ -832,14 +838,14 @@ async function loadUnavailSlots(_isRetry) {
       // Pas de docId : peut-être que la session n'est pas encore prête → retry 1x après 1.5s
       if (!_isRetry) {
         console.info('[unavail] docId null au 1er essai → retry dans 1.5s');
-        list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px"><i class="fa fa-circle-notch fa-spin"></i> Vérification de votre fiche...</div>';
+        _setList('<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px"><i class="fa fa-circle-notch fa-spin"></i> Vérification de votre fiche...</div>');
         setTimeout(function () { loadUnavailSlots(true); }, 1500);
         return;
       }
       // Après retry : vraiment pas de fiche claim → bandeau jaune visible
       if (notClaimed) notClaimed.classList.remove('hidden');
       if (btnAdd) btnAdd.disabled = true;
-      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">— (réclamez votre fiche pour activer cette section)</div>';
+      _setList('<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">— (réclamez votre fiche pour activer cette section)</div>');
       return;
     }
     if (notClaimed) notClaimed.classList.add('hidden');
@@ -848,10 +854,10 @@ async function loadUnavailSlots(_isRetry) {
     var slots = await window.tabibiDoctor.listUnavailableSlots();
     console.info('[unavail] slots loaded count=', slots.length);
     if (!slots.length) {
-      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;background:var(--bg);border-radius:10px"><i class="fa fa-circle-check" style="color:var(--green)"></i> Aucun blocage. Vous êtes disponible selon vos horaires hebdomadaires.</div>';
+      _setList('<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;background:var(--bg);border-radius:10px"><i class="fa fa-circle-check" style="color:var(--green)"></i> Aucun blocage. Vous êtes disponible selon vos horaires hebdomadaires.</div>');
       return;
     }
-    list.innerHTML = slots.map(function (s) {
+    _setList(slots.map(function (s) {
       var rangeStr = _fmtSlotDate(s.starts_at, s.all_day) + ' → ' + _fmtSlotDate(s.ends_at, s.all_day);
       var reasonStr = s.reason ? '<div style="font-size:12px;color:var(--text3);margin-top:4px"><i class="fa fa-tag fa-xs"></i> ' + _esc(s.reason) + '</div>' : '';
       var allDayBadge = s.all_day ? '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;margin-left:6px">Toute la journée</span>' : '';
@@ -862,10 +868,18 @@ async function loadUnavailSlots(_isRetry) {
         +    '</div>'
         +    '<button onclick="deleteUnavail(\'' + s.id + '\')" class="btn btn-ghost btn-sm" style="color:var(--red);flex-shrink:0" aria-label="Supprimer ce blocage" title="Supprimer"><i class="fa fa-trash"></i></button>'
         +  '</div>';
-    }).join('');
+    }).join(''));
   } catch (e) {
     console.error('[unavail] loadUnavailSlots EXCEPTION', e);
-    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
+    _setList('<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>');
+  } finally {
+    // [Phase 4.B.3-fix3] Garde-fou : si malgré try/catch/timeout on est resté
+    // sur "Chargement..." (cas pathologique), on force un message d'erreur
+    // avec bouton Réessayer plutôt que de laisser l'utilisateur figé.
+    if (!_renderedSomething && list.innerHTML.indexOf('Chargement') !== -1) {
+      console.warn('[unavail] finally: hang detecté, force-affichage erreur');
+      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Délai dépassé. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
+    }
   }
 }
 
@@ -1019,6 +1033,10 @@ async function saveUnavailSlot() {
     window.tabibiDoctor.invalidateDoctorIdCache();
   }
 
+  // [Phase 4.B.3-fix3] finally{} GARANTIT la restauration du bouton même si
+  // une exception pathologique passe à travers le catch (rare mais déjà vu
+  // sur Safari avec await hang). Sans finally, le bouton reste "Enregistrement..."
+  // figé indéfiniment et l'utilisateur croit que la page est cassée.
   var res;
   try {
     res = await window.tabibiDoctor.addUnavailableSlot(startsAt, endsAt, reason || null, allDay);
@@ -1026,9 +1044,9 @@ async function saveUnavailSlot() {
   } catch (e) {
     console.error('[unavail] saveUnavailSlot EXCEPTION', e);
     res = { ok: false, error: 'exception', raw: e };
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
   }
-
-  if (btn) { btn.disabled = false; btn.innerHTML = origHtml; }
 
   if (res && res.ok) {
     closeUnavailModal();
@@ -1042,6 +1060,7 @@ async function saveUnavailSlot() {
             : errCode === 'check_violation_chrono'            ? "Plage horaire invalide (fin avant début)."
             : errCode === 'doctor_not_found'                  ? "Fiche médecin introuvable. Reconnectez-vous puis réessayez."
             : errCode === 'insert_returned_no_data'           ? "L'insertion n'a pas été persistée par la base. Vérifiez votre session puis réessayez."
+            : errCode === 'timeout'                            ? "Délai dépassé (>10s). Votre connexion est lente ou la session a expiré. Reconnectez-vous et réessayez."
             : errCode === 'network_error'                      ? "Erreur réseau. Vérifiez votre connexion et réessayez."
             : errCode === 'exception'                          ? "Erreur inattendue. Détails dans la console DevTools (F12)."
             : 'Erreur inconnue : ' + errCode;
@@ -1053,7 +1072,7 @@ async function saveUnavailSlot() {
   }
 }
 
-// [Phase 4.B.3-fix1] Try/catch + log res + always-toast
+// [Phase 4.B.3-fix1+fix3] Try/catch + log res + always-toast + code timeout
 async function deleteUnavail(id) {
   if (!id) return;
   if (!confirm('Supprimer ce blocage ? Les patients pourront à nouveau prendre RDV sur ce créneau.')) return;
@@ -1071,6 +1090,7 @@ async function deleteUnavail(id) {
   } else {
     var errCode = (res && res.error) || 'unknown';
     var msg = errCode === 'rls_denied' ? "Permission refusée."
+            : errCode === 'timeout' ? "Délai dépassé (>8s). Connexion lente ou session expirée."
             : errCode === 'network_error' ? "Erreur réseau. Réessayez."
             : errCode === 'exception' ? "Erreur inattendue (console F12 pour détails)."
             : 'Erreur : ' + errCode;
