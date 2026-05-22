@@ -274,7 +274,7 @@
       // c'est qu'on n'a RIEN inséré (edge case PostgREST). On le signale au lieu de
       // retourner ok:true silencieusement.
       if (!r.data || !r.data.id) {
-        console.warn('[tabibiDoctor] addUnavailableSlot SILENT FAILURE : pas d''erreur mais aucune data retournée');
+        console.warn("[tabibiDoctor] addUnavailableSlot SILENT FAILURE : pas d'erreur mais aucune data retournée");
         return { ok: false, error: 'insert_returned_no_data', raw: r };
       }
       return { ok: true, data: r.data };

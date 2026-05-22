@@ -1,11 +1,12 @@
 /**
- * Tabibi Service Worker v13 — Production
+ * Tabibi Service Worker v14 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
- * Bump v13 : Phase 4.B.3-fix2 (construction Date locale via composants
- *            explicites, allDay forcé jour entier 00:00→23:59, pré-fill
- *            "tomorrow" en heure locale au lieu de UTC, logs [unavail-validate])
+ * Bump v14 : Phase 4.B.3-fix2-hotpatch (correction SyntaxError ligne 277
+ *            tabibi-doctor-dashboard.js : apostrophe française mal échappée
+ *            '' style SQL au lieu de \' ou string double-quote → tout le JS
+ *            plantait au parse → window.tabibiDoctor undefined → exception)
  */
-const CACHE_VERSION = 'tabibi-v13-2026-05-22';
+const CACHE_VERSION = 'tabibi-v14-2026-05-22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
