@@ -154,7 +154,7 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 
 ### Phase 5.2 — Frontend booking patient (en cours)
 - [x] **5.2.1** `js/tabibi-booking.js` (NEW) — helpers `window.tabibiBooking.{getAvailableSlots, createAppointment, listMyAppointments, cancelMyAppointment, errorMessage, CODES}` avec pattern Phase 4.B.3-fix3 (timeouts 8s/10s + try/catch + always-return `{ok, data?, error?}`). 14 codes erreur typés ERR_* + mapping FR. Validation client pré-flight (UUID, date range J+90, slot duration [5,240]). Tests doc `tests/manual/PHASE5_2_1_BOOKING_HELPERS_TESTS.md` (12 scénarios). **Non inclus dans aucun HTML en 5.2.1** (inclusion 5.2.3).
-- [ ] 5.2.2 `doctor-profile.html` : bouton "Prendre RDV" sticky (Option A : visible tous + "Connexion requise pour confirmer")
+- [x] 5.2.2 `doctor-profile.html` : bouton "Prendre RDV" sticky câblé (commit 2026-05-22) — Option A : refactor `reserve()` pour link `reservation.html?doctor_id=...&doctor_name=...&prix=...&spec=...`. Helper `_refreshReserveBtnState()` appelé depuis `loadDoc()` : (a) fiche non-claim → bouton disabled + mention "Ce médecin n'a pas encore activé les RDV en ligne", (b) fiche claim + user loggé → mention vide, (c) fiche claim + anon → mention "Connexion requise pour confirmer le RDV" (signup-wall arrive dans reservation.html en 5.2.3). sw.js bump v15 → v16.
 - [ ] 5.2.3 `reservation.html` refactor 4 steps (Date+Slot → Détails → Paiement → Confirmation) — calendrier 90 jours, utilise `tabibiBooking`
 - [ ] 5.2.4 `mes-rdv.html` (NEW) — liste RDV patient + annulation
 - [ ] 5.2.5 Neutraliser booking legacy `patient-dashboard.html` + sw.js bump + tests E2E + ZIP

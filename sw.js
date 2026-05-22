@@ -1,12 +1,12 @@
 /**
- * Tabibi Service Worker v15 — Production
+ * Tabibi Service Worker v16 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
- * Bump v15 : Phase 4.B.3-fix3 (anti-hang : timeouts Supabase 5s/8s/10s via
- *            Promise.race, finally{} garantis sur saveUnavailSlot/loadUnavailSlots
- *            qui restaurent l'UI même en cas d'exception pathologique,
- *            code erreur 'timeout' mappé en messages FR)
+ * Bump v16 : Phase 5.2.2 (bouton "Prendre RDV" dans doctor-profile.html
+ *            wire vers reservation.html?doctor_id=... Option A — visible
+ *            tous, désactivé si fiche non-claim, mention "Connexion requise
+ *            pour confirmer" si pas auth)
  */
-const CACHE_VERSION = 'tabibi-v15-2026-05-22b';
+const CACHE_VERSION = 'tabibi-v16-2026-05-22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 

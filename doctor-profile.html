@@ -149,11 +149,15 @@
     </div>
   </div>
 
-  <!-- CTA RÉSERVER -->
+  <!-- CTA RÉSERVER — Phase 5.2.2 : link vers reservation.html?doctor_id=... -->
   <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;padding:14px 16px;border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,.06);z-index:100">
-    <div style="display:flex;gap:8px;max-width:480px;margin:0 auto">
-      <button onclick="reserve()" class="btn btn-primary btn-xl" style="flex:1"><i class="fa fa-calendar-plus"></i> Réserver un RDV</button>
-      <button onclick="visio()" class="btn btn-soft btn-xl" style="background:#f3e8ff;color:#7c3aed"><i class="fa fa-video"></i></button>
+    <div style="max-width:480px;margin:0 auto">
+      <div style="display:flex;gap:8px">
+        <button id="reserve-btn" onclick="reserve()" class="btn btn-primary btn-xl" style="flex:1"><i class="fa fa-calendar-plus"></i> Réserver un RDV</button>
+        <button onclick="visio()" class="btn btn-soft btn-xl" style="background:#f3e8ff;color:#7c3aed" aria-label="Téléconsultation"><i class="fa fa-video"></i></button>
+      </div>
+      <!-- [Phase 5.2.2] Mention discrète sous le bouton — change selon état claim + auth -->
+      <div id="reserve-mention" style="font-size:11px;color:var(--text3);text-align:center;margin-top:6px;min-height:14px"></div>
     </div>
   </div>
 </main>
@@ -361,6 +365,9 @@ async function loadDoc(){
     } catch (e) { console.warn('[doctor-profile] claim banner', e); }
   }
 
+  // [Phase 5.2.2] Mise à jour bouton "Réserver un RDV" selon état claim + auth
+  try { _refreshReserveBtnState(); } catch (e) { console.warn('[doctor-profile] reserve btn state', e); }
+
   // Avis : chargement Supabase
   try { loadRealReviews(d.id); } catch (e) {}
 
@@ -388,16 +395,59 @@ function toggleFav(){
     }
   } catch (e) { console.warn('[doctor-profile] fav', e); }
 }
+// [Phase 5.2.2] Refactor Option A : visible pour tous (anon + auth).
+// Le signup-wall arrive DANS reservation.html au moment du confirm.
+// Si la fiche n'est pas claim (currentDoc._isClaimed = false), le bouton
+// est désactivé via _refreshReserveBtnState() appelé depuis loadDoc().
 function reserve(){
-  var u = null;
-  try { u = JSON.parse(localStorage.getItem("tabibi_user") || "null"); } catch (e) {}
-  if (!u) {
-    var msg = (typeof tabibiT === 'function') ? tabibiT('alert_login_required_booking', "Connectez-vous pour reserver") : "Connectez-vous pour reserver";
-    alert(msg);
-    location.href = "login.html";
+  if (!currentDoc) { return; }
+  if (!currentDoc._isClaimed) {
+    // Garde paranoïaque — le bouton est censé être disabled dans ce cas
     return;
   }
-  location.href = "patient-dashboard.html";
+  // Construit l'URL vers reservation.html avec les params attendus par
+  // la page (cf. reservation.html ligne 110-114 : getParam doctorId/
+  // doctorName/prix/spec). Pas de slot/date ici : ils seront choisis
+  // DANS reservation.html en step 1 (refactor 5.2.3 à venir).
+  var qs = '?doctor_id=' + encodeURIComponent(currentDoc.id)
+         + '&doctor_name=' + encodeURIComponent(currentDoc.fr || '')
+         + '&prix=' + encodeURIComponent(currentDoc.prix || 0)
+         + '&spec=' + encodeURIComponent(currentDoc.spec || '');
+  location.href = 'reservation.html' + qs;
+}
+
+// [Phase 5.2.2] Met à jour l'état du bouton "Réserver" + mention sous-jacente
+// selon (a) la fiche est-elle claim, (b) l'utilisateur est-il connecté.
+// Appelée depuis loadDoc() après que currentDoc soit défini.
+function _refreshReserveBtnState() {
+  var btn = document.getElementById('reserve-btn');
+  var mention = document.getElementById('reserve-mention');
+  if (!btn || !mention || !currentDoc) return;
+
+  // Cas 1 : fiche non-claim → bouton désactivé + message explicite
+  if (!currentDoc._isClaimed) {
+    btn.disabled = true;
+    btn.style.opacity = '0.55';
+    btn.style.cursor = 'not-allowed';
+    mention.textContent = "Ce médecin n'a pas encore activé les RDV en ligne.";
+    mention.style.color = 'var(--text3)';
+    return;
+  }
+
+  // Cas 2 : fiche claim → bouton actif. Mention varie selon auth.
+  btn.disabled = false;
+  btn.style.opacity = '';
+  btn.style.cursor = '';
+  // Détection rapide auth via localStorage (cohérent reste de la page)
+  // — le vrai check session se fera dans reservation.html au confirm.
+  var u = null;
+  try { u = JSON.parse(localStorage.getItem("tabibi_user") || "null"); } catch (e) {}
+  if (u && u.id) {
+    mention.textContent = '';   // user loggé → pas de mention
+  } else {
+    mention.textContent = "Connexion requise pour confirmer le RDV.";
+    mention.style.color = 'var(--text3)';
+  }
 }
 function visio(){
   var msg = (typeof tabibiT === 'function') ? tabibiT('alert_visio_starting', "Demarrage de la visioconsultation — Fonctionnalite en beta") : "Demarrage de la visioconsultation";
