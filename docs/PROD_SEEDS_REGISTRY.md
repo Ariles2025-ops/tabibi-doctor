@@ -12,7 +12,7 @@ et exécuté à la main.
 | Fichier | Date introduction | Commit | Date exécution prod | Opérateur | Vérif post-exec |
 |---|---|---|---|---|---|
 | migrations/PHASE4B_seed_claim_test_doctor.sql | 2026-05-21 | 87773c7 | 2026-05-22 (via UPDATE manuel équivalent) | Aghiles | ✅ section 3 du seed OK |
-| fixtures/test_doctor_blocages.sql | 2026-05-22 | _à remplir post-commit_ | _à remplir post-exec_ | _à remplir_ | _à remplir_ |
+| fixtures/test_doctor_blocages.sql | 2026-05-22 | 881d236 | 2026-05-22 | Aghiles | ✅ 3 fixtures visibles |
 
 ## Procédure standard
 
