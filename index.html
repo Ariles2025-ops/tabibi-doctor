@@ -2421,10 +2421,15 @@ async function loadRealDoctors(){
       if(!Array.isArray(batch)||!batch.length)break;
       batch.forEach((d,i)=>{
         const clr=_COLORS[(total+i)%_COLORS.length];
-        const name=d.full_name||d.name_fr||d.name||'Médecin';
-        const parts=name.replace(/^Dr\.?\s*/i,'').trim().split(/\s+/);
-        const ini=parts.slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'MD';
-        DOCTORS.push({id:String(d.id||('db_'+(total+i))),fr:name,ar:d.name_ar||name,en:d.name_en||name,spec:_spec(d),sAr:'',sEn:'',ville:_ville(d),vAr:'',vEn:'',note:parseFloat(d.rating||d.average_rating||4.5)||4.5,prix:parseInt(d.consultation_fee||d.price||1500)||1500,urgent:!!(d.is_urgent||d.urgent),cert:d.is_verified!==undefined?!!(d.is_verified):true,in:ini,bg:clr.bg,tc:clr.tc,g:(d.gender==='F'||d.sexe==='F'||d.gender==='female')?'F':'H',avis:parseInt(d.reviews_count||d.total_reviews||0)||0,langs:d.languages||d.langs||['FR','AR'],desc:d.description||d.bio||d.about||'',addr:d.address||d.cabinet_address||d.addr||'',diplomes:d.diplomes||[]});
+        // [Phase 5.2.3-fix 2026-05-22] tabibiDoctorName.format() — préfixe
+        // "Dr." conditionné par entity_type, fallback full_name_ar puis
+        // "Praticien". Remplace le découpage char-par-char obsolète.
+        const DN=window.tabibiDoctorName;
+        const nameFr=DN?DN.formatForLang(d,'fr'):(d.full_name||d.name_fr||d.name||'Médecin');
+        const nameAr=DN?DN.formatForLang(d,'ar'):(d.name_ar||d.full_name_ar||d.full_name||nameFr);
+        const nameEn=DN?DN.formatForLang(d,'en'):(d.name_en||d.full_name||nameFr);
+        const ini=DN?DN.initials(d):((d.full_name||'').replace(/^Dr\.?\s*/i,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'MD');
+        DOCTORS.push({id:String(d.id||('db_'+(total+i))),entityType:d.entity_type||null,fr:nameFr,ar:nameAr,en:nameEn,spec:_spec(d),sAr:'',sEn:'',ville:_ville(d),vAr:'',vEn:'',note:parseFloat(d.rating||d.average_rating||4.5)||4.5,prix:parseInt(d.consultation_fee||d.price||1500)||1500,urgent:!!(d.is_urgent||d.urgent),cert:d.is_verified!==undefined?!!(d.is_verified):true,in:ini,bg:clr.bg,tc:clr.tc,g:(d.gender==='F'||d.sexe==='F'||d.gender==='female')?'F':'H',avis:parseInt(d.reviews_count||d.total_reviews||0)||0,langs:d.languages||d.langs||['FR','AR'],desc:d.description||d.bio||d.about||'',addr:d.address||d.cabinet_address||d.addr||'',diplomes:d.diplomes||[]});
       });
       total+=batch.length;
       filtered=[...DOCTORS];renderDocs();
@@ -2609,6 +2614,8 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<!-- [Phase 5.2.3-fix] Helper formatage nom médecin (full_name + entity_type) -->
+<script src="js/tabibi-doctor-name.js"></script>
 <script src="js/tabibi-brevo.js"></script>
 <script src="js/tabibi-turnstile.js"></script>
 <script src="js/tabibi-sms.js"></script>

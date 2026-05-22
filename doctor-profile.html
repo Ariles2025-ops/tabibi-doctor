@@ -179,39 +179,40 @@ function isUuid(s){
 }
 
 // [FIX 2026-05-21] Palette generee a partir du nom pour avatar (initiales)
-function _doctorAvatar(name){
+// [Phase 5.2.3-fix 2026-05-22] Utilise tabibiDoctorName.initials() (Unicode-safe).
+function _doctorAvatar(rowOrName){
   var bg = ['#dbeafe','#dcfce7','#fef3c7','#fee2e2','#ede9fe','#cffafe','#fce7f3','#e0e7ff'];
   var tc = ['#1d4ed8','#0a4d3e','#b45309','#b91c1c','#6d28d9','#0891b2','#be185d','#3730a3'];
-  var n  = name || 'Dr';
-  var h  = 0; for (var i=0; i<n.length; i++) h = (h * 31 + n.charCodeAt(i)) >>> 0;
+  // Compat : accepte soit un profile {full_name, entity_type, ...} soit une string.
+  var profile = (typeof rowOrName === 'object' && rowOrName) ? rowOrName : { full_name: String(rowOrName || '') };
+  var hashKey = profile.full_name || profile.full_name_ar || 'Dr';
+  var h = 0; for (var i=0; i<hashKey.length; i++) h = (h * 31 + hashKey.charCodeAt(i)) >>> 0;
   var idx = h % bg.length;
-  var parts = n.replace(/^Dr\s+/i,'').trim().split(/\s+/);
-  var initials = (parts[0] ? parts[0][0] : '?') + (parts[1] ? parts[1][0] : '');
-  return { in: initials.toUpperCase(), bg: bg[idx], tc: tc[idx] };
+  var DN = window.tabibiDoctorName;
+  var ini = DN ? DN.initials(profile) : '?';
+  return { in: ini, bg: bg[idx], tc: tc[idx] };
 }
 
-// [FIX 2026-05-21] Anonymisation legere (avant validation explicite RGPD)
-// "Dr Khaled BOUASRIA" -> "Dr K. B."
-function _anonymizeName(name){
-  if (!name) return 'Dr ?';
-  var parts = name.replace(/^Dr\s+/i,'').trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return 'Dr ?';
-  return 'Dr ' + parts.map(function(p){ return p[0].toUpperCase() + '.'; }).join(' ');
-}
+// [Phase 5.2.3-fix 2026-05-22] _anonymizeName SUPPRIMÉ.
+// Cette fonction découpait char-par-char ("Ouanza Dental Clinic" → "Dr O. D. C.")
+// et produisait des affichages garblés ("Dr. م .ي.", "Dr. – . a."). La décision
+// d'anonymiser les fiches non-claim est désormais déléguée à la vue SQL
+// public_doctors (si elle implémente l'anonymisation côté serveur). Le JS
+// affiche le full_name reçu tel quel via tabibiDoctorName.format().
 
 // [FIX 2026-05-21] Mapping Supabase public_doctors -> shape attendue par l'UI
-// [UPDATE RGPD 2026-05-21] Si is_claimed=true -> affiche nom complet + adresse.
-// Si is_claimed=false (defaut pour les 14 509 medecins scrapes) -> anonymise.
+// [Phase 5.2.3-fix 2026-05-22] displayName via tabibiDoctorName.format() :
+// préfixe "Dr." seulement si entity_type = médecin, sinon nom brut.
 function _mapSupabaseDoctor(row){
   var isClaimed = row.is_claimed === true; // strict: undefined ou null -> false
-  var avatar = _doctorAvatar(row.full_name);
+  var avatar = _doctorAvatar(row);
   var spec = row.specialty_fr || row.specialty_slug || 'Medecin';
   var ville = row.wilaya_fr || row.wilaya || 'Algerie';
 
-  // Nom affiche : complet si revendique, anonymise sinon
-  var displayName = isClaimed
-    ? (row.full_name || 'Dr ?')
-    : _anonymizeName(row.full_name);
+  // Nom affiche : tabibiDoctorName.format gère full_name → full_name_ar → "Praticien"
+  // + préfixe "Dr." conditionné par entity_type.
+  var DN = window.tabibiDoctorName;
+  var displayName = DN ? DN.format(row) : (row.full_name || 'Praticien');
 
   // Adresse : precise si revendique, wilaya seule sinon
   var displayAddr = isClaimed
@@ -461,6 +462,8 @@ document.addEventListener("DOMContentLoaded", loadDoc);
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<!-- [Phase 5.2.3-fix] Helper formatage nom médecin (full_name + entity_type) -->
+<script src="js/tabibi-doctor-name.js"></script>
 <script src="js/doctors-display.js"></script>
 <script src="js/tabibi-reviews.js"></script>
 <script src="js/tabibi-claim.js"></script>

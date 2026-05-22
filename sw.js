@@ -1,6 +1,12 @@
 /**
- * Tabibi Service Worker v17 — Production
+ * Tabibi Service Worker v18 — Production
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
+ * Bump v18 : Phase 5.2.3-fix (helper js/tabibi-doctor-name.js partagé pour
+ *            formatage nom médecin — full_name + fallback full_name_ar +
+ *            préfixe "Dr." conditionné par entity_type. Remplace la fonction
+ *            _anonymizeName() qui produisait "Dr O. D. C." pour
+ *            "Ouanza Dental Clinic".)
+ *
  * Bump v17 : Phase 5.2.3 (reservation.html refactor wizard 4 steps :
  *            NEW Step 1 calendrier 90j + cache Map<dateISO,slots> + fetch
  *            on-demand + TZ Africa/Algiers. INSERT via tabibiBooking
@@ -8,7 +14,7 @@
  *            ERR_SLOT_TAKEN + auth-wall sur ERR_AUTH_REQUIRED. Précache
  *            js/tabibi-booking.js pour latence zéro 1er booking.)
  */
-const CACHE_VERSION = 'tabibi-v17-2026-05-22';
+const CACHE_VERSION = 'tabibi-v18-2026-05-22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -22,7 +28,9 @@ const PRECACHE_URLS = [
   '/js/tabibi-doctor-dashboard.js',
   // [Phase 5.2.3] helpers booking patient (Phase 5.2.1) — précache pour
   // zéro latence au 1er chargement de reservation.html
-  '/js/tabibi-booking.js'
+  '/js/tabibi-booking.js',
+  // [Phase 5.2.3-fix] helper formatage nom médecin partagé (index, doctor-profile)
+  '/js/tabibi-doctor-name.js'
 ];
 
 self.addEventListener('install', event => {

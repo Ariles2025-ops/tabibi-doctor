@@ -55,15 +55,22 @@
   }
 
   function convertDoctor(doc) {
-    const initials = (doc.full_name || '').split(' ').map(w => w.charAt(0)).slice(0, 2).join('').toUpperCase() || 'MD';
+    // [Phase 5.2.3-fix 2026-05-22] Utilise tabibiDoctorName pour
+    // formatage cohérent (full_name + entity_type → préfixe "Dr." conditionnel).
+    // Fallback à l'ancien comportement si le helper n'est pas chargé.
+    const DN = window.tabibiDoctorName;
+    const initials = DN
+      ? DN.initials(doc)
+      : ((doc.full_name || '').split(' ').map(w => w.charAt(0)).slice(0, 2).join('').toUpperCase() || 'MD');
     // [I18N-UNIFY-2026] Lit specialty_ar/en et wilaya_ar/en depuis la vue public_doctors
     // (générées par le JOIN sur specialties/wilayas via slug et code).
     // Fallback FR si la migration SQL n'a pas encore été exécutée.
     return {
       id: doc.id,
-      fr: doc.full_name || 'Médecin',
-      ar: doc.full_name_ar || doc.full_name || '',
-      en: doc.full_name || 'Doctor',
+      entityType: doc.entity_type || null,
+      fr: DN ? DN.formatForLang(doc, 'fr') : (doc.full_name || 'Médecin'),
+      ar: DN ? DN.formatForLang(doc, 'ar') : (doc.full_name_ar || doc.full_name || ''),
+      en: DN ? DN.formatForLang(doc, 'en') : (doc.full_name || 'Doctor'),
       spec: doc.specialty_name_fr || doc.specialty_fr || 'Généraliste',
       sAr: doc.specialty_ar || doc.specialty_fr || '',
       sEn: doc.specialty_en || doc.specialty_fr || '',
