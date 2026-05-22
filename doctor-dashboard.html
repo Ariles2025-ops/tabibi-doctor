@@ -984,9 +984,11 @@ async function saveUnavailSlot() {
             : errCode === 'network_error'                      ? "Erreur réseau. Vérifiez votre connexion et réessayez."
             : errCode === 'exception'                          ? "Erreur inattendue. Détails dans la console DevTools (F12)."
             : 'Erreur inconnue : ' + errCode;
-    _showUnavailError(msg);
-    // Toast aussi visible — l'erreur inline peut être hors viewport sur petit écran
-    toastM('Blocage non enregistré — ' + msg, 'error');
+    _showUnavailError(msg);  // détail dans la modal
+    // [Phase 4.B.3-fix1-review] Toast court (évite la duplication verbatim
+    // du message complet déjà affiché dans la modal). Le toast attire l'œil
+    // si l'utilisateur a scrollé hors du bandeau d'erreur dans la modal.
+    toastM('Erreur de création du blocage — voir détail dans la modal', 'error');
   }
 }
 
