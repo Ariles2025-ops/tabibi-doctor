@@ -14,6 +14,10 @@
  *            ERR_SLOT_TAKEN + auth-wall sur ERR_AUTH_REQUIRED. Précache
  *            js/tabibi-booking.js pour latence zéro 1er booking.)
  */
+// [Phase 5.2.5 — 2026-05-22] Bump cache pour précacher mes-rdv.html
+// (Phase 5.2.4) + reservation.html refactor (Phase 5.2.3). HTML reste en
+// network-first (cf. fetch handler ligne 56) donc le précache n'a un effet
+// que sur la 1ère visite offline / sous flaky network.
 const CACHE_VERSION = 'tabibi-v18-2026-05-22';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
@@ -23,6 +27,8 @@ const PRECACHE_URLS = [
   '/offline.html', '/404.html', '/manifest.json', '/favicon.ico',
   '/styles/app.css', '/styles/components.css',
   '/images/icon-192.png', '/images/icon-512.png',
+  // [Phase 5.2.5] Pages booking patient bout-en-bout
+  '/reservation.html', '/mes-rdv.html',
   // [Phase 4.B.2] helpers médecin partagés (cache-first via runtime suffit,
   // mais on précache pour zéro latence au 1er affichage du dashboard)
   '/js/tabibi-doctor-dashboard.js',

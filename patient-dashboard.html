@@ -111,17 +111,25 @@
 </div>
 
 <div class="dash-tabs" style="position:sticky;top:var(--nav-h);z-index:150;background:#fff;border-bottom:1px solid var(--border)">
-  <button class="dash-tab active" onclick="sw('book',this)"><i class="fa fa-calendar-plus"></i> <span data-i18n="tab_book">Réserver</span></button>
-  <button class="dash-tab" onclick="sw('rdv',this)"><i class="fa fa-calendar-check"></i> <span data-i18n="tab_rdv">Mes RDV</span></button>
-  <button class="dash-tab" onclick="sw('overview',this)"><i class="fa fa-chart-line"></i> <span data-i18n="tab_view">Vue</span></button>
+  <!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — CTA Réserver redirige vers /index.html
+       (la recherche médecin est désormais centralisée sur la home et le booking
+       passe par doctor-profile.html → reservation.html). CTA Mes RDV redirige vers
+       /mes-rdv.html (Phase 5.2.4). L'ancien switch tab interne est désactivé. -->
+  <button class="dash-tab" onclick="location.href='index.html';return false" aria-label="Réserver un RDV"><i class="fa fa-calendar-plus"></i> <span data-i18n="tab_book">Réserver</span></button>
+  <button class="dash-tab" onclick="location.href='mes-rdv.html';return false" aria-label="Mes rendez-vous"><i class="fa fa-calendar-check"></i> <span data-i18n="tab_rdv">Mes RDV</span></button>
+  <button class="dash-tab active" onclick="sw('overview',this)"><i class="fa fa-chart-line"></i> <span data-i18n="tab_view">Vue</span></button>
   <button class="dash-tab" onclick="sw('docs',this)"><i class="fa fa-file-medical"></i> <span data-i18n="tab_docs">Documents</span></button>
   <button class="dash-tab" onclick="sw('favs',this)"><i class="fa fa-heart"></i> <span data-i18n="tab_favs">Favoris</span></button>
 </div>
 
 <main id="main" class="page" role="main">
 
-  <!-- ═════ ONGLET RÉSERVER ═════ -->
-  <div id="tab-book" class="tab-panel active">
+  <!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Panel #tab-book conservé en DOM
+       pour rollback rapide mais inerte : (a) tab button redirige vers index.html,
+       (b) classe 'active' déplacée sur #tab-overview, (c) openBooking() en bas
+       du fichier ne déclenche plus #book-modal. Ne PAS supprimer ce bloc — il
+       sera retiré définitivement après validation E2E Phase 5.3. -->
+  <div id="tab-book" class="tab-panel">
     <div style="padding:14px 16px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff">
       <div style="font-size:18px;font-weight:800;margin-bottom:4px">Trouvez votre médecin <i class="fa fa-stethoscope"></i></div>
       <div style="font-size:12px;opacity:.85;margin-bottom:12px"><span id="dash-doc-count">...</span> médecins certifiés disponibles en Algérie</div>
@@ -158,7 +166,9 @@
     </div>
   </div>
 
-  <!-- ═════ MES RDV ═════ -->
+  <!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Panel #tab-rdv conservé en DOM
+       pour rollback rapide mais inerte (tab button redirige vers /mes-rdv.html
+       qui est la nouvelle page dédiée Phase 5.2.4). Ne PAS supprimer. -->
   <div id="tab-rdv" class="tab-panel" style="padding:14px 16px">
     <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none">
       <button class="chip active" data-f="all" onclick="filtRdv('all',this)">Tous (<span id="cnt-all">0</span>)</button>
@@ -175,7 +185,7 @@
       <div style="font-size:13px;opacity:.85;margin-bottom:4px" id="greet">Bonjour <i class="fa fa-sun" style="color:#fbbf24"></i></div>
       <div style="font-size:22px;font-weight:800" id="welcome-name">Bienvenue</div>
       <p style="font-size:13px;opacity:.75;margin-top:4px">Votre espace santé Tabibi</p>
-      <button class="btn btn-white btn-sm" style="margin-top:12px" onclick="goTab(0)"><i class="fa fa-search"></i> Trouver un médecin</button>
+      <button class="btn btn-white btn-sm" style="margin-top:12px" onclick="location.href='index.html';return false"><i class="fa fa-search"></i> Trouver un médecin</button>
     </div>
     <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="card" style="padding:14px;border-left:3px solid var(--blue)"><div id="ov-up" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="upcoming_rdv">RDV à venir</div></div>
@@ -190,7 +200,7 @@
     <div style="padding:14px 16px">
       <div style="font-size:14px;font-weight:700;margin-bottom:10px"><i class="fa fa-bolt" style="color:#f59e0b"></i> Accès rapide</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="goTab(0)"><i class="fa fa-search" style="font-size:22px;color:var(--blue);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_book">Réserver</div></button>
+        <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="location.href='index.html';return false"><i class="fa fa-search" style="font-size:22px;color:var(--blue);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_book">Réserver</div></button>
         <a class="card card-tap" style="padding:14px;text-align:center;border:none;display:block;color:inherit;text-decoration:none" href="patient-ordonnances.html"><i class="fa fa-file-prescription" style="font-size:22px;color:var(--blue);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="my_prescriptions">Ordonnances</div></a>
         <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="goTab(3)"><i class="fa fa-file-medical" style="font-size:22px;color:var(--green);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_docs">Documents</div></button>
         <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="location.href='patient-profile.html'"><i class="fa fa-user" style="font-size:22px;color:#7c3aed;margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_profile">Profil</div></button>
@@ -222,7 +232,9 @@
 
 </main>
 
-<!-- ═════ MODAL RÉSERVATION ═════ -->
+<!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Modal #book-modal conservé en DOM
+     pour rollback mais jamais déclenché (openBooking redirige vers
+     doctor-profile.html). Conservera la classe 'hidden' en permanence. -->
 <div class="modal-bg hidden" id="book-modal">
   <div class="modal-sheet" style="max-height:92dvh">
     <div class="modal-handle"></div>
@@ -450,7 +462,18 @@ function goDocPage(p){
   if (el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"start"});
 }
 function filterSpec(spec,btn){currentSpec=spec;docPage=1;document.querySelectorAll("[data-spec]").forEach(b=>b.classList.remove("active"));if(btn) btn.classList.add("active");renderDocs();}
-function openBooking(docId){bookingDoc=DOCTORS.find(x=>x.id===docId);if(!bookingDoc){toastM(tabibiT('toast_doctor_not_found',"Médecin introuvable"),"error");return;}bookingDate=null;bookingTime=null;bookingPay="cash";showBookingStep(1);document.getElementById("book-modal").classList.remove("hidden");document.body.style.overflow="hidden";}
+// LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Le modal de booking interne au
+// dashboard est désactivé. Tous les clics sur "Réserver" depuis cette page
+// redirigent vers doctor-profile.html?id=... (qui propose le bouton "Prendre
+// RDV" Phase 5.2.2 → reservation.html wizard Phase 5.2.3). showBookingStep,
+// selDate, finalBooking restent définies pour ne pas casser d'éventuels
+// listeners orphelins, mais ne sont plus appelées par aucun chemin actif.
+function openBooking(docId){
+  if(!docId){ if(typeof toastM==='function') toastM("Médecin manquant.","error"); return; }
+  location.href = 'doctor-profile.html?id=' + encodeURIComponent(docId);
+}
+// Ancien corps (gardé pour rollback) :
+// function openBooking(docId){bookingDoc=DOCTORS.find(x=>x.id===docId);if(!bookingDoc){toastM(tabibiT('toast_doctor_not_found',"Médecin introuvable"),"error");return;}bookingDate=null;bookingTime=null;bookingPay="cash";showBookingStep(1);document.getElementById("book-modal").classList.remove("hidden");document.body.style.overflow="hidden";}
 function closeBooking(){document.getElementById("book-modal").classList.add("hidden");document.body.style.overflow="";}
 
 // Cache des slots occupés par (doctorId|date) pour éviter de re-fetch à chaque render
@@ -717,7 +740,7 @@ function doFiltRdvRender(f){
   const STC={Confirmed:"badge-blue",Completed:"badge-green",Cancelled:"badge-red",Pending:"badge-amber"};
   const STL={Confirmed:"Confirmé",Completed:"Terminé",Cancelled:"Annulé",Pending:"En attente"};
   const cls={Confirmed:"",Completed:"completed",Cancelled:"cancelled",Pending:"pending"};
-  if(!list.length){document.getElementById("rdv-list").innerHTML=`<div style="text-align:center;padding:40px 20px"><i class="fa fa-calendar-xmark" style="font-size:48px;color:var(--text4);margin-bottom:14px;display:block"></i><div style="font-weight:700;color:var(--text2);margin-bottom:6px">Aucun rendez-vous</div><div style="font-size:13px;color:var(--text3);margin-bottom:16px">Réservez votre premier RDV maintenant</div><button class="btn btn-primary btn-lg" onclick="goTab(0)"><i class="fa fa-search"></i> Trouver un médecin</button></div>`;return;}
+  if(!list.length){document.getElementById("rdv-list").innerHTML=`<div style="text-align:center;padding:40px 20px"><i class="fa fa-calendar-xmark" style="font-size:48px;color:var(--text4);margin-bottom:14px;display:block"></i><div style="font-weight:700;color:var(--text2);margin-bottom:6px">Aucun rendez-vous</div><div style="font-size:13px;color:var(--text3);margin-bottom:16px">Réservez votre premier RDV maintenant</div><button class="btn btn-primary btn-lg" onclick="location.href='index.html';return false"><i class="fa fa-search"></i> Trouver un médecin</button></div>`;return;}
   document.getElementById("rdv-list").innerHTML=list.map(r=>{const dt=new Date(r.date);const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"short",day:"numeric",month:"short",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short",year:"numeric"}));return `<div class="rdv-card-full ${cls[r.status]||''}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
         <div style="flex:1"><div style="font-weight:700;font-size:14px">${esc(r.doctorName)}</div><div style="font-size:12px;color:var(--text3)">${esc(r.spec||"")}</div></div>
