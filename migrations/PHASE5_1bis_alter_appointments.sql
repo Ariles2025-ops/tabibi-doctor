@@ -61,10 +61,28 @@ SELECT column_name, data_type FROM information_schema.columns
 -- Idempotent via IF NOT EXISTS (Postgres 15+).
 
 ALTER TABLE public.appointments
-  ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ
-    GENERATED ALWAYS AS (scheduled_at) STORED,
-  ADD COLUMN IF NOT EXISTS ends_at TIMESTAMPTZ
-    GENERATED ALWAYS AS (scheduled_at + (duration_minutes || ' minutes')::interval) STORED;
+  ADD COLUMN IF NOT EXISTS starts_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS ends_at TIMESTAMPTZ;
+
+CREATE OR REPLACE FUNCTION public.appointments_sync_slot_times()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.starts_at := NEW.scheduled_at;
+  NEW.ends_at := NEW.scheduled_at + (NEW.duration_minutes || ' minutes')::interval;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_appointments_sync_slot_times ON public.appointments;
+CREATE TRIGGER trg_appointments_sync_slot_times
+  BEFORE INSERT OR UPDATE OF scheduled_at, duration_minutes
+  ON public.appointments
+  FOR EACH ROW
+  EXECUTE FUNCTION public.appointments_sync_slot_times();
+
+UPDATE public.appointments
+SET scheduled_at = scheduled_at
+WHERE starts_at IS NULL OR ends_at IS NULL;
 
 COMMENT ON COLUMN public.appointments.starts_at IS
   'Phase 5.1bis. Alias calculé de scheduled_at (GENERATED STORED). Permet à get_available_slots() de filtrer par starts_at sans toucher au schema OLD.';
