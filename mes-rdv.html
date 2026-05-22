@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Mes rendez-vous médicaux sur Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/mes-rdv.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560"><meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_my_appointments">
+<title>Mes rendez-vous | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<!-- [Phase 5.2.4] Styles inline pour les sections RDV — pas de pollution app.css -->
+<style>
+  .rdv-tabs { display:flex;border-bottom:2px solid var(--border);background:#fff;position:sticky;top:0;z-index:5; }
+  .rdv-tab { flex:1;padding:14px 8px;text-align:center;font-size:13px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;background:transparent;border-left:0;border-right:0;border-top:0; }
+  .rdv-tab.active { color:var(--blue);border-bottom-color:var(--blue); }
+  .rdv-tab .count { display:inline-block;background:var(--bg2);color:var(--text3);font-size:11px;font-weight:700;padding:1px 8px;border-radius:var(--rfull);margin-left:6px;min-width:18px; }
+  .rdv-tab.active .count { background:var(--blue-l);color:var(--blue); }
+  .rdv-card { background:#fff;border-radius:var(--r12);padding:14px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);display:flex;gap:12px;align-items:flex-start; }
+  .rdv-card .ava { width:48px;height:48px;border-radius:var(--r12);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;background:#EEF4FB;color:#1557A0; }
+  .rdv-card .body { flex:1;min-width:0; }
+  .rdv-card .docname { font-size:14px;font-weight:700;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+  .rdv-card .spec { font-size:12px;color:var(--text3);margin-bottom:6px; }
+  .rdv-card .meta { display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px; }
+  .rdv-card .badge-sm { font-size:11px;padding:3px 8px;border-radius:var(--rfull);font-weight:600;background:var(--blue-l);color:var(--blue); }
+  .rdv-card .badge-sm.is-cabinet { background:#FFF7E6;color:#B07000; }
+  .rdv-card .badge-sm.is-visio { background:#EEF4FB;color:#1557A0; }
+  .rdv-card .badge-sm.is-status-cancelled { background:#FFEEEC;color:var(--red); }
+  .rdv-card .badge-sm.is-status-completed { background:var(--green-l);color:var(--green-d); }
+  .rdv-card .badge-sm.is-status-pending { background:#FFF7E6;color:#B07000; }
+  .rdv-card .reason { font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.4; }
+  .rdv-card .actions { display:flex;gap:8px;flex-wrap:wrap; }
+  .rdv-card .btn-cancel { font-size:12px;padding:6px 10px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--r8);cursor:pointer;font-weight:600; }
+  .rdv-card .btn-cancel:hover:not(:disabled) { background:#FFEEEC; }
+  .rdv-card .btn-cancel:disabled { opacity:.4;cursor:not-allowed; }
+  .rdv-empty { text-align:center;padding:48px 16px;color:var(--text3); }
+  .rdv-empty .ico { font-size:48px;color:var(--text3);opacity:.4;margin-bottom:14px; }
+  .rdv-empty .title { font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px; }
+  .rdv-empty .sub { font-size:13px;margin-bottom:18px; }
+  .rdv-section { padding:14px 16px 60px; }
+  .rdv-section.hidden { display:none; }
+  .rdv-msg { padding:14px;text-align:center;color:var(--text3);font-size:13px;background:var(--bg2);border-radius:var(--r8);margin-bottom:10px; }
+  .rdv-msg.is-error { background:#FFEEEC;color:var(--red); }
+  .rdv-skeleton { background:#fff;border-radius:var(--r12);padding:14px;margin-bottom:10px;display:flex;gap:12px;animation:pulse 1.2s ease-in-out infinite; }
+  .rdv-skeleton .sk-ava { width:48px;height:48px;border-radius:var(--r12);background:var(--bg2);flex-shrink:0; }
+  .rdv-skeleton .sk-lines { flex:1;display:flex;flex-direction:column;gap:6px; }
+  .rdv-skeleton .sk-line { height:10px;background:var(--bg2);border-radius:4px; }
+  .rdv-skeleton .sk-line.sm { width:60%; }
+  .rdv-skeleton .sk-line.xs { width:40%; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+</style>
+</head>
+<body>
+<script src="scripts/seed.js"></script>
+<script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);window.addEventListener("error",k);})();</script>
+
+<div class="app-root">
+<div class="loading-screen" id="loading"><div class="spinner"></div></div>
+
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Mes rendez-vous</div></div>
+  <div id="uarea-desk"></div>
+</header>
+
+<!-- TABS — À venir / Passés / Annulés -->
+<div class="rdv-tabs" role="tablist" aria-label="Sections de rendez-vous">
+  <button class="rdv-tab active" id="tab-upcoming" onclick="showTab('upcoming')" role="tab" aria-selected="true">
+    À venir <span class="count" id="count-upcoming">0</span>
+  </button>
+  <button class="rdv-tab" id="tab-past" onclick="showTab('past')" role="tab" aria-selected="false">
+    Passés <span class="count" id="count-past">0</span>
+  </button>
+  <button class="rdv-tab" id="tab-cancelled" onclick="showTab('cancelled')" role="tab" aria-selected="false">
+    Annulés <span class="count" id="count-cancelled">0</span>
+  </button>
+</div>
+
+<main class="page" role="main">
+
+  <!-- Auth wall (visible si anon) -->
+  <div id="auth-wall" class="rdv-section hidden">
+    <div class="rdv-empty">
+      <i class='fa fa-user-lock ico'></i>
+      <div class="title">Connexion requise</div>
+      <div class="sub">Connectez-vous pour voir vos rendez-vous médicaux.</div>
+      <a id="auth-wall-login" href="#" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> Se connecter</a>
+    </div>
+  </div>
+
+  <!-- Error global (réseau, RLS, etc.) -->
+  <div id="global-error" class="rdv-section hidden">
+    <div class="rdv-msg is-error" id="global-error-msg"></div>
+    <div style="text-align:center;margin-top:10px">
+      <button class="btn btn-ghost btn-lg" onclick="loadAppointments()"><i class='fa fa-rotate'></i> Réessayer</button>
+    </div>
+  </div>
+
+  <!-- Section À venir -->
+  <section id="section-upcoming" class="rdv-section" aria-labelledby="tab-upcoming">
+    <div id="list-upcoming" aria-live="polite"></div>
+  </section>
+
+  <!-- Section Passés -->
+  <section id="section-past" class="rdv-section hidden" aria-labelledby="tab-past">
+    <div id="list-past" aria-live="polite"></div>
+  </section>
+
+  <!-- Section Annulés -->
+  <section id="section-cancelled" class="rdv-section hidden" aria-labelledby="tab-cancelled">
+    <div id="list-cancelled" aria-live="polite"></div>
+  </section>
+
+</main>
+<nav class="tab-bar" id="tab-bar"></nav>
+<div id="uarea-mob" class="hidden"></div>
+
+<script src="scripts/app.js"></script>
+<script>
+// ========================================================================
+// [Phase 5.2.4] mes-rdv.html — liste RDV patient + annulation
+// ------------------------------------------------------------------------
+// Dépend de :
+//   • window.tabibiBooking.listMyAppointments() (Phase 5.2.1)
+//   • window.tabibiBooking.cancelMyAppointment(id, reason)
+//   • window.tabibiBooking.errorMessage(code)
+//   • window.tabibiDoctorName.format(profile) (Phase 5.2.3-fix)
+//
+// Codes erreur spécifiques à cette page :
+//   ERR_MESRDV_TOO_LATE_TO_CANCEL  — tentative d'annulation <24h avant
+//
+// (Les autres codes ERR_* viennent de tabibiBooking.)
+// ========================================================================
+
+var MESRDV_CODES = Object.freeze({
+  ERR_MESRDV_TOO_LATE_TO_CANCEL: 'ERR_MESRDV_TOO_LATE_TO_CANCEL'
+});
+var MESRDV_MSG_FR = {
+  ERR_MESRDV_TOO_LATE_TO_CANCEL: "Annulation impossible moins de 24h avant le RDV. Contactez le cabinet."
+};
+function mesrdvMessage(code){
+  if(MESRDV_MSG_FR[code]) return MESRDV_MSG_FR[code];
+  if(window.tabibiBooking && window.tabibiBooking.errorMessage){
+    return window.tabibiBooking.errorMessage(code);
+  }
+  return "Erreur inattendue.";
+}
+
+// ── State ───────────────────────────────────────────────────────────────
+var _allAppointments = [];   // raw rows du backend
+var _groups = { upcoming: [], past: [], cancelled: [] };
+var _currentTab = 'upcoming';
+var _cancelInFlight = false;
+
+// ── TZ + formats ────────────────────────────────────────────────────────
+var _DF_DATE_FR = new Intl.DateTimeFormat('fr-FR', {
+  weekday:'long', day:'numeric', month:'long', year:'numeric',
+  timeZone:'Africa/Algiers'
+});
+var _DF_TIME_FR = new Intl.DateTimeFormat('fr-FR', {
+  hour:'2-digit', minute:'2-digit', hour12:false,
+  timeZone:'Africa/Algiers'
+});
+function _formatDate(iso){
+  if(!iso) return '—';
+  try { return _DF_DATE_FR.format(new Date(iso)); }
+  catch(e) { return '—'; }
+}
+function _formatTime(iso){
+  if(!iso) return '—';
+  try { return _DF_TIME_FR.format(new Date(iso)); }
+  catch(e) { return '—'; }
+}
+function _formatDateTime(iso){
+  return _formatDate(iso) + ' · ' + _formatTime(iso);
+}
+
+// ── Doctor name fallback (utilise tabibiDoctorName si dispo) ────────────
+function _doctorName(row){
+  // Cherche les champs nom standardisés (la vue my_upcoming_appointments
+  // peut exposer doctor_full_name, doctor_name, ou imbriqué).
+  // [TODO-SQL-003] vérifier le schéma exact de la vue.
+  var profile = {
+    full_name:     row.doctor_full_name    || row.full_name    || (row.doctor && row.doctor.full_name)    || null,
+    full_name_ar:  row.doctor_full_name_ar || row.full_name_ar || (row.doctor && row.doctor.full_name_ar) || null,
+    entity_type:   row.doctor_entity_type  || row.entity_type  || (row.doctor && row.doctor.entity_type)  || null
+  };
+  if(window.tabibiDoctorName){
+    return window.tabibiDoctorName.format(profile);
+  }
+  return profile.full_name || profile.full_name_ar || "Praticien";
+}
+function _doctorInitials(row){
+  if(window.tabibiDoctorName){
+    return window.tabibiDoctorName.initials({
+      full_name:    row.doctor_full_name    || row.full_name    || null,
+      full_name_ar: row.doctor_full_name_ar || row.full_name_ar || null
+    });
+  }
+  return '?';
+}
+function _doctorSpec(row){
+  return row.doctor_specialty_fr || row.specialty_fr
+       || (row.doctor && (row.doctor.specialty_fr || row.doctor.specialty_name_fr))
+       || '';
+}
+function _consultLocation(row){
+  // Détecte téléconsultation vs cabinet — heuristique sur consult_type / cabinet
+  var ctype = (row.consult_type || '').toLowerCase();
+  if(ctype.indexOf('visio') !== -1 || ctype.indexOf('tele') !== -1){
+    return { kind: 'visio', label: 'Téléconsultation' };
+  }
+  var addr = row.cabinet_address || (row.cabinet && row.cabinet.address) || '';
+  if(addr) return { kind: 'cabinet', label: addr };
+  var ville = row.cabinet_city || row.wilaya_fr || (row.cabinet && row.cabinet.city) || '';
+  if(ville) return { kind: 'cabinet', label: ville };
+  return { kind: 'cabinet', label: 'Cabinet' };
+}
+
+// ── Group appointments en 3 buckets ─────────────────────────────────────
+function _groupAppointments(rows){
+  var now = Date.now();
+  var groups = { upcoming: [], past: [], cancelled: [] };
+  (rows || []).forEach(function(r){
+    var status = String(r.status || '').toLowerCase();
+    var when = r.starts_at || r.scheduled_at;
+    var whenMs = when ? new Date(when).getTime() : 0;
+    if(status === 'cancelled'){
+      groups.cancelled.push(r);
+    } else if(status === 'completed' || status === 'no_show'){
+      groups.past.push(r);
+    } else if(whenMs && whenMs < now){
+      groups.past.push(r);
+    } else {
+      groups.upcoming.push(r);
+    }
+  });
+  // Tri : à venir = chronologique ASC, passés/annulés = DESC
+  groups.upcoming.sort(function(a,b){
+    return new Date(a.starts_at || a.scheduled_at) - new Date(b.starts_at || b.scheduled_at);
+  });
+  groups.past.sort(function(a,b){
+    return new Date(b.starts_at || b.scheduled_at) - new Date(a.starts_at || a.scheduled_at);
+  });
+  groups.cancelled.sort(function(a,b){
+    var ta = new Date(a.cancelled_at || a.starts_at || a.scheduled_at);
+    var tb = new Date(b.cancelled_at || b.starts_at || b.scheduled_at);
+    return tb - ta;
+  });
+  return groups;
+}
+
+// ── Can cancel (>24h avant) ─────────────────────────────────────────────
+function _canCancel(row){
+  var status = String(row.status || '').toLowerCase();
+  if(status !== 'pending' && status !== 'confirmed') return false;
+  var when = row.starts_at || row.scheduled_at;
+  if(!when) return false;
+  var ms = new Date(when).getTime() - Date.now();
+  return ms > 24 * 3600 * 1000;
+}
+
+// ── Render ──────────────────────────────────────────────────────────────
+function _renderCard(row, opts){
+  opts = opts || {};
+  var status = String(row.status || '').toLowerCase();
+  var name = _doctorName(row);
+  var ini  = _doctorInitials(row);
+  var spec = _doctorSpec(row);
+  var loc  = _consultLocation(row);
+  var when = row.starts_at || row.scheduled_at;
+  var canCancel = _canCancel(row);
+  var statusBadge = '';
+  if(status === 'cancelled') statusBadge = '<span class="badge-sm is-status-cancelled">Annulé</span>';
+  else if(status === 'completed') statusBadge = '<span class="badge-sm is-status-completed">Terminé</span>';
+  else if(status === 'pending') statusBadge = '<span class="badge-sm is-status-pending">En attente</span>';
+  else if(status === 'no_show') statusBadge = '<span class="badge-sm is-status-cancelled">Absent</span>';
+
+  var locBadge = '<span class="badge-sm is-' + loc.kind + '">'
+               + '<i class="fa fa-' + (loc.kind === 'visio' ? 'video' : 'location-dot') + '"></i> '
+               + _escapeHtml(loc.label) + '</span>';
+
+  var dateBadge = '<span class="badge-sm"><i class="fa fa-calendar-day"></i> '
+                + _escapeHtml(_formatDateTime(when)) + '</span>';
+
+  var reasonHtml = '';
+  if(row.reason){
+    reasonHtml = '<div class="reason">' + _escapeHtml(row.reason) + '</div>';
+  }
+  if(status === 'cancelled' && row.cancellation_reason){
+    reasonHtml += '<div class="reason"><em>Motif annulation : ' + _escapeHtml(row.cancellation_reason) + '</em></div>';
+  }
+
+  var actionsHtml = '';
+  if(opts.section === 'upcoming'){
+    var disabledAttr = canCancel ? '' : 'disabled';
+    var title = canCancel ? 'Annuler ce RDV' : 'Annulation impossible <24h avant le RDV';
+    actionsHtml = '<div class="actions">'
+                + '<button class="btn-cancel" '+disabledAttr+' title="' + _escapeAttr(title) + '" '
+                + 'onclick="doCancel(\''+ _escapeAttr(row.id) +'\')">'
+                + '<i class="fa fa-xmark"></i> Annuler</button>'
+                + '</div>';
+  }
+
+  return '<article class="rdv-card" data-id="'+_escapeAttr(row.id)+'">'
+       + '<div class="ava">'+_escapeHtml(ini || '?')+'</div>'
+       + '<div class="body">'
+       +   '<div class="docname">'+_escapeHtml(name)+'</div>'
+       +   (spec ? '<div class="spec">'+_escapeHtml(spec)+'</div>' : '')
+       +   '<div class="meta">'+dateBadge+' '+locBadge+' '+statusBadge+'</div>'
+       +   reasonHtml
+       +   actionsHtml
+       + '</div>'
+       + '</article>';
+}
+
+function _renderEmpty(section){
+  var msgMap = {
+    upcoming:  { title:"Aucun rendez-vous à venir", sub:"Trouvez un médecin et réservez en quelques clics." },
+    past:      { title:"Aucun rendez-vous passé",   sub:"Votre historique apparaîtra ici après votre 1ère consultation." },
+    cancelled: { title:"Aucun rendez-vous annulé",  sub:"Vos annulations apparaîtront ici." }
+  };
+  var m = msgMap[section] || msgMap.upcoming;
+  return '<div class="rdv-empty">'
+       + '<i class="fa fa-calendar-xmark ico"></i>'
+       + '<div class="title">'+m.title+'</div>'
+       + '<div class="sub">'+m.sub+'</div>'
+       + '<a href="index.html" class="btn btn-primary btn-lg"><i class="fa fa-search"></i> Trouver un médecin</a>'
+       + '</div>';
+}
+
+function _renderSection(section){
+  var list = _groups[section] || [];
+  var html;
+  if(list.length === 0){
+    html = _renderEmpty(section);
+  } else {
+    html = list.map(function(r){ return _renderCard(r, { section: section }); }).join('');
+  }
+  document.getElementById('list-' + section).innerHTML = html;
+  document.getElementById('count-' + section).textContent = list.length;
+}
+
+function _renderAll(){
+  _renderSection('upcoming');
+  _renderSection('past');
+  _renderSection('cancelled');
+}
+
+function _renderSkeleton(){
+  var sk = '<div class="rdv-skeleton"><div class="sk-ava"></div><div class="sk-lines">'
+         + '<div class="sk-line"></div><div class="sk-line sm"></div><div class="sk-line xs"></div>'
+         + '</div></div>';
+  document.getElementById('list-upcoming').innerHTML = sk + sk + sk;
+}
+
+// ── Tabs ────────────────────────────────────────────────────────────────
+function showTab(name){
+  _currentTab = name;
+  ['upcoming','past','cancelled'].forEach(function(s){
+    var tab = document.getElementById('tab-' + s);
+    var sec = document.getElementById('section-' + s);
+    var isActive = (s === name);
+    tab.classList.toggle('active', isActive);
+    tab.setAttribute('aria-selected', isActive);
+    sec.classList.toggle('hidden', !isActive);
+  });
+}
+
+// ── Auth wall ───────────────────────────────────────────────────────────
+function _showAuthWall(){
+  document.getElementById('auth-wall').classList.remove('hidden');
+  document.getElementById('global-error').classList.add('hidden');
+  ['upcoming','past','cancelled'].forEach(function(s){
+    document.getElementById('section-' + s).classList.add('hidden');
+  });
+  document.querySelector('.rdv-tabs').classList.add('hidden');
+  var login = document.getElementById('auth-wall-login');
+  if(login){
+    var current = location.pathname + location.search;
+    login.href = 'login.html?next=' + encodeURIComponent(current);
+  }
+}
+function _showError(msg){
+  document.getElementById('global-error-msg').textContent = msg;
+  document.getElementById('global-error').classList.remove('hidden');
+}
+function _hideError(){
+  document.getElementById('global-error').classList.add('hidden');
+}
+
+// ── Load + cancel ───────────────────────────────────────────────────────
+async function loadAppointments(){
+  _hideError();
+  document.getElementById('auth-wall').classList.add('hidden');
+  document.querySelector('.rdv-tabs').classList.remove('hidden');
+  ['upcoming','past','cancelled'].forEach(function(s){
+    document.getElementById('section-' + s).classList.toggle('hidden', s !== _currentTab);
+  });
+  _renderSkeleton();
+
+  if(!window.tabibiBooking){
+    _showError("Module de réservation indisponible. Rechargez la page.");
+    return;
+  }
+
+  var r = await window.tabibiBooking.listMyAppointments();
+
+  if(!r.ok){
+    if(r.error === 'ERR_AUTH_REQUIRED' || r.error === 'ERR_SESSION_EXPIRED'){
+      _showAuthWall();
+      return;
+    }
+    _showError(mesrdvMessage(r.error));
+    return;
+  }
+
+  _allAppointments = r.data || [];
+  _groups = _groupAppointments(_allAppointments);
+  _renderAll();
+}
+
+async function doCancel(id){
+  if(_cancelInFlight){
+    toast("Annulation déjà en cours…", "info");
+    return;
+  }
+  // Re-check >24h client-side au moment du clic (au cas où l'utilisateur
+  // serait resté longtemps sur la page).
+  var row = _allAppointments.find(function(r){ return r.id === id; });
+  if(row && !_canCancel(row)){
+    toast(mesrdvMessage(MESRDV_CODES.ERR_MESRDV_TOO_LATE_TO_CANCEL), "warning");
+    return;
+  }
+  if(!confirm("Annuler ce rendez-vous ?\nVous pourrez en reprendre un nouveau si besoin.")){
+    return;
+  }
+  _cancelInFlight = true;
+  var btn = document.querySelector('.rdv-card[data-id="'+id+'"] .btn-cancel');
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> …'; }
+
+  var r = await window.tabibiBooking.cancelMyAppointment(id, '');
+  _cancelInFlight = false;
+
+  if(r.ok){
+    toast("Rendez-vous annulé.", "success");
+    // Refresh complet pour récupérer le nouveau status + déplacer la card
+    // de "À venir" vers "Annulés" proprement.
+    loadAppointments();
+    return;
+  }
+  if(r.error === 'ERR_AUTH_REQUIRED' || r.error === 'ERR_SESSION_EXPIRED'){
+    _showAuthWall();
+    return;
+  }
+  toast(mesrdvMessage(r.error), "error");
+  if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fa fa-xmark"></i> Annuler'; }
+}
+
+// ── Escape helpers (XSS-safe innerHTML) ────────────────────────────────
+function _escapeHtml(s){
+  if(s == null) return '';
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function _escapeAttr(s){ return _escapeHtml(s); }
+
+// ── Goback + init ───────────────────────────────────────────────────────
+function goBackSafe(){
+  if(document.referrer) history.back();
+  else window.location.href = "index.html";
+}
+
+function init(){
+  if(typeof loadUser === 'function') loadUser();
+  if(typeof setLang === 'function') setLang(lang);
+  if(typeof renderUserUI === 'function') renderUserUI();
+  if(typeof initTabBar === 'function') initTabBar("rdv");
+  if(typeof hideLoading === 'function') hideLoading();
+  loadAppointments();
+}
+
+document.addEventListener("DOMContentLoaded", init);
+window.showTab = showTab;
+window.doCancel = doCancel;
+window.goBackSafe = goBackSafe;
+window.loadAppointments = loadAppointments;
+</script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<!-- [Phase 5.2.3-fix] Helper formatage nom médecin -->
+<script src="js/tabibi-doctor-name.js"></script>
+<!-- [Phase 5.2.4] Helper booking patient (Phase 5.2.1) -->
+<script src="js/tabibi-booking.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-sentry.js"></script>
+</body>
+</html>

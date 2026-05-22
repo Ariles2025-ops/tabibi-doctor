@@ -53,6 +53,30 @@ LIMIT 20;
 
 ---
 
+## Phase 5.2.4 (2026-05-22) — mes-rdv.html
+
+### TODO-SQL-003 : Vérifier le schéma exact de `my_upcoming_appointments`
+**Contexte** : `mes-rdv.html` utilise `tabibiBooking.listMyAppointments()` qui appelle `select('*').from('my_upcoming_appointments')`. Le code de la page tente plusieurs noms de colonnes pour le nom du médecin (`doctor_full_name`, `full_name`, embedded `doctor.full_name`) et pour la localisation (`cabinet_address`, `consult_type`, etc.). Si le schéma réel ne match aucun de ces fallbacks → la page affichera "Praticien" et "Cabinet" générique pour tout.
+
+**À vérifier en SQL** :
+```sql
+SELECT column_name, data_type FROM information_schema.columns
+WHERE table_schema='public' AND table_name='my_upcoming_appointments'
+ORDER BY ordinal_position;
+```
+Si la vue n'expose ni `doctor_full_name` ni `full_name`, alimenter la vue avec un JOIN sur `doctor_profiles` exposant au minimum :
+- `doctor_full_name` (text)
+- `doctor_full_name_ar` (text)
+- `doctor_entity_type` (enum, pour le préfixe "Dr.")
+- `doctor_specialty_fr` (text)
+- `cabinet_address` (text, peut être null)
+
+**Également** : confirmer que la vue retourne TOUS les RDV du patient (pending, confirmed, cancelled, completed, no_show) — pas seulement les "upcoming". Sinon les sections "Passés" / "Annulés" de mes-rdv.html seront toujours vides. Si la vue est restrictive (futur seul), créer une 2e vue `my_all_appointments` ou utiliser `appointments` directement avec un JOIN dans le code.
+
+**Risque sans fix** : sections Passés / Annulés vides + nom médecin = "Praticien" partout.
+
+---
+
 ## Phase 12 (déjà tracé dans PROGRESS.md, recopié ici pour vue d'ensemble)
 - DB hygiène : nettoyer doublon `claim_my_doctor_profile()` sans args
 - DB sécurité : aligner `public_doctors`, `public_doctor_full` sur `security_invoker=true`
