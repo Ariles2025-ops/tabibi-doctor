@@ -10,7 +10,9 @@
 -- représentatifs sur la fiche du compte test medecin.test@tabibi.doctor
 -- (doctor_id = 023bbccc-e2ba-45ad-8c9a-8fca85da18fa, Ouanza Dental Clinic
 -- claim 2026-05-22) → permet de valider visuellement l'UI agenda dans
--- les cas réels (blocage passé, blocage futur timed, blocage weekend).
+-- les cas réels du calendrier algérien (fermetures Aïd musulmanes + formation
+-- continue). Adapté au contexte cabinet médical en Algérie (et non au
+-- calendrier liturgique chrétien des fixtures v1).
 --
 -- 🔒 GARANTIES
 --   • Idempotent : DELETE des slots existants pour ce doctor_id AVANT
@@ -83,15 +85,15 @@ BEGIN
   GET DIAGNOSTICS v_deleted = ROW_COUNT;
   RAISE NOTICE '✓ % blocage(s) existant(s) supprimé(s) (idempotence)', v_deleted;
 
-  -- INSERT 3 blocages représentatifs
+  -- INSERT 3 blocages représentatifs du calendrier algérien (Aïd musulmans + formation)
   INSERT INTO public.doctor_unavailable_slots
     (doctor_id, starts_at,                  ends_at,                    all_day, reason)
   VALUES
-    (v_doctor_id, '2026-04-15 00:00:00+01', '2026-04-22 23:59:00+01', true,  'Vacances de Pâques'),
-    (v_doctor_id, '2026-06-10 09:00:00+01', '2026-06-10 17:00:00+01', false, 'Formation continue cardiologie'),
-    (v_doctor_id, '2026-05-30 00:00:00+01', '2026-05-31 23:59:00+01', true,  'Indisponible weekend');
+    (v_doctor_id, '2026-03-20 00:00:00+01', '2026-03-22 23:59:00+01', true,  'Fermeture Aïd el-Fitr'),
+    (v_doctor_id, '2026-05-27 00:00:00+01', '2026-05-29 23:59:00+01', true,  'Fermeture Aïd el-Adha'),
+    (v_doctor_id, '2026-06-10 09:00:00+01', '2026-06-10 17:00:00+01', false, 'Formation continue cardiologie');
   GET DIAGNOSTICS v_inserted = ROW_COUNT;
-  RAISE NOTICE '✅ % blocage(s) insérés (3 attendus : passé all-day, futur timed, weekend all-day)', v_inserted;
+  RAISE NOTICE '✅ % blocage(s) insérés (3 attendus : Aïd el-Fitr all-day, Aïd el-Adha all-day, Formation timed)', v_inserted;
 END $$;
 
 
@@ -111,8 +113,8 @@ FROM public.doctor_unavailable_slots
  WHERE doctor_id = '023bbccc-e2ba-45ad-8c9a-8fca85da18fa'
  ORDER BY starts_at ASC;
 -- ATTENDU : EXACTEMENT 3 lignes dans cet ordre :
---   1. 2026-04-15 → 2026-04-22 (all_day=true, "Vacances de Pâques")
---   2. 2026-05-30 → 2026-05-31 (all_day=true, "Indisponible weekend")
+--   1. 2026-03-20 → 2026-03-22 (all_day=true, "Fermeture Aïd el-Fitr")
+--   2. 2026-05-27 → 2026-05-29 (all_day=true, "Fermeture Aïd el-Adha")
 --   3. 2026-06-10 09:00 → 17:00 (all_day=false, "Formation continue cardiologie")
 
 
