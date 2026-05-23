@@ -4,6 +4,35 @@
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script>
 <script src="js/tabibi-security.js"></script>
+<!-- [Phase 7.4] Feature flags — check video=false dès le head pour redirect propre -->
+<script src="js/tabibi-features.js"></script>
+<script>
+(function(){
+  // Early redirect si feature video désactivée — évite de charger Daily SDK
+  // et de tenter des appels RPC inexistants (Phase 7.1 confirmé : get_video_session
+  // et set_video_recording_consent absents en DB, cf SQL_TODO-008).
+  if (window.TABIBI_FEATURES && window.TABIBI_FEATURES.video === false) {
+    document.addEventListener('DOMContentLoaded', function(){
+      // Cache tous les écrans + montre un état "Bientôt disponible"
+      var shell = document.querySelector('.tc-shell');
+      if (shell) {
+        shell.innerHTML =
+          '<div class="tc-card" style="text-align:center;padding:48px 24px;margin-top:48px;background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.12)">' +
+            '<i class="fa-solid fa-video" style="font-size:48px;color:#0F7560;opacity:.5;margin-bottom:16px"></i>' +
+            '<h1 style="font-size:20px;margin-bottom:8px;color:#1A1A1A">Téléconsultation bientôt disponible</h1>' +
+            '<p style="color:#666;font-size:14px;margin-bottom:24px;line-height:1.6">' +
+              "Cette fonctionnalité sera activée prochainement, après validation du flux vidéo avec nos médecins partenaires. " +
+              "En attendant, vous pouvez prendre un rendez-vous en cabinet." +
+            '</p>' +
+            '<a href="/index.html" class="tc-btn tc-btn-primary" style="display:inline-block;background:#0F7560;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">' +
+              '<i class="fa-solid fa-search"></i> Trouver un médecin' +
+            '</a>' +
+          '</div>';
+      }
+    });
+  }
+})();
+</script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="description" content="Tabibi — Teleconsultation video securisee, vie privee garantie.">
 <meta name="robots" content="noindex,nofollow">

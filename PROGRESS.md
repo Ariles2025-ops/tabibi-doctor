@@ -174,10 +174,10 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [x] **6.2** Édition profil patient (nom, DDN, téléphone, wilaya, langue) — `patient-profile.html saveAll()` ajoute sync best-effort vers Supabase : (a) `auth.updateUser({data: user_metadata})` toujours OK + (b) UPDATE `users` table avec fallback minimal si colonne manquante. localStorage save inchangé (cache local UX). TODO-SQL-007 pour confirmer schéma colonnes `users.{phone, birth_date, gender, lang, wilaya_fr, address}` + RLS self-update.
 
 ## Phase 7 — Téléconsultation (préparation, non-prod) (4-6h)
-- [ ] 7.1 Vérif RPCs vidéo Supabase (`get_video_session`, etc.) existantes
-- [ ] 7.2 Frontend `teleconsultation.html` Daily.co (déjà câblé v10.28)
-- [ ] 7.3 Bandeau RGPD consentement enregistrement
-- [ ] 7.4 Feature flag OFF par défaut, activable médecin par médecin
+- [x] **7.1** Vérif RPCs vidéo Supabase — **non existantes** (PGRST202 confirmé live). `get_video_session` + `set_video_recording_consent` à créer côté SQL → **TODO-SQL-008**.
+- [x] **7.2** Frontend `teleconsultation.html` Daily.co — déjà câblé v10.28 (25 KB), 4 écrans : loading / error / prejoin avec consent / iframe Daily. Pas de modification nécessaire côté code, juste wire feature flag.
+- [x] **7.3** Bandeau RGPD consentement enregistrement — déjà présent (visible patient uniquement, texte conforme RGPD art. 9 + loi DZ 18-07, conservation 30 j puis suppression auto). Pas de modification.
+- [x] **7.4** Feature flag `window.TABIBI_FEATURES.video = false` (NEW `js/tabibi-features.js`) → teleconsultation.html intercepte early et affiche "Bientôt disponible" + CTA Trouver médecin. Activation per-doctor restera côté SQL (`doctor_profiles.video_enabled` à ajouter, TODO-SQL-008).
 
 ## Phase 8 — Paiements sandbox (4-6h)
 - [ ] 8.1 Stripe Test mode + structure SATIM/Edahabia documentée

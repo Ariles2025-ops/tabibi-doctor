@@ -36,7 +36,9 @@ const PRECACHE_URLS = [
   // zéro latence au 1er chargement de reservation.html
   '/js/tabibi-booking.js',
   // [Phase 5.2.3-fix] helper formatage nom médecin partagé (index, doctor-profile)
-  '/js/tabibi-doctor-name.js'
+  '/js/tabibi-doctor-name.js',
+  // [Phase 7.4] feature flags (video/payments/notifications/reviews/analytics/sentry)
+  '/js/tabibi-features.js'
 ];
 
 self.addEventListener('install', event => {

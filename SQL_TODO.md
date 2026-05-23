@@ -107,6 +107,33 @@ ALTER VIEW public_doctors AS (
 );
 ```
 
+### TODO-SQL-008 : RPCs téléconsultation Daily.co (Phase 7.1)
+**Contexte** : `teleconsultation.html` est entièrement câblé côté front mais appelle 2 RPCs inexistantes en DB (PGRST202 vérifié 2026-05-23) :
+- `get_video_session(appointment_id uuid)` — retourne `{room_url, token, session_id, consent_patient_recording, expires_at, ...}`
+- `set_video_recording_consent(p_appt uuid, p_consent bool)` — UPDATE le consentement enregistrement
+
+**Frontend bloqué proprement via feature flag** : `window.TABIBI_FEATURES.video = false` dans `js/tabibi-features.js` → la page redirige avec "Bientôt disponible" + CTA Trouver médecin. Aucun appel RPC tenté.
+
+**À créer en SQL (Phase 7 backend session séparée)** :
+```sql
+-- 1. Colonne per-doctor video_enabled
+ALTER TABLE doctor_profiles ADD COLUMN video_enabled boolean DEFAULT false;
+
+-- 2. RPC get_video_session (sécurité : patient_id=auth.uid() ou doctor=auth.uid())
+CREATE OR REPLACE FUNCTION public.get_video_session(appointment_id uuid)
+RETURNS jsonb LANGUAGE plpgsql SECURITY DEFINER AS $$
+-- ... contracter avec Daily.co côté Edge Function pour générer room+token éphémère
+$$;
+
+-- 3. RPC set_video_recording_consent (patient self-update)
+CREATE OR REPLACE FUNCTION public.set_video_recording_consent(p_appt uuid, p_consent bool)
+RETURNS void LANGUAGE plpgsql SECURITY DEFINER AS $$
+-- UPDATE appointments SET consent_recording=p_consent WHERE id=p_appt AND patient_id=auth.uid();
+$$;
+```
+
+**Après création SQL** : passer `window.TABIBI_FEATURES.video = true` dans `js/tabibi-features.js` + tester E2E.
+
 ### TODO-SQL-007 : Vérifier colonnes profil patient dans table `users` + RLS self-update
 **Contexte** : Phase 6.2 sync `patient-profile.html saveAll()` envoie un UPDATE
 sur `users` avec ces colonnes — best-effort, fallback si KO :
