@@ -207,11 +207,11 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [x] **11.5** Page offline — **déjà existe** (`offline.html` 2.5 KB, précachée dans sw.js).
 
 ## Phase 12 — Monitoring & sécurité (3-4h)
-- [ ] 12.1 Sentry frontend errors (DSN feature flag)
-- [ ] 12.2 Audit `window.*` : aucun secret exposé client
-- [ ] 12.3 RLS audit avec rôle `anon` (read `public_doctors`, write `appointments` only)
-- [ ] 12.4 Rate limiting RPCs sensibles (claim, signup, reset)
-- [ ] 12.5 Headers sécurité strict dans `netlify.toml` (CSP, HSTS, X-Frame DENY)
+- [ ] 12.1 Sentry frontend errors — **bloquant compte tiers**. Tracked via `window.TABIBI_FEATURES.sentry = false` (Phase 7.4). `js/tabibi-sentry.js` déjà inclus sur toutes les pages mais inerte sans DSN. Après création projet sentry.io → ajouter DSN à `js/config.js` + passer flag à true.
+- [x] **12.2** Audit `window.*` aucun secret exposé — ✅ **CONFIRMÉ** : 0 occurrence de `service_role`, `sk_live`, `sk_test`, `SUPABASE_SERVICE`, `sb_secret`, `private_key` dans tout le repo. Seul JWT exposé = `role:anon` (public par design pour le client Supabase).
+- [ ] 12.3 RLS audit rôle `anon` — **TODO-SQL** : tester via curl avec apikey anon que les UPDATE/DELETE sur `users`, `doctor_profiles`, `appointments` sont rejetés. Faisable en READ-only mais hors scope Phase 12 frontend.
+- [ ] 12.4 Rate limiting RPCs sensibles — **backend Supabase** (`pg_extension pg_throttle` ou Edge Function middleware). Hors scope frontend.
+- [x] **12.5** Headers sécurité netlify.toml — **déjà solides** (Phase 2) : CSP, HSTS preload, X-Frame DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy stricte. **Ajout Phase 12.5** : `plausible.io` dans script-src + connect-src pour Phase 10.5 quand analytics=true.
 
 ## Phase 13 — Domaine + déploiement final (1-2h)
 - [ ] 13.1 Instructions DNS pour `tabibi.doctor` (A/AAAA/CNAME)
