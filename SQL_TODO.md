@@ -107,6 +107,36 @@ ALTER VIEW public_doctors AS (
 );
 ```
 
+### TODO-SQL-007 : Vérifier colonnes profil patient dans table `users` + RLS self-update
+**Contexte** : Phase 6.2 sync `patient-profile.html saveAll()` envoie un UPDATE
+sur `users` avec ces colonnes — best-effort, fallback si KO :
+- `first_name`, `last_name`, `full_name` (✅ vérifiés OK depuis signup index.html L1355)
+- `phone`, `birth_date`, `gender`, `lang`, `wilaya_fr`, `address` (❓ non vérifiés)
+
+**À vérifier en SQL** :
+```sql
+SELECT column_name, data_type FROM information_schema.columns
+WHERE table_schema='public' AND table_name='users'
+  AND column_name IN ('phone','birth_date','gender','lang','wilaya_fr','address')
+ORDER BY column_name;
+```
+Si colonne manquante, soit ALTER TABLE pour l'ajouter, soit accepter le
+fallback minimal `{first_name, last_name, full_name}` + auth.user_metadata
+(qui marche déjà pour le reste).
+
+**RLS** : vérifier que `users` autorise `auth.uid() = id` pour UPDATE
+self-profil :
+```sql
+SELECT polname, polcmd, qual, with_check FROM pg_policies
+WHERE schemaname='public' AND tablename='users';
+```
+Si pas de policy "users_self_update", l'UPDATE sera silencieusement filtré.
+Le fallback `auth.updateUser({data})` (user_metadata) reste actif quoi qu'il arrive.
+
+**Risque sans fix** : les modifications profil patient (téléphone, wilaya, langue)
+ne persistent que dans `user_metadata` Supabase Auth, pas dans la table `users`
+— certaines requêtes JOIN risquent de ne pas voir les valeurs à jour.
+
 ### TODO-SQL-006 : ajouter `entity_type`, `is_urgent`, `gender` à `public_doctors`
 **Contexte** :
 - `entity_type` ABSENT → préfixe "Dr." appliqué partout (workaround Phase 5.5 : inférence depuis `specialty_slug`)

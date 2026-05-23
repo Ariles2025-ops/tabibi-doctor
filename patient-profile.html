@@ -414,6 +414,61 @@ async function saveAll(){
   u.settings={};
   document.querySelectorAll("[data-key]").forEach(el=>{ u.settings[el.dataset.key]=el.classList.contains("on"); });
   localStorage.setItem("tabibi_user",JSON.stringify(u));
+
+  // [Phase 6.2] Sync identité vers Supabase pour persistence cross-device.
+  // Avant : save uniquement localStorage → perdu à reconnexion/changement device.
+  // Maintenant : 2 niveaux de persistence (best-effort, ne casse pas le save local) :
+  //   (a) auth.updateUser({data}) → user_metadata (toujours autorisé, pas de RLS)
+  //   (b) users table UPDATE → colonnes profil (RLS doit autoriser self-update)
+  // Si une colonne n'existe pas en base, PostgREST renvoie 400 → on log warning
+  // et on continue. Tracked SQL_TODO TODO-SQL-007 pour vérifier schéma.
+  try {
+    const sb = window.tabibi && window.tabibi.supabase;
+    if(sb){
+      const sessRes = await sb.auth.getSession();
+      const userId = sessRes && sessRes.data && sessRes.data.session && sessRes.data.session.user && sessRes.data.session.user.id;
+      const fullName = (f_first.value + " " + f_last.value).trim();
+      const metaPayload = {
+        first_name: f_first.value || null,
+        last_name:  f_last.value  || null,
+        full_name:  fullName || null,
+        phone:      f_phone.value || null,
+        birth_date: f_bd.value    || null,
+        gender:     f_gender.value || null,
+        lang:       f_lang.value  || null,
+        wilaya_fr:  f_city.value  || null,
+        address:    f_addr.value  || null
+      };
+      // (a) auth.updateUser — toujours OK, persiste dans user_metadata
+      try {
+        await sb.auth.updateUser({ data: metaPayload });
+      } catch(authErr) {
+        console.warn('[Tabibi] auth.updateUser failed (non-bloquant):', authErr && authErr.message);
+      }
+      // (b) UPDATE users table — best-effort. Si une colonne manque,
+      // ré-essaie avec subset minimal {first_name, last_name, full_name}
+      // qu'on sait présent (cf signup index.html ligne 1355).
+      if(userId){
+        const fullPayload = { ...metaPayload };
+        let res = await sb.from('users').update(fullPayload).eq('id', userId);
+        if(res && res.error){
+          console.warn('[Tabibi] users full update failed, retry minimal:', res.error.message);
+          const minimalPayload = {
+            first_name: fullPayload.first_name,
+            last_name:  fullPayload.last_name,
+            full_name:  fullPayload.full_name
+          };
+          const res2 = await sb.from('users').update(minimalPayload).eq('id', userId);
+          if(res2 && res2.error){
+            console.warn('[Tabibi] users minimal update KO:', res2.error.message);
+          }
+        }
+      }
+    }
+  } catch(syncErr) {
+    console.warn('[Tabibi] Phase 6.2 sync identité KO (non-bloquant):', syncErr && syncErr.message);
+  }
+
   toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"),"success");
 }
 

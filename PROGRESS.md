@@ -170,8 +170,8 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [ ] 5.6 Rappels J-1 (Edge Function ou pg_cron, feature flag OFF par défaut)
 
 ## Phase 6 — Dashboard patient + historique (4-6h)
-- [ ] 6.1 Page `patient-dashboard.html` (prochains RDV, historique, ordonnances, favoris)
-- [ ] 6.2 Édition profil patient (nom, DDN, téléphone, wilaya, langue)
+- [x] **6.1** `patient-dashboard.html` overview wire à la vraie data Supabase via `tabibiBooking.listMyAppointments()` : stats #ov-up/c/f/d hydratés + #next-rdv card chronologique (ou empty state CTA "Trouver un médecin"). Favoris depuis localStorage. Total dépensé = `—` tant que `appointments.prix` n'est pas systématiquement renseigné. Idempotent : `window.refreshDashboardOverview` exposé pour re-trigger après cancel.
+- [x] **6.2** Édition profil patient (nom, DDN, téléphone, wilaya, langue) — `patient-profile.html saveAll()` ajoute sync best-effort vers Supabase : (a) `auth.updateUser({data: user_metadata})` toujours OK + (b) UPDATE `users` table avec fallback minimal si colonne manquante. localStorage save inchangé (cache local UX). TODO-SQL-007 pour confirmer schéma colonnes `users.{phone, birth_date, gender, lang, wilaya_fr, address}` + RLS self-update.
 
 ## Phase 7 — Téléconsultation (préparation, non-prod) (4-6h)
 - [ ] 7.1 Vérif RPCs vidéo Supabase (`get_video_session`, etc.) existantes
