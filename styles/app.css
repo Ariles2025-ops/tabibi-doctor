@@ -327,9 +327,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .pay-info p{font-size:12px;color:var(--text3)}
 
 /* ── DASH TABS ─────────── */
-.dash-tabs{display:flex;overflow-x:auto;border-bottom:2px solid var(--border);scrollbar-width:none;background:#fff;padding:0 16px}
+/* [Phase 5.4 fix BUG #4] padding réduit (container 16→8, tab 16→10) pour
+   fit les 5 tabs dans 480px max-width app-root sans "Favoris" coupé. Le
+   gain : 5 tabs × 12px = 60px + container 16px = 76px libérés.
+   overflow-x:auto conservé en filet de sécurité responsive. */
+.dash-tabs{display:flex;overflow-x:auto;border-bottom:2px solid var(--border);scrollbar-width:none;background:#fff;padding:0 8px}
 .dash-tabs::-webkit-scrollbar{display:none}
-.dash-tab{flex-shrink:0;padding:12px 16px;font-size:13px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all var(--t1);white-space:nowrap}
+.dash-tab{flex-shrink:0;padding:12px 10px;font-size:13px;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all var(--t1);white-space:nowrap}
 .dash-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
 .tab-panel{display:none}
 .tab-panel.active{display:block}
