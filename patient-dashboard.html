@@ -988,6 +988,10 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 <script src="js/api.js"></script>
 <script src="js/tabibi-pii-migration.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<!-- [Phase 6.1] Helper formatage nom médecin -->
+<script src="js/tabibi-doctor-name.js"></script>
+<!-- [Phase 6.1] Helpers booking patient (listMyAppointments pour overview) -->
+<script src="js/tabibi-booking.js"></script>
 <script src="js/doctors-display.js"></script>
 <script src="js/tabibi-network.js"></script>
 <script src="js/tabibi-reviews.js"></script>
@@ -1058,4 +1062,137 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
 <script src="js/tabibi-sentry.js"></script>
+<!-- ============================================================
+     [Phase 6.1] Wire overview tab à la vraie data Supabase :
+     - #ov-up   = nombre RDV à venir (pending + confirmed, futur)
+     - #ov-c    = nombre RDV passés (completed, no_show, futur dépassé)
+     - #ov-f    = nombre favoris (localStorage)
+     - #ov-d    = total dépensé (sum prix sur passés) — "—" si prix absents
+     - #next-rdv = card du prochain RDV chronologique ou empty state CTA
+     Idempotent : si rappelé (changement onglet), re-fetch sans dupliquer.
+============================================================ -->
+<script>
+(function(){
+  'use strict';
+  // Helpers TZ Algiers
+  var _DF_DAY = new Intl.DateTimeFormat('fr-FR', { weekday:'long', day:'numeric', month:'long', timeZone:'Africa/Algiers' });
+  var _DF_TIME = new Intl.DateTimeFormat('fr-FR', { hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Africa/Algiers' });
+  function _fmtDate(iso){ try { return _DF_DAY.format(new Date(iso)); } catch(e){ return '—'; } }
+  function _fmtTime(iso){ try { return _DF_TIME.format(new Date(iso)); } catch(e){ return '—'; } }
+  function _esc(s){
+    if(s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+  function _doctorName(row){
+    var profile = {
+      full_name:    row.doctor_full_name    || row.full_name    || (row.doctor && row.doctor.full_name)    || null,
+      full_name_ar: row.doctor_full_name_ar || row.full_name_ar || (row.doctor && row.doctor.full_name_ar) || null,
+      entity_type:  row.doctor_entity_type  || row.entity_type  || (row.doctor && row.doctor.entity_type)  || null
+    };
+    return (window.tabibiDoctorName && window.tabibiDoctorName.format)
+      ? window.tabibiDoctorName.format(profile)
+      : (profile.full_name || profile.full_name_ar || 'Praticien');
+  }
+  function _doctorSpec(row){
+    return row.doctor_specialty_fr || row.specialty_fr
+        || (row.doctor && (row.doctor.specialty_fr || row.doctor.specialty_name_fr))
+        || '';
+  }
+  function _favCount(){
+    try {
+      var raw = localStorage.getItem('tabibi_favs') || '[]';
+      var arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr.length : 0;
+    } catch(e){ return 0; }
+  }
+  function _renderEmptyNextRdv(){
+    var box = document.getElementById('next-rdv'); if(!box) return;
+    box.innerHTML =
+      '<div class="card" style="padding:18px;text-align:center">' +
+        '<i class="fa fa-calendar-plus" style="font-size:28px;color:var(--text3);margin-bottom:10px;display:block" aria-hidden="true"></i>' +
+        '<div style="font-size:13px;color:var(--text2);margin-bottom:12px">Aucun RDV à venir pour le moment.</div>' +
+        '<a href="index.html" class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Trouver un médecin</a>' +
+      '</div>';
+  }
+  function _renderNextRdv(rdv){
+    var box = document.getElementById('next-rdv'); if(!box) return;
+    var name = _esc(_doctorName(rdv));
+    var spec = _esc(_doctorSpec(rdv));
+    var when = rdv.starts_at || rdv.scheduled_at;
+    box.innerHTML =
+      '<div class="card" style="padding:14px">' +
+        '<div style="font-size:14px;font-weight:700;margin-bottom:4px">' + name + '</div>' +
+        (spec ? '<div style="font-size:12px;color:var(--text3);margin-bottom:8px">' + spec + '</div>' : '') +
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">' +
+          '<span style="font-size:11px;padding:3px 8px;border-radius:999px;background:var(--blue-l);color:var(--blue);font-weight:600">' +
+          '<i class="fa fa-calendar-day"></i> ' + _esc(_fmtDate(when)) + ' · ' + _esc(_fmtTime(when)) + '</span>' +
+        '</div>' +
+        '<a href="mes-rdv.html" class="btn btn-ghost btn-sm" style="font-size:12px"><i class="fa fa-list"></i> Voir tous mes RDV</a>' +
+      '</div>';
+  }
+  function _setStat(id, val){
+    var el = document.getElementById(id);
+    if(el) el.textContent = val;
+  }
+  async function refreshOverview(){
+    // Favoris : toujours dispo (local), update immédiat
+    _setStat('ov-f', _favCount());
+
+    if(!window.tabibiBooking || !window.tabibiBooking.listMyAppointments){
+      // Module pas encore chargé → empty state propre, ne pas crasher
+      _renderEmptyNextRdv();
+      return;
+    }
+    var r = await window.tabibiBooking.listMyAppointments();
+    if(!r.ok){
+      // ERR_AUTH_REQUIRED : pas connecté → l'app gère déjà ailleurs (redirect)
+      // Autres erreurs : silencieux + empty state
+      _renderEmptyNextRdv();
+      return;
+    }
+    var rows = r.data || [];
+    var now = Date.now();
+    var upcoming = [], past = [], spentSum = 0, spentHasData = false;
+    rows.forEach(function(rdv){
+      var status = String(rdv.status || '').toLowerCase();
+      var when = rdv.starts_at || rdv.scheduled_at;
+      var whenMs = when ? new Date(when).getTime() : 0;
+      if(status === 'cancelled') return;     // exclu des stats
+      if(status === 'completed' || status === 'no_show' || (whenMs && whenMs < now)){
+        past.push(rdv);
+        if(rdv.prix != null){ spentSum += parseInt(rdv.prix,10) || 0; spentHasData = true; }
+      } else {
+        upcoming.push(rdv);
+      }
+    });
+    upcoming.sort(function(a,b){
+      return new Date(a.starts_at || a.scheduled_at) - new Date(b.starts_at || b.scheduled_at);
+    });
+
+    _setStat('ov-up', upcoming.length);
+    _setStat('ov-c', past.length);
+    _setStat('ov-d', spentHasData ? (spentSum.toLocaleString('fr-DZ') + ' DA') : '—');
+
+    if(upcoming.length > 0){
+      _renderNextRdv(upcoming[0]);
+    } else {
+      _renderEmptyNextRdv();
+    }
+  }
+  // Wait DOMContentLoaded + un petit delay pour que tabibiBooking soit chargé
+  function _start(){
+    // Le script tabibi-booking.js est chargé synchronement avant ce bloc,
+    // donc window.tabibiBooking est dispo. Au cas où : retry après 200ms.
+    setTimeout(refreshOverview, 50);
+    setTimeout(refreshOverview, 800);  // retry au cas où auth pas encore prête
+  }
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', _start);
+  } else {
+    _start();
+  }
+  // Expose pour re-trigger manuel (ex: après cancel RDV via mes-rdv)
+  window.refreshDashboardOverview = refreshOverview;
+})();
+</script>
 </body></html>
