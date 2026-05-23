@@ -712,6 +712,11 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <a href="login.html" class="btn btn-white btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></a>
         <a href="signup.html" class="btn btn-lg" style="flex:1;min-width:140px;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
       </div>
+      <!-- [Phase 14.3] CTA médecin — visible TOUS users (anon + patient) -->
+      <a href="doctor-claim.html" style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.10);border:1.5px dashed rgba(255,255,255,.35);border-radius:var(--r12);color:#fff;text-decoration:none;font-size:13px">
+        <span><i class="fa fa-user-doctor" style="margin-right:6px"></i> <span data-i18n="cta_doctor_claim">Vous êtes médecin ? Réclamez votre fiche</span></span>
+        <i class="fa fa-arrow-right" style="opacity:.7"></i>
+      </a>
     </section>
 
   <!-- SPECIALTIES -->
@@ -855,7 +860,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     sec_specs:"Spécialités",sec_doctors:"Médecins",see_all:"Voir tout →",
     foot_patients:"Patients",foot_doctors:"Médecins",foot_company:"Entreprise",foot_legal:"Légal",
     foot_find_doc:"Trouver un médecin",foot_signin:"Se connecter",foot_signup:"Créer un compte",
-    foot_my_rdv:"Mes RDV",foot_become:"Devenir partenaire",foot_pro_space:"Espace pro",
+    foot_my_rdv:"Mes RDV",foot_become:"Devenir partenaire",foot_pro_space:"Espace pro",foot_claim_fiche:"Réclamer ma fiche",cta_doctor_claim:"Vous êtes médecin ? Réclamez votre fiche",badge_unclaimed:"Non réclamée",
     foot_about:"À propos",foot_careers:"Carrières",foot_press:"Presse",foot_blog:"Blog santé",
     foot_cgu:"CGU",foot_privacy:"Confidentialité",foot_cookies:"Cookies",foot_legal_mentions:"Mentions légales",
     foot_support_24:"Support 7j/7 — 8h à 22h",
@@ -918,7 +923,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     sec_specs:"التخصصات",sec_doctors:"الأطباء",see_all:"عرض الكل →",
     foot_patients:"المرضى",foot_doctors:"الأطباء",foot_company:"الشركة",foot_legal:"قانوني",
     foot_find_doc:"ابحث عن طبيب",foot_signin:"تسجيل الدخول",foot_signup:"إنشاء حساب",
-    foot_my_rdv:"مواعيدي",foot_become:"أصبح شريكا",foot_pro_space:"الفضاء المهني",
+    foot_my_rdv:"مواعيدي",foot_become:"أصبح شريكا",foot_pro_space:"الفضاء المهني",foot_claim_fiche:"المطالبة بملفي",cta_doctor_claim:"هل أنت طبيب؟ طالب بملفك",badge_unclaimed:"غير مطالب به",
     foot_about:"من نحن",foot_careers:"التوظيف",foot_press:"الصحافة",foot_blog:"مدونة صحية",
     foot_cgu:"الشروط",foot_privacy:"الخصوصية",foot_cookies:"الكوكيز",foot_legal_mentions:"إشعارات قانونية",
     foot_support_24:"الدعم 7/7 — من 8 إلى 22",
@@ -981,7 +986,7 @@ nav_doctors:"Doctors",cta_login:"Sign in",cta_signup:"Sign up",
     sec_specs:"Specialties",sec_doctors:"Doctors",see_all:"See all →",
     foot_patients:"Patients",foot_doctors:"Doctors",foot_company:"Company",foot_legal:"Legal",
     foot_find_doc:"Find a doctor",foot_signin:"Sign in",foot_signup:"Sign up",
-    foot_my_rdv:"My appointments",foot_become:"Become partner",foot_pro_space:"Pro space",
+    foot_my_rdv:"My appointments",foot_become:"Become partner",foot_pro_space:"Pro space",foot_claim_fiche:"Claim my listing",cta_doctor_claim:"Are you a doctor? Claim your listing",badge_unclaimed:"Unclaimed",
     foot_about:"About",foot_careers:"Careers",foot_press:"Press",foot_blog:"Health blog",
     foot_cgu:"Terms",foot_privacy:"Privacy",foot_cookies:"Cookies",foot_legal_mentions:"Legal notice",
     foot_support_24:"Support 7/7 — 8am to 10pm",
@@ -1910,6 +1915,7 @@ function docCard(d){
       ${d.acceptsChifa?`<span class="badge" style="background:#dcfce7;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>Chifa</span>`:""}
       ${d.acceptsCard?`<span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class='fa fa-credit-card fa-xs'></i>Carte</span>`:""}
       ${d.acceptsCash?`<span class="badge" style="background:#fef3c7;color:#92400e"><i class='fa fa-money-bill-wave fa-xs'></i>Espèces</span>`:""}
+      ${d.claimed===false?`<a href="doctor-claim.html" onclick="event.stopPropagation()" class="badge" style="background:#fef3c7;color:#92400e;text-decoration:none;border:1px dashed #f59e0b" title="Vous êtes ce médecin ? Cliquez pour réclamer votre fiche."><i class='fa fa-circle-info fa-xs'></i>Non réclamée</a>`:""}
     </div>
     <div class="doc-footer">
       <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
@@ -2898,6 +2904,8 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       </div>
       <div>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#2E8B57;margin-bottom:8px" data-i18n="foot_doctors">Médecins</div>
+        <!-- [Phase 14.3] Lien direct claim — priorité 1 pour acquisition médecin -->
+        <a href="doctor-claim.html" style="display:block;font-size:12px;color:#0F7560;font-weight:700;padding:4px 0;text-decoration:none"><i class="fa fa-id-card fa-xs" style="margin-right:4px"></i><span data-i18n="foot_claim_fiche">Réclamer ma fiche</span></a>
         <a href="onboarding-medecin.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="foot_become">Devenir partenaire</span></a>
         <a href="doctor-dashboard.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="foot_pro_space">Espace pro</span></a>
         <a href="#" class="link-disabled" title="Bientôt disponible" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span id="foot-pro-pricing">Tabibi PRO 5 000 DA/mois</span> · <span class="foot-soon">Bientôt</span></a>

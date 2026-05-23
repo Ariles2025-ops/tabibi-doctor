@@ -73,7 +73,7 @@
   <!-- HERO -->
   <section class="dc-hero" aria-label="Vous êtes médecin">
     <h1><i class="fa fa-user-doctor" style="margin-right:8px;opacity:.85"></i> Vous êtes médecin ?</h1>
-    <p>Trouvez votre fiche parmi <span id="dc-count">79 746</span> praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</p>
+    <p>Trouvez votre fiche parmi <span id="dc-count">—</span> praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</p>
   </section>
 
   <!-- SEARCH -->
@@ -147,7 +147,9 @@
 // [Phase 14.1] doctor-claim.html — recherche fiche + flow claim
 // ------------------------------------------------------------------------
 // Restriction CRITIQUE : la RPC claim_my_doctor_profile attend un legacy_id
-// INTEGER. Seuls 14 508 / 79 746 médecins ont un legacy_id non-null en DB.
+// INTEGER. Tous les médecins importés via le CSV historique ont un legacy_id ;
+// les fiches ajoutées ultérieurement n'en ont pas → non-réclamables via cette RPC
+// (CTA "Écrivez-nous" en bas de page pour les cas non-couverts).
 // On filtre côté serveur `legacy_id=not.is.null AND is_claimed=false` pour
 // éviter d'afficher des cards non-réclamables.
 // ========================================================================
@@ -329,8 +331,25 @@ document.addEventListener('click', function(e){
   if(e.target && e.target.id === 'dc-modal') dcCloseModal();
 });
 
+// Charge compteur total médecins (HEAD count=exact, 1 round-trip rapide)
+async function _loadTotalDoctorCount(){
+  try {
+    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=id', {
+      method:'HEAD',
+      headers:{ apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-0' }
+    });
+    var cr = r.headers.get('content-range') || '';
+    var t = parseInt((cr.split('/')[1] || '0'), 10) || 0;
+    if(t){
+      var el = document.getElementById('dc-count');
+      if(el) el.textContent = t.toLocaleString('fr-DZ');
+    }
+  } catch(e){ /* silencieux, le placeholder "—" reste affiché */ }
+}
+
 // Init
 document.addEventListener('DOMContentLoaded', function(){
+  _loadTotalDoctorCount();
   _populateDropdowns();
   // Premier load : afficher quelques exemples + count
   dcSearch();

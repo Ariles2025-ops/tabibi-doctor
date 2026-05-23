@@ -927,6 +927,11 @@
     'Reçu': { ar: 'إيصال', en: 'Receipt' },
     'Facture': { ar: 'فاتورة', en: 'Invoice' },
 
+    // ─── [Phase 14.2] Onboarding médecin (medecin-profile.html ?onboarding=1) ───
+    'Bienvenue sur Tabibi !': { ar: 'مرحبا بك في طبيبي!', en: 'Welcome to Tabibi!' },
+    'Complétez votre fiche en 3 minutes pour la rendre visible aux patients. Champs obligatoires : photo, tarif consultation et horaires.': { ar: 'أكمل ملفك في 3 دقائق لجعله مرئيا للمرضى. الحقول المطلوبة: صورة، رسوم الاستشارة، ومواعيد العمل.', en: 'Complete your listing in 3 minutes to make it visible to patients. Required: photo, consultation fee, working hours.' },
+    'Sauvegarder et publier ma fiche': { ar: 'احفظ وانشر ملفي', en: 'Save and publish my listing' },
+
     // ─── Médecin / Spécialités ───
     'Médecin': { ar: 'طبيب', en: 'Doctor' },
     'Médecine Gén.': { ar: 'طب عام', en: 'General Med.' },
