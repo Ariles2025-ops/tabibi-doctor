@@ -186,11 +186,11 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [x] **8.4** Credentials prod NON activés — confirmé via `window.TABIBI_FEATURES.payments = false` (Phase 7.4).
 
 ## Phase 9 — Notifications & avis (4-6h)
-- [ ] 9.1 Table `notifications` + page `notifications.html` (in-app only V1)
-- [ ] 9.2 Triggers : RDV confirmé/annulé, rappel J-1, ordonnance, fiche réclamée
-- [ ] 9.3 Table `reviews` (rating 1-5, comment, verified flag)
-- [ ] 9.4 RLS : patient review uniquement si appointment.status='completed'
-- [ ] 9.5 Affichage moyenne + 5 derniers avis sur fiche
+- [x] **9.1** Page `notifications.html` créée (frontend ready) — empty state + disclaimer M0 + early empty si `notifications=false`. Lit `sb.from('notifications').select(...)` quand backend prêt (cf TODO-SQL-010). markAllRead + format date relatif FR.
+- [ ] 9.2 Triggers PostgreSQL : **TODO-SQL-010** (RDV confirmé/annulé, rappel J-1 via pg_cron, ordonnance, claim fiche).
+- [ ] 9.3 Table `reviews` : **TODO-SQL-011** (schéma + RLS strict appointment.status='completed').
+- [ ] 9.4 RLS post-completed : **TODO-SQL-011** (CHECK policy patient_create).
+- [ ] 9.5 Affichage moyenne + 5 derniers avis : `js/tabibi-reviews.js` existe déjà côté front. Activable une fois TODO-SQL-011 exécuté + `window.TABIBI_FEATURES.reviews = true`.
 
 ## Phase 10 — SEO & analytics (3-5h)
 - [ ] 10.1 Régen 490 pages SEO avec noms anonymisés depuis `public_doctors`

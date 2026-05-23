@@ -107,6 +107,70 @@ ALTER VIEW public_doctors AS (
 );
 ```
 
+### TODO-SQL-010 : Notifications in-app (Phase 9.1/9.2)
+**Contexte** : `notifications.html` (Phase 9.1) lit déjà `sb.from('notifications').select(...).order(created_at desc).limit(50)` quand `TABIBI_FEATURES.notifications=true`. Schéma cible :
+```sql
+CREATE TABLE public.notifications (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  type         text NOT NULL CHECK (type IN ('rdv_confirmed','rdv_cancelled','rdv_reminder','prescription','claim','system')),
+  title        text NOT NULL,
+  message      text NOT NULL,
+  data         jsonb,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  read_at      timestamptz
+);
+CREATE INDEX notifications_user_id_created_idx ON public.notifications(user_id, created_at DESC);
+
+-- RLS : utilisateur voit + marque-lu uniquement ses propres notifs
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY notif_self_read ON public.notifications FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY notif_self_update ON public.notifications FOR UPDATE USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+-- pas de INSERT côté client (triggers + Edge Functions seulement)
+```
+
+**Triggers à créer** (Phase 9.2) :
+- appointments AFTER INSERT pending → notif type='rdv_confirmed' (au patient)
+- appointments AFTER UPDATE status='cancelled' → notif type='rdv_cancelled' (à l'autre partie)
+- pg_cron J-1 sur upcoming RDV → notif type='rdv_reminder'
+- prescriptions AFTER INSERT → notif type='prescription' (au patient)
+- doctor_profiles AFTER UPDATE is_claimed → notif type='claim' (au médecin via mail si user_id NULL)
+
+**Après backend prêt** : passer `window.TABIBI_FEATURES.notifications = true`.
+
+### TODO-SQL-011 : Avis & reviews (Phase 9.3/9.4/9.5)
+**Contexte** : tabibi-reviews.js existe déjà côté front (chargé par doctor-profile.html) mais lit `from('reviews')`. Schéma cible :
+```sql
+CREATE TABLE public.reviews (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  appointment_id  uuid NOT NULL REFERENCES public.appointments(id) ON DELETE CASCADE,
+  patient_id      uuid NOT NULL REFERENCES auth.users(id),
+  doctor_id       uuid NOT NULL REFERENCES public.doctor_profiles(id),
+  rating          int NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment         text,
+  verified        boolean DEFAULT false,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (appointment_id)
+);
+CREATE INDEX reviews_doctor_id_created_idx ON public.reviews(doctor_id, created_at DESC);
+
+-- RLS strict : 1 avis = 1 appointment.status='completed' du patient connecté
+ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+CREATE POLICY reviews_public_read ON public.reviews FOR SELECT USING (true);
+CREATE POLICY reviews_patient_create ON public.reviews FOR INSERT WITH CHECK (
+  patient_id = auth.uid()
+  AND EXISTS (
+    SELECT 1 FROM public.appointments a
+    WHERE a.id = appointment_id AND a.patient_id = auth.uid() AND a.status = 'completed'
+  )
+);
+-- pas d'UPDATE/DELETE patient (intégrité avis)
+```
+
+**Vue agrégée** pour public_doctors.{rating, review_count} (TODO-SQL-005 référence cette même attente).
+
+**Après backend prêt** : passer `window.TABIBI_FEATURES.reviews = true` + reactiver le formulaire d'avis dans doctor-profile.html (actuellement masqué via data-feature="reviews" si présent).
+
 ### TODO-SQL-009 : Paiements Stripe Test + Edge Function webhook (Phase 8.1/8.3)
 **Contexte** : `payment.html` (Phase 8.2) affiche les 4 méthodes (espèces, carte, Edahabia, CIB) mais seules les espèces sont actives via feature flag `payments=false`. Quand backend Stripe Test prêt :
 
