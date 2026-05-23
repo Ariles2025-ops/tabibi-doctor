@@ -203,17 +203,47 @@ async function doSignup(e){
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Création en cours...'; }
 
   // ─── INSCRIPTION VIA SUPABASE AUTH ───
+  // [Phase 14.3 fix] Self-healing : si window.tabibi.auth manque (api.js ou
+  // supabase-client.js a fail silencieusement, ou bridge désactivé), on init
+  // un client Supabase EN INLINE et on appelle l'API directement. Évite
+  // tout silent fail signup. Aucune dépendance externe au-delà du SDK Supabase
+  // (chargé en ligne 422 via CDN).
+  console.log('[signup] doSignup() start role=' + cur + ' email=' + em.substring(0,3) + '***');
   try {
-    if (!window.tabibi || !window.tabibi.auth || !window.tabibi.supabase) {
-      throw new Error("Service d'authentification indisponible");
+    var sbClient = (window.tabibi && window.tabibi.supabase) || null;
+    if (!sbClient) {
+      // Bootstrap inline
+      console.warn('[signup] window.tabibi.supabase absent, bootstrap inline');
+      var SB_URL_LOC = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co';
+      var SB_KEY_LOC = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        throw new Error("SDK Supabase non chargé — rechargez la page (Ctrl+R)");
+      }
+      if (!SB_KEY_LOC) {
+        throw new Error("Configuration manquante — contact@tabibi.doctor");
+      }
+      sbClient = window.supabase.createClient(SB_URL_LOC, SB_KEY_LOC, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+      });
+      // Cache pour les usages downstream (claim auto, upsert users)
+      window.tabibi = window.tabibi || {};
+      window.tabibi.supabase = sbClient;
     }
 
-    // 1. Créer le compte Supabase Auth
-    const signupResult = await window.tabibi.auth.signUp(em, pw, cur);
+    // 1. Créer le compte Supabase Auth — call DIRECT au SDK, pas via wrapper
+    console.log('[signup] auth.signUp() POST /auth/v1/signup …');
+    var _signupRes = await sbClient.auth.signUp({
+      email: em,
+      password: pw,
+      options: { data: { role: cur } }
+    });
+    if (_signupRes.error) throw _signupRes.error;
+    var signupResult = _signupRes.data;
 
     if (!signupResult || !signupResult.user) {
       throw new Error("Erreur lors de la création du compte");
     }
+    console.log('[signup] auth.signUp() OK user_id=' + signupResult.user.id.substring(0,8) + '…');
 
     // 2. Créer/compléter le profil dans public.profiles
     //    NOTE : le trigger set_profile_status mettra status='pending_verification' pour les médecins
