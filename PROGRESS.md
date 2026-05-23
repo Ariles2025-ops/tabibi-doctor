@@ -193,11 +193,11 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [ ] 9.5 Affichage moyenne + 5 derniers avis : `js/tabibi-reviews.js` existe déjà côté front. Activable une fois TODO-SQL-011 exécuté + `window.TABIBI_FEATURES.reviews = true`.
 
 ## Phase 10 — SEO & analytics (3-5h)
-- [ ] 10.1 Régen 490 pages SEO avec noms anonymisés depuis `public_doctors`
-- [ ] 10.2 `robots.txt` + `sitemap.xml` cohérents
-- [ ] 10.3 Schema.org Physician/MedicalBusiness JSON-LD
-- [ ] 10.4 Open Graph + Twitter Cards complets
-- [ ] 10.5 Plausible analytics (feature flag OFF)
+- [ ] 10.1 Régen 490 pages SEO depuis `public_doctors` — **script outil hors live frontend**. À écrire en session séparée (Node.js + fetch public_doctors par batches + template HTML par {wilaya}/{specialty}). Tracked SQL_TODO-002 confirme déjà que la vue retourne noms anonymisés si is_claimed=false → safe pour SEO. Robots.txt désactive déjà `/seo/` jusqu'à régénération propre.
+- [x] **10.2** `robots.txt` + `sitemap.xml` — déjà présents et cohérents (Phase 2). 3 sitemaps : static, blog, seo-local. Pas de modification.
+- [x] **10.3** Schema.org JSON-LD — **4 blocs déjà présents** dans index.html (Organization, WebSite, FAQPage, LocalBusiness). Pas de modification.
+- [x] **10.4** Open Graph + Twitter Cards — **déjà complets** dans index.html (lignes 14-31) : og:type/url/title/description/image (1200x630) + og:locale fr_DZ + alternates ar_DZ/en_US + twitter:card summary_large_image. Pas de modification.
+- [x] **10.5** Plausible analytics feature flag — NEW `js/tabibi-analytics.js` qui charge le script Plausible UNIQUEMENT si `TABIBI_FEATURES.analytics=true` ET consent cookies analytics OK. Activation post-création compte Plausible. Cookieless par défaut = RGPD-safe.
 
 ## Phase 11 — Mobile & PWA (3-4h)
 - [ ] 11.1 Audit responsive (320/375/414/768px)
