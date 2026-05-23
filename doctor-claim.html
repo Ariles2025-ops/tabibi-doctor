@@ -229,17 +229,21 @@ function _renderResults(res){
   cline.textContent = (res.total > 20)
     ? res.rows.length + ' affichées sur ' + res.total + ' — affinez par wilaya/spécialité'
     : res.total + ' fiche(s) trouvée(s)';
+  // [Phase 14.1-fix] Event delegation au lieu d'inline onclick — évite tout
+  // risque de parsing cassé sur noms exotiques (UTF-8, ', /, etc.). Le bouton
+  // porte juste data-claim-legacy + data-claim-name, lus par le listener
+  // global #dc-list attaché en DOMContentLoaded.
   box.innerHTML = res.rows.map(function(d){
     var DN = window.tabibiDoctorName;
     var name = DN ? DN.format(d) : (d.full_name || 'Praticien');
     var ini  = DN ? DN.initials(d) : _initialsOf(d.full_name);
     var meta = _esc((d.specialty_fr||'') + ' · ' + (d.city ? (d.city+', ') : '') + (d.wilaya_fr||''));
-    return '<article class="dc-card" data-id="'+_esc(d.id)+'" data-legacy="'+_esc(d.legacy_id)+'" data-name="'+_esc(name)+'">'
+    return '<article class="dc-card" data-id="'+_esc(d.id)+'">'
          +   '<div class="ava">'+_esc(ini)+'</div>'
          +   '<div class="body">'
          +     '<div class="name">'+_esc(name)+'</div>'
          +     '<div class="meta">'+meta+'</div>'
-         +     '<button type="button" class="btn-claim" onclick="dcOpenModal(\''+_esc(d.legacy_id)+'\',\''+_esc(name)+'\')">'
+         +     '<button type="button" class="btn-claim" data-claim-legacy="'+_esc(d.legacy_id)+'" data-claim-name="'+_esc(name)+'">'
          +       '<i class="fa fa-id-card"></i> C\'est moi, je veux réclamer'
          +     '</button>'
          +   '</div>'
@@ -353,6 +357,27 @@ document.addEventListener('DOMContentLoaded', function(){
   _populateDropdowns();
   // Premier load : afficher quelques exemples + count
   dcSearch();
+  // [Phase 14.1-fix] Event delegation pour les boutons "C'est moi". Attaché
+  // UNE seule fois sur le container parent (immuable). Lit data-claim-* du
+  // bouton cliqué et appelle dcOpenModal. Marche même si re-render des
+  // cards (changement de filtre) car le listener est sur #dc-list, pas sur
+  // les boutons individuels.
+  var listEl = document.getElementById('dc-list');
+  if(listEl){
+    listEl.addEventListener('click', function(e){
+      var btn = e.target.closest && e.target.closest('.btn-claim');
+      if(!btn) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var legacy = btn.getAttribute('data-claim-legacy');
+      var name   = btn.getAttribute('data-claim-name');
+      if(!legacy){
+        console.warn('[doctor-claim] btn-claim sans data-claim-legacy', btn);
+        return;
+      }
+      dcOpenModal(legacy, name || '');
+    });
+  }
 });
 window.dcSearch = dcSearch;
 window.dcSearchDebounced = dcSearchDebounced;
