@@ -1947,9 +1947,9 @@ function showDoctorModal(d){
           <div style="font-size:18px;font-weight:800;color:#fff">${n}</div>
           <div style="font-size:13px;color:rgba(255,255,255,.75)">${s} · ${c}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
-            <span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span>
-            <span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span>
-            <span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis} avis)</span>
+            ${d.note != null
+              ? `<span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span><span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span><span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis||0} avis)</span>`
+              : `<span style='font-size:12px;color:rgba(255,255,255,.65)'>Pas encore noté</span>`}
             ${d.cert?`<span class="badge badge-green" style="font-size:10px"><i class='fa fa-check fa-xs'></i>Certifié</span>`:""}
             ${d.urgent?`<span class="badge badge-red" style="font-size:10px"><i class='fa fa-bolt fa-xs'></i>Urgences</span>`:""}
           </div>
@@ -1959,7 +1959,7 @@ function showDoctorModal(d){
           <div class="card" style="margin-bottom:14px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
               <div style="font-size:14px;font-weight:700"><i class='fa fa-calendar-days'></i> Créneaux disponibles</div>
-              <div style="font-size:16px;font-weight:800;color:var(--blue)">${d.prix.toLocaleString()} DA</div>
+              <div style="font-size:16px;font-weight:800;color:var(--blue)">${d.prix != null ? `${d.prix.toLocaleString()} DA` : `<span style="font-size:13px;color:var(--text3)">Tarif à confirmer</span>`}</div>
             </div>
             <div class="slots-grid" id="prof-slots"></div>
             <div id="slot-confirm-txt" class="hidden" style="background:var(--blue-l);border-radius:var(--r12);padding:10px;font-size:13px;color:var(--blue);margin:10px 0;display:flex;align-items:center;gap:6px"><i class='fa fa-check-circle'></i><span id="slot-txt"></span></div>
@@ -2048,7 +2048,7 @@ function showBookingModal(d,slot){
             <div style="font-size:12px;color:var(--text3)">${dspec(d)} · ${dcity(d)}</div>
             <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
               <span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:var(--rfull);font-weight:600"><i class='fa fa-calendar-days'></i> ${slot||"09:00"}</span>
-              <span style='font-size:13px;font-weight:700;color:var(--blue)'>${d.prix.toLocaleString()} DA</span>
+              <span style='font-size:13px;font-weight:700;color:var(--blue)'>${d.prix != null ? `${d.prix.toLocaleString()} DA` : 'Tarif à confirmer'}</span>
             </div>
           </div>
         </div>
