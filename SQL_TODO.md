@@ -77,6 +77,54 @@ Si la vue n'expose ni `doctor_full_name` ni `full_name`, alimenter la vue avec u
 
 ---
 
+## Phase 5.5 (2026-05-23) — recherche server-side + cards data
+
+### TODO-SQL-004 : ajouter `consultation_fee_dzd` à `public_doctors`
+**Contexte** : `loadDoctorCards()` Phase 5.5 affiche "Tarif à confirmer" sur 100 % des cards car la vue n'expose pas la colonne. Filtre client `maxPrice` skippé.
+
+**À vérifier puis ajouter** :
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_schema='public' AND table_name='doctor_profiles'
+  AND column_name LIKE '%fee%' OR column_name LIKE '%price%';
+-- Si la colonne existe en table source mais pas dans la vue : ALTER VIEW pour l'ajouter
+-- Si elle n'existe pas du tout : ALTER TABLE doctor_profiles ADD COLUMN consultation_fee_dzd integer;
+```
+
+**Risque sans fix** : UX dégradée (pas de tarif visible avant booking), filtre prix inutilisable.
+
+### TODO-SQL-005 : ajouter `rating` + `review_count` à `public_doctors`
+**Contexte** : `loadDoctorCards()` affiche "Pas encore noté" sur 100 % des cards. Chip "4★+" inutilisable. Sort "Mieux notés" tombe sur `full_name.asc`.
+
+**À vérifier puis** :
+```sql
+-- Probablement déjà calculé depuis la table reviews (Phase 9), à exposer dans la vue
+ALTER VIEW public_doctors AS (
+  SELECT ..., r.avg_rating AS rating, r.cnt AS review_count
+  FROM doctor_profiles dp
+  LEFT JOIN (SELECT doctor_id, AVG(rating) avg_rating, COUNT(*) cnt
+             FROM reviews GROUP BY doctor_id) r ON r.doctor_id = dp.id
+);
+```
+
+### TODO-SQL-006 : ajouter `entity_type`, `is_urgent`, `gender` à `public_doctors`
+**Contexte** :
+- `entity_type` ABSENT → préfixe "Dr." appliqué partout (workaround Phase 5.5 : inférence depuis `specialty_slug`)
+- `is_urgent` ABSENT → chip "Urgences" inutilisable
+- `gender` ABSENT → chip "Femmes" inutilisable
+
+**À vérifier en SQL** :
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_schema='public' AND table_name='doctor_profiles'
+  AND column_name IN ('entity_type','is_urgent','gender','sexe');
+```
+Ajouter les colonnes manquantes à la table source si besoin, puis recréer la vue avec ces colonnes.
+
+**Risque sans fix** : "Dr. Nadia Kidari" pour une pharmacie ; 2 chips de filtre non fonctionnels.
+
+---
+
 ## Phase 12 (déjà tracé dans PROGRESS.md, recopié ici pour vue d'ensemble)
 - DB hygiène : nettoyer doublon `claim_my_doctor_profile()` sans args
 - DB sécurité : aligner `public_doctors`, `public_doctor_full` sur `security_invoker=true`
