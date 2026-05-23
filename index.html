@@ -2446,12 +2446,64 @@ async function loadRealDoctors(){
 
 function animateCounters(total){if(!total)return;const targets=[document.getElementById("hero-doc-count"),document.getElementById("stats-doc-count"),document.getElementById("foot-doc-count")].filter(Boolean);const duration=1200,start=performance.now();function tick(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const val=Math.floor(eased*total);const txt=val.toLocaleString("fr-DZ");targets.forEach(el=>{if(el)el.textContent=txt;});if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);}
 
+// [Phase 5.4 fix BUG #1] Charge UN échantillon de cartes pour la liste publique
+// "Médecins certifiés en Algérie" (section #sec-docs sur la home).
+// Distinct de loadRealDoctors() (dormante) : 1 SEUL fetch, limit=20, pas de
+// batches, et n'écrit JAMAIS sur les compteurs (hero/stats/foot) — ceux-ci
+// restent exclusivement alimentés par fetchDoctorCount() + animateCounters().
+// L'utilisateur peut affiner via la barre de recherche / filtres (mais le
+// dataset client reste limité à 20 ; full search côté serveur = Phase 6+).
+async function loadDoctorCards(){
+  try {
+    const res = await fetch(_SB_URL + '/rest/v1/public_doctors?select=*&limit=20&order=full_name', {
+      headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY }
+    });
+    if(!res.ok) { console.warn('[Tabibi] loadDoctorCards HTTP', res.status); return; }
+    const batch = await res.json();
+    if(!Array.isArray(batch) || !batch.length) return;
+    // Vide puis remplit DOCTORS (sans toucher aux compteurs DOM)
+    DOCTORS.length = 0;
+    batch.forEach((d,i) => {
+      const clr = _COLORS[i % _COLORS.length];
+      const DN = window.tabibiDoctorName;
+      const nameFr = DN ? DN.formatForLang(d,'fr') : (d.full_name || d.name_fr || d.name || 'Médecin');
+      const nameAr = DN ? DN.formatForLang(d,'ar') : (d.name_ar || d.full_name_ar || d.full_name || nameFr);
+      const nameEn = DN ? DN.formatForLang(d,'en') : (d.name_en || d.full_name || nameFr);
+      const ini = DN ? DN.initials(d) : ((d.full_name||'').replace(/^Dr\.?\s*/i,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || 'MD');
+      DOCTORS.push({
+        id: String(d.id || ('db_'+i)),
+        entityType: d.entity_type || null,
+        fr: nameFr, ar: nameAr, en: nameEn,
+        spec: _spec(d), sAr:'', sEn:'',
+        ville: _ville(d), vAr:'', vEn:'',
+        note: parseFloat(d.rating || d.average_rating || 4.5) || 4.5,
+        prix: parseInt(d.consultation_fee || d.price || 1500) || 1500,
+        urgent: !!(d.is_urgent || d.urgent),
+        cert: d.is_verified !== undefined ? !!d.is_verified : true,
+        in: ini, bg: clr.bg, tc: clr.tc,
+        g: (d.gender==='F'||d.sexe==='F'||d.gender==='female') ? 'F' : 'H',
+        avis: parseInt(d.reviews_count || d.total_reviews || 0) || 0,
+        langs: d.languages || d.langs || ['FR','AR'],
+        desc: d.description || d.bio || d.about || '',
+        addr: d.address || d.cabinet_address || d.addr || '',
+        diplomes: d.diplomes || []
+      });
+    });
+    // Re-render via doFilter() pour passer dans le pipeline filtres/tri standard.
+    // doFilter() écrit res-count (✅ pas un compteur médecins global) et appelle renderDocs().
+    if(typeof doFilter === 'function') doFilter();
+  } catch(e) {
+    console.warn('[Tabibi] loadDoctorCards exception:', e && e.message);
+  }
+}
+
 /* INIT */
 document.addEventListener("DOMContentLoaded",()=>{
   loadUser(); setLang(lang);
   populateSelects(); renderSpecs(); renderChips(); doFilter();
   renderUserUI(); initTabBar("home");
   fetchDoctorCount().then(animateCounters);    // compteur exact en 1 requête rapide (HEAD)
+  loadDoctorCards();                            // [Phase 5.4 fix BUG #1] 20 cards pour la section liste publique
   /* loadRealDoctors(); désactivé */     // chargement complet par batches (plus lent mais remplit la liste)
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
