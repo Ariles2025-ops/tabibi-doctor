@@ -111,6 +111,28 @@
   </a>
 </div>
 <main class="page" style="padding:0 0 80px">
+
+  <!-- [Phase 14.2] Banner mode onboarding — visible UNIQUEMENT si ?onboarding=1 -->
+  <!-- Injecté/masqué runtime par _initOnboardingMode(). Tooltip champs obligatoires -->
+  <!-- gérés via classe .ob-required + couleur d'alerte sur les champs vides. -->
+  <div id="ob-banner" class="hidden" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border-bottom:1px solid #f59e0b;padding:14px 16px;color:#78350f">
+    <div style="display:flex;align-items:start;gap:10px;margin-bottom:10px">
+      <i class="fa fa-circle-info" style="font-size:18px;color:#92400e;margin-top:2px"></i>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:14px;margin-bottom:2px" data-i18n="ob_welcome_title">Bienvenue sur Tabibi !</div>
+        <div style="font-size:12px;line-height:1.5" data-i18n="ob_welcome_msg">Complétez votre fiche en 3 minutes pour la rendre visible aux patients. Champs obligatoires : photo, tarif consultation et horaires.</div>
+      </div>
+    </div>
+    <!-- Progress bar -->
+    <div style="background:rgba(255,255,255,.6);border-radius:999px;height:8px;overflow:hidden">
+      <div id="ob-progress-bar" style="height:100%;background:linear-gradient(90deg,#10b981,#047857);width:0%;transition:width .4s ease;border-radius:999px"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;font-weight:600">
+      <span><span id="ob-progress-pct">0</span>% rempli</span>
+      <span id="ob-progress-missing" style="opacity:.85"></span>
+    </div>
+  </div>
+
   <!-- COVER -->
   <div style="background:linear-gradient(135deg,#047857,#10b981,#34d399);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
     <div style="position:relative;display:inline-block;margin:0 auto 12px">
@@ -325,6 +347,12 @@
     </div>
 
     <button class="btn btn-success btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> Sauvegarder toutes les modifications</button>
+
+    <!-- [Phase 14.2] CTA spécifique onboarding : sauvegarde + redirect dashboard -->
+    <button id="ob-publish-btn" class="btn btn-primary btn-full btn-xl hidden" style="margin-top:10px;background:linear-gradient(135deg,#0F7560,#10b981);font-size:15px" onclick="saveAndPublish()">
+      <i class="fa fa-rocket"></i> <span data-i18n="ob_publish_btn">Sauvegarder et publier ma fiche</span>
+    </button>
+
     <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
   </div>
 </main>
@@ -761,9 +789,103 @@ async function saveAll(){
 }
 function changePassword(){const o=prompt(tabibiT('prompt_old_password',"Ancien mot de passe :"));if(!o)return;const n=prompt(tabibiT('prompt_new_password',"Nouveau (min 8) :"));if(!n||n.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}toastM(tabibiT('toast_password_changed',"Mot de passe changé"),"success");}
 function logout(){localStorage.removeItem("tabibi_user");location.href="index.html";}
+// ========================================================================
+// [Phase 14.2] Mode onboarding — activé via ?onboarding=1 (post-claim)
+// Affiche banner + progress bar + bouton "Publier ma fiche".
+// ========================================================================
+function _isOnboardingMode(){
+  try { return new URL(location.href).searchParams.get('onboarding') === '1'; }
+  catch(e){ return false; }
+}
+function _initOnboardingMode(){
+  if(!_isOnboardingMode()) return;
+  // Affiche banner + bouton publier
+  var banner = document.getElementById('ob-banner');
+  var pubBtn = document.getElementById('ob-publish-btn');
+  if(banner) banner.classList.remove('hidden');
+  if(pubBtn) pubBtn.classList.remove('hidden');
+  // Pré-remplit N° Ordre depuis localStorage (saisi sur doctor-claim.html)
+  try {
+    var ordre = localStorage.getItem('tabibi_claim_ordre');
+    var f_ordre = document.getElementById('f_ordre');
+    if(ordre && f_ordre && !f_ordre.value){ f_ordre.value = ordre; }
+  } catch(e){}
+  // Recompute progress après load + sur chaque input
+  setTimeout(_recomputeOnboardingProgress, 1200);
+  document.addEventListener('input', _onboardingProgressTick, true);
+  document.addEventListener('change', _onboardingProgressTick, true);
+}
+var _obTickT = null;
+function _onboardingProgressTick(){
+  if(_obTickT) clearTimeout(_obTickT);
+  _obTickT = setTimeout(_recomputeOnboardingProgress, 250);
+}
+function _recomputeOnboardingProgress(){
+  // 7 champs scorés. Le calcul est volontairement permissif :
+  // tout champ rempli compte, peu importe la qualité (à durcir Phase 14.x).
+  var checks = [
+    { id:'f_bio',         label:'bio',       ok: function(el){ return el && (el.value||'').trim().length >= 20; } },
+    { id:'f_price',       label:'tarif',     ok: function(el){ return el && parseInt(el.value,10) > 0; } },
+    { id:'f_addr',        label:'adresse',   ok: function(el){ return el && (el.value||'').trim().length >= 5; } },
+    { id:'f_phone_cab',   label:'téléphone', ok: function(el){ return el && (el.value||'').trim().length >= 9; } },
+    { id:'f_ordre',       label:'N° Ordre',  ok: function(el){ return el && (el.value||'').trim().length >= 3; } },
+    // Photo : check via ava style background-image (set par onPhotoSelected)
+    { id:'__photo',       label:'photo',     ok: function(){
+        var av = document.getElementById('ava');
+        return av && /url\(/i.test(av.style.backgroundImage||'');
+    } },
+    // Horaires : check via existence d'au moins un input horaire renseigné
+    { id:'__hours',       label:'horaires',  ok: function(){
+        var slots = document.querySelectorAll('.sched-row input[type="time"]');
+        for(var i=0;i<slots.length;i++){ if(slots[i].value) return true; }
+        return false;
+    } }
+  ];
+  var done = 0;
+  var missing = [];
+  checks.forEach(function(c){
+    var el = c.id.indexOf('__') === 0 ? null : document.getElementById(c.id);
+    if(c.ok(el)) done++;
+    else missing.push(c.label);
+  });
+  var total = checks.length;
+  var pct   = Math.round((done / total) * 100);
+  var bar   = document.getElementById('ob-progress-bar');
+  var pctEl = document.getElementById('ob-progress-pct');
+  var misEl = document.getElementById('ob-progress-missing');
+  if(bar)   bar.style.width = pct + '%';
+  if(pctEl) pctEl.textContent = pct;
+  if(misEl) misEl.textContent = missing.length ? ('Restent : ' + missing.slice(0,3).join(', ') + (missing.length>3?'…':'')) : '✓ Profil complet';
+  // Highlight champs obligatoires vides en jaune
+  ['f_bio','f_price','f_phone_cab','f_addr','f_ordre'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    var empty = !el.value || !el.value.trim();
+    el.style.borderColor = empty ? '#f59e0b' : '';
+    el.style.boxShadow   = empty ? '0 0 0 1px #fde68a inset' : '';
+  });
+}
+async function saveAndPublish(){
+  var btn = document.getElementById('ob-publish-btn');
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Publication…'; }
+  try {
+    await saveAll();
+    if(typeof toastM === 'function') toastM("✓ Votre fiche est publiée. Bienvenue !", 'success');
+    // Nettoie le N° Ordre temporaire
+    try { localStorage.removeItem('tabibi_claim_ordre'); } catch(e){}
+    setTimeout(function(){ location.href = 'doctor-dashboard.html'; }, 1500);
+  } catch(e){
+    console.warn('[onboarding] saveAndPublish', e);
+    if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fa fa-rocket"></i> Sauvegarder et publier ma fiche'; }
+  }
+}
+window.saveAndPublish = saveAndPublish;
+
 document.addEventListener("DOMContentLoaded",function(){
   loadProfile();
   try { render2FAStatus(); } catch(e) {}
+  // [Phase 14.2] Active mode onboarding après loadProfile (sinon champs pas remplis)
+  setTimeout(_initOnboardingMode, 500);
 });
 </script>
 </div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

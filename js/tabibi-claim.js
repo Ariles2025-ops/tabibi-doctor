@@ -147,10 +147,13 @@
     _toast("Réclamation en cours...", 'info');
     var res = await performClaim(n);
     if (res.ok) {
-      _toast("Fiche réclamée avec succès ! Redirection vers votre tableau de bord...", 'success');
+      // [Phase 14.2] Post-claim → onboarding wizard pour remplir bio/tarif/horaires.
+      // Si déjà fait (ex: re-claim cas absurde), medecin-profile détectera et
+      // n'affichera pas la banner onboarding.
+      _toast("Fiche réclamée ! Complétez maintenant votre profil en 3 minutes.", 'success');
       try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
       setTimeout(function () {
-        global.location.href = 'doctor-dashboard.html';
+        global.location.href = 'medecin-profile.html?onboarding=1';
       }, 1500);
     } else {
       _toast(_humanError(res.error), 'error');
