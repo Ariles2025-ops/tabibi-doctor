@@ -1740,32 +1740,55 @@ function populateSelects(){
   // Vider sauf la première option (placeholder "Toutes les wilayas/spécialités")
   while (vs.children.length > 1) vs.removeChild(vs.lastChild);
   while (ss.children.length > 1) ss.removeChild(ss.lastChild);
-  // Re-peupler avec traductions
-  CITIES.forEach(c=>{
-    const o=document.createElement("option");
-    o.value=c;
-    // Valeur reste FR (clé interne pour matcher), label traduit selon langue
+
+  // [Phase 5.6 fix] Source des wilayas : DB DISTINCT si dispo, sinon CITIES.
+  // Les 48 wilayas matchent en pratique mais on privilégie la source de vérité.
+  const wilayaSrc = (Array.isArray(window._DB_WILAYAS) && window._DB_WILAYAS.length)
+    ? window._DB_WILAYAS : CITIES;
+  wilayaSrc.forEach(c => {
+    const o = document.createElement("option");
+    o.value = c;   // value = valeur DB exacte
     const tr = WILAYA_I18N[c];
     o.textContent = (lang==="ar"&&tr?tr.ar:lang==="en"&&tr?tr.en:c);
     vs.appendChild(o);
   });
-  SPECS.forEach(s=>{
-    const o=document.createElement("option");
-    o.value=s.name; // clé FR interne
-    o.textContent = (lang==="ar"&&s.ar?s.ar:lang==="en"&&s.en?s.en:s.name);
-    ss.appendChild(o);
-  });
+
+  // [Phase 5.6 fix BUG #1 v2] Source des spécialités : DB DISTINCT EN PRIORITÉ
+  // (28 valeurs réelles : "Cardiologue", "Pédiatre"...). Fallback SPECS uniquement
+  // si fetch a échoué. SPECS reste utilisé pour les chips visuelles (renderSpecs)
+  // avec mapping via _specUIToDB().
+  if(Array.isArray(window._DB_SPECIALTIES) && window._DB_SPECIALTIES.length){
+    window._DB_SPECIALTIES.forEach(name => {
+      const o = document.createElement("option");
+      o.value = name;       // valeur DB → matchera filtre PostgREST eq.X
+      o.textContent = name; // label DB (pas de traduction AR/EN pour l'instant —
+                             // i18n des spécialités scrapées = Phase 12)
+      ss.appendChild(o);
+    });
+  } else {
+    SPECS.forEach(s => {
+      const o = document.createElement("option");
+      o.value = s.name;
+      o.textContent = (lang==="ar"&&s.ar?s.ar:lang==="en"&&s.en?s.en:s.name);
+      ss.appendChild(o);
+    });
+  }
   // Restaurer sélection
   vs.value = curV; ss.value = curS;
 }
 
 function renderSpecs(){
+  // [Phase 5.6 fix] cur (DB value) comparé via _specUIToDB(s.name) (UI → DB)
+  // pour que la chip "Cardiologie" reste active quand f-spec.value="Cardiologue".
   const cur=document.getElementById("f-spec")?.value||"";
-  document.getElementById("spec-scroll").innerHTML=SPECS.map(s=>`
-    <div class="spec-chip${cur===s.name?" active":""}" onclick="filterBySpec('${s.name}')" tabindex="0" onkeydown="if(event.key==='Enter')filterBySpec('${s.name}')">
+  document.getElementById("spec-scroll").innerHTML=SPECS.map(s=>{
+    const dbVal = _specUIToDB(s.name);
+    const isActive = (cur && cur === dbVal);
+    return `<div class="spec-chip${isActive?" active":""}" onclick="filterBySpec('${s.name}')" tabindex="0" onkeydown="if(event.key==='Enter')filterBySpec('${s.name}')">
       <div class="spec-chip-icon">${s.icon.startsWith("fa-")?`<i class='fa ${s.icon}' style='color:var(--blue);font-size:24px'></i>`:s.icon}</div>
       <div class="spec-chip-name">${sname(s)}</div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 function renderChips(){
@@ -1804,7 +1827,12 @@ function doFilter(immediate){
 }
 
 function filterBySpec(name){
-  document.getElementById("f-spec").value=name;
+  // [Phase 5.6 fix BUG #1 v2] Le chip envoie un nom UI ("Cardiologie") mais
+  // f-spec attend désormais une valeur DB ("Cardiologue"). Translation via
+  // _specUIToDB(). Si pas de mapping → setvalue brut (filter retournera 0).
+  const dbVal = _specUIToDB(name);
+  const sel = document.getElementById("f-spec");
+  if(sel) sel.value = dbVal;
   doFilter(); renderSpecs();
   scrollTo$("sec-docs");
 }
@@ -2479,6 +2507,72 @@ let _loadDocsSeq = 0;
 let _lastDoctorTotal = 0;
 let _lastFilterOpts = {};
 
+// [Phase 5.6 fix BUG #1 v2] Fetch DISTINCT values des colonnes que filtre la
+// recherche : la cause racine du bug Mostaganem+Cardiologie etc. = mismatch
+// total entre l'UI (`Cardiologie`, `Pédiatrie`, ...) et la DB (`Cardiologue`,
+// `Pédiatre`, ...). Phase 5.5 avait fixé Constantine+ORL parce que `ORL` et
+// `Dentiste` étaient les SEULS specs qui matchaient (2/30).
+// On peuple maintenant le <select id="f-spec"> avec les vraies valeurs DB.
+window._DB_SPECIALTIES = null;
+window._DB_WILAYAS = null;
+async function _fetchDistinctSpecsAndWilayas(){
+  // Fetch en parallèle, fallback silencieux sur SPECS/CITIES hardcodés si KO
+  const headers = { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY };
+  const baseUrl = _SB_URL + '/rest/v1/public_doctors';
+  async function fetchDistinct(col){
+    try {
+      // PostgREST n'a pas de "SELECT DISTINCT" natif → on ramène la colonne
+      // sur 10k lignes (1 seule colonne = léger) et on dédoublonne client.
+      const r = await fetch(baseUrl + '?select=' + col + '&limit=10000', { headers });
+      if(!r.ok) return null;
+      const rows = await r.json();
+      const set = new Set();
+      for(const row of rows){
+        const v = row && row[col];
+        if(v) set.add(v);
+      }
+      return [...set].sort((a,b) => a.localeCompare(b, 'fr'));
+    } catch(e) {
+      console.warn('[Tabibi] fetchDistinct', col, 'KO', e && e.message);
+      return null;
+    }
+  }
+  const [specs, wilayas] = await Promise.all([
+    fetchDistinct('specialty_fr'),
+    fetchDistinct('wilaya_fr')
+  ]);
+  if(specs && specs.length)   window._DB_SPECIALTIES = specs;
+  if(wilayas && wilayas.length) window._DB_WILAYAS = wilayas;
+}
+
+// Mappe un nom de spécialité UI ("Cardiologie") vers la valeur DB correspondante
+// ("Cardiologue") via match exact d'abord, puis prefix-match fuzzy normalisé
+// (NFD strip accents + lowercase). Si aucune correspondance, retourne uiName
+// tel quel — la recherche retournera 0 résultats avec empty state intelligent.
+function _specUIToDB(uiName){
+  if(!uiName) return '';
+  const list = window._DB_SPECIALTIES;
+  if(!Array.isArray(list) || !list.length) return uiName;
+  const norm = s => String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+  const target = norm(uiName);
+  // 1. Match exact (Dentiste, ORL, Sage-femme, Pharmacie)
+  for(const v of list){ if(norm(v) === target) return v; }
+  // 2. Prefix-match — 7 chars pour éviter "orthopédie" → "orthophoniste"
+  //    (les 2 partagent "orthop" mais "orthope" diffère de "orthopho").
+  if(target.length >= 5){
+    const prefix = target.substring(0, Math.min(7, target.length - 2));
+    for(const v of list){ if(norm(v).startsWith(prefix)) return v; }
+  }
+  // 3. Cas 2 mots — premier mot prefix 7 (ex: "Médecine Générale"
+  //    → premier mot "medecine" → prefix "medecin" → "Médecin généraliste").
+  const firstWord = target.split(/\s+/)[0];
+  if(firstWord && firstWord.length >= 5){
+    const prefix = firstWord.substring(0, Math.min(7, firstWord.length - 1));
+    for(const v of list){ if(norm(v).startsWith(prefix)) return v; }
+  }
+  return uiName;   // pas trouvé → laisse passer, filtre serveur → 0 hits
+}
+
 function _inferEntityType(slug){
   // Devine entity_type à partir de specialty_slug (la vue n'expose pas la
   // colonne — workaround Phase 5.5 jusqu'à TODO-SQL-001).
@@ -2667,9 +2761,23 @@ window.resetFilters = resetFilters;
 /* INIT */
 document.addEventListener("DOMContentLoaded",()=>{
   loadUser(); setLang(lang);
+  // 1er populateSelects avec SPECS/CITIES hardcodés (instant, pas de réseau)
+  // pour avoir une UI réactive immédiate.
   populateSelects(); renderSpecs(); renderChips();
   renderUserUI(); initTabBar("home");
   fetchDoctorCount().then(animateCounters);    // compteur exact en 1 requête rapide (HEAD)
+
+  // [Phase 5.6 fix BUG #1 v2] Fetch async des DISTINCT specialty_fr +
+  // wilaya_fr depuis la DB → re-populate les <select> avec les VRAIES valeurs.
+  // En parallèle, doFilter(true) déclenche un 1er load des cards. Si le
+  // user clique un filtre avant que distinct soit prêt, on a le fallback
+  // SPECS/CITIES (qui ne matchera pas la DB pour spec mais c'est temporaire,
+  // <300ms typique). Quand distinct arrive, on re-populate + re-render chips.
+  _fetchDistinctSpecsAndWilayas().then(() => {
+    populateSelects();
+    renderSpecs();
+  }).catch(e => console.warn('[Tabibi] fetchDistinct boot KO', e && e.message));
+
   // [Phase 5.5] doFilter(true) déclenche loadDoctorCards immédiatement (pas
   // de debounce 300ms au load). loadDoctorCards récupère 20 médecins +
   // count exact ET applique les filtres UI (vides au load).
