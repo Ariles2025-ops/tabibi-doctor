@@ -1882,12 +1882,17 @@ function buildPagination(cur, total){
 
 function docCard(d){
   const n=dname(d),s=dspec(d),c=dcity(d),fav=isFav(d.id);
+  // [Phase 13] Avatar : photo_url si dispo (vide en M0, sera rempli au claim médecin),
+  // sinon initiales sur fond coloré (existant).
+  const avaHtml = d.photoUrl
+    ? `<img src="${d.photoUrl}" alt="" class="doc-ava" style="object-fit:cover;width:48px;height:48px;border-radius:var(--r12)" loading="lazy" onerror="this.outerHTML='<div class=\\'doc-ava\\' style=\\'background:${d.bg};color:${d.tc}\\'>${d.in}</div>'">`
+    : `<div class="doc-ava" style="background:${d.bg};color:${d.tc}">${d.in}</div>`;
   return `<article class="doc-card fu" onclick="goDoc('${d.id}')" tabindex="0" onkeydown="if(event.key==='Enter')goDoc('${d.id}')">
     <button class="fav-btn${fav?" is-fav":""}" data-fid="${d.id}" onclick="event.stopPropagation();toggleFav('${d.id}',this)" aria-label="Favori">
       <i class="${fav?"fa":"far"} fa-heart"></i>
     </button>
     <div class="doc-row">
-      <div class="doc-ava" style="background:${d.bg};color:${d.tc}">${d.in}</div>
+      ${avaHtml}
       <div style="flex:1;min-width:0">
         <div class="doc-name">${n}</div>
         <div class="doc-spec"><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
@@ -1901,8 +1906,10 @@ function docCard(d){
     </div>
     <div class="doc-tags">
       ${d.cert?`<span class="badge badge-green"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
-      ${d.urgent?`<span class="badge badge-red"><i class='fa fa-bolt fa-xs'></i>${T("urgent")}</span>`:""}
-      <span class="badge badge-blue">${T("available")}</span>
+      ${d.telehealth?`<span class="badge badge-blue"><i class='fa fa-video fa-xs'></i>Téléconsultation</span>`:""}
+      ${d.acceptsChifa?`<span class="badge" style="background:#dcfce7;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>Chifa</span>`:""}
+      ${d.acceptsCard?`<span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class='fa fa-credit-card fa-xs'></i>Carte</span>`:""}
+      ${d.acceptsCash?`<span class="badge" style="background:#fef3c7;color:#92400e"><i class='fa fa-money-bill-wave fa-xs'></i>Espèces</span>`:""}
     </div>
     <div class="doc-footer">
       <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
@@ -2656,32 +2663,47 @@ async function loadDoctorCards(opts){
     (Array.isArray(batch) ? batch : []).forEach((d, i) => {
       const clr = _COLORS[i % _COLORS.length];
       const DN = window.tabibiDoctorName;
-      // Workaround entity_type : déduit de specialty_slug
-      const inferredEntity = _inferEntityType(d.specialty_slug);
-      const dForName = { ...d, entity_type: d.entity_type || inferredEntity };
+      // [Phase 13] entity_type vient maintenant directement de la vue (32 cols).
+      // Fallback _inferEntityType uniquement si NULL (cas rare en M0, base entièrement typée).
+      const inferredEntity = d.entity_type || _inferEntityType(d.specialty_slug);
+      const dForName = { ...d, entity_type: inferredEntity };
       const nameFr = DN ? DN.formatForLang(dForName,'fr') : (d.full_name || 'Médecin');
       const nameAr = DN ? DN.formatForLang(dForName,'ar') : (d.full_name_ar || d.full_name || nameFr);
       const nameEn = DN ? DN.formatForLang(dForName,'en') : (d.full_name || nameFr);
       const ini    = DN ? DN.initials(dForName) : '?';
+      // [Phase 13] Composition ville : "City, Wilaya" si city dispo, sinon wilaya seul
+      const cityStr = (d.city && d.city.trim()) ? (d.city + ', ' + (d.wilaya_fr || '')) : (d.wilaya_fr || _ville(d));
       DOCTORS.push({
         id: String(d.id || ('db_'+i)),
         entityType: dForName.entity_type,
         fr: nameFr, ar: nameAr, en: nameEn,
         spec: _spec(d), sAr:'', sEn:'',
-        ville: _ville(d), vAr:'', vEn:'',
-        // [Phase 5.5] note/prix = null si pas de donnée (au lieu de fallback
-        // trompeur 4.5 / 1500 DA). docCard affiche "—" / "Tarif à confirmer".
+        ville: cityStr, vAr:'', vEn:'',
+        wilayaCode: d.wilaya_code || null,
+        // null si pas de donnée — docCard affiche "Tarif à confirmer" / "Pas encore noté"
         note: (d.rating != null) ? parseFloat(d.rating) : null,
-        prix: (d.consultation_fee_dzd != null) ? parseInt(d.consultation_fee_dzd, 10) : null,
-        urgent: !!(d.is_urgent || d.urgent),
+        prix: (d.consultation_fee_dzd != null && d.consultation_fee_dzd > 0) ? parseInt(d.consultation_fee_dzd, 10) : null,
+        urgent: false,  // colonne is_urgent toujours pas dans la vue enrichie
         cert: d.is_verified !== undefined ? !!d.is_verified : false,
         in: ini, bg: clr.bg, tc: clr.tc,
-        g: (d.gender==='F' || d.sexe==='F' || d.gender==='female') ? 'F' : 'H',
-        avis: parseInt(d.reviews_count || d.total_reviews || 0) || 0,
-        langs: d.languages || d.langs || ['FR','AR'],
-        desc: d.description || d.bio || d.about || '',
-        addr: d.address || d.cabinet_address || d.addr || '',
-        diplomes: d.diplomes || []
+        g: 'H',  // colonne gender toujours pas dans la vue enrichie
+        avis: parseInt(d.review_count || 0) || 0,
+        langs: Array.isArray(d.languages) ? d.languages.map(l => l.toUpperCase()) : ['FR','AR'],
+        desc: d.bio || '',
+        addr: d.address || '',
+        diplomes: [],
+        // [Phase 13] Nouveaux champs DB
+        photoUrl:    d.photo_url || null,
+        bio:         d.bio || null,
+        workingHours: d.working_hours || null,
+        telehealth:  !!d.telehealth_enabled,
+        telehealthFee: (d.telehealth_fee_dzd != null && d.telehealth_fee_dzd > 0) ? parseInt(d.telehealth_fee_dzd,10) : null,
+        acceptsCard:  !!d.accepts_card,
+        acceptsChifa: !!d.accepts_chifa,
+        acceptsCash:  d.accepts_cash !== false,  // defaut true si null
+        claimed:     !!d.is_claimed,
+        latitude:    d.latitude || null,
+        longitude:   d.longitude || null
       });
     });
 

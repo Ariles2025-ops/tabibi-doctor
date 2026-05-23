@@ -38,7 +38,12 @@
     'cabinet',
     'centre', 'center', 'centre_medical', 'medical_center',
     'pharmacie', 'pharmacy',
-    'hopital', 'hôpital', 'hospital'
+    'hopital', 'hôpital', 'hospital',
+    // [Phase 13] Valeurs DB live confirmées : doctor (préfixe "Dr."),
+    // pharmacy/optician/clinic/dentist/lab (autres). On range optician
+    // côté NON_DOCTOR (opticien = profession non médicale). dentist reste
+    // doctor par défaut (personne physique exerçant) → préfixe "Dr.".
+    'optician', 'opticien'
   ];
 
   function _norm(t) {
