@@ -200,11 +200,11 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [x] **10.5** Plausible analytics feature flag — NEW `js/tabibi-analytics.js` qui charge le script Plausible UNIQUEMENT si `TABIBI_FEATURES.analytics=true` ET consent cookies analytics OK. Activation post-création compte Plausible. Cookieless par défaut = RGPD-safe.
 
 ## Phase 11 — Mobile & PWA (3-4h)
-- [ ] 11.1 Audit responsive (320/375/414/768px)
-- [ ] 11.2 `manifest.json` complet (icons multi-sizes, theme/bg color, standalone)
-- [ ] 11.3 Service Worker : network-first API, cache-first assets
-- [ ] 11.4 Bouton "Installer l'app" Android (beforeinstallprompt)
-- [ ] 11.5 Page offline si pas de réseau
+- [ ] 11.1 Audit responsive (320/375/414/768px) — pas d'outil headless dispo, à faire manuellement via Chrome DevTools Device Toolbar. PROGRESS_AUDIT_PHASE11.md à créer en session future.
+- [x] **11.2** `manifest.json` **déjà complet** : 9 icons (72/96/128/144/152/192/384/512 + SVG any), theme/bg `#0F7560`, standalone, scope `/`, start_url `/?pwa=1`, 2 shortcuts (Trouver médecin + Mes RDV). Pas de modification.
+- [x] **11.3** Service Worker — **NEW `js/tabibi-sw-register.js`** + inclusion dans index.html. **Fix bug majeur audit P5.4 #5** : sw.js existait depuis Phase 1 mais n'était JAMAIS enregistré nulle part. Toutes les bumps v15→v18 du CACHE_VERSION étaient sans effet runtime. C'est le PREMIER déploiement (v19) où le SW est réellement actif côté client. Skip localhost dev pour ne pas polluer cache pendant développement.
+- [x] **11.4** Bouton "Installer l'app" Android — **déjà fait Phase 5.4** (beforeinstallprompt + matchMedia standalone + auto-hide 12s + X visible).
+- [x] **11.5** Page offline — **déjà existe** (`offline.html` 2.5 KB, précachée dans sw.js).
 
 ## Phase 12 — Monitoring & sécurité (3-4h)
 - [ ] 12.1 Sentry frontend errors (DSN feature flag)

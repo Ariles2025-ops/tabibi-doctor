@@ -18,7 +18,13 @@
 // (Phase 5.2.4) + reservation.html refactor (Phase 5.2.3). HTML reste en
 // network-first (cf. fetch handler ligne 56) donc le précache n'a un effet
 // que sur la 1ère visite offline / sous flaky network.
-const CACHE_VERSION = 'tabibi-v18-2026-05-22';
+// [Phase 11.3 — 2026-05-23] Bump v19. NB : c'est le PREMIER déploiement
+// où le SW est réellement enregistré côté client (audit P5.4 #5 — toutes
+// les bumps v15→v18 étaient sans effet runtime car sw.js n'était jamais
+// `navigator.serviceWorker.register('/sw.js')` nulle part). Nouveaux
+// précaches : tabibi-features.js, tabibi-analytics.js, tabibi-sw-register.js,
+// payment.html, notifications.html.
+const CACHE_VERSION = 'tabibi-v19-2026-05-23';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -38,7 +44,14 @@ const PRECACHE_URLS = [
   // [Phase 5.2.3-fix] helper formatage nom médecin partagé (index, doctor-profile)
   '/js/tabibi-doctor-name.js',
   // [Phase 7.4] feature flags (video/payments/notifications/reviews/analytics/sentry)
-  '/js/tabibi-features.js'
+  '/js/tabibi-features.js',
+  // [Phase 10.5] Plausible analytics conditional loader
+  '/js/tabibi-analytics.js',
+  // [Phase 11.3] SW register loader (this file enables itself once cached)
+  '/js/tabibi-sw-register.js',
+  // [Phase 8.2 / 9.1] nouvelles pages placeholder
+  '/payment.html',
+  '/notifications.html'
 ];
 
 self.addEventListener('install', event => {
