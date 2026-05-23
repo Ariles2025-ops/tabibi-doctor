@@ -1435,7 +1435,9 @@
     'App mobile sans navigateur': { ar: 'تطبيق محمول بدون متصفح', en: 'Mobile app without browser' },
     'طبيبي · La santé à portée de clic': { ar: 'طبيبي · الصحة على بُعد نقرة', en: 'طبيبي · Healthcare one click away' },
     'طبيبي · Médecins Algérie': { ar: 'طبيبي · أطباء الجزائر', en: 'طبيبي · Algeria Doctors' },
-    '14 508 médecins certifiés en Algérie': { ar: '14,508 طبيب معتمد في الجزائر', en: '14,508 certified doctors in Algeria' },
+    // [Phase 5.3 cleanup] Clé i18n "<count> médecins certifiés en Algérie" supprimée.
+    // Le compteur médecins est désormais alimenté dynamiquement via
+    // fetchDoctorCount() + animateCounters() (cf. index.html).
     'Trouvez votre médecin en ligne en Algérie': { ar: 'ابحث عن طبيبك عبر الإنترنت في الجزائر', en: 'Find your doctor online in Algeria' },
     'Réservez en ligne 24h/24 auprès de médecins certifiés dans les 48 wilayas. Rapide, simple, sécurisé.': { ar: 'احجز عبر الإنترنت 24/7 مع أطباء معتمدين في 48 ولاية. سريع، بسيط، آمن.', en: 'Book online 24/7 with certified doctors in all 48 wilayas. Fast, simple, secure.' },
     'Spécialités médicales': { ar: 'التخصصات الطبية', en: 'Medical specialties' },
@@ -1453,7 +1455,9 @@
     'Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.': { ar: 'انضم إلى طبيبي وطوّر قاعدة مرضاك عبر الإنترنت. تسجيل مجاني لمدة 30 يومًا.', en: 'Join Tabibi and grow your patient base online. Free registration for 30 days.' },
     'Rejoignez la waiting list': { ar: 'انضم لقائمة الانتظار', en: 'Join the waiting list' },
     'Soyez parmi les 1ers à découvrir Tabibi · Inscription gratuite': { ar: 'كن من الأوائل لاكتشاف طبيبي · تسجيل مجاني', en: 'Be among the first to discover Tabibi · Free signup' },
-    'La 1ère plateforme médicale algérienne. 14 500+ médecins certifiés dans 48 wilayas. Réservez en ligne 24/7.': { ar: 'أول منصة طبية جزائرية. أكثر من 14,500 طبيب معتمد في 48 ولاية. احجز عبر الإنترنت 24/7.', en: 'The first Algerian medical platform. 14,500+ certified doctors in 48 wilayas. Book online 24/7.' },
+    // [Phase 5.3 cleanup] Clé i18n footer (variante "24/7") supprimée.
+    // Le texte est désormais composé dynamiquement via <p id="foot-desc"> +
+    // span #foot-doc-count alimenté par animateCounters dans index.html.
     'Tabibi PRO 5 000 DA/mois': { ar: 'Tabibi PRO 5000 دج/شهر', en: 'Tabibi PRO 5,000 DA/month' },
     'Blog santé': { ar: 'مدونة الصحة', en: 'Health blog' },
     'Légal': { ar: 'قانوني', en: 'Legal' },
@@ -1476,7 +1480,8 @@
     // Versions exactes des textes tronqués
     'J\'autorise expressément le traitement de mes données médicales sensibles aux seules fins de la prise de rendez-vous (art. 18 loi 18-07).': { ar: 'أوافق صراحة على معالجة بياناتي الطبية الحساسة لأغراض حجز المواعيد فقط (المادة 18 من القانون 18-07).', en: 'I expressly authorize processing of my sensitive medical data for appointment booking purposes only (art. 18 of law 18-07).' },
     'Passez à Tabibi Pro pour débloquer les statistiques en temps réel, l\'export CSV et la comparaison annuelle.': { ar: 'قم بالترقية إلى Tabibi Pro لفتح الإحصائيات الفورية، تصدير CSV والمقارنة السنوية.', en: 'Upgrade to Tabibi Pro to unlock real-time stats, CSV export and annual comparison.' },
-    'La 1ère plateforme médicale algérienne. 14 500+ médecins certifiés dans 48 wilayas. Réservez en ligne 24h/24.': { ar: 'أول منصة طبية جزائرية. أكثر من 14,500 طبيب معتمد في 48 ولاية. احجز عبر الإنترنت 24/7.', en: 'The first Algerian medical platform. 14,500+ certified doctors in 48 wilayas. Book online 24/7.' },
+    // [Phase 5.3 cleanup] Clé i18n footer (variante "24h/24") supprimée.
+    // Compteur médecins alimenté dynamiquement (cf. index.html #foot-doc-count).
 
     // [I18N-UNIFY-2026] LOT 2 — Pages orphelines (404, offline, onboarding, patient-profile, reservation, success)
     // 404.html
