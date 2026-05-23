@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Paiement sécurisé Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/payment.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_payment">
+<title>Paiement | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  .pay-shell { padding: 16px; max-width: 480px; margin: 0 auto; }
+  .pay-summary { background:#fff; border-radius: var(--r12); padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .pay-row { display:flex; justify-content:space-between; padding: 8px 0; font-size: 13px; }
+  .pay-row.total { font-weight: 800; font-size: 16px; border-top: 1px solid var(--bg2); margin-top: 6px; padding-top: 12px; color: var(--blue); }
+  .pay-method-card { background:#fff; border: 2px solid var(--border); border-radius: var(--r12); padding: 14px; margin-bottom: 10px; cursor: pointer; transition: all .15s; display:flex; align-items:center; gap: 12px; }
+  .pay-method-card.selected { border-color: var(--blue); background: var(--blue-l); }
+  .pay-method-card.disabled { opacity: .5; cursor: not-allowed; }
+  .pay-method-card .ico { width: 40px; height: 40px; border-radius: var(--r8); background: var(--bg2); display:flex; align-items:center; justify-content:center; font-size: 18px; color: var(--text2); flex-shrink: 0; }
+  .pay-method-card .body { flex: 1; }
+  .pay-method-card .name { font-size: 14px; font-weight: 700; }
+  .pay-method-card .desc { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .pay-method-card .badge { font-size: 10px; padding: 2px 6px; background: #FFF7E6; color: #B07000; border-radius: var(--rfull); font-weight: 700; margin-left: 6px; }
+  .pay-disclaimer { background: #FFF7E6; border: 1px solid #FFD580; border-radius: var(--r12); padding: 14px; font-size: 12px; color: #78350f; margin-top: 10px; line-height: 1.5; }
+  .pay-secure { display:flex; gap: 8px; align-items:center; padding: 10px 12px; background: var(--bg2); border-radius: var(--r8); font-size: 11px; color: var(--text3); margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="app-root">
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Paiement</div></div>
+</header>
+
+<main class="page pay-shell" role="main">
+
+  <!-- Récap RDV (récupéré depuis sessionStorage ou query string) -->
+  <div class="pay-summary" id="summary-box" aria-label="Récapitulatif">
+    <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">
+      <i class="fa fa-receipt" style="color:var(--blue)"></i> Récapitulatif
+    </div>
+    <div class="pay-row"><span style="color:var(--text3)">Médecin</span> <span id="s-doctor">—</span></div>
+    <div class="pay-row"><span style="color:var(--text3)">Date</span> <span id="s-date">—</span></div>
+    <div class="pay-row"><span style="color:var(--text3)">Type</span> <span id="s-type">Consultation</span></div>
+    <div class="pay-row total"><span>Total à payer</span> <span id="s-amount">— DA</span></div>
+  </div>
+
+  <!-- Méthodes — toutes désactivées sauf "Payer au cabinet" (cash) -->
+  <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">
+    <i class="fa fa-credit-card" style="color:var(--blue)"></i> Mode de paiement
+  </div>
+
+  <!-- Cash : toujours dispo, sélectionné par défaut -->
+  <div class="pay-method-card selected" id="pm-cash" onclick="selectMethod('cash')" tabindex="0" role="radio" aria-checked="true">
+    <div class="ico"><i class="fa fa-money-bill-wave" style="color:var(--green-d)"></i></div>
+    <div class="body">
+      <div class="name">Payer au cabinet (espèces)</div>
+      <div class="desc">Réglez directement au médecin lors de votre visite</div>
+    </div>
+    <i class="fa fa-check-circle" style="color:var(--blue);font-size:20px"></i>
+  </div>
+
+  <!-- Stripe Test — désactivé via feature flag -->
+  <div class="pay-method-card disabled" data-feature="payments" id="pm-card" aria-disabled="true">
+    <div class="ico"><i class="fa fa-credit-card" style="color:#1557A0"></i></div>
+    <div class="body">
+      <div class="name">Carte bancaire <span class="badge">BIENTÔT</span></div>
+      <div class="desc">Visa, Mastercard — paiement sécurisé via Stripe</div>
+    </div>
+  </div>
+
+  <!-- SATIM / Edahabia — désactivés via feature flag -->
+  <div class="pay-method-card disabled" data-feature="payments" id="pm-edahabia" aria-disabled="true">
+    <div class="ico"><i class="fa fa-mobile-screen" style="color:#0a4d3e"></i></div>
+    <div class="body">
+      <div class="name">Edahabia <span class="badge">BIENTÔT</span></div>
+      <div class="desc">Carte postale algérienne — intégration SATIM en cours</div>
+    </div>
+  </div>
+
+  <div class="pay-method-card disabled" data-feature="payments" id="pm-cib" aria-disabled="true">
+    <div class="ico"><i class="fa fa-building-columns" style="color:#1A1A1A"></i></div>
+    <div class="body">
+      <div class="name">CIB <span class="badge">BIENTÔT</span></div>
+      <div class="desc">Carte interbancaire — intégration SATIM en cours</div>
+    </div>
+  </div>
+
+  <!-- Message si feature flag OFF (visible aux utilisateurs) -->
+  <div class="pay-disclaimer" data-feature-not="payments">
+    <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
+    <strong>Paiement en ligne bientôt disponible.</strong> Pour l'instant, validez votre RDV
+    et réglez directement au cabinet le jour de la consultation. Vous recevrez votre reçu sur place.
+  </div>
+
+  <!-- CTA -->
+  <button class="btn btn-success btn-full btn-xl" id="btn-confirm-pay" onclick="confirmPay()" style="margin-top:18px">
+    <i class="fa fa-check"></i> Confirmer le mode de paiement
+  </button>
+
+  <a href="mes-rdv.html" class="btn btn-ghost btn-full btn-lg" style="margin-top:8px;text-decoration:none">
+    <i class="fa fa-list"></i> Voir mes rendez-vous
+  </a>
+
+  <div class="pay-secure">
+    <i class="fa fa-shield-halved" style="color:var(--blue)"></i>
+    Vos données de paiement sont chiffrées et conformes RGPD + loi DZ 18-07.
+  </div>
+
+</main>
+<nav class="tab-bar" id="tab-bar"></nav>
+
+<script src="scripts/app.js"></script>
+<script>
+// ========================================================================
+// [Phase 8.2] payment.html — page placeholder post-booking
+// ------------------------------------------------------------------------
+// État M0 : seul "espèces au cabinet" actif. Stripe/SATIM/Edahabia
+// affichés en "BIENTÔT" via feature flag payments=false.
+// Quand backend Edge Function webhook prêt (Phase 8.3 SQL_TODO-013),
+// passer window.TABIBI_FEATURES.payments=true → boutons cliquables.
+// ========================================================================
+var _selectedMethod = 'cash';
+
+function selectMethod(m){
+  // Si feature payments OFF, seul 'cash' est sélectionnable
+  if(m !== 'cash' && (!window.TABIBI_FEATURES || !window.TABIBI_FEATURES.payments)){
+    return;
+  }
+  _selectedMethod = m;
+  document.querySelectorAll('.pay-method-card').forEach(function(el){ el.classList.remove('selected'); el.setAttribute('aria-checked','false'); });
+  var el = document.getElementById('pm-' + m);
+  if(el){ el.classList.add('selected'); el.setAttribute('aria-checked','true'); }
+}
+
+function getParam(k){
+  try { return new URL(location.href).searchParams.get(k) || ''; } catch(e){ return ''; }
+}
+function _esc(s){
+  if(s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+function init(){
+  // Récup contexte RDV via query string (passé depuis reservation.html confirm)
+  var doctor = decodeURIComponent(getParam('doctor_name') || '');
+  var date   = decodeURIComponent(getParam('date') || '');
+  var amount = parseInt(getParam('amount') || '0', 10);
+
+  if(doctor) document.getElementById('s-doctor').textContent = doctor;
+  if(date)   document.getElementById('s-date').textContent = date;
+  if(amount > 0){
+    document.getElementById('s-amount').textContent = amount.toLocaleString('fr-DZ') + ' DA';
+  } else {
+    document.getElementById('s-amount').textContent = 'À confirmer';
+  }
+}
+
+function confirmPay(){
+  // M0 : juste rediriger vers mes-rdv avec confirmation (le RDV est déjà
+  // créé en pending via reservation.html). Le paiement réel sera traité
+  // au cabinet (cash).
+  if(typeof toast === 'function'){
+    toast('Mode de paiement enregistré : ' + _selectedMethod, 'success');
+  }
+  setTimeout(function(){ location.href = 'mes-rdv.html'; }, 800);
+}
+
+function goBackSafe(){
+  if(document.referrer) history.back();
+  else location.href = 'index.html';
+}
+
+document.addEventListener('DOMContentLoaded', init);
+window.selectMethod = selectMethod;
+window.confirmPay = confirmPay;
+window.goBackSafe = goBackSafe;
+</script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+</body>
+</html>

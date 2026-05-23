@@ -180,10 +180,10 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [x] **7.4** Feature flag `window.TABIBI_FEATURES.video = false` (NEW `js/tabibi-features.js`) → teleconsultation.html intercepte early et affiche "Bientôt disponible" + CTA Trouver médecin. Activation per-doctor restera côté SQL (`doctor_profiles.video_enabled` à ajouter, TODO-SQL-008).
 
 ## Phase 8 — Paiements sandbox (4-6h)
-- [ ] 8.1 Stripe Test mode + structure SATIM/Edahabia documentée
-- [ ] 8.2 Page `payment.html` post-booking
-- [ ] 8.3 Edge Function webhook handler → `appointments.status`
-- [ ] 8.4 Credentials prod NON activés
+- [ ] 8.1 Stripe Test mode — **bloquant compte tiers** (création compte Stripe nécessaire). Documenté **TODO-SQL-009**.
+- [x] **8.2** Page `payment.html` créée — placeholder M0 avec 4 méthodes affichées (espèces actif, Stripe+Edahabia+CIB grisés "BIENTÔT" via `data-feature="payments"`). CTA "Confirmer mode" → redirect mes-rdv. Lit `?doctor_name=&date=&amount=` query string (passé depuis reservation.html confirm). Disclaimer RGPD + loi DZ 18-07. Empty state propre si feature OFF.
+- [ ] 8.3 Edge Function webhook handler → **TODO-SQL-009** (backend Stripe + colonnes appointments).
+- [x] **8.4** Credentials prod NON activés — confirmé via `window.TABIBI_FEATURES.payments = false` (Phase 7.4).
 
 ## Phase 9 — Notifications & avis (4-6h)
 - [ ] 9.1 Table `notifications` + page `notifications.html` (in-app only V1)

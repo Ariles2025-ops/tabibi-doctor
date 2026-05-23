@@ -107,6 +107,21 @@ ALTER VIEW public_doctors AS (
 );
 ```
 
+### TODO-SQL-009 : Paiements Stripe Test + Edge Function webhook (Phase 8.1/8.3)
+**Contexte** : `payment.html` (Phase 8.2) affiche les 4 méthodes (espèces, carte, Edahabia, CIB) mais seules les espèces sont actives via feature flag `payments=false`. Quand backend Stripe Test prêt :
+
+1. Créer compte Stripe Test (https://stripe.com)
+2. Récupérer clé publique → ajouter à `js/config.js` ou window.TABIBI_CONFIG
+3. Créer Edge Function `stripe-webhook` qui :
+   - Vérifie signature Stripe-Signature
+   - UPDATE `appointments.status` selon event (charge.succeeded → confirmed, charge.failed → cancelled, charge.refunded → cancelled+ refund flag)
+4. SQL : ajouter colonnes `appointments.{stripe_session_id, stripe_payment_intent, paid_at, refunded_at}` (toutes nullable)
+5. SQL : RLS confirmer que seul service_role (Edge Function) peut UPDATE ces colonnes
+
+**Pour SATIM/Edahabia** : pas d'API sandbox stable disponible en Algérie. À documenter dans `DEPLOY_INSTRUCTIONS.md` pour intégration manuelle quand contrat partenariat signé.
+
+**Après backend prêt** : passer `window.TABIBI_FEATURES.payments = true` + tester E2E.
+
 ### TODO-SQL-008 : RPCs téléconsultation Daily.co (Phase 7.1)
 **Contexte** : `teleconsultation.html` est entièrement câblé côté front mais appelle 2 RPCs inexistantes en DB (PGRST202 vérifié 2026-05-23) :
 - `get_video_session(appointment_id uuid)` — retourne `{room_url, token, session_id, consent_patient_recording, expires_at, ...}`
