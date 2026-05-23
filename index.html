@@ -2444,13 +2444,15 @@ async function loadRealDoctors(){
   }catch(e){console.error('[Tabibi] Erreur:',e);}
 }
 
+function animateCounters(total){if(!total)return;const targets=[document.getElementById("hero-doc-count"),document.getElementById("stats-doc-count"),...document.querySelectorAll(".hs-n")].filter(Boolean);const duration=1200,start=performance.now();function tick(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const val=Math.floor(eased*total);const txt=val.toLocaleString("fr-DZ");targets.forEach(el=>{if(el)el.textContent=txt;});if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);}
+
 /* INIT */
 document.addEventListener("DOMContentLoaded",()=>{
   loadUser(); setLang(lang);
   populateSelects(); renderSpecs(); renderChips(); doFilter();
   renderUserUI(); initTabBar("home");
-  fetchDoctorCount();    // compteur exact en 1 requête rapide (HEAD)
-  loadRealDoctors();     // chargement complet par batches (plus lent mais remplit la liste)
+  fetchDoctorCount().then(animateCounters);    // compteur exact en 1 requête rapide (HEAD)
+  /* loadRealDoctors(); désactivé */     // chargement complet par batches (plus lent mais remplit la liste)
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
 
