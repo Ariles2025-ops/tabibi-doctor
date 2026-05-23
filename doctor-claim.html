@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Vous êtes médecin ? Trouvez votre fiche et réclamez-la pour gérer vos rendez-vous sur Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/doctor-claim.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_doctor_claim">
+<title>Réclamer ma fiche médecin | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  .dc-shell { padding: 0 0 60px; max-width: 480px; margin: 0 auto; }
+  .dc-hero { background: linear-gradient(155deg,#0a4d3e,#0F7560,#1A8A73); color:#fff; padding: 28px 18px; }
+  .dc-hero h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .dc-hero p { font-size: 13px; opacity: .9; line-height: 1.5; }
+  .dc-search-wrap { padding: 14px 16px; background:#fff; border-bottom:1px solid var(--border); position:sticky; top:0; z-index:5; }
+  .dc-search-row { display:flex; gap:8px; margin-bottom:8px; }
+  .dc-search-row select { flex:1; padding:10px; border:1.5px solid var(--border); border-radius:var(--r8); font-size:13px; background:#fff; }
+  .dc-search input { width:100%; padding:11px 14px 11px 38px; border:1.5px solid var(--border); border-radius:var(--r8); font-size:14px; }
+  .dc-search { position:relative; }
+  .dc-search > i { position:absolute; top:50%; left:12px; transform:translateY(-50%); color:var(--text3); }
+  .dc-results-count { padding: 8px 16px; font-size: 12px; color: var(--text3); background:#fff; }
+  .dc-list { padding: 12px 16px; }
+  .dc-card { background:#fff; border-radius:var(--r12); padding:14px; margin-bottom:10px; box-shadow:0 1px 3px rgba(0,0,0,.06); display:flex; gap:12px; align-items:flex-start; }
+  .dc-card .ava { width:48px;height:48px;border-radius:var(--r12);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;background:#EEF4FB;color:#1557A0; }
+  .dc-card .body { flex:1; min-width:0; }
+  .dc-card .name { font-size:14px;font-weight:700;margin-bottom:2px; }
+  .dc-card .meta { font-size:12px;color:var(--text3);margin-bottom:8px; }
+  .dc-card .btn-claim { font-size:13px;background:var(--blue);color:#fff;border:none;padding:8px 12px;border-radius:var(--r8);font-weight:600;cursor:pointer;width:100%; }
+  .dc-card .btn-claim:hover { background:var(--blue-d); }
+  .dc-empty { padding:48px 16px;text-align:center;color:var(--text3); }
+  .dc-empty .ico { font-size:48px;color:var(--text3);opacity:.4;margin-bottom:14px; }
+  .dc-loading { padding:18px;text-align:center;color:var(--text3);font-size:13px; }
+  .dc-skeleton { background:#fff;border-radius:var(--r12);padding:14px;margin-bottom:10px;display:flex;gap:12px;animation:pulse 1.2s ease-in-out infinite; }
+  .dc-skeleton .sk-ava { width:48px;height:48px;border-radius:var(--r12);background:var(--bg2);flex-shrink:0; }
+  .dc-skeleton .sk-lines { flex:1;display:flex;flex-direction:column;gap:6px; }
+  .dc-skeleton .sk-line { height:10px;background:var(--bg2);border-radius:4px; }
+  .dc-skeleton .sk-line.sm { width:60%; } .dc-skeleton .sk-line.xs { width:40%; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  /* Modale confirm */
+  .dc-modal-bg { position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:1000; display:flex; align-items:flex-end; justify-content:center; }
+  .dc-modal { background:#fff; width:100%; max-width:480px; border-radius:var(--r24) var(--r24) 0 0; padding:20px 18px calc(20px + env(safe-area-inset-bottom)); max-height:88dvh; overflow-y:auto; }
+  .dc-modal h2 { font-size:16px;font-weight:800;margin-bottom:8px; }
+  .dc-modal .lbl { font-size:13px;font-weight:700;color:var(--text2);margin-top:14px;margin-bottom:6px;display:block; }
+  .dc-modal input { width:100%;padding:11px 14px;border:1.5px solid var(--border);border-radius:var(--r8);font-size:14px;font-family:inherit; }
+  .dc-modal .honor { display:flex;gap:8px;align-items:flex-start;padding:12px;background:#FFF7E6;border:1px solid #FFD580;border-radius:var(--r12);margin-top:14px;font-size:12px;color:#78350f;line-height:1.5; }
+  .dc-modal .honor input { width:auto;margin-top:3px;flex-shrink:0; }
+  .dc-modal .upload-note { font-size:11px;color:var(--text3);margin-top:4px;font-style:italic; }
+  .dc-modal .actions { display:flex;gap:8px;margin-top:18px; }
+  .dc-modal .btn-cancel { flex:1;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--r8);font-weight:600;cursor:pointer;font-family:inherit; }
+  .dc-modal .btn-submit { flex:2;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--r8);font-weight:700;cursor:pointer;font-family:inherit; }
+  .dc-modal .btn-submit:disabled { opacity:.5;cursor:not-allowed; }
+</style>
+</head>
+<body>
+<div class="app-root">
+
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='index.html'" aria-label="Retour accueil"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Réclamer ma fiche</div></div>
+</header>
+
+<main class="page" role="main">
+<div class="dc-shell">
+
+  <!-- HERO -->
+  <section class="dc-hero" aria-label="Vous êtes médecin">
+    <h1><i class="fa fa-user-doctor" style="margin-right:8px;opacity:.85"></i> Vous êtes médecin ?</h1>
+    <p>Trouvez votre fiche parmi <span id="dc-count">79 746</span> praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</p>
+  </section>
+
+  <!-- SEARCH -->
+  <section class="dc-search-wrap" aria-label="Recherche fiche">
+    <div class="dc-search-row">
+      <select id="dc-ville" onchange="dcSearch()"><option value="">Toutes wilayas</option></select>
+      <select id="dc-spec"  onchange="dcSearch()"><option value="">Toutes spécialités</option></select>
+    </div>
+    <div class="dc-search">
+      <i class="fa fa-search" aria-hidden="true"></i>
+      <input type="search" id="dc-q" placeholder="Votre nom de famille…" oninput="dcSearchDebounced()" autocomplete="off">
+    </div>
+  </section>
+
+  <div class="dc-results-count" id="dc-count-line" aria-live="polite">Saisissez votre nom puis sélectionnez la fiche qui correspond.</div>
+
+  <!-- RESULTS -->
+  <div class="dc-list" id="dc-list" aria-live="polite"></div>
+
+  <!-- HELP : pas trouvé -->
+  <div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">
+    Vous ne trouvez pas votre fiche ?
+    <a href="mailto:contact@tabibi.doctor?subject=Ajout%20de%20ma%20fiche%20médecin"
+       style="color:var(--blue);text-decoration:underline;font-weight:600">
+       Écrivez-nous pour qu'on l'ajoute
+    </a>
+  </div>
+
+</div>
+</main>
+
+<!-- MODAL CLAIM -->
+<div class="dc-modal-bg hidden" id="dc-modal" role="dialog" aria-modal="true" aria-labelledby="dc-modal-title">
+  <div class="dc-modal">
+    <h2 id="dc-modal-title"><i class="fa fa-id-card" style="color:var(--blue);margin-right:6px"></i> Réclamer cette fiche</h2>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px">Vous allez réclamer la fiche de :</div>
+    <div style="padding:10px 12px;background:var(--bg2);border-radius:var(--r8);font-weight:700;color:var(--text1)" id="dc-modal-doctor">—</div>
+
+    <label class="lbl" for="dc-ordre">N° Conseil de l'Ordre des Médecins <span style="color:var(--red)">*</span></label>
+    <input type="text" id="dc-ordre" placeholder="Ex : CO-2025-XXXX" autocomplete="off">
+    <div class="upload-note">Saisi pour traçabilité. Aucun document à envoyer à cette étape (upload pièce d'identité disponible bientôt).</div>
+
+    <label class="honor">
+      <input type="checkbox" id="dc-honor">
+      <span><strong>Je certifie sur l'honneur</strong> être le médecin de cette fiche.
+      Toute fausse déclaration peut entraîner la suppression de mon compte et des poursuites
+      (loi DZ 18-07 + art. 226-15 du Code pénal).</span>
+    </label>
+
+    <div class="actions">
+      <button type="button" class="btn-cancel" onclick="dcCloseModal()">Annuler</button>
+      <button type="button" class="btn-submit" id="dc-submit" onclick="dcSubmit()" disabled>
+        <i class="fa fa-check"></i> Confirmer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-doctor-name.js"></script>
+<script src="js/tabibi-claim.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script>
+// ========================================================================
+// [Phase 14.1] doctor-claim.html — recherche fiche + flow claim
+// ------------------------------------------------------------------------
+// Restriction CRITIQUE : la RPC claim_my_doctor_profile attend un legacy_id
+// INTEGER. Seuls 14 508 / 79 746 médecins ont un legacy_id non-null en DB.
+// On filtre côté serveur `legacy_id=not.is.null AND is_claimed=false` pour
+// éviter d'afficher des cards non-réclamables.
+// ========================================================================
+
+var _SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co';
+var _SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+
+var _dcDebounce = null, _dcAbort = null, _dcSeq = 0;
+var _selectedDoctor = null;
+
+function _esc(s){
+  if(s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function _initialsOf(name){
+  if(!name) return '?';
+  var parts = String(name).replace(/^Dr\.?\s+/i,'').trim().split(/\s+/);
+  return ((parts[0]||'')[0]||'?').toUpperCase() + ((parts[1]||'')[0]||'').toUpperCase();
+}
+
+// Cherche dans public_doctors avec filtres legacy_id et is_claimed
+async function _dcFetchResults(opts){
+  if(_dcAbort){ try{_dcAbort.abort();}catch(e){} }
+  _dcAbort = (typeof AbortController!=='undefined') ? new AbortController() : null;
+  var mySeq = ++_dcSeq;
+  var q = new URLSearchParams();
+  q.set('select','id,legacy_id,full_name,full_name_ar,wilaya_fr,specialty_fr,city,entity_type,is_claimed');
+  // Filtre dur : seules les fiches avec legacy_id réclamables sont affichées
+  q.set('legacy_id','not.is.null');
+  q.set('is_claimed','eq.false');
+  if(opts.ville) q.set('wilaya_fr','eq.'+opts.ville);
+  if(opts.spec)  q.set('specialty_fr','eq.'+opts.spec);
+  if(opts.q){
+    var s = String(opts.q).replace(/[(),]/g,' ').trim();
+    if(s){
+      var v = encodeURIComponent('%'+s+'%');
+      q.set('or','(full_name.ilike.'+v+',full_name_ar.ilike.'+v+')');
+    }
+  }
+  q.set('order','full_name.asc');
+  q.set('limit','20');
+  try {
+    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?' + q.toString(), {
+      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-19' },
+      signal: _dcAbort ? _dcAbort.signal : undefined
+    });
+    if(mySeq !== _dcSeq) return null;
+    if(!r.ok) return { total:0, rows:[] };
+    var cr = r.headers.get('content-range') || '';
+    var total = parseInt((cr.split('/')[1] || '0'), 10) || 0;
+    var rows = await r.json();
+    return { total: total, rows: Array.isArray(rows) ? rows : [] };
+  } catch(e){
+    if(e && e.name === 'AbortError') return null;
+    console.warn('[dc] fetch error', e && e.message);
+    return { total:0, rows:[] };
+  }
+}
+
+function _renderSkeleton(){
+  var sk = '<div class="dc-skeleton"><div class="sk-ava"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line sm"></div><div class="sk-line xs"></div></div></div>';
+  document.getElementById('dc-list').innerHTML = sk + sk;
+  document.getElementById('dc-count-line').textContent = 'Recherche…';
+}
+
+function _renderResults(res){
+  var box = document.getElementById('dc-list');
+  var cline = document.getElementById('dc-count-line');
+  if(!res){ return; }
+  if(!res.rows.length){
+    box.innerHTML = '<div class="dc-empty"><i class="fa fa-magnifying-glass ico"></i>'
+                  + '<div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Aucune fiche disponible</div>'
+                  + '<div style="font-size:13px">Affinez votre recherche ou écrivez-nous si votre fiche manque.</div></div>';
+    cline.textContent = '0 fiche trouvée';
+    return;
+  }
+  cline.textContent = (res.total > 20)
+    ? res.rows.length + ' affichées sur ' + res.total + ' — affinez par wilaya/spécialité'
+    : res.total + ' fiche(s) trouvée(s)';
+  box.innerHTML = res.rows.map(function(d){
+    var DN = window.tabibiDoctorName;
+    var name = DN ? DN.format(d) : (d.full_name || 'Praticien');
+    var ini  = DN ? DN.initials(d) : _initialsOf(d.full_name);
+    var meta = _esc((d.specialty_fr||'') + ' · ' + (d.city ? (d.city+', ') : '') + (d.wilaya_fr||''));
+    return '<article class="dc-card" data-id="'+_esc(d.id)+'" data-legacy="'+_esc(d.legacy_id)+'" data-name="'+_esc(name)+'">'
+         +   '<div class="ava">'+_esc(ini)+'</div>'
+         +   '<div class="body">'
+         +     '<div class="name">'+_esc(name)+'</div>'
+         +     '<div class="meta">'+meta+'</div>'
+         +     '<button type="button" class="btn-claim" onclick="dcOpenModal(\''+_esc(d.legacy_id)+'\',\''+_esc(name)+'\')">'
+         +       '<i class="fa fa-id-card"></i> C\'est moi, je veux réclamer'
+         +     '</button>'
+         +   '</div>'
+         + '</article>';
+  }).join('');
+}
+
+async function dcSearch(){
+  var opts = {
+    ville: document.getElementById('dc-ville').value || '',
+    spec:  document.getElementById('dc-spec').value  || '',
+    q:     (document.getElementById('dc-q').value||'').trim()
+  };
+  _renderSkeleton();
+  var res = await _dcFetchResults(opts);
+  if(res) _renderResults(res);
+}
+function dcSearchDebounced(){
+  if(_dcDebounce) clearTimeout(_dcDebounce);
+  _dcDebounce = setTimeout(dcSearch, 300);
+}
+
+// Populate dropdowns depuis DISTINCT DB
+async function _populateDropdowns(){
+  var headers = { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY };
+  async function fetchDistinct(col){
+    try {
+      var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=' + col + '&limit=10000', { headers });
+      if(!r.ok) return [];
+      var rows = await r.json();
+      var set = new Set();
+      rows.forEach(function(row){ if(row && row[col]) set.add(row[col]); });
+      return [...set].sort(function(a,b){ return a.localeCompare(b,'fr'); });
+    } catch(e){ return []; }
+  }
+  var [wilayas, specs] = await Promise.all([fetchDistinct('wilaya_fr'), fetchDistinct('specialty_fr')]);
+  var vs = document.getElementById('dc-ville');
+  var ss = document.getElementById('dc-spec');
+  wilayas.forEach(function(w){ var o=document.createElement('option'); o.value=w; o.textContent=w; vs.appendChild(o); });
+  specs.forEach(function(s){    var o=document.createElement('option'); o.value=s; o.textContent=s; ss.appendChild(o); });
+}
+
+// ── Modale claim ─────────────────────────────────────────────────────
+function dcOpenModal(legacyId, doctorName){
+  _selectedDoctor = { legacyId: legacyId, name: doctorName };
+  document.getElementById('dc-modal-doctor').textContent = doctorName;
+  document.getElementById('dc-ordre').value = '';
+  document.getElementById('dc-honor').checked = false;
+  document.getElementById('dc-submit').disabled = true;
+  var m = document.getElementById('dc-modal');
+  m.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function dcCloseModal(){
+  document.getElementById('dc-modal').classList.add('hidden');
+  document.body.style.overflow = '';
+  _selectedDoctor = null;
+}
+function _updateSubmitState(){
+  var hasOrdre = document.getElementById('dc-ordre').value.trim().length >= 3;
+  var honor    = document.getElementById('dc-honor').checked;
+  document.getElementById('dc-submit').disabled = !(hasOrdre && honor);
+}
+document.addEventListener('input',  function(e){ if(e.target.id==='dc-ordre') _updateSubmitState(); });
+document.addEventListener('change', function(e){ if(e.target.id==='dc-honor') _updateSubmitState(); });
+
+async function dcSubmit(){
+  if(!_selectedDoctor) return;
+  var btn = document.getElementById('dc-submit');
+  btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Réclamation…';
+
+  // N° Ordre stocké en localStorage pour pré-remplir l'onboarding step 1
+  // (la RPC actuelle ne le persiste pas — TODO-SQL-012 pour ajouter colonne dédiée)
+  try { localStorage.setItem('tabibi_claim_ordre', document.getElementById('dc-ordre').value.trim()); } catch(e){}
+
+  if(window.tabibiClaim && typeof window.tabibiClaim.handle === 'function'){
+    // tabibiClaim.handle gère : non-auth → redirect signup, auth+medecin → RPC, auth+patient → toast erreur
+    await window.tabibiClaim.handle(_selectedDoctor.legacyId);
+    // Si on est ici, c'est qu'on est resté sur la page (cas erreur ou patient role)
+    btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> Confirmer';
+  } else {
+    btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> Confirmer';
+    alert('Module de réclamation indisponible. Rechargez la page.');
+  }
+}
+
+// Close modal on backdrop click
+document.addEventListener('click', function(e){
+  if(e.target && e.target.id === 'dc-modal') dcCloseModal();
+});
+
+// Init
+document.addEventListener('DOMContentLoaded', function(){
+  _populateDropdowns();
+  // Premier load : afficher quelques exemples + count
+  dcSearch();
+});
+window.dcSearch = dcSearch;
+window.dcSearchDebounced = dcSearchDebounced;
+window.dcOpenModal = dcOpenModal;
+window.dcCloseModal = dcCloseModal;
+window.dcSubmit = dcSubmit;
+</script>
+</div>
+</body>
+</html>
