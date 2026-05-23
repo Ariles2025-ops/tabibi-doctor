@@ -299,8 +299,12 @@ async function loadMembers(){
     const ini = ((m.first_name||"?")[0] + (m.last_name||"")[0]).toUpperCase();
     const role = m.role; const pillClass = role === 'admin_cabinet' ? 'admin' : role;
     const pendingTag = m.accepted ? "" : ` <span style="font-size:10px;color:#92400e;background:#fef3c7;padding:1px 6px;border-radius:6px">EN ATTENTE</span>`;
+    // [Phase 14.1.1] data-* attributes + event delegation (cf #members-list listener)
+    // au lieu d'inline onclick — évite parsing cassé si m.full_name contient
+    // UTF-8/quotes/slashes (noms arabes, raison sociale clinique, etc.).
+    const _escAttr = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     const removeBtn = (m.user_id === CURRENT_USER_ID || role === 'owner') ? ""
-      : `<button class="btn btn-icon btn-icon-sm" style="background:#fee2e2;color:#dc2626" onclick="removeMember('${m.user_id}','${(m.full_name||'').replace(/'/g,"\\'")}')"><i class="fa fa-trash"></i></button>`;
+      : `<button class="btn btn-icon btn-icon-sm js-remove-member" style="background:#fee2e2;color:#dc2626" data-member-id="${_escAttr(m.user_id)}" data-member-name="${_escAttr(m.full_name||'')}" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>`;
     return `
       <div class="member-row">
         <div class="avatar-mini">${ini}</div>
@@ -313,6 +317,21 @@ async function loadMembers(){
       </div>`;
   }).join("");
   document.getElementById("members-list").innerHTML = html || "<div style='color:var(--text3)'>Aucun membre.</div>";
+  // [Phase 14.1.1] Event delegation : un seul listener attaché une fois sur
+  // #members-list. Idempotent : on stocke un flag pour ne pas dupliquer.
+  var listEl = document.getElementById('members-list');
+  if (listEl && !listEl.__rmBound) {
+    listEl.__rmBound = true;
+    listEl.addEventListener('click', function(e){
+      var btn = e.target.closest && e.target.closest('.js-remove-member');
+      if (!btn) return;
+      e.preventDefault();
+      removeMember(
+        btn.getAttribute('data-member-id') || '',
+        btn.getAttribute('data-member-name') || ''
+      );
+    });
+  }
 }
 
 async function removeMember(userId, name){
