@@ -219,6 +219,8 @@ function _mapSupabaseDoctor(row){
     ? (row.address || ville)
     : ville; // pas d'adresse precise pour les fiches non-revendiquees
 
+  // [Phase 13b] Composition adresse enrichie : city + wilaya si city dispo
+  var cityStr = (row.city && row.city.trim()) ? (row.city + ', ' + ville) : ville;
   return {
     id: row.id,
     legacy_id: (row.legacy_id != null ? parseInt(row.legacy_id, 10) : null), // [Phase 1] requis par RPC claim_my_doctor_profile
@@ -227,17 +229,32 @@ function _mapSupabaseDoctor(row){
     tc: avatar.tc,
     fr: displayName,
     spec: spec,
-    ville: ville,
-    note: 0,
-    avis: 0,
-    prix: row.consultation_fee_dzd || 0,
-    desc: spec + ' exercant a ' + ville + '.',
-    addr: displayAddr,
-    langs: ['FR','AR'],
+    ville: cityStr,
+    wilayaCode: row.wilaya_code || null,
+    // [Phase 13b] note/prix = null si pas de donnée (au lieu de 0 trompeur)
+    note: (row.rating != null) ? parseFloat(row.rating) : null,
+    avis: parseInt(row.review_count || 0) || 0,
+    prix: (row.consultation_fee_dzd != null && row.consultation_fee_dzd > 0) ? parseInt(row.consultation_fee_dzd, 10) : null,
+    // [Phase 13b] bio si présente (null en M0), sinon phrase générique
+    desc: row.bio || (spec + ' exerçant à ' + ville + '.'),
+    addr: isClaimed ? (row.address || cityStr) : cityStr,
+    langs: Array.isArray(row.languages) && row.languages.length ? row.languages.map(function(l){return String(l).toUpperCase();}) : ['FR','AR'],
     cert: !!row.is_verified,
     urgent: false,
-    diplomes: ['Doctorat en Medecine'],
+    diplomes: ['Doctorat en Médecine'],
     phone: null,        // jamais expose tant que pas branche backend SMS
+    // [Phase 13b] Nouveaux champs DB enrichie
+    photoUrl:     row.photo_url || null,
+    bio:          row.bio || null,
+    workingHours: row.working_hours || null,
+    telehealth:   !!row.telehealth_enabled,
+    telehealthFee: (row.telehealth_fee_dzd != null && row.telehealth_fee_dzd > 0) ? parseInt(row.telehealth_fee_dzd,10) : null,
+    acceptsCard:  !!row.accepts_card,
+    acceptsChifa: !!row.accepts_chifa,
+    acceptsCash:  row.accepts_cash !== false,
+    entityType:   row.entity_type || null,
+    latitude:     row.latitude || null,
+    longitude:    row.longitude || null,
     _claimable: !isClaimed,  // bandeau "Reclamer" SEULEMENT si pas encore revendiquee
     _isClaimed: isClaimed
   };
@@ -281,6 +298,77 @@ function _renderNotFound(id){
     + '</div>';
 }
 
+// [Phase 13b] Injecte 3 sections additionnelles dans la fiche après render
+// principal : badges téléconsult + moyens de paiement + horaires. Idempotent
+// (supprime + re-crée à chaque appel). Aucun crash si données absentes.
+function _injectPhase13Sections(d){
+  // Conteneur cible : on insère AVANT #d-dipl (section diplômes) qui existe
+  // déjà dans tous les layouts doctor-profile. Si absent, fallback fin de main.
+  var ANCHOR_ID = 'd-dipl';
+  var WRAP_ID   = 'd-phase13-extras';
+  var existing = document.getElementById(WRAP_ID);
+  if (existing) existing.parentNode.removeChild(existing);
+  var anchor = document.getElementById(ANCHOR_ID);
+  var parent = anchor ? anchor.parentNode : document.querySelector('main');
+  if (!parent) return;
+  var wrap = document.createElement('div');
+  wrap.id = WRAP_ID;
+  wrap.style.cssText = 'margin:14px 0';
+  var html = '';
+  // Téléconsultation
+  if (d.telehealth) {
+    var feeTxt = (d.telehealthFee != null) ? (d.telehealthFee.toLocaleString() + ' DA') : 'Tarif à confirmer';
+    html += '<div class="card" style="padding:14px;margin-bottom:10px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd">'
+         +   '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
+         +     '<i class="fa fa-video" style="font-size:20px;color:#1d4ed8"></i>'
+         +     '<div style="font-size:14px;font-weight:700;color:#1d4ed8">Téléconsultation disponible</div>'
+         +   '</div>'
+         +   '<div style="font-size:13px;color:var(--text2)">Consultation vidéo sécurisée — ' + esc(feeTxt) + '</div>'
+         + '</div>';
+  }
+  // Moyens de paiement acceptés (toujours afficher si au moins un)
+  var pmBadges = [];
+  if (d.acceptsCash)  pmBadges.push('<span class="badge" style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-money-bill-wave fa-xs"></i> Espèces</span>');
+  if (d.acceptsCard)  pmBadges.push('<span class="badge" style="background:#dbeafe;color:#1d4ed8;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-credit-card fa-xs"></i> Carte</span>');
+  if (d.acceptsChifa) pmBadges.push('<span class="badge" style="background:#dcfce7;color:#0a4d3e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-id-card fa-xs"></i> Chifa</span>');
+  if (pmBadges.length) {
+    html += '<div class="card" style="padding:14px;margin-bottom:10px">'
+         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-wallet" style="color:var(--blue)"></i> Moyens de paiement acceptés</div>'
+         +   '<div style="display:flex;flex-wrap:wrap">' + pmBadges.join('') + '</div>'
+         + '</div>';
+  }
+  // Horaires (working_hours JSONB — format attendu : {mon:[{open,close}], tue:...})
+  var WH = d.workingHours;
+  if (WH && typeof WH === 'object' && Object.keys(WH).length) {
+    var DAYS = [
+      {k:'mon',l:'Lun'},{k:'tue',l:'Mar'},{k:'wed',l:'Mer'},{k:'thu',l:'Jeu'},
+      {k:'fri',l:'Ven'},{k:'sat',l:'Sam'},{k:'sun',l:'Dim'}
+    ];
+    var rows = DAYS.map(function(day){
+      var slots = WH[day.k];
+      var txt;
+      if (!slots || !Array.isArray(slots) || !slots.length) {
+        txt = '<span style="color:var(--text3)">Fermé</span>';
+      } else {
+        txt = slots.map(function(s){ return esc(s.open||'') + '–' + esc(s.close||''); }).join(' &middot; ');
+      }
+      return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bg2);font-size:13px">'
+           +   '<span style="font-weight:600;min-width:40px">' + day.l + '</span>'
+           +   '<span style="color:var(--text2)">' + txt + '</span>'
+           + '</div>';
+    }).join('');
+    html += '<div class="card" style="padding:14px;margin-bottom:10px">'
+         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-clock" style="color:var(--blue)"></i> Horaires d\'ouverture</div>'
+         +   rows
+         + '</div>';
+  }
+  // Bio si dispo et différente de la phrase générique (déjà rendue dans #d-bio)
+  // → on n'insère PAS bio ici pour éviter doublon
+  wrap.innerHTML = html;
+  if (anchor) parent.insertBefore(wrap, anchor);
+  else parent.appendChild(wrap);
+}
+
 async function loadDoc(){
   var id = getDocId();
   if (!id) { _renderNotFound(''); return; }
@@ -310,20 +398,50 @@ async function loadDoc(){
 
   // Render UI (chaque section dans try pour eviter crash en cascade)
   try {
-    document.getElementById("d-ava").textContent = d.in || '?';
-    document.getElementById("d-ava").style.background = d.bg || '#dbeafe';
-    document.getElementById("d-ava").style.color = d.tc || '#1d4ed8';
+    // [Phase 13b] Avatar : photo_url si dispo (avec fallback onerror sur initiales)
+    var avaEl = document.getElementById("d-ava");
+    if (d.photoUrl) {
+      avaEl.innerHTML = '<img src="' + esc(d.photoUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" loading="lazy" onerror="this.parentNode.textContent=\'' + esc(d.in || '?') + '\'">';
+      avaEl.style.background = d.bg || '#dbeafe';
+    } else {
+      avaEl.textContent = d.in || '?';
+      avaEl.style.background = d.bg || '#dbeafe';
+      avaEl.style.color = d.tc || '#1d4ed8';
+    }
     document.getElementById("d-name").textContent = d.fr || 'Dr ?';
     document.getElementById("d-spec").innerHTML = '<i class="fa fa-stethoscope fa-xs"></i> ' + esc(d.spec || '') + ' &middot; ' + esc(d.ville || '');
-    document.getElementById("d-stars").textContent = "★".repeat(Math.round(d.note || 0)) + "☆".repeat(5 - Math.round(d.note || 0));
-    document.getElementById("d-note").textContent = (d.note || 0).toFixed ? (d.note || 0).toFixed(1) : (d.note || 0);
-    document.getElementById("d-avis").textContent = "(" + (d.avis || 0) + " avis)";
-    document.getElementById("d-price").textContent = (d.prix || 0).toLocaleString() + " DA";
+    // [Phase 13b] Note : null si pas notée → masque stars + "Pas encore noté"
+    var starsEl = document.getElementById("d-stars");
+    var noteEl  = document.getElementById("d-note");
+    var avisEl  = document.getElementById("d-avis");
+    if (d.note != null) {
+      starsEl.textContent = "★".repeat(Math.round(d.note)) + "☆".repeat(5 - Math.round(d.note));
+      noteEl.textContent  = d.note.toFixed(1);
+      avisEl.textContent  = "(" + (d.avis || 0) + " avis)";
+      starsEl.style.display = ''; noteEl.style.display = '';
+    } else {
+      starsEl.style.display = 'none'; noteEl.style.display = 'none';
+      avisEl.textContent = 'Pas encore noté';
+      avisEl.style.color = 'var(--text3)';
+    }
+    // [Phase 13b] Prix : null → "Tarif à confirmer"
+    var priceEl = document.getElementById("d-price");
+    if (d.prix != null) {
+      priceEl.textContent = d.prix.toLocaleString() + " DA";
+      priceEl.style.color = '';
+    } else {
+      priceEl.textContent = "Tarif à confirmer";
+      priceEl.style.color = 'var(--text3)';
+      priceEl.style.fontSize = '14px';
+    }
     document.getElementById("d-bio").textContent = d.desc || '';
     document.getElementById("d-addr").textContent = d.addr || d.ville || '';
-    document.getElementById("b-langs").textContent = (d.langs || ["FR","AR"]).join(" &middot; ");
+    document.getElementById("b-langs").textContent = (d.langs || ["FR","AR"]).join(" · ");
     document.getElementById("b-cert").style.display = d.cert ? "" : "none";
     document.getElementById("b-urg").style.display = d.urgent ? "" : "none";
+
+    // [Phase 13b] NEW : injecter badges téléconsult + paiements + horaires
+    _injectPhase13Sections(d);
     document.getElementById("d-dipl").innerHTML = (d.diplomes || ["Doctorat en Medecine"]).map(function(dipl){
       return '<div style="display:flex;align-items:start;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2)"><i class="fa fa-certificate" style="color:#f59e0b;margin-top:3px"></i><div>' + esc(dipl) + '</div></div>';
     }).join("");
