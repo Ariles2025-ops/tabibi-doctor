@@ -1776,47 +1776,31 @@ function renderChips(){
   ].map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
 }
 
-function doFilter(){
-  const name=(document.getElementById("name-search")?.value||"").trim().toLowerCase();
-  const ville=document.getElementById("f-ville")?.value||"";
-  const spec=document.getElementById("f-spec")?.value||"";
-  const maxP=parseInt(document.getElementById("f-price")?.value||10000);
-  const sort=document.getElementById("f-sort")?.value||"rating";
-  const chips=[...document.querySelectorAll(".chip.active")].map(c=>c.dataset.cv);
-
-  let res=DOCTORS.filter(d=>{
-    if(name){
-      const m=d.fr.toLowerCase().includes(name)||d.ar.includes(name)||d.en.toLowerCase().includes(name)||
-              d.spec.toLowerCase().includes(name)||(d.sEn||"").toLowerCase().includes(name)||d.ville.toLowerCase().includes(name);
-      if(!m) return false;
-    }
-    if(ville&&d.ville!==ville) return false;
-    if(spec){
-      // Match insensible aux accents/casse — d.spec est normalisé via _spec()
-      const ns=_norm(d.spec), nq=_norm(spec);
-      if(ns!==nq && ns.indexOf(nq)===-1 && nq.indexOf(ns)===-1) return false;
-    }
-    if(d.prix>maxP) return false;
-    if(chips.includes("urg")&&!d.urgent) return false;
-    if(chips.includes("cert")&&!d.cert) return false;
-    if(chips.includes("4plus")&&d.note<4) return false;
-    if(chips.includes("cheap")&&d.prix>=2000) return false;
-    if(chips.includes("fem")&&d.g!=="F") return false;
-    return true;
-  });
-
-  res.sort((a,b)=>{
-    if(sort==="rating") return b.note-a.note;
-    if(sort==="price_asc") return a.prix-b.prix;
-    if(sort==="price_desc") return b.prix-a.prix;
-    if(sort==="reviews") return (b.avis||0)-(a.avis||0);
-    return 0;
-  });
-
-  filtered=res; curPage=1;
-  renderDocs();
-  const rc=document.getElementById("res-count");
-  if(rc) rc.textContent=res.length+" "+T("found");
+// [Phase 5.5 fix BUG #1] doFilter() ne filtre plus en mémoire (qui ne contenait
+// que 20 médecins random). Il lit l'état UI puis délègue à loadDoctorCards()
+// qui re-requête Supabase avec les filtres en query string PostgREST.
+// Debounce 300ms sur input texte pour ne pas spammer la base.
+let _doFilterDebounce = null;
+function _readFilterUI(){
+  const chipEls = [...document.querySelectorAll(".chip.active")];
+  const chips = chipEls.map(c=>c.dataset.cv).filter(Boolean);
+  const maxP = parseInt(document.getElementById("f-price")?.value || 10000);
+  return {
+    search:    (document.getElementById("name-search")?.value||"").trim(),
+    ville:     document.getElementById("f-ville")?.value || "",
+    spec:      document.getElementById("f-spec")?.value || "",
+    sort:      document.getElementById("f-sort")?.value || "rating",
+    maxPrice:  (maxP < 10000) ? maxP : null,   // null si user n'a pas bougé le slider
+    minRating: chips.indexOf("4plus") !== -1 ? 4 : 0,
+    cert:      chips.indexOf("cert") !== -1,
+    chips:     chips
+  };
+}
+function doFilter(immediate){
+  if(_doFilterDebounce){ clearTimeout(_doFilterDebounce); _doFilterDebounce = null; }
+  const fire = () => loadDoctorCards(_readFilterUI());
+  if(immediate === true) { fire(); return; }
+  _doFilterDebounce = setTimeout(fire, 300);
 }
 
 function filterBySpec(name){
@@ -1883,9 +1867,9 @@ function docCard(d){
       </div>
     </div>
     <div class="doc-stars">
-      <span class="sf">${stars(d.note)}</span>
-      <span class="rn">${d.note}</span>
-      <span class="rc">(${d.avis} ${T("avis_word")})</span>
+      ${d.note != null
+        ? `<span class="sf">${stars(d.note)}</span><span class="rn">${d.note}</span><span class="rc">(${d.avis} ${T("avis_word")})</span>`
+        : `<span class="rc" style="color:var(--text3)">Pas encore noté</span>`}
     </div>
     <div class="doc-tags">
       ${d.cert?`<span class="badge badge-green"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
@@ -1893,7 +1877,7 @@ function docCard(d){
       <span class="badge badge-blue">${T("available")}</span>
     </div>
     <div class="doc-footer">
-      <div class="doc-price">${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small></div>
+      <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
       <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')">
         <i class='fa fa-calendar-plus'></i>${T("rdv")}
       </button>
@@ -2472,42 +2456,133 @@ async function loadRealDoctors(){
 
 function animateCounters(total){if(!total)return;const targets=[document.getElementById("hero-doc-count"),document.getElementById("stats-doc-count"),document.getElementById("foot-doc-count")].filter(Boolean);const duration=1200,start=performance.now();function tick(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const val=Math.floor(eased*total);const txt=val.toLocaleString("fr-DZ");targets.forEach(el=>{if(el)el.textContent=txt;});if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);}
 
-// [Phase 5.4 fix BUG #1] Charge UN échantillon de cartes pour la liste publique
-// "Médecins certifiés en Algérie" (section #sec-docs sur la home).
-// Distinct de loadRealDoctors() (dormante) : 1 SEUL fetch, limit=20, pas de
-// batches, et n'écrit JAMAIS sur les compteurs (hero/stats/foot) — ceux-ci
-// restent exclusivement alimentés par fetchDoctorCount() + animateCounters().
-// L'utilisateur peut affiner via la barre de recherche / filtres (mais le
-// dataset client reste limité à 20 ; full search côté serveur = Phase 6+).
-async function loadDoctorCards(){
+// [Phase 5.5 fix BUG #1] Recherche médecins SERVEUR — accepte un objet
+// `opts` de filtres et construit une query PostgREST. AVANT (Phase 5.4) :
+// fetch limit=20 sans filtres + filtrage client sur 20 cards → Constantine+ORL
+// retournait "0 médecin(s)" alors que la DB a 37 ORL Constantine.
+//
+// Filtres SERVEUR (colonnes présentes dans la vue public_doctors) :
+//   wilaya_fr (eq), specialty_fr (eq), full_name (ilike OR-search), is_verified (eq)
+// Filtres CLIENT (colonnes manquantes — fallback post-fetch sur les 20 résultats) :
+//   maxPrice, minRating, urgent, gender ← skippés tant que les colonnes
+//   `consultation_fee_dzd`, `rating`, `is_urgent`, `gender` ne sont pas
+//   ajoutées à la vue. Tracked SQL_TODO TODO-SQL-004/005/006.
+//
+// Compteur via Prefer: count=exact + parsing header Content-Range "0-19/<TOTAL>".
+// N'écrit JAMAIS sur hero-doc-count / stats-doc-count / foot-doc-count
+// (réservés exclusivement à animateCounters via fetchDoctorCount).
+// AbortController : annule un fetch en cours si l'utilisateur retape vite.
+// Race-protection : numéro de séquence ; on ignore une réponse plus ancienne
+// que la dernière demandée (= AbortController + safety net).
+let _loadDocsAbort = null;
+let _loadDocsSeq = 0;
+let _lastDoctorTotal = 0;
+let _lastFilterOpts = {};
+
+function _inferEntityType(slug){
+  // Devine entity_type à partir de specialty_slug (la vue n'expose pas la
+  // colonne — workaround Phase 5.5 jusqu'à TODO-SQL-001).
+  if(!slug) return null;
+  const s = String(slug).toLowerCase();
+  if(s.indexOf('pharmacie') !== -1)   return 'pharmacie';
+  if(s.indexOf('laboratoire') !== -1) return 'laboratoire';
+  if(s.indexOf('clinique') !== -1)    return 'clinique';
+  if(s.indexOf('cabinet') !== -1)     return 'cabinet';
+  if(s.indexOf('centre') !== -1)      return 'centre';
+  if(s.indexOf('hopital') !== -1 || s.indexOf('hôpital') !== -1) return 'hopital';
+  return null;   // défaut médecin → préfixe "Dr."
+}
+
+function _buildDoctorCardsUrl(opts){
+  const q = new URLSearchParams();
+  q.set('select', '*');
+  // Filtres serveur — uniquement colonnes présentes
+  if(opts.ville)  q.set('wilaya_fr',     'eq.' + opts.ville);
+  if(opts.spec)   q.set('specialty_fr',  'eq.' + opts.spec);
+  if(opts.cert)   q.set('is_verified',   'eq.true');
+  if(opts.search){
+    // Échapper les virgules et parenthèses pour éviter de casser l'OR PostgREST
+    const safe = String(opts.search).replace(/[(),]/g,' ').trim();
+    if(safe){
+      const v = encodeURIComponent('%' + safe + '%');
+      // OR raw — encodeURIComponent ne s'applique pas au separator OR de PostgREST
+      // URLSearchParams encode déjà les valeurs, on construit la string brute après.
+      q.set('or', '(full_name.ilike.' + v + ',specialty_fr.ilike.' + v + ',wilaya_fr.ilike.' + v + ')');
+    }
+  }
+  // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
+  // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
+  q.set('order', 'full_name.asc');
+  q.set('limit', '20');
+  return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
+}
+
+async function loadDoctorCards(opts){
+  opts = opts || {};
+  _lastFilterOpts = opts;
+
+  // Annule un fetch en vol si l'user retape
+  if(_loadDocsAbort){ try{ _loadDocsAbort.abort(); }catch(e){} }
+  _loadDocsAbort = (typeof AbortController!=='undefined') ? new AbortController() : null;
+  const signal = _loadDocsAbort ? _loadDocsAbort.signal : undefined;
+  const mySeq = ++_loadDocsSeq;
+
+  // Loading state — discret pour ne pas flash le compteur
+  const rc = document.getElementById('res-count');
+  if(rc) rc.textContent = '...';
+
   try {
-    const res = await fetch(_SB_URL + '/rest/v1/public_doctors?select=*&limit=20&order=full_name', {
-      headers: { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY }
+    const url = _buildDoctorCardsUrl(opts);
+    const res = await fetch(url, {
+      headers: {
+        'apikey':       _SB_KEY,
+        'Authorization':'Bearer ' + _SB_KEY,
+        'Prefer':       'count=exact',
+        'Range-Unit':   'items',
+        'Range':        '0-19'
+      },
+      signal: signal
     });
-    if(!res.ok) { console.warn('[Tabibi] loadDoctorCards HTTP', res.status); return; }
+    if(mySeq !== _loadDocsSeq) return;  // une requête plus récente a démarré
+    if(!res.ok){
+      console.warn('[Tabibi] loadDoctorCards HTTP', res.status);
+      if(rc) rc.textContent = '';
+      return;
+    }
+    // Total via header "Content-Range: 0-19/<TOTAL>"
+    const cr = res.headers.get('content-range') || '';
+    const total = parseInt((cr.split('/')[1] || '0'), 10) || 0;
+    _lastDoctorTotal = total;
+
     const batch = await res.json();
-    if(!Array.isArray(batch) || !batch.length) return;
-    // Vide puis remplit DOCTORS (sans toucher aux compteurs DOM)
+    if(mySeq !== _loadDocsSeq) return;
+
+    // Hydrate DOCTORS
     DOCTORS.length = 0;
-    batch.forEach((d,i) => {
+    (Array.isArray(batch) ? batch : []).forEach((d, i) => {
       const clr = _COLORS[i % _COLORS.length];
       const DN = window.tabibiDoctorName;
-      const nameFr = DN ? DN.formatForLang(d,'fr') : (d.full_name || d.name_fr || d.name || 'Médecin');
-      const nameAr = DN ? DN.formatForLang(d,'ar') : (d.name_ar || d.full_name_ar || d.full_name || nameFr);
-      const nameEn = DN ? DN.formatForLang(d,'en') : (d.name_en || d.full_name || nameFr);
-      const ini = DN ? DN.initials(d) : ((d.full_name||'').replace(/^Dr\.?\s*/i,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase() || 'MD');
+      // Workaround entity_type : déduit de specialty_slug
+      const inferredEntity = _inferEntityType(d.specialty_slug);
+      const dForName = { ...d, entity_type: d.entity_type || inferredEntity };
+      const nameFr = DN ? DN.formatForLang(dForName,'fr') : (d.full_name || 'Médecin');
+      const nameAr = DN ? DN.formatForLang(dForName,'ar') : (d.full_name_ar || d.full_name || nameFr);
+      const nameEn = DN ? DN.formatForLang(dForName,'en') : (d.full_name || nameFr);
+      const ini    = DN ? DN.initials(dForName) : '?';
       DOCTORS.push({
         id: String(d.id || ('db_'+i)),
-        entityType: d.entity_type || null,
+        entityType: dForName.entity_type,
         fr: nameFr, ar: nameAr, en: nameEn,
         spec: _spec(d), sAr:'', sEn:'',
         ville: _ville(d), vAr:'', vEn:'',
-        note: parseFloat(d.rating || d.average_rating || 4.5) || 4.5,
-        prix: parseInt(d.consultation_fee || d.price || 1500) || 1500,
+        // [Phase 5.5] note/prix = null si pas de donnée (au lieu de fallback
+        // trompeur 4.5 / 1500 DA). docCard affiche "—" / "Tarif à confirmer".
+        note: (d.rating != null) ? parseFloat(d.rating) : null,
+        prix: (d.consultation_fee_dzd != null) ? parseInt(d.consultation_fee_dzd, 10) : null,
         urgent: !!(d.is_urgent || d.urgent),
-        cert: d.is_verified !== undefined ? !!d.is_verified : true,
+        cert: d.is_verified !== undefined ? !!d.is_verified : false,
         in: ini, bg: clr.bg, tc: clr.tc,
-        g: (d.gender==='F'||d.sexe==='F'||d.gender==='female') ? 'F' : 'H',
+        g: (d.gender==='F' || d.sexe==='F' || d.gender==='female') ? 'F' : 'H',
         avis: parseInt(d.reviews_count || d.total_reviews || 0) || 0,
         langs: d.languages || d.langs || ['FR','AR'],
         desc: d.description || d.bio || d.about || '',
@@ -2515,22 +2590,91 @@ async function loadDoctorCards(){
         diplomes: d.diplomes || []
       });
     });
-    // Re-render via doFilter() pour passer dans le pipeline filtres/tri standard.
-    // doFilter() écrit res-count (✅ pas un compteur médecins global) et appelle renderDocs().
-    if(typeof doFilter === 'function') doFilter();
+
+    // Post-filter client (colonnes absentes de la vue — skippe si filtre actif
+    // sur des colonnes absent = retourne tout vu qu'on ne sait pas filtrer)
+    let res2 = [...DOCTORS];
+    if(opts.maxPrice != null){
+      // Ne filtre que les docs qui ONT un prix renseigné > maxPrice. Pas de
+      // prix renseigné = laisse passer (sinon on cacherait toute la base).
+      res2 = res2.filter(d => d.prix == null || d.prix <= opts.maxPrice);
+    }
+    if(opts.minRating > 0){
+      res2 = res2.filter(d => d.note != null && d.note >= opts.minRating);
+    }
+    if(opts.chips && opts.chips.indexOf('fem') !== -1){
+      res2 = res2.filter(d => d.g === 'F');
+    }
+    if(opts.chips && opts.chips.indexOf('urg') !== -1){
+      res2 = res2.filter(d => d.urgent);
+    }
+    if(opts.chips && opts.chips.indexOf('cheap') !== -1){
+      res2 = res2.filter(d => d.prix == null || d.prix < 2000);
+    }
+
+    filtered = res2; curPage = 1;
+    renderDocs();
+    _updateResCount(total, res2.length, opts);
   } catch(e) {
+    if(e && e.name === 'AbortError') return;
     console.warn('[Tabibi] loadDoctorCards exception:', e && e.message);
+    if(rc) rc.textContent = '';
   }
 }
+
+// Affiche un compteur + message UX selon contexte
+function _updateResCount(serverTotal, shownLocal, opts){
+  const rc = document.getElementById('res-count');
+  if(!rc) return;
+  if(serverTotal === 0){
+    const filtersActive = !!(opts.ville || opts.spec || opts.search || opts.cert
+                          || opts.maxPrice != null || opts.minRating > 0
+                          || (opts.chips && opts.chips.length));
+    if(filtersActive){
+      rc.innerHTML = '<span style="color:var(--text2)">Aucun médecin avec ces filtres.</span> '
+                   + '<button type="button" onclick="resetFilters()" '
+                   + 'style="background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;text-decoration:underline;font-size:inherit;font-family:inherit;padding:0">'
+                   + 'Voir tous les médecins</button>';
+    } else {
+      rc.textContent = '0 ' + (T('found')||'médecin(s) trouvé(s)');
+    }
+    return;
+  }
+  if(serverTotal > 20){
+    rc.textContent = shownLocal + ' affichés sur ' + serverTotal.toLocaleString('fr-DZ')
+                   + ' — affinez votre recherche pour voir plus';
+  } else {
+    rc.textContent = serverTotal.toLocaleString('fr-DZ') + ' ' + (T('found')||'médecin(s) trouvé(s)');
+  }
+}
+
+// Reset complet : vide tous les filtres puis recharge
+function resetFilters(){
+  const ns = document.getElementById('name-search'); if(ns) ns.value = '';
+  const fv = document.getElementById('f-ville');    if(fv) fv.value = '';
+  const fs = document.getElementById('f-spec');     if(fs) fs.value = '';
+  const fp = document.getElementById('f-price');
+  if(fp){
+    fp.value = 10000;
+    const pl = document.getElementById('price-lbl');
+    if(pl) pl.textContent = '10 000 DA';
+  }
+  document.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
+  doFilter(true);
+}
+window.resetFilters = resetFilters;
 
 /* INIT */
 document.addEventListener("DOMContentLoaded",()=>{
   loadUser(); setLang(lang);
-  populateSelects(); renderSpecs(); renderChips(); doFilter();
+  populateSelects(); renderSpecs(); renderChips();
   renderUserUI(); initTabBar("home");
   fetchDoctorCount().then(animateCounters);    // compteur exact en 1 requête rapide (HEAD)
-  loadDoctorCards();                            // [Phase 5.4 fix BUG #1] 20 cards pour la section liste publique
-  /* loadRealDoctors(); désactivé */     // chargement complet par batches (plus lent mais remplit la liste)
+  // [Phase 5.5] doFilter(true) déclenche loadDoctorCards immédiatement (pas
+  // de debounce 300ms au load). loadDoctorCards récupère 20 médecins +
+  // count exact ET applique les filtres UI (vides au load).
+  doFilter(true);
+  /* loadRealDoctors(); désactivé */     // ancienne fonction batches multi-pages (rollback)
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
 
