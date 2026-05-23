@@ -2074,13 +2074,25 @@ function showBookingModal(d,slot){
           <label class="form-label">Mode de paiement</label>
           <div id="bk-pay"></div>
         </div>
-        <button class="btn btn-success btn-full btn-xl" onclick="finalBooking('${d.id}','${slot||"09:00"}','${n}','${d.prix}')"><i class='fa fa-check'></i> Confirmer le RDV</button>
+        <button class="btn btn-success btn-full btn-xl" id="bk-confirm-btn" data-bk-doctor-id="${d.id}" data-bk-slot="${slot||"09:00"}" data-bk-prix="${d.prix||''}"><i class='fa fa-check'></i> Confirmer le RDV</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
   document.body.style.overflow="hidden";
   document.getElementById("bk-pay").innerHTML=renderPayMethods("cash");
   window._bkPay="cash";
+  // [Phase 14.1.1 fix] Bind bouton Confirmer via addEventListener au lieu d'inline onclick.
+  // Évite tout risque de parsing cassé sur ${n}=nom médecin DB (UTF-8/quotes/slashes).
+  // Le nom est capturé en closure (var locale `n`), pas injecté dans l'attribut.
+  var confirmBtn = modal.querySelector('#bk-confirm-btn');
+  if (confirmBtn) {
+    confirmBtn.addEventListener('click', function(){
+      var docId = confirmBtn.getAttribute('data-bk-doctor-id') || '';
+      var slotV = confirmBtn.getAttribute('data-bk-slot') || '09:00';
+      var prixV = confirmBtn.getAttribute('data-bk-prix') || '';
+      finalBooking(docId, slotV, n, prixV);
+    });
+  }
 }
 
 async function finalBooking(docId,slot,docName,prix){
