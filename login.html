@@ -54,7 +54,10 @@
     <p style="color:var(--text3);font-size:13px;margin-top:3px">La santé à portée de clic</p>
   </div>
   <div class="card" style="max-width:400px;margin:0 auto">
-    <form onsubmit="doLogin(event)">
+    <!-- [Phase 14.2 fix] id="loginForm" REQUIS depuis le fix login-handler.js : fallback
+         catch-all retiré pour ne plus polluer signup.html. login-handler attache
+         son listener uniquement si form#loginForm OU form[data-form="login"]. -->
+    <form id="loginForm" onsubmit="doLogin(event)">
       <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
         <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
           <input class="form-control" id="le" type="email" required style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>

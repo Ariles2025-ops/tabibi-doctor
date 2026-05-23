@@ -6,9 +6,15 @@
   }
 
   function findLoginForm() {
+    // [Phase 14.2 fix] Fallback `document.querySelector('form')` SUPPRIMÉ.
+    // Avant : signup.html (form sans id) tombait sur le catch-all → listener
+    // login attaché → POST /auth/v1/token?grant_type=password sur submit signup
+    // → 400 Invalid login credentials → flow signup cassé.
+    // Maintenant : opt-in explicite via id="loginForm" ou data-form="login".
+    // login.html ajoute id="loginForm" au form. Toute autre page (signup,
+    // forgot-password, reset, contact, etc.) est désormais immune.
     return document.querySelector('form#loginForm') ||
-           document.querySelector('form[data-form="login"]') ||
-           document.querySelector('form');
+           document.querySelector('form[data-form="login"]');
   }
 
   function showError(msg) {
