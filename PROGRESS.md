@@ -213,6 +213,13 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [ ] 12.4 Rate limiting RPCs sensibles — **backend Supabase** (`pg_extension pg_throttle` ou Edge Function middleware). Hors scope frontend.
 - [x] **12.5** Headers sécurité netlify.toml — **déjà solides** (Phase 2) : CSP, HSTS preload, X-Frame DENY, X-Content-Type-Options nosniff, Referrer-Policy strict-origin-when-cross-origin, Permissions-Policy stricte. **Ajout Phase 12.5** : `plausible.io` dans script-src + connect-src pour Phase 10.5 quand analytics=true.
 
+## Phase 13a-c — Exploitation vue public_doctors enrichie (32 cols, 2026-05-23)
+Session SQL séparée a enrichi la vue `public_doctors` de 15 → 32 colonnes (entity_type, full_name_ar, wilaya_code, city, latitude/longitude, photo_url, bio, languages, consultation_fee_dzd, accepts_card/chifa/cash, telehealth_enabled, telehealth_fee_dzd, rating, review_count, working_hours).
+- [x] **13a** `index.html` `loadDoctorCards()` + `docCard()` — entity_type direct depuis vue, city+wilaya, prix/note null si absent, badges Téléconsultation/Chifa/Carte/Espèces, avatar `<img src=photoUrl>` avec fallback initiales. `_inferEntityType` reste fallback safe.
+- [x] **13b** `doctor-profile.html` `_mapSupabaseDoctor()` + `loadDoc()` + NEW `_injectPhase13Sections()` — bio dans desc, langues uppercase, "Pas encore noté"/"Tarif à confirmer" propres, 3 cards additionnelles (téléconsult / paiements / horaires 7j parsés depuis JSONB).
+- [x] **13c** `tabibi-doctor-name.js` ajout `optician`/`opticien` aux NON_DOCTOR_ENTITIES. `SQL_TODO.md` nettoyé : TODO-SQL-001 à 007 marqués résolus, restent 008/009/010/011 (Daily.co RPCs, Stripe, notifications table, reviews table).
+- [x] **13c** Notes M0 documentées : `consultation_fee_dzd` 0/79746, `telehealth_enabled` 0/79746, `photo_url` 0/79746 — se rempliront naturellement au claim médecin. Le frontend gère tous les NULL gracieusement (aucun crash, aucun placeholder trompeur).
+
 ## Phase 13 — Domaine + déploiement final (1-2h)
 - [ ] 13.1 Instructions DNS pour `tabibi.doctor` (A/AAAA/CNAME)
 - [ ] 13.2 SSL Let's Encrypt auto
