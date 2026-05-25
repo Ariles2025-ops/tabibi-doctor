@@ -215,7 +215,7 @@ async function loadCounts(){
 // ─── Query builder ────────────────────────────────────────────
 function bq(sb,head){
   let q=sb.from('doctor_profiles').select(
-    head?'id':'id,full_name,email,phone,photo_url,wilaya_code,specialty_id,claimed_at,source,legacy_id,ordre_card_path,id_card_path,rejection_reason,rejected_at,validated_at',
+    head?'id':'id,full_name,email,phone,photo_url,wilaya_code,specialty_id,claimed_at,source,legacy_id,ordre_card_path,id_card_path,validation_rejected_reason,validation_rejected_at,validation_approved_at',
     head?{count:'exact',head:true}:{}
   ).eq('validation_status',_tab);
   if(_tab==='pending')q=q.eq('is_claimed',true);
@@ -293,8 +293,8 @@ function renderCard(d){
     </div>`;
   }
 
-  const rejBox=(_tab==='rejected'&&d.rejection_reason)
-    ?`<div class="rej-box"><strong>Motif :</strong> ${esc(d.rejection_reason)}<br><span style="font-size:10px;opacity:.7">Rejeté le ${fmtD(d.rejected_at)}</span></div>`:'';
+  const rejBox=(_tab==='rejected'&&d.validation_rejected_reason)
+    ?`<div class="rej-box"><strong>Motif :</strong> ${esc(d.validation_rejected_reason)}<br><span style="font-size:10px;opacity:.7">Rejeté le ${fmtD(d.validation_rejected_at)}</span></div>`:'';
 
   const missBadge=(!hasDocs&&_tab==='pending')
     ?'<span style="font-size:10px;background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px"><i class="fa fa-triangle-exclamation fa-xs"></i> Docs manquants</span>':'';
