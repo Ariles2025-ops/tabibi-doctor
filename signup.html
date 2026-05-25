@@ -157,8 +157,18 @@ function selRole(r,btn){
 }
 function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
 
+// [Phase 15.2 fix E] Guard global anti-double-submit. Si l'utilisateur double-clique
+// (ou si le listener est attaché 2x à cause d'un bug de hot-reload), on bloque
+// le 2e appel au lieu de partir en flux concurrent.
+window._signupInFlight = window._signupInFlight || false;
+
 async function doSignup(e){
   e.preventDefault();
+  if (window._signupInFlight) {
+    console.warn('[signup] double-submit bloqué (un signup est déjà en cours)');
+    return;
+  }
+  window._signupInFlight = true;
   const fn=sf.value.trim(),ln=sl.value.trim(),em=se.value.trim().toLowerCase(),ph=sp.value.trim(),wi=sw.value,pw=spw.value;
 
   // ─── VALIDATIONS ───
@@ -231,12 +241,50 @@ async function doSignup(e){
     }
 
     // 1. Créer le compte Supabase Auth — call DIRECT au SDK, pas via wrapper
-    console.log('[signup] auth.signUp() POST /auth/v1/signup …');
-    var _signupRes = await sbClient.auth.signUp({
-      email: em,
-      password: pw,
-      options: { data: { role: cur } }
-    });
+    // [Phase 15.2 fix C] emailRedirectTo = origin + /auth/callback.html
+    // Doit être whitelist dans Supabase Auth Settings → URL Configuration
+    // (Site URL + Redirect URLs). Si l'URL n'est pas autorisée, Supabase
+    // rejette le redirect mais ne throw pas — c'est une source de réponse vide.
+    var emailRedirectTo = location.origin + '/auth/callback.html';
+    console.log('[signup] auth.signUp() POST /auth/v1/signup  emailRedirectTo=' + emailRedirectTo);
+
+    // [Phase 15.2 fix A + D] Helper avec retry 1× sur réponse vide
+    async function _signUpOnce() {
+      return await sbClient.auth.signUp({
+        email: em,
+        password: pw,
+        options: {
+          data: { role: cur },
+          emailRedirectTo: emailRedirectTo
+        }
+      });
+    }
+    var _signupRes = await _signUpOnce();
+
+    // [Phase 15.2 fix A] LOG BRUT COMPLET avant toute destructuration.
+    // Permet de diagnostiquer cas edge SDK ou Auth Hooks Postgres custom.
+    try {
+      console.log('[signup] RAW response:', JSON.stringify(_signupRes, function(k, v){
+        // Mask password si présent par accident
+        if (k === 'password') return '***';
+        return v;
+      }, 2));
+    } catch (logErr) {
+      console.log('[signup] RAW response (non-serializable):', _signupRes);
+    }
+
+    // [Phase 15.2 fix D] Retry 1× si data ET error sont tous deux null/undefined.
+    // Réseau flaky ou race condition côté serveur — un seul retry après 2s
+    // suffit en pratique, sinon on tombe dans le message informatif fix B.
+    var _isEmpty = (_signupRes && !_signupRes.data && !_signupRes.error);
+    if (_isEmpty) {
+      console.warn('[signup] Réponse vide détectée → retry dans 2 s …');
+      await new Promise(function(r){ setTimeout(r, 2000); });
+      _signupRes = await _signUpOnce();
+      try {
+        console.log('[signup] RAW response (retry):', JSON.stringify(_signupRes, null, 2));
+      } catch (e) {}
+    }
     // [Phase 15.1 fix] Détection officielle Supabase duplicate vs nouveau signup.
     // Référence : https://supabase.com/docs/reference/javascript/auth-signup
     //
@@ -255,6 +303,25 @@ async function doSignup(e){
       console.warn('[signup] Supabase error', _signupRes.error);
       throw _signupRes.error;
     }
+
+    // [Phase 15.2 fix B] Si APRÈS le retry data ET error sont TOUS DEUX
+    // absents → réponse Supabase totalement vide. Cause typique :
+    //   - emailRedirectTo non whitelist dans Supabase Auth → URL Configuration
+    //   - Auth Hook Postgres function qui swallow la réponse
+    //   - Bug SDK ou proxy/CDN qui mange le body
+    // Message explicite + log complet pour debug, PAS catch générique.
+    if (!_signupRes || (!_signupRes.data && !_signupRes.error)) {
+      console.error('[signup] Réponse Supabase TOTALEMENT VIDE après retry. Causes probables :',
+        '\n  1. emailRedirectTo (' + emailRedirectTo + ') non whitelist Supabase Auth → URL Configuration',
+        '\n  2. Auth Hook Postgres function qui intercepte sans répondre',
+        '\n  3. CDN/proxy qui drop le body de la réponse',
+        '\n  Raw object:', _signupRes);
+      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+      toastM("Réponse Supabase vide. Ouvrez la console (F12) puis contactez support@tabibi.doctor avec la capture.", "error");
+      window._signupInFlight = false;
+      return;
+    }
+
     var signupResult = _signupRes.data || {};
     var u = signupResult.user || null;
 
@@ -450,6 +517,11 @@ async function doSignup(e){
     } else {
       toastM(msg, "error");
     }
+  } finally {
+    // [Phase 15.2 fix E] TOUJOURS libérer le guard, même si setTimeout redirect
+    // ou return early. Évite l'utilisateur "bloqué" sur le bouton désactivé
+    // après erreur réseau silent.
+    window._signupInFlight = false;
   }
 }
 
