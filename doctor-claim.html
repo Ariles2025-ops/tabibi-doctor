@@ -170,29 +170,30 @@ function _initialsOf(name){
   return ((parts[0]||'')[0]||'?').toUpperCase() + ((parts[1]||'')[0]||'').toUpperCase();
 }
 
-// Cherche dans public_doctors avec filtres legacy_id et is_claimed
+// [Phase 16.5] Cherche dans claimable_doctors (= 79k scrapés non-claimés).
+// La vue applique déjà legacy_id IS NOT NULL AND is_claimed = false, donc
+// on retire ces filtres redondants côté client.
 async function _dcFetchResults(opts){
   if(_dcAbort){ try{_dcAbort.abort();}catch(e){} }
   _dcAbort = (typeof AbortController!=='undefined') ? new AbortController() : null;
   var mySeq = ++_dcSeq;
   var q = new URLSearchParams();
   q.set('select','id,legacy_id,full_name,full_name_ar,wilaya_fr,specialty_fr,city,entity_type,is_claimed');
-  // Filtre dur : seules les fiches avec legacy_id réclamables sont affichées
-  q.set('legacy_id','not.is.null');
-  q.set('is_claimed','eq.false');
   if(opts.ville) q.set('wilaya_fr','eq.'+opts.ville);
   if(opts.spec)  q.set('specialty_fr','eq.'+opts.spec);
   if(opts.q){
     var s = String(opts.q).replace(/[(),]/g,' ').trim();
     if(s){
-      var v = encodeURIComponent('%'+s+'%');
+      // [Phase 16.5 FIX] même bug d'encoding qu'index.html — q.toString()
+      // ré-encode les `%`, donc on les passe nus.
+      var v = '%'+s+'%';
       q.set('or','(full_name.ilike.'+v+',full_name_ar.ilike.'+v+')');
     }
   }
   q.set('order','full_name.asc');
   q.set('limit','20');
   try {
-    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?' + q.toString(), {
+    var r = await fetch(_SB_URL + '/rest/v1/claimable_doctors?' + q.toString(), {
       headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-19' },
       signal: _dcAbort ? _dcAbort.signal : undefined
     });
@@ -271,7 +272,8 @@ async function _populateDropdowns(){
   var headers = { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY };
   async function fetchDistinct(col){
     try {
-      var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=' + col + '&limit=10000', { headers });
+      // [Phase 16.5] dropdowns alimentés depuis la vue des réclamables
+      var r = await fetch(_SB_URL + '/rest/v1/claimable_doctors?select=' + col + '&limit=10000', { headers });
       if(!r.ok) return [];
       var rows = await r.json();
       var set = new Set();
@@ -338,7 +340,8 @@ document.addEventListener('click', function(e){
 // Charge compteur total médecins (HEAD count=exact, 1 round-trip rapide)
 async function _loadTotalDoctorCount(){
   try {
-    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=id', {
+    // [Phase 16.5] compteur "X fiches réclamables" = vue claimable_doctors
+    var r = await fetch(_SB_URL + '/rest/v1/claimable_doctors?select=id', {
       method:'HEAD',
       headers:{ apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-0' }
     });

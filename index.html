@@ -2359,30 +2359,24 @@ function onLangChange(){
   set('hero-t', heroFullTitle[lang] || heroFullTitle.fr);
 
   // Hero badge : "Médecins certifiés en Algérie"
-  const total = window._tabibiDocTotal;
-  if (total && total > 0) {
-    const localeMap = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
-    const formatted = total.toLocaleString(localeMap[lang] || 'fr-DZ');
-    const badgeText = {
-      fr: formatted + ' médecins certifiés en Algérie',
-      ar: formatted + ' طبيب معتمد في الجزائر',
-      en: formatted + ' certified doctors in Algeria'
-    };
-    const hb = document.getElementById('hbadge');
-    if (hb) hb.textContent = badgeText[lang] || badgeText.fr;
-    const hdc = document.getElementById('hero-doc-count'); if (hdc) hdc.textContent = formatted;
-    const sdc = document.getElementById('stats-doc-count'); if (sdc) sdc.textContent = formatted;
+  // [Phase 16.5] Re-render badge + chiffres + footer avec la règle X / N.
+  const X = window._tabibiDocX || 0;
+  const N = window._tabibiDocN || 0;
+  if (X > 0 || N > 0) {
+    const locale = ({ fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' })[lang] || 'fr-DZ';
+    const nFmt = N.toLocaleString(locale);
+    const texts = (typeof _buildDoctorCountTexts === 'function')
+      ? _buildDoctorCountTexts(lang, X, N)
+      : null;
+    if (texts) {
+      const hb = document.getElementById('hbadge');
+      if (hb) hb.textContent = texts.badge[lang] || texts.badge.fr;
+      set('foot-desc', texts.foot[lang] || texts.foot.fr);
+    }
+    const hdc = document.getElementById('hero-doc-count'); if (hdc) hdc.textContent = nFmt;
+    const sdc = document.getElementById('stats-doc-count'); if (sdc) sdc.textContent = nFmt;
+    const fdc = document.getElementById('foot-doc-count'); if (fdc) fdc.textContent = nFmt;
   }
-
-  // Footer : description (avec compteur dynamique)
-  const footTotal = (window._tabibiDocTotal && window._tabibiDocTotal > 0) ? window._tabibiDocTotal : 0;
-  const footFormatted = footTotal.toLocaleString(lang === 'en' ? 'en-US' : (lang === 'ar' ? 'ar-DZ' : 'fr-DZ'));
-  const footDescText = {
-    fr: 'La 1ère plateforme médicale algérienne. ' + footFormatted + '+ médecins certifiés dans 48 wilayas. Réservez en ligne 24h/24.',
-    ar: 'أول منصة طبية جزائرية. أكثر من ' + footFormatted + ' طبيب معتمد في 48 ولاية. احجز عبر الإنترنت 24/24.',
-    en: '1st Algerian medical platform. ' + footFormatted + '+ certified doctors across 48 wilayas. Book online 24/7.'
-  };
-  set('foot-desc', footDescText[lang] || footDescText.fr);
 
   // Footer "Bientôt" badges
   const soonText = { fr: 'Bientôt', ar: 'قريبًا', en: 'Soon' };
@@ -2513,7 +2507,10 @@ async function loadRealDoctors(){
   }catch(e){console.error('[Tabibi] Erreur:',e);}
 }
 
-function animateCounters(total){if(!total)return;const targets=[document.getElementById("hero-doc-count"),document.getElementById("stats-doc-count"),document.getElementById("foot-doc-count")].filter(Boolean);const duration=1200,start=performance.now();function tick(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const val=Math.floor(eased*total);const txt=val.toLocaleString("fr-DZ");targets.forEach(el=>{if(el)el.textContent=txt;});if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);}
+// [Phase 16.5] anime vers N (= indexés/claimable) car les 3 cibles sont des
+// chiffres seuls "Médecins" — la nuance X certifiés / N indexés est portée
+// par le badge texte (#hbadge) et le footer (#foot-desc).
+function animateCounters(counts){const total=(counts && typeof counts==='object')?(counts.N||counts.X||0):(counts||0);if(!total)return;const targets=[document.getElementById("hero-doc-count"),document.getElementById("stats-doc-count"),document.getElementById("foot-doc-count")].filter(Boolean);const duration=1200,start=performance.now();function tick(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const val=Math.floor(eased*total);const txt=val.toLocaleString("fr-DZ");targets.forEach(el=>{if(el)el.textContent=txt;});if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);}
 
 // [Phase 5.5 fix BUG #1] Recherche médecins SERVEUR — accepte un objet
 // `opts` de filtres et construit une query PostgREST. AVANT (Phase 5.4) :
@@ -2629,9 +2626,11 @@ function _buildDoctorCardsUrl(opts){
     // Échapper les virgules et parenthèses pour éviter de casser l'OR PostgREST
     const safe = String(opts.search).replace(/[(),]/g,' ').trim();
     if(safe){
-      const v = encodeURIComponent('%' + safe + '%');
-      // OR raw — encodeURIComponent ne s'applique pas au separator OR de PostgREST
-      // URLSearchParams encode déjà les valeurs, on construit la string brute après.
+      // [Phase 16.5 FIX] NE PAS encodeURIComponent ici — q.set + q.toString()
+      // ré-encode les `%` en `%25`, ce qui faisait que PostgREST recevait
+      // `%25ouanza%25` (caractère % littéral) au lieu de `%ouanza%` (wildcard
+      // ilike) → 0 résultat sur toute recherche texte.
+      const v = '%' + safe + '%';
       q.set('or', '(full_name.ilike.' + v + ',specialty_fr.ilike.' + v + ',wilaya_fr.ilike.' + v + ')');
     }
   }
@@ -2833,40 +2832,106 @@ document.addEventListener("DOMContentLoaded",()=>{
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
 
-// Récupère le nombre exact de médecins en 1 requête rapide via header Content-Range
-// Permet d'afficher le compteur correct AVANT que loadRealDoctors n'ait fini les 14 batches
-async function fetchDoctorCount(){
-  try {
-    const res = await fetch(_SB_URL + '/rest/v1/public_doctors?select=id', {
-      method: 'HEAD',
-      headers: {
-        apikey: _SB_KEY,
-        Authorization: 'Bearer ' + _SB_KEY,
-        Prefer: 'count=exact',
-        'Range-Unit': 'items',
-        Range: '0-0'
+// [Phase 16.5] Construit les textes "compteur médecins" selon la spec :
+//   X = count(public_doctors)  = médecins claimés et certifiés (visibles côté patient)
+//   N = count(claimable_doctors) = fiches scrapées indexées encore réclamables
+// Règle :
+//   X = 0  → "N médecins indexés en Algérie — réclamez votre fiche"
+//   X > 0  → "X médecins certifiés + N indexés en Algérie"
+// Retourne { badge: {fr,ar,en}, foot: {fr,ar,en} }.
+function _buildDoctorCountTexts(langKey, X, N){
+  const locale = ({ fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' })[langKey] || 'fr-DZ';
+  const xFmt = (X || 0).toLocaleString(locale);
+  const nFmt = (N || 0).toLocaleString(locale);
+  // Accord singulier/pluriel (FR + EN doctor/doctors ; AR invariable).
+  const xIs1 = (X === 1);
+  const nIs1 = (N === 1);
+  if (!X || X <= 0) {
+    // Cas X = 0 : seul N est affiché.
+    const frN = nIs1 ? ' médecin indexé' : ' médecins indexés';
+    const enN = nIs1 ? ' doctor indexed' : ' doctors indexed';
+    return {
+      badge: {
+        fr: nFmt + frN + ' en Algérie — réclamez votre fiche',
+        ar: nFmt + ' طبيب مفهرس في الجزائر — استرجع بطاقتك',
+        en: nFmt + enN + ' in Algeria — claim your profile'
+      },
+      foot: {
+        fr: 'La 1ère plateforme médicale algérienne. ' + nFmt + frN + ' dans 48 wilayas. Réservez en ligne 24h/24.',
+        ar: 'أول منصة طبية جزائرية. ' + nFmt + ' طبيب مفهرس في 48 ولاية. احجز عبر الإنترنت 24/24.',
+        en: '1st Algerian medical platform. ' + nFmt + enN + ' across 48 wilayas. Book online 24/7.'
       }
-    });
-    const cr = res.headers.get('content-range') || '';
-    const m = cr.match(/\/(\d+)$/);
-    if (!m) return;
-    const total = parseInt(m[1], 10);
-    if (!isFinite(total) || total <= 0) return;
-    const localeMap = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
-    const formatted = total.toLocaleString(localeMap[lang] || 'fr-DZ');
-    const hdc = document.getElementById('hero-doc-count'); if (hdc) hdc.textContent = formatted;
-    const sdc = document.getElementById('stats-doc-count'); if (sdc) sdc.textContent = formatted;
-    const badgeText = {
-      fr: formatted + ' médecins certifiés en Algérie',
-      ar: formatted + ' طبيب معتمد في الجزائر',
-      en: formatted + ' certified doctors in Algeria'
     };
-    const hb  = document.getElementById('hbadge');         if (hb)  hb.textContent  = badgeText[lang] || badgeText.fr;
-    document.querySelectorAll('.hs-n').forEach((el,i)=>{ if(i===0) el.textContent = formatted; });
-    // Stocker total pour re-render au changement de langue
-    window._tabibiDocTotal = total;
+  }
+  // Cas X > 0 : compound "X certifiés + N indexés".
+  const frX = xIs1 ? ' médecin certifié' : ' médecins certifiés';
+  const frN = nIs1 ? ' indexé'           : ' indexés';
+  const enX = xIs1 ? ' certified doctor' : ' certified doctors';
+  const enN = ' indexed';  // EN: indexed invariable, et l'objet implicite "doctor(s)" est déjà porté par X.
+  return {
+    badge: {
+      fr: xFmt + frX + ' + ' + nFmt + frN + ' en Algérie',
+      ar: xFmt + ' طبيب معتمد + ' + nFmt + ' مفهرس في الجزائر',
+      en: xFmt + enX + ' + ' + nFmt + enN + ' in Algeria'
+    },
+    foot: {
+      fr: 'La 1ère plateforme médicale algérienne. ' + xFmt + frX + ' + ' + nFmt + frN + ' dans 48 wilayas. Réservez en ligne 24h/24.',
+      ar: 'أول منصة طبية جزائرية. ' + xFmt + ' طبيب معتمد + ' + nFmt + ' مفهرس في 48 ولاية. احجز عبر الإنترنت 24/24.',
+      en: '1st Algerian medical platform. ' + xFmt + enX + ' + ' + nFmt + enN + ' across 48 wilayas. Book online 24/7.'
+    }
+  };
+}
+
+// [Phase 16.5] HEAD count=exact en parallèle sur les 2 vues.
+//   public_doctors    → X (médecins claimés visibles)
+//   claimable_doctors → N (fiches scrapées encore réclamables)
+// Le compteur ne hardcode plus 79 746 — il reflète l'état réel de la base.
+async function fetchDoctorCount(){
+  async function _head(view){
+    try {
+      const r = await fetch(_SB_URL + '/rest/v1/' + view + '?select=id', {
+        method: 'HEAD',
+        headers: {
+          apikey: _SB_KEY,
+          Authorization: 'Bearer ' + _SB_KEY,
+          Prefer: 'count=exact',
+          'Range-Unit': 'items',
+          Range: '0-0'
+        }
+      });
+      const cr = r.headers.get('content-range') || '';
+      const m = cr.match(/\/(\d+)$/);
+      return m ? parseInt(m[1], 10) : 0;
+    } catch(e) {
+      console.warn('[Tabibi] fetchDoctorCount HEAD', view, e && e.message);
+      return 0;
+    }
+  }
+  try {
+    const [X, N] = await Promise.all([_head('public_doctors'), _head('claimable_doctors')]);
+    if (!isFinite(X) || !isFinite(N) || (X + N) <= 0) return null;
+    // Mémorise pour re-render au changement de langue.
+    window._tabibiDocX = X;
+    window._tabibiDocN = N;
+    // Rétro-compat : ancien code peut encore lire _tabibiDocTotal.
+    window._tabibiDocTotal = (X > 0) ? X : N;
+    // Chiffres seuls (3 compteurs) → N = la vitrine "X 000 médecins indexés".
+    const locale = ({ fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' })[lang] || 'fr-DZ';
+    const nFmt = N.toLocaleString(locale);
+    const hdc = document.getElementById('hero-doc-count'); if (hdc) hdc.textContent = nFmt;
+    const sdc = document.getElementById('stats-doc-count'); if (sdc) sdc.textContent = nFmt;
+    const fdc = document.getElementById('foot-doc-count'); if (fdc) fdc.textContent = nFmt;
+    document.querySelectorAll('.hs-n').forEach((el,i)=>{ if(i===0) el.textContent = nFmt; });
+    // Badge texte composé + footer description.
+    const texts = _buildDoctorCountTexts(lang, X, N);
+    const hb = document.getElementById('hbadge');
+    if (hb) hb.textContent = texts.badge[lang] || texts.badge.fr;
+    const fd = document.getElementById('foot-desc');
+    if (fd) fd.textContent = texts.foot[lang] || texts.foot.fr;
+    return { X: X, N: N };
   } catch(e) {
     console.warn('[Tabibi] fetchDoctorCount:', e && e.message);
+    return null;
   }
 }
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
