@@ -1919,9 +1919,10 @@ function docCard(d){
     </div>
     <div class="doc-footer">
       <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
-      <button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')">
-        <i class='fa fa-calendar-plus'></i>${T("rdv")}
-      </button>
+      ${(d.claimed && d.validationStatus && d.validationStatus !== 'approved')
+        ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> Validation en cours</span>`
+        : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')"><i class='fa fa-calendar-plus'></i>${T("rdv")}</button>`
+      }
     </div>
   </article>`;
 }
@@ -1935,6 +1936,11 @@ function goDoc(id){
 function bookDoc(id){
   if(!isLogged()){openModal("login");toast(T("conn_req"),"info");return;}
   const d=DOCTORS.find(x=>x.id===id);
+  if(!d) return;
+  // [Phase 16.4] garde paranoïaque validation
+  if(d.claimed && d.validationStatus && d.validationStatus !== 'approved'){
+    toast("Ce médecin est en cours de validation.","info"); return;
+  }
   showBookingModal(d);
 }
 
@@ -2720,6 +2726,7 @@ async function loadDoctorCards(opts){
         acceptsChifa: !!d.accepts_chifa,
         acceptsCash:  d.accepts_cash !== false,  // defaut true si null
         claimed:     !!d.is_claimed,
+        validationStatus: d.validation_status || null,  // [Phase 16.4]
         latitude:    d.latitude || null,
         longitude:   d.longitude || null
       });

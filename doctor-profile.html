@@ -256,7 +256,8 @@ function _mapSupabaseDoctor(row){
     latitude:     row.latitude || null,
     longitude:    row.longitude || null,
     _claimable: !isClaimed,  // bandeau "Reclamer" SEULEMENT si pas encore revendiquee
-    _isClaimed: isClaimed
+    _isClaimed: isClaimed,
+    _validationStatus: row.validation_status || null  // [Phase 16.4] null = unclaimed scraped
   };
 }
 
@@ -524,6 +525,8 @@ function reserve(){
     // Garde paranoïaque — le bouton est censé être disabled dans ce cas
     return;
   }
+  // [Phase 16.4] Garde paranoïaque validation admin
+  if (currentDoc._validationStatus && currentDoc._validationStatus !== 'approved') { return; }
   // Construit l'URL vers reservation.html avec les params attendus par
   // la page (cf. reservation.html ligne 110-114 : getParam doctorId/
   // doctorName/prix/spec). Pas de slot/date ici : ils seront choisis
@@ -553,7 +556,17 @@ function _refreshReserveBtnState() {
     return;
   }
 
-  // Cas 2 : fiche claim → bouton actif. Mention varie selon auth.
+  // [Phase 16.4] Cas 2 : fiche claimed mais validation admin en attente
+  if (currentDoc._validationStatus && currentDoc._validationStatus !== 'approved') {
+    btn.disabled = true;
+    btn.style.opacity = '0.55';
+    btn.style.cursor = 'not-allowed';
+    mention.textContent = "Validation en cours — ce médecin sera bientôt disponible.";
+    mention.style.color = 'var(--text3)';
+    return;
+  }
+
+  // Cas 3 : fiche claim + approuvée → bouton actif. Mention varie selon auth.
   btn.disabled = false;
   btn.style.opacity = '';
   btn.style.cursor = '';
