@@ -237,30 +237,55 @@ async function doSignup(e){
       password: pw,
       options: { data: { role: cur } }
     });
-    // [Phase 15 fix] Distinction stricte erreur Supabase vs réponse normale
-    if (_signupRes.error) throw _signupRes.error;
-    var signupResult = _signupRes.data || {};
+    // [Phase 15.1 fix] Détection officielle Supabase duplicate vs nouveau signup.
+    // Référence : https://supabase.com/docs/reference/javascript/auth-signup
+    //
+    // Quand confirm_email=ON, Supabase retourne TOUJOURS data.user (avec id),
+    // que ce soit un nouveau signup OU un duplicate silencieux (anti-enumeration).
+    // La SEULE façon fiable de les distinguer :
+    //   - Nouveau user      → data.user.identities = [{...}]  (1+ entrée)
+    //   - Email déjà existe → data.user.identities = []       (array vide)
+    // data.session est null DANS LES DEUX CAS tant que l'email n'est pas confirmé.
+    //
+    // L'ancien check Phase 15 `!signupResult.user` levait un faux duplicate
+    // sur les signups réussis (data.user est toujours présent).
 
-    // Cas Supabase confirm_email=ON + email DÉJÀ UTILISÉ :
-    // l'API retourne {data:{user:null, session:null}, error:null} pour ne pas
-    // révéler quels emails sont enregistrés (sécurité anti-énumération).
-    // → On affiche un message clair "email déjà utilisé" SANS toast d'erreur générique.
-    if (!signupResult.user) {
+    if (_signupRes.error) {
+      // Cas 1 : vraie erreur Supabase (400 format, network, etc.) → catch global
+      console.warn('[signup] Supabase error', _signupRes.error);
+      throw _signupRes.error;
+    }
+    var signupResult = _signupRes.data || {};
+    var u = signupResult.user || null;
+
+    if (!u) {
+      // Cas inattendu : pas d'erreur ET pas de user. Shouldn't happen avec SDK v2.
+      console.warn('[signup] Réponse inattendue : pas d\'erreur, pas de user', signupResult);
+      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+      toastM("Erreur inattendue. Réessayez ou contactez support@tabibi.doctor", "error");
+      return;
+    }
+
+    // Cas 2 : duplicate silencieux détecté via identities vide
+    if (Array.isArray(u.identities) && u.identities.length === 0) {
+      console.log('[signup] DUPLICATE detected (identities=[]) email=' + em.substring(0,3) + '***');
       if (btn) { btn.disabled = false; btn.innerHTML = origText; }
       toastM(tabibiT('toast_email_already_used',
         "Cet email est déjà utilisé. Connectez-vous ou utilisez 'Mot de passe oublié'."),
         "warning");
       return;
     }
-    console.log('[signup] auth.signUp() OK user_id=' + signupResult.user.id.substring(0,8) + '…');
 
-    // [Phase 15 fix] Si confirm_email=ON, session est null tant que l'utilisateur
-    // n'a pas cliqué le lien de confirmation. Dans ce cas on redirige TOUS les
-    // rôles vers /verify-email.html (au lieu de tenter dashboard sans session,
-    // ou modale médecin qui suppose le compte actif). L'auto-claim médecin
-    // reste appelé : il marche tant que la session signup est encore valide ;
-    // sinon legacy_id est stocké en localStorage pour retry au 1er login
-    // post-confirmation (cf tabibi-claim.js consumePending).
+    // Cas 3 : succès (nouveau user créé). Log info détaillée pour debug.
+    console.log('[signup] auth.signUp() OK user_id=' + u.id.substring(0,8) + '…'
+              + ' identities=' + ((u.identities || []).length)
+              + ' session=' + (signupResult.session ? 'yes' : 'no')
+              + ' confirmation_sent=' + (u.confirmation_sent_at ? 'yes' : 'no'));
+
+    // Si confirm_email=ON (config par défaut Supabase), session est null tant que
+    // l'utilisateur n'a pas cliqué le lien de confirmation. Dans ce cas on
+    // redirige TOUS les rôles vers /verify-email.html (au lieu de tenter dashboard
+    // sans session, ou modale médecin qui suppose le compte actif).
     var needsEmailConfirm = !signupResult.session;
 
     // 2. Créer/compléter le profil dans public.profiles
