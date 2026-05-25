@@ -324,10 +324,19 @@ async function doSignup(e){
 
     var signupResult = _signupRes.data || {};
     var u = signupResult.user || null;
+    var hasSession = !!(signupResult.session);
 
+    // CAS NORMAL Supabase v2 : Confirm email activé → user=null + session=null + error=null
+    // Le compte EST créé, l'email de confirmation EST envoyé
+    if (!u && !hasSession && !_signupRes.error) {
+      console.log('[signup] OK - Confirm email mode: account created, verification email sent');
+      window.location.href = '/verify-email.html?email=' + encodeURIComponent(em);
+      return;
+    }
+
+    // Vrai cas anormal : tout est null ET error existe (à logger)
     if (!u) {
-      // Cas inattendu : pas d'erreur ET pas de user. Shouldn't happen avec SDK v2.
-      console.warn('[signup] Réponse inattendue : pas d\'erreur, pas de user', signupResult);
+      console.warn('[signup] Réponse vraiment inattendue', signupResult, _signupRes.error);
       if (btn) { btn.disabled = false; btn.innerHTML = origText; }
       toastM("Erreur inattendue. Réessayez ou contactez support@tabibi.doctor", "error");
       return;
