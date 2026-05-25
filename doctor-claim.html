@@ -114,7 +114,10 @@
 
     <label class="lbl" for="dc-ordre">N° Conseil de l'Ordre des Médecins <span style="color:var(--red)">*</span></label>
     <input type="text" id="dc-ordre" placeholder="Ex : CO-2025-XXXX" autocomplete="off">
-    <div class="upload-note">Saisi pour traçabilité. Aucun document à envoyer à cette étape (upload pièce d'identité disponible bientôt).</div>
+    <div class="upload-note">Saisi pour traçabilité.</div>
+
+    <!-- [Phase 16.5] Zones upload des 2 justificatifs (carte Ordre + identité) -->
+    <div id="dc-upload-container" style="margin-top:6px"></div>
 
     <label class="honor">
       <input type="checkbox" id="dc-honor">
@@ -139,6 +142,7 @@
 <script src="js/tabibi-bridge.js"></script>
 <script src="js/tabibi-doctor-name.js"></script>
 <script src="js/tabibi-claim.js"></script>
+<script src="js/tabibi-doc-upload.js"></script>
 <script src="js/tabibi-features.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
@@ -291,12 +295,27 @@ async function _populateDropdowns(){
 }
 
 // ── Modale claim ─────────────────────────────────────────────────────
+// [Phase 16.5] _dcUpload contient l'instance tabibiDocUpload courante.
+// Re-créée à chaque dcOpenModal pour repartir d'un état propre.
+var _dcUpload = null;
+var _dcDocsValid = false;
+
 function dcOpenModal(legacyId, doctorName){
   _selectedDoctor = { legacyId: legacyId, name: doctorName };
   document.getElementById('dc-modal-doctor').textContent = doctorName;
   document.getElementById('dc-ordre').value = '';
   document.getElementById('dc-honor').checked = false;
   document.getElementById('dc-submit').disabled = true;
+  // [Phase 16.5] Init zones upload (2 dropzones carte Ordre + identité)
+  _dcDocsValid = false;
+  if (window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {
+    _dcUpload = window.tabibiDocUpload.setup({
+      container: 'dc-upload-container',
+      onValidChange: function(v){ _dcDocsValid = v; _updateSubmitState(); }
+    });
+  } else {
+    console.warn('[claim] tabibiDocUpload module absent');
+  }
   var m = document.getElementById('dc-modal');
   m.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -305,32 +324,112 @@ function dcCloseModal(){
   document.getElementById('dc-modal').classList.add('hidden');
   document.body.style.overflow = '';
   _selectedDoctor = null;
+  _dcUpload = null;
+  _dcDocsValid = false;
 }
 function _updateSubmitState(){
   var hasOrdre = document.getElementById('dc-ordre').value.trim().length >= 3;
   var honor    = document.getElementById('dc-honor').checked;
-  document.getElementById('dc-submit').disabled = !(hasOrdre && honor);
+  // [Phase 16.5] Submit dispo SEULEMENT si : N°Ordre + honor + 2 docs valides
+  document.getElementById('dc-submit').disabled = !(hasOrdre && honor && _dcDocsValid);
 }
 document.addEventListener('input',  function(e){ if(e.target.id==='dc-ordre') _updateSubmitState(); });
 document.addEventListener('change', function(e){ if(e.target.id==='dc-honor') _updateSubmitState(); });
 
+// [Phase 16.5] Helper toast — réutilise toastM ou toast global, fallback alert.
+function _dcToast(msg, kind){
+  try {
+    if (typeof window.toastM === 'function') return window.toastM(msg, kind || 'info');
+    if (typeof window.toast === 'function')  return window.toast(msg, kind || 'info');
+  } catch(e){}
+  if (kind === 'error') console.error('[claim]', msg); else console.log('[claim]', msg);
+}
+
 async function dcSubmit(){
   if(!_selectedDoctor) return;
-  var btn = document.getElementById('dc-submit');
-  btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Réclamation…';
+  if(!window.tabibiClaim){ alert('Module de réclamation indisponible. Rechargez la page.'); return; }
 
-  // N° Ordre stocké en localStorage pour pré-remplir l'onboarding step 1
-  // (la RPC actuelle ne le persiste pas — TODO-SQL-012 pour ajouter colonne dédiée)
+  var btn = document.getElementById('dc-submit');
+  var btnOrig = '<i class="fa fa-check"></i> Confirmer';
+  function _reset(){ btn.disabled = false; btn.innerHTML = btnOrig; }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vérification…';
+
+  // N° Ordre stocké en localStorage (TODO Phase 16.6 : push en DB via RPC).
   try { localStorage.setItem('tabibi_claim_ordre', document.getElementById('dc-ordre').value.trim()); } catch(e){}
 
-  if(window.tabibiClaim && typeof window.tabibiClaim.handle === 'function'){
-    // tabibiClaim.handle gère : non-auth → redirect signup, auth+medecin → RPC, auth+patient → toast erreur
-    await window.tabibiClaim.handle(_selectedDoctor.legacyId);
-    // Si on est ici, c'est qu'on est resté sur la page (cas erreur ou patient role)
-    btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> Confirmer';
-  } else {
-    btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> Confirmer';
-    alert('Module de réclamation indisponible. Rechargez la page.');
+  // 1. Auth + role check
+  var info = await window.tabibiClaim.getCurrentUserInfo();
+  if(!info.isAuth){
+    // Non-connecté → redirect signup avec claim param (comportement legacy handle)
+    location.href = 'signup.html?role=medecin&claim_legacy_id=' + encodeURIComponent(_selectedDoctor.legacyId);
+    return;
+  }
+  if(info.role && info.role !== 'medecin'){
+    _dcToast("Vous êtes connecté en tant que " + info.role + ". Pour réclamer une fiche, créez un compte médecin (déconnectez-vous d'abord).", 'error');
+    _reset(); return;
+  }
+
+  // 2. Sanity-check upload (les fichiers ont pu être désélectionnés)
+  if(!_dcUpload || !_dcUpload.isValid()){
+    _dcToast("Veuillez uploader les 2 documents.", 'error');
+    _reset(); return;
+  }
+
+  // 3. RPC claim
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Réclamation…';
+  var res = await window.tabibiClaim.performClaim(_selectedDoctor.legacyId);
+  if(!res.ok){
+    var msg = _humanClaimError(res.error);
+    _dcToast(msg, 'error');
+    _reset(); return;
+  }
+  var profileId = res.data && res.data.profile_id;
+  if(!profileId){
+    _dcToast("Réclamation OK mais identifiant profil manquant. Contactez le support.", 'error');
+    _reset(); return;
+  }
+
+  // 4. Upload séquentiel des 2 docs + UPDATE paths
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi des documents…';
+  var upRes = await _dcUpload.submit(profileId);
+  if(!upRes.ok){
+    // Claim a réussi mais upload pas — laisse fiche en pending sans docs,
+    // banner medecin-profile.html guidera vers retry.
+    console.warn('[claim] upload after claim fail:', upRes.error, upRes.detail);
+    _dcToast("Fiche réclamée mais documents non envoyés (" + upRes.error + "). Reconnectez-vous depuis votre tableau de bord pour réessayer l'upload.", 'error');
+    setTimeout(function(){ location.href = 'medecin-profile.html?onboarding=1'; }, 3500);
+    return;
+  }
+
+  // 5. Succès — message exact spec phase 16.5
+  var email = (info && info.userId) ? '' : '';
+  try {
+    var sb = window.tabibi && window.tabibi.supabase;
+    if (sb) {
+      var s = await sb.auth.getSession();
+      email = (s && s.data && s.data.session && s.data.session.user && s.data.session.user.email) || '';
+    }
+  } catch(e){}
+  var emailLabel = email || 'votre adresse email';
+  _dcToast("✅ Fiche réclamée. Vos documents ont été envoyés pour vérification. Notre équipe les examinera sous 48h ouvrées et vous recevrez un email à " + emailLabel + " dès qu'ils seront validés. En attendant, vous pouvez compléter votre profil (bio, tarifs, horaires) — votre fiche ne sera publique qu'après validation.", 'success');
+  try { localStorage.removeItem('tabibi_pending_claim_legacy_id'); } catch(e){}
+  setTimeout(function(){ location.href = 'medecin-profile.html?onboarding=1'; }, 3500);
+}
+
+// [Phase 16.5] Map codes erreur RPC claim → messages FR humains (miroir
+// de _humanError dans tabibi-claim.js — duplique car tabibi-claim.js
+// expose pas cette fonction).
+function _humanClaimError(code){
+  switch (code) {
+    case 'not_authenticated':              return "Vous devez d'abord créer un compte médecin pour réclamer cette fiche.";
+    case 'user_not_found':                 return "Compte introuvable. Reconnectez-vous puis réessayez.";
+    case 'not_a_doctor_account':           return "Seul un compte médecin peut réclamer une fiche.";
+    case 'already_claimed_another_profile':return "Vous avez déjà réclamé une autre fiche. Contactez le support.";
+    case 'profile_not_found':              return "Fiche introuvable. Le lien est peut-être obsolète.";
+    case 'profile_already_claimed':        return "Cette fiche a déjà été réclamée. Si c'est une erreur, écrivez à support@tabibi.doctor.";
+    default:                               return "Erreur lors de la réclamation : " + String(code || 'inconnue');
   }
 }
 
