@@ -237,13 +237,31 @@ async function doSignup(e){
       password: pw,
       options: { data: { role: cur } }
     });
+    // [Phase 15 fix] Distinction stricte erreur Supabase vs réponse normale
     if (_signupRes.error) throw _signupRes.error;
-    var signupResult = _signupRes.data;
+    var signupResult = _signupRes.data || {};
 
-    if (!signupResult || !signupResult.user) {
-      throw new Error("Erreur lors de la création du compte");
+    // Cas Supabase confirm_email=ON + email DÉJÀ UTILISÉ :
+    // l'API retourne {data:{user:null, session:null}, error:null} pour ne pas
+    // révéler quels emails sont enregistrés (sécurité anti-énumération).
+    // → On affiche un message clair "email déjà utilisé" SANS toast d'erreur générique.
+    if (!signupResult.user) {
+      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+      toastM(tabibiT('toast_email_already_used',
+        "Cet email est déjà utilisé. Connectez-vous ou utilisez 'Mot de passe oublié'."),
+        "warning");
+      return;
     }
     console.log('[signup] auth.signUp() OK user_id=' + signupResult.user.id.substring(0,8) + '…');
+
+    // [Phase 15 fix] Si confirm_email=ON, session est null tant que l'utilisateur
+    // n'a pas cliqué le lien de confirmation. Dans ce cas on redirige TOUS les
+    // rôles vers /verify-email.html (au lieu de tenter dashboard sans session,
+    // ou modale médecin qui suppose le compte actif). L'auto-claim médecin
+    // reste appelé : il marche tant que la session signup est encore valide ;
+    // sinon legacy_id est stocké en localStorage pour retry au 1er login
+    // post-confirmation (cf tabibi-claim.js consumePending).
+    var needsEmailConfirm = !signupResult.session;
 
     // 2. Créer/compléter le profil dans public.profiles
     //    NOTE : le trigger set_profile_status mettra status='pending_verification' pour les médecins
@@ -315,6 +333,11 @@ async function doSignup(e){
       };
       try { localStorage.setItem("tabibi_user", JSON.stringify(userData)); } catch(e){}
       try { localStorage.setItem("tabibi_role", "secretaire"); } catch(e){}
+      // [Phase 15 fix] Si email confirm requis → verify-email page (compat email confirm ON)
+      if (needsEmailConfirm) {
+        location.href = '/verify-email.html?email=' + encodeURIComponent(em) + '&role=secretaire';
+        return;
+      }
       toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"), "success");
       setTimeout(()=>location.href="secretaire-dashboard.html", 800);
       return;
@@ -355,7 +378,14 @@ async function doSignup(e){
       localStorage.removeItem("tabibi_user");
       localStorage.removeItem("tabibi_role");
 
-      // Afficher la modale de confirmation
+      // [Phase 15 fix] Si confirm email requis → verify-email page (avec disclaimer
+      // validation 48h médecin via param pending_validation=1). Sinon (compat config
+      // sans confirm) → ancienne modale "validation 48h".
+      if (needsEmailConfirm) {
+        location.href = '/verify-email.html?email=' + encodeURIComponent(em)
+                      + '&role=medecin&pending_validation=1';
+        return;
+      }
       showMedecinPendingModal(em, fn);
       if (btn) { btn.disabled = false; btn.innerHTML = origText; }
       return;
@@ -377,6 +407,11 @@ async function doSignup(e){
       };
       localStorage.setItem("tabibi_user", JSON.stringify(userData));
       localStorage.setItem("tabibi_role", "patient");
+      // [Phase 15 fix] Si email confirm requis → verify-email page (compat email confirm ON)
+      if (needsEmailConfirm) {
+        location.href = '/verify-email.html?email=' + encodeURIComponent(em) + '&role=patient';
+        return;
+      }
       toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"), "success");
       setTimeout(()=>location.href="patient-dashboard.html", 800);
     }

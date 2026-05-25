@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Confirmez votre email pour activer votre compte Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/verify-email.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Vérifiez votre email | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  .vm-shell { max-width: 480px; margin: 0 auto; padding: 40px 20px; text-align: center; }
+  .vm-ico-wrap { width: 96px; height: 96px; margin: 0 auto 24px; border-radius: 50%; background: linear-gradient(135deg,#dcfce7,#bbf7d0); display: flex; align-items: center; justify-content: center; }
+  .vm-ico { font-size: 44px; color: #0F7560; }
+  .vm-title { font-size: 22px; font-weight: 800; color: var(--text1); margin-bottom: 10px; line-height: 1.3; }
+  .vm-sub { font-size: 14px; color: var(--text2); line-height: 1.6; margin-bottom: 20px; }
+  .vm-email-box { background: var(--bg2); border-radius: var(--r12); padding: 14px 16px; font-size: 14px; font-weight: 700; color: var(--blue); margin-bottom: 22px; word-break: break-all; }
+  .vm-steps { background: #fff; border-radius: var(--r12); padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); text-align: left; margin-bottom: 22px; }
+  .vm-step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--bg2); font-size: 13px; }
+  .vm-step:last-child { border-bottom: none; }
+  .vm-step-num { width: 26px; height: 26px; border-radius: 50%; background: var(--blue-l); color: var(--blue); font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+  .vm-spam-tip { background: #FFF7E6; border: 1px solid #FFD580; border-radius: var(--r12); padding: 14px; font-size: 13px; color: #78350f; line-height: 1.5; margin-bottom: 20px; text-align: left; }
+  .vm-medecin-extra { background: #EEF4FB; border: 1px solid #BFD9FA; border-radius: var(--r12); padding: 14px; font-size: 13px; color: #1557A0; line-height: 1.5; margin-bottom: 20px; text-align: left; }
+  .vm-login-hint { font-size: 12px; color: var(--text2); margin-bottom: 8px; font-style: italic; }
+  .vm-actions { display: flex; flex-direction: column; gap: 10px; }
+  .vm-actions .btn { width: 100%; }
+</style>
+</head>
+<body>
+<div class="app-root">
+
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='index.html'" aria-label="Retour accueil"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Confirmation email</div></div>
+</header>
+
+<main class="page" role="main">
+<div class="vm-shell">
+
+  <div class="vm-ico-wrap"><i class="fa fa-envelope-circle-check vm-ico" aria-hidden="true"></i></div>
+
+  <h1 class="vm-title">Vérifiez votre email</h1>
+
+  <p class="vm-sub">Nous venons d'envoyer un lien de confirmation à :</p>
+  <div class="vm-email-box" id="vm-email">votre adresse email</div>
+
+  <div class="vm-steps" aria-label="Étapes à suivre">
+    <div class="vm-step">
+      <div class="vm-step-num">1</div>
+      <div>Ouvrez votre boîte de réception (et vérifiez vos <strong>spams</strong> / courriers indésirables)</div>
+    </div>
+    <div class="vm-step">
+      <div class="vm-step-num">2</div>
+      <div>Cliquez sur le lien <strong>"Confirmer mon compte"</strong> dans l'email de Tabibi</div>
+    </div>
+    <div class="vm-step">
+      <div class="vm-step-num">3</div>
+      <div>Vous serez automatiquement connecté et redirigé vers votre tableau de bord</div>
+    </div>
+  </div>
+
+  <div class="vm-spam-tip">
+    <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
+    <strong>Pas d'email reçu ?</strong> Vérifiez vos spams. L'email peut mettre jusqu'à 5 minutes à arriver.
+    Si rien dans 10 minutes, écrivez-nous : <a href="mailto:contact@tabibi.doctor" style="color:#78350f;text-decoration:underline;font-weight:700">contact@tabibi.doctor</a>
+  </div>
+
+  <!-- Disclaimer additionnel médecin (validation manuelle 48h après confirm email) -->
+  <div class="vm-medecin-extra hidden" id="vm-medecin-extra">
+    <i class="fa fa-user-doctor" style="color:#1557A0;margin-right:6px"></i>
+    <strong>Compte médecin :</strong> après confirmation de votre email, notre équipe validera
+    manuellement votre profil sous 48h (vérification N° Ordre + identité). Vous recevrez un
+    second email dès activation.
+  </div>
+
+  <!-- [User-requested] Précise que le bouton est un fallback -->
+  <p class="vm-login-hint">
+    Le clic sur le lien dans l'email vous connectera automatiquement. Ce bouton n'est utile que si le lien ne fonctionne pas.
+  </p>
+
+  <div class="vm-actions">
+    <a href="login.html" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> J'ai confirmé, me connecter</a>
+    <a href="index.html" class="btn btn-ghost btn-lg"><i class='fa fa-home'></i> Retour à l'accueil</a>
+  </div>
+
+</div>
+</main>
+
+<script>
+(function(){
+  // Récup email + role depuis query string
+  function getParam(k){
+    try { return new URL(location.href).searchParams.get(k) || ''; } catch(e){ return ''; }
+  }
+  var email = decodeURIComponent(getParam('email') || '');
+  var role  = (getParam('role') || '').toLowerCase();
+  var em = document.getElementById('vm-email');
+  if(em && email) em.textContent = email;
+  // Si médecin → affiche disclaimer validation 48h en plus de l'email
+  if(role === 'medecin' && getParam('pending_validation') === '1'){
+    var extra = document.getElementById('vm-medecin-extra');
+    if(extra) extra.classList.remove('hidden');
+  }
+})();
+</script>
+
+</div>
+</body>
+</html>
