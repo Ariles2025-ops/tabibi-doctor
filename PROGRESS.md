@@ -299,3 +299,5 @@ Session SQL séparée a enrichi la vue `public_doctors` de 15 → 32 colonnes (e
 ---
 
 ## Test auto-deploy - 2026-05-26T19:47:06Z
+
+## Retry auto-deploy avec email vérifié - 2026-05-26T19:52:53Z
