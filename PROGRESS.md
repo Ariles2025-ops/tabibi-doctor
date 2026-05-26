@@ -297,3 +297,5 @@ Session SQL séparée a enrichi la vue `public_doctors` de 15 → 32 colonnes (e
 - index.html.bak_20260523_183336 présent en untracked. À supprimer ou ajouter au .gitignore.
 
 ---
+
+## Test auto-deploy - 2026-05-26T19:47:06Z
