@@ -618,7 +618,11 @@ document.addEventListener("DOMContentLoaded", loadDoc);
 <script src="js/tabibi-bridge.js"></script>
 <!-- [Phase 5.2.3-fix] Helper formatage nom médecin (full_name + entity_type) -->
 <script src="js/tabibi-doctor-name.js"></script>
-<script src="js/doctors-display.js"></script>
+<!-- [FIX 2026-05-26] doctors-display.js RETIRÉ de doctor-profile.html.
+     Ce script pagine public_doctors en entier (while/offset+1000) pour peupler
+     window.DOCTORS[] — comportement adapté à l'annuaire/home UNIQUEMENT.
+     doctor-profile.html utilise _fetchDoctorFromSupabase() : 1 requête ciblée
+     .eq('legacy_id', N) ou .eq('id', UUID). Aucun cache global nécessaire. -->
 <script src="js/tabibi-reviews.js"></script>
 <script src="js/tabibi-claim.js"></script>
 <script>
