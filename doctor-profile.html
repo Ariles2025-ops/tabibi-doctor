@@ -161,16 +161,18 @@
     </div>
   </div>
 </main>
-<script src="scripts/app.js"></script>
 <script>
+// [FIX 2026-05-26] scripts/app.js supprimé (404 — paginait public_doctors en entier, remplacé par fetch ciblé)
 // Code mort retiré (anciens avis hard-codés). Les vrais avis viennent de Supabase via tabibi-reviews.js
 
 let currentDoc=null;
 
 // [FIX 2026-05-21] getDocId accepte UUID Supabase OU ID numerique CSV.
+// [FIX 2026-05-26] Lit aussi ?legacy_id= (URL canonique pour les fiches scrapées).
 // Pas de fallback "d1" si vide -> on affiche un etat erreur clair.
 function getDocId(){
-  var raw = new URLSearchParams(location.search).get("id");
+  var p = new URLSearchParams(location.search);
+  var raw = p.get("id") || p.get("legacy_id");
   return raw ? String(raw).trim() : null;
 }
 
