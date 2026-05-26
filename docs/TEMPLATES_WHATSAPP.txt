@@ -1,0 +1,97 @@
+===
+T1 — ACCUSÉ RÉCEPTION (< 1h)
+===
+
+Bonjour Docteur,
+
+Merci pour votre demande de revendication de la fiche #[ID] sur Tabibi.
+
+Pour valider votre identité, nous avons besoin d'une vérification rapide. Je vous recontacte dans les prochaines heures.
+
+Cordialement,
+[Prénom] — Équipe Tabibi
+
+===
+T2 — DEMANDE PIÈCE JUSTIFICATIVE
+===
+
+Docteur [Nom],
+
+Pour finaliser la revendication, deux options au choix :
+
+OPTION 1 — Photo de votre Carte de l'Ordre des Médecins (recto-verso)
+Envoyez les photos en réponse à ce message.
+
+OPTION 2 — Rencontre rapide à votre cabinet
+Indiquez-nous un créneau de 15 minutes qui vous convient.
+
+Toute information transmise reste confidentielle.
+
+Cordialement,
+[Prénom] — Équipe Tabibi
+
+===
+T3 — CRÉATION COMPTE
+===
+
+Parfait, votre identité est validée ✅
+
+Dernière étape : créez votre compte médecin sur :
+https://tabibi.doctor/signup.html?role=medecin
+
+Utilisez l'email professionnel que vous voulez utiliser au quotidien.
+
+Dès que c'est fait, envoyez-moi votre email ici et je lie votre compte à votre fiche.
+
+Cordialement,
+[Prénom] — Équipe Tabibi
+
+===
+T4 — COMPTE LIÉ
+===
+
+Votre fiche est maintenant liée à votre compte ✅
+
+Connectez-vous ici : https://tabibi.doctor/login.html
+
+Premières étapes recommandées :
+1. Compléter votre profil (photo, présentation, tarifs)
+2. Ajouter vos créneaux de disponibilité
+3. Activer ou non la téléconsultation
+
+Notre équipe support est joignable 7j/7 sur ce WhatsApp.
+
+Bienvenue sur Tabibi 🩺
+[Prénom] — Équipe Tabibi
+
+===
+T-REJECT-1 — FICHE DÉJÀ REVENDIQUÉE
+===
+
+Docteur,
+
+La fiche #[ID] est déjà associée à un compte Tabibi.
+
+S'il s'agit d'une erreur ou d'un litige (homonymie, ancien associé, etc.), répondez à ce message avec :
+- Une copie de votre Carte Ordre des Médecins
+- Une brève explication
+
+Nous traitons ces cas sous 48h.
+
+Cordialement,
+[Prénom] — Équipe Tabibi
+
+===
+T-REJECT-2 — IDENTITÉ NON VÉRIFIABLE
+===
+
+Docteur,
+
+Nous n'avons pas pu valider votre identité avec les éléments transmis (carte illisible / expirée / incohérence avec la fiche).
+
+Pouvez-vous nous renvoyer une photo plus nette de votre Carte de l'Ordre des Médecins, ou nous proposer un créneau pour une vérification au cabinet ?
+
+Sans réponse sous 7 jours, la demande sera archivée.
+
+Cordialement,
+[Prénom] — Équipe Tabibi
