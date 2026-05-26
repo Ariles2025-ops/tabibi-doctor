@@ -257,3 +257,43 @@ Session SQL séparée a enrichi la vue `public_doctors` de 15 → 32 colonnes (e
 | Paiements | Stripe Test + doc SATIM | Pas d'API sandbox stable Algérie |
 | Analytics | Plausible | Privacy-friendly + mature |
 | i18n | FR par défaut, dict JSON | Extension AR/EN en sprint dédié |
+
+---
+## 26 mai 2026 — Session refactor claim + performance
+
+### Bugs résolus
+- Flow claim self-service (matching email) abandonné : 0.07% des fiches scrapées ont un email, design impossible avec les données actuelles
+- Remplacé par CTA WhatsApp vers équipe (+213 777 169 074)
+- Bug "Médecin introuvable" sur doctor-profile.html : full table scan paginé sans filtre legacy_id
+- Optimisation bande passante home/dashboard : 84 Mo → 8 ko par visite (-99.99%)
+- Quota Supabase Pro mensuel projeté : 252 Go → 2 Go (-99%)
+
+### Infrastructure
+- Table `claim_requests` créée avec RLS admin
+- Comptes admin : aghiles.haddadene@gmail.com + contact@tabibi.doctor
+- Procédure manuelle équipe : médecin contacte via WhatsApp → équipe valide identité → UPDATE doctor_profiles SET user_id = '[uuid]' WHERE legacy_id = X
+
+### Fichiers modifiés
+- js/doctors-display.js (réécriture : while(true) → méthodes filtrées)
+- index.html (suppression boucle full-scan, wilayas dérivées du dict)
+- doctor-profile.html (CTA WhatsApp + retrait doctors-display.js)
+- patient-dashboard.html (renderDocs/renderFavs async via tabibiDoctors)
+- appointment.html, medecin-profile.html, reservation.html (retrait scripts inutiles)
+
+### À activer post-launch (>500 médecins actifs)
+- Claim self-service via OTP SMS sur téléphone fiche
+- Migration des claim_requests historiques vers le nouveau flow
+
+### Décisions de lancement confirmées (rappel)
+- Pas de claim self-service au launch (juillet 2026)
+- 100 premiers médecins onboardés en personne (règle #1)
+- KPI hebdo : médecins actifs (≥1 RDV/semaine), pas inscrits
+- Aucune nouvelle feature pendant 6 mois post-launch
+- Hébergement Supabase EU/US OK au launch (migration Algérie progressive selon volume)
+
+### Dette technique identifiée
+- Netlify non connecté à GitHub (deploy manuel par zip drag-drop). PRIORITÉ AVANT LAUNCH : configurer auto-deploy depuis main.
+- Erreur console "Failed to load /scripts/app.js 404" présente sur plusieurs pages (référence orpheline). Bénin mais à nettoyer.
+- index.html.bak_20260523_183336 présent en untracked. À supprimer ou ajouter au .gitignore.
+
+---

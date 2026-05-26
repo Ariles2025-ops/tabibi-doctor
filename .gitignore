@@ -62,3 +62,4 @@ test-prescriptions/
 # --- Whitelist : on garde les SVG, JSON brand, fichiers de structure ---
 !images/*.svg
 !brand/*.json
+*.bak*
