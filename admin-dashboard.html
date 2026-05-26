@@ -150,7 +150,7 @@
 </main>
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 
-<script src="scripts/app.js"></script>
+<!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
 function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 async function logout(){
