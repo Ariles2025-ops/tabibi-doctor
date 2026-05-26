@@ -2461,39 +2461,9 @@ function _spec(d){
 }
 function _ville(d){if(d.wilaya_name&&d.wilaya_name!=='')return d.wilaya_name;if(d.commune_name&&d.commune_name!=='')return d.commune_name;if(d.city&&d.city!=='')return d.city;if(d.wilaya_code)return _W[parseInt(d.wilaya_code)]||('Wilaya '+d.wilaya_code);return 'Algérie';}
 
-async function loadRealDoctors(){
-  try{
-    let offset=0,total=0,BATCH=1000;
-    DOCTORS.length=0;
-    while(true){
-      const res=await fetch(_SB_URL+'/rest/v1/public_doctors?select=*&limit='+BATCH+'&offset='+offset+'&order=full_name',{headers:{'apikey':_SB_KEY,'Authorization':'Bearer '+_SB_KEY}});
-      if(!res.ok)break;
-      const batch=await res.json();
-      if(!Array.isArray(batch)||!batch.length)break;
-      batch.forEach((d,i)=>{
-        const clr=_COLORS[(total+i)%_COLORS.length];
-        // [Phase 5.2.3-fix 2026-05-22] tabibiDoctorName.format() — préfixe
-        // "Dr." conditionné par entity_type, fallback full_name_ar puis
-        // "Praticien". Remplace le découpage char-par-char obsolète.
-        const DN=window.tabibiDoctorName;
-        const nameFr=DN?DN.formatForLang(d,'fr'):(d.full_name||d.name_fr||d.name||'Médecin');
-        const nameAr=DN?DN.formatForLang(d,'ar'):(d.name_ar||d.full_name_ar||d.full_name||nameFr);
-        const nameEn=DN?DN.formatForLang(d,'en'):(d.name_en||d.full_name||nameFr);
-        const ini=DN?DN.initials(d):((d.full_name||'').replace(/^Dr\.?\s*/i,'').trim().split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase()||'MD');
-        DOCTORS.push({id:String(d.id||('db_'+(total+i))),entityType:d.entity_type||null,fr:nameFr,ar:nameAr,en:nameEn,spec:_spec(d),sAr:'',sEn:'',ville:_ville(d),vAr:'',vEn:'',note:parseFloat(d.rating||d.average_rating||4.5)||4.5,prix:parseInt(d.consultation_fee||d.price||1500)||1500,urgent:!!(d.is_urgent||d.urgent),cert:d.is_verified!==undefined?!!(d.is_verified):true,in:ini,bg:clr.bg,tc:clr.tc,g:(d.gender==='F'||d.sexe==='F'||d.gender==='female')?'F':'H',avis:parseInt(d.reviews_count||d.total_reviews||0)||0,langs:d.languages||d.langs||['FR','AR'],desc:d.description||d.bio||d.about||'',addr:d.address||d.cabinet_address||d.addr||'',diplomes:d.diplomes||[]});
-      });
-      total+=batch.length;
-      filtered=[...DOCTORS];renderDocs();
-      const rc=document.getElementById('res-count');if(rc)rc.textContent=DOCTORS.length+' '+(T('found')||'médecin(s) trouvé(s)');
-      const hdc=document.getElementById('hero-doc-count');if(hdc)hdc.textContent=total.toLocaleString('fr-DZ');
-      const sdc=document.getElementById('stats-doc-count');if(sdc)sdc.textContent=total.toLocaleString('fr-DZ');
-      document.querySelectorAll('.hs-n').forEach((el,i)=>{if(i===0)el.textContent=total.toLocaleString('fr-DZ');});
-      if(batch.length<BATCH)break;
-      offset+=BATCH;
-    }
-    /* [FIX-PROD-2026-05-19] console.log retiré */
-  }catch(e){console.error('[Tabibi] Erreur:',e);}
-}
+// [Phase 16.5 refactor] loadRealDoctors() supprimée — full table scan (84 Mo/visiteur).
+// Remplacée par loadDoctorCards() (déjà active) + window.tabibiDoctors API.
+/* loadRealDoctors désactivée */
 
 function animateCounters(total){if(!total)return;const targets=[document.getElementById("hero-doc-count"),document.getElementById("stats-doc-count"),document.getElementById("foot-doc-count")].filter(Boolean);const duration=1200,start=performance.now();function tick(now){const p=Math.min((now-start)/duration,1);const eased=1-Math.pow(1-p,3);const val=Math.floor(eased*total);const txt=val.toLocaleString("fr-DZ");targets.forEach(el=>{if(el)el.textContent=txt;});if(p<1)requestAnimationFrame(tick);}requestAnimationFrame(tick);}
 
@@ -2528,34 +2498,36 @@ let _lastFilterOpts = {};
 // On peuple maintenant le <select id="f-spec"> avec les vraies valeurs DB.
 window._DB_SPECIALTIES = null;
 window._DB_WILAYAS = null;
+// [Phase 16.5 refactor] _fetchDistinctSpecsAndWilayas() :
+//   - Wilayas  : dérivées de _W (0 requête réseau, instantané)
+//   - Spécialités : 1 fetch × 500 lignes (vs 10 000 avant)
+//     → économie ~95% bande passante pour cet appel
 async function _fetchDistinctSpecsAndWilayas(){
-  // Fetch en parallèle, fallback silencieux sur SPECS/CITIES hardcodés si KO
+  // ── Wilayas : pas de fetch, on lit le dict _W déjà en mémoire ──────────
+  try {
+    const wilayas = Object.values(_W).filter(Boolean).sort((a, b) => a.localeCompare(b, 'fr'));
+    if (wilayas.length) window._DB_WILAYAS = wilayas;
+  } catch (e) {
+    console.warn('[Tabibi] _W wilayas KO', e && e.message);
+  }
+
+  // ── Spécialités : 500 lignes suffisent pour couvrir les ~50-100 valeurs ─
   const headers = { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY };
   const baseUrl = _SB_URL + '/rest/v1/public_doctors';
-  async function fetchDistinct(col){
-    try {
-      // PostgREST n'a pas de "SELECT DISTINCT" natif → on ramène la colonne
-      // sur 10k lignes (1 seule colonne = léger) et on dédoublonne client.
-      const r = await fetch(baseUrl + '?select=' + col + '&limit=10000', { headers });
-      if(!r.ok) return null;
-      const rows = await r.json();
-      const set = new Set();
-      for(const row of rows){
-        const v = row && row[col];
-        if(v) set.add(v);
-      }
-      return [...set].sort((a,b) => a.localeCompare(b, 'fr'));
-    } catch(e) {
-      console.warn('[Tabibi] fetchDistinct', col, 'KO', e && e.message);
-      return null;
+  try {
+    const r = await fetch(baseUrl + '?select=specialty_fr&limit=500', { headers });
+    if (!r.ok) return;
+    const rows = await r.json();
+    const set = new Set();
+    for (const row of rows) {
+      const v = row && row.specialty_fr;
+      if (v) set.add(v);
     }
+    const specs = [...set].sort((a, b) => a.localeCompare(b, 'fr'));
+    if (specs.length) window._DB_SPECIALTIES = specs;
+  } catch (e) {
+    console.warn('[Tabibi] fetchDistinct specialty_fr KO', e && e.message);
   }
-  const [specs, wilayas] = await Promise.all([
-    fetchDistinct('specialty_fr'),
-    fetchDistinct('wilaya_fr')
-  ]);
-  if(specs && specs.length)   window._DB_SPECIALTIES = specs;
-  if(wilayas && wilayas.length) window._DB_WILAYAS = wilayas;
 }
 
 // Mappe un nom de spécialité UI ("Cardiologie") vers la valeur DB correspondante

@@ -105,7 +105,7 @@
 <nav class="tab-bar" id="tab-bar"></nav>
 <div id="uarea-mob" class="hidden"></div>
 
-<script src="scripts/app.js"></script>
+<!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
 let doctorId=getParam("doctorId")||"d1";
 let slot=getParam("slot")||"09:00";
@@ -117,18 +117,32 @@ let payMethod="cash";
 function init(){
   if(!requireAuth()) return;
   loadUser(); setLang(lang);
-  const d=DOCTORS.find(x=>x.id===doctorId)||DOCTORS[0];
-  const n=doctorName||dname(d);
-  specName=specName||dspec(d);
+
+  // [Phase 16.5] DOCTORS n'est plus chargé en masse — on s'appuie sur les
+  // paramètres URL (doctorName, spec, prix) qui sont TOUJOURS présents.
+  // Si DOCTORS est quand même peuplé (futur) on l'utilise comme bonus.
+  const d = (window.DOCTORS && Array.isArray(window.DOCTORS))
+    ? (window.DOCTORS.find(x=>x.id===doctorId) || null)
+    : null;
+  const n = doctorName || (d && typeof dname==='function' ? dname(d) : 'Médecin');
+  if(!specName && d && typeof dspec==='function') specName = dspec(d);
 
   const ava=document.getElementById("a-ava");
-  ava.textContent=d.in; ava.style.background=d.bg; ava.style.color=d.tc;
+  if(d){
+    ava.textContent=d.in; ava.style.background=d.bg; ava.style.color=d.tc;
+  } else {
+    // Générer initiales depuis le nom URL (pas de full scan nécessaire)
+    const ini = n.replace(/^Dr\.?\s*/i,'').trim().split(/\s+/).slice(0,2)
+                  .map(w=>w[0]||'').join('').toUpperCase() || 'MD';
+    ava.textContent=ini; ava.style.background='#E0F2FE'; ava.style.color='#0066CC';
+  }
   document.getElementById("a-name").textContent=n;
-  document.getElementById("a-spec").textContent=specName+" · "+dcity(d);
-  document.getElementById("a-slot").textContent="<i class='fa fa-calendar-days'></i> Mer 7 Mai 2025 — "+slot;
+  document.getElementById("a-spec").textContent=specName+(d&&typeof dcity==='function'?' · '+dcity(d):'');
+  document.getElementById("a-slot").textContent="Mer 7 Mai 2025 — "+slot;
   document.getElementById("a-prix").textContent=prix.toLocaleString()+" DA";
 
-  document.getElementById("pay-methods").innerHTML=renderPayMethods("cash");
+  const _rpm = typeof renderPayMethods==='function' ? renderPayMethods : function(){ return ''; };
+  document.getElementById("pay-methods").innerHTML=_rpm("cash");
   window._pay="cash";
   renderUserUI(); initTabBar("rdv"); hideLoading();
 }
@@ -194,7 +208,7 @@ window.toStep=toStep; window.confirmRDV=confirmRDV; window.goBackSafe=goBackSafe
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
-<script src="js/doctors-display.js"></script>
+<!-- [Phase 16.5] doctors-display.js retiré — DOCTORS non utilisé sur cette page -->
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
