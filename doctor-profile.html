@@ -255,6 +255,7 @@ function _mapSupabaseDoctor(row){
     entityType:   row.entity_type || null,
     latitude:     row.latitude || null,
     longitude:    row.longitude || null,
+    rawName: row.full_name || '',  // nom brut sans préfixe (WhatsApp CTA)
     _claimable: !isClaimed,  // bandeau "Reclamer" SEULEMENT si pas encore revendiquee
     _isClaimed: isClaimed,
     _validationStatus: row.validation_status || null  // [Phase 16.4] null = unclaimed scraped
@@ -458,31 +459,51 @@ async function loadDoc(){
     console.warn('[doctor-profile] render', e);
   }
 
-  // [Phase 1 2026-05-21] Bandeau interactif "Reclamer ma fiche"
-  // Câblé sur RPC claim_my_doctor_profile via window.tabibiClaim.handle(legacy_id)
-  // Routage 3 cas : non-auth -> signup, medecin -> claim direct, patient -> erreur
-  if (d._claimable && d.legacy_id) {
+  // [Phase 16.5 — WhatsApp CTA] Claim 100% manuel via WhatsApp jusqu'à 500 médecins actifs.
+  // Self-service (tabibi-claim.js RPC) conservé en place mais non appelé ici.
+  // Affiche badge + CTA si la fiche vient du scrape (legacy_id présent).
+  if (d.legacy_id) {
     try {
       var hdr = document.querySelector('.profile-header, main') || document.body;
-      var banner = document.createElement('div');
-      banner.id = 'claim-banner';
-      banner.style.cssText = 'background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:12px 16px;border-radius:10px;margin:12px 0;font-size:13px;display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap';
-      banner.innerHTML = '<div><i class="fa fa-circle-info"></i> Vous etes ce medecin ? Reclamez votre fiche pour la completer.</div>'
-        + '<button type="button" id="claim-btn" data-legacy-id="' + d.legacy_id + '" class="btn btn-sm" style="background:#f59e0b;color:#fff;border:none;cursor:pointer;padding:6px 12px;border-radius:8px;font-weight:700">Reclamer ma fiche</button>';
-      if (hdr.firstChild) hdr.insertBefore(banner, hdr.firstChild);
-      else hdr.appendChild(banner);
-      var btn = document.getElementById('claim-btn');
-      if (btn) {
-        btn.addEventListener('click', function () {
-          if (window.tabibiClaim && typeof window.tabibiClaim.handle === 'function') {
-            window.tabibiClaim.handle(d.legacy_id);
-          } else {
-            // Fallback : si le script n'est pas chargé, fallback vers signup avec param
-            window.location.href = 'signup.html?role=medecin&claim_legacy_id=' + encodeURIComponent(d.legacy_id);
-          }
-        });
+      var claimBlock = document.createElement('div');
+      claimBlock.id = 'claim-status-block';
+      claimBlock.style.cssText = 'margin:12px 0';
+
+      if (!d._isClaimed) {
+        // ── Fiche non revendiquée : badge + CTA WhatsApp ──────────────────
+        var _waText = 'Bonjour, je souhaite revendiquer la fiche #'
+          + d.legacy_id + ' - Dr ' + (d.rawName || d.fr || 'Médecin');
+        var _waUrl = 'https://wa.me/213777169074?text=' + encodeURIComponent(_waText);
+        claimBlock.innerHTML =
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">'
+          + '<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;'
+          +   'padding:3px 10px;border-radius:20px;border:1px solid #f59e0b;display:inline-flex;align-items:center;gap:5px">'
+          +   '<i class="fa fa-circle-exclamation" style="font-size:10px"></i> Fiche non revendiquée'
+          + '</span>'
+          + '</div>'
+          + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:14px 16px">'
+          +   '<div style="font-weight:700;font-size:14px;color:#14532d;margin-bottom:4px">C\'est votre fiche ?</div>'
+          +   '<div style="font-size:13px;color:#166534;margin-bottom:12px">Contactez notre équipe pour la revendiquer en quelques minutes.</div>'
+          +   '<a href="' + _waUrl + '" target="_blank" rel="noopener noreferrer"'
+          +     ' style="display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;'
+          +     'padding:9px 16px;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none">'
+          +     '<i class="fa-brands fa-whatsapp" style="font-size:16px"></i> Réclamer via WhatsApp'
+          +   '</a>'
+          + '</div>';
+      } else {
+        // ── Fiche revendiquée : badge vert uniquement ─────────────────────
+        claimBlock.innerHTML =
+          '<div style="display:flex;align-items:center;gap:6px">'
+          + '<span style="background:#f0fdf4;color:#166534;font-size:11px;font-weight:700;'
+          +   'padding:3px 10px;border-radius:20px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px">'
+          +   '<i class="fa fa-circle-check" style="font-size:10px"></i> Fiche revendiquée par le médecin'
+          + '</span>'
+          + '</div>';
       }
-    } catch (e) { console.warn('[doctor-profile] claim banner', e); }
+
+      if (hdr.firstChild) hdr.insertBefore(claimBlock, hdr.firstChild);
+      else hdr.appendChild(claimBlock);
+    } catch (e) { console.warn('[doctor-profile] claim-status-block', e); }
   }
 
   // [Phase 5.2.2] Mise à jour bouton "Réserver un RDV" selon état claim + auth
