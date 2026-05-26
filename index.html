@@ -1356,25 +1356,11 @@ async function handleSignup(e) {
       return;
     }
 
-    // 2. Upsert profil (rôle forcé côté client + trigger côté serveur)
-    const profileData = {
-      id: signupResult.user.id,
-      email: email,
-      first_name: first,
-      last_name: last,
-      full_name: first + " " + last,
-      role: role,
-      is_test: false
-    };
-    // [Phase 2 2026-05-21] Table canonique = 'users'. La table 'profiles'
-    // n'existe pas en base : on supprime le fallback dead-code (cf. audit P2).
-    try {
-      await window.tabibi.supabase.from('users').upsert(profileData, { onConflict: 'id' });
-    } catch(pErr) {
-      console.warn('[signup] users upsert failed:', pErr?.message);
-    }
+    // [Phase 16.5] Upsert client-side supprimé — trigger handle_new_auth_user()
+    // lit désormais raw_user_meta_data->>'role' et insère le bon rôle.
+    // L'upsert ici était un band-aid masquant le bug trigger (role='patient' hardcodé).
 
-    // 3. Si médecin → déconnexion + message d'attente
+    // 2. Si médecin → déconnexion + message d'attente
     if (role === 'medecin') {
       try { await window.tabibi.auth.signOut(); } catch(e){}
       closeModal();
