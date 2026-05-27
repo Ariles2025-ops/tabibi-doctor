@@ -1,0 +1,21 @@
+{
+  "name": "tabibi-doctor-audit",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Playwright audit suite for tabibi.doctor (audit-only, no production code)",
+  "scripts": {
+    "test": "playwright test",
+    "test:buttons": "playwright test tests/audit/01-buttons.spec.js",
+    "test:flows": "playwright test tests/audit/02-flows.spec.js",
+    "test:security": "playwright test tests/audit/03-security.spec.js",
+    "test:perf": "playwright test tests/audit/04-perf.spec.js",
+    "test:a11y": "playwright test tests/audit/05-a11y.spec.js",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.49.0",
+    "lighthouse": "^13.3.0"
+  }
+}

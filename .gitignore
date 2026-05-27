@@ -63,3 +63,17 @@ test-prescriptions/
 !images/*.svg
 !brand/*.json
 *.bak*
+
+# --- Playwright / Audit ---
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+# tests/screenshots est outputDir PW (artefacts d'échec, videos, traces volumineux)
+# Les vraies captures full-page sont dans tests/visual/
+tests/screenshots/
+tests/reports/playwright-html/
+tests/reports/playwright-results.json
+# Bodies HTML capturés pour vérif PII — pas besoin de versionner
+tests/gating/
