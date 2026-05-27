@@ -75,3 +75,5 @@ node_modules/
 tests/screenshots/
 tests/reports/playwright-html/
 tests/reports/playwright-results.json
+# Bodies HTML capturés pour vérif PII — pas besoin de versionner
+tests/gating/

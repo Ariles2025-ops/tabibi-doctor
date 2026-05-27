@@ -14,7 +14,8 @@
     "report": "playwright show-report"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.49.0",
-    "@axe-core/playwright": "^4.10.0"
+    "lighthouse": "^13.3.0"
   }
 }

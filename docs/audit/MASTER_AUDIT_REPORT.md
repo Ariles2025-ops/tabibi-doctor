@@ -1,8 +1,10 @@
-**Version** : 1.0
+**Version** : 1.1 (mise à jour après validation intrusive)
 **Date** : 27 mai 2026
 **Branche** : `audit/full-quality-sept2026`
 **Cible** : `https://effulgent-kelpie-e48e81.netlify.app` (staging)
 **Auteur** : Audit Playwright automatisé
+
+> 📌 **MAJ v1.1** : 3 CRIT initiaux validés en environnement réel. **2 nouveaux CRIT découverts** lors des probes RLS intrusifs. Synthèse mise à jour ci-dessous.
 
 ---
 
@@ -37,24 +39,47 @@
 
 | Catégorie | Verdict | Détail |
 |---|---|---|
-| Auth & gating | 🔴 À confirmer | 5 pages chargent sans redirect ; gating JS-only à valider |
-| RLS Supabase | 🟡 Audit nécessaire | 2/13 tables confirmées |
+| Auth & gating | 🟢 **OK** | 5 pages : aucune PII rendue sans session, RLS verrouille au backend |
+| RLS Supabase (anon) | 🟡 7/9 OK, 1 fuite schema | `doctor_profiles` exposé en colonnes sensibles (CRIT-4) |
+| RLS Supabase (cross-user A↔B) | ⏸️ Non testé | Service_role requis (cf. RLS_INTRUSIVE §5) |
 | Headers HTTP | 🟢 Excellent | HSTS, CSP, X-Frame, COOP/CORP, Permissions-Policy |
 | Mixed content | 🟢 Aucun | Pas de http:// |
 | Secrets exposés | 🟢 Aucun | Pas de service_role, sk_, AKIA, etc. |
 | XSS reflected (sample) | 🟢 OK | Param `q` correctement échappé |
+| Mass assignment (anon) | 🟢 Bloqué | `is_admin` col inexistante, RLS bloque INSERT |
+| Mass assignment (auth médecin) | ⏸️ À tester | Session médecin requise (test prêt) |
+| Captcha signup serveur | 🔴 **Manquant** | Turnstile contournable par REST direct (CRIT-5) |
 | Performance Web Vitals | 🟢 Bon | LCP 1.4s home, FCP 504ms, TTFB 62ms |
+| Lighthouse Perf | 🟡 67-79/100 | Sous le seuil 80 (CLS, unused JS) |
+| Lighthouse A11y | 🟡 85-92/100 | Contrastes, labels formulaires |
+| Lighthouse BP | 🟢 92-100/100 | Excellent |
+| Lighthouse SEO | 🟢 100/100 | Excellent |
 | Régression Phase 16.5 | 🟢 Tenue | 2 requêtes Supabase home (budget 5) |
-| Accessibilité WCAG AA | 🟡 À mesurer | Spec en place, axe non encore exécuté |
-| Mobile responsive | 🟢 4/4 pages testées OK | Pas d'overflow horizontal |
+| Mobile responsive | 🟢 4/4 pages OK | Pas d'overflow horizontal |
+| Cross-browser | 🟢 Chromium+Firefox | WebKit blocked par sandbox (libs) |
 
-### Décompte des findings
+### Décompte des findings (v1.1)
 
 | Sévérité | Compteur | Description |
 |---|---|---|
-| **CRIT** | **3** | Bloquant launch |
-| **MAJ** | **9** | Important, à fixer rapidement |
+| **CRIT** | **3** | CRIT-4 (doctor_profiles exposure), CRIT-5 (captcha bypass), CRIT-1 résiduel (RLS dump prod) |
+| **MAJ** | **9** | Lighthouse a11y/perf, tests cross-user, mass-assign post-auth, etc. |
 | **MIN** | **6** | Post-launch acceptable |
+
+### Compte test à supprimer manuellement
+
+Un compte créé pendant les probes RLS reste **non confirmé** en `auth.users` :
+
+```
+UUID  : 9df8df4f-a5b3-4d68-85cf-32ee08a32190
+Email : audit_rls_a_1779905978@tabibi.test
+Status: unconfirmed
+```
+
+Suppression via Supabase Studio SQL :
+```sql
+DELETE FROM auth.users WHERE id = '9df8df4f-a5b3-4d68-85cf-32ee08a32190';
+```
 
 ---
 
@@ -90,13 +115,22 @@
 
 ## 3. Bugs CRIT — à fixer avant launch <a id="3-bugs-crit"></a>
 
+### État des 3 CRIT initiaux (post-validation intrusive)
+
+| ID | Description | Validation effectuée | Statut |
+|---|---|---|---|
+| **CRIT-1** | Audit RLS Supabase incomplet | 9 tables probées en anon : 7/9 retournent `[]` ou 401, **2 expositions trouvées** (cf. CRIT-4, CRIT-5) | 🟡 **Partiel** — voir CRIT-4 |
+| **CRIT-2** | Gating auth pages applicatives | 5 pages chargées sans cookie, grep PII complet : seul `contact@tabibi.doctor` apparaît | ✅ **LEVÉ** — voir AUTH_GATING_REPORT |
+| **CRIT-3** | Mass assignment sur `update_my_doctor_profile` | INSERT users avec `is_admin` → 400 (col inexistante) ; RPC sans auth → 401/not_authenticated | 🟢 **Mitigé** (anon-side). Test post-auth médecin reste à faire — voir MASS_ASSIGNMENT_REPORT |
+
+### Nouveaux CRIT découverts (post v1.0)
+
 | ID | Description | Source | Effort fix |
 |---|---|---|---|
-| **CRIT-1** | **Audit RLS Supabase incomplet** : 11/13 tables référencées front sans RLS confirmé en migration. Sans dump prod, on ne peut pas affirmer que `users`, `appointments`, `reviews`, `doctor_profiles` etc. sont protégés. | DB_AUDIT_REPORT §2 | 1-2 jours |
-| **CRIT-2** | **Gating auth des pages applicatives** : 5 pages (`patient-dashboard`, `doctor-dashboard`, `mes-rdv`, `notifications`, `patient-profile`) chargent leur HTML sans redirect. Vérifier qu'aucune PII n'est rendue avant authentification. | BUTTONS_REPORT §2.1 | 2 heures (vérif) + correction si besoin |
-| **CRIT-3** | **Mass assignment potentiel** sur RPC `update_my_doctor_profile(params jsonb)`. Si la whitelist côté serveur manque, un médecin pourrait s'élever en `admin`. | RPC_FUNCTIONS.md §3 | 2 heures (test) + 2 heures (fix si besoin) |
+| **CRIT-4** | **`doctor_profiles` expose à anon des champs sensibles** : `email`, `phone`, `id_card_path`, `ordre_card_path`, `validation_rejected_reason`, `validation_*`, `user_id`. Actuellement seulement 10 emails populés, **0 paths documents**, mais **bombe à retardement** au launch. | RLS_INTRUSIVE_REPORT §4 | 2 h (révoquer SELECT direct + pousser front sur `public_doctors`) |
+| **CRIT-5** | **L'endpoint `/auth/v1/signup` accepte les signups sans token Turnstile** (le captcha n'est imposé que côté UI). Permet la création illimitée de comptes unconfirmed depuis un script. | RLS_INTRUSIVE_REPORT §6 | 4-6 h (Edge function captcha-gated ou rate limit Supabase Pro) |
 
-> ⚠️ **Aucun de ces points n'a été confirmé comme bug effectif** par cet audit — ils nécessitent des vérifications supplémentaires avec accès prod. Mais **par défaut**, on les classe CRIT car le coût d'une régression sur l'un d'eux serait majeur.
+> ⚠️ **Avant le launch septembre 2026** : CRIT-4 et CRIT-5 doivent être adressés. CRIT-1 reste à compléter par un dump RLS prod exhaustif et un test cross-user A↔B avec `service_role`.
 
 ---
 
