@@ -1,0 +1,56 @@
+[
+  {
+    "page": "login",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779906176420
+  },
+  {
+    "page": "login",
+    "button": "×",
+    "selector": "button:nth-visible(2) \"×\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"close-x\" aria-label=\"Close\" onclick=\"window.tab",
+    "severity": "MAJ",
+    "ts": 1779906178673
+  },
+  {
+    "page": "login",
+    "button": "",
+    "selector": "button:nth-visible(3) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(2)\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"Back to home\" onclick=\"locat",
+    "severity": "MAJ",
+    "ts": 1779906180680
+  },
+  {
+    "page": "login",
+    "button": "",
+    "selector": "button:nth-visible(4) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(3)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"ii-r\" type=\"button\" onclick=\"togglePw('lp',this",
+    "severity": "MAJ",
+    "ts": 1779906182686
+  },
+  {
+    "page": "login",
+    "button": "Sign in",
+    "selector": "button:nth-visible(5) \"Sign in\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(4)\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"submit\" class=\"btn btn-primary btn-full btn-xl\">",
+    "severity": "MAJ",
+    "ts": 1779906184693
+  },
+  {
+    "page": "login",
+    "button": "🇬🇧 EN",
+    "selector": "button:nth-visible(6) \"🇬🇧 EN\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(5)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"tabibi-lang-trigger\" aria-label=\"Changer de langue",
+    "severity": "MAJ",
+    "ts": 1779906186700
+  }
+]
