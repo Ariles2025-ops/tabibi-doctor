@@ -1,0 +1,380 @@
+[
+  {
+    "page": "signup",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904693707
+  },
+  {
+    "page": "signup",
+    "button": "×",
+    "selector": "button:nth-visible(2) \"×\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"close-x\" aria-label=\"Close\" onclick=\"window.tab",
+    "severity": "MAJ",
+    "ts": 1779904695976
+  },
+  {
+    "page": "signup",
+    "button": "",
+    "selector": "button:nth-visible(3) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(2)\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"Retour à la connexion\" oncli",
+    "severity": "MAJ",
+    "ts": 1779904697983
+  },
+  {
+    "page": "signup",
+    "button": "Patient",
+    "selector": "button:nth-visible(4) \"Patient\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(3)\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"radio\" type=\"button\" aria-checked=\"true\" class=\"",
+    "severity": "MAJ",
+    "ts": 1779904699988
+  },
+  {
+    "page": "signup",
+    "button": "Médecin",
+    "selector": "button:nth-visible(5) \"Médecin\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(4)\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"radio\" type=\"button\" class=\"role-btn\" aria-check",
+    "severity": "MAJ",
+    "ts": 1779904701994
+  },
+  {
+    "page": "signup",
+    "button": "Secrétariat",
+    "selector": "button:nth-visible(6) \"Secrétariat\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(5)\u001b[22m\n\u001b[2m    - locator resolved to <button role=\"radio\" type=\"button\" class=\"role-btn\" aria-check",
+    "severity": "MAJ",
+    "ts": 1779904704001
+  },
+  {
+    "page": "signup",
+    "button": "",
+    "selector": "button:nth-visible(7) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(6)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"ii-r\" type=\"button\" onclick=\"togglePw('spw',thi",
+    "severity": "MAJ",
+    "ts": 1779904706005
+  },
+  {
+    "page": "signup",
+    "button": "Create my account",
+    "selector": "button:nth-visible(8) \"Create my account\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(7)\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"submit\" class=\"btn btn-primary btn-full btn-xl\">",
+    "severity": "MAJ",
+    "ts": 1779904708010
+  },
+  {
+    "page": "signup",
+    "button": "🇬🇧 EN",
+    "selector": "button:nth-visible(9) \"🇬🇧 EN\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(8)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"tabibi-lang-trigger\" aria-label=\"Changer de langue",
+    "severity": "MAJ",
+    "ts": 1779904710016
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904710931
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "×",
+    "selector": "button:nth-visible(2) \"×\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"close-x\" aria-label=\"Close\" onclick=\"window.tab",
+    "severity": "MAJ",
+    "ts": 1779904713146
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "",
+    "selector": "button:nth-visible(3) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(2)\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"Back\" onclick=\"history.back(",
+    "severity": "MAJ",
+    "ts": 1779904715150
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "",
+    "selector": "button:nth-visible(4) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(3)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"fav-btn\" type=\"button\" onclick=\"toggleFav()\" aria-",
+    "severity": "MAJ",
+    "ts": 1779904717155
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "",
+    "selector": "button:nth-visible(5) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(4)\u001b[22m\n\u001b[2m    - locator resolved to <button type=\"button\" aria-label=\"Partager le profil\" class=\"b",
+    "severity": "MAJ",
+    "ts": 1779904719161
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "Book appointment",
+    "selector": "button:nth-visible(6) \"Book appointment\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(5)\u001b[22m\n\u001b[2m    - locator resolved to <button disabled id=\"reserve-btn\" onclick=\"reserve()\" class=\"b",
+    "severity": "MAJ",
+    "ts": 1779904721172
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "",
+    "selector": "button:nth-visible(7) \"\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(6)\u001b[22m\n\u001b[2m    - locator resolved to <button onclick=\"visio()\" aria-label=\"Telehealth\" class=\"btn b",
+    "severity": "MAJ",
+    "ts": 1779904723176
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "🇬🇧 EN",
+    "selector": "button:nth-visible(8) \"🇬🇧 EN\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(7)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"tabibi-lang-trigger\" aria-label=\"Changer de langue",
+    "severity": "MAJ",
+    "ts": 1779904725181
+  },
+  {
+    "page": "doctor-profile-241",
+    "button": "(console)",
+    "selector": "console.error",
+    "result": "FAIL",
+    "error": "Framing 'https://maps.google.com/' violates the following Content Security Policy directive: \"default-src 'self'\". The request has been blocked. Note that 'frame-src' was not explicitly set, so 'default-src' is used as a fallback.\n",
+    "severity": "MAJ",
+    "ts": 1779904725181
+  },
+  {
+    "page": "teleconsult",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904726164
+  },
+  {
+    "page": "teleconsult",
+    "button": "(console)",
+    "selector": "console.error",
+    "result": "FAIL",
+    "error": "Access to script at 'https://unpkg.com/@daily-co/daily-js@0.66.1/dist/daily-iframe.js' from origin 'https://effulgent-kelpie-e48e81.netlify.app' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. || Failed to load resource: net::ERR_FAILED",
+    "severity": "MAJ",
+    "ts": 1779904726368
+  },
+  {
+    "page": "waiting-list",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904727068
+  },
+  {
+    "page": "waiting-list",
+    "button": "(console)",
+    "selector": "console.error",
+    "result": "FAIL",
+    "error": "[Tabibi] SDK Supabase non chargé || [Tabibi] SDK Supabase non chargé",
+    "severity": "MAJ",
+    "ts": 1779904727971
+  },
+  {
+    "page": "api-docs",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904728704
+  },
+  {
+    "page": "api-docs",
+    "button": "(console)",
+    "selector": "console.error",
+    "result": "FAIL",
+    "error": "Loading the script 'https://cdn.redoc.ly/redoc/v2.1.5/bundles/redoc.standalone.js' violates the following Content Security Policy directive: \"script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.googletagmanager.com https://plausible.io\". Note that 'script-src-elem' was not explicitly set, so 'script-src' is used as a fallback. The a",
+    "severity": "MAJ",
+    "ts": 1779904729290
+  },
+  {
+    "page": "legal-cgu",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904730079
+  },
+  {
+    "page": "legal-cgu",
+    "button": "×",
+    "selector": "button:nth-visible(2) \"×\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"close-x\" aria-label=\"Close\" onclick=\"window.tab",
+    "severity": "MAJ",
+    "ts": 1779904732292
+  },
+  {
+    "page": "legal-cgu",
+    "button": "FR",
+    "selector": "button:nth-visible(3) \"FR\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(2)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"\" id=\"btn-fr\" onclick=\"setLang('fr')\">FR</butto",
+    "severity": "MAJ",
+    "ts": 1779904734296
+  },
+  {
+    "page": "legal-cgu",
+    "button": "AR",
+    "selector": "button:nth-visible(4) \"AR\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(3)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"btn-ar\" onclick=\"setLang('ar')\">AR</button>\u001b[22m\n\u001b",
+    "severity": "MAJ",
+    "ts": 1779904736303
+  },
+  {
+    "page": "legal-cgu",
+    "button": "EN",
+    "selector": "button:nth-visible(5) \"EN\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(4)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"btn-en\" class=\"active\" onclick=\"setLang('en')\">EN<",
+    "severity": "MAJ",
+    "ts": 1779904738308
+  },
+  {
+    "page": "legal-cookies",
+    "button": "(page load)",
+    "selector": "goto",
+    "result": "PASS",
+    "error": "",
+    "severity": "INFO",
+    "ts": 1779904738922
+  },
+  {
+    "page": "legal-cookies",
+    "button": "×",
+    "selector": "button:nth-visible(2) \"×\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(1)\u001b[22m\n\u001b[2m    - locator resolved to <button class=\"close-x\" aria-label=\"Fermer\" onclick=\"window.ta",
+    "severity": "MAJ",
+    "ts": 1779904741144
+  },
+  {
+    "page": "legal-cookies",
+    "button": "FR",
+    "selector": "button:nth-visible(3) \"FR\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(2)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"btn-fr\" class=\"active\" onclick=\"setLang('fr')\">FR<",
+    "severity": "MAJ",
+    "ts": 1779904743148
+  },
+  {
+    "page": "legal-cookies",
+    "button": "AR",
+    "selector": "button:nth-visible(4) \"AR\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(3)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"btn-ar\" onclick=\"setLang('ar')\">AR</button>\u001b[22m\n\u001b",
+    "severity": "MAJ",
+    "ts": 1779904745158
+  },
+  {
+    "page": "legal-cookies",
+    "button": "EN",
+    "selector": "button:nth-visible(5) \"EN\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(4)\u001b[22m\n\u001b[2m    - locator resolved to <button id=\"btn-en\" onclick=\"setLang('en')\">EN</button>\u001b[22m\n\u001b",
+    "severity": "MAJ",
+    "ts": 1779904747163
+  },
+  {
+    "page": "legal-cookies",
+    "button": "Tout accepter",
+    "selector": "button:nth-visible(6) \"Tout accepter\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(5)\u001b[22m\n\u001b[2m    - locator resolved to <button onclick=\"acceptAll()\" class=\"btn btn-primary\">…</butto",
+    "severity": "MAJ",
+    "ts": 1779904749168
+  },
+  {
+    "page": "legal-cookies",
+    "button": "Tout refuser",
+    "selector": "button:nth-visible(7) \"Tout refuser\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(6)\u001b[22m\n\u001b[2m    - locator resolved to <button onclick=\"rejectAll()\" class=\"btn btn-secondary\">…</but",
+    "severity": "MAJ",
+    "ts": 1779904751172
+  },
+  {
+    "page": "legal-cookies",
+    "button": "Enregistrer",
+    "selector": "button:nth-visible(8) \"Enregistrer\"",
+    "result": "CLICK_FAIL",
+    "error": "locator.click: Timeout 2000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:visible').nth(7)\u001b[22m\n\u001b[2m    - locator resolved to <button onclick=\"savePrefs()\" class=\"btn btn-secondary\">…</but",
+    "severity": "MAJ",
+    "ts": 1779904753176
+  },
+  {
+    "page": "patient-dashboard",
+    "button": "(auth gating)",
+    "selector": "redirect-or-modal",
+    "result": "CHECK",
+    "error": "Page loaded but no redirect to login. URL=https://effulgent-kelpie-e48e81.netlify.app/patient-dashboard.html, title=\"\". Verify manually.",
+    "severity": "MAJ",
+    "ts": 1779904754057
+  },
+  {
+    "page": "doctor-dashboard",
+    "button": "(auth gating)",
+    "selector": "redirect-or-modal",
+    "result": "CHECK",
+    "error": "Page loaded but no redirect to login. URL=https://effulgent-kelpie-e48e81.netlify.app/doctor-dashboard.html, title=\"\". Verify manually.",
+    "severity": "MAJ",
+    "ts": 1779904755008
+  },
+  {
+    "page": "mes-rdv",
+    "button": "(auth gating)",
+    "selector": "redirect-or-modal",
+    "result": "CHECK",
+    "error": "Page loaded but no redirect to login. URL=https://effulgent-kelpie-e48e81.netlify.app/mes-rdv.html, title=\"Mes rendez-vous | Tabibi\". Verify manually.",
+    "severity": "MAJ",
+    "ts": 1779904755882
+  },
+  {
+    "page": "notifications",
+    "button": "(auth gating)",
+    "selector": "redirect-or-modal",
+    "result": "CHECK",
+    "error": "Page loaded but no redirect to login. URL=https://effulgent-kelpie-e48e81.netlify.app/notifications.html, title=\"Notifications | Tabibi\". Verify manually.",
+    "severity": "MAJ",
+    "ts": 1779904756452
+  },
+  {
+    "page": "patient-profile",
+    "button": "(auth gating)",
+    "selector": "redirect-or-modal",
+    "result": "CHECK",
+    "error": "Page loaded but no redirect to login. URL=https://effulgent-kelpie-e48e81.netlify.app/patient-profile.html, title=\"My profile | Tabibi\". Verify manually.",
+    "severity": "MAJ",
+    "ts": 1779904757217
+  }
+]

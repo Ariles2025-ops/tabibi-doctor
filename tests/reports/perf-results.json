@@ -1,0 +1,50 @@
+[
+  {
+    "page": "index",
+    "elapsedMs": 2076,
+    "totalReqs": 33,
+    "supaReqs": 2,
+    "totalBytesApprox": 572557,
+    "vitals": {
+      "ttfb": 62.40000000002328,
+      "domContentLoaded": 521.3000000000466,
+      "loadEvent": 559.5999999999767,
+      "fcp": 504,
+      "lcp": 1364
+    },
+    "budget": {
+      "reqs": 60,
+      "supaReqs": 5,
+      "bytes": 1500000
+    },
+    "verdict": {
+      "reqsOk": true,
+      "supaReqsOk": true,
+      "bytesOk": true
+    }
+  },
+  {
+    "page": "login",
+    "elapsedMs": 1035,
+    "totalReqs": 27,
+    "supaReqs": 1,
+    "totalBytesApprox": 332122,
+    "vitals": {
+      "ttfb": 37,
+      "domContentLoaded": 260.80000000004657,
+      "loadEvent": 306.69999999995343,
+      "fcp": 280,
+      "lcp": 1080
+    },
+    "budget": {
+      "reqs": 50,
+      "supaReqs": 3,
+      "bytes": 1000000
+    },
+    "verdict": {
+      "reqsOk": true,
+      "supaReqsOk": true,
+      "bytesOk": true
+    }
+  }
+]
