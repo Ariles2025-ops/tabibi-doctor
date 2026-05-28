@@ -38,30 +38,15 @@ npm install
 
 ---
 
-## 3. Installer CocoaPods (iOS uniquement)
+## 3. Dépendances iOS — Swift Package Manager (automatique)
 
-```bash
-sudo gem install cocoapods
-# ou avec Homebrew :
-brew install cocoapods
-```
+> **Capacitor 8 utilise Swift Package Manager (SPM) — CocoaPods n'est pas requis.**
+> Pas de `pod install`. Xcode résout les 16 dépendances automatiquement au premier build
+> ou via `xcodebuild -resolvePackageDependencies`.
 
 ---
 
-## 4. Installer les Pods iOS
-
-```bash
-cd ios/App
-pod install
-cd ../..
-```
-
-> Cette étape télécharge les dépendances natives Swift/Objective-C.
-> Durée : 2-5 minutes selon la connexion.
-
----
-
-## 5. Construire les assets web
+## 4. Construire les assets web
 
 ```bash
 bash scripts/build-mobile.sh
@@ -72,7 +57,7 @@ bash scripts/build-mobile.sh
 
 ---
 
-## 6. Synchroniser les plateformes natives
+## 5. Synchroniser les plateformes natives
 
 ```bash
 npx cap sync
@@ -83,7 +68,7 @@ npx cap sync
 
 ---
 
-## 7. Ouvrir dans Xcode (iOS)
+## 6. Ouvrir dans Xcode (iOS)
 
 ```bash
 npx cap open ios
@@ -98,7 +83,7 @@ Dans Xcode :
 
 ---
 
-## 8. Ouvrir dans Android Studio (Android)
+## 7. Ouvrir dans Android Studio (Android)
 
 ```bash
 npx cap open android
@@ -129,7 +114,7 @@ tabibi-doctor/
 │       ├── App/
 │       │   ├── Info.plist  ← Permissions iOS
 │       │   └── public/     ← Copie de www/ (généré)
-│       └── Podfile         ← Dépendances CocoaPods
+│       └── CapApp-SPM/     ← Dépendances Swift Package Manager
 ├── android/                ← Projet Android Studio (versionné)
 │   └── app/
 │       ├── build.gradle    ← Config build Android

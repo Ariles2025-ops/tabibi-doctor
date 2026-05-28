@@ -27,23 +27,22 @@ Android Studio embarque son propre JDK (JetBrains Runtime).
 
 ---
 
-### [IOS] 🟡 CocoaPods non installés sur machine fraîche
+### [IOS] ✅ CocoaPods NON requis — Capacitor 8 utilise Swift Package Manager
 
-**Symptôme** :
-```
-[error] Could not find "Podfile" in ios directory.
-```
-Ou après `npx cap open ios` : Xcode ne peut pas résoudre les dépendances Swift.
+**Note** : Contrairement aux versions antérieures de Capacitor (≤5), Capacitor 8 utilise
+**Swift Package Manager (SPM)** pour les dépendances iOS. Il n'y a pas de Podfile.
 
-**Cause** : CocoaPods requis mais non installé par défaut.
+Le fichier `ios/App/CapApp-SPM/Package.swift` déclare les 16 dépendances SPM.
+Xcode les résout automatiquement au premier build (via réseau et `node_modules/`).
 
-**Fix** :
+**Commande de résolution manuelle si nécessaire** :
 ```bash
-sudo gem install cocoapods
-cd ios/App && pod install
+xcodebuild -project ios/App/App.xcodeproj -scheme App \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -resolvePackageDependencies
 ```
 
-**Statut** : ✅ Documenté dans SETUP_GUIDE.md — pas de fix code nécessaire
+**Statut** : ✅ Validé — BUILD SUCCEEDED + premier boot simulateur iPhone 17 Pro (2026-05-28)
 
 ---
 
@@ -165,6 +164,31 @@ un `git pull`. Le README et SETUP_GUIDE.md le mentionnent.
 
 ---
 
+### [IOS + ANDROID] 🟢 Cookie consent banner visible en mode natif
+
+**Symptôme** : Le modal cookie (RGPD) s'affiche dans l'app native alors qu'il devrait
+être masqué. L'app n'est pas soumise au RGPD européen (Algérie).
+
+**Cause** : `capacitor-bridge.js` → `initAnalytics()` désactive le banner en natif,
+mais `window.tabibi.bridge.init()` n'est pas encore appelé dans les pages HTML.
+
+**Fix** : Dans chaque page HTML, avant la fermeture `</body>` :
+```html
+<script src="/js/capacitor-bridge.js"></script>
+<script>
+  if (window.Capacitor?.isNativePlatform()) {
+    window.tabibi.bridge.init();
+  }
+</script>
+```
+Ou mieux : ajouter ce bloc dans un script partagé déjà inclus partout (ex: `tabibi-network.js`).
+
+**Impact** : Cosmétique uniquement — pas de crash, pas de perte de données.
+
+**Statut** : ⏳ Phase 2 — à implémenter avant soumission stores
+
+---
+
 ## Issues résolues
 
 | Date | Issue | Résolution |
@@ -172,6 +196,8 @@ un `git pull`. Le README et SETUP_GUIDE.md le mentionnent.
 | 2026-05-28 | `webDir: "./"` invalide pour Capacitor | Créé `www/` + `scripts/build-mobile.sh` |
 | 2026-05-28 | TypeScript manquant pour `capacitor.config.ts` | `npm install -D typescript` |
 | 2026-05-28 | `ios platform already exists` après first fail | `rm -rf ios && npx cap add ios` |
+| 2026-05-28 | CocoaPods supposé requis — en réalité non | Capacitor 8 = SPM, pas CocoaPods |
+| 2026-05-28 | Premier build iOS — BUILD SUCCEEDED | iPhone 17 Pro simulateur iOS 26.5 ✅ |
 
 ---
 
