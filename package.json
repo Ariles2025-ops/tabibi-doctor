@@ -1,0 +1,42 @@
+{
+  "name": "tabibi-doctor",
+  "version": "1.0.0",
+  "description": "Tabibi — Plateforme médicale algérienne (iOS + Android via Capacitor)",
+  "private": true,
+  "scripts": {
+    "sync": "npx cap sync",
+    "open:ios": "npx cap open ios",
+    "open:android": "npx cap open android",
+    "build:ios": "npx cap build ios",
+    "build:android": "npx cap build android"
+  },
+  "keywords": [
+    "tabibi",
+    "medical",
+    "algeria",
+    "capacitor"
+  ],
+  "author": "Aghiles Haddadene",
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@capacitor/android": "^8.3.4",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/app-launcher": "^8.0.1",
+    "@capacitor/browser": "^8.0.3",
+    "@capacitor/camera": "^8.2.0",
+    "@capacitor/cli": "^8.3.4",
+    "@capacitor/core": "^8.3.4",
+    "@capacitor/geolocation": "^8.2.0",
+    "@capacitor/ios": "^8.3.4",
+    "@capacitor/keyboard": "^8.0.3",
+    "@capacitor/local-notifications": "^8.2.0",
+    "@capacitor/preferences": "^8.0.1",
+    "@capacitor/push-notifications": "^8.1.1",
+    "@capacitor/share": "^8.0.1",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}
