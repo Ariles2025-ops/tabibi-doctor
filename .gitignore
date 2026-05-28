@@ -63,3 +63,17 @@ test-prescriptions/
 !images/*.svg
 !brand/*.json
 *.bak*
+
+# --- Capacitor / Mobile ---
+node_modules/
+ios/App/Pods/
+ios/App/Podfile.lock
+ios/App/build/
+ios/App/App/Public/
+ios/.xcode.env.local
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/release/
+www/
