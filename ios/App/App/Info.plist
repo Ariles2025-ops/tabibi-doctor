@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CAPACITOR_DEBUG</key>
+	<string>$(CAPACITOR_DEBUG)</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+        <string>Tabibi</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleVersion</key>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+	<!-- PERMISSIONS TABIBI — Obligatoires Apple App Store              -->
+	<!-- ═══════════════════════════════════════════════════════════════ -->
+
+	<!-- Caméra : photo de profil médecin, upload documents claim -->
+	<key>NSCameraUsageDescription</key>
+	<string>Tabibi a besoin de l'accès caméra pour votre photo de profil médical et l'envoi de documents de vérification.</string>
+
+	<!-- Galerie photos : sélection photo de profil -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Tabibi a besoin d'accéder à vos photos pour votre photo de profil médical.</string>
+
+	<!-- Localisation : recherche de médecins proches -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Tabibi utilise votre position pour trouver les médecins les plus proches de chez vous.</string>
+
+	<!-- Microphone : téléconsultations vidéo avec Daily.co -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Tabibi utilise le microphone pour les téléconsultations vidéo avec votre médecin.</string>
+
+	<!-- Contacts : partage d'une fiche médecin -->
+	<key>NSContactsUsageDescription</key>
+	<string>Tabibi peut accéder à vos contacts pour partager directement une fiche médecin.</string>
+
+	<!-- Notifications push : rappels RDV, notifications médecin -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- Sécurité Transport (App Transport Security) -->
+	<!-- Supabase utilise HTTPS — ATS en mode strict -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+
+	<!-- Deep links — URL scheme pour auth Supabase -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.tabibi.doctor</string>
+			</array>
+			<key>CFBundleURLName</key>
+			<string>com.tabibi.doctor</string>
+		</dict>
+	</array>
+
+	<!-- App locale : français / arabe par défaut -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>fr</string>
+		<string>ar</string>
+		<string>en</string>
+	</array>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>fr-DZ</string>
+
+	<!-- Portrait uniquement sur iPhone (paysage autorisé iPad) -->
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+
+</dict>
+</plist>

@@ -1,0 +1,262 @@
+# Known Issues — Tabibi Mobile
+**Dernière mise à jour** : 2026-05-28
+
+Format : `[PLATEFORME] [CRITICITÉ] Titre — Statut`
+Criticité : 🔴 Bloquant | 🟡 Important | 🟢 Mineur
+
+---
+
+## Issues actives
+
+### [ANDROID] ✅ Java Runtime — utiliser le JBR d'Android Studio
+
+**Symptôme initial** :
+```
+Error running gradle sync: The operation couldn't be completed.
+Unable to locate a Java Runtime.
+```
+
+**Cause** : `/usr/bin/java` est un stub macOS sans JDK. `JAVA_HOME` absent du shell.
+
+**Fix validé** : Utiliser le JetBrains Runtime (JBR) embarqué dans Android Studio :
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH=$JAVA_HOME/bin:$PATH
+```
+Ajouter à `~/.zshrc` pour persistance.
+
+**Statut** : ✅ Résolu — BUILD SUCCESSFUL Android (2026-05-28)
+
+---
+
+### [IOS + ANDROID] 🟡 Splash screen — icône Capacitor par défaut au lieu de Tabibi
+
+**Symptôme** : Au démarrage sur Android, splash screen affiche l'icône Capacitor bleue
+(croix bleue sur fond gris) au lieu du logo Tabibi sur fond #0F7560.
+Sur iOS, le fond vert est correct mais l'icône n'est pas Tabibi non plus.
+
+**Cause** : `capacitor.config.ts` configure `backgroundColor: '#0F7560'` mais
+aucune image de splash custom n'a été configurée. Capacitor utilise l'icône par défaut.
+
+**Fix** :
+1. Préparer une image `splash.png` 2732×2732 px (fond transparent, logo centré)
+2. Placer dans `resources/splash.png`
+3. Générer les assets natifs :
+   ```bash
+   npm install -D @capacitor/assets
+   npx capacitor-assets generate --splashscreen
+   ```
+   Cela génère automatiquement les tailles pour iOS et Android.
+
+**Alternative sans assets CLI** :
+- iOS : `ios/App/App/Assets.xcassets/Splash.imageset/` → remplacer les images
+- Android : `android/app/src/main/res/drawable/splash.png` → remplacer
+
+**Impact** : Visuel uniquement. Aucun crash. **Bloquant pour stores** (image de marque requise).
+
+**Statut** : ⏳ À faire en Phase 2 — avant soumission stores
+
+---
+
+### [IOS] ✅ CocoaPods NON requis — Capacitor 8 utilise Swift Package Manager
+
+**Note** : Contrairement aux versions antérieures de Capacitor (≤5), Capacitor 8 utilise
+**Swift Package Manager (SPM)** pour les dépendances iOS. Il n'y a pas de Podfile.
+
+Le fichier `ios/App/CapApp-SPM/Package.swift` déclare les 16 dépendances SPM.
+Xcode les résout automatiquement au premier build (via réseau et `node_modules/`).
+
+**Commande de résolution manuelle si nécessaire** :
+```bash
+xcodebuild -project ios/App/App.xcodeproj -scheme App \
+  -destination 'platform=iOS Simulator,name=iPhone 17 Pro' \
+  -resolvePackageDependencies
+```
+
+**Statut** : ✅ Validé — BUILD SUCCEEDED + premier boot simulateur iPhone 17 Pro (2026-05-28)
+
+---
+
+### [IOS] 🟡 Teleconsultation Daily.co — WebRTC à valider en device réel
+
+**Symptôme** : Écran noir ou erreur permissions dans `teleconsultation.html`.
+
+**Cause** : Daily.co utilise WebRTC via `<iframe>`. WKWebView iOS supporte WebRTC
+depuis iOS 14.5, mais les permissions caméra/micro doivent être explicitement déclarées
+dans `Info.plist` ET demandées au runtime.
+
+**Workaround** : `Info.plist` déjà configuré avec `NSCameraUsageDescription` et
+`NSMicrophoneUsageDescription`. Permissions déclarées.
+
+**Test requis** : Tester sur device réel iOS avec un RDV téléconsultation actif.
+Si échec → intégrer `@daily-co/daily-js` mobile SDK (fallback natif, +5 jours dev).
+
+**Statut** : ⏳ NON TESTÉ — à prioriser en Phase 3
+
+---
+
+### [IOS + ANDROID] 🟡 Turnstile captcha incompatible WebView
+
+**Symptôme** : Le widget Turnstile ne s'affiche pas, ou affiche une erreur, ou bloque
+l'inscription sur `signup.html`.
+
+**Cause** : Cloudflare Turnstile détecte les environnements non-browser (WebView) et
+peut refuser de se rendre correctement.
+
+**Workaround** : `capacitor-bridge.js` expose `shouldShowTurnstile()` qui retourne
+`false` en mode natif. Mais il faut encore :
+1. Modifier `signup.html` pour appeler `shouldShowTurnstile()` avant d'afficher le widget
+2. Modifier l'Edge Function `verify-turnstile` pour accepter les appels sans token
+   depuis l'app native (header `X-App-Platform: capacitor`)
+
+**Statut** : ⏳ Logic bridge créée — intégration dans signup.html à faire (Phase 2)
+
+---
+
+### [ANDROID] 🟡 Deep links — assetlinks.json non encore déployé
+
+**Symptôme** : Les liens email Supabase s'ouvrent dans Chrome au lieu de l'app.
+
+**Cause** : `https://tabibi.doctor/.well-known/assetlinks.json` n'existe pas encore.
+Sans ce fichier, Android App Links ne fonctionnent pas et le fallback est le navigateur.
+
+**Fix** :
+1. Générer le SHA-256 du keystore de production :
+   ```bash
+   keytool -list -v -keystore tabibi-release.keystore -alias tabibi
+   # Copier le "SHA256:" affiché
+   ```
+2. Créer `/.well-known/assetlinks.json` à la racine du site avec le fingerprint
+3. Déployer sur Netlify (le fichier est déjà dans `.gitignore` à NE PAS ignorer)
+4. Configurer Supabase Auth → Redirect URLs : `com.tabibi.doctor://`
+
+**Statut** : ⏳ À faire avant premier test deep links Android
+
+---
+
+### [IOS] 🟡 Universal Links — apple-app-site-association non déployé
+
+**Symptôme** : Même problème que assetlinks.json côté iOS — liens email ouvrent Safari.
+
+**Fix** :
+1. Obtenir le Team ID dans Apple Developer Portal
+2. Créer `/.well-known/apple-app-site-association` avec le bon `appID`
+3. Déployer sur Netlify
+4. Activer Associated Domains dans Xcode : Signing & Capabilities → +
+   → Associated Domains → `applinks:tabibi.doctor`
+
+**Statut** : ⏳ Requiert compte Apple Developer actif
+
+---
+
+### [IOS] 🟢 Orientation paysage désactivée sur iPhone
+
+**Symptôme** : L'app ne pivote pas en paysage sur iPhone (voulu).
+
+**Cause** : `Info.plist` configuré portrait uniquement sur iPhone, toutes orientations sur iPad.
+
+**Note** : C'est le comportement voulu. Si à reconsidérer pour la téléconsultation (paysage
+naturel pour les visios), modifier `UISupportedInterfaceOrientations` dans `Info.plist`.
+
+**Statut** : ✅ Comportement intentionnel — documenter si UX change
+
+---
+
+### [ANDROID] 🟢 Commentaires dans variables.gradle causent un warning Gradle
+
+**Symptôme** :
+```
+warning: comments in Groovy DSL are not supported for Kotlin value assignment
+```
+
+**Cause** : Le fichier `android/variables.gradle` utilise la syntaxe Groovy avec des
+commentaires inline `// ...` après les assignations de valeurs.
+
+**Fix** : Déplacer les commentaires sur la ligne précédente :
+```groovy
+// Android 8.0 minimum
+minSdkVersion = 26
+```
+
+**Statut** : 🟢 Warning non bloquant — à corriger lors du premier build Android Studio
+
+---
+
+### [IOS + ANDROID] 🟢 www/ non versionné — risque de confusion
+
+**Symptôme** : `www/` est dans `.gitignore` mais certains devs essaient de le committer.
+
+**Cause** : `www/` est généré par `build-mobile.sh` et ne doit pas être versionné.
+
+**Fix** : Toujours relancer `bash scripts/build-mobile.sh && npx cap sync` après
+un `git pull`. Le README et SETUP_GUIDE.md le mentionnent.
+
+**Statut** : ✅ Documenté — à rappeler en onboarding
+
+---
+
+### [IOS + ANDROID] 🟢 Cookie consent banner visible en mode natif
+
+**Symptôme** : Le modal cookie (RGPD) s'affiche dans l'app native alors qu'il devrait
+être masqué. L'app n'est pas soumise au RGPD européen (Algérie).
+
+**Cause** : `capacitor-bridge.js` → `initAnalytics()` désactive le banner en natif,
+mais `window.tabibi.bridge.init()` n'est pas encore appelé dans les pages HTML.
+
+**Fix** : Dans chaque page HTML, avant la fermeture `</body>` :
+```html
+<script src="/js/capacitor-bridge.js"></script>
+<script>
+  if (window.Capacitor?.isNativePlatform()) {
+    window.tabibi.bridge.init();
+  }
+</script>
+```
+Ou mieux : ajouter ce bloc dans un script partagé déjà inclus partout (ex: `tabibi-network.js`).
+
+**Impact** : Cosmétique uniquement — pas de crash, pas de perte de données.
+
+**Statut** : ⏳ Phase 2 — à implémenter avant soumission stores
+
+---
+
+## Issues résolues
+
+| Date | Issue | Résolution |
+|---|---|---|
+| 2026-05-28 | `webDir: "./"` invalide pour Capacitor | Créé `www/` + `scripts/build-mobile.sh` |
+| 2026-05-28 | TypeScript manquant pour `capacitor.config.ts` | `npm install -D typescript` |
+| 2026-05-28 | `ios platform already exists` après first fail | `rm -rf ios && npx cap add ios` |
+| 2026-05-28 | CocoaPods supposé requis — en réalité non | Capacitor 8 = SPM, pas CocoaPods |
+| 2026-05-28 | Premier build iOS — BUILD SUCCEEDED | iPhone 17 Pro simulateur iOS 26.5 ✅ |
+| 2026-05-28 | ANDROID_HOME + JAVA_HOME absents du PATH | JBR Android Studio + ~/Library/Android/sdk |
+| 2026-05-28 | cmdline-tools absents (no avdmanager) | Téléchargé cmdline-tools 12.0 + AVD Pixel 6 créé |
+| 2026-05-28 | Premier build Android — BUILD SUCCESSFUL | Pixel 6 API 34 émulateur, APK 12MB ✅ |
+
+---
+
+## Template pour reporter un nouveau bug
+
+```markdown
+### [PLATEFORME] CRITICITÉ Titre court
+
+**Symptôme** : Ce que l'utilisateur voit / le message d'erreur exact
+
+**Reproductible sur** :
+- [ ] iOS Simulateur
+- [ ] iOS Device réel
+- [ ] Android Émulateur
+- [ ] Android Device réel
+
+**Étapes pour reproduire** :
+1. ...
+2. ...
+
+**Cause** : Explication technique (si connue)
+
+**Workaround** : Solution temporaire (si disponible)
+
+**Fix** : Ce qui doit être fait
+
+**Statut** : ⏳ En cours / ✅ Résolu / 🚫 Won't fix
+```
