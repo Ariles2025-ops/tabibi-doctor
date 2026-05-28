@@ -8,22 +8,53 @@ Criticité : 🔴 Bloquant | 🟡 Important | 🟢 Mineur
 
 ## Issues actives
 
-### [ANDROID] 🟡 Gradle sync échoue sans Java Runtime
+### [ANDROID] ✅ Java Runtime — utiliser le JBR d'Android Studio
 
-**Symptôme** :
+**Symptôme initial** :
 ```
 Error running gradle sync: The operation couldn't be completed.
 Unable to locate a Java Runtime.
 ```
 
-**Cause** : Android Studio en cours d'installation sur la machine de dev. JDK absent du PATH.
+**Cause** : `/usr/bin/java` est un stub macOS sans JDK. `JAVA_HOME` absent du shell.
 
-**Workaround** : Ouvrir Android Studio → File → Sync Project with Gradle Files.
-Android Studio embarque son propre JDK (JetBrains Runtime).
+**Fix validé** : Utiliser le JetBrains Runtime (JBR) embarqué dans Android Studio :
+```bash
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+export PATH=$JAVA_HOME/bin:$PATH
+```
+Ajouter à `~/.zshrc` pour persistance.
 
-**Fix permanent** : Installer JDK 17+ via `brew install openjdk@17` et configurer `JAVA_HOME`.
+**Statut** : ✅ Résolu — BUILD SUCCESSFUL Android (2026-05-28)
 
-**Statut** : ⏳ Android Studio installation en cours — résolution attendue
+---
+
+### [IOS + ANDROID] 🟡 Splash screen — icône Capacitor par défaut au lieu de Tabibi
+
+**Symptôme** : Au démarrage sur Android, splash screen affiche l'icône Capacitor bleue
+(croix bleue sur fond gris) au lieu du logo Tabibi sur fond #0F7560.
+Sur iOS, le fond vert est correct mais l'icône n'est pas Tabibi non plus.
+
+**Cause** : `capacitor.config.ts` configure `backgroundColor: '#0F7560'` mais
+aucune image de splash custom n'a été configurée. Capacitor utilise l'icône par défaut.
+
+**Fix** :
+1. Préparer une image `splash.png` 2732×2732 px (fond transparent, logo centré)
+2. Placer dans `resources/splash.png`
+3. Générer les assets natifs :
+   ```bash
+   npm install -D @capacitor/assets
+   npx capacitor-assets generate --splashscreen
+   ```
+   Cela génère automatiquement les tailles pour iOS et Android.
+
+**Alternative sans assets CLI** :
+- iOS : `ios/App/App/Assets.xcassets/Splash.imageset/` → remplacer les images
+- Android : `android/app/src/main/res/drawable/splash.png` → remplacer
+
+**Impact** : Visuel uniquement. Aucun crash. **Bloquant pour stores** (image de marque requise).
+
+**Statut** : ⏳ À faire en Phase 2 — avant soumission stores
 
 ---
 
@@ -198,6 +229,9 @@ Ou mieux : ajouter ce bloc dans un script partagé déjà inclus partout (ex: `t
 | 2026-05-28 | `ios platform already exists` après first fail | `rm -rf ios && npx cap add ios` |
 | 2026-05-28 | CocoaPods supposé requis — en réalité non | Capacitor 8 = SPM, pas CocoaPods |
 | 2026-05-28 | Premier build iOS — BUILD SUCCEEDED | iPhone 17 Pro simulateur iOS 26.5 ✅ |
+| 2026-05-28 | ANDROID_HOME + JAVA_HOME absents du PATH | JBR Android Studio + ~/Library/Android/sdk |
+| 2026-05-28 | cmdline-tools absents (no avdmanager) | Téléchargé cmdline-tools 12.0 + AVD Pixel 6 créé |
+| 2026-05-28 | Premier build Android — BUILD SUCCESSFUL | Pixel 6 API 34 émulateur, APK 12MB ✅ |
 
 ---
 
