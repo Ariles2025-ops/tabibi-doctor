@@ -105,7 +105,7 @@
 - Modal se ferme automatiquement
 - Toast vert haut écran : **"Blocage enregistré ✓"**
 - Section "Blocages exceptionnels" rechargée → nouvelle 4e card visible :
-  - **Mer 1 juillet 2026 14:00 → Mer 1 juillet 2026 16:00** + 🏷 "Test E2E"
+  - **Mer 1 septembre 2026 14:00 → Mer 1 septembre 2026 16:00** + 🏷 "Test E2E"
 - Vérif DB optionnelle dans Supabase SQL Editor :
   ```sql
   SELECT id, starts_at, ends_at, reason
@@ -143,7 +143,7 @@
 ### Résultat attendu ✅
 - Modal se ferme, toast vert "Blocage enregistré ✓"
 - Nouvelle card apparaît :
-  - **Mer 15 juillet 2026 → Mer 15 juillet 2026** + badge jaune **"Toute la journée"** + 🏷 "Test all-day"
+  - **Mer 15 septembre 2026 → Mer 15 septembre 2026** + badge jaune **"Toute la journée"** + 🏷 "Test all-day"
 - En DB : `all_day = true`, `starts_at = 2026-07-15 00:00:00+01`, `ends_at = 2026-07-15 23:59:00+01`
 
 ### Résultat KO connu

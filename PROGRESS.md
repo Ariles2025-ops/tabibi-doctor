@@ -285,7 +285,7 @@ Session SQL séparée a enrichi la vue `public_doctors` de 15 → 32 colonnes (e
 - Migration des claim_requests historiques vers le nouveau flow
 
 ### Décisions de lancement confirmées (rappel)
-- Pas de claim self-service au launch (juillet 2026)
+- Pas de claim self-service au launch (septembre 2026)
 - 100 premiers médecins onboardés en personne (règle #1)
 - KPI hebdo : médecins actifs (≥1 RDV/semaine), pas inscrits
 - Aucune nouvelle feature pendant 6 mois post-launch

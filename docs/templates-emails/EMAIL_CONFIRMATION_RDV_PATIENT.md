@@ -17,7 +17,7 @@
 - `{{titre_medecin}}` : `Dr.`
 - `{{nom_medecin}}` : Nom complet du médecin
 - `{{specialite}}` : spécialité
-- `{{date_rdv}}` : `lundi 12 juillet 2026`
+- `{{date_rdv}}` : `lundi 12 septembre 2026`
 - `{{heure_rdv}}` : `14:30`
 - `{{adresse_cabinet}}` : adresse complète
 - `{{telephone_cabinet}}` : téléphone direct du cabinet

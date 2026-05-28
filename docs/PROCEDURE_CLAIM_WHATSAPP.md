@@ -7,7 +7,7 @@
 
 ## Vue d'ensemble
 
-Tabibi n'a pas de système self-service de revendication de fiche médecin au lancement (juillet 2026). Tous les claims passent par WhatsApp avec validation manuelle.
+Tabibi n'a pas de système self-service de revendication de fiche médecin au lancement (septembre 2026). Tous les claims passent par WhatsApp avec validation manuelle.
 
 Pourquoi : 0.07% des fiches scrapées ont un email exploitable. Le matching automatique est impossible.
 
