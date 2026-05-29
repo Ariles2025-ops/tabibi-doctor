@@ -46,4 +46,6 @@ rm -f "$WWW/scripts/build-mobile.sh" 2>/dev/null || true
 echo "✅ www/ prêt — $(find "$WWW" -name "*.html" | wc -l | tr -d ' ') pages HTML copiées"
 echo "   Taille totale : $(du -sh "$WWW" | cut -f1)"
 echo ""
-echo "Prochaine étape : npx cap sync"
+echo "🔄 Sync Capacitor (iOS + Android)..."
+npx cap sync
+echo "✅ Sync terminé"
