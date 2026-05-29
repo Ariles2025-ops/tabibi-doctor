@@ -387,8 +387,9 @@
 
         // Écouter le token
         return new Promise((resolve) => {
-          PushNotifications.addListener('registration', (token) => {
+          PushNotifications.addListener('registration', async (token) => {
             console.log('[Tabibi/Bridge] Push token:', token.value.substring(0, 20) + '...');
+            await this.saveDeviceToken(token.value); // ← UPSERT Supabase device_tokens
             resolve({ token: token.value, granted: true });
           });
           PushNotifications.addListener('registrationError', (err) => {
@@ -412,6 +413,47 @@
      * @param {Function} onReceived - callback(notification) quand app au premier plan
      * @param {Function} onAction - callback(notification) quand tap sur notif
      */
+    /**
+     * Sauvegarde le token FCM/APNs dans Supabase (table device_tokens).
+     * UPSERT sur (user_id, token) → jamais de doublon.
+     * Ne throw pas : un échec de save ne doit jamais bloquer l'app.
+     *
+     * @param {string} token - Token FCM (Android) ou APNs (iOS)
+     */
+    async saveDeviceToken(token) {
+      if (!token) return;
+      try {
+        const sb = window.tabibi && window.tabibi.supabase;
+        if (!sb) return;
+
+        const { data: sessionData } = await sb.auth.getSession();
+        const userId = sessionData &&
+                       sessionData.session &&
+                       sessionData.session.user &&
+                       sessionData.session.user.id;
+
+        if (!userId) {
+          console.log('[Tabibi/Bridge] saveDeviceToken: pas de session active, token ignoré');
+          return;
+        }
+
+        const platform = this.platform || 'android'; // 'android' | 'ios' | 'web'
+
+        const { error } = await sb.from('device_tokens').upsert(
+          { user_id: userId, token, platform, updated_at: new Date().toISOString() },
+          { onConflict: 'user_id,token' }
+        );
+
+        if (error) {
+          console.warn('[Tabibi/Bridge] saveDeviceToken error:', error.message);
+        } else {
+          console.log('[Tabibi/Bridge] Token FCM sauvegardé (' + platform + ')');
+        }
+      } catch (err) {
+        console.warn('[Tabibi/Bridge] saveDeviceToken exception:', err);
+      }
+    },
+
     async onPushNotification(onReceived, onAction) {
       if (!this.isNative) return;
       try {
