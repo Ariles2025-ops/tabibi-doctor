@@ -1,3 +1,5 @@
+-- OBSOLETE : approche REVOKE/GRANT sur doctor_profiles non retenue.
+-- Le fix réellement déployé est dans CRIT-4_step2_fix_VIEW.sql
 -- =====================================================================
 -- CRIT-4 — STEP 2 : FIX (REVOKE + GRANT column-level)
 -- =====================================================================
