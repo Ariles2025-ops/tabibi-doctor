@@ -54,6 +54,7 @@ _deploy_clean/
 coverage/
 test-results/
 playwright-report/
+tests/visual/*.png
 
 # --- PDFs generes en local ---
 test-prescriptions/
