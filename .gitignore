@@ -54,6 +54,7 @@ _deploy_clean/
 coverage/
 test-results/
 playwright-report/
+tests/visual/*.png
 
 # --- PDFs generes en local ---
 test-prescriptions/
@@ -65,6 +66,10 @@ test-prescriptions/
 *.bak*
 
 # --- Capacitor / Mobile ---
+# google-services.json contient l'api_key Firebase (clé serveur FCM).
+# Repo PUBLIC → ne jamais committer. À placer manuellement sur chaque
+# machine de build (voir docs/mobile/FIREBASE_SETUP.md).
+android/app/google-services.json
 node_modules/
 ios/App/Pods/
 ios/App/Podfile.lock

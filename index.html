@@ -694,7 +694,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- HERO -->
   <section class="hero-mobile">
     <div class="hz">
-      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">79 746 médecins certifiés en Algérie</span></div>
+      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin certifié + 79 746 indexés en Algérie</span></div>
       <h1 class="hero-title" id="hero-t">Trouvez votre médecin en ligne en Algérie</h1>
       <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Réservez en ligne 24h/24 auprès de médecins certifiés dans les 48 wilayas. Rapide, simple, sécurisé.</p>
       <div class="hero-search-wrap">
@@ -702,7 +702,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <input class="hero-search" type="search" id="name-search" data-i18n="s_ph" data-i18n-placeholder="ph_hero_search" placeholder="Dr. Benali, Cardiologie, Alger..." oninput="doFilter()" autocomplete="off">
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="hs-n" id="hero-doc-count">79 746</div><div class="hs-l" id="hs1" data-i18n="nav_doctors">Médecins</div></div>
+        <div class="hero-stat"><div class="hs-n" id="hero-doc-count">0</div><div class="hs-l" id="hs1" data-i18n="nav_doctors">Médecins</div></div>
         <div class="hero-stat"><div class="hs-n">48</div><div class="hs-l" id="hs2">Wilayas</div></div>
         <div class="hero-stat"><div class="hs-n">4.8 <i class='fa fa-star' style='color:#f59e0b;font-size:.7em'></i></div><div class="hs-l" id="hs4" data-i18n="hs4">Note moy.</div></div>
       </div>
@@ -773,7 +773,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <section class="section">
     <div style="padding:0 16px">
       <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r20);padding:28px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">79 746</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins certifiés</div></div>
+        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins certifiés</div></div>
         <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">48</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas couvertes</div></div>
       </div>
     </div>
@@ -2344,27 +2344,8 @@ function onLangChange(){
   };
   set('hero-t', heroFullTitle[lang] || heroFullTitle.fr);
 
-  // [Phase 16.5 rollback] Compteur hardcodé — single source of truth.
-  // Pas de fetch dynamique : affichage immédiat, pas de fenêtre "—" cold cache.
-  const TABIBI_DOC_TOTAL = 79746;
-  const localeMap = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
-  const formatted = TABIBI_DOC_TOTAL.toLocaleString(localeMap[lang] || 'fr-DZ');
-  const badgeText = {
-    fr: formatted + ' médecins certifiés en Algérie',
-    ar: formatted + ' طبيب معتمد في الجزائر',
-    en: formatted + ' certified doctors in Algeria'
-  };
-  const hb = document.getElementById('hbadge');
-  if (hb) hb.textContent = badgeText[lang] || badgeText.fr;
-  const hdc = document.getElementById('hero-doc-count'); if (hdc) hdc.textContent = formatted;
-  const sdc = document.getElementById('stats-doc-count'); if (sdc) sdc.textContent = formatted;
-  const fdc = document.getElementById('foot-doc-count'); if (fdc) fdc.textContent = formatted;
-  const footDescText = {
-    fr: 'La 1ère plateforme médicale algérienne. ' + formatted + ' médecins certifiés dans 48 wilayas. Réservez en ligne 24h/24.',
-    ar: 'أول منصة طبية جزائرية. ' + formatted + ' طبيب معتمد في 48 ولاية. احجز عبر الإنترنت 24/24.',
-    en: '1st Algerian medical platform. ' + formatted + ' certified doctors across 48 wilayas. Book online 24/7.'
-  };
-  set('foot-desc', footDescText[lang] || footDescText.fr);
+  // Compteur dynamique certifiés + indexés (fallback window._tabibiBadge, màj async au load)
+  _updateDocCounterUI();
 
   // Footer "Bientôt" badges
   const soonText = { fr: 'Bientôt', ar: 'قريبًا', en: 'Soon' };
@@ -2768,7 +2749,22 @@ document.addEventListener("DOMContentLoaded",()=>{
   // pour avoir une UI réactive immédiate.
   populateSelects(); renderSpecs(); renderChips();
   renderUserUI(); initTabBar("home");
-  // [Phase 16.5 rollback] Compteur hardcodé dans le HTML — pas de fetch.
+  // Fetch compteur dynamique certifiés + indexés — màj après fallback immédiat
+  (async function() {
+    try {
+      var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co';
+      var _key = _SB_KEY;
+      var _h = { apikey: _key, Authorization: 'Bearer ' + _key, Prefer: 'count=exact' };
+      var _res = await Promise.all([
+        fetch(_url + '/rest/v1/public_doctors?is_claimed=eq.true&select=id&limit=1', { headers: _h }),
+        fetch(_url + '/rest/v1/public_doctors?select=id&limit=1', { headers: _h })
+      ]);
+      if (!_res[0].ok || !_res[1].ok) return;
+      var _cert = parseInt((_res[0].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
+      var _idx  = parseInt((_res[1].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
+      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert, indexed: _idx }; _updateDocCounterUI(); }
+    } catch(e) { /* fallback window._tabibiBadge déjà affiché */ }
+  })();
 
   // [Phase 5.6 fix BUG #1 v2] Fetch async des DISTINCT specialty_fr +
   // wilaya_fr depuis la DB → re-populate les <select> avec les VRAIES valeurs.
@@ -2789,9 +2785,28 @@ document.addEventListener("DOMContentLoaded",()=>{
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
 
-// [Phase 16.5 rollback] _buildDoctorCountTexts() et fetchDoctorCount()
-// supprimées — le compteur est désormais hardcodé "79 746" dans le HTML
-// et géré statiquement par onLangChange (cf. plus haut).
+// Fallback last-known pour le compteur (affiché instantanément, remplacé par fetch async au load)
+window._tabibiBadge = { certified: 0, indexed: 79746 };
+function _updateDocCounterUI() {
+  var _lm = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
+  var _cert = window._tabibiBadge.certified;
+  var _idx  = window._tabibiBadge.indexed;
+  var _fc = _cert.toLocaleString(_lm[lang] || 'fr-DZ');
+  var _fi = _idx.toLocaleString(_lm[lang]  || 'fr-DZ');
+  var _hb = document.getElementById('hbadge');
+  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد + ' + _fi + ' مُفهرَس في الجزائر'
+                            : lang === 'en' ? _fc + ' certified + ' + _fi + ' indexed in Algeria'
+                            :                 _fc + ' médecins certifiés + ' + _fi + ' indexés en Algérie';
+  var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fc;
+  var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fc;
+  var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fc;
+  var _fdEl = document.getElementById('foot-desc');
+  if (_fdEl) _fdEl.textContent = lang === 'ar'
+    ? 'أول منصة طبية جزائرية. ' + _fc + ' طبيب معتمد + ' + _fi + ' مُفهرَس في 48 ولاية. احجز عبر الإنترنت 24/24.'
+    : lang === 'en'
+    ? '1st Algerian medical platform. ' + _fc + ' certified + ' + _fi + ' indexed doctors across 48 wilayas. Book online 24/7.'
+    : 'La 1ère plateforme médicale algérienne. ' + _fc + ' médecins certifiés + ' + _fi + ' indexés dans 48 wilayas. Réservez en ligne 24h/24.';
+}
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
 window.filterBySpec=filterBySpec; window.onLangChange=onLangChange;
 window.selectProfileSlot=selectProfileSlot; window.confirmFromProfile=confirmFromProfile;
@@ -2834,7 +2849,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0F7560,#0F7560);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">T</div>
       <div><div style="font-weight:800;font-size:18px;color:#0F7560">Tabibi <span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></div><div style="font-size:11px;color:#64748b;font-family:'Cairo',sans-serif">طبيبي</div></div>
     </div>
-    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">79 746</span> médecins certifiés dans 48 wilayas. Réservez en ligne 24h/24.</p>
+    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">0</span> médecin certifié + 79 746 indexés dans 48 wilayas. Réservez en ligne 24h/24.</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
       <div>
@@ -2916,6 +2931,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/capacitor-bridge.js" defer></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
 <!-- [Phase 5.2.3-fix] Helper formatage nom médecin (full_name + entity_type) -->

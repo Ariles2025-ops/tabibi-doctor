@@ -197,8 +197,8 @@
       return { valid: !!data?.success, error: data?.error };
     } catch (err) {
       console.error('[Turnstile] Verify error:', err);
-      // En cas d'erreur réseau, on permet quand même (pas bloquer l'utilisateur)
-      return { valid: true, error: 'Verification skipped: ' + err.message };
+      // [CRIT-5] fail CLOSED : une erreur de vérification = rejet (ne plus laisser passer).
+      return { valid: false, error: 'Verification failed: ' + err.message };
     }
   }
 
@@ -221,6 +221,53 @@
     return null;
   }
 
+  /**
+   * [CRIT-5] Récupère un token Turnstile FRAIS via un widget invisible (mode execute).
+   * Rendu une seule fois puis réutilisé via reset() → un token neuf par appel
+   * (les tokens Turnstile sont à usage unique).
+   * Retourne undefined si captcha désactivé / non configuré / erreur / timeout 8s.
+   * Côté serveur Supabase Auth, un token absent ou invalide = rejet (fail closed).
+   * @returns {Promise<string|undefined>}
+   */
+  let _execWidgetId = null;
+  let _execContainer = null;
+  let _execResolve = null;
+  function _execResolveOnce(token) {
+    if (_execResolve) { const r = _execResolve; _execResolve = null; r(token || undefined); }
+  }
+  async function getCaptchaToken() {
+    if (!TURNSTILE_CONFIG.enabled) return undefined;
+    if (!TURNSTILE_CONFIG.siteKey) readSiteKey();
+    if (!TURNSTILE_CONFIG.siteKey) return undefined;
+    try {
+      await loadTurnstileScript();
+      if (!_execContainer) {
+        _execContainer = document.createElement('div');
+        _execContainer.style.display = 'none';
+        document.body.appendChild(_execContainer);
+      }
+      return await new Promise((resolve) => {
+        _execResolve = resolve;
+        if (_execWidgetId === null) {
+          _execWidgetId = window.turnstile.render(_execContainer, {
+            sitekey: TURNSTILE_CONFIG.siteKey,
+            size: 'invisible',
+            callback: _execResolveOnce,
+            'error-callback': () => _execResolveOnce(undefined),
+            'expired-callback': () => _execResolveOnce(undefined)
+          });
+        } else {
+          window.turnstile.reset(_execWidgetId);
+        }
+        window.turnstile.execute(_execWidgetId);
+        setTimeout(() => _execResolveOnce(undefined), 8000);
+      });
+    } catch (e) {
+      console.warn('[Turnstile] getCaptchaToken error:', e);
+      return undefined;
+    }
+  }
+
   // Initialiser au chargement
   readSiteKey();
 
@@ -230,6 +277,7 @@
     verifyToken,
     resetWidget,
     getResponse,
+    getCaptchaToken,
     isEnabled: () => TURNSTILE_CONFIG.enabled && !!TURNSTILE_CONFIG.siteKey,
     config: TURNSTILE_CONFIG
   };
