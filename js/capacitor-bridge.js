@@ -504,8 +504,8 @@
      * @returns {boolean}
      */
     shouldShowTurnstile() {
-      if (this.isNative) return false;
-      // En web : Turnstile normal
+      // [CRIT-5] plus de bypass natif : le captcha est imposé server-side par Supabase Auth.
+      // Turnstile (mode invisible) fonctionne dans le WebView Capacitor.
       return true;
     },
 

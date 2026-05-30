@@ -9,15 +9,19 @@
 
   window.tabibi.auth = {
     async signUp(email, password, role = 'patient') {
+      // [CRIT-5] token captcha frais (Supabase Auth le valide server-side)
+      const captchaToken = window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : undefined;
       const { data, error } = await sb.auth.signUp({
         email, password,
-        options: { data: { role } },
+        options: { data: { role }, captchaToken },
       });
       if (error) throw error;
       return data;
     },
     async signIn(email, password) {
-      const { data, error } = await sb.auth.signInWithPassword({ email, password });
+      // [CRIT-5] token captcha frais (Supabase Auth le valide server-side)
+      const captchaToken = window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : undefined;
+      const { data, error } = await sb.auth.signInWithPassword({ email, password, options: { captchaToken } });
       if (error) throw error;
       return data;
     },
