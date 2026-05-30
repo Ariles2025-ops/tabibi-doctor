@@ -19,10 +19,6 @@
     async signIn(email, password) {
       const { data, error } = await sb.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // Enregistrer le token push si app native (fire-and-forget, ne bloque pas le login)
-      if (window.tabibi && window.tabibi.bridge && window.tabibi.bridge.isNative) {
-        window.tabibi.bridge.initPushNotifications().catch(() => {});
-      }
       return data;
     },
     async signOut() {

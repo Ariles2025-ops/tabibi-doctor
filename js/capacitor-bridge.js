@@ -36,6 +36,18 @@
     typeof window.Capacitor !== 'undefined';
 
   /**
+   * Récupère un plugin Capacitor exposé nativement sur window.Capacitor.Plugins.
+   * App non-bundlée → import ESM bare-specifier ('@capacitor/x') NON résolvable
+   * par le WebView. On lit donc le registre natif des plugins.
+   * Retourne null si absent (web, ou plugin non installé).
+   */
+  function _plug(name) {
+    return (isCapacitorAvailable &&
+            window.Capacitor.Plugins &&
+            window.Capacitor.Plugins[name]) || null;
+  }
+
+  /**
    * Expose l'API bridge globalement.
    * window.tabibi.bridge est disponible sur toutes les pages qui chargent ce script.
    */
@@ -81,16 +93,19 @@
       try {
         if (opts.inApp) {
           // Ouvre dans un browser intégré à l'app (garde le contexte)
-          const { Browser } = await import('@capacitor/browser');
+          const Browser = _plug('Browser');
+          if (!Browser) { console.warn('[Tabibi/Bridge] Browser plugin indisponible'); window.open(url, '_blank', 'noopener,noreferrer'); return; }
           await Browser.open({ url, presentationStyle: 'popover' });
         } else {
           // Ouvre dans l'app système (WhatsApp, téléphone, etc.)
-          const { AppLauncher } = await import('@capacitor/app-launcher');
+          const AppLauncher = _plug('AppLauncher');
+          if (!AppLauncher) { console.warn('[Tabibi/Bridge] AppLauncher plugin indisponible'); window.open(url, '_blank', 'noopener,noreferrer'); return; }
           const { completed } = await AppLauncher.openUrl({ url });
           if (!completed) {
             // Fallback si l'app cible n'est pas installée
-            const { Browser } = await import('@capacitor/browser');
-            await Browser.open({ url });
+            const Browser = _plug('Browser');
+            if (Browser) { await Browser.open({ url }); }
+            else { window.open(url, '_blank', 'noopener,noreferrer'); }
           }
         }
       } catch (err) {
@@ -183,7 +198,8 @@
       if (!this.isNative) return;
 
       try {
-        const { App } = await import('@capacitor/app');
+        const App = _plug('App');
+        if (!App) { console.warn('[Tabibi/Bridge] App plugin indisponible (deep links)'); return; }
 
         // Deep link reçu quand l'app est déjà ouverte
         App.addListener('appUrlOpen', (event) => {
@@ -248,7 +264,8 @@
       async get(key) {
         if (isCapacitorAvailable && window.Capacitor.isNativePlatform()) {
           try {
-            const { Preferences } = await import('@capacitor/preferences');
+            const Preferences = _plug('Preferences');
+            if (!Preferences) return localStorage.getItem(key);
             const { value } = await Preferences.get({ key });
             return value;
           } catch (err) {
@@ -261,7 +278,8 @@
       async set(key, value) {
         if (isCapacitorAvailable && window.Capacitor.isNativePlatform()) {
           try {
-            const { Preferences } = await import('@capacitor/preferences');
+            const Preferences = _plug('Preferences');
+            if (!Preferences) { localStorage.setItem(key, value); return; }
             await Preferences.set({ key, value: String(value) });
             return;
           } catch (err) { /* fallback */ }
@@ -272,7 +290,8 @@
       async remove(key) {
         if (isCapacitorAvailable && window.Capacitor.isNativePlatform()) {
           try {
-            const { Preferences } = await import('@capacitor/preferences');
+            const Preferences = _plug('Preferences');
+            if (!Preferences) { localStorage.removeItem(key); return; }
             await Preferences.remove({ key });
             return;
           } catch (err) { /* fallback */ }
@@ -315,12 +334,13 @@
       }
 
       try {
-        const { Camera, CameraSource, CameraResultType } = await import('@capacitor/camera');
+        const Camera = _plug('Camera');
+        if (!Camera) { console.warn('[Tabibi/Bridge] Camera plugin indisponible'); return null; }
         const image = await Camera.getPhoto({
           quality: 85,
           allowEditing: false,
-          resultType: CameraResultType.DataUrl,
-          source: source === 'photo' ? CameraSource.Camera : CameraSource.Photos,
+          resultType: 'dataUrl',                            // CameraResultType.DataUrl
+          source: source === 'photo' ? 'CAMERA' : 'PHOTOS', // CameraSource.Camera / .Photos
         });
         return { dataUrl: image.dataUrl, mimeType: 'image/' + image.format };
       } catch (err) {
@@ -343,7 +363,8 @@
       if (!this.isAndroid) return;
 
       try {
-        const { App } = await import('@capacitor/app');
+        const App = _plug('App');
+        if (!App) { console.warn('[Tabibi/Bridge] App plugin indisponible (back button)'); return; }
         App.addListener('backButton', ({ canGoBack }) => {
           if (canGoBack) {
             window.history.back();
@@ -372,7 +393,8 @@
       }
 
       try {
-        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const PushNotifications = _plug('PushNotifications');
+        if (!PushNotifications) { console.warn('[Tabibi/Bridge] PushNotifications plugin indisponible'); return { token: null, granted: false }; }
 
         // Demander la permission
         const { receive: permStatus } = await PushNotifications.requestPermissions();
@@ -457,7 +479,8 @@
     async onPushNotification(onReceived, onAction) {
       if (!this.isNative) return;
       try {
-        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const PushNotifications = _plug('PushNotifications');
+        if (!PushNotifications) { console.warn('[Tabibi/Bridge] PushNotifications plugin indisponible'); return; }
         if (onReceived) {
           PushNotifications.addListener('pushNotificationReceived', onReceived);
         }
@@ -540,9 +563,10 @@
       opts = opts || {};
 
       try {
-        const { StatusBar, Style } = await import('@capacitor/status-bar');
+        const StatusBar = _plug('StatusBar');
+        if (!StatusBar) { console.warn('[Tabibi/Bridge] StatusBar plugin indisponible'); return; }
         await StatusBar.setStyle({
-          style: opts.style === 'LIGHT' ? Style.Light : Style.Dark,
+          style: opts.style === 'LIGHT' ? 'LIGHT' : 'DARK', // Style.Light / .Dark
         });
         if (this.isAndroid) {
           await StatusBar.setBackgroundColor({

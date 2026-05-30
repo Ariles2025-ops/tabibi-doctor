@@ -1113,6 +1113,7 @@ async function deleteUnavail(id) {
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/capacitor-bridge.js" defer></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
 <script src="js/tabibi-claim.js"></script>
@@ -1122,4 +1123,24 @@ async function deleteUnavail(id) {
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
 <script src="js/tabibi-sentry.js"></script>
+<!-- Push : déclenché au chargement du dashboard (contexte stable post-login, natif only) -->
+<script>
+(function () {
+  document.addEventListener('DOMContentLoaded', async function () {
+    try {
+      if (window._tabibiPushInitDone) return;          // idempotent (1x par page-load)
+      var b = window.tabibi && window.tabibi.bridge;
+      if (!b || !b.isNative) return;                    // natif uniquement (no-op web)
+      var sb = window.tabibi && window.tabibi.supabase;
+      if (!sb) return;
+      var s = await sb.auth.getSession();
+      if (!s || !s.data || !s.data.session) return;     // session active requise
+      window._tabibiPushInitDone = true;
+      await b.initPushNotifications();                  // permission -> token -> saveDeviceToken (UPSERT)
+    } catch (e) {
+      console.warn('[Tabibi/Dashboard] push init skipped:', e);
+    }
+  });
+})();
+</script>
 </body></html>
