@@ -276,18 +276,17 @@
 <script>
 function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText=`background:${col[t]||col.info};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 
-function loadProfile(){
+async function loadProfile(){
+  // [FIX session] Garde réseau-aware centralisée (remplace le check cache-first + retry bridge).
+  // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si session
+  // morte (refresh token invalide) ; mode dégradé offline si token encore valide localement.
+  const authed = await window.tabibi.auth.requireAuth('patient');
+  if(!authed) return; // null → requireAuth a déjà déclenché le redirect
+  // Objet d'affichage depuis le cache tabibi_user (rafraîchi/préservé par requireAuth) : il contient
+  // les champs profil/médicaux (birthDate, gender, bloodType, allergies, ville...) absents de `users`.
   let u=null;
   try{u=JSON.parse(localStorage.getItem("tabibi_user")||"null");}catch(e){}
-  // Si pas d'utilisateur ou pas un patient, attendre 1s pour laisser le bridge Supabase finir
-  if(!u||u.role!=="patient"){
-    if(!window._tabibiProfileRetried){
-      window._tabibiProfileRetried=true;
-      setTimeout(loadProfile,800);
-      return;
-    }
-    location.href="login.html";return;
-  }
+  if(!u) u=authed; // fallback 1ère connexion (cache pas encore enrichi)
   // Avatar : photo si disponible, sinon initiales
   if (window.TabibiAvatar) {
     TabibiAvatar.init({

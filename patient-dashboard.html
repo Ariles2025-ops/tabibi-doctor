@@ -936,46 +936,24 @@ const FAQ=[
 function openHelp(){closeMenus();const html=FAQ.map(([q,a],i)=>`<details style="border-bottom:1px solid var(--border);padding:12px 0"><summary style="cursor:pointer;font-weight:600;font-size:13px">${q}</summary><p style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5">${a}</p></details>`).join("");document.getElementById("faq-list").innerHTML=html;document.getElementById("help-modal").classList.remove("hidden");document.body.style.overflow="hidden";}
 
 document.addEventListener("DOMContentLoaded", async ()=>{
-  // ─── v10.6 : Attendre que le bridge Supabase ait synchronisé tabibi_user ───
-  // Le bridge écoute SIGNED_IN et écrit dans localStorage, mais le DOM peut
-  // être prêt AVANT que le bridge ait fini sa première sync.
-  async function waitForUser(maxMs){
-    const t0 = Date.now();
-    while (Date.now() - t0 < maxMs){
-      let u = null;
-      try { u = JSON.parse(localStorage.getItem("tabibi_user")||"null"); } catch(e){}
-      if (u && (u.role || u.email)) return u;
-      // Si Supabase a une session mais bridge pas fini, forcer sync
-      if (window.tabibi && window.tabibi.auth) {
-        try {
-          const session = await window.tabibi.auth.getSession();
-          if (session) {
-            // Session existe, attendre le bridge ou forcer maj
-            const su = await window.tabibi.auth.getUser();
-            if (su) {
-              const fn = su.first_name || '';
-              const ln = su.last_name || '';
-              const name = (fn + ' ' + ln).trim() || (su.email||'').split('@')[0];
-              const parts = name.split(/\s+/);
-              const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
-              const role = (su.role === 'doctor' || su.role === 'medecin') ? 'medecin' : (su.role === 'admin' ? 'admin' : 'patient');
-              const userObj = { id: su.id, email: su.email, role, name, initials, firstName: fn, lastName: ln, phone: su.phone||'' };
-              localStorage.setItem('tabibi_user', JSON.stringify(userObj));
-              return userObj;
-            }
-          } else {
-            // Pas de session Supabase + pas de tabibi_user = pas connecté
-            return null;
-          }
-        } catch(e){}
-      }
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return null;
-  }
+  // [FIX session] Garde centralisée réseau-aware (remplace l'ancien waitForUser cache-first).
+  // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si la
+  // session est morte (refresh token invalide) ; mode dégradé offline si token encore valide.
+  const authed = await window.tabibi.auth.requireAuth('patient');
+  if (!authed) return; // null → requireAuth a déjà déclenché le redirect
 
-  const u = await waitForUser(3000);
-  if (!u || u.role !== "patient") { location.href = "login.html"; return; }
+  // Normaliser en objet d'affichage (compat rendu : u.name/initials/email/photo_url).
+  // authed = ligne `users` (session valide) OU tabibi_user en cache (mode dégradé réseau).
+  const u = (function(a){
+    if (a && a.initials && a.name) return a;            // déjà au format cache
+    const fn = a.first_name || a.firstName || '';
+    const ln = a.last_name  || a.lastName  || '';
+    const name = (fn + ' ' + ln).trim() || (a.email||'').split('@')[0];
+    const parts = name.split(/\s+/);
+    const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+    return { id:a.id, email:a.email, role:'patient', name, initials,
+             firstName:fn, lastName:ln, phone:a.phone||'', photo_url:a.photo_url||'' };
+  })(authed);
 
   document.getElementById("user-init").textContent = u.initials || (u.email||'?')[0].toUpperCase();
   // Si l'utilisateur a une photo de profil, l'afficher dans le bouton header (par-dessus les initiales)
