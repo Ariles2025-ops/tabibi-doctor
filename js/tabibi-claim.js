@@ -126,40 +126,14 @@
 
     var info = await getCurrentUserInfo();
 
-    // Cas A : non connecté
-    // Vérifie si l'email de la fiche médecin correspond à un compte médecin existant.
-    // → si oui  : stocker le legacy_id en attente + redirect login.html
-    // → si non  : redirect signup.html?role=medecin&claim_legacy_id=N
-    // Si la query échoue (RLS / réseau) : fallback signup (comportement original).
+    // Cas A : non connecté → toujours redirigé vers signup médecin.
+    // [CRIT-1] L'ancienne découverte d'email (read anon doctor_profiles.email + check users)
+    // est SUPPRIMÉE : (1) elle exposait la PII (fuite phone/email/address des fiches),
+    // (2) elle était déjà non-fonctionnelle sous RLS (anon voit 0 ligne dans users → branche
+    // login jamais prise). L'auto-claim post-signup (RPC claim_my_doctor_profile, authentifié)
+    // prend le relais une fois le compte créé.
     if (!info.isAuth) {
-      var _signupUrl = 'signup.html?role=medecin&claim_legacy_id=' + encodeURIComponent(n);
-      try {
-        var _sb2 = _sb();
-        if (_sb2) {
-          // 1. Email de la fiche dans doctor_profiles (lecture directe, lecture seule)
-          var _dpRes = await _sb2.from('doctor_profiles')
-            .select('email')
-            .eq('legacy_id', n)
-            .maybeSingle();
-          var _dpEmail = (_dpRes && !_dpRes.error && _dpRes.data && _dpRes.data.email) || null;
-          if (_dpEmail) {
-            // 2. Compte medecin existant pour cet email ?
-            var _uRes = await _sb2.from('users')
-              .select('id', { count: 'exact', head: true })
-              .eq('email', _dpEmail)
-              .eq('role', 'medecin');
-            if (_uRes && !_uRes.error && _uRes.count > 0) {
-              // Compte médecin existant : stocker pending, rediriger login
-              try { localStorage.setItem(STORAGE_KEY, String(n)); } catch (e) {}
-              global.location.href = 'login.html';
-              return;
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('[claim] account-check failed, fallback to signup', e);
-      }
-      global.location.href = _signupUrl;
+      global.location.href = 'signup.html?role=medecin&claim_legacy_id=' + encodeURIComponent(n);
       return;
     }
 
