@@ -710,42 +710,28 @@ function renderNotifs(){
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
-  // ─── v10.6 : Attendre que le bridge synchronise tabibi_user ───
-  async function waitForUser(maxMs){
-    const t0 = Date.now();
-    while (Date.now() - t0 < maxMs){
-      let u = null;
-      try { u = JSON.parse(localStorage.getItem("tabibi_user")||"null"); } catch(e){}
-      if (u && (u.role === 'medecin' || u.role === 'doctor')) return u;
-      if (window.tabibi && window.tabibi.auth) {
-        try {
-          const session = await window.tabibi.auth.getSession();
-          if (session) {
-            const su = await window.tabibi.auth.getUser();
-            if (su) {
-              const fn = su.first_name || '';
-              const ln = su.last_name || '';
-              const name = (fn + ' ' + ln).trim() || (su.email||'').split('@')[0];
-              const parts = name.split(/\s+/);
-              const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
-              const role = (su.role === 'doctor' || su.role === 'medecin') ? 'medecin' : (su.role === 'admin' ? 'admin' : 'patient');
-              const userObj = { id: su.id, email: su.email, role, name, initials, firstName: fn, lastName: ln, specialty: su.specialty_fr||'', ville: su.wilaya_fr||'', phone: su.phone||'' };
-              localStorage.setItem('tabibi_user', JSON.stringify(userObj));
-              if (role === 'medecin') return userObj;
-            }
-          } else { return null; }
-        } catch(e){}
-      }
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return null;
-  }
+  // [FIX session] Garde centralisée réseau-aware (remplace l'ancien waitForUser cache-first).
+  // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si la
+  // session est morte (refresh token invalide) ; mode dégradé offline si le token est encore
+  // valide localement. Plus de dashboard fantôme rendu depuis un cache périmé.
+  const authed = await window.tabibi.auth.requireAuth('medecin');
+  if (!authed) return; // null → requireAuth a déjà déclenché le redirect
 
-  const u = await waitForUser(3000);
-  if (!u || u.role !== "medecin") {
-    location.href = "login.html";
-    return;
-  }
+  // Normaliser en objet d'affichage (compat rendu existant : u.name/initials/specialty/ville/photo_url).
+  // authed = ligne `users` (session valide) OU tabibi_user en cache (mode dégradé réseau).
+  const u = (function(a){
+    if (a && a.initials && a.name) return a;            // déjà au format cache
+    const fn = a.first_name || a.firstName || '';
+    const ln = a.last_name  || a.lastName  || '';
+    const name = (fn + ' ' + ln).trim() || (a.email||'').split('@')[0];
+    const parts = name.split(/\s+/);
+    const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+    return { id:a.id, email:a.email, role:'medecin', name, initials,
+             firstName:fn, lastName:ln,
+             specialty:a.specialty_fr||a.specialty||'',
+             ville:a.wilaya_fr||a.ville||'',
+             phone:a.phone||'', photo_url:a.photo_url||'' };
+  })(authed);
 
   // [Phase 16.5] Consommer claim en attente (set par handleClaimBanner Cas A
   // ou par autoClaim post-signup quand confirm_email=ON bloque la session).

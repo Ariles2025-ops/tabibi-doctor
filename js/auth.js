@@ -38,6 +38,12 @@
       const { data } = await sb.auth.getSession();
       return data.session;
     },
+    // [FIX session] Variante qui PRÉSERVE l'error du SDK.
+    // getSession() reste inchangé (backward-compat : api.js, reviews, bridge, pages).
+    async getSessionResult() {
+      const { data, error } = await sb.auth.getSession();
+      return { session: (data && data.session) || null, error: error || null };
+    },
     async getUser() {
       const session = await this.getSession();
       if (!session) return null;
@@ -54,14 +60,67 @@
       const target = cfg.REDIRECTS[role] || cfg.REDIRECTS.patient;
       window.location.href = target;
     },
+    // [FIX session] Garde réseau-aware : valide la session AVANT le cache,
+    // purge sur rejet serveur, tolère le réseau coupé (mode dégradé).
     async requireAuth(allowedRoles = null) {
-      const user = await this.getUser();
-      if (!user) { window.location.href = cfg.REDIRECTS.notLoggedIn; return null; }
-      if (allowedRoles && !allowedRoles.includes(user.role)) {
-        window.location.href = cfg.REDIRECTS[user.role] || cfg.REDIRECTS.patient;
-        return null;
+      const red = (cfg && cfg.REDIRECTS) || {};
+      const loginUrl = red.notLoggedIn || 'login.html';
+      const normRole = (r) => { r = (r||'patient').toLowerCase(); return (r==='doctor'||r==='médecin')?'medecin':r; };
+      const roleAllowed = (role) => {
+        if (!allowedRoles) return true;
+        const list = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+        return list.map(normRole).indexOf(normRole(role)) !== -1;
+      };
+      const cachedUser = () => { try { return JSON.parse(localStorage.getItem('tabibi_user')||'null'); } catch(e){ return null; } };
+      const purgeAndLogin = () => {
+        try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch(e){}
+        window.location.href = loginUrl; return null;
+      };
+      // (e) classification fine, pas de catch générique
+      const isAuthRejection = (err) => {
+        if (!err) return false;
+        if (err.name === 'AuthApiError') return true;
+        const s = (typeof err.status === 'number') ? err.status : null;
+        return s === 400 || s === 401 || s === 403;
+      };
+      const isNetworkError = (err) => {
+        if (!err) return false;
+        if (err.name === 'AuthRetryableFetchError' || err.name === 'TypeError' || err.name === 'FetchError') return true;
+        const s = (typeof err.status === 'number') ? err.status : null;
+        return s === null || s === 0; // pas de réponse serveur = réseau
+      };
+      const gateRole = (user) => {
+        if (roleAllowed(user.role)) return user;
+        const r = normRole(user.role);
+        window.location.href = red[r] || red.patient || loginUrl; return null;
+      };
+
+      // (a) session AVANT le cache, en gardant l'error
+      const { session, error } = await this.getSessionResult();
+
+      // (c) session nulle + rejet serveur (refresh token invalide) → purge + login
+      if (!session && isAuthRejection(error)) return purgeAndLogin();
+
+      // (d) session nulle + erreur réseau/retryable → mode dégradé : cache si présent
+      if (!session && isNetworkError(error)) {
+        const cu = cachedUser();
+        return (cu && roleAllowed(cu.role)) ? cu : purgeAndLogin();
       }
-      return user;
+
+      // session nulle sans erreur (jamais connecté) → login
+      if (!session) return purgeAndLogin();
+
+      // (b) session présente → profil frais + rafraîchit le cache tabibi_user
+      const user = await this.getUser();
+      if (!user) { const cu = cachedUser(); return (cu && roleAllowed(cu.role)) ? cu : purgeAndLogin(); }
+      try {
+        const cu = cachedUser() || {};
+        cu.id = user.id; cu.email = user.email; cu.role = normRole(user.role);
+        localStorage.setItem('tabibi_user', JSON.stringify(cu));
+      } catch(e){}
+
+      // (3) rôle attendu
+      return gateRole(user);
     },
   };
   /* [FIX-PROD-2026-05-19] log d'init retiré */
