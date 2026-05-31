@@ -87,6 +87,11 @@
       try { existing = JSON.parse(localStorage.getItem('tabibi_user') || '{}') || {}; } catch (e) {}
 
       const u = user || {};
+      // [SECU] Changement de compte : ne pas hériter de l'identité de l'utilisateur précédent.
+      // Sur id différent, on repart d'un cache vide (sinon name/initials/ville/birthDate du
+      // compte précédent persistent → fuite cross-compte de PII sur app médicale).
+      const newId = u.id || session.user.id;
+      if (existing.id && existing.id !== newId) existing = {};
       const role = normalizeRole(u.role || existing.role || 'patient');
 
       // Construire un nom d'affichage

@@ -114,9 +114,19 @@
       const user = await this.getUser();
       if (!user) { const cu = cachedUser(); return (cu && roleAllowed(cu.role)) ? cu : purgeAndLogin(); }
       try {
-        const cu = cachedUser() || {};
-        cu.id = user.id; cu.email = user.email; cu.role = normRole(user.role);
-        localStorage.setItem('tabibi_user', JSON.stringify(cu));
+        const cu = cachedUser();
+        let next;
+        if (cu && cu.id === user.id) {
+          // même compte → merge : on préserve les champs d'affichage déjà chargés (identité)
+          next = cu;
+          next.email = user.email;
+          next.role  = normRole(user.role);
+        } else {
+          // compte différent OU cache absent → cache NEUF : ne reporte AUCUN champ d'un autre
+          // utilisateur (sécurité : pas de fuite cross-compte de PII sur app médicale).
+          next = { id: user.id, email: user.email, role: normRole(user.role) };
+        }
+        localStorage.setItem('tabibi_user', JSON.stringify(next));
       } catch(e){}
 
       // (3) rôle attendu
