@@ -484,38 +484,18 @@ async function openAud(docId,docName){
 }
 
 // ─── Auth guard (same pattern as admin-dashboard.html) ────────
-async function waitForUser(ms){
-  const t0=Date.now();
-  while(Date.now()-t0<ms){
-    let u=null;
-    try{u=JSON.parse(localStorage.getItem('tabibi_user')||'null');}catch(e){}
-    if(u&&u.role)return u;
-    if(window.tabibi&&window.tabibi.auth){
-      try{
-        const sess=await window.tabibi.auth.getSession();
-        if(sess){
-          const su=await window.tabibi.auth.getUser();
-          if(su){
-            const fn=su.first_name||'',ln=su.last_name||'';
-            const name=(fn+' '+ln).trim()||(su.email||'').split('@')[0];
-            const parts=name.split(/\s+/);
-            const init=((parts[0]||'?')[0]+(parts[1]?parts[1][0]:'')).toUpperCase();
-            const role=(su.role==='doctor'||su.role==='medecin')?'medecin':(su.role==='admin'?'admin':'patient');
-            const obj={id:su.id,email:su.email,role,name,initials:init};
-            localStorage.setItem('tabibi_user',JSON.stringify(obj));
-            return obj;
-          }
-        }else{return null;}
-      }catch(e){}
-    }
-    await new Promise(r=>setTimeout(r,100));
-  }
-  return null;
-}
-
 document.addEventListener('DOMContentLoaded',async()=>{
-  const u=await waitForUser(3000);
-  if(!u||u.role!=='admin'){location.href='login.html';return;}
+  // [FIX session] Garde centralisée réseau-aware (remplace waitForUser cache-first).
+  const authed=await window.tabibi.auth.requireAuth('admin');
+  if(!authed) return; // null → requireAuth a déjà géré le redirect
+  const u=(function(a){
+    if(a&&a.initials)return a;
+    const fn=a.first_name||a.firstName||'',ln=a.last_name||a.lastName||'';
+    const name=(fn+' '+ln).trim()||(a.email||'').split('@')[0];
+    const parts=name.split(/\s+/);
+    const initials=((parts[0]||'?')[0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+    return Object.assign({},a,{role:'admin',name,initials});
+  })(authed);
 
   try{
     if(window.tabibi&&window.tabibi.auth){

@@ -511,42 +511,17 @@ function renderPay(){
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // ─── v10.6 : Attendre que le bridge synchronise tabibi_user ───
-  async function waitForUser(maxMs){
-    const t0 = Date.now();
-    while (Date.now() - t0 < maxMs){
-      let u = null;
-      try { u = JSON.parse(localStorage.getItem("tabibi_user")||"null"); } catch(e){}
-      if (u && u.role) return u;
-      if (window.tabibi && window.tabibi.auth) {
-        try {
-          const session = await window.tabibi.auth.getSession();
-          if (session) {
-            const su = await window.tabibi.auth.getUser();
-            if (su) {
-              const fn = su.first_name || '';
-              const ln = su.last_name || '';
-              const name = (fn + ' ' + ln).trim() || (su.email||'').split('@')[0];
-              const parts = name.split(/\s+/);
-              const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
-              const role = (su.role === 'doctor' || su.role === 'medecin') ? 'medecin' : (su.role === 'admin' ? 'admin' : 'patient');
-              const userObj = { id: su.id, email: su.email, role, name, initials, firstName: fn, lastName: ln };
-              localStorage.setItem('tabibi_user', JSON.stringify(userObj));
-              return userObj;
-            }
-          } else { return null; }
-        } catch(e){}
-      }
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return null;
-  }
-
-  const u = await waitForUser(3000);
-  if (!u || u.role !== "admin") {
-    location.href = "login.html";
-    return;
-  }
+  // [FIX session] Garde centralisée réseau-aware (remplace waitForUser cache-first).
+  const authed = await window.tabibi.auth.requireAuth('admin');
+  if (!authed) return; // null → requireAuth a déjà géré le redirect
+  const u = (function(a){
+    if (a && a.initials) return a;                       // déjà au format cache
+    const fn=a.first_name||a.firstName||'', ln=a.last_name||a.lastName||'';
+    const name=(fn+' '+ln).trim()||(a.email||'').split('@')[0];
+    const parts=name.split(/\s+/);
+    const initials=((parts[0]||'?')[0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+    return Object.assign({}, a, { role:'admin', name, initials });
+  })(authed);
 
   // Check Supabase serveur (sécurité)
   try {

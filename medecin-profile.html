@@ -579,16 +579,15 @@ function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (e
 function rmDiploma(i){if(!confirm("Retirer ?"))return;const d=getDiplomas();d.splice(i,1);setDiplomas(d);renderDiplomas();}
 
 async function loadProfile(){
+  // [FIX session] Garde réseau-aware centralisée (remplace le check cache-first + retry bridge).
+  // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si session
+  // morte ; mode dégradé offline si token encore valide. Le profil riche reste chargé via la RPC
+  // get_my_doctor_profile ci-dessous (DB-sourced, par médecin).
+  const authed=await window.tabibi.auth.requireAuth('medecin');
+  if(!authed) return; // null → requireAuth a déjà déclenché le redirect
   let u=null;
   try{u=JSON.parse(localStorage.getItem("tabibi_user")||"null");}catch(e){}
-  if(!u||u.role!=="medecin"){
-    if(!window._tabibiProfileRetried){
-      window._tabibiProfileRetried=true;
-      setTimeout(loadProfile,800);
-      return;
-    }
-    location.href="login.html";return;
-  }
+  if(!u) u=authed; // fallback 1ère connexion (cache pas encore enrichi)
 
   // [Phase 4.B.1] Si session Supabase active, on PRIVILÉGIE les vraies données
   // depuis doctor_profiles via get_my_doctor_profile() (RPC SECURITY DEFINER).
