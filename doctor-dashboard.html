@@ -49,7 +49,7 @@
     </div>
   </div>
   <button class="btn btn-icon btn-icon-sm" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
-    <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
+    <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:none;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite"></span>
   </button>
   <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#2E8B57,#166534);color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(46,139,87,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">DR</span></button>
   <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
@@ -289,7 +289,14 @@ async function logout(){
   toastM(tabibiT('toast_logout_success',"Déconnexion réussie"),"success");
   setTimeout(()=>location.href="index.html",500);
 }
-function toggleNotif(){document.getElementById("notif-drop").classList.toggle("hidden");document.getElementById("user-drop").classList.add("hidden");renderNotifs();}
+async function toggleNotif(){
+  var drop=document.getElementById("notif-drop");
+  drop.classList.toggle("hidden");
+  document.getElementById("user-drop").classList.add("hidden");
+  if(drop.classList.contains("hidden")) return;   // fermeture → ne rien refetch
+  await renderNotifs();        // affiche la liste + badge = non-lus
+  await markNotifsRead();      // marque tout lu côté serveur + badge à 0
+}
 function toggleMenu(){document.getElementById("user-drop").classList.toggle("hidden");document.getElementById("notif-drop").classList.add("hidden");}
 document.addEventListener("click",e=>{if(!e.target.closest(".dropdown-menu") && !e.target.closest("#user-pill") && !e.target.closest("button[title='Notifications']")){document.getElementById("notif-drop")?.classList.add("hidden");document.getElementById("user-drop")?.classList.add("hidden");}});
 
@@ -698,15 +705,75 @@ function renderProfile(){
   document.getElementById("prof-spec").textContent=(u.specialty||"Médecin")+" · "+(u.ville||"Alger");
 }
 
-function renderNotifs(){
-  const list=[
-    {ic:"fa-calendar-plus",col:"var(--blue)",t:"Nouveau RDV pris",m:"Mohamed Tabet — demain à 09:30",time:"il y a 30min"},
-    {ic:"fa-bell",col:"#f59e0b",t:"Rappel : RDV dans 1h",m:"Karim Benali à 09:00",time:"il y a 2h"},
-    {ic:"fa-money-bill",col:"var(--green)",t:"Paiement reçu",m:"+2 500 DA — Karim B.",time:"hier"}
-  ];
-  document.getElementById("med-notif-list").innerHTML=list.map(n=>`<div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid var(--bg2)">
-    <div style="width:32px;height:32px;border-radius:8px;background:${n.col}22;color:${n.col};display:flex;align-items:center;justify-content:center"><i class="fa ${n.ic}"></i></div>
-    <div style="flex:1"><div style="font-weight:700;font-size:12px">${n.t}</div><div style="font-size:11px;color:var(--text3)">${n.m}</div><div style="font-size:10px;color:var(--text4);margin-top:2px">${n.time}</div></div></div>`).join("");
+// ─── Notifications (cloche médecin) ── branché sur public.notifications ──
+// Icône + couleur par type (aligné sur notifications.html TYPE_META).
+var _NOTIF_META = {
+  rdv_new:       { ic:"fa-calendar-plus",      col:"var(--blue)" },
+  rdv_confirmed: { ic:"fa-calendar-check",     col:"var(--green)" },
+  rdv_cancelled: { ic:"fa-calendar-xmark",     col:"var(--red)" },
+  rdv_reminder:  { ic:"fa-bell",               col:"#f59e0b" },
+  prescription:  { ic:"fa-file-prescription",  col:"var(--green)" },
+  claim:         { ic:"fa-id-badge",           col:"#7c3aed" },
+  system:        { ic:"fa-circle-info",        col:"var(--text3)" }
+};
+
+// Temps relatif (copie de notifications.html _fmtRel).
+function _fmtRel(iso){
+  if(!iso) return "";
+  try {
+    var s = Math.floor((Date.now() - new Date(iso).getTime())/1000);
+    if(s < 60) return "à l'instant";
+    var m = Math.floor(s/60);
+    if(m < 60) return "il y a " + m + " min";
+    var h = Math.floor(m/60);
+    if(h < 24) return "il y a " + h + " h";
+    var d = Math.floor(h/24);
+    if(d < 7) return "il y a " + d + " j";
+    return new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short",timeZone:"Africa/Algiers"}).format(new Date(iso));
+  } catch(e){ return ""; }
+}
+
+// Badge non-lus : affiche le nombre si >0, masqué sinon.
+function _notifSetBadge(n){
+  var b = document.getElementById("med-notif-count");
+  if(!b) return;
+  if(n > 0){ b.textContent = String(n); b.style.display = "flex"; }
+  else { b.textContent = ""; b.style.display = "none"; }
+}
+
+function _notifRenderEmpty(){
+  var box = document.getElementById("med-notif-list");
+  if(box) box.innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--text3);font-size:12px"><i class="fa fa-bell-slash" style="display:block;font-size:20px;margin-bottom:8px;color:var(--text4)"></i>Aucune notification</div>';
+}
+
+// Charge les vraies notifs depuis Supabase et peuple la cloche + le badge.
+async function renderNotifs(){
+  var sb = window.tabibi && window.tabibi.supabase;
+  if(!sb){ _notifRenderEmpty(); _notifSetBadge(0); return; }
+  try {
+    var r = await sb.from("notifications").select("*").order("created_at",{ascending:false}).limit(20);
+    if(r.error){ console.warn("[notif] fetch error", r.error.message); _notifRenderEmpty(); _notifSetBadge(0); return; }
+    var items = r.data || [];
+    if(!items.length){ _notifRenderEmpty(); _notifSetBadge(0); return; }
+    var unread = items.filter(function(n){ return n.read_at == null; }).length;
+    document.getElementById("med-notif-list").innerHTML = items.map(function(n){
+      var meta = _NOTIF_META[n.type] || _NOTIF_META.system;
+      return `<div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid var(--bg2)">
+    <div style="width:32px;height:32px;border-radius:8px;background:${meta.col}22;color:${meta.col};display:flex;align-items:center;justify-content:center"><i class="fa ${meta.ic}"></i></div>
+    <div style="flex:1"><div style="font-weight:700;font-size:12px">${_esc(n.title||"")}</div><div style="font-size:11px;color:var(--text3)">${_esc(n.message||"")}</div><div style="font-size:10px;color:var(--text4);margin-top:2px">${_esc(_fmtRel(n.created_at))}</div></div></div>`;
+    }).join("");
+    _notifSetBadge(unread);
+  } catch(e){ console.warn("[notif] exception", e && e.message); _notifRenderEmpty(); _notifSetBadge(0); }
+}
+
+// Marque toutes les notifs non-lues comme lues (cf notifications.html l.146) puis badge à 0.
+async function markNotifsRead(){
+  var sb = window.tabibi && window.tabibi.supabase;
+  if(!sb){ _notifSetBadge(0); return; }
+  try {
+    await sb.from("notifications").update({ read_at:new Date().toISOString() }).is("read_at", null);
+  } catch(e){ console.warn("[notif] markRead exception", e && e.message); }
+  _notifSetBadge(0);
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
