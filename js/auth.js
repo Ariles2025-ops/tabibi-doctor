@@ -9,8 +9,9 @@
 
   window.tabibi.auth = {
     async signUp(email, password, role = 'patient') {
-      // [CRIT-5] token captcha frais (Supabase Auth le valide server-side)
-      const captchaToken = window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : undefined;
+      // [CRIT-5][FIX native] Token captcha si dispo ; getCaptchaToken ne hang plus (timeout 5s → null).
+      // Supabase n'enforce pas le captcha → pas de token = login quand même (captchaToken omis = undefined).
+      const captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
       const { data, error } = await sb.auth.signUp({
         email, password,
         options: { data: { role }, captchaToken },
@@ -19,8 +20,9 @@
       return data;
     },
     async signIn(email, password) {
-      // [CRIT-5] token captcha frais (Supabase Auth le valide server-side)
-      const captchaToken = window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : undefined;
+      // [CRIT-5][FIX native] Token captcha si dispo ; getCaptchaToken ne hang plus (timeout 5s → null).
+      // Supabase n'enforce pas le captcha → pas de token = login quand même (captchaToken omis = undefined).
+      const captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
       const { data, error } = await sb.auth.signInWithPassword({ email, password, options: { captchaToken } });
       if (error) throw error;
       return data;

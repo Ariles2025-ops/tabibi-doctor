@@ -225,9 +225,10 @@
    * [CRIT-5] Récupère un token Turnstile FRAIS via un widget invisible (mode execute).
    * Rendu une seule fois puis réutilisé via reset() → un token neuf par appel
    * (les tokens Turnstile sont à usage unique).
-   * Retourne undefined si captcha désactivé / non configuré / erreur / timeout 8s.
-   * Côté serveur Supabase Auth, un token absent ou invalide = rejet (fail closed).
-   * @returns {Promise<string|undefined>}
+   * [FIX native] Course (Promise.race) entre l'acquisition et un timeout de 5s :
+   *   token obtenu → retourné ; sinon (désactivé / non configuré / erreur /
+   *   widget muet en WebView native sur origine localhost) → null. Jamais de hang > 5s.
+   * @returns {Promise<string|null>}
    */
   let _execWidgetId = null;
   let _execContainer = null;
@@ -236,10 +237,13 @@
     if (_execResolve) { const r = _execResolve; _execResolve = null; r(token || undefined); }
   }
   async function getCaptchaToken() {
-    if (!TURNSTILE_CONFIG.enabled) return undefined;
+    if (!TURNSTILE_CONFIG.enabled) return null;
     if (!TURNSTILE_CONFIG.siteKey) readSiteKey();
-    if (!TURNSTILE_CONFIG.siteKey) return undefined;
-    try {
+    if (!TURNSTILE_CONFIG.siteKey) return null;
+    // [FIX native] Acquisition réelle du token. Peut hang indéfiniment si le widget
+    // Turnstile ne répond pas (WebView native, origine localhost non autorisée…).
+    // .catch() : une erreur tardive (après le timeout gagnant) n'est jamais "unhandled".
+    var _acquire = (async function () {
       await loadTurnstileScript();
       if (!_execContainer) {
         _execContainer = document.createElement('div');
@@ -260,12 +264,15 @@
           window.turnstile.reset(_execWidgetId);
         }
         window.turnstile.execute(_execWidgetId);
-        setTimeout(() => _execResolveOnce(undefined), 8000);
       });
-    } catch (e) {
+    })().catch(function (e) {
       console.warn('[Turnstile] getCaptchaToken error:', e);
-      return undefined;
-    }
+      return null;
+    });
+    // [FIX native] Course token VS timeout 5s → null. getCaptchaToken ne hang JAMAIS > 5s.
+    var _timeout = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 5000); });
+    var tok = await Promise.race([_acquire, _timeout]);
+    return tok || null;
   }
 
   // Initialiser au chargement
