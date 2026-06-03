@@ -694,7 +694,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- HERO -->
   <section class="hero-mobile">
     <div class="hz">
-      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin certifié + 79 746 indexés en Algérie</span></div>
+      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin certifié en Algérie</span></div>
       <h1 class="hero-title" id="hero-t">Trouvez votre médecin en ligne en Algérie</h1>
       <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Réservez en ligne 24h/24 auprès de médecins certifiés dans les 48 wilayas. Rapide, simple, sécurisé.</p>
       <div class="hero-search-wrap">
@@ -2255,7 +2255,7 @@ function showDoctorDashboardModal(){
       <div class="modal-body" style="padding-bottom:24px">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--green-l);border-radius:var(--r12);margin-bottom:16px">
           <div style="width:46px;height:46px;border-radius:var(--r16);background:${user?.avatar?.bg||"#d1fae5"};color:${user?.avatar?.tc||"#065f46"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
-          <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${user?.specialty||"Médecin"} · ${user?.ville||"Alger"}</div><span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span></div>
+          <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${[user?.specialty,user?.ville].filter(Boolean).join(" · ")}</div><span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span></div>
         </div>
         <!-- [TODO 2026-05-18] Remplacer ces stats hardcodees par appel API Supabase
              (rdv count, sum revenus, avg rating, pending count) avant lancement public.
@@ -2762,7 +2762,7 @@ document.addEventListener("DOMContentLoaded",()=>{
       if (!_res[0].ok || !_res[1].ok) return;
       var _cert = parseInt((_res[0].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
       var _idx  = parseInt((_res[1].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
-      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert, indexed: _idx }; _updateDocCounterUI(); }
+      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert }; _updateDocCounterUI(); }
     } catch(e) { /* fallback window._tabibiBadge déjà affiché */ }
   })();
 
@@ -2786,26 +2786,24 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 // Fallback last-known pour le compteur (affiché instantanément, remplacé par fetch async au load)
-window._tabibiBadge = { certified: 0, indexed: 79746 };
+window._tabibiBadge = { certified: 0 };
 function _updateDocCounterUI() {
   var _lm = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
   var _cert = window._tabibiBadge.certified;
-  var _idx  = window._tabibiBadge.indexed;
   var _fc = _cert.toLocaleString(_lm[lang] || 'fr-DZ');
-  var _fi = _idx.toLocaleString(_lm[lang]  || 'fr-DZ');
   var _hb = document.getElementById('hbadge');
-  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد + ' + _fi + ' مُفهرَس في الجزائر'
-                            : lang === 'en' ? _fc + ' certified + ' + _fi + ' indexed in Algeria'
-                            :                 _fc + ' médecins certifiés + ' + _fi + ' indexés en Algérie';
+  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد في الجزائر'
+                            : lang === 'en' ? _fc + ' certified in Algeria'
+                            :                 _fc + ' médecins certifiés en Algérie';
   var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fc;
   var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fc;
   var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fc;
   var _fdEl = document.getElementById('foot-desc');
   if (_fdEl) _fdEl.textContent = lang === 'ar'
-    ? 'أول منصة طبية جزائرية. ' + _fc + ' طبيب معتمد + ' + _fi + ' مُفهرَس في 48 ولاية. احجز عبر الإنترنت 24/24.'
+    ? 'أول منصة طبية جزائرية. ' + _fc + ' طبيب معتمد في 48 ولاية. احجز عبر الإنترنت 24/24.'
     : lang === 'en'
-    ? '1st Algerian medical platform. ' + _fc + ' certified + ' + _fi + ' indexed doctors across 48 wilayas. Book online 24/7.'
-    : 'La 1ère plateforme médicale algérienne. ' + _fc + ' médecins certifiés + ' + _fi + ' indexés dans 48 wilayas. Réservez en ligne 24h/24.';
+    ? '1st Algerian medical platform. ' + _fc + ' certified doctors across 48 wilayas. Book online 24/7.'
+    : 'La 1ère plateforme médicale algérienne. ' + _fc + ' médecins certifiés dans 48 wilayas. Réservez en ligne 24h/24.';
 }
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
 window.filterBySpec=filterBySpec; window.onLangChange=onLangChange;
@@ -2849,7 +2847,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0F7560,#0F7560);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">T</div>
       <div><div style="font-weight:800;font-size:18px;color:#0F7560">Tabibi <span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></div><div style="font-size:11px;color:#64748b;font-family:'Cairo',sans-serif">طبيبي</div></div>
     </div>
-    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">0</span> médecin certifié + 79 746 indexés dans 48 wilayas. Réservez en ligne 24h/24.</p>
+    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">0</span> médecin certifié dans 48 wilayas. Réservez en ligne 24h/24.</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
       <div>

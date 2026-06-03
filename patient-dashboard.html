@@ -60,7 +60,6 @@
 </head>
 <body>
 <a class="skip-link" href="#main">Aller au contenu</a>
-<script src="scripts/seed.js"></script>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <header class="app-bar">
@@ -338,12 +337,7 @@ async function logout(){
 function getNotifs(){
   let n=JSON.parse(localStorage.getItem("tabibi_notifs")||"null");
   if(!n){
-    n=[
-      {id:1,type:"rdv",icon:"fa-calendar-check",color:"var(--blue)",title:"RDV confirmé",msg:"Dr. Karim Benali — Cardiologie le 15 mai à 10:30",time:"il y a 2h",unread:true},
-      {id:2,type:"reminder",icon:"fa-bell",color:"#f59e0b",title:"Rappel RDV",msg:"Votre RDV avec Dr. Yacine Djalout est dans 24h",time:"il y a 5h",unread:true},
-      {id:3,type:"document",icon:"fa-file-medical",color:"var(--green)",title:"Nouvelle ordonnance",msg:"Dr. Amira Kaci a partagé votre ordonnance",time:"hier",unread:true},
-      {id:4,type:"info",icon:"fa-circle-info",color:"#7c3aed",title:"Bienvenue sur Tabibi",msg:"Complétez votre dossier médical pour une meilleure prise en charge",time:"il y a 3 jours",unread:false}
-    ];
+    n=[];  // [Phase 2 launch] notifs démo retirées (vrai système : notifications.html / table notifications)
     localStorage.setItem("tabibi_notifs",JSON.stringify(n));
   }
   return n;
@@ -841,13 +835,7 @@ function submitReview(){if(!reviewStars){toastM(tabibiT('toast_select_rating',"S
 function getDocs(){
   let d=JSON.parse(localStorage.getItem("tabibi_docs")||"null");
   if(!d){
-    d=[
-      {id:1,name:"Ordonnance Cardio - Dr. Benali.pdf",type:"ordonnance",date:"2025-04-17",size:"245 KB",doctor:"Dr. Karim Benali"},
-      {id:2,name:"Analyse de sang - Bilan annuel.pdf",type:"resultat",date:"2025-04-10",size:"1.2 MB",doctor:"Laboratoire Pasteur"},
-      {id:3,name:"Certificat médical - Aptitude sport.pdf",type:"certificat",date:"2025-03-22",size:"180 KB",doctor:"Dr. Rachid Tlemceni"},
-      {id:4,name:"Reçu RDV Dr. Kaci.pdf",type:"recu",date:"2025-04-05",size:"95 KB",doctor:"Tabibi"},
-      {id:5,name:"IRM Cervicale.pdf",type:"resultat",date:"2025-03-15",size:"3.4 MB",doctor:"Centre d'Imagerie Alger"}
-    ];
+    d=[];  // [Phase 2 launch] documents démo retirés
     localStorage.setItem("tabibi_docs",JSON.stringify(d));
   }
   return d;
