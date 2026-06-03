@@ -47,6 +47,7 @@
       <div class="app-bar-sub" id="hdr-sub" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:2px"><i class="fa fa-stethoscope fa-xs" style="color:var(--green)"></i> Praticien · Tabibi PRO</div>
     </div>
   </div>
+  <a id="med-msg-link" href="messages.html" hidden title="Messages" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;border-radius:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:4px"><i class="fa fa-comments" style="font-size:14px"></i></a>
   <button class="btn btn-icon btn-icon-sm" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
     <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:none;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite"></span>
   </button>
@@ -714,7 +715,8 @@ var _NOTIF_META = {
   rdv_reminder:  { ic:"fa-bell",               col:"#f59e0b" },
   prescription:  { ic:"fa-file-prescription",  col:"var(--green)" },
   claim:         { ic:"fa-id-badge",           col:"#7c3aed" },
-  system:        { ic:"fa-circle-info",        col:"var(--text3)" }
+  system:        { ic:"fa-circle-info",        col:"var(--text3)" },
+  message:       { ic:"fa-comment-dots",       col:"var(--blue)" }
 };
 
 // Temps relatif (copie de notifications.html _fmtRel).
@@ -1169,6 +1171,8 @@ async function deleteUnavail(id) {
 <script src="js/capacitor-bridge.js" defer></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script>(function(){var el=document.getElementById('med-msg-link');if(!el)return;if(window.TABIBI_FEATURES&&window.TABIBI_FEATURES.messaging){el.hidden=false;}else{el.remove();}})();</script>
 <script src="js/tabibi-claim.js"></script>
 <script src="js/tabibi-doctor-dashboard.js"></script>
 <script src="js/tabibi-network.js"></script>

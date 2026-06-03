@@ -58,6 +58,12 @@
     //   - Étape 2 (à venir) : rappel veille J-1 via pg_cron
     notifications: true,
 
+    // Messagerie patient<->medecin (MSG step1) :
+    //   - DB prod : tables conversations + messages + RLS + RPC ensure_conversation
+    //   - Front : messages.html + conversation.html + js/tabibi-messaging.js
+    //   - OFF tant que les 2 pages ne sont pas testées + points d'entrée ajoutés
+    messaging: false,
+
     // Avis (Phase 9) :
     //   - Table reviews : non créée (TODO-SQL-011)
     //   - RLS post-completed : non créée (TODO-SQL-012)

@@ -34,6 +34,7 @@
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
   <div class="app-bar-body"><div class="app-bar-title">Notifications</div></div>
+  <a id="notif-msg-link" href="messages.html" hidden class="btn btn-icon btn-icon-sm btn-ghost" aria-label="Messages"><i class="fa fa-comments"></i></a>
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="markAllRead()" aria-label="Tout marquer lu" id="btn-mark-all"><i class="fa fa-check-double"></i></button>
 </header>
 
@@ -88,7 +89,8 @@ var TYPE_META = {
   rdv_reminder:  { ico:'fa-bell',           color:'#f59e0b' },
   prescription:  { ico:'fa-file-prescription', color:'var(--green)' },
   claim:         { ico:'fa-id-badge',       color:'#7c3aed' },
-  system:        { ico:'fa-circle-info',    color:'var(--text3)' }
+  system:        { ico:'fa-circle-info',    color:'var(--text3)' },
+  message:       { ico:'fa-comment-dots',   color:'var(--blue)' }
 };
 
 function _renderEmpty(){
@@ -154,6 +156,9 @@ function goBackSafe(){
 }
 
 document.addEventListener('DOMContentLoaded', function(){
+  // [MSG] Icone Messages gated : absente du DOM si features.messaging != true.
+  var _ml = document.getElementById('notif-msg-link');
+  if(_ml){ if(window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging){ _ml.hidden = false; } else { _ml.remove(); } }
   loadNotifications();
 });
 window.markAllRead = markAllRead;
