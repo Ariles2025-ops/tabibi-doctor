@@ -59,7 +59,8 @@
 // messages.html — inbox messagerie. Calque notifications.html.
 // Gate par TABIBI_FEATURES.messaging (OFF -> disclaimer + empty, pas de fetch).
 // ========================================================================
-var M = window.tabibiMessaging;
+var M;  // [MSG-fix] assigne au DOMContentLoaded : tabibi-messaging.js est charge en bas
+        // de page, donc window.tabibiMessaging est undefined au parse de ce script inline.
 
 function _renderEmpty(txt){
   document.getElementById('conv-list').innerHTML =
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async function(){
     location.replace((_r==='medecin'||_r==='doctor') ? 'doctor-dashboard.html' : (_r==='patient' ? 'patient-dashboard.html' : 'index.html'));
     return;
   }
+  M = window.tabibiMessaging;   // [MSG-fix] scripts charges -> window.tabibiMessaging dispo
   // Garde d'auth (messagerie reservee aux connectes) : requireAuth gere le redirect.
   if(window.tabibi && window.tabibi.auth && window.tabibi.auth.requireAuth){
     var u = await window.tabibi.auth.requireAuth();

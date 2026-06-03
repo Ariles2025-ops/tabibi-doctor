@@ -50,7 +50,8 @@
 // conversation.html — fil d'une conversation (?c=<uuid>).
 // Polling 10s + mark-as-read a l'ouverture et a chaque poll. Pas de realtime.
 // ========================================================================
-var M = window.tabibiMessaging;
+var M;  // [MSG-fix] assigne au DOMContentLoaded : tabibi-messaging.js est charge en bas
+        // de page, donc window.tabibiMessaging est undefined au parse de ce script inline.
 var CONV_ID = new URLSearchParams(location.search).get('c') || '';
 
 function _scrollBottom(){ var el = document.getElementById('msg-list'); if(el) el.scrollTop = el.scrollHeight; }
@@ -111,6 +112,7 @@ document.addEventListener('DOMContentLoaded', async function(){
     location.replace((_r==='medecin'||_r==='doctor') ? 'doctor-dashboard.html' : (_r==='patient' ? 'patient-dashboard.html' : 'index.html'));
     return;
   }
+  M = window.tabibiMessaging;   // [MSG-fix] scripts charges -> window.tabibiMessaging dispo
   if(window.tabibi && window.tabibi.auth && window.tabibi.auth.requireAuth){
     var u = await window.tabibi.auth.requireAuth();
     if(!u) return;
