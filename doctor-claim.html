@@ -300,22 +300,53 @@ async function _populateDropdowns(){
 var _dcUpload = null;
 var _dcDocsValid = false;
 
-function dcOpenModal(legacyId, doctorName){
+async function dcOpenModal(legacyId, doctorName){
   _selectedDoctor = { legacyId: legacyId, name: doctorName };
   document.getElementById('dc-modal-doctor').textContent = doctorName;
   document.getElementById('dc-ordre').value = '';
   document.getElementById('dc-honor').checked = false;
   document.getElementById('dc-submit').disabled = true;
-  // [Phase 16.5] Init zones upload (2 dropzones carte Ordre + identité)
+  _dcUpload = null;
   _dcDocsValid = false;
-  if (window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {
-    _dcUpload = window.tabibiDocUpload.setup({
-      container: 'dc-upload-container',
-      onValidChange: function(v){ _dcDocsValid = v; _updateSubmitState(); }
-    });
+
+  // [FIX #2] On branche la collecte des justificatifs sur l'état d'authentification.
+  // Non-connecté : la modale redirige vers signup et la closure tabibiDocUpload (qui
+  // détient les File en mémoire) est détruite à la navigation → tout fichier uploadé ici
+  // serait JETÉ. On ne le demande donc pas : le médecin ajoute ses 2 docs depuis son espace
+  // après login (bandeau "documents manquants" de medecin-profile.html, recovery déjà en place).
+  // Connecté (médecin qui réclame) : flow atomique inchangé — les 2 docs restent requis.
+  var isAuth = false;
+  try {
+    var info = await window.tabibiClaim.getCurrentUserInfo();
+    isAuth = !!(info && info.isAuth);
+  } catch(e){}
+
+  var up = document.getElementById('dc-upload-container');
+  if (isAuth) {
+    // [Phase 16.5] Init zones upload (2 dropzones carte Ordre + identité)
+    if (window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {
+      _dcUpload = window.tabibiDocUpload.setup({
+        container: 'dc-upload-container',
+        onValidChange: function(v){ _dcDocsValid = v; _updateSubmitState(); }
+      });
+    } else {
+      console.warn('[claim] tabibiDocUpload module absent');
+    }
   } else {
-    console.warn('[claim] tabibiDocUpload module absent');
+    // Non-connecté : pas de dropzones, gate docs levée (submit = N° Ordre + honneur).
+    if (up) {
+      up.innerHTML =
+        '<div style="display:flex;gap:8px;align-items:flex-start;padding:12px;background:#EFF6FF;' +
+        'border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.5;margin-top:6px">' +
+          '<i class="fa fa-circle-info" style="margin-top:2px"></i>' +
+          '<span>Vos justificatifs (carte du Conseil de l\'Ordre + pièce d\'identité) seront à ajouter ' +
+          'depuis votre espace médecin, juste après la création de votre compte.</span>' +
+        '</div>';
+    }
+    _dcDocsValid = true;
   }
+
+  _updateSubmitState();
   var m = document.getElementById('dc-modal');
   m.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
