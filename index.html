@@ -826,7 +826,7 @@ const TR = {
     hero_sub:"Réservez en ligne 24h/24 auprès de médecins certifiés dans les 48 wilayas.",
     s_ph:"Dr. Benali, Cardiologie, Alger...",
     all_cities:"Toutes les wilayas",all_specs:"Toutes les spécialités",
-    chip_urg:"Urgences",chip_cert:"Certifiés",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
+    chip_urg:"Urgences",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
     step1_t:"Recherchez",step1_d:"Filtrez par nom, ville, spécialité, note et prix.",
     step2_t:"Réservez",step2_d:"Choisissez un créneau et confirmez votre RDV en ligne.",
     step3_t:"Consultez",step3_d:"Recevez un SMS de confirmation et rencontrez votre médecin.",
@@ -889,7 +889,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     hero_sub:"احجز أونلاين مع أطباء معتمدين في 48 ولاية. سريع وبسيط وآمن.",
     s_ph:"د. بن علي، قلب، الجزائر...",
     all_cities:"كل الولايات",all_specs:"كل التخصصات",
-    chip_urg:"طوارئ",chip_cert:"معتمدون",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
+    chip_urg:"طوارئ",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
     step1_t:"ابحث",step1_d:"صفّ حسب الاسم والمدينة والتخصص والسعر.",
     step2_t:"احجز",step2_d:"اختر وقتاً وأكّد موعدك أونلاين.",
     step3_t:"استشر",step3_d:"احصل على تأكيد SMS والتقِ بطبيبك.",
@@ -952,7 +952,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     hero_sub:"Book online 24/7 with certified doctors across all 48 wilayas.",
     s_ph:"Dr. Benali, Cardiology, Algiers...",
     all_cities:"All cities",all_specs:"All specialties",
-    chip_urg:"Urgent",chip_cert:"Certified",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
+    chip_urg:"Urgent",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
     step1_t:"Search",step1_d:"Filter by name, city, specialty, rating and price.",
     step2_t:"Book",step2_d:"Choose a slot and confirm your appointment online.",
     step3_t:"Consult",step3_d:"Get an SMS confirmation and meet your doctor.",
@@ -1786,7 +1786,7 @@ function renderChips(){
   const prev={};
   document.querySelectorAll(".chip[data-cv]").forEach(c=>{prev[c.dataset.cv]=c.classList.contains("active");});
   document.getElementById("chips").innerHTML=[
-    {k:"chip_urg",v:"urg"},{k:"chip_cert",v:"cert"},{k:"chip_4",v:"4plus"},{k:"chip_cheap",v:"cheap"},{k:"chip_fem",v:"fem"}
+    {k:"chip_urg",v:"urg"},{k:"chip_4",v:"4plus"},{k:"chip_cheap",v:"cheap"},{k:"chip_fem",v:"fem"}
   ].map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
 }
 
@@ -1806,7 +1806,6 @@ function _readFilterUI(){
     sort:      document.getElementById("f-sort")?.value || "rating",
     maxPrice:  (maxP < 10000) ? maxP : null,   // null si user n'a pas bougé le slider
     minRating: chips.indexOf("4plus") !== -1 ? 4 : 0,
-    cert:      chips.indexOf("cert") !== -1,
     chips:     chips
   };
 }
@@ -2494,7 +2493,7 @@ async function _fetchDistinctSpecsAndWilayas(){
 
   // ── Spécialités : 500 lignes suffisent pour couvrir les ~50-100 valeurs ─
   const headers = { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY };
-  const baseUrl = _SB_URL + '/rest/v1/public_doctors';
+  const baseUrl = _SB_URL + '/rest/v1/public_doctors_listed';
   try {
     const r = await fetch(baseUrl + '?select=specialty_fr&limit=500', { headers });
     if (!r.ok) return;
@@ -2559,7 +2558,7 @@ function _buildDoctorCardsUrl(opts){
   // Filtres serveur — uniquement colonnes présentes
   if(opts.ville)  q.set('wilaya_fr',     'eq.' + opts.ville);
   if(opts.spec)   q.set('specialty_fr',  'eq.' + opts.spec);
-  if(opts.cert)   q.set('is_verified',   'eq.true');
+  // [#3] toggle "cert"/is_verified retiré : public_doctors_listed n'expose que des fiches déjà certifiées
   if(opts.search){
     // Échapper les virgules et parenthèses pour éviter de casser l'OR PostgREST
     const safe = String(opts.search).replace(/[(),]/g,' ').trim();
@@ -2576,7 +2575,7 @@ function _buildDoctorCardsUrl(opts){
   // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
   q.set('order', 'full_name.asc');
   q.set('limit', '20');
-  return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
+  return _SB_URL + '/rest/v1/public_doctors_listed?' + q.toString();
 }
 
 async function loadDoctorCards(opts){
@@ -2705,7 +2704,7 @@ function _updateResCount(serverTotal, shownLocal, opts){
   const rc = document.getElementById('res-count');
   if(!rc) return;
   if(serverTotal === 0){
-    const filtersActive = !!(opts.ville || opts.spec || opts.search || opts.cert
+    const filtersActive = !!(opts.ville || opts.spec || opts.search
                           || opts.maxPrice != null || opts.minRating > 0
                           || (opts.chips && opts.chips.length));
     if(filtersActive){
@@ -2756,13 +2755,15 @@ document.addEventListener("DOMContentLoaded",()=>{
       var _key = _SB_KEY;
       var _h = { apikey: _key, Authorization: 'Bearer ' + _key, Prefer: 'count=exact' };
       var _res = await Promise.all([
-        fetch(_url + '/rest/v1/public_doctors?is_claimed=eq.true&select=id&limit=1', { headers: _h }),
+        // X certifiés : vue public_doctors_listed (déjà filtrée is_claimed=true AND validation_status='approved')
+        fetch(_url + '/rest/v1/public_doctors_listed?select=id&limit=1', { headers: _h }),
+        // N indexés : total brut public_doctors
         fetch(_url + '/rest/v1/public_doctors?select=id&limit=1', { headers: _h })
       ]);
       if (!_res[0].ok || !_res[1].ok) return;
       var _cert = parseInt((_res[0].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
       var _idx  = parseInt((_res[1].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
-      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert }; _updateDocCounterUI(); }
+      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert, indexed: _idx }; _updateDocCounterUI(); }
     } catch(e) { /* fallback window._tabibiBadge déjà affiché */ }
   })();
 
@@ -2786,15 +2787,19 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 // Fallback last-known pour le compteur (affiché instantanément, remplacé par fetch async au load)
-window._tabibiBadge = { certified: 0 };
+window._tabibiBadge = { certified: 0, indexed: 0 };
 function _updateDocCounterUI() {
   var _lm = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
+  var _loc = _lm[lang] || 'fr-DZ';
   var _cert = window._tabibiBadge.certified;
-  var _fc = _cert.toLocaleString(_lm[lang] || 'fr-DZ');
+  var _idx  = window._tabibiBadge.indexed || 0;
+  var _fc = _cert.toLocaleString(_loc);
+  var _fi = _idx.toLocaleString(_loc);
   var _hb = document.getElementById('hbadge');
-  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد في الجزائر'
-                            : lang === 'en' ? _fc + ' certified in Algeria'
-                            :                 _fc + ' médecins certifiés en Algérie';
+  // Badge double : X certifiés (public_doctors_listed) + N indexés (public_doctors)
+  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مفهرس في الجزائر'
+                            : lang === 'en' ? _fc + ' certified · ' + _fi + ' indexed in Algeria'
+                            :                 _fc + ' médecins certifiés · ' + _fi + ' indexés en Algérie';
   var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fc;
   var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fc;
   var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fc;
