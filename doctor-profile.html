@@ -441,7 +441,9 @@ async function loadDoc(){
     document.getElementById("d-bio").textContent = d.desc || '';
     document.getElementById("d-addr").textContent = d.addr || d.ville || '';
     document.getElementById("b-langs").textContent = (d.langs || ["FR","AR"]).join(" · ");
-    document.getElementById("b-cert").style.display = d.cert ? "" : "none";
+    // [Défaut #4-A4] Défense en profondeur : badge certifié SSI is_verified ET validation_status approuvé
+    // (la fiche est servie par public_doctors_listed, mais l'accès direct par id reste un vecteur distinct).
+    document.getElementById("b-cert").style.display = (d.cert && d._validationStatus === 'approved') ? "" : "none";
     document.getElementById("b-urg").style.display = d.urgent ? "" : "none";
 
     // [Phase 13b] NEW : injecter badges téléconsult + paiements + horaires

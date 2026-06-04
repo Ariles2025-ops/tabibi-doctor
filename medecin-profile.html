@@ -168,7 +168,8 @@
     </div>
     <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
     <p id="pspec" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
-    <span class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:inline-block"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
+    <!-- [Défaut #4-A1] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _checkDocsMissing) -->
+    <span id="cert-badge" class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:none"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
     <div id="photo-upload-status" class="hidden" style="margin-top:10px;font-size:12px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:8px;display:inline-block"></div>
   </div>
   <div style="padding:16px 16px 0">
@@ -422,6 +423,16 @@ async function _checkDocsMissing(profileId) {
     if (r.error || !r.data) return;
     var missing = (!r.data.ordre_card_path || !r.data.id_card_path);
     var notApproved = (r.data.validation_status !== 'approved');
+    // [Défaut #4-A1] Badge "certifié" affiché SSI validation_status==='approved'.
+    // Caché par défaut (display:none dans le HTML) → fail-safe si erreur/incertitude.
+    var cb = document.getElementById('cert-badge');
+    if (cb) cb.style.display = notApproved ? 'none' : 'inline-block';
+    // [Défaut #4-A2/A3] Stamp le cache tabibi_user pour le dashboard + chip home
+    // (absence du champ = badge non affiché = fail-safe, jamais de sur-affichage).
+    try {
+      var _cu = JSON.parse(localStorage.getItem('tabibi_user') || 'null');
+      if (_cu) { _cu._validation_status = r.data.validation_status || null; localStorage.setItem('tabibi_user', JSON.stringify(_cu)); }
+    } catch (_e) {}
     // Affiche banner UNIQUEMENT si docs manquants ET fiche pas encore approuvée
     // (cas rejected : afficher aussi pour permettre re-upload après correction).
     if (missing && notApproved) showDocsMissingBanner();

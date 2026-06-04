@@ -252,7 +252,8 @@
       <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
       <div style="font-size:18px;font-weight:700" id="prof-name">--</div>
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px" id="prof-spec">--</div>
-      <span class="badge badge-green"><i class="fa fa-check"></i> Certifié Tabibi</span>
+      <!-- [Défaut #4-A2] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _gateCertBadge) -->
+      <span id="dash-cert-badge" class="badge badge-green" style="display:none"><i class="fa fa-check"></i> Certifié Tabibi</span>
       <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px">
         <a href="medecin-profile.html" class="btn btn-success btn-full btn-lg"><i class="fa fa-pen"></i> Modifier mon profil</a>
         <a href="medecin-profile.html#sec-pricing" class="btn btn-soft btn-full"><i class="fa fa-coins"></i> Tarifs & types consultation</a>
@@ -778,6 +779,31 @@ async function markNotifsRead(){
   _notifSetBadge(0);
 }
 
+// [Défaut #4-A2] Affiche le badge "Certifié Tabibi" du dashboard SSI le médecin
+// connecté a validation_status==='approved'. Caché par défaut (fail-safe).
+// 1) lecture cache rapide ; 2) sinon SELECT autoritaire via getMyDoctorId().
+async function _gateCertBadge() {
+  var badge = document.getElementById('dash-cert-badge');
+  if (!badge) return;
+  try {
+    var cu = null;
+    try { cu = JSON.parse(localStorage.getItem('tabibi_user') || 'null'); } catch (_) {}
+    if (cu && cu._validation_status === 'approved') { badge.style.display = ''; return; }
+    if (window.tabibiDoctor && typeof window.tabibiDoctor.getMyDoctorId === 'function') {
+      var did = await window.tabibiDoctor.getMyDoctorId();
+      var sb = window.tabibi && window.tabibi.supabase;
+      if (did && sb) {
+        var r = await sb.from('doctor_profiles').select('validation_status').eq('id', did).single();
+        if (!r.error && r.data) {
+          badge.style.display = (r.data.validation_status === 'approved') ? '' : 'none';
+          if (cu) { cu._validation_status = r.data.validation_status || null; try { localStorage.setItem('tabibi_user', JSON.stringify(cu)); } catch (_) {} }
+        }
+      }
+    }
+    // incertitude → reste caché (display:none par défaut)
+  } catch (e) { console.warn('[Défaut #4-A2] _gateCertBadge', e && e.message); }
+}
+
 document.addEventListener("DOMContentLoaded", async ()=>{
   // [FIX session] Garde centralisée réseau-aware (remplace l'ancien waitForUser cache-first).
   // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si la
@@ -845,6 +871,8 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     document.addEventListener('tabibi:lang-change', window._refreshDoctorGreet);
     renderToday();
     renderNotifs();
+    // [Défaut #4-A2] Gate le badge certifié sur validation_status==='approved'
+    _gateCertBadge();
     // Charger les vrais RDV depuis Supabase et re-render
     refreshDoctorRdvs();
     // [Phase 4.B.3] Charger les blocages exceptionnels (no-op si pas auth/pas claim)
