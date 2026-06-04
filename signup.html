@@ -364,8 +364,8 @@ async function doSignup(e){
     // sans session, ou modale médecin qui suppose le compte actif).
     var needsEmailConfirm = !signupResult.session;
 
-    // 2. Créer/compléter le profil dans public.profiles
-    //    NOTE : le trigger set_profile_status mettra status='pending_verification' pour les médecins
+    // 2. Compléter le profil dans public.users (la ligne est déjà créée par le
+    //    trigger de signup ; cet upsert remplit l'identité + les consentements).
     const profileData = {
       id: signupResult.user.id,
       email: em,
@@ -375,25 +375,34 @@ async function doSignup(e){
       role: cur,
       phone: ph,
       wilaya_fr: wi,
-      consents: consents,
+      // [FIX #1] public.users n'a PAS de colonne `consents` : ce sont 4 colonnes
+      // timestamp dédiées. Envoyer `consents` faisait échouer TOUT l'upsert
+      // (PGRST204 colonne inconnue) → l'identité n'était jamais enregistrée.
+      consent_terms_at:       consents.cgu_accepted_at,
+      consent_privacy_at:     consents.privacy_accepted_at,
+      consent_health_data_at: consents.medical_data_accepted_at,
+      consent_marketing_at:   consents.marketing_accepted_at,
       is_test: false
     };
 
     if (cur === "medecin") {
       profileData.specialty_fr = ssp.value;
-      profileData.ordre_number = sord.value.trim();
+      // [FIX #1] retiré `ordre_number` : pas de colonne sur public.users (le N° Ordre
+      // vit dans localStorage.tabibi_claim_ordre, puis sur doctor_profiles au claim).
     }
-    if (cur === "secretaire") {
-      profileData.cabinet_invite_code = cabCode; // trace côté users (champ optionnel)
-    }
+    // [FIX #1] secrétaire : retiré `cabinet_invite_code` (pas de colonne sur public.users) ;
+    // le rattachement cabinet est fait par la RPC accept_cabinet_invitation ci-dessous.
 
     const { error: profileError } = await window.tabibi.supabase
       .from('users')
       .upsert(profileData, { onConflict: 'id' });
 
     if (profileError) {
-      console.warn("[signup] profile upsert error:", profileError.message);
-      // Ne pas bloquer : le profil peut être complété au prochain login
+      // [FIX #1] ne plus avaler l'erreur en silence : log en erreur + toast non bloquant.
+      // Le compte auth existe déjà → on n'interrompt pas le flux, mais l'échec
+      // d'enregistrement du profil doit être visible (QA + prod).
+      console.error("[signup] users upsert FAILED:", profileError.message, profileError.code || "");
+      toastM("Compte créé, mais l'enregistrement de votre profil a échoué. Vous pourrez le compléter depuis votre espace.", "error");
     }
 
     // 2.bis Si rôle secrétariat : vérifier puis rattacher au cabinet via RPC.
