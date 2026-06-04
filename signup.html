@@ -483,19 +483,25 @@ async function doSignup(e){
         try { localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); } catch(_){}
       }
 
-      // Déconnexion immédiate + message clair
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      localStorage.removeItem("tabibi_user");
-      localStorage.removeItem("tabibi_role");
-
+      // [Défaut #4-B] La déconnexion + redirection ne se font PLUS ici : le
+      // signOut auth.js navigue vers index.html et court-circuitait la modale
+      // "validation 48h". On déconnecte (a) avant le redirect verify-email,
+      // (b) à la fermeture de la modale (medecinPendingClose).
       // [Phase 15 fix] Si confirm email requis → verify-email page (avec disclaimer
       // validation 48h médecin via param pending_validation=1). Sinon (compat config
-      // sans confirm) → ancienne modale "validation 48h".
+      // sans confirm) → modale "validation 48h" qui s'affiche réellement.
       if (needsEmailConfirm) {
+        // teardown SDK brut (NE navigue pas) puis redirect verify-email
+        try { await window.tabibi.supabase.auth.signOut(); } catch(e){}
+        localStorage.removeItem("tabibi_user");
+        localStorage.removeItem("tabibi_role");
         location.href = '/verify-email.html?email=' + encodeURIComponent(em)
                       + '&role=medecin&pending_validation=1';
         return;
       }
+      // Sans confirmation : la modale s'affiche (session encore active, overlay
+      // plein écran z-index 9999 — rien d'actionnable derrière). signOut + redirect
+      // index.html au clic "Retour à l'accueil" (medecinPendingClose).
       showMedecinPendingModal(em, fn);
       if (btn) { btn.disabled = false; btn.innerHTML = origText; }
       return;
@@ -563,12 +569,25 @@ function showMedecinPendingModal(email, prenom) {
         <strong>📋 Prochaine étape :</strong>
         <br>Préparez vos documents (diplôme + attestation Ordre) pour les envoyer à <strong>contact@tabibi.doctor</strong>
       </div>
-      <button onclick="location.href='index.html'" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
+      <button onclick="medecinPendingClose()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
         Retour à l'accueil
       </button>
     </div>
   `;
   document.body.appendChild(modal);
+}
+
+// [Défaut #4-B] Fermeture de la modale pending : déconnexion PUIS retour index.
+// auth.signOut() (auth.js) purge la session ET navigue vers REDIRECTS.afterLogout
+// (=index.html). Fallback dur si le signOut rejette (réseau KO) → on va quand même
+// à index.html pour ne pas laisser l'utilisateur bloqué derrière la modale fermée.
+function medecinPendingClose(){
+  try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch(e){}
+  if (window.tabibi && window.tabibi.auth && typeof window.tabibi.auth.signOut === 'function') {
+    window.tabibi.auth.signOut().catch(function(){ location.href='index.html'; });
+  } else {
+    location.href='index.html';
+  }
 }
 
 function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
