@@ -8,7 +8,7 @@
 
   window.tabibi.api = {
     async searchDoctors({ query = '', wilayaCode = null, specialtySlug = null, entityType = null, limit = 50, offset = 0 } = {}) {
-      let q = sb.from('public_doctors_listed').select('*', { count: 'exact' });
+      let q = sb.from('public_doctors').select('*', { count: 'exact' });
       if (wilayaCode) q = q.eq('wilaya_code', wilayaCode);
       if (specialtySlug) q = q.eq('specialty_slug', specialtySlug);
       if (entityType) q = q.eq('entity_type', entityType);
@@ -20,7 +20,7 @@
     },
 
     async getDoctor(id) {
-      const { data, error } = await sb.from('public_doctors_listed').select('*').eq('id', id).single();
+      const { data, error } = await sb.from('public_doctors').select('*').eq('id', id).single();
       if (error) { console.error('[Tabibi/api] getDoctor', error); return null; }
       return data;
     },

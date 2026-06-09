@@ -271,14 +271,14 @@ async function _fetchDoctorFromSupabase(id){
     if (!sb) return null;
     // Tente d'abord par UUID
     if (isUuid(id)) {
-      var r1 = await sb.from('public_doctors_listed').select('*').eq('id', id).maybeSingle();
+      var r1 = await sb.from('public_doctors').select('*').eq('id', id).maybeSingle();
       if (r1 && r1.data) return r1.data;
     } else {
       // ID numerique CSV : tente colonne legacy_id si elle existe
-      var r2 = await sb.from('public_doctors_listed').select('*').eq('legacy_id', parseInt(id, 10)).maybeSingle();
+      var r2 = await sb.from('public_doctors').select('*').eq('legacy_id', parseInt(id, 10)).maybeSingle();
       if (r2 && r2.data) return r2.data;
       // Fallback : peut-etre que l'ID est en fait un slug
-      var r3 = await sb.from('public_doctors_listed').select('*').eq('id', id).maybeSingle();
+      var r3 = await sb.from('public_doctors').select('*').eq('id', id).maybeSingle();
       if (r3 && r3.data) return r3.data;
     }
     return null;

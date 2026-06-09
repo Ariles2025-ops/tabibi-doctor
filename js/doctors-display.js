@@ -72,7 +72,7 @@
       diplomes:   ['Doctorat en Médecine'],
       // champs bruts utiles pour la fiche médecin
       legacy_id:  doc.legacy_id || null,
-      _isClaimed: !!(doc.user_id)
+      _isClaimed: !!doc.is_claimed
     };
   }
 
@@ -119,7 +119,7 @@
     var offset   = (page - 1) * pageSize;
 
     try {
-      var q = sb.from('public_doctors_listed').select('*', { count: 'exact' });
+      var q = sb.from('public_doctors').select('*', { count: 'exact' });
 
       if (opts.wilaya_fr) {
         q = q.eq('wilaya_fr', opts.wilaya_fr);
@@ -170,7 +170,7 @@
     var sb = _sb();
     if (!sb || !id) return { data: null, error: 'invalid_id' };
     try {
-      var res = await sb.from('public_doctors_listed').select('*').eq('id', String(id)).maybeSingle();
+      var res = await sb.from('public_doctors').select('*').eq('id', String(id)).maybeSingle();
       if (res.error) return { data: null, error: res.error.message };
       return { data: res.data ? convertDoctor(res.data) : null, error: null };
     } catch (e) {
@@ -186,7 +186,7 @@
     var n = parseInt(legacyId, 10);
     if (!sb || !n || isNaN(n)) return { data: null, error: 'invalid_legacy_id' };
     try {
-      var res = await sb.from('public_doctors_listed').select('*').eq('legacy_id', n).maybeSingle();
+      var res = await sb.from('public_doctors').select('*').eq('legacy_id', n).maybeSingle();
       if (res.error) return { data: null, error: res.error.message };
       return { data: res.data ? convertDoctor(res.data) : null, error: null };
     } catch (e) {
@@ -203,7 +203,7 @@
     if (!sb) return { count: 0, error: 'no_client' };
     opts = opts || {};
     try {
-      var q = sb.from('public_doctors_listed').select('*', { count: 'exact', head: true });
+      var q = sb.from('public_doctors').select('*', { count: 'exact', head: true });
       if (opts.wilaya_fr) q = q.eq('wilaya_fr', opts.wilaya_fr);
       if (opts.specialty_fr) {
         var mapped = _mapSpec(opts.specialty_fr);
