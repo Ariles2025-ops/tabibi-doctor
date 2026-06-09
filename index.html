@@ -2096,6 +2096,20 @@ async function finalBooking(docId,slot,docName,prix){
     const t=new Date(); t.setDate(t.getDate()+1); return t.toISOString().split("T")[0];
   })();
 
+  // [FIX P17] Auth obligatoire AVANT tout INSERT : la RLS de public.appointments impose
+  // patient_id = auth.uid(). Sans session connectée, on n'insère pas et on n'affiche aucun succès.
+  let _patientId = null, _sbAccessToken = null;
+  try {
+    if (window.tabibi && window.tabibi.supabase) {
+      const { data: { session } } = await window.tabibi.supabase.auth.getSession();
+      if (session && session.user) { _patientId = session.user.id; _sbAccessToken = session.access_token || null; }
+    }
+  } catch(e) {}
+  if (!_patientId) {
+    toast("<i class='fa fa-triangle-exclamation'></i> Connectez-vous pour réserver un rendez-vous.", "error", 5000);
+    return;
+  }
+
   // Construire le RDV pour le storage local (rétrocompat avec affichage dashboard)
   const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   const appt={
@@ -2109,25 +2123,22 @@ async function finalBooking(docId,slot,docName,prix){
     patientPhone:u.phone||"",
     createdAt:new Date().toISOString()
   };
-  const saved=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
-  saved.unshift(appt); localStorage.setItem("tabibi_rdv",JSON.stringify(saved));
+  // [FIX P17] Écriture localStorage DÉPLACÉE dans la branche succès de l'INSERT ci-dessous
+  // (plus d'écriture optimiste) : aucun RDV local fantôme si l'INSERT échoue.
 
   // INSERT dans Supabase (source de vérité — sinon le médecin ne reçoit jamais le RDV)
-  let supabaseOk = false;
+  let supabaseOk = false, _bkServerError = null;
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
     const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
-    let token = SB_KEY;
-    if (window.tabibi && window.tabibi.supabase) {
-      const { data: { session } } = await window.tabibi.supabase.auth.getSession();
-      if (session && session.access_token) token = session.access_token;
-    }
+    const token = _sbAccessToken || SB_KEY;
     const dt = new Date(isoDate + 'T' + slot);
     const res = await fetch(SB_URL + '/rest/v1/appointments', {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: JSON.stringify({
-        doctor_id: docId,
+        patient_id: _patientId,        // [FIX P17] requis : RLS WITH CHECK patient_id=auth.uid() + NOT NULL
+        doctor_id: docId,              // inchangé = doctor_profiles.id (correct)
         scheduled_at: dt.toISOString(),
         duration_minutes: 30,
         reason: reason,
@@ -2140,25 +2151,31 @@ async function finalBooking(docId,slot,docName,prix){
     });
     if (res.ok) {
       supabaseOk = true;
-      // Récupérer l'ID Supabase et le mémoriser sur le RDV local pour les opérations futures
+      // [FIX P17] Écriture localStorage UNIQUEMENT ici (INSERT abouti), en reflétant ce que
+      // la DB a réellement écrit : id + short_id réels via Prefer:return=representation.
       try {
-        const data = await res.json();
-        if (Array.isArray(data) && data[0]) {
-          appt.sbId = data[0].id;
+        const data = await res.json().catch(()=>null);
+        const row = (Array.isArray(data) && data[0]) ? data[0] : null;
+        if (row) {
+          appt.sbId = row.id;                   // id réel DB
+          appt.shortId = row.short_id || null;  // short_id réel généré par la DB
           appt._sb = true;
-          // Re-sauvegarder le storage avec l'ID Supabase
-          const arr = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
-          arr[0] = appt;
-          localStorage.setItem("tabibi_rdv", JSON.stringify(arr));
         }
+        // Si la réponse n'est pas exploitable (row null) : on stocke appt avec les champs
+        // déjà connus côté client, SANS inventer d'id/short_id DB.
+        const arr = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
+        arr.unshift(appt);
+        localStorage.setItem("tabibi_rdv", JSON.stringify(arr));
       } catch(_) {}
       /* [FIX-PROD-2026-05-19] console.log retiré */
       // Invalider le cache des slots pour ce médecin/date
       if (window._takenSlotsCache) delete window._takenSlotsCache[docId + '|' + isoDate];
     } else {
-      console.warn('[Tabibi] INSERT appointments HTTP', res.status, await res.text().catch(()=>''));
+      _bkServerError = (await res.text().catch(()=>'')) || ('HTTP ' + res.status);
+      console.warn('[Tabibi] INSERT appointments HTTP', res.status, _bkServerError);
     }
   } catch(e) {
+    _bkServerError = (e && e.message) || 'erreur réseau';
     console.warn('[Tabibi] INSERT Supabase erreur:', e && e.message);
   }
 
@@ -2170,11 +2187,15 @@ async function finalBooking(docId,slot,docName,prix){
       return (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(isoDate), {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : new Date(isoDate).toLocaleDateString("fr-FR", {weekday:'long', day:'numeric', month:'long', year:'numeric'}));
     } catch(e) { return isoDate; }
   })();
+  // [FIX P17] Gating strict : AUCUN toast de succès si l'écriture en base a échoué.
+  if (!supabaseOk) {
+    var _bkMsg = _bkServerError ? (" (" + String(_bkServerError).slice(0, 160) + ")") : "";
+    toast("<i class='fa fa-triangle-exclamation'></i> Échec de la réservation — le rendez-vous n'a PAS été enregistré." + _bkMsg, "error", 8000);
+    return;
+  }
   toast(T("rdv_ok"), "success", 4000);
   setTimeout(()=>{
-    if (supabaseOk) {
-      toast("<i class='fa fa-bell'></i> Le médecin a été notifié", "info", 3500);
-    }
+    toast("<i class='fa fa-bell'></i> Le médecin a été notifié", "info", 3500);
     toast("<i class='fa fa-calendar-days'></i> RDV confirmé pour le " + dateLbl + " à " + slot, "success", 5000);
   }, 800);
 }
