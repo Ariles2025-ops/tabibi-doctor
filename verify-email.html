@@ -86,12 +86,17 @@
 
   <div class="vm-actions">
     <a href="login.html" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> J'ai confirmé, me connecter</a>
+    <button type="button" id="vm-resend" class="btn btn-ghost btn-lg" onclick="resendConfirmation()"><i class='fa fa-paper-plane'></i> <span id="vm-resend-label">Renvoyer l'email de confirmation</span></button>
+    <span id="vm-resend-msg" role="status" aria-live="polite" style="font-size:13px;color:var(--text2);min-height:18px;display:block"></span>
     <a href="index.html" class="btn btn-ghost btn-lg"><i class='fa fa-home'></i> Retour à l'accueil</a>
   </div>
 
 </div>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script>
 (function(){
   // Récup email + role depuis query string
@@ -107,6 +112,88 @@
     var extra = document.getElementById('vm-medecin-extra');
     if(extra) extra.classList.remove('hidden');
   }
+
+  // [B5] Libellé bouton resend via i18n si dispo (sinon fallback FR déjà dans le HTML)
+  try {
+    if (typeof tabibiT === 'function') {
+      var _lbl0 = document.getElementById('vm-resend-label');
+      if (_lbl0) _lbl0.textContent = tabibiT('resend_confirm_email', "Renvoyer l'email de confirmation");
+    }
+  } catch(_) {}
+
+  // [B5] Renvoi de l'email de confirmation (auth.resend type:'signup') + cooldown 60s anti-429.
+  var _vmCooldown = false;
+  function _setMsg(txt, kind){
+    var m = document.getElementById('vm-resend-msg');
+    if(!m) return;
+    m.textContent = txt || '';
+    m.style.color = (kind === 'error') ? 'var(--red)'
+                  : (kind === 'success') ? 'var(--green-d, #0a7d3e)'
+                  : 'var(--text2)';
+  }
+  function _startCooldown(){
+    var btn = document.getElementById('vm-resend');
+    var lbl = document.getElementById('vm-resend-label');
+    if(!btn) return;
+    _vmCooldown = true;
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+    btn.style.cursor = 'not-allowed';
+    var base = lbl ? lbl.textContent : "Renvoyer l'email de confirmation";
+    var left = 60;
+    (function tick(){
+      if(lbl) lbl.textContent = base + ' (' + left + 's)';
+      left--;
+      if(left < 0){
+        _vmCooldown = false;
+        btn.disabled = false;
+        btn.style.opacity = '';
+        btn.style.cursor = '';
+        if(lbl) lbl.textContent = base;
+        return;
+      }
+      setTimeout(tick, 1000);
+    })();
+  }
+  async function resendConfirmation(){
+    if(_vmCooldown) return;
+    var mail = decodeURIComponent(getParam('email') || '');
+    if(!mail){
+      _setMsg("Adresse email introuvable — recommencez l'inscription.", 'error');
+      return;
+    }
+    var sb = window.tabibi && window.tabibi.supabase;
+    if(!sb || !sb.auth || typeof sb.auth.resend !== 'function'){
+      _setMsg("Service indisponible, réessayez dans un instant.", 'error');
+      return;
+    }
+    _setMsg('Envoi en cours…', 'info');
+    try {
+      var res = await sb.auth.resend({
+        type: 'signup',
+        email: mail,
+        options: { emailRedirectTo: location.origin + '/auth/callback.html' }
+      });
+      if(res && res.error){
+        var emsg = (res.error.message || '').toLowerCase();
+        var estatus = res.error.status || 0;
+        if(estatus === 429 || emsg.indexOf('rate limit') !== -1 || emsg.indexOf('too many') !== -1){
+          _setMsg('Patiente une minute avant de réessayer.', 'error');
+          _startCooldown();
+        } else {
+          _setMsg("Échec de l'envoi, réessayez plus tard.", 'error');
+          console.warn('[verify-email] resend error:', res.error.message || res.error);
+        }
+        return;
+      }
+      _setMsg('Email renvoyé, vérifie ta boîte (et les spams).', 'success');
+      _startCooldown();
+    } catch(e){
+      _setMsg("Échec de l'envoi, réessayez plus tard.", 'error');
+      console.warn('[verify-email] resend exception:', e && e.message);
+    }
+  }
+  window.resendConfirmation = resendConfirmation;
 })();
 </script>
 
