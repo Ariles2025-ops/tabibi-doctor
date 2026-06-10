@@ -638,7 +638,7 @@ function contactPatientByEmail(rdvId){
 }
 
 async function updateRdvStatusInSupabase(sbId, status){
-  if (!sbId) return;
+  if (!sbId) return false;
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
     const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
@@ -648,30 +648,46 @@ async function updateRdvStatusInSupabase(sbId, status){
       if (session && session.access_token) token = session.access_token;
     }
     const url = SB_URL + '/rest/v1/appointments?id=eq.' + encodeURIComponent(sbId);
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'PATCH',
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: JSON.stringify({ status: status })
     });
+    if (!res.ok) {
+      console.warn('[Tabibi/doctor] updateRdvStatus HTTP', res.status, await res.text().catch(()=>''));
+      return false;
+    }
+    const rows = await res.json().catch(()=>[]);
+    return Array.isArray(rows) && rows.length > 0;   // 0 ligne (RLS/sbId erroné) → false, pas un faux succès
   } catch(e) {
     console.warn('[Tabibi/doctor] updateRdvStatus erreur:', e && e.message);
+    return false;
   }
 }
 
-function confRdv(id){
+async function confRdv(id){
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
-  if(i>-1){r[i].status="Confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'confirmed');}
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'confirmed');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="Confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_confirmed',"RDV confirmé"),"success");renderToday();
 }
-function cancRdv(id){
+async function cancRdv(id){
   if(!confirm("Refuser ce RDV ?"))return;
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
-  if(i>-1){r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'cancelled');}
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'cancelled');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_refused',"RDV refusé"),"info");renderToday();
 }
-function markDone(id){
+async function markDone(id){
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
-  if(i>-1){r[i].status="Completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'completed');}
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'completed');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="Completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_completed',"RDV terminé"),"success");renderToday();
 }
 
