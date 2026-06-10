@@ -88,7 +88,7 @@ self.addEventListener('fetch', event => {
 
 async function networkFirst(req) {
   try {
-    const fresh = await fetch(req);
+    const fresh = await fetch(req, { cache: 'no-store' });
     const cache = await caches.open(RUNTIME_CACHE);
     cache.put(req, fresh.clone()).catch(()=>{});
     return fresh;
