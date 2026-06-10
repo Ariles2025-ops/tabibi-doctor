@@ -611,8 +611,8 @@ async function loadProfile(){
       } else {
         // Fusion : la DB gagne sur les champs gérés Phase 4, localStorage garde le reste
         if (dbProfile.bio != null) u.bio = dbProfile.bio;
-        if (dbProfile.phone != null) u.phone = dbProfile.phone;
-        if (dbProfile.address != null) u.addr = dbProfile.address;
+        if (!u.phone && dbProfile.phone != null) u.phone = dbProfile.phone;
+        if (!u.addr && dbProfile.address != null) u.addr = dbProfile.address;
         if (dbProfile.consultation_fee_dzd != null) u.price = String(dbProfile.consultation_fee_dzd);
         if (Array.isArray(dbProfile.languages)) {
           u.lang_fr = dbProfile.languages.indexOf('FR') !== -1;
@@ -629,7 +629,6 @@ async function loadProfile(){
         u._accepts_card = !!dbProfile.accepts_card;
         u._accepts_cash = dbProfile.accepts_cash !== false; // default true
         u._db_doctor_id = dbProfile.id;
-        u._db_full_name = dbProfile.full_name;
         try { localStorage.setItem("tabibi_user", JSON.stringify(u)); } catch (e) {}
         // [Phase 16.5] Check docs manquants → banner recovery
         _checkDocsMissing(dbProfile.id);
@@ -655,7 +654,7 @@ async function loadProfile(){
   } else {
     document.getElementById("ava").textContent=u.initials||"?";
   }
-  document.getElementById("pname").textContent=u._db_full_name || u.name || "Dr. Médecin";
+  document.getElementById("pname").textContent=u.name || "Dr. Médecin";
   document.getElementById("pspec").textContent=[u.specialty,u.ville].filter(Boolean).join(" · ");
   const parts=(u.name||"").replace(/^Dr\.?\s+/,"").split(" ");
   f_first.value=parts[0]||""; f_last.value=parts.slice(1).join(" ")||"";
