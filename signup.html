@@ -595,11 +595,25 @@ function toastM(m,t){const c=document.getElementById("toast-container");const co
 // [Phase 1 2026-05-21] Auto-sélectionne le rôle médecin si l'utilisateur arrive
 // depuis le bandeau "Réclamer ma fiche" (URL ?role=medecin&claim_legacy_id=N).
 // Affiche aussi un bandeau info en haut du form pour confirmer la démarche.
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
   try {
     var claimLegacyId = _getClaimLegacyIdFromUrl();
     var roleParam = _getRoleFromUrl();
     if (claimLegacyId && (roleParam === 'medecin' || roleParam == null)) {
+      // [B2] Médecin DÉJÀ connecté arrivant sur un lien de claim → NE PAS afficher le
+      // formulaire de création de compte (dead-end "email déjà utilisé") : router vers
+      // le formulaire de claim authentifié (doctor-claim.html prend le relais via ?legacy_id).
+      try {
+        var _sb = window.tabibi && window.tabibi.supabase;
+        if (_sb && _sb.auth && typeof _sb.auth.getSession === 'function') {
+          var _sres = await _sb.auth.getSession();
+          var _sess = _sres && _sres.data && _sres.data.session;
+          if (_sess && _sess.user) {
+            location.href = 'doctor-claim.html?legacy_id=' + encodeURIComponent(claimLegacyId);
+            return;
+          }
+        }
+      } catch (e2) { console.warn('[signup] B2 session check', e2 && e2.message); }
       // Sélectionne le bouton médecin programmatiquement
       var medBtn = document.querySelector('.role-btn[onclick*="medecin"]');
       if (medBtn) {

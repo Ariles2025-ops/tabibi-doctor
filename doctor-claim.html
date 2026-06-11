@@ -492,6 +492,25 @@ document.addEventListener('DOMContentLoaded', function(){
   _populateDropdowns();
   // Premier load : afficher quelques exemples + count
   dcSearch();
+  // [B2] Deep-link ?legacy_id=N (ou ?claim_legacy_id=N) → pré-ouvre la modale de claim
+  // pour un médecin connecté arrivant depuis son espace (sans recherche manuelle).
+  // L'upload des docs + la confirmation restent obligatoires (dcSubmit).
+  (function(){
+    function _dcGetParam(k){ try { return new URL(location.href).searchParams.get(k) || ''; } catch(e){ return ''; } }
+    var _pre  = _dcGetParam('legacy_id') || _dcGetParam('claim_legacy_id');
+    var _preN = parseInt(_pre, 10);
+    if(!_preN || isNaN(_preN) || _preN < 1) return;
+    fetch(_SB_URL + '/rest/v1/public_doctors?select=full_name&legacy_id=eq.' + _preN + '&limit=1', {
+      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY }
+    }).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
+      var fiche = (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+      if(fiche && typeof dcOpenModal === 'function'){
+        dcOpenModal(_preN, fiche.full_name || ('Fiche #' + _preN));
+      } else {
+        console.warn('[doctor-claim] B2 deep-link: fiche legacy_id=' + _preN + ' introuvable → recherche par défaut.');
+      }
+    }).catch(function(e){ console.warn('[doctor-claim] B2 deep-link fetch error', e && e.message); });
+  })();
   // [Phase 14.1-fix] Event delegation pour les boutons "C'est moi". Attaché
   // UNE seule fois sur le container parent (immuable). Lit data-claim-* du
   // bouton cliqué et appelle dcOpenModal. Marche même si re-render des
