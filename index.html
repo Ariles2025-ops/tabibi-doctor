@@ -1721,7 +1721,7 @@ Object.assign(window,{
 
 /* ═══ PAGE LOGIC ═══════════════════════════════════════════ */
 let filtered=[], curPage=1;
-const PER=6;
+const PER=50;
 
 function populateSelects(){
   const vs=document.getElementById("f-ville"),ss=document.getElementById("f-spec");
@@ -1828,23 +1828,18 @@ function filterBySpec(name){
 
 function renderDocs(){
   const box=document.getElementById("docs-list");
-  // [i18n] Masque à l'affichage les fiches dont le nom rendu (FR) est en écriture arabe
-  // (full_name scrapé en arabe). Purement visuel : ne modifie PAS `filtered` (recherche/filtres/compteurs globaux inchangés).
-  const visible = filtered.filter(function(d){
-    return !(window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(d.fr));
-  });
-  if(!visible.length){
+  if(!filtered.length){
     box.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class='fa fa-magnifying-glass'></i></div><div class="empty-title">${T("no_docs")}</div><p class="empty-sub">${T("try_other")}</p></div>`;
     document.getElementById("pag").innerHTML=""; return;
   }
-  const pages=Math.ceil(visible.length/PER);
-  const paged=visible.slice((curPage-1)*PER,curPage*PER);
-  box.innerHTML=paged.map(d=>docCard(d)).join("");
+  // Pagination SERVEUR : le batch EST déjà la page ; nb pages = total serveur / PER
+  const pages=Math.ceil(_lastDoctorTotal/PER);
+  box.innerHTML=filtered.map(d=>docCard(d)).join("");
   const pag=document.getElementById("pag");
   pag.innerHTML = pages>1 ? buildPagination(curPage, pages) : "";
 }
 
-function goPage(p){curPage=p;renderDocs();scrollTo$("sec-docs");}
+function goPage(p){loadDoctorCards(_lastFilterOpts, p);scrollTo$("sec-docs");}
 
 function buildPagination(cur, total){
   // Style Google : 1 ... cur-2 cur-1 cur cur+1 cur+2 ... total
@@ -2614,12 +2609,13 @@ function _buildDoctorCardsUrl(opts){
   // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
   // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
   q.set('order', 'full_name.asc');
-  q.set('limit', '20');
+  q.set('full_name', 'not.match.[؀-ۿ]');  // exclut les noms en écriture arabe (U+0600–U+06FF) côté serveur
   return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
 }
 
-async function loadDoctorCards(opts){
+async function loadDoctorCards(opts, page){
   opts = opts || {};
+  page = page || 1;
   _lastFilterOpts = opts;
 
   // Annule un fetch en vol si l'user retape
@@ -2640,7 +2636,7 @@ async function loadDoctorCards(opts){
         'Authorization':'Bearer ' + _SB_KEY,
         'Prefer':       'count=exact',
         'Range-Unit':   'items',
-        'Range':        '0-19'
+        'Range':        ((page-1)*PER) + '-' + (page*PER - 1)
       },
       signal: signal
     });
@@ -2729,7 +2725,7 @@ async function loadDoctorCards(opts){
       res2 = res2.filter(d => d.prix == null || d.prix < 2000);
     }
 
-    filtered = res2; curPage = 1;
+    filtered = res2; curPage = page;
     renderDocs();
     _updateResCount(total, res2.length, opts);
   } catch(e) {
