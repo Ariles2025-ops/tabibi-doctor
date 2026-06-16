@@ -703,8 +703,8 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hs-n" id="hero-doc-count">0</div><div class="hs-l" id="hs1" data-i18n="nav_doctors">Médecins</div></div>
-        <div class="hero-stat"><div class="hs-n">48</div><div class="hs-l" id="hs2">Wilayas</div></div>
-        <div class="hero-stat"><div class="hs-n">4.8 <i class='fa fa-star' style='color:#f59e0b;font-size:.7em'></i></div><div class="hs-l" id="hs4" data-i18n="hs4">Note moy.</div></div>
+        <div class="hero-stat"><div class="hs-n">69</div><div class="hs-l" id="hs2">Wilayas</div></div>
+        <div class="hero-stat"><div class="hs-n">24/7</div><div class="hs-l" id="hs4">Réservation</div></div>
       </div>
     </div>
       <!-- AUTH CTA — visible si pas connecté (script en bas le masquera si user existe) -->
@@ -774,7 +774,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <div style="padding:0 16px">
       <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r20);padding:28px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
         <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins référencés</div></div>
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">48</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas couvertes</div></div>
+        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">69</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas couvertes</div></div>
       </div>
     </div>
   </section>
@@ -2833,7 +2833,7 @@ function _updateDocCounterUI() {
   // Badge double : X certifiés (public_doctors_listed) + N indexés (public_doctors)
   if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مفهرس في الجزائر'
                             : lang === 'en' ? _fc + ' certified · ' + _fi + ' indexed in Algeria'
-                            :                 _fc + ' médecins certifiés · ' + _fi + ' indexés en Algérie';
+                            :                 _fc + ' médecin'+(_cert>1?'s':'')+' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' indexé'+(_idx>1?'s':'') + ' en Algérie';
   var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fi;
   var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fi;
   var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fi;
