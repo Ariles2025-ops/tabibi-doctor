@@ -76,7 +76,7 @@
   <!-- BELL NOTIFICATIONS -->
   <button class="btn btn-icon btn-icon-sm notif-bell" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
     <i class="fa fa-bell" style="font-size:14px"></i>
-    <span class="notif-badge" id="notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
+    <span class="notif-badge" id="notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">0</span>
   </button>
   <!-- USER MENU -->
   <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0F7560,#0a4d3e);color:#fff;font-weight:800;font-size:13px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(15,117,96,.4);display:flex;align-items:center;justify-content:center"><span id="user-init"><i class="fa fa-user" style="font-size:14px"></i></span></button>
@@ -634,7 +634,7 @@ async function confirmBooking(){const reason=document.getElementById("bk-reason"
   }catch(e){console.warn('[Tabibi] RDV local seulement:',e);}
   showBookingStep(3);
   // Notif push
-  const n=getNotifs();n.unshift({id:Date.now(),type:"rdv",icon:"fa-calendar-check",color:"var(--blue)",title:"RDV confirmé",msg:`${bookingDoc.fr} — ${bookingDate} à ${bookingTime}`,time:"à l'instant",unread:true});localStorage.setItem("tabibi_notifs",JSON.stringify(n));renderNotifs();
+  const n=getNotifs();n.unshift({id:Date.now(),type:"rdv",icon:"fa-calendar-plus",color:"var(--blue)",title:"Demande de RDV envoyée",msg:`${bookingDoc.fr} — ${bookingDate} à ${bookingTime} · en attente de confirmation`,time:"à l'instant",unread:true});localStorage.setItem("tabibi_notifs",JSON.stringify(n));renderNotifs();
 }
 
 /* ─── MES RDV ─── */
