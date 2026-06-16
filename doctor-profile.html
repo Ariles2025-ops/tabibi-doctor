@@ -414,6 +414,9 @@ async function loadDoc(){
     }
     document.getElementById("d-name").textContent = d.fr || 'Dr ?';
     document.getElementById("d-spec").innerHTML = '<i class="fa fa-stethoscope fa-xs"></i> ' + esc(d.spec || '') + ' &middot; ' + esc(d.ville || '');
+    var _dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(d.fr)) ? 'rtl' : 'ltr';
+    var _nm = document.getElementById("d-name"); _nm.setAttribute('dir',_dir); _nm.setAttribute('data-rtl-keep','true');
+    if(_dir==='rtl'){ var _sp=document.getElementById("d-spec"); _sp.setAttribute('dir','rtl'); _sp.setAttribute('data-rtl-keep','true'); }
     // [Phase 13b] Note : null si pas notée → masque stars + "Pas encore noté"
     var starsEl = document.getElementById("d-stars");
     var noteEl  = document.getElementById("d-note");

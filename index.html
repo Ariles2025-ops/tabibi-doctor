@@ -1871,6 +1871,8 @@ function buildPagination(cur, total){
 
 function docCard(d){
   const n=dname(d),s=dspec(d),c=dcity(d),fav=isFav(d.id);
+  const dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(n)) ? 'rtl' : 'ltr';
+  const rk  = (dir==='rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
   // [Phase 13] Avatar : photo_url si dispo (vide en M0, sera rempli au claim médecin),
   // sinon initiales sur fond coloré (existant).
   const avaHtml = d.photoUrl
@@ -1883,9 +1885,9 @@ function docCard(d){
     <div class="doc-row">
       ${avaHtml}
       <div style="flex:1;min-width:0">
-        <div class="doc-name">${n}</div>
-        <div class="doc-spec"><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
-        <div class="doc-loc"><i class='fa fa-location-dot fa-xs'></i>${c}</div>
+        <div class="doc-name" dir="${dir}" data-rtl-keep="true">${n}</div>
+        <div class="doc-spec"${rk}><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
+        <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${c}</div>
       </div>
     </div>
     <div class="doc-stars">
