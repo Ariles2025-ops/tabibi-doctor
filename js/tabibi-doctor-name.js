@@ -26,7 +26,7 @@
 (function () {
   'use strict';
 
-  if (window.tabibiDoctorName && typeof window.tabibiDoctorName.format === 'function') {
+  if (window.tabibiDoctorName && typeof window.tabibiDoctorName.dirFor === 'function') {
     return;
   }
 
