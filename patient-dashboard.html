@@ -924,6 +924,11 @@ const FAQ=[
 function openHelp(){closeMenus();const html=FAQ.map(([q,a],i)=>`<details style="border-bottom:1px solid var(--border);padding:12px 0"><summary style="cursor:pointer;font-weight:600;font-size:13px">${q}</summary><p style="font-size:12px;color:var(--text3);margin-top:8px;line-height:1.5">${a}</p></details>`).join("");document.getElementById("faq-list").innerHTML=html;document.getElementById("help-modal").classList.remove("hidden");document.body.style.overflow="hidden";}
 
 document.addEventListener("DOMContentLoaded", async ()=>{
+  // [B3] Garde de rôle : un médecin (rôle en cache) ne reste pas sur l'espace patient.
+  try {
+    var _r=(JSON.parse(localStorage.getItem('tabibi_user')||'{}').role||'').toLowerCase();
+    if(_r==='medecin'||_r==='doctor'||_r==='médecin'){ location.replace('doctor-dashboard.html'); return; }
+  } catch(e){}
   // [FIX session] Garde centralisée réseau-aware (remplace l'ancien waitForUser cache-first).
   // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si la
   // session est morte (refresh token invalide) ; mode dégradé offline si token encore valide.

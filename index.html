@@ -1412,7 +1412,7 @@ function renderUserUI() {
     return;
   }
   const rc={patient:T("patient_role"),medecin:T("medecin_role"),admin:T("admin_role")};
-  const r=user.role||"patient",lbl=rc[r]||r;
+  const r=(user.role||"").toLowerCase(),lbl=rc[r]||(r?r:"");
   const bg=user.avatar?.bg||"#dcfce7",tc=user.avatar?.tc||"#0a4d3e";
   const pill=`
     <div onclick="goDash()" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:var(--rfull);border:1.5px solid var(--border);cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
