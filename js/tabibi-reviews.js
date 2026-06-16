@@ -167,9 +167,12 @@
       return data;
     },
     async getMyReviewableAppointments() {
-      const { data, error } = await sb.from('my_reviewable_appointments').select('*');
-      if (error) { console.error('[reviews] reviewable', error); return []; }
-      return data || [];
+      // [console-noise] Vue `my_reviewable_appointments` pas encore créée en prod (cf SQL_TODO-011).
+      // Court-circuit pour éviter le 404 + console.error à chaque load. Réactiver le corps quand la vue existe.
+      return [];
+      // const { data, error } = await sb.from('my_reviewable_appointments').select('*');
+      // if (error) { console.error('[reviews] reviewable', error); return []; }
+      // return data || [];
     },
     async getMyReviews() {
       const session = await window.tabibi.auth.getSession();
