@@ -245,11 +245,13 @@ function _renderResults(res){
     var name = DN ? DN.format(d) : (d.full_name || 'Praticien');
     var ini  = DN ? DN.initials(d) : _initialsOf(d.full_name);
     var meta = _esc((d.specialty_fr||'') + ' · ' + (d.city ? (d.city+', ') : '') + (d.wilaya_fr||''));
+    var dir  = DN ? DN.dirFor(d) : 'ltr';
+    var metaDir = (dir === 'rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
     return '<article class="dc-card" data-id="'+_esc(d.id)+'">'
          +   '<div class="ava">'+_esc(ini)+'</div>'
          +   '<div class="body">'
-         +     '<div class="name">'+_esc(name)+'</div>'
-         +     '<div class="meta">'+meta+'</div>'
+         +     '<div class="name" dir="'+dir+'" data-rtl-keep="true">'+_esc(name)+'</div>'
+         +     '<div class="meta"'+metaDir+'>'+meta+'</div>'
          +     '<button type="button" class="btn-claim" data-claim-legacy="'+_esc(d.legacy_id)+'" data-claim-name="'+_esc(name)+'">'
          +       '<i class="fa fa-id-card"></i> C\'est moi, je veux réclamer'
          +     '</button>'

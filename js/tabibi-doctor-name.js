@@ -99,11 +99,23 @@
     return s ? s.toUpperCase() : '?';
   }
 
+  // [RTL] true si la chaîne contient au moins un caractère arabe (plage U+0600–U+06FF).
+  function isArabic(str) {
+    return /[\u0600-\u06FF]/.test(String(str || ''));
+  }
+
+  // [RTL] direction d'écriture pour le nom RÉELLEMENT rendu (rawName, mode fr par défaut).
+  function dirFor(profile) {
+    return isArabic(rawName(profile)) ? 'rtl' : 'ltr';
+  }
+
   window.tabibiDoctorName = {
     format: format,
     formatForLang: formatForLang,
     rawName: rawName,
     initials: initials,
+    isArabic: isArabic,
+    dirFor: dirFor,
     // Exposé pour debug / extension future
     _NON_DOCTOR_ENTITIES: NON_DOCTOR_ENTITIES.slice()
   };
