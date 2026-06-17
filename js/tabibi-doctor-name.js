@@ -43,7 +43,9 @@
     // pharmacy/optician/clinic/dentist/lab (autres). On range optician
     // côté NON_DOCTOR (opticien = profession non médicale). dentist reste
     // doctor par défaut (personne physique exerçant) → préfixe "Dr.".
-    'optician', 'opticien'
+    'optician', 'opticien',
+    // [clean] valeurs base supplémentaires (non-docteur → pas de "Dr.")
+    'paramedical', 'health_center'
   ];
 
   function _norm(t) {
@@ -64,7 +66,16 @@
     var n = _pickName(profile, lang || 'fr');
     if (!n) return 'Praticien';
     // Strip un éventuel préfixe "Dr." déjà présent pour éviter "Dr. Dr. X"
-    return n.replace(/^(Dr\.?|Docteur)\s+/i, '').trim() || 'Praticien';
+    var name = n.replace(/^(Dr\.?|Docteur)\s+/i, '').trim();
+    // [clean-display] Nettoie les caractères parasites — AFFICHAGE SEULEMENT,
+    // ne réécrit JAMAIS profile.full_name ni la base.
+    name = String(name)
+      .replace(/^[\s\-–—_.،٫ـ]+/, '')   // vire parasites EN TÊTE
+      .replace(/[\s\-–—_.،٫ـ]+$/, '')   // vire parasites EN FIN
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (!name) name = 'Praticien';
+    return name;
   }
 
   // Décide si on doit préfixer "Dr." selon entity_type.
