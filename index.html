@@ -1,20 +1,30 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
+<script>
+(function () {
+  try {
+    var h = window.location.hash || '';
+    if (/[#&]type=recovery/.test(h) && window.location.pathname.indexOf('reset-password') === -1) {
+      window.location.replace('/reset-password.html' + h);
+    }
+  } catch (e) {}
+})();
+</script>
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script>
 <script src="js/tabibi-security.js"></script>
 <script src="js/tabibi-avatar.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <!-- SEO -->
-<meta name="description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins certifiés, toutes spécialités, 48 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
+<meta name="description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins référencés, toutes spécialités, 58 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
 <link rel="canonical" href="https://tabibi.doctor/">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <!-- Open Graph -->
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tabibi.doctor/">
 <meta property="og:title" content="Tabibi — Médecin en ligne Algérie | RDV en quelques clics">
-<meta property="og:description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins certifiés, toutes spécialités, 48 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
+<meta property="og:description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins référencés, toutes spécialités, 58 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
 <meta property="og:image" content="https://tabibi.doctor/assets/og-image.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,7 +36,7 @@
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Tabibi — Médecin en ligne Algérie | RDV en quelques clics">
-<meta name="twitter:description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins certifiés, toutes spécialités, 48 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
+<meta name="twitter:description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins référencés, toutes spécialités, 58 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
 <meta name="twitter:image" content="https://tabibi.doctor/assets/og-image.jpg">
 <meta name="twitter:image:alt" content="Tabibi — Trouvez votre médecin en Algérie">
 <!-- Hreflang -->
@@ -69,7 +79,7 @@
   "name": "Tabibi",
   "url": "https://tabibi.doctor",
   "logo": "https://tabibi.doctor/assets/og-image.png",
-  "description": "Plateforme de mise en relation entre patients et médecins certifiés en Algérie. Prise de rendez-vous en ligne 24h/24, toutes spécialités médicales, 48 wilayas couvertes.",
+  "description": "Plateforme de prise de rendez-vous en ligne avec les médecins référencés partout en Algérie. Réservation 24h/24, toutes spécialités médicales, 58 wilayas.",
   "areaServed": {
     "@type": "Country",
     "name": "Algérie"
@@ -146,7 +156,7 @@
       "name": "Quelles wilayas sont couvertes par Tabibi ?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Tabibi couvre les 48 wilayas d'Algérie, avec une présence forte à Alger, Oran, Constantine, Annaba, Sétif, Blida, Tlemcen, Béjaïa et toutes les grandes villes. La plateforme référence l'ensemble des médecins certifiés à travers tout le pays."
+        "text": "Tabibi couvre les 58 wilayas d'Algérie, avec une présence forte à Alger, Oran, Constantine, Annaba, Sétif, Blida, Tlemcen, Béjaïa et toutes les grandes villes. La plateforme référence des médecins de toutes les spécialités partout dans le pays, avec prise de rendez-vous en ligne 24h/24."
       }
     },
     {
@@ -694,17 +704,17 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- HERO -->
   <section class="hero-mobile">
     <div class="hz">
-      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin certifié + 79 746 indexés en Algérie</span></div>
+      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin en Algérie</span></div>
       <h1 class="hero-title" id="hero-t">Trouvez votre médecin en ligne en Algérie</h1>
-      <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Réservez en ligne 24h/24 auprès de médecins certifiés dans les 48 wilayas. Rapide, simple, sécurisé.</p>
+      <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Réservez en ligne 24h/24 dans les 58 wilayas. Rapide, simple, sécurisé.</p>
       <div class="hero-search-wrap">
         <i class='hero-si fa fa-search' aria-hidden='true'></i>
         <input class="hero-search" type="search" id="name-search" data-i18n="s_ph" data-i18n-placeholder="ph_hero_search" placeholder="Dr. Benali, Cardiologie, Alger..." oninput="doFilter()" autocomplete="off">
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hs-n" id="hero-doc-count">0</div><div class="hs-l" id="hs1" data-i18n="nav_doctors">Médecins</div></div>
-        <div class="hero-stat"><div class="hs-n">48</div><div class="hs-l" id="hs2">Wilayas</div></div>
-        <div class="hero-stat"><div class="hs-n">4.8 <i class='fa fa-star' style='color:#f59e0b;font-size:.7em'></i></div><div class="hs-l" id="hs4" data-i18n="hs4">Note moy.</div></div>
+        <div class="hero-stat"><div class="hs-n">58</div><div class="hs-l" id="hs2">Wilayas</div></div>
+        <div class="hero-stat"><div class="hs-n">24/7</div><div class="hs-l" id="hs4">Réservation</div></div>
       </div>
     </div>
       <!-- AUTH CTA — visible si pas connecté (script en bas le masquera si user existe) -->
@@ -752,7 +762,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- DOCTORS -->
   <section class="section" id="sec-docs">
     <div class="sec-hdr">
-      <h2 class="sec-title" id="st-docs">Médecins certifiés en Algérie</h2>
+      <h2 class="sec-title" id="st-docs">Médecins référencés en Algérie</h2>
       <span id="res-count" style="font-size:12px;color:var(--text3)" aria-live="polite"></span>
     </div>
     <div style="display:flex;flex-direction:column;gap:12px;padding:0 16px" id="docs-list"></div>
@@ -773,8 +783,8 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <section class="section">
     <div style="padding:0 16px">
       <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r20);padding:28px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins certifiés</div></div>
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">48</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas couvertes</div></div>
+        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins référencés</div></div>
+        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">58</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas</div></div>
       </div>
     </div>
   </section>
@@ -821,12 +831,12 @@ const TR = {
     found:"médecin(s) trouvé(s)",avis_word:"avis",consult_word:"consult.",
     nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",
     login:"Connexion",signup:"Inscription",my_account:"Mon compte",logout:"Déconnexion",
-    hero_badge:"Médecins certifiés en Algérie",
+    hero_badge:"Médecins en Algérie",
     hero_title:"Trouvez votre",hero_title_em:"médecin en ligne",hero_title2:"en Algérie",
-    hero_sub:"Réservez en ligne 24h/24 auprès de médecins certifiés dans les 48 wilayas.",
+    hero_sub:"Réservez en ligne 24h/24 partout en Algérie, dans les 58 wilayas.",
     s_ph:"Dr. Benali, Cardiologie, Alger...",
     all_cities:"Toutes les wilayas",all_specs:"Toutes les spécialités",
-    chip_urg:"Urgences",chip_cert:"Certifiés",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
+    chip_urg:"Urgences",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
     step1_t:"Recherchez",step1_d:"Filtrez par nom, ville, spécialité, note et prix.",
     step2_t:"Réservez",step2_d:"Choisissez un créneau et confirmez votre RDV en ligne.",
     step3_t:"Consultez",step3_d:"Recevez un SMS de confirmation et rencontrez votre médecin.",
@@ -845,7 +855,7 @@ const TR = {
     review_ok:"Avis envoyé avec succès !",rating_req:"Sélectionnez une note",comment_req:"Ajoutez un commentaire",
     install_title:"Installer Tabibi",install_sub:"Accédez à votre médecin sans navigateur",install_btn:"Installer",
     hs1:"Médecins",hs2:"Wilayas",hs3:"Patients",hs4:"Note moy.",
-    sb1:"Médecins certifiés",sb2:"Wilayas couvertes",sb3:"Patients satisfaits",sb4:"Taux de satisfaction",
+    sb1:"Médecins référencés",sb2:"Wilayas",sb3:"Patients satisfaits",sb4:"Taux de satisfaction",
     patient_role:"Patient",medecin_role:"Médecin",admin_role:"Admin",
     today_rdv:"Consultations du jour",next_rdv:"Prochain rendez-vous",
     days_label:"jours",bonjour:"Bonjour",bonsoir:"Bonsoir",
@@ -866,7 +876,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     foot_support_24:"Support 7j/7 — 8h à 22h",
     price_max:"Prix max",
     sort_rating:"Mieux notés",sort_price_asc:"Prix ↑",sort_price_desc:"Prix ↓",sort_reviews:"Plus d'avis",
-    section_doctors_in_dz:"Médecins certifiés en Algérie",
+    section_doctors_in_dz:"Médecins référencés en Algérie",
     howto_title:"Comment prendre RDV en ligne ?",
     cta_doc_title:"Vous êtes médecin ?",
     cta_doc_sub:"Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.",
@@ -884,12 +894,12 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     found:"طبيب(ة) وُجد(ت)",avis_word:"تقييم",consult_word:"استشارة",
     nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",
     login:"دخول",signup:"تسجيل",my_account:"حسابي",logout:"خروج",
-    hero_badge:"أكثر من 2400 طبيب معتمد في الجزائر",
+    hero_badge:"أطباء في الجزائر",
     hero_title:"ابحث عن",hero_title_em:"طبيبك",hero_title2:"في كل أنحاء الجزائر",
-    hero_sub:"احجز أونلاين مع أطباء معتمدين في 48 ولاية. سريع وبسيط وآمن.",
+    hero_sub:"احجز موعدك أونلاين مع أطباء في 58 ولاية. سريع وبسيط وآمن.",
     s_ph:"د. بن علي، قلب، الجزائر...",
     all_cities:"كل الولايات",all_specs:"كل التخصصات",
-    chip_urg:"طوارئ",chip_cert:"معتمدون",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
+    chip_urg:"طوارئ",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
     step1_t:"ابحث",step1_d:"صفّ حسب الاسم والمدينة والتخصص والسعر.",
     step2_t:"احجز",step2_d:"اختر وقتاً وأكّد موعدك أونلاين.",
     step3_t:"استشر",step3_d:"احصل على تأكيد SMS والتقِ بطبيبك.",
@@ -908,7 +918,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     review_ok:"تم إرسال التقييم!",rating_req:"اختر تقييماً",comment_req:"أضف تعليقاً",
     install_title:"تثبيت طبيبي",install_sub:"الوصول إلى طبيبك بدون متصفح",install_btn:"تثبيت",
     hs1:"طبيب",hs2:"ولاية",hs3:"مريض",hs4:"التقييم",
-    sb1:"طبيب معتمد",sb2:"ولاية مغطاة",sb3:"مريض راضٍ",sb4:"معدل الرضا",
+    sb1:"طبيب مُدرج",sb2:"ولاية",sb3:"مريض راضٍ",sb4:"معدل الرضا",
     patient_role:"مريض",medecin_role:"طبيب",admin_role:"مدير",
     today_rdv:"استشارات اليوم",next_rdv:"الموعد القادم",
     days_label:"أيام",bonjour:"صباح الخير",bonsoir:"مساء الخير",
@@ -929,7 +939,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     foot_support_24:"الدعم 7/7 — من 8 إلى 22",
     price_max:"السعر الأقصى",
     sort_rating:"الأعلى تقييماً",sort_price_asc:"السعر ↑",sort_price_desc:"السعر ↓",sort_reviews:"الأكثر تقييماً",
-    section_doctors_in_dz:"أطباء معتمدون في الجزائر",
+    section_doctors_in_dz:"أطباء مُدرجون في الجزائر",
     howto_title:"كيف تحجز موعدك عبر الإنترنت؟",
     cta_doc_title:"هل أنت طبيب؟",
     cta_doc_sub:"انضم إلى طبيبي وطوّر قاعدة مرضاك عبر الإنترنت. تسجيل مجاني لمدة 30 يومًا.",
@@ -947,12 +957,12 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     found:"doctor(s) found",avis_word:"reviews",consult_word:"consult.",
     nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",
     login:"Sign in",signup:"Sign up",my_account:"My account",logout:"Log out",
-    hero_badge:"14,500+ certified doctors in Algeria",
+    hero_badge:"Doctors across Algeria",
     hero_title:"Find your",hero_title_em:"doctor",hero_title2:"across Algeria",
-    hero_sub:"Book online 24/7 with certified doctors across all 48 wilayas.",
+    hero_sub:"Book appointments online 24/7 across all 58 wilayas.",
     s_ph:"Dr. Benali, Cardiology, Algiers...",
     all_cities:"All cities",all_specs:"All specialties",
-    chip_urg:"Urgent",chip_cert:"Certified",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
+    chip_urg:"Urgent",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
     step1_t:"Search",step1_d:"Filter by name, city, specialty, rating and price.",
     step2_t:"Book",step2_d:"Choose a slot and confirm your appointment online.",
     step3_t:"Consult",step3_d:"Get an SMS confirmation and meet your doctor.",
@@ -971,7 +981,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     review_ok:"Review sent successfully!",rating_req:"Please select a rating",comment_req:"Add a comment",
     install_title:"Install Tabibi",install_sub:"Access your doctor without a browser",install_btn:"Install",
     hs1:"Doctors",hs2:"Wilayas",hs3:"Patients",hs4:"Avg. rating",
-    sb1:"Certified doctors",sb2:"Wilayas covered",sb3:"Happy patients",sb4:"Satisfaction rate",
+    sb1:"Referenced doctors",sb2:"Wilayas",sb3:"Happy patients",sb4:"Satisfaction rate",
     patient_role:"Patient",medecin_role:"Doctor",admin_role:"Admin",
     today_rdv:"Today's consultations",next_rdv:"Next appointment",
     days_label:"days",bonjour:"Good morning",bonsoir:"Good evening",
@@ -992,7 +1002,7 @@ nav_doctors:"Doctors",cta_login:"Sign in",cta_signup:"Sign up",
     foot_support_24:"Support 7/7 — 8am to 10pm",
     price_max:"Max price",
     sort_rating:"Top rated",sort_price_asc:"Price ↑",sort_price_desc:"Price ↓",sort_reviews:"Most reviewed",
-    section_doctors_in_dz:"Certified doctors in Algeria",
+    section_doctors_in_dz:"Referenced doctors in Algeria",
     howto_title:"How to book online?",
     cta_doc_title:"Are you a doctor?",
     cta_doc_sub:"Join Tabibi and grow your patient base online. Free sign-up for 30 days.",
@@ -1412,7 +1422,7 @@ function renderUserUI() {
     return;
   }
   const rc={patient:T("patient_role"),medecin:T("medecin_role"),admin:T("admin_role")};
-  const r=user.role||"patient",lbl=rc[r]||r;
+  const r=(user.role||"").toLowerCase(),lbl=rc[r]||(r?r:"");
   const bg=user.avatar?.bg||"#dcfce7",tc=user.avatar?.tc||"#0a4d3e";
   const pill=`
     <div onclick="goDash()" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:var(--rfull);border:1.5px solid var(--border);cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -1721,7 +1731,7 @@ Object.assign(window,{
 
 /* ═══ PAGE LOGIC ═══════════════════════════════════════════ */
 let filtered=[], curPage=1;
-const PER=6;
+const PER=7;
 
 function populateSelects(){
   const vs=document.getElementById("f-ville"),ss=document.getElementById("f-spec");
@@ -1733,7 +1743,6 @@ function populateSelects(){
   while (ss.children.length > 1) ss.removeChild(ss.lastChild);
 
   // [Phase 5.6 fix] Source des wilayas : DB DISTINCT si dispo, sinon CITIES.
-  // Les 48 wilayas matchent en pratique mais on privilégie la source de vérité.
   const wilayaSrc = (Array.isArray(window._DB_WILAYAS) && window._DB_WILAYAS.length)
     ? window._DB_WILAYAS : CITIES;
   wilayaSrc.forEach(c => {
@@ -1786,7 +1795,7 @@ function renderChips(){
   const prev={};
   document.querySelectorAll(".chip[data-cv]").forEach(c=>{prev[c.dataset.cv]=c.classList.contains("active");});
   document.getElementById("chips").innerHTML=[
-    {k:"chip_urg",v:"urg"},{k:"chip_cert",v:"cert"},{k:"chip_4",v:"4plus"},{k:"chip_cheap",v:"cheap"},{k:"chip_fem",v:"fem"}
+    {k:"chip_urg",v:"urg"},{k:"chip_4",v:"4plus"},{k:"chip_cheap",v:"cheap"},{k:"chip_fem",v:"fem"}
   ].map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
 }
 
@@ -1806,7 +1815,6 @@ function _readFilterUI(){
     sort:      document.getElementById("f-sort")?.value || "rating",
     maxPrice:  (maxP < 10000) ? maxP : null,   // null si user n'a pas bougé le slider
     minRating: chips.indexOf("4plus") !== -1 ? 4 : 0,
-    cert:      chips.indexOf("cert") !== -1,
     chips:     chips
   };
 }
@@ -1834,14 +1842,14 @@ function renderDocs(){
     box.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class='fa fa-magnifying-glass'></i></div><div class="empty-title">${T("no_docs")}</div><p class="empty-sub">${T("try_other")}</p></div>`;
     document.getElementById("pag").innerHTML=""; return;
   }
-  const pages=Math.ceil(filtered.length/PER);
-  const paged=filtered.slice((curPage-1)*PER,curPage*PER);
-  box.innerHTML=paged.map(d=>docCard(d)).join("");
+  // Pagination SERVEUR : le batch EST déjà la page ; nb pages = total serveur / PER
+  const pages=Math.ceil(_lastDoctorTotal/PER);
+  box.innerHTML=filtered.map(d=>docCard(d)).join("");
   const pag=document.getElementById("pag");
   pag.innerHTML = pages>1 ? buildPagination(curPage, pages) : "";
 }
 
-function goPage(p){curPage=p;renderDocs();scrollTo$("sec-docs");}
+function goPage(p){loadDoctorCards(_lastFilterOpts, p);scrollTo$("sec-docs");}
 
 function buildPagination(cur, total){
   // Style Google : 1 ... cur-2 cur-1 cur cur+1 cur+2 ... total
@@ -1873,6 +1881,8 @@ function buildPagination(cur, total){
 
 function docCard(d){
   const n=dname(d),s=dspec(d),c=dcity(d),fav=isFav(d.id);
+  const dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(n)) ? 'rtl' : 'ltr';
+  const rk  = (dir==='rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
   // [Phase 13] Avatar : photo_url si dispo (vide en M0, sera rempli au claim médecin),
   // sinon initiales sur fond coloré (existant).
   const avaHtml = d.photoUrl
@@ -1885,9 +1895,9 @@ function docCard(d){
     <div class="doc-row">
       ${avaHtml}
       <div style="flex:1;min-width:0">
-        <div class="doc-name">${n}</div>
-        <div class="doc-spec"><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
-        <div class="doc-loc"><i class='fa fa-location-dot fa-xs'></i>${c}</div>
+        <div class="doc-name" dir="${dir}" data-rtl-keep="true">${n}</div>
+        <div class="doc-spec"${rk}><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
+        <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${c}</div>
       </div>
     </div>
     <div class="doc-stars">
@@ -1905,9 +1915,11 @@ function docCard(d){
     </div>
     <div class="doc-footer">
       <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
-      ${(d.claimed && d.validationStatus && d.validationStatus !== 'approved')
-        ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> Validation en cours</span>`
-        : `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')"><i class='fa fa-calendar-plus'></i>${T("rdv")}</button>`
+      ${(d.claimed && d.validationStatus === 'approved')
+        ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')"><i class='fa fa-calendar-plus'></i>${T("rdv")}</button>`
+        : (d.claimed
+          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> Validation en cours</span>`
+          : '')
       }
     </div>
   </article>`;
@@ -1923,9 +1935,9 @@ function bookDoc(id){
   if(!isLogged()){openModal("login");toast(T("conn_req"),"info");return;}
   const d=DOCTORS.find(x=>x.id===id);
   if(!d) return;
-  // [Phase 16.4] garde paranoïaque validation
-  if(d.claimed && d.validationStatus && d.validationStatus !== 'approved'){
-    toast("Ce médecin est en cours de validation.","info"); return;
+  // [Phase 16.4 / P1.6b] garde : réservable SSI fiche claimed + approved
+  if(!(d.claimed && d.validationStatus === 'approved')){
+    toast(d.claimed ? "Ce médecin est en cours de validation." : "Ce médecin n'a pas encore activé les RDV en ligne.","info"); return;
   }
   showBookingModal(d);
 }
@@ -1994,9 +2006,15 @@ function showDoctorModal(d){
 
   // Re-render des slots (utilise getTakenSlots qui consulte le cache)
   function renderProfileSlots(){
-    const taken = getTakenSlots(d.id);
     const el = document.getElementById("prof-slots");
     if (!el) return;
+    // [P1.6b] Masque les créneaux générés si la fiche n'est pas claimed+approved
+    // (UX uniquement — le serveur bloque déjà la réservation via RLS).
+    if (!(d.claimed && d.validationStatus === 'approved')) {
+      el.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:6px 0">${d.claimed ? "Validation en cours — réservation bientôt disponible." : "Ce médecin n'a pas encore activé les RDV en ligne."}</div>`;
+      return;
+    }
+    const taken = getTakenSlots(d.id);
     el.innerHTML = generateSlots().map(s=>{
       const isT = taken.includes(s);
       return `<button class="slot-btn${isT?" taken":""}" onclick="${isT?"":("selectProfileSlot(this,'"+s+"')")}" ${isT?"disabled":""}>${isT?'<i class="fa fa-lock" style="font-size:10px"></i>':s}</button>`;
@@ -2021,6 +2039,11 @@ function confirmFromProfile(docId){
   if(!isLogged()){openModal("login");toast(T("conn_req"),"info");return;}
   if(!window._profileSlot){toast(T("slot_req"),"error");return;}
   const d=DOCTORS.find(x=>x.id===docId);
+  // [P1.6b] même garde que bookDoc : réservable SSI claimed + approved (UX ; le serveur bloque déjà via RLS)
+  if(!d || !(d.claimed && d.validationStatus === 'approved')){
+    toast(d && d.claimed ? "Ce médecin est en cours de validation." : "Ce médecin n'a pas encore activé les RDV en ligne.","info");
+    return;
+  }
   document.querySelectorAll(".modal-bg").forEach(m=>{m.remove();document.body.style.overflow="";});
   showBookingModal(d,window._profileSlot);
 }
@@ -2097,6 +2120,20 @@ async function finalBooking(docId,slot,docName,prix){
     const t=new Date(); t.setDate(t.getDate()+1); return t.toISOString().split("T")[0];
   })();
 
+  // [FIX P17] Auth obligatoire AVANT tout INSERT : la RLS de public.appointments impose
+  // patient_id = auth.uid(). Sans session connectée, on n'insère pas et on n'affiche aucun succès.
+  let _patientId = null, _sbAccessToken = null;
+  try {
+    if (window.tabibi && window.tabibi.supabase) {
+      const { data: { session } } = await window.tabibi.supabase.auth.getSession();
+      if (session && session.user) { _patientId = session.user.id; _sbAccessToken = session.access_token || null; }
+    }
+  } catch(e) {}
+  if (!_patientId) {
+    toast("<i class='fa fa-triangle-exclamation'></i> Connectez-vous pour réserver un rendez-vous.", "error", 5000);
+    return;
+  }
+
   // Construire le RDV pour le storage local (rétrocompat avec affichage dashboard)
   const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   const appt={
@@ -2110,25 +2147,22 @@ async function finalBooking(docId,slot,docName,prix){
     patientPhone:u.phone||"",
     createdAt:new Date().toISOString()
   };
-  const saved=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
-  saved.unshift(appt); localStorage.setItem("tabibi_rdv",JSON.stringify(saved));
+  // [FIX P17] Écriture localStorage DÉPLACÉE dans la branche succès de l'INSERT ci-dessous
+  // (plus d'écriture optimiste) : aucun RDV local fantôme si l'INSERT échoue.
 
   // INSERT dans Supabase (source de vérité — sinon le médecin ne reçoit jamais le RDV)
-  let supabaseOk = false;
+  let supabaseOk = false, _bkServerError = null;
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
     const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
-    let token = SB_KEY;
-    if (window.tabibi && window.tabibi.supabase) {
-      const { data: { session } } = await window.tabibi.supabase.auth.getSession();
-      if (session && session.access_token) token = session.access_token;
-    }
+    const token = _sbAccessToken || SB_KEY;
     const dt = new Date(isoDate + 'T' + slot);
     const res = await fetch(SB_URL + '/rest/v1/appointments', {
       method: 'POST',
       headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: JSON.stringify({
-        doctor_id: docId,
+        patient_id: _patientId,        // [FIX P17] requis : RLS WITH CHECK patient_id=auth.uid() + NOT NULL
+        doctor_id: docId,              // inchangé = doctor_profiles.id (correct)
         scheduled_at: dt.toISOString(),
         duration_minutes: 30,
         reason: reason,
@@ -2141,25 +2175,31 @@ async function finalBooking(docId,slot,docName,prix){
     });
     if (res.ok) {
       supabaseOk = true;
-      // Récupérer l'ID Supabase et le mémoriser sur le RDV local pour les opérations futures
+      // [FIX P17] Écriture localStorage UNIQUEMENT ici (INSERT abouti), en reflétant ce que
+      // la DB a réellement écrit : id + short_id réels via Prefer:return=representation.
       try {
-        const data = await res.json();
-        if (Array.isArray(data) && data[0]) {
-          appt.sbId = data[0].id;
+        const data = await res.json().catch(()=>null);
+        const row = (Array.isArray(data) && data[0]) ? data[0] : null;
+        if (row) {
+          appt.sbId = row.id;                   // id réel DB
+          appt.shortId = row.short_id || null;  // short_id réel généré par la DB
           appt._sb = true;
-          // Re-sauvegarder le storage avec l'ID Supabase
-          const arr = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
-          arr[0] = appt;
-          localStorage.setItem("tabibi_rdv", JSON.stringify(arr));
         }
+        // Si la réponse n'est pas exploitable (row null) : on stocke appt avec les champs
+        // déjà connus côté client, SANS inventer d'id/short_id DB.
+        const arr = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
+        arr.unshift(appt);
+        localStorage.setItem("tabibi_rdv", JSON.stringify(arr));
       } catch(_) {}
       /* [FIX-PROD-2026-05-19] console.log retiré */
       // Invalider le cache des slots pour ce médecin/date
       if (window._takenSlotsCache) delete window._takenSlotsCache[docId + '|' + isoDate];
     } else {
-      console.warn('[Tabibi] INSERT appointments HTTP', res.status, await res.text().catch(()=>''));
+      _bkServerError = (await res.text().catch(()=>'')) || ('HTTP ' + res.status);
+      console.warn('[Tabibi] INSERT appointments HTTP', res.status, _bkServerError);
     }
   } catch(e) {
+    _bkServerError = (e && e.message) || 'erreur réseau';
     console.warn('[Tabibi] INSERT Supabase erreur:', e && e.message);
   }
 
@@ -2171,11 +2211,15 @@ async function finalBooking(docId,slot,docName,prix){
       return (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(isoDate), {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : new Date(isoDate).toLocaleDateString("fr-FR", {weekday:'long', day:'numeric', month:'long', year:'numeric'}));
     } catch(e) { return isoDate; }
   })();
+  // [FIX P17] Gating strict : AUCUN toast de succès si l'écriture en base a échoué.
+  if (!supabaseOk) {
+    var _bkMsg = _bkServerError ? (" (" + String(_bkServerError).slice(0, 160) + ")") : "";
+    toast("<i class='fa fa-triangle-exclamation'></i> Échec de la réservation — le rendez-vous n'a PAS été enregistré." + _bkMsg, "error", 8000);
+    return;
+  }
   toast(T("rdv_ok"), "success", 4000);
   setTimeout(()=>{
-    if (supabaseOk) {
-      toast("<i class='fa fa-bell'></i> Le médecin a été notifié", "info", 3500);
-    }
+    toast("<i class='fa fa-bell'></i> Le médecin a été notifié", "info", 3500);
     toast("<i class='fa fa-calendar-days'></i> RDV confirmé pour le " + dateLbl + " à " + slot, "success", 5000);
   }, 800);
 }
@@ -2255,7 +2299,7 @@ function showDoctorDashboardModal(){
       <div class="modal-body" style="padding-bottom:24px">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--green-l);border-radius:var(--r12);margin-bottom:16px">
           <div style="width:46px;height:46px;border-radius:var(--r16);background:${user?.avatar?.bg||"#d1fae5"};color:${user?.avatar?.tc||"#065f46"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
-          <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${user?.specialty||"Médecin"} · ${user?.ville||"Alger"}</div><span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span></div>
+          <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${[user?.specialty,user?.ville].filter(Boolean).join(" · ")}</div>${user?._validation_status==='approved'?`<span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span>`:""}</div>
         </div>
         <!-- [TODO 2026-05-18] Remplacer ces stats hardcodees par appel API Supabase
              (rdv count, sum revenus, avg rating, pending count) avant lancement public.
@@ -2319,13 +2363,13 @@ function onLangChange(){
   set('opt-sort-reviews', tr.sort_reviews || "Plus d'avis");
 
   // Titres sections
-  set('st-docs', tr.section_doctors_in_dz || 'Médecins certifiés en Algérie');
+  set('st-docs', tr.section_doctors_in_dz || 'Médecins référencés en Algérie');
   set('hiw-title', tr.howto_title || 'Comment prendre RDV en ligne ?');
   set('see-all-btn', tr.see_all || 'Voir tout →');
 
   // Stats
-  set('stats-doc-lbl', tr.sb1 || 'Médecins certifiés');
-  set('stats-wilaya-lbl', tr.sb2 || 'Wilayas couvertes');
+  set('stats-doc-lbl', tr.sb1 || 'Médecins référencés');
+  set('stats-wilaya-lbl', tr.sb2 || 'Wilayas');
 
   // CTA Médecin
   set('cta-doc-title', tr.cta_doc_title || 'Vous êtes médecin ?');
@@ -2559,7 +2603,7 @@ function _buildDoctorCardsUrl(opts){
   // Filtres serveur — uniquement colonnes présentes
   if(opts.ville)  q.set('wilaya_fr',     'eq.' + opts.ville);
   if(opts.spec)   q.set('specialty_fr',  'eq.' + opts.spec);
-  if(opts.cert)   q.set('is_verified',   'eq.true');
+  // [#3] toggle "cert"/is_verified retiré : public_doctors_listed n'expose que des fiches déjà certifiées
   if(opts.search){
     // Échapper les virgules et parenthèses pour éviter de casser l'OR PostgREST
     const safe = String(opts.search).replace(/[(),]/g,' ').trim();
@@ -2574,13 +2618,14 @@ function _buildDoctorCardsUrl(opts){
   }
   // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
   // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
-  q.set('order', 'full_name.asc');
-  q.set('limit', '20');
+  q.set('order', 'name_sort_key.asc');
+  q.set('full_name', 'not.match.[؀-ۿ]');  // exclut les noms en écriture arabe (U+0600–U+06FF) côté serveur
   return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
 }
 
-async function loadDoctorCards(opts){
+async function loadDoctorCards(opts, page){
   opts = opts || {};
+  page = page || 1;
   _lastFilterOpts = opts;
 
   // Annule un fetch en vol si l'user retape
@@ -2601,7 +2646,7 @@ async function loadDoctorCards(opts){
         'Authorization':'Bearer ' + _SB_KEY,
         'Prefer':       'count=exact',
         'Range-Unit':   'items',
-        'Range':        '0-19'
+        'Range':        ((page-1)*PER) + '-' + (page*PER - 1)
       },
       signal: signal
     });
@@ -2690,7 +2735,7 @@ async function loadDoctorCards(opts){
       res2 = res2.filter(d => d.prix == null || d.prix < 2000);
     }
 
-    filtered = res2; curPage = 1;
+    filtered = res2; curPage = page;
     renderDocs();
     _updateResCount(total, res2.length, opts);
   } catch(e) {
@@ -2705,7 +2750,7 @@ function _updateResCount(serverTotal, shownLocal, opts){
   const rc = document.getElementById('res-count');
   if(!rc) return;
   if(serverTotal === 0){
-    const filtersActive = !!(opts.ville || opts.spec || opts.search || opts.cert
+    const filtersActive = !!(opts.ville || opts.spec || opts.search
                           || opts.maxPrice != null || opts.minRating > 0
                           || (opts.chips && opts.chips.length));
     if(filtersActive){
@@ -2756,7 +2801,9 @@ document.addEventListener("DOMContentLoaded",()=>{
       var _key = _SB_KEY;
       var _h = { apikey: _key, Authorization: 'Bearer ' + _key, Prefer: 'count=exact' };
       var _res = await Promise.all([
-        fetch(_url + '/rest/v1/public_doctors?is_claimed=eq.true&select=id&limit=1', { headers: _h }),
+        // X certifiés : vue public_doctors_listed (déjà filtrée is_claimed=true AND validation_status='approved')
+        fetch(_url + '/rest/v1/public_doctors_listed?select=id&limit=1', { headers: _h }),
+        // N indexés : total brut public_doctors
         fetch(_url + '/rest/v1/public_doctors?select=id&limit=1', { headers: _h })
       ]);
       if (!_res[0].ok || !_res[1].ok) return;
@@ -2786,26 +2833,28 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 // Fallback last-known pour le compteur (affiché instantanément, remplacé par fetch async au load)
-window._tabibiBadge = { certified: 0, indexed: 79746 };
+window._tabibiBadge = { certified: 0, indexed: 0 };
 function _updateDocCounterUI() {
   var _lm = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
+  var _loc = _lm[lang] || 'fr-DZ';
   var _cert = window._tabibiBadge.certified;
-  var _idx  = window._tabibiBadge.indexed;
-  var _fc = _cert.toLocaleString(_lm[lang] || 'fr-DZ');
-  var _fi = _idx.toLocaleString(_lm[lang]  || 'fr-DZ');
+  var _idx  = window._tabibiBadge.indexed || 0;
+  var _fc = _cert.toLocaleString(_loc);
+  var _fi = _idx.toLocaleString(_loc);
   var _hb = document.getElementById('hbadge');
-  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد + ' + _fi + ' مُفهرَس في الجزائر'
-                            : lang === 'en' ? _fc + ' certified + ' + _fi + ' indexed in Algeria'
-                            :                 _fc + ' médecins certifiés + ' + _fi + ' indexés en Algérie';
-  var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fc;
-  var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fc;
-  var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fc;
+  // Badge double : X certifiés (public_doctors_listed) + N indexés (public_doctors)
+  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مفهرس في الجزائر'
+                            : lang === 'en' ? _fc + ' certified · ' + _fi + ' indexed in Algeria'
+                            :                 _fc + ' médecin'+(_cert>1?'s':'')+' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' indexé'+(_idx>1?'s':'') + ' en Algérie';
+  var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fi;
+  var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fi;
+  var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fi;
   var _fdEl = document.getElementById('foot-desc');
   if (_fdEl) _fdEl.textContent = lang === 'ar'
-    ? 'أول منصة طبية جزائرية. ' + _fc + ' طبيب معتمد + ' + _fi + ' مُفهرَس في 48 ولاية. احجز عبر الإنترنت 24/24.'
+    ? 'أول منصة طبية جزائرية. ' + _fi + ' طبيب مُدرج في 58 ولاية. احجز عبر الإنترنت 24/24.'
     : lang === 'en'
-    ? '1st Algerian medical platform. ' + _fc + ' certified + ' + _fi + ' indexed doctors across 48 wilayas. Book online 24/7.'
-    : 'La 1ère plateforme médicale algérienne. ' + _fc + ' médecins certifiés + ' + _fi + ' indexés dans 48 wilayas. Réservez en ligne 24h/24.';
+    ? '1st Algerian medical platform. ' + _fi + ' referenced doctors across 58 wilayas. Book online 24/7.'
+    : 'La 1ère plateforme médicale algérienne. ' + _fi + ' médecins référencés dans 58 wilayas. Réservez en ligne 24h/24.';
 }
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
 window.filterBySpec=filterBySpec; window.onLangChange=onLangChange;
@@ -2849,7 +2898,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0F7560,#0F7560);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">T</div>
       <div><div style="font-weight:800;font-size:18px;color:#0F7560">Tabibi <span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></div><div style="font-size:11px;color:#64748b;font-family:'Cairo',sans-serif">طبيبي</div></div>
     </div>
-    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">0</span> médecin certifié + 79 746 indexés dans 48 wilayas. Réservez en ligne 24h/24.</p>
+    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">0</span> médecin dans 58 wilayas. Réservez en ligne 24h/24.</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
       <div>
@@ -2865,7 +2914,6 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
         <a href="doctor-claim.html" style="display:block;font-size:12px;color:#0F7560;font-weight:700;padding:4px 0;text-decoration:none"><i class="fa fa-id-card fa-xs" style="margin-right:4px"></i><span data-i18n="foot_claim_fiche">Réclamer ma fiche</span></a>
         <a href="onboarding-medecin.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="foot_become">Devenir partenaire</span></a>
         <a href="doctor-dashboard.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="foot_pro_space">Espace pro</span></a>
-        <a href="#" class="link-disabled" title="Bientôt disponible" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span id="foot-pro-pricing">Tabibi PRO 5 000 DA/mois</span> · <span class="foot-soon">Bientôt</span></a>
         <a href="#" class="link-disabled" title="Bientôt disponible" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span id="foot-doc-docs">Documentation</span> · <span class="foot-soon">Bientôt</span></a>
       </div>
     </div>
@@ -2887,21 +2935,6 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       </div>
     </div>
 
-    <!-- Wave 4 (2026-05-19) : bloc Partenaires & API publique -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
-      <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#0F7560;margin-bottom:8px" data-i18n="footer.api.title">Partenaires &amp; développeurs</div>
-        <a href="api-docs.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="footer.api.docs">Documentation API</span></a>
-        <a href="api-docs.html#how-to-get-key" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="footer.api.become">Devenir partenaire</span></a>
-        <a href="api/openapi.yaml" download style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none">OpenAPI spec</a>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:#2E8B57;margin-bottom:8px" data-i18n="foot_tools">Outils</div>
-        <a href="verify-prescription.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none" data-i18n="foot_verify_rx">Vérifier une ordonnance</a>
-        <a href="teleconsultation.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none" data-i18n="foot_teleconsult">Téléconsultation</a>
-      </div>
-    </div>
-
     <div style="background:#fff;border:1px solid #dcfce7;border-radius:12px;padding:14px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
       <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#0f172a"><i class='fa fa-headset' style='color:#2E8B57'></i> <span data-i18n="foot_support_24">Support 7j/7 — 8h à 22h</span></div>
       <a href="mailto:contact@tabibi.doctor" style="display:block;font-size:13px;color:#0F7560;padding:4px 0;text-decoration:none;font-weight:600"><i class='fa fa-envelope fa-xs'></i> contact@tabibi.doctor</a>
@@ -2913,11 +2946,6 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <a href="#" class="social-disabled" title="Bientôt disponible" aria-label="Instagram (bientôt disponible)" style="width:38px;height:38px;border-radius:50%;background:#E4405F;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none"><i class='fab fa-instagram'></i></a>
       <a href="#" class="social-disabled" title="Bientôt disponible" aria-label="X / Twitter (bientôt disponible)" style="width:38px;height:38px;border-radius:50%;background:#0f172a;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none"><i class='fab fa-x-twitter'></i></a>
       <a href="#" class="social-disabled" title="Bientôt disponible" aria-label="LinkedIn (bientôt disponible)" style="width:38px;height:38px;border-radius:50%;background:#0A66C2;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none"><i class='fab fa-linkedin-in'></i></a>
-    </div>
-
-    <div style="display:flex;gap:8px;justify-content:center;margin-bottom:18px">
-      <a href="#" class="appstore-disabled" title="App iOS bientôt disponible" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:8px;font-size:11px;text-decoration:none;display:flex;align-items:center;gap:6px"><i class='fab fa-apple' style='font-size:18px'></i><span>App Store</span></a>
-      <a href="#" class="appstore-disabled" title="App Android bientôt disponible" style="background:#0f172a;color:#fff;padding:8px 14px;border-radius:8px;font-size:11px;text-decoration:none;display:flex;align-items:center;gap:6px"><i class='fab fa-google-play'></i><span>Google Play</span></a>
     </div>
 
     <div style="border-top:1px solid #dcfce7;padding-top:14px;text-align:center;font-size:11px;color:#64748b">

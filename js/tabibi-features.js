@@ -51,10 +51,18 @@
     //   → Bloquer côté UI (cards paiement = "Bientôt disponible")
     payments: false,
 
-    // Notifications in-app (Phase 9) :
-    //   - Table notifications : non créée (TODO-SQL-009)
-    //   - Triggers : non créés (TODO-SQL-010)
-    notifications: false,
+    // Notifications in-app (Phase 9) — ACTIF (étape 1) :
+    //   - Table public.notifications (type/message/title/data) recréée + RLS
+    //   - Triggers tg_notify_appointment AFTER INSERT/UPDATE actifs
+    //   - Notifs : rdv_new (médecin), rdv_confirmed (patient), rdv_cancelled (routage auth.uid)
+    //   - Étape 2 (à venir) : rappel veille J-1 via pg_cron
+    notifications: true,
+
+    // Messagerie patient<->medecin (MSG step1) :
+    //   - DB prod : tables conversations + messages + RLS + RPC ensure_conversation
+    //   - Front : messages.html + conversation.html + js/tabibi-messaging.js
+    //   - OFF tant que les 2 pages ne sont pas testées + points d'entrée ajoutés
+    messaging: false,
 
     // Avis (Phase 9) :
     //   - Table reviews : non créée (TODO-SQL-011)

@@ -21,8 +21,7 @@
   "@type": "Physician",
   "name": "Médecin Tabibi",
   "medicalSpecialty": "PrimaryCare",
-  "address": {"@type":"PostalAddress","addressLocality":"Alger","addressCountry":"DZ"},
-  "aggregateRating": {"@type":"AggregateRating","ratingValue":"4.8","reviewCount":"0"}
+  "address": {"@type":"PostalAddress","addressLocality":"Alger","addressCountry":"DZ"}
 }
 </script>
 <script>
@@ -90,7 +89,6 @@
 </style>
 </head>
 <body>
-<script src="scripts/seed.js"></script>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <header class="app-bar">
@@ -106,8 +104,8 @@
     <div style="font-weight:700;color:#78350f;margin-bottom:4px">Votre fiche médecin n'est pas encore liée à votre compte</div>
     <div>Tabibi contient déjà votre fiche dans l'annuaire des 14&nbsp;508 médecins. Recherchez-vous dans l'annuaire et cliquez « Réclamer ma fiche » sur votre profil pour pouvoir l'éditer ici.</div>
   </div>
-  <a href="index.html" class="btn btn-sm" style="background:#f59e0b;color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:700;white-space:nowrap">
-    <i class="fa fa-search" aria-hidden="true"></i> Rechercher ma fiche
+  <a href="doctor-claim.html" class="btn btn-sm" style="background:#f59e0b;color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:700;white-space:nowrap">
+    <i class="fa fa-id-card" aria-hidden="true"></i> <span data-i18n="foot_claim_fiche">Réclamer ma fiche</span>
   </a>
 </div>
 
@@ -170,15 +168,16 @@
     </div>
     <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
     <p id="pspec" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
-    <span class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:inline-block"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
+    <!-- [Défaut #4-A1] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _checkDocsMissing) -->
+    <span id="cert-badge" class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:none"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
     <div id="photo-upload-status" class="hidden" style="margin-top:10px;font-size:12px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:8px;display:inline-block"></div>
   </div>
   <div style="padding:16px 16px 0">
     <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;padding:16px 8px">
-      <div><div id="rdv-month" style="font-size:20px;font-weight:800;color:var(--blue);line-height:1.1">28</div><div style="font-size:10px;color:var(--text3);margin-top:4px">RDV ce mois</div></div>
-      <div><div id="patients-count" style="font-size:20px;font-weight:800;color:var(--green);line-height:1.1">142</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="tab_patients">Patients</div></div>
-      <div><div id="rating" style="font-size:20px;font-weight:800;color:#f59e0b;line-height:1.1">4.8</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="rating">Note</div></div>
-      <div><div id="reviews-count" style="font-size:20px;font-weight:800;color:#7c3aed;line-height:1.1">87</div><div style="font-size:10px;color:var(--text3);margin-top:4px">Avis</div></div>
+      <div><div id="rdv-month" style="font-size:20px;font-weight:800;color:var(--blue);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">RDV ce mois</div></div>
+      <div><div id="patients-count" style="font-size:20px;font-weight:800;color:var(--green);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="tab_patients">Patients</div></div>
+      <div><div id="rating" style="font-size:20px;font-weight:800;color:#f59e0b;line-height:1.1">—</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="rating">Note</div></div>
+      <div><div id="reviews-count" style="font-size:20px;font-weight:800;color:#7c3aed;line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">Avis</div></div>
     </div>
   </div>
   <div style="padding:16px">
@@ -242,8 +241,8 @@
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-location-dot"></i></i>
         <div><div class="lbl">Cabinet / Lieu d'exercice</div><div class="desc">Adresse visible aux patients</div></div></div>
-      <div class="form-group"><label class="form-label">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Cabinet Dr. Hadj" data-i18n-placeholder="ph_cabinet_name"></div>
-      <div class="form-group"><label class="form-label">Adresse complète</label><textarea class="form-control" id="f_addr" rows="2" placeholder="12 Rue Didouche Mourad, Alger Centre" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
+      <div class="form-group"><label class="form-label">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Nom de votre cabinet" data-i18n-placeholder="ph_cabinet_name"></div>
+      <div class="form-group"><label class="form-label">Adresse complète</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, wilaya" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label" data-i18n="wilaya">Wilaya</label>
           <select class="form-control" id="f_city"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option></select></div>
@@ -316,10 +315,10 @@
         <div><div class="lbl">Mon abonnement Tabibi PRO</div><div class="desc">Plan actuel</div></div></div>
       <div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div><div style="font-size:18px;font-weight:800;color:#92400e">Plan PRO</div><div style="font-size:12px;color:var(--text3)">5 000 DA / mois</div></div>
-          <span class="badge badge-green"><i class="fa fa-check"></i> Actif</span>
+          <div><div style="font-size:18px;font-weight:800;color:#92400e">Plan PRO</div><div style="font-size:12px;color:var(--text3)">Bientôt disponible</div></div>
+          <span class="badge badge-amber"><i class="fa fa-clock"></i> Bientôt</span>
         </div>
-        <div style="font-size:12px;color:var(--text3)">Renouvellement automatique le <strong style="color:var(--text)">28 mai 2026</strong></div>
+        <div style="font-size:12px;color:var(--text3)">Les abonnements et paiements arrivent prochainement.</div>
       </div>
       <button class="btn btn-ghost btn-full" style="margin-bottom:6px"><i class="fa fa-file-invoice"></i> Voir mes factures</button>
       <button class="btn btn-ghost btn-full" style="color:var(--red);border-color:#fca5a5"><i class="fa fa-xmark"></i> Annuler l'abonnement</button>
@@ -424,6 +423,16 @@ async function _checkDocsMissing(profileId) {
     if (r.error || !r.data) return;
     var missing = (!r.data.ordre_card_path || !r.data.id_card_path);
     var notApproved = (r.data.validation_status !== 'approved');
+    // [Défaut #4-A1] Badge "certifié" affiché SSI validation_status==='approved'.
+    // Caché par défaut (display:none dans le HTML) → fail-safe si erreur/incertitude.
+    var cb = document.getElementById('cert-badge');
+    if (cb) cb.style.display = notApproved ? 'none' : 'inline-block';
+    // [Défaut #4-A2/A3] Stamp le cache tabibi_user pour le dashboard + chip home
+    // (absence du champ = badge non affiché = fail-safe, jamais de sur-affichage).
+    try {
+      var _cu = JSON.parse(localStorage.getItem('tabibi_user') || 'null');
+      if (_cu) { _cu._validation_status = r.data.validation_status || null; localStorage.setItem('tabibi_user', JSON.stringify(_cu)); }
+    } catch (_e) {}
     // Affiche banner UNIQUEMENT si docs manquants ET fiche pas encore approuvée
     // (cas rejected : afficher aussi pour permettre re-upload après correction).
     if (missing && notApproved) showDocsMissingBanner();
@@ -579,16 +588,15 @@ function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (e
 function rmDiploma(i){if(!confirm("Retirer ?"))return;const d=getDiplomas();d.splice(i,1);setDiplomas(d);renderDiplomas();}
 
 async function loadProfile(){
+  // [FIX session] Garde réseau-aware centralisée (remplace le check cache-first + retry bridge).
+  // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si session
+  // morte ; mode dégradé offline si token encore valide. Le profil riche reste chargé via la RPC
+  // get_my_doctor_profile ci-dessous (DB-sourced, par médecin).
+  const authed=await window.tabibi.auth.requireAuth('medecin');
+  if(!authed) return; // null → requireAuth a déjà déclenché le redirect
   let u=null;
   try{u=JSON.parse(localStorage.getItem("tabibi_user")||"null");}catch(e){}
-  if(!u||u.role!=="medecin"){
-    if(!window._tabibiProfileRetried){
-      window._tabibiProfileRetried=true;
-      setTimeout(loadProfile,800);
-      return;
-    }
-    location.href="login.html";return;
-  }
+  if(!u) u=authed; // fallback 1ère connexion (cache pas encore enrichi)
 
   // [Phase 4.B.1] Si session Supabase active, on PRIVILÉGIE les vraies données
   // depuis doctor_profiles via get_my_doctor_profile() (RPC SECURITY DEFINER).
@@ -603,8 +611,8 @@ async function loadProfile(){
       } else {
         // Fusion : la DB gagne sur les champs gérés Phase 4, localStorage garde le reste
         if (dbProfile.bio != null) u.bio = dbProfile.bio;
-        if (dbProfile.phone != null) u.phone = dbProfile.phone;
-        if (dbProfile.address != null) u.addr = dbProfile.address;
+        if (!u.phone && dbProfile.phone != null) u.phone = dbProfile.phone;
+        if (!u.addr && dbProfile.address != null) u.addr = dbProfile.address;
         if (dbProfile.consultation_fee_dzd != null) u.price = String(dbProfile.consultation_fee_dzd);
         if (Array.isArray(dbProfile.languages)) {
           u.lang_fr = dbProfile.languages.indexOf('FR') !== -1;
@@ -621,7 +629,6 @@ async function loadProfile(){
         u._accepts_card = !!dbProfile.accepts_card;
         u._accepts_cash = dbProfile.accepts_cash !== false; // default true
         u._db_doctor_id = dbProfile.id;
-        u._db_full_name = dbProfile.full_name;
         try { localStorage.setItem("tabibi_user", JSON.stringify(u)); } catch (e) {}
         // [Phase 16.5] Check docs manquants → banner recovery
         _checkDocsMissing(dbProfile.id);
@@ -636,7 +643,7 @@ async function loadProfile(){
     TabibiAvatar.init({
       containerId: 'ava',
       photoUrl: u.photo_url || null,
-      fallbackText: u.initials || 'AH',
+      fallbackText: u.initials || '?',
       fallbackBg: '#fff',
       fallbackColor: '#047857',
       allowUpload: false  // [Phase 4.B.1] On gère l'upload via notre bouton dédié
@@ -645,25 +652,25 @@ async function loadProfile(){
     var av = document.getElementById("ava");
     if (av) { av.style.backgroundImage = "url(" + u.photo_url + ")"; av.textContent = ""; }
   } else {
-    document.getElementById("ava").textContent=u.initials||"AH";
+    document.getElementById("ava").textContent=u.initials||"?";
   }
-  document.getElementById("pname").textContent=u._db_full_name || u.name || "Dr. Médecin";
-  document.getElementById("pspec").textContent=(u.specialty||"Cardiologue")+" · "+(u.ville||"Alger");
-  const parts=(u.name||"Dr. Amina Hadj").replace(/^Dr\.?\s+/,"").split(" ");
-  f_first.value=parts[0]||"Amina"; f_last.value=parts.slice(1).join(" ")||"Hadj";
-  f_email.value=u.email||""; f_phone_perso.value=u.phone_perso||""; f_bd.value=u.birthDate||"1980-05-15";
-  f_spec.value=u.specialty||"Cardiologie"; f_subspec.value=u.subspec||"Rythmologie, Échocardiographie";
-  f_ordre.value=u.ordre||"CO-2010-3421"; f_rpps.value=u.rpps||"DZ-CARD-21345";
-  f_start_year.value=u.start_year||"2010";
-  f_bio.value=u.bio||"Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha. Spécialiste en maladies coronariennes, rythmologie et insuffisance cardiaque.";
+  document.getElementById("pname").textContent=u.name || "Dr. Médecin";
+  document.getElementById("pspec").textContent=[u.specialty,u.ville].filter(Boolean).join(" · ");
+  const parts=(u.name||"").replace(/^Dr\.?\s+/,"").split(" ");
+  f_first.value=parts[0]||""; f_last.value=parts.slice(1).join(" ")||"";
+  f_email.value=u.email||""; f_phone_perso.value=u.phone_perso||""; f_bd.value=u.birthDate||"";
+  f_spec.value=u.specialty||""; f_subspec.value=u.subspec||"";
+  f_ordre.value=u.ordre||""; f_rpps.value=u.rpps||"";
+  f_start_year.value=u.start_year||"";
+  f_bio.value=u.bio||"";
   updateBioCounter();
   lang_fr.checked=u.lang_fr!==false; lang_ar.checked=u.lang_ar!==false; lang_en.checked=!!u.lang_en; lang_kab.checked=!!u.lang_kab;
-  f_cabinet.value=u.cabinet||"Cabinet Dr. Hadj — Cardiologie";
-  f_addr.value=u.addr||"12 Rue Didouche Mourad, Alger Centre";
-  f_city.value=u.ville||"Alger"; f_postal.value=u.postal||"16000";
-  f_phone_cab.value=u.phone||"0661 234 567"; f_web.value=u.web||"";
-  f_price.value=u.price||"2500"; f_price_followup.value=u.price_followup||"1800";
-  f_price_urgent.value=u.price_urgent||"3500"; f_duration.value=u.duration||"30";
+  f_cabinet.value=u.cabinet||"";
+  f_addr.value=u.addr||"";
+  f_city.value=u.ville||""; f_postal.value=u.postal||"";
+  f_phone_cab.value=u.phone||""; f_web.value=u.web||"";
+  f_price.value=u.price||""; f_price_followup.value=u.price_followup||"";
+  f_price_urgent.value=u.price_urgent||""; f_duration.value=u.duration||"30";
   ins_cnas.checked=u.ins_cnas!==false; ins_casnos.checked=u.ins_casnos!==false;
   ins_chifa.checked=u.ins_chifa!==false; ins_private.checked=!!u.ins_private;
   Object.keys(u.settings||{}).forEach(k=>{const el=document.querySelector(`[data-key="${k}"]`);if(el)el.classList.toggle("on",!!u.settings[k]);});

@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Votre messagerie Tabibi.">
+<link rel="canonical" href="https://tabibi.doctor/messages.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="title_messages">
+<title>Messages | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<style>
+  .msg-shell { padding: 14px 16px; max-width: 480px; margin: 0 auto; }
+  .conv-card { display:flex; gap:12px; align-items:center; background:#fff; border-radius: var(--r12); padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); text-decoration:none; color:inherit; }
+  .conv-card.unread { border-left: 3px solid var(--blue); }
+  .conv-card .ava { width:42px; height:42px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; background:#dcfce7; color:#0a4d3e; }
+  .conv-card .body { flex:1; min-width:0; }
+  .conv-card .row1 { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .conv-card .name { font-size:14px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .conv-card .time { font-size:11px; color:var(--text3); flex-shrink:0; }
+  .conv-card .row2 { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:2px; }
+  .conv-card .preview { font-size:13px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex:1; }
+  .conv-card .badge { background:var(--red); color:#fff; font-size:11px; font-weight:800; min-width:20px; height:20px; border-radius:10px; display:flex; align-items:center; justify-content:center; padding:0 6px; flex-shrink:0; }
+  .conv-empty { padding: 48px 16px; text-align: center; color: var(--text3); }
+  .conv-empty .ico-big { font-size: 48px; color: var(--text3); opacity: .4; margin-bottom: 14px; }
+  .msg-disclaimer { background:#FFF7E6; border:1px solid #FFD580; border-radius: var(--r12); padding:12px; font-size:12px; color:#78350f; margin-bottom:14px; line-height:1.5; }
+</style>
+</head>
+<body>
+<div class="app-root">
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title">Messages</div></div>
+  <span style="width:36px"></span>
+</header>
+
+<main class="page msg-shell" role="main">
+
+  <!-- Disclaimer feature flag OFF -->
+  <div class="msg-disclaimer" data-feature-not="messaging">
+    <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
+    <strong>Messagerie bientôt disponible.</strong> Vous pourrez échanger avec un médecin
+    après un rendez-vous confirmé.
+  </div>
+
+  <div id="conv-list" aria-live="polite"></div>
+
+</main>
+<nav class="tab-bar" id="tab-bar"></nav>
+
+<script>
+// ========================================================================
+// messages.html — inbox messagerie. Calque notifications.html.
+// Gate par TABIBI_FEATURES.messaging (OFF -> disclaimer + empty, pas de fetch).
+// ========================================================================
+var M;  // [MSG-fix] assigne au DOMContentLoaded : tabibi-messaging.js est charge en bas
+        // de page, donc window.tabibiMessaging est undefined au parse de ce script inline.
+
+function _renderEmpty(txt){
+  document.getElementById('conv-list').innerHTML =
+    '<div class="conv-empty">' +
+      '<i class="fa fa-comments ico-big" aria-hidden="true"></i>' +
+      '<div style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:6px">' + (txt || 'Aucune conversation') + '</div>' +
+      '<div style="font-size:13px">Vos échanges avec vos médecins apparaîtront ici.</div>' +
+    '</div>';
+}
+
+function _render(list){
+  if(!list || !list.length){ _renderEmpty(); return; }
+  document.getElementById('conv-list').innerHTML = list.map(function(c){
+    var sub = c.sub ? (' · ' + M.esc(c.sub)) : '';
+    return '<a class="conv-card' + (c.unread ? ' unread' : '') + '" href="conversation.html?c=' + M.esc(c.id) + '">' +
+      '<div class="ava">' + M.esc(M.initials(c.name)) + '</div>' +
+      '<div class="body">' +
+        '<div class="row1"><span class="name">' + M.esc(c.name) + sub + '</span>' +
+          '<span class="time">' + M.esc(M.fmtRel(c.lastAt)) + '</span></div>' +
+        '<div class="row2"><span class="preview">' + (c.lastBody ? M.esc(c.lastBody) : '<em>Nouvelle conversation</em>') + '</span>' +
+          (c.unread ? '<span class="badge">' + c.unread + '</span>' : '') + '</div>' +
+      '</div></a>';
+  }).join('');
+}
+
+async function loadInbox(){
+  if(!M || !M.enabled()){ _renderEmpty('Messagerie bientôt disponible'); return; }
+  try { _render(await M.listConversations()); }
+  catch(e){ console.warn('[msg] inbox', e && e.message); _renderEmpty(); }
+}
+
+var _poll = null;
+function _startPoll(){ loadInbox(); if(_poll) clearInterval(_poll); _poll = setInterval(loadInbox, 10000); }
+function _stopPoll(){ if(_poll){ clearInterval(_poll); _poll = null; } }
+document.addEventListener('visibilitychange', function(){ if(document.hidden) _stopPoll(); else _startPoll(); });
+
+function goBackSafe(){
+  if(document.referrer){ history.back(); return; }
+  var role = '';
+  try { role = (JSON.parse(localStorage.getItem('tabibi_user')||'{}').role || ''); } catch(e){}
+  location.href = (role === 'medecin' || role === 'doctor') ? 'doctor-dashboard.html' : 'patient-dashboard.html';
+}
+
+document.addEventListener('DOMContentLoaded', async function(){
+  // [MSG] Backstop dark : flag OFF -> la page refuse de s'afficher (replace, pas href,
+  // pour ne pas polluer l'historique). Couvre l'acces direct par URL / bookmark.
+  if(!(window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging)){
+    var _r=''; try{ _r=(JSON.parse(localStorage.getItem('tabibi_user')||'{}').role||''); }catch(e){}
+    location.replace((_r==='medecin'||_r==='doctor') ? 'doctor-dashboard.html' : (_r==='patient' ? 'patient-dashboard.html' : 'index.html'));
+    return;
+  }
+  M = window.tabibiMessaging;   // [MSG-fix] scripts charges -> window.tabibiMessaging dispo
+  // Garde d'auth (messagerie reservee aux connectes) : requireAuth gere le redirect.
+  if(window.tabibi && window.tabibi.auth && window.tabibi.auth.requireAuth){
+    var u = await window.tabibi.auth.requireAuth();
+    if(!u) return;
+  }
+  _startPoll();
+});
+window.goBackSafe = goBackSafe;
+window.loadInbox = loadInbox;
+</script>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script src="js/tabibi-messaging.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+</body>
+</html>

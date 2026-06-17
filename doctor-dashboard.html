@@ -34,7 +34,6 @@
 </style>
 </head>
 <body>
-<script src="scripts/seed.js"></script>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <header class="app-bar">
@@ -48,8 +47,9 @@
       <div class="app-bar-sub" id="hdr-sub" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:2px"><i class="fa fa-stethoscope fa-xs" style="color:var(--green)"></i> Praticien · Tabibi PRO</div>
     </div>
   </div>
+  <a id="med-msg-link" href="messages.html" hidden title="Messages" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;border-radius:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:4px"><i class="fa fa-comments" style="font-size:14px"></i></a>
   <button class="btn btn-icon btn-icon-sm" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
-    <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
+    <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:none;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite"></span>
   </button>
   <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#2E8B57,#166534);color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(46,139,87,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">DR</span></button>
   <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
@@ -95,9 +95,9 @@
     </div>
     <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="card" style="padding:12px;border-left:3px solid var(--blue)"><div id="kpi-today" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)">RDV aujourd'hui</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">28</div><div style="font-size:11px;color:var(--text3)">Ce mois</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">140k DA</div><div style="font-size:11px;color:var(--text3)">Revenus mois</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">4.8 ★</div><div style="font-size:11px;color:var(--text3)">Note moyenne</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">0</div><div style="font-size:11px;color:var(--text3)">Ce mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">—</div><div style="font-size:11px;color:var(--text3)">Revenus mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">—</div><div style="font-size:11px;color:var(--text3)">Note moyenne</div></div>
     </div>
     <div style="padding:0 16px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -153,7 +153,7 @@
       <!-- Mini-bandeau "pas claim" — visible uniquement si médecin pas encore réclamé -->
       <div id="unavail-not-claimed" class="hidden" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <i class="fa fa-circle-info" aria-hidden="true"></i>
-        <span>Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités. <a href="medecin-profile.html" style="color:#78350f;font-weight:700;text-decoration:underline">Aller à mon profil</a></span>
+        <span>Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités. <a href="doctor-claim.html" style="color:#78350f;font-weight:700;text-decoration:underline" data-i18n="foot_claim_fiche">Réclamer ma fiche</a></span>
       </div>
       <div id="unavail-list">
         <div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">Chargement...</div>
@@ -252,7 +252,8 @@
       <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
       <div style="font-size:18px;font-weight:700" id="prof-name">--</div>
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px" id="prof-spec">--</div>
-      <span class="badge badge-green"><i class="fa fa-check"></i> Certifié Tabibi</span>
+      <!-- [Défaut #4-A2] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _gateCertBadge) -->
+      <span id="dash-cert-badge" class="badge badge-green" style="display:none"><i class="fa fa-check"></i> Certifié Tabibi</span>
       <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px">
         <a href="medecin-profile.html" class="btn btn-success btn-full btn-lg"><i class="fa fa-pen"></i> Modifier mon profil</a>
         <a href="medecin-profile.html#sec-pricing" class="btn btn-soft btn-full"><i class="fa fa-coins"></i> Tarifs & types consultation</a>
@@ -289,7 +290,14 @@ async function logout(){
   toastM(tabibiT('toast_logout_success',"Déconnexion réussie"),"success");
   setTimeout(()=>location.href="index.html",500);
 }
-function toggleNotif(){document.getElementById("notif-drop").classList.toggle("hidden");document.getElementById("user-drop").classList.add("hidden");renderNotifs();}
+async function toggleNotif(){
+  var drop=document.getElementById("notif-drop");
+  drop.classList.toggle("hidden");
+  document.getElementById("user-drop").classList.add("hidden");
+  if(drop.classList.contains("hidden")) return;   // fermeture → ne rien refetch
+  await renderNotifs();        // affiche la liste + badge = non-lus
+  await markNotifsRead();      // marque tout lu côté serveur + badge à 0
+}
 function toggleMenu(){document.getElementById("user-drop").classList.toggle("hidden");document.getElementById("notif-drop").classList.add("hidden");}
 document.addEventListener("click",e=>{if(!e.target.closest(".dropdown-menu") && !e.target.closest("#user-pill") && !e.target.closest("button[title='Notifications']")){document.getElementById("notif-drop")?.classList.add("hidden");document.getElementById("user-drop")?.classList.add("hidden");}});
 
@@ -527,6 +535,10 @@ function renderToday(){
   const todays = rdvs.filter(r=>r.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
   document.getElementById("kpi-today").textContent = todays.length;
   document.getElementById("today-count").textContent = todays.length+" RDV";
+  // [Phase 2 launch] RDV du mois courant — vrai count depuis les RDV Supabase (kpi-month).
+  var _ym = today.slice(0,7);
+  var _km = document.getElementById("kpi-month");
+  if (_km) _km.textContent = rdvs.filter(function(r){ return (r.date||"").slice(0,7) === _ym; }).length;
   if(!todays.length){
     document.getElementById("today-list").innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-day" style="font-size:42px;margin-bottom:12px;display:block;opacity:.4"></i>Aucun RDV aujourd'hui</div>`;
     return;
@@ -626,7 +638,7 @@ function contactPatientByEmail(rdvId){
 }
 
 async function updateRdvStatusInSupabase(sbId, status){
-  if (!sbId) return;
+  if (!sbId) return false;
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
     const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
@@ -636,30 +648,46 @@ async function updateRdvStatusInSupabase(sbId, status){
       if (session && session.access_token) token = session.access_token;
     }
     const url = SB_URL + '/rest/v1/appointments?id=eq.' + encodeURIComponent(sbId);
-    await fetch(url, {
+    const res = await fetch(url, {
       method: 'PATCH',
-      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', Prefer: 'return=representation' },
       body: JSON.stringify({ status: status })
     });
+    if (!res.ok) {
+      console.warn('[Tabibi/doctor] updateRdvStatus HTTP', res.status, await res.text().catch(()=>''));
+      return false;
+    }
+    const rows = await res.json().catch(()=>[]);
+    return Array.isArray(rows) && rows.length > 0;   // 0 ligne (RLS/sbId erroné) → false, pas un faux succès
   } catch(e) {
     console.warn('[Tabibi/doctor] updateRdvStatus erreur:', e && e.message);
+    return false;
   }
 }
 
-function confRdv(id){
+async function confRdv(id){
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
-  if(i>-1){r[i].status="Confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'confirmed');}
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'confirmed');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="Confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_confirmed',"RDV confirmé"),"success");renderToday();
 }
-function cancRdv(id){
+async function cancRdv(id){
   if(!confirm("Refuser ce RDV ?"))return;
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
-  if(i>-1){r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'cancelled');}
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'cancelled');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_refused',"RDV refusé"),"info");renderToday();
 }
-function markDone(id){
+async function markDone(id){
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
-  if(i>-1){r[i].status="Completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));updateRdvStatusInSupabase(r[i].sbId,'completed');}
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'completed');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="Completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_completed',"RDV terminé"),"success");renderToday();
 }
 
@@ -681,71 +709,140 @@ function renderPatients(){
 }
 
 function renderStats(){
-  document.getElementById("stats-cards").innerHTML = [
-    {n:"28",l:"Total RDV",c:"var(--blue)"},{n:"94%",l:"Taux présence",c:"var(--green)"},
-    {n:"140 000 DA",l:"Revenus",c:"#f59e0b"},{n:"4.8 ★",l:"Note moy.",c:"#7c3aed"}
-  ].map(s=>`<div class="card" style="padding:12px;border-left:3px solid ${s.c}"><div style="font-size:18px;font-weight:800;color:${s.c}">${s.n}</div><div style="font-size:11px;color:var(--text3)">${s.l}</div></div>`).join("");
-  const mk=(id,d,col="var(--blue)")=>{document.getElementById(id).innerHTML=d.map(([l,p,v])=>`<div class="bar-row"><div style="font-size:11px;font-weight:600">${l}</div><div class="bar-track"><div class="bar-fill" style="width:${p}%;background:${col}">${v}</div></div></div>`).join("");};
-  mk("rev-bars",[["Sem 1",60,"24 000 DA"],["Sem 2",85,"34 000 DA"],["Sem 3",55,"22 000 DA"],["Sem 4",100,"40 000 DA"]],"#f59e0b");
-  mk("type-bars",[["Premier RDV",65,"18"],["Suivi",40,"11"],["Urgence",25,"7"],["Contrôle",10,"3"]],"var(--blue)");
-  mk("pay-bars",[["Espèces",55,"15 RDV"],["Edahabia",25,"7"],["CIB",15,"4"],["CNAS",5,"2"]],"#7c3aed");
+  // [Phase 2 launch] Stats détaillées (revenus, note, paiements, taux présence) non
+  // branchées sur Supabase (avis + paiements feature-OFF) → état vide, pas de faux chiffres.
+  var _empty = '<div style="padding:24px 8px;text-align:center;color:var(--text3);font-size:13px"><i class="fa fa-chart-column" style="display:block;font-size:22px;margin-bottom:8px;color:var(--text4)"></i>Statistiques détaillées bientôt disponibles.</div>';
+  var _sc = document.getElementById("stats-cards"); if (_sc) _sc.innerHTML = _empty;
+  ["rev-bars","type-bars","pay-bars"].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=""; });
 }
 
 function renderProfile(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   document.getElementById("prof-ava").textContent=u.initials||"DR";
   document.getElementById("prof-name").textContent=u.name||"Dr. --";
-  document.getElementById("prof-spec").textContent=(u.specialty||"Médecin")+" · "+(u.ville||"Alger");
+  document.getElementById("prof-spec").textContent=[u.specialty,u.ville].filter(Boolean).join(" · ");
 }
 
-function renderNotifs(){
-  const list=[
-    {ic:"fa-calendar-plus",col:"var(--blue)",t:"Nouveau RDV pris",m:"Mohamed Tabet — demain à 09:30",time:"il y a 30min"},
-    {ic:"fa-bell",col:"#f59e0b",t:"Rappel : RDV dans 1h",m:"Karim Benali à 09:00",time:"il y a 2h"},
-    {ic:"fa-money-bill",col:"var(--green)",t:"Paiement reçu",m:"+2 500 DA — Karim B.",time:"hier"}
-  ];
-  document.getElementById("med-notif-list").innerHTML=list.map(n=>`<div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid var(--bg2)">
-    <div style="width:32px;height:32px;border-radius:8px;background:${n.col}22;color:${n.col};display:flex;align-items:center;justify-content:center"><i class="fa ${n.ic}"></i></div>
-    <div style="flex:1"><div style="font-weight:700;font-size:12px">${n.t}</div><div style="font-size:11px;color:var(--text3)">${n.m}</div><div style="font-size:10px;color:var(--text4);margin-top:2px">${n.time}</div></div></div>`).join("");
+// ─── Notifications (cloche médecin) ── branché sur public.notifications ──
+// Icône + couleur par type (aligné sur notifications.html TYPE_META).
+var _NOTIF_META = {
+  rdv_new:       { ic:"fa-calendar-plus",      col:"var(--blue)" },
+  rdv_confirmed: { ic:"fa-calendar-check",     col:"var(--green)" },
+  rdv_cancelled: { ic:"fa-calendar-xmark",     col:"var(--red)" },
+  rdv_reminder:  { ic:"fa-bell",               col:"#f59e0b" },
+  prescription:  { ic:"fa-file-prescription",  col:"var(--green)" },
+  claim:         { ic:"fa-id-badge",           col:"#7c3aed" },
+  system:        { ic:"fa-circle-info",        col:"var(--text3)" },
+  message:       { ic:"fa-comment-dots",       col:"var(--blue)" }
+};
+
+// Temps relatif (copie de notifications.html _fmtRel).
+function _fmtRel(iso){
+  if(!iso) return "";
+  try {
+    var s = Math.floor((Date.now() - new Date(iso).getTime())/1000);
+    if(s < 60) return "à l'instant";
+    var m = Math.floor(s/60);
+    if(m < 60) return "il y a " + m + " min";
+    var h = Math.floor(m/60);
+    if(h < 24) return "il y a " + h + " h";
+    var d = Math.floor(h/24);
+    if(d < 7) return "il y a " + d + " j";
+    return new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short",timeZone:"Africa/Algiers"}).format(new Date(iso));
+  } catch(e){ return ""; }
+}
+
+// Badge non-lus : affiche le nombre si >0, masqué sinon.
+function _notifSetBadge(n){
+  var b = document.getElementById("med-notif-count");
+  if(!b) return;
+  if(n > 0){ b.textContent = String(n); b.style.display = "flex"; }
+  else { b.textContent = ""; b.style.display = "none"; }
+}
+
+function _notifRenderEmpty(){
+  var box = document.getElementById("med-notif-list");
+  if(box) box.innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--text3);font-size:12px"><i class="fa fa-bell-slash" style="display:block;font-size:20px;margin-bottom:8px;color:var(--text4)"></i>Aucune notification</div>';
+}
+
+// Charge les vraies notifs depuis Supabase et peuple la cloche + le badge.
+async function renderNotifs(){
+  var sb = window.tabibi && window.tabibi.supabase;
+  if(!sb){ _notifRenderEmpty(); _notifSetBadge(0); return; }
+  try {
+    var r = await sb.from("notifications").select("*").order("created_at",{ascending:false}).limit(20);
+    if(r.error){ console.warn("[notif] fetch error", r.error.message); _notifRenderEmpty(); _notifSetBadge(0); return; }
+    var items = r.data || [];
+    if(!items.length){ _notifRenderEmpty(); _notifSetBadge(0); return; }
+    var unread = items.filter(function(n){ return n.read_at == null; }).length;
+    document.getElementById("med-notif-list").innerHTML = items.map(function(n){
+      var meta = _NOTIF_META[n.type] || _NOTIF_META.system;
+      return `<div style="display:flex;gap:10px;padding:10px;border-bottom:1px solid var(--bg2)">
+    <div style="width:32px;height:32px;border-radius:8px;background:${meta.col}22;color:${meta.col};display:flex;align-items:center;justify-content:center"><i class="fa ${meta.ic}"></i></div>
+    <div style="flex:1"><div style="font-weight:700;font-size:12px">${_esc(n.title||"")}</div><div style="font-size:11px;color:var(--text3)">${_esc(n.message||"")}</div><div style="font-size:10px;color:var(--text4);margin-top:2px">${_esc(_fmtRel(n.created_at))}</div></div></div>`;
+    }).join("");
+    _notifSetBadge(unread);
+  } catch(e){ console.warn("[notif] exception", e && e.message); _notifRenderEmpty(); _notifSetBadge(0); }
+}
+
+// Marque toutes les notifs non-lues comme lues (cf notifications.html l.146) puis badge à 0.
+async function markNotifsRead(){
+  var sb = window.tabibi && window.tabibi.supabase;
+  if(!sb){ _notifSetBadge(0); return; }
+  try {
+    await sb.from("notifications").update({ read_at:new Date().toISOString() }).is("read_at", null);
+  } catch(e){ console.warn("[notif] markRead exception", e && e.message); }
+  _notifSetBadge(0);
+}
+
+// [Défaut #4-A2] Affiche le badge "Certifié Tabibi" du dashboard SSI le médecin
+// connecté a validation_status==='approved'. Caché par défaut (fail-safe).
+// 1) lecture cache rapide ; 2) sinon SELECT autoritaire via getMyDoctorId().
+async function _gateCertBadge() {
+  var badge = document.getElementById('dash-cert-badge');
+  if (!badge) return;
+  try {
+    var cu = null;
+    try { cu = JSON.parse(localStorage.getItem('tabibi_user') || 'null'); } catch (_) {}
+    if (cu && cu._validation_status === 'approved') { badge.style.display = ''; return; }
+    if (window.tabibiDoctor && typeof window.tabibiDoctor.getMyDoctorId === 'function') {
+      var did = await window.tabibiDoctor.getMyDoctorId();
+      var sb = window.tabibi && window.tabibi.supabase;
+      if (did && sb) {
+        var r = await sb.from('doctor_profiles').select('validation_status').eq('id', did).single();
+        if (!r.error && r.data) {
+          badge.style.display = (r.data.validation_status === 'approved') ? '' : 'none';
+          if (cu) { cu._validation_status = r.data.validation_status || null; try { localStorage.setItem('tabibi_user', JSON.stringify(cu)); } catch (_) {} }
+        }
+      }
+    }
+    // incertitude → reste caché (display:none par défaut)
+  } catch (e) { console.warn('[Défaut #4-A2] _gateCertBadge', e && e.message); }
 }
 
 document.addEventListener("DOMContentLoaded", async ()=>{
-  // ─── v10.6 : Attendre que le bridge synchronise tabibi_user ───
-  async function waitForUser(maxMs){
-    const t0 = Date.now();
-    while (Date.now() - t0 < maxMs){
-      let u = null;
-      try { u = JSON.parse(localStorage.getItem("tabibi_user")||"null"); } catch(e){}
-      if (u && (u.role === 'medecin' || u.role === 'doctor')) return u;
-      if (window.tabibi && window.tabibi.auth) {
-        try {
-          const session = await window.tabibi.auth.getSession();
-          if (session) {
-            const su = await window.tabibi.auth.getUser();
-            if (su) {
-              const fn = su.first_name || '';
-              const ln = su.last_name || '';
-              const name = (fn + ' ' + ln).trim() || (su.email||'').split('@')[0];
-              const parts = name.split(/\s+/);
-              const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
-              const role = (su.role === 'doctor' || su.role === 'medecin') ? 'medecin' : (su.role === 'admin' ? 'admin' : 'patient');
-              const userObj = { id: su.id, email: su.email, role, name, initials, firstName: fn, lastName: ln, specialty: su.specialty_fr||'', ville: su.wilaya_fr||'', phone: su.phone||'' };
-              localStorage.setItem('tabibi_user', JSON.stringify(userObj));
-              if (role === 'medecin') return userObj;
-            }
-          } else { return null; }
-        } catch(e){}
-      }
-      await new Promise(r => setTimeout(r, 100));
-    }
-    return null;
-  }
+  // [FIX session] Garde centralisée réseau-aware (remplace l'ancien waitForUser cache-first).
+  // requireAuth valide la session AVANT le cache : purge tabibi_user + redirect login si la
+  // session est morte (refresh token invalide) ; mode dégradé offline si le token est encore
+  // valide localement. Plus de dashboard fantôme rendu depuis un cache périmé.
+  const authed = await window.tabibi.auth.requireAuth('medecin');
+  if (!authed) return; // null → requireAuth a déjà déclenché le redirect
 
-  const u = await waitForUser(3000);
-  if (!u || u.role !== "medecin") {
-    location.href = "login.html";
-    return;
-  }
+  // Normaliser en objet d'affichage (compat rendu existant : u.name/initials/specialty/ville/photo_url).
+  // authed = ligne `users` (session valide) OU tabibi_user en cache (mode dégradé réseau).
+  const u = (function(a){
+    if (a && a.initials && a.name) return a;            // déjà au format cache
+    const fn = a.first_name || a.firstName || '';
+    const ln = a.last_name  || a.lastName  || '';
+    const name = (fn + ' ' + ln).trim() || (a.email||'').split('@')[0];
+    const parts = name.split(/\s+/);
+    const initials = ((parts[0]||'?')[0] + (parts[1]?parts[1][0]:'')).toUpperCase();
+    return { id:a.id, email:a.email, role:'medecin', name, initials,
+             firstName:fn, lastName:ln,
+             specialty:a.specialty_fr||a.specialty||'',
+             ville:a.wilaya_fr||a.ville||'',
+             phone:a.phone||'', photo_url:a.photo_url||'' };
+  })(authed);
 
   // [Phase 16.5] Consommer claim en attente (set par handleClaimBanner Cas A
   // ou par autoClaim post-signup quand confirm_email=ON bloque la session).
@@ -790,6 +887,8 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     document.addEventListener('tabibi:lang-change', window._refreshDoctorGreet);
     renderToday();
     renderNotifs();
+    // [Défaut #4-A2] Gate le badge certifié sur validation_status==='approved'
+    _gateCertBadge();
     // Charger les vrais RDV depuis Supabase et re-render
     refreshDoctorRdvs();
     // [Phase 4.B.3] Charger les blocages exceptionnels (no-op si pas auth/pas claim)
@@ -1116,6 +1215,8 @@ async function deleteUnavail(id) {
 <script src="js/capacitor-bridge.js" defer></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script>(function(){var el=document.getElementById('med-msg-link');if(!el)return;if(window.TABIBI_FEATURES&&window.TABIBI_FEATURES.messaging){el.hidden=false;}else{el.remove();}})();</script>
 <script src="js/tabibi-claim.js"></script>
 <script src="js/tabibi-doctor-dashboard.js"></script>
 <script src="js/tabibi-network.js"></script>

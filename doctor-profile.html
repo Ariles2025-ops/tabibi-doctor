@@ -414,6 +414,9 @@ async function loadDoc(){
     }
     document.getElementById("d-name").textContent = d.fr || 'Dr ?';
     document.getElementById("d-spec").innerHTML = '<i class="fa fa-stethoscope fa-xs"></i> ' + esc(d.spec || '') + ' &middot; ' + esc(d.ville || '');
+    var _dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(d.fr)) ? 'rtl' : 'ltr';
+    var _nm = document.getElementById("d-name"); _nm.setAttribute('dir',_dir); _nm.setAttribute('data-rtl-keep','true');
+    if(_dir==='rtl'){ var _sp=document.getElementById("d-spec"); _sp.setAttribute('dir','rtl'); _sp.setAttribute('data-rtl-keep','true'); }
     // [Phase 13b] Note : null si pas notée → masque stars + "Pas encore noté"
     var starsEl = document.getElementById("d-stars");
     var noteEl  = document.getElementById("d-note");
@@ -441,7 +444,9 @@ async function loadDoc(){
     document.getElementById("d-bio").textContent = d.desc || '';
     document.getElementById("d-addr").textContent = d.addr || d.ville || '';
     document.getElementById("b-langs").textContent = (d.langs || ["FR","AR"]).join(" · ");
-    document.getElementById("b-cert").style.display = d.cert ? "" : "none";
+    // [Défaut #4-A4] Défense en profondeur : badge certifié SSI is_verified ET validation_status approuvé
+    // (la fiche est servie par public_doctors_listed, mais l'accès direct par id reste un vecteur distinct).
+    document.getElementById("b-cert").style.display = (d.cert && d._validationStatus === 'approved') ? "" : "none";
     document.getElementById("b-urg").style.display = d.urgent ? "" : "none";
 
     // [Phase 13b] NEW : injecter badges téléconsult + paiements + horaires

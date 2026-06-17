@@ -364,8 +364,8 @@ async function doSignup(e){
     // sans session, ou modale médecin qui suppose le compte actif).
     var needsEmailConfirm = !signupResult.session;
 
-    // 2. Créer/compléter le profil dans public.profiles
-    //    NOTE : le trigger set_profile_status mettra status='pending_verification' pour les médecins
+    // 2. Compléter le profil dans public.users (la ligne est déjà créée par le
+    //    trigger de signup ; cet upsert remplit l'identité + les consentements).
     const profileData = {
       id: signupResult.user.id,
       email: em,
@@ -375,25 +375,34 @@ async function doSignup(e){
       role: cur,
       phone: ph,
       wilaya_fr: wi,
-      consents: consents,
+      // [FIX #1] public.users n'a PAS de colonne `consents` : ce sont 4 colonnes
+      // timestamp dédiées. Envoyer `consents` faisait échouer TOUT l'upsert
+      // (PGRST204 colonne inconnue) → l'identité n'était jamais enregistrée.
+      consent_terms_at:       consents.cgu_accepted_at,
+      consent_privacy_at:     consents.privacy_accepted_at,
+      consent_health_data_at: consents.medical_data_accepted_at,
+      consent_marketing_at:   consents.marketing_accepted_at,
       is_test: false
     };
 
     if (cur === "medecin") {
       profileData.specialty_fr = ssp.value;
-      profileData.ordre_number = sord.value.trim();
+      // [FIX #1] retiré `ordre_number` : pas de colonne sur public.users (le N° Ordre
+      // vit dans localStorage.tabibi_claim_ordre, puis sur doctor_profiles au claim).
     }
-    if (cur === "secretaire") {
-      profileData.cabinet_invite_code = cabCode; // trace côté users (champ optionnel)
-    }
+    // [FIX #1] secrétaire : retiré `cabinet_invite_code` (pas de colonne sur public.users) ;
+    // le rattachement cabinet est fait par la RPC accept_cabinet_invitation ci-dessous.
 
     const { error: profileError } = await window.tabibi.supabase
       .from('users')
       .upsert(profileData, { onConflict: 'id' });
 
     if (profileError) {
-      console.warn("[signup] profile upsert error:", profileError.message);
-      // Ne pas bloquer : le profil peut être complété au prochain login
+      // [FIX #1] ne plus avaler l'erreur en silence : log en erreur + toast non bloquant.
+      // Le compte auth existe déjà → on n'interrompt pas le flux, mais l'échec
+      // d'enregistrement du profil doit être visible (QA + prod).
+      console.error("[signup] users upsert FAILED:", profileError.message, profileError.code || "");
+      toastM("Compte créé, mais l'enregistrement de votre profil a échoué. Vous pourrez le compléter depuis votre espace.", "error");
     }
 
     // 2.bis Si rôle secrétariat : vérifier puis rattacher au cabinet via RPC.
@@ -474,19 +483,25 @@ async function doSignup(e){
         try { localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); } catch(_){}
       }
 
-      // Déconnexion immédiate + message clair
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      localStorage.removeItem("tabibi_user");
-      localStorage.removeItem("tabibi_role");
-
+      // [Défaut #4-B] La déconnexion + redirection ne se font PLUS ici : le
+      // signOut auth.js navigue vers index.html et court-circuitait la modale
+      // "validation 48h". On déconnecte (a) avant le redirect verify-email,
+      // (b) à la fermeture de la modale (medecinPendingClose).
       // [Phase 15 fix] Si confirm email requis → verify-email page (avec disclaimer
       // validation 48h médecin via param pending_validation=1). Sinon (compat config
-      // sans confirm) → ancienne modale "validation 48h".
+      // sans confirm) → modale "validation 48h" qui s'affiche réellement.
       if (needsEmailConfirm) {
+        // teardown SDK brut (NE navigue pas) puis redirect verify-email
+        try { await window.tabibi.supabase.auth.signOut(); } catch(e){}
+        localStorage.removeItem("tabibi_user");
+        localStorage.removeItem("tabibi_role");
         location.href = '/verify-email.html?email=' + encodeURIComponent(em)
                       + '&role=medecin&pending_validation=1';
         return;
       }
+      // Sans confirmation : la modale s'affiche (session encore active, overlay
+      // plein écran z-index 9999 — rien d'actionnable derrière). signOut + redirect
+      // index.html au clic "Retour à l'accueil" (medecinPendingClose).
       showMedecinPendingModal(em, fn);
       if (btn) { btn.disabled = false; btn.innerHTML = origText; }
       return;
@@ -554,7 +569,7 @@ function showMedecinPendingModal(email, prenom) {
         <strong>📋 Prochaine étape :</strong>
         <br>Préparez vos documents (diplôme + attestation Ordre) pour les envoyer à <strong>contact@tabibi.doctor</strong>
       </div>
-      <button onclick="location.href='index.html'" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
+      <button onclick="medecinPendingClose()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
         Retour à l'accueil
       </button>
     </div>
@@ -562,16 +577,43 @@ function showMedecinPendingModal(email, prenom) {
   document.body.appendChild(modal);
 }
 
+// [Défaut #4-B] Fermeture de la modale pending : déconnexion PUIS retour index.
+// auth.signOut() (auth.js) purge la session ET navigue vers REDIRECTS.afterLogout
+// (=index.html). Fallback dur si le signOut rejette (réseau KO) → on va quand même
+// à index.html pour ne pas laisser l'utilisateur bloqué derrière la modale fermée.
+function medecinPendingClose(){
+  try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch(e){}
+  if (window.tabibi && window.tabibi.auth && typeof window.tabibi.auth.signOut === 'function') {
+    window.tabibi.auth.signOut().catch(function(){ location.href='index.html'; });
+  } else {
+    location.href='index.html';
+  }
+}
+
 function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 
 // [Phase 1 2026-05-21] Auto-sélectionne le rôle médecin si l'utilisateur arrive
 // depuis le bandeau "Réclamer ma fiche" (URL ?role=medecin&claim_legacy_id=N).
 // Affiche aussi un bandeau info en haut du form pour confirmer la démarche.
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
   try {
     var claimLegacyId = _getClaimLegacyIdFromUrl();
     var roleParam = _getRoleFromUrl();
     if (claimLegacyId && (roleParam === 'medecin' || roleParam == null)) {
+      // [B2] Médecin DÉJÀ connecté arrivant sur un lien de claim → NE PAS afficher le
+      // formulaire de création de compte (dead-end "email déjà utilisé") : router vers
+      // le formulaire de claim authentifié (doctor-claim.html prend le relais via ?legacy_id).
+      try {
+        var _sb = window.tabibi && window.tabibi.supabase;
+        if (_sb && _sb.auth && typeof _sb.auth.getSession === 'function') {
+          var _sres = await _sb.auth.getSession();
+          var _sess = _sres && _sres.data && _sres.data.session;
+          if (_sess && _sess.user) {
+            location.href = 'doctor-claim.html?legacy_id=' + encodeURIComponent(claimLegacyId);
+            return;
+          }
+        }
+      } catch (e2) { console.warn('[signup] B2 session check', e2 && e2.message); }
       // Sélectionne le bouton médecin programmatiquement
       var medBtn = document.querySelector('.role-btn[onclick*="medecin"]');
       if (medBtn) {

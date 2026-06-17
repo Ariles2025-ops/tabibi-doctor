@@ -37,6 +37,9 @@
   .rdv-card .btn-cancel { font-size:12px;padding:6px 10px;background:transparent;border:1px solid var(--red);color:var(--red);border-radius:var(--r8);cursor:pointer;font-weight:600; }
   .rdv-card .btn-cancel:hover:not(:disabled) { background:#FFEEEC; }
   .rdv-card .btn-cancel:disabled { opacity:.4;cursor:not-allowed; }
+  .rdv-card .btn-msg { font-size:12px;padding:6px 10px;background:var(--green-l);border:1px solid var(--green);color:var(--green-d);border-radius:var(--r8);cursor:pointer;font-weight:600; }
+  .rdv-card .btn-msg:hover:not(:disabled) { background:#d1fae5; }
+  .rdv-card .btn-msg:disabled { opacity:.5;cursor:default; }
   .rdv-empty { text-align:center;padding:48px 16px;color:var(--text3); }
   .rdv-empty .ico { font-size:48px;color:var(--text3);opacity:.4;margin-bottom:14px; }
   .rdv-empty .title { font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px; }
@@ -55,7 +58,6 @@
 </style>
 </head>
 <body>
-<script src="scripts/seed.js"></script>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);window.addEventListener("error",k);})();</script>
 
 <div class="app-root">
@@ -295,16 +297,25 @@ function _renderCard(row, opts){
     reasonHtml += '<div class="reason"><em>Motif annulation : ' + _escapeHtml(row.cancellation_reason) + '</em></div>';
   }
 
-  var actionsHtml = '';
+  // Bouton "Annuler" (RDV a venir) — inchange.
+  var cancelBtn = '';
   if(opts.section === 'upcoming'){
     var disabledAttr = canCancel ? '' : 'disabled';
     var title = canCancel ? 'Annuler ce RDV' : 'Annulation impossible <24h avant le RDV';
-    actionsHtml = '<div class="actions">'
-                + '<button class="btn-cancel" '+disabledAttr+' title="' + _escapeAttr(title) + '" '
-                + 'onclick="doCancel(\''+ _escapeAttr(row.id) +'\')">'
-                + '<i class="fa fa-xmark"></i> Annuler</button>'
-                + '</div>';
+    cancelBtn = '<button class="btn-cancel" '+disabledAttr+' title="' + _escapeAttr(title) + '" '
+              + 'onclick="doCancel(\''+ _escapeAttr(row.id) +'\')">'
+              + '<i class="fa fa-xmark"></i> Annuler</button>';
   }
+  // [MSG] Bouton "Message" GATED : rendu UNIQUEMENT si features.messaging=true
+  // (sinon ABSENT du DOM), et seulement sur un RDV confirme/honore avec doctor_id.
+  var msgBtn = '';
+  if((status === 'confirmed' || status === 'completed')
+     && row.doctor_id
+     && window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging){
+    msgBtn = '<button class="btn-msg" onclick="openMessage(\''+ _escapeAttr(row.doctor_id) +'\', this)">'
+           + '<i class="fa fa-comment-dots"></i> Message</button>';
+  }
+  var actionsHtml = (cancelBtn || msgBtn) ? ('<div class="actions">' + cancelBtn + msgBtn + '</div>') : '';
 
   return '<article class="rdv-card" data-id="'+_escapeAttr(row.id)+'">'
        + '<div class="ava">'+_escapeHtml(ini || '?')+'</div>'
@@ -332,6 +343,22 @@ function _renderEmpty(section){
        + '<a href="index.html" class="btn btn-primary btn-lg"><i class="fa fa-search"></i> Trouver un médecin</a>'
        + '</div>';
 }
+
+// [MSG] Ouvre/cree la conversation avec le medecin de CE rdv (gating RDV cote RPC),
+// puis redirige vers le fil. Erreur -> message propre, pas de crash ni spinner infini.
+async function openMessage(doctorId, btn){
+  if(!window.tabibiMessaging || !doctorId) return;
+  if(btn) btn.disabled = true;
+  try {
+    var convId = await window.tabibiMessaging.ensureConversation(doctorId);
+    if(convId){ window.location.href = 'conversation.html?c=' + encodeURIComponent(convId); return; }
+    throw new Error('no_conv');
+  } catch(e){
+    if(btn) btn.disabled = false;
+    alert('Messagerie indisponible pour ce rendez-vous');
+  }
+}
+window.openMessage = openMessage;
 
 function _renderSection(section){
   var list = _groups[section] || [];
@@ -501,6 +528,8 @@ window.loadAppointments = loadAppointments;
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script src="js/tabibi-messaging.js"></script>
 <!-- [Phase 5.2.3-fix] Helper formatage nom médecin -->
 <script src="js/tabibi-doctor-name.js"></script>
 <!-- [Phase 5.2.4] Helper booking patient (Phase 5.2.1) -->

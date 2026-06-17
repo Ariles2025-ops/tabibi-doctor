@@ -99,7 +99,7 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
         <p>Passez à Tabibi Pro pour débloquer les statistiques en temps réel, l'export CSV et la comparaison annuelle.</p>
       </div>
     </div>
-    <a href="#" class="btn">Passer à Pro — 2 900 DA/mois</a>
+    <a href="#" class="btn">Passer à Pro — bientôt disponible</a>
   </div>
 
   <div class="tabs">
@@ -164,11 +164,12 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 
 <script>
 // ─── Données démo (en prod : remplacer par appel Supabase) ───
+// [Phase 2 launch] Données démo neutralisées (aucune source Supabase câblée ; analytics PRO à venir).
 const DEMO = {
-  '7j':  { rdv:14, patients:11, note:4.8, noshow:7, monthly:[2,3,1,4,2,1,1], hours:[1,0,2,3,4,2,1,0], motifs:[['Consultation générale',35],['Suivi traitement',24],['Renouvellement ordonnance',18],['Bilan annuel',13],['Urgence',10]] },
-  '30j': { rdv:48, patients:36, note:4.7, noshow:9, monthly:[8,12,10,9,9], hours:[3,5,8,12,15,9,5,2], motifs:[['Consultation générale',32],['Suivi traitement',28],['Renouvellement ordonnance',19],['Bilan annuel',12],['Urgence',9]] },
-  '90j': { rdv:142, patients:98, note:4.7, noshow:11, monthly:[42,48,52], hours:[8,18,28,38,42,30,18,7], motifs:[['Consultation générale',38],['Suivi traitement',25],['Renouvellement ordonnance',18],['Bilan annuel',11],['Urgence',8]] },
-  '1an': { rdv:560, patients:312, note:4.8, noshow:8, monthly:[38,45,52,48,55,62,58,60,52,48,42,40], hours:[28,68,118,142,162,118,72,28], motifs:[['Consultation générale',40],['Suivi traitement',24],['Renouvellement ordonnance',17],['Bilan annuel',12],['Urgence',7]] }
+  '7j':  { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
+  '30j': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
+  '90j': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
+  '1an': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] }
 };
 
 // [I18N-UNIFY-2026] Labels mois/jours désormais générés dynamiquement selon langue active

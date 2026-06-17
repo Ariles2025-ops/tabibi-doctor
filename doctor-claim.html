@@ -188,6 +188,7 @@ async function _dcFetchResults(opts){
   q.set('is_claimed','eq.false');
   if(opts.ville) q.set('wilaya_fr','eq.'+opts.ville);
   if(opts.spec)  q.set('specialty_fr','eq.'+opts.spec);
+  q.set('full_name', 'not.match.[؀-ۿ]');   // exclut les noms en écriture arabe (cohérent annuaire)
   if(opts.q){
     var s = String(opts.q).replace(/[(),]/g,' ').trim();
     if(s){
@@ -196,7 +197,7 @@ async function _dcFetchResults(opts){
       q.set('or','(full_name.ilike.'+v+',full_name_ar.ilike.'+v+')');
     }
   }
-  q.set('order','full_name.asc');
+  q.set('order','name_sort_key.asc');
   q.set('limit','20');
   try {
     var r = await fetch(_SB_URL + '/rest/v1/public_doctors?' + q.toString(), {
@@ -245,11 +246,13 @@ function _renderResults(res){
     var name = DN ? DN.format(d) : (d.full_name || 'Praticien');
     var ini  = DN ? DN.initials(d) : _initialsOf(d.full_name);
     var meta = _esc((d.specialty_fr||'') + ' · ' + (d.city ? (d.city+', ') : '') + (d.wilaya_fr||''));
+    var dir  = DN ? DN.dirFor(d) : 'ltr';
+    var metaDir = (dir === 'rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
     return '<article class="dc-card" data-id="'+_esc(d.id)+'">'
          +   '<div class="ava">'+_esc(ini)+'</div>'
          +   '<div class="body">'
-         +     '<div class="name">'+_esc(name)+'</div>'
-         +     '<div class="meta">'+meta+'</div>'
+         +     '<div class="name" dir="'+dir+'" data-rtl-keep="true">'+_esc(name)+'</div>'
+         +     '<div class="meta"'+metaDir+'>'+meta+'</div>'
          +     '<button type="button" class="btn-claim" data-claim-legacy="'+_esc(d.legacy_id)+'" data-claim-name="'+_esc(name)+'">'
          +       '<i class="fa fa-id-card"></i> C\'est moi, je veux réclamer'
          +     '</button>'
@@ -300,22 +303,53 @@ async function _populateDropdowns(){
 var _dcUpload = null;
 var _dcDocsValid = false;
 
-function dcOpenModal(legacyId, doctorName){
+async function dcOpenModal(legacyId, doctorName){
   _selectedDoctor = { legacyId: legacyId, name: doctorName };
   document.getElementById('dc-modal-doctor').textContent = doctorName;
   document.getElementById('dc-ordre').value = '';
   document.getElementById('dc-honor').checked = false;
   document.getElementById('dc-submit').disabled = true;
-  // [Phase 16.5] Init zones upload (2 dropzones carte Ordre + identité)
+  _dcUpload = null;
   _dcDocsValid = false;
-  if (window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {
-    _dcUpload = window.tabibiDocUpload.setup({
-      container: 'dc-upload-container',
-      onValidChange: function(v){ _dcDocsValid = v; _updateSubmitState(); }
-    });
+
+  // [FIX #2] On branche la collecte des justificatifs sur l'état d'authentification.
+  // Non-connecté : la modale redirige vers signup et la closure tabibiDocUpload (qui
+  // détient les File en mémoire) est détruite à la navigation → tout fichier uploadé ici
+  // serait JETÉ. On ne le demande donc pas : le médecin ajoute ses 2 docs depuis son espace
+  // après login (bandeau "documents manquants" de medecin-profile.html, recovery déjà en place).
+  // Connecté (médecin qui réclame) : flow atomique inchangé — les 2 docs restent requis.
+  var isAuth = false;
+  try {
+    var info = await window.tabibiClaim.getCurrentUserInfo();
+    isAuth = !!(info && info.isAuth);
+  } catch(e){}
+
+  var up = document.getElementById('dc-upload-container');
+  if (isAuth) {
+    // [Phase 16.5] Init zones upload (2 dropzones carte Ordre + identité)
+    if (window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {
+      _dcUpload = window.tabibiDocUpload.setup({
+        container: 'dc-upload-container',
+        onValidChange: function(v){ _dcDocsValid = v; _updateSubmitState(); }
+      });
+    } else {
+      console.warn('[claim] tabibiDocUpload module absent');
+    }
   } else {
-    console.warn('[claim] tabibiDocUpload module absent');
+    // Non-connecté : pas de dropzones, gate docs levée (submit = N° Ordre + honneur).
+    if (up) {
+      up.innerHTML =
+        '<div style="display:flex;gap:8px;align-items:flex-start;padding:12px;background:#EFF6FF;' +
+        'border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.5;margin-top:6px">' +
+          '<i class="fa fa-circle-info" style="margin-top:2px"></i>' +
+          '<span>Vos justificatifs (carte du Conseil de l\'Ordre + pièce d\'identité) seront à ajouter ' +
+          'depuis votre espace médecin, juste après la création de votre compte.</span>' +
+        '</div>';
+    }
+    _dcDocsValid = true;
   }
+
+  _updateSubmitState();
   var m = document.getElementById('dc-modal');
   m.classList.remove('hidden');
   document.body.style.overflow = 'hidden';
@@ -442,7 +476,7 @@ document.addEventListener('click', function(e){
 async function _loadTotalDoctorCount(){
   try {
     // [Phase 16.5 rollback] compteur total = public_doctors
-    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=id', {
+    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=id&full_name=not.match.[؀-ۿ]', {
       method:'HEAD',
       headers:{ apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-0' }
     });
@@ -461,6 +495,25 @@ document.addEventListener('DOMContentLoaded', function(){
   _populateDropdowns();
   // Premier load : afficher quelques exemples + count
   dcSearch();
+  // [B2] Deep-link ?legacy_id=N (ou ?claim_legacy_id=N) → pré-ouvre la modale de claim
+  // pour un médecin connecté arrivant depuis son espace (sans recherche manuelle).
+  // L'upload des docs + la confirmation restent obligatoires (dcSubmit).
+  (function(){
+    function _dcGetParam(k){ try { return new URL(location.href).searchParams.get(k) || ''; } catch(e){ return ''; } }
+    var _pre  = _dcGetParam('legacy_id') || _dcGetParam('claim_legacy_id');
+    var _preN = parseInt(_pre, 10);
+    if(!_preN || isNaN(_preN) || _preN < 1) return;
+    fetch(_SB_URL + '/rest/v1/public_doctors?select=full_name&legacy_id=eq.' + _preN + '&limit=1', {
+      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY }
+    }).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
+      var fiche = (Array.isArray(rows) && rows[0]) ? rows[0] : null;
+      if(fiche && typeof dcOpenModal === 'function'){
+        dcOpenModal(_preN, fiche.full_name || ('Fiche #' + _preN));
+      } else {
+        console.warn('[doctor-claim] B2 deep-link: fiche legacy_id=' + _preN + ' introuvable → recherche par défaut.');
+      }
+    }).catch(function(e){ console.warn('[doctor-claim] B2 deep-link fetch error', e && e.message); });
+  })();
   // [Phase 14.1-fix] Event delegation pour les boutons "C'est moi". Attaché
   // UNE seule fois sur le container parent (immuable). Lit data-claim-* du
   // bouton cliqué et appelle dcOpenModal. Marche même si re-render des

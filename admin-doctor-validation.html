@@ -201,30 +201,18 @@ async function loadRefs(){
 async function loadCounts(){
   const sb=window.tabibi&&window.tabibi.supabase;if(!sb)return;
   try{
-    const[p,a,r]=await Promise.all([
-      sb.from('doctor_profiles').select('id',{count:'exact',head:true}).eq('validation_status','pending').eq('is_claimed',true),
-      sb.from('doctor_profiles').select('id',{count:'exact',head:true}).eq('validation_status','approved'),
-      sb.from('doctor_profiles').select('id',{count:'exact',head:true}).eq('validation_status','rejected')
-    ]);
-    document.getElementById('cnt-p').textContent=p.count??0;
-    document.getElementById('cnt-a').textContent=a.count??0;
-    document.getElementById('cnt-r').textContent=r.count??0;
-  }catch(e){console.warn('[dv] loadCounts:',e);}
+    const{data,error}=await sb.rpc('admin_validation_counts');
+    if(error)throw error;
+    const c=(data&&data[0])||{};
+    document.getElementById('cnt-p').textContent=c.pending??0;
+    document.getElementById('cnt-a').textContent=c.approved??0;
+    document.getElementById('cnt-r').textContent=c.rejected??0;
+  }catch(e){console.warn('[dv] loadCounts:',e);toastM('Erreur chargement compteurs','error');}
 }
 
-// ─── Query builder ────────────────────────────────────────────
-function bq(sb,head){
-  let q=sb.from('doctor_profiles').select(
-    head?'id':'id,full_name,email,phone,photo_url,wilaya_code,specialty_id,claimed_at,source,legacy_id,ordre_card_path,id_card_path,validation_rejected_reason,validation_rejected_at,validation_approved_at',
-    head?{count:'exact',head:true}:{}
-  ).eq('validation_status',_tab);
-  if(_tab==='pending')q=q.eq('is_claimed',true);
-  if(_search)q=q.or(`full_name.ilike.%${_search}%,email.ilike.%${_search}%`);
-  if(_wilaya)q=q.eq('wilaya_code',Number(_wilaya)||_wilaya);
-  return q;
-}
-
-// ─── List load ────────────────────────────────────────────────
+// ─── List load (via RPC SECURITY DEFINER : admin_validation_list + admin_validation_total) ──
+// [B12] Plus d'accès direct .from('doctor_profiles') : la policy SELECT passe owner-only,
+// l'admin lit via RPC DEFINER. Tri/filtres/pagination appliqués côté SQL par le RPC.
 async function loadList(){
   if(_busy)return;_busy=true;
   const lEl=document.getElementById('dv-list'),pEl=document.getElementById('dv-pg');
@@ -232,15 +220,16 @@ async function loadList(){
   const sb=window.tabibi&&window.tabibi.supabase;
   if(!sb){lEl.innerHTML='<div class="dv-empty"><i class="fa fa-plug"></i>Supabase indisponible</div>';_busy=false;return;}
   try{
-    const start=_page*PS,end=start+PS-1;
-    const[{data,error},{count:tot}]=await Promise.all([
-      bq(sb,false).order('claimed_at',{ascending:_tab==='pending'}).range(start,end),
-      bq(sb,true)
+    const[lst,tot]=await Promise.all([
+      sb.rpc('admin_validation_list',{p_tab:_tab,p_search:_search||null,p_wilaya:_wilaya||null,p_limit:PS,p_offset:_page*PS}),
+      sb.rpc('admin_validation_total',{p_tab:_tab,p_search:_search||null,p_wilaya:_wilaya||null})
     ]);
-    if(error)throw error;
-    if(!data||!data.length){lEl.innerHTML=emptyHtml();_busy=false;return;}
+    if(lst.error)throw lst.error;
+    const data=lst.data||[];
+    if(!data.length){lEl.innerHTML=emptyHtml();_busy=false;return;}
     lEl.innerHTML=data.map(renderCard).join('');
-    renderPg(pEl,tot??0);
+    const total=(tot&&!tot.error&&tot.data!=null)?Number(tot.data)||0:0;
+    renderPg(pEl,total);
   }catch(e){
     console.error('[dv] loadList:',e);
     lEl.innerHTML=`<div class="dv-empty"><i class="fa fa-triangle-exclamation"></i>${esc(e.message||'Erreur chargement')}</div>`;
@@ -338,9 +327,10 @@ async function prevDoc(docId,type){
   const sb=window.tabibi&&window.tabibi.supabase;
   if(!sb){toastM('Supabase indisponible','error');return;}
   try{
-    const{data,error}=await sb.from('doctor_profiles').select('ordre_card_path,id_card_path').eq('id',docId).single();
-    if(error||!data)throw error||new Error('Médecin introuvable');
-    const path=type==='ordre'?data.ordre_card_path:data.id_card_path;
+    const{data,error}=await sb.rpc('admin_doctor_doc_paths',{p_doctor_id:docId});
+    const row=(data&&data[0])||null;
+    if(error||!row)throw error||new Error('Médecin introuvable');
+    const path=type==='ordre'?row.ordre_card_path:row.id_card_path;
     if(!path){toastM('Document non uploadé','warn');return;}
     const{data:u,error:ue}=await sb.storage.from('doctor-docs').createSignedUrl(path,60);
     if(ue)throw ue;
@@ -376,7 +366,7 @@ async function doValidate(){
   const sb=window.tabibi&&window.tabibi.supabase;
   if(!sb){toastM('Supabase indisponible','error');return;}
   try{
-    const{error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'validate',p_reason:null});
+    const{error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'validate',p_notes:null});
     if(error)throw error;
     if(window.tabibiBrevo){
       try{
@@ -431,7 +421,7 @@ async function doReject(){
   const sb=window.tabibi&&window.tabibi.supabase;
   if(!sb){toastM('Supabase indisponible','error');return;}
   try{
-    const{error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'reject',p_reason:reason});
+    const{error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'reject',p_notes:reason});
     if(error)throw error;
     if(window.tabibiBrevo){
       try{
@@ -484,38 +474,18 @@ async function openAud(docId,docName){
 }
 
 // ─── Auth guard (same pattern as admin-dashboard.html) ────────
-async function waitForUser(ms){
-  const t0=Date.now();
-  while(Date.now()-t0<ms){
-    let u=null;
-    try{u=JSON.parse(localStorage.getItem('tabibi_user')||'null');}catch(e){}
-    if(u&&u.role)return u;
-    if(window.tabibi&&window.tabibi.auth){
-      try{
-        const sess=await window.tabibi.auth.getSession();
-        if(sess){
-          const su=await window.tabibi.auth.getUser();
-          if(su){
-            const fn=su.first_name||'',ln=su.last_name||'';
-            const name=(fn+' '+ln).trim()||(su.email||'').split('@')[0];
-            const parts=name.split(/\s+/);
-            const init=((parts[0]||'?')[0]+(parts[1]?parts[1][0]:'')).toUpperCase();
-            const role=(su.role==='doctor'||su.role==='medecin')?'medecin':(su.role==='admin'?'admin':'patient');
-            const obj={id:su.id,email:su.email,role,name,initials:init};
-            localStorage.setItem('tabibi_user',JSON.stringify(obj));
-            return obj;
-          }
-        }else{return null;}
-      }catch(e){}
-    }
-    await new Promise(r=>setTimeout(r,100));
-  }
-  return null;
-}
-
 document.addEventListener('DOMContentLoaded',async()=>{
-  const u=await waitForUser(3000);
-  if(!u||u.role!=='admin'){location.href='login.html';return;}
+  // [FIX session] Garde centralisée réseau-aware (remplace waitForUser cache-first).
+  const authed=await window.tabibi.auth.requireAuth('admin');
+  if(!authed) return; // null → requireAuth a déjà géré le redirect
+  const u=(function(a){
+    if(a&&a.initials)return a;
+    const fn=a.first_name||a.firstName||'',ln=a.last_name||a.lastName||'';
+    const name=(fn+' '+ln).trim()||(a.email||'').split('@')[0];
+    const parts=name.split(/\s+/);
+    const initials=((parts[0]||'?')[0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+    return Object.assign({},a,{role:'admin',name,initials});
+  })(authed);
 
   try{
     if(window.tabibi&&window.tabibi.auth){

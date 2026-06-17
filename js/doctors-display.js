@@ -72,7 +72,7 @@
       diplomes:   ['Doctorat en Médecine'],
       // champs bruts utiles pour la fiche médecin
       legacy_id:  doc.legacy_id || null,
-      _isClaimed: !!(doc.user_id)
+      _isClaimed: !!doc.is_claimed
     };
   }
 

@@ -70,6 +70,10 @@ test-prescriptions/
 # Repo PUBLIC → ne jamais committer. À placer manuellement sur chaque
 # machine de build (voir docs/mobile/FIREBASE_SETUP.md).
 android/app/google-services.json
+# Signing release (clé d'upload Android) — JAMAIS committer (repo public)
+*.jks
+*.keystore
+keystore.properties
 node_modules/
 ios/App/Pods/
 ios/App/Podfile.lock

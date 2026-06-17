@@ -26,7 +26,7 @@
 (function () {
   'use strict';
 
-  if (window.tabibiDoctorName && typeof window.tabibiDoctorName.format === 'function') {
+  if (window.tabibiDoctorName && typeof window.tabibiDoctorName.dirFor === 'function') {
     return;
   }
 
@@ -43,7 +43,9 @@
     // pharmacy/optician/clinic/dentist/lab (autres). On range optician
     // côté NON_DOCTOR (opticien = profession non médicale). dentist reste
     // doctor par défaut (personne physique exerçant) → préfixe "Dr.".
-    'optician', 'opticien'
+    'optician', 'opticien',
+    // [clean] valeurs base supplémentaires (non-docteur → pas de "Dr.")
+    'paramedical', 'health_center'
   ];
 
   function _norm(t) {
@@ -64,7 +66,17 @@
     var n = _pickName(profile, lang || 'fr');
     if (!n) return 'Praticien';
     // Strip un éventuel préfixe "Dr." déjà présent pour éviter "Dr. Dr. X"
-    return n.replace(/^(Dr\.?|Docteur)\s+/i, '').trim() || 'Praticien';
+    var name = n.replace(/^(dr\.?|docteur)\s+/i, '').trim();
+    // [clean-display] Nettoie les caractères parasites — AFFICHAGE SEULEMENT,
+    // ne réécrit JAMAIS profile.full_name ni la base.
+    name = String(name)
+      .replace(/^[\s\-–—_.،٫ـ]+/, '')   // vire parasites EN TÊTE
+      .replace(/[\s\-–—_.،٫ـ]+$/, '')   // vire parasites EN FIN
+      .replace(/\s*[-–—_]{3,}\s*/g, ' ')// colle les runs de tirets parasites internes (---)
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+    if (!name) name = 'Praticien';
+    return name;
   }
 
   // Décide si on doit préfixer "Dr." selon entity_type.
@@ -75,6 +87,13 @@
     return NON_DOCTOR_ENTITIES.indexOf(et) === -1;
   }
 
+  // Title Case UNIQUEMENT les runs de lettres latines (laisse arabe/chiffres/ponctuation intacts → noms mixtes AR+FR OK).
+  function titleCaseLatin(s){
+    return String(s).replace(/[A-Za-zÀ-ÿ]+/g, function(w){
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    });
+  }
+
   // Format principal — fr par défaut.
   function format(profile) {
     return formatForLang(profile, 'fr');
@@ -83,7 +102,12 @@
   function formatForLang(profile, lang) {
     var name = rawName(profile, lang);
     if (name === 'Praticien') return name;             // pas de préfixe sur fallback
-    if (!_shouldPrefix(profile)) return name;          // clinique/labo → pas de Dr.
+    // [titre] Détecte un titre médecin déjà présent (FR/AR), AVANT title-case → évite le double "Dr.".
+    var hasTitle = /^\s*(dr\.?|docteur|pr\.?|prof(?:esseur)?)\b/i.test(name)
+                || /^\s*(الدكتور|الحكيم|طبيب|د\.)/.test(name);
+    name = titleCaseLatin(name);                       // Title Case des runs latins uniquement, AVANT le préfixe
+    if (!_shouldPrefix(profile)) return name;          // clinique/labo/pharma/paramedical → pas de Dr.
+    if (hasTitle) return name;                         // déjà un titre → ne pas ajouter "Dr. "
     return 'Dr. ' + name;
   }
 
@@ -99,11 +123,23 @@
     return s ? s.toUpperCase() : '?';
   }
 
+  // [RTL] true si la chaîne contient au moins un caractère arabe (plage U+0600–U+06FF).
+  function isArabic(str) {
+    return /[\u0600-\u06FF]/.test(String(str || ''));
+  }
+
+  // [RTL] direction d'écriture pour le nom RÉELLEMENT rendu (rawName, mode fr par défaut).
+  function dirFor(profile) {
+    return isArabic(rawName(profile)) ? 'rtl' : 'ltr';
+  }
+
   window.tabibiDoctorName = {
     format: format,
     formatForLang: formatForLang,
     rawName: rawName,
     initials: initials,
+    isArabic: isArabic,
+    dirFor: dirFor,
     // Exposé pour debug / extension future
     _NON_DOCTOR_ENTITIES: NON_DOCTOR_ENTITIES.slice()
   };

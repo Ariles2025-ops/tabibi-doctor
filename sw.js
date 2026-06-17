@@ -24,7 +24,7 @@
 // `navigator.serviceWorker.register('/sw.js')` nulle part). Nouveaux
 // précaches : tabibi-features.js, tabibi-analytics.js, tabibi-sw-register.js,
 // payment.html, notifications.html.
-const CACHE_VERSION = 'tabibi-v19-2026-05-23';
+const CACHE_VERSION = 'tabibi-v23-2026-06-17';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -88,7 +88,7 @@ self.addEventListener('fetch', event => {
 
 async function networkFirst(req) {
   try {
-    const fresh = await fetch(req);
+    const fresh = await fetch(req, { cache: 'no-store' });
     const cache = await caches.open(RUNTIME_CACHE);
     cache.put(req, fresh.clone()).catch(()=>{});
     return fresh;
