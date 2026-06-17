@@ -1,6 +1,16 @@
 <!DOCTYPE html>
 <html lang="fr" dir="ltr">
 <head>
+<script>
+(function () {
+  try {
+    var h = window.location.hash || '';
+    if (/[#&]type=recovery/.test(h) && window.location.pathname.indexOf('reset-password') === -1) {
+      window.location.replace('/reset-password.html' + h);
+    }
+  } catch (e) {}
+})();
+</script>
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script>
 <script src="js/tabibi-security.js"></script>
@@ -2904,7 +2914,6 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
         <a href="doctor-claim.html" style="display:block;font-size:12px;color:#0F7560;font-weight:700;padding:4px 0;text-decoration:none"><i class="fa fa-id-card fa-xs" style="margin-right:4px"></i><span data-i18n="foot_claim_fiche">Réclamer ma fiche</span></a>
         <a href="onboarding-medecin.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="foot_become">Devenir partenaire</span></a>
         <a href="doctor-dashboard.html" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span data-i18n="foot_pro_space">Espace pro</span></a>
-        <a href="#" class="link-disabled" title="Bientôt disponible" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span id="foot-pro-pricing">Tabibi PRO 5 000 DA/mois</span> · <span class="foot-soon">Bientôt</span></a>
         <a href="#" class="link-disabled" title="Bientôt disponible" style="display:block;font-size:12px;color:#334155;padding:4px 0;text-decoration:none"><span id="foot-doc-docs">Documentation</span> · <span class="foot-soon">Bientôt</span></a>
       </div>
     </div>
