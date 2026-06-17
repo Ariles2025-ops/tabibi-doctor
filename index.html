@@ -2608,7 +2608,7 @@ function _buildDoctorCardsUrl(opts){
   }
   // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
   // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
-  q.set('order', 'full_name.asc');
+  q.set('order', 'name_sort_key.asc');
   q.set('full_name', 'not.match.[؀-ۿ]');  // exclut les noms en écriture arabe (U+0600–U+06FF) côté serveur
   return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
 }
