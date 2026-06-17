@@ -66,12 +66,13 @@
     var n = _pickName(profile, lang || 'fr');
     if (!n) return 'Praticien';
     // Strip un éventuel préfixe "Dr." déjà présent pour éviter "Dr. Dr. X"
-    var name = n.replace(/^(Dr\.?|Docteur)\s+/i, '').trim();
+    var name = n.replace(/^(dr\.?|docteur)\s+/i, '').trim();
     // [clean-display] Nettoie les caractères parasites — AFFICHAGE SEULEMENT,
     // ne réécrit JAMAIS profile.full_name ni la base.
     name = String(name)
       .replace(/^[\s\-–—_.،٫ـ]+/, '')   // vire parasites EN TÊTE
       .replace(/[\s\-–—_.،٫ـ]+$/, '')   // vire parasites EN FIN
+      .replace(/\s*[-–—_]{3,}\s*/g, ' ')// colle les runs de tirets parasites internes (---)
       .replace(/\s{2,}/g, ' ')
       .trim();
     if (!name) name = 'Praticien';
@@ -86,6 +87,13 @@
     return NON_DOCTOR_ENTITIES.indexOf(et) === -1;
   }
 
+  // Title Case UNIQUEMENT les runs de lettres latines (laisse arabe/chiffres/ponctuation intacts → noms mixtes AR+FR OK).
+  function titleCaseLatin(s){
+    return String(s).replace(/[A-Za-zÀ-ÿ]+/g, function(w){
+      return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+    });
+  }
+
   // Format principal — fr par défaut.
   function format(profile) {
     return formatForLang(profile, 'fr');
@@ -94,7 +102,12 @@
   function formatForLang(profile, lang) {
     var name = rawName(profile, lang);
     if (name === 'Praticien') return name;             // pas de préfixe sur fallback
-    if (!_shouldPrefix(profile)) return name;          // clinique/labo → pas de Dr.
+    // [titre] Détecte un titre médecin déjà présent (FR/AR), AVANT title-case → évite le double "Dr.".
+    var hasTitle = /^\s*(dr\.?|docteur|pr\.?|prof(?:esseur)?)\b/i.test(name)
+                || /^\s*(الدكتور|الحكيم|طبيب|د\.)/.test(name);
+    name = titleCaseLatin(name);                       // Title Case des runs latins uniquement, AVANT le préfixe
+    if (!_shouldPrefix(profile)) return name;          // clinique/labo/pharma/paramedical → pas de Dr.
+    if (hasTitle) return name;                         // déjà un titre → ne pas ajouter "Dr. "
     return 'Dr. ' + name;
   }
 
