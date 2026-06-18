@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────
+# export-ignore : exclut le contenu INTERNE/SENSIBLE des archives `git archive`
+# (= le build web déployé sur l'hébergement statique public Cloudflare Pages).
+# Ces chemins ne doivent JAMAIS être servis publiquement.
+# ─────────────────────────────────────────────────────────────────────────
+migrations/        export-ignore
+fixtures/          export-ignore
+scripts/           export-ignore
+docs/              export-ignore
+tests/             export-ignore
+templates/         export-ignore
+android/           export-ignore
+ios/               export-ignore
+.github/           export-ignore
+*.md               export-ignore
+package.json       export-ignore
+package-lock.json  export-ignore
+netlify.toml       export-ignore
+capacitor.config.ts export-ignore
+.gitignore         export-ignore
+.gitattributes     export-ignore
