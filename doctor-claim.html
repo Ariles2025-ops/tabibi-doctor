@@ -57,6 +57,14 @@
   .dc-modal .btn-cancel { flex:1;padding:12px;background:transparent;border:1px solid var(--border);border-radius:var(--r8);font-weight:600;cursor:pointer;font-family:inherit; }
   .dc-modal .btn-submit { flex:2;padding:12px;background:var(--blue);color:#fff;border:none;border-radius:var(--r8);font-weight:700;cursor:pointer;font-family:inherit; }
   .dc-modal .btn-submit:disabled { opacity:.5;cursor:not-allowed; }
+  /* ── RTL (mode arabe) — i18n P0 #3 ────────────────────────────────────────
+     Les rangées flex (.dc-search-row, .honor checkbox+texte, .actions) s'inversent
+     automatiquement sous dir=rtl. On force l'alignement texte, le miroir de
+     l'icône de recherche (+ son padding) et de la flèche retour app-bar. */
+  [dir="rtl"] .dc-hero p, [dir="rtl"] .dc-results-count, [dir="rtl"] .dc-modal .lbl { text-align: right; }
+  [dir="rtl"] .dc-search > i { left: auto; right: 12px; }
+  [dir="rtl"] .dc-search input { padding: 11px 38px 11px 14px; }
+  [dir="rtl"] .fa-arrow-left { display: inline-block; transform: scaleX(-1); }
 </style>
 </head>
 <body>
@@ -64,7 +72,7 @@
 
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='index.html'" aria-label="Retour accueil"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Réclamer ma fiche</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="claim_my_profile">Réclamer ma fiche</div></div>
 </header>
 
 <main class="page" role="main">
@@ -72,32 +80,32 @@
 
   <!-- HERO -->
   <section class="dc-hero" aria-label="Vous êtes médecin">
-    <h1><i class="fa fa-user-doctor" style="margin-right:8px;opacity:.85"></i> Vous êtes médecin ?</h1>
-    <p>Trouvez votre fiche parmi <span id="dc-count">—</span> praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</p>
+    <h1><i class="fa fa-user-doctor" style="margin-inline-end:8px;opacity:.85"></i> <span data-i18n="you_are_doctor">Vous êtes médecin ?</span></h1>
+    <p><span data-i18n="claim_find_1">Trouvez votre fiche parmi</span> <span id="dc-count">—</span> <span data-i18n="claim_find_2">praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</span></p>
   </section>
 
   <!-- SEARCH -->
   <section class="dc-search-wrap" aria-label="Recherche fiche">
     <div class="dc-search-row">
-      <select id="dc-ville" onchange="dcSearch()"><option value="">Toutes wilayas</option></select>
-      <select id="dc-spec"  onchange="dcSearch()"><option value="">Toutes spécialités</option></select>
+      <select id="dc-ville" onchange="dcSearch()"><option value="" data-i18n="all_wilayas">Toutes wilayas</option></select>
+      <select id="dc-spec"  onchange="dcSearch()"><option value="" data-i18n="all_specialties">Toutes spécialités</option></select>
     </div>
     <div class="dc-search">
       <i class="fa fa-search" aria-hidden="true"></i>
-      <input type="search" id="dc-q" placeholder="Votre nom de famille…" oninput="dcSearchDebounced()" autocomplete="off">
+      <input type="search" id="dc-q" placeholder="Votre nom de famille…" data-i18n-placeholder="ph_family_name" oninput="dcSearchDebounced()" autocomplete="off">
     </div>
   </section>
 
-  <div class="dc-results-count" id="dc-count-line" aria-live="polite">Saisissez votre nom puis sélectionnez la fiche qui correspond.</div>
+  <div class="dc-results-count" id="dc-count-line" aria-live="polite" data-i18n="claim_search_prompt">Saisissez votre nom puis sélectionnez la fiche qui correspond.</div>
 
   <!-- RESULTS -->
   <div class="dc-list" id="dc-list" aria-live="polite"></div>
 
   <!-- HELP : pas trouvé -->
   <div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">
-    Vous ne trouvez pas votre fiche ?
+    <span data-i18n="claim_not_found">Vous ne trouvez pas votre fiche ?</span>
     <a href="mailto:contact@tabibi.doctor?subject=Ajout%20de%20ma%20fiche%20médecin"
-       style="color:var(--blue);text-decoration:underline;font-weight:600">
+       style="color:var(--blue);text-decoration:underline;font-weight:600" data-i18n="claim_write_us">
        Écrivez-nous pour qu'on l'ajoute
     </a>
   </div>
@@ -108,28 +116,28 @@
 <!-- MODAL CLAIM -->
 <div class="dc-modal-bg hidden" id="dc-modal" role="dialog" aria-modal="true" aria-labelledby="dc-modal-title">
   <div class="dc-modal">
-    <h2 id="dc-modal-title"><i class="fa fa-id-card" style="color:var(--blue);margin-right:6px"></i> Réclamer cette fiche</h2>
-    <div style="font-size:13px;color:var(--text2);margin-bottom:6px">Vous allez réclamer la fiche de :</div>
+    <h2 id="dc-modal-title"><i class="fa fa-id-card" style="color:var(--blue);margin-inline-end:6px"></i> <span data-i18n="claim_this_profile">Réclamer cette fiche</span></h2>
+    <div style="font-size:13px;color:var(--text2);margin-bottom:6px" data-i18n="claim_you_will_claim">Vous allez réclamer la fiche de :</div>
     <div style="padding:10px 12px;background:var(--bg2);border-radius:var(--r8);font-weight:700;color:var(--text1)" id="dc-modal-doctor">—</div>
 
-    <label class="lbl" for="dc-ordre">N° Conseil de l'Ordre des Médecins <span style="color:var(--red)">*</span></label>
+    <label class="lbl" for="dc-ordre"><span data-i18n="order_council_number_full">N° Conseil de l'Ordre des Médecins</span> <span style="color:var(--red)">*</span></label>
     <input type="text" id="dc-ordre" placeholder="Ex : CO-2025-XXXX" autocomplete="off">
-    <div class="upload-note">Saisi pour traçabilité.</div>
+    <div class="upload-note" data-i18n="entered_for_tracking">Saisi pour traçabilité.</div>
 
     <!-- [Phase 16.5] Zones upload des 2 justificatifs (carte Ordre + identité) -->
     <div id="dc-upload-container" style="margin-top:6px"></div>
 
     <label class="honor">
       <input type="checkbox" id="dc-honor">
-      <span><strong>Je certifie sur l'honneur</strong> être le médecin de cette fiche.
+      <span data-i18n-html="claim_certify"><strong>Je certifie sur l'honneur</strong> être le médecin de cette fiche.
       Toute fausse déclaration peut entraîner la suppression de mon compte et des poursuites
       (loi DZ 18-07 + art. 226-15 du Code pénal).</span>
     </label>
 
     <div class="actions">
-      <button type="button" class="btn-cancel" onclick="dcCloseModal()">Annuler</button>
+      <button type="button" class="btn-cancel" onclick="dcCloseModal()" data-i18n="cancel">Annuler</button>
       <button type="button" class="btn-submit" id="dc-submit" onclick="dcSubmit()" disabled>
-        <i class="fa fa-check"></i> Confirmer
+        <i class="fa fa-check"></i> <span data-i18n="confirm">Confirmer</span>
       </button>
     </div>
   </div>
@@ -163,6 +171,9 @@ var _SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) |
 
 var _dcDebounce = null, _dcAbort = null, _dcSeq = 0;
 var _selectedDoctor = null;
+
+// [I18N-RES] helper clés explicites + fallback FR (tabibiT vient de tabibi-i18n.js)
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 
 function _esc(s){
   if(s == null) return '';
@@ -220,7 +231,7 @@ async function _dcFetchResults(opts){
 function _renderSkeleton(){
   var sk = '<div class="dc-skeleton"><div class="sk-ava"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line sm"></div><div class="sk-line xs"></div></div></div>';
   document.getElementById('dc-list').innerHTML = sk + sk;
-  document.getElementById('dc-count-line').textContent = 'Recherche…';
+  document.getElementById('dc-count-line').textContent = _t('claim_searching', 'Recherche…');
 }
 
 function _renderResults(res){
@@ -229,14 +240,14 @@ function _renderResults(res){
   if(!res){ return; }
   if(!res.rows.length){
     box.innerHTML = '<div class="dc-empty"><i class="fa fa-magnifying-glass ico"></i>'
-                  + '<div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">Aucune fiche disponible</div>'
-                  + '<div style="font-size:13px">Affinez votre recherche ou écrivez-nous si votre fiche manque.</div></div>';
-    cline.textContent = '0 fiche trouvée';
+                  + '<div style="font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px">' + _t('claim_no_profile','Aucune fiche disponible') + '</div>'
+                  + '<div style="font-size:13px">' + _t('claim_refine_or_write','Affinez votre recherche ou écrivez-nous si votre fiche manque.') + '</div></div>';
+    cline.textContent = _t('claim_zero_found','0 fiche trouvée');
     return;
   }
   cline.textContent = (res.total > 20)
-    ? res.rows.length + ' affichées sur ' + res.total + ' — affinez par wilaya/spécialité'
-    : res.total + ' fiche(s) trouvée(s)';
+    ? res.rows.length + ' ' + _t('claim_shown_of','affichées sur') + ' ' + res.total + ' — ' + _t('claim_refine','affinez par wilaya/spécialité')
+    : res.total + ' ' + _t('claim_profiles_found','fiche(s) trouvée(s)');
   // [Phase 14.1-fix] Event delegation au lieu d'inline onclick — évite tout
   // risque de parsing cassé sur noms exotiques (UTF-8, ', /, etc.). Le bouton
   // porte juste data-claim-legacy + data-claim-name, lus par le listener
@@ -342,8 +353,7 @@ async function dcOpenModal(legacyId, doctorName){
         '<div style="display:flex;gap:8px;align-items:flex-start;padding:12px;background:#EFF6FF;' +
         'border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.5;margin-top:6px">' +
           '<i class="fa fa-circle-info" style="margin-top:2px"></i>' +
-          '<span>Vos justificatifs (carte du Conseil de l\'Ordre + pièce d\'identité) seront à ajouter ' +
-          'depuis votre espace médecin, juste après la création de votre compte.</span>' +
+          '<span>' + _t('claim_docs_note', "Vos justificatifs (carte du Conseil de l'Ordre + pièce d'identité) seront à ajouter depuis votre espace médecin, juste après la création de votre compte.") + '</span>' +
         '</div>';
     }
     _dcDocsValid = true;
@@ -384,7 +394,7 @@ async function dcSubmit(){
   if(!window.tabibiClaim){ alert('Module de réclamation indisponible. Rechargez la page.'); return; }
 
   var btn = document.getElementById('dc-submit');
-  var btnOrig = '<i class="fa fa-check"></i> Confirmer';
+  var btnOrig = '<i class="fa fa-check"></i> ' + _t('confirm','Confirmer');
   function _reset(){ btn.disabled = false; btn.innerHTML = btnOrig; }
 
   btn.disabled = true;
