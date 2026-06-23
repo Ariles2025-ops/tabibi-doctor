@@ -360,7 +360,7 @@ async function dcOpenModal(legacyId, doctorName){
         '<div style="display:flex;gap:8px;align-items:flex-start;padding:12px;background:#EFF6FF;' +
         'border:1px solid #BFDBFE;border-radius:10px;font-size:12px;color:#1e40af;line-height:1.5;margin-top:6px">' +
           '<i class="fa fa-circle-info" style="margin-top:2px"></i>' +
-          '<span>' + _t('claim_docs_note', "Vos justificatifs (carte du Conseil de l'Ordre + pièce d'identité) seront à ajouter depuis votre espace médecin, juste après la création de votre compte.") + '</span>' +
+          '<span data-i18n-html="claim_docs_later_note">' + _t('claim_docs_later_note', "Vos pièces justificatives (carte du Conseil de l'Ordre + pièce d'identité) devront être ajoutées depuis votre espace médecin, juste après la création de votre compte.") + '</span>' +
         '</div>';
     }
     _dcDocsValid = true;
