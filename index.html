@@ -855,6 +855,15 @@ const TR = {
     review_ok:"Avis envoyé avec succès !",rating_req:"Sélectionnez une note",comment_req:"Ajoutez un commentaire",
     install_title:"Installer Tabibi",install_sub:"Accédez à votre médecin sans navigateur",install_btn:"Installer",
     hs1:"Médecins",hs2:"Wilayas",hs3:"Patients",hs4:"Note moy.",
+    // [I18N-RES 2026-06-18] cartes annuaire + modale fiche + hero stat (P0 #3)
+    not_rated_yet:"Pas encore noté", badge_teleconsult:"Téléconsultation", badge_chifa:"Chifa", badge_card:"Carte",
+    price_tbd:"Tarif à confirmer", validation_pending:"Validation en cours", badge_urgent:"Urgences",
+    available_slots:"Créneaux disponibles", confirm_slot:"Confirmer ce créneau", about_doctor:"À propos",
+    addr_label:"Adresse", langs_label:"Langues", availability_label:"Disponibilité", hours_default:"Lun – Ven • 8h – 18h",
+    validation_pending_long:"Validation en cours — réservation bientôt disponible.",
+    booking_not_active:"Ce médecin n'a pas encore activé les RDV en ligne.",
+    doctor_validating:"Ce médecin est en cours de validation.",
+    hero_booking:"Réservation", claim_hint_title:"Vous êtes ce médecin ? Cliquez pour réclamer votre fiche.",
     sb1:"Médecins référencés",sb2:"Wilayas",sb3:"Patients satisfaits",sb4:"Taux de satisfaction",
     patient_role:"Patient",medecin_role:"Médecin",admin_role:"Admin",
     today_rdv:"Consultations du jour",next_rdv:"Prochain rendez-vous",
@@ -918,6 +927,15 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     review_ok:"تم إرسال التقييم!",rating_req:"اختر تقييماً",comment_req:"أضف تعليقاً",
     install_title:"تثبيت طبيبي",install_sub:"الوصول إلى طبيبك بدون متصفح",install_btn:"تثبيت",
     hs1:"طبيب",hs2:"ولاية",hs3:"مريض",hs4:"التقييم",
+    // [I18N-RES 2026-06-18] cartes annuaire + modale fiche + hero stat (P0 #3)
+    not_rated_yet:"لم يُقيَّم بعد", badge_teleconsult:"استشارة عن بُعد", badge_chifa:"شيفا", badge_card:"بطاقة",
+    price_tbd:"السعر قيد التأكيد", validation_pending:"قيد التحقق", badge_urgent:"حالات طارئة",
+    available_slots:"المواعيد المتاحة", confirm_slot:"تأكيد هذا الموعد", about_doctor:"نبذة",
+    addr_label:"العنوان", langs_label:"اللغات", availability_label:"التوفّر", hours_default:"الاثنين – الجمعة • 08:00 – 18:00",
+    validation_pending_long:"قيد التحقق — الحجز متاح قريبًا.",
+    booking_not_active:"لم يُفعّل هذا الطبيب الحجز عبر الإنترنت بعد.",
+    doctor_validating:"هذا الطبيب قيد التحقق.",
+    hero_booking:"الحجز", claim_hint_title:"هل أنت هذا الطبيب؟ انقر للمطالبة بملفك.",
     sb1:"طبيب مُدرج",sb2:"ولاية",sb3:"مريض راضٍ",sb4:"معدل الرضا",
     patient_role:"مريض",medecin_role:"طبيب",admin_role:"مدير",
     today_rdv:"استشارات اليوم",next_rdv:"الموعد القادم",
@@ -981,6 +999,15 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     review_ok:"Review sent successfully!",rating_req:"Please select a rating",comment_req:"Add a comment",
     install_title:"Install Tabibi",install_sub:"Access your doctor without a browser",install_btn:"Install",
     hs1:"Doctors",hs2:"Wilayas",hs3:"Patients",hs4:"Avg. rating",
+    // [I18N-RES 2026-06-18] annuaire cards + profile modal + hero stat (P0 #3)
+    not_rated_yet:"Not rated yet", badge_teleconsult:"Teleconsultation", badge_chifa:"Chifa", badge_card:"Card",
+    price_tbd:"Price to confirm", validation_pending:"Validation pending", badge_urgent:"Emergencies",
+    available_slots:"Available slots", confirm_slot:"Confirm this slot", about_doctor:"About",
+    addr_label:"Address", langs_label:"Languages", availability_label:"Availability", hours_default:"Mon – Fri • 8am – 6pm",
+    validation_pending_long:"Validation in progress — booking available soon.",
+    booking_not_active:"This doctor hasn't enabled online booking yet.",
+    doctor_validating:"This doctor is being validated.",
+    hero_booking:"Booking", claim_hint_title:"Are you this doctor? Click to claim your profile.",
     sb1:"Referenced doctors",sb2:"Wilayas",sb3:"Happy patients",sb4:"Satisfaction rate",
     patient_role:"Patient",medecin_role:"Doctor",admin_role:"Admin",
     today_rdv:"Today's consultations",next_rdv:"Next appointment",
@@ -1903,22 +1930,22 @@ function docCard(d){
     <div class="doc-stars">
       ${d.note != null
         ? `<span class="sf">${stars(d.note)}</span><span class="rn">${d.note}</span><span class="rc">(${d.avis} ${T("avis_word")})</span>`
-        : `<span class="rc" style="color:var(--text3)">Pas encore noté</span>`}
+        : `<span class="rc" style="color:var(--text3)">${T("not_rated_yet")}</span>`}
     </div>
     <div class="doc-tags">
       ${d.cert?`<span class="badge badge-green"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
-      ${d.telehealth?`<span class="badge badge-blue"><i class='fa fa-video fa-xs'></i>Téléconsultation</span>`:""}
-      ${d.acceptsChifa?`<span class="badge" style="background:#dcfce7;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>Chifa</span>`:""}
-      ${d.acceptsCard?`<span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class='fa fa-credit-card fa-xs'></i>Carte</span>`:""}
-      ${d.acceptsCash?`<span class="badge" style="background:#fef3c7;color:#92400e"><i class='fa fa-money-bill-wave fa-xs'></i>Espèces</span>`:""}
-      ${d.claimed===false?`<a href="doctor-claim.html" onclick="event.stopPropagation()" class="badge" style="background:#fef3c7;color:#92400e;text-decoration:none;border:1px dashed #f59e0b" title="Vous êtes ce médecin ? Cliquez pour réclamer votre fiche."><i class='fa fa-circle-info fa-xs'></i>Non réclamée</a>`:""}
+      ${d.telehealth?`<span class="badge badge-blue"><i class='fa fa-video fa-xs'></i>${T("badge_teleconsult")}</span>`:""}
+      ${d.acceptsChifa?`<span class="badge" style="background:#dcfce7;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>${T("badge_chifa")}</span>`:""}
+      ${d.acceptsCard?`<span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class='fa fa-credit-card fa-xs'></i>${T("badge_card")}</span>`:""}
+      ${d.acceptsCash?`<span class="badge" style="background:#fef3c7;color:#92400e"><i class='fa fa-money-bill-wave fa-xs'></i>${T("pay_cash")}</span>`:""}
+      ${d.claimed===false?`<a href="doctor-claim.html" onclick="event.stopPropagation()" class="badge" style="background:#fef3c7;color:#92400e;text-decoration:none;border:1px dashed #f59e0b" title="${T("claim_hint_title")}"><i class='fa fa-circle-info fa-xs'></i>${T("badge_unclaimed")}</a>`:""}
     </div>
     <div class="doc-footer">
-      <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
+      <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">${T("price_tbd")}</span>`}</div>
       ${(d.claimed && d.validationStatus === 'approved')
         ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')"><i class='fa fa-calendar-plus'></i>${T("rdv")}</button>`
         : (d.claimed
-          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> Validation en cours</span>`
+          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> ${T("validation_pending")}</span>`
           : '')
       }
     </div>
@@ -1937,7 +1964,7 @@ function bookDoc(id){
   if(!d) return;
   // [Phase 16.4 / P1.6b] garde : réservable SSI fiche claimed + approved
   if(!(d.claimed && d.validationStatus === 'approved')){
-    toast(d.claimed ? "Ce médecin est en cours de validation." : "Ce médecin n'a pas encore activé les RDV en ligne.","info"); return;
+    toast(d.claimed ? T("doctor_validating") : T("booking_not_active"),"info"); return;
   }
   showBookingModal(d);
 }
@@ -1958,37 +1985,37 @@ function showDoctorModal(d){
           <div style="font-size:13px;color:rgba(255,255,255,.75)">${s} · ${c}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
             ${d.note != null
-              ? `<span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span><span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span><span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis||0} avis)</span>`
-              : `<span style='font-size:12px;color:rgba(255,255,255,.65)'>Pas encore noté</span>`}
-            ${d.cert?`<span class="badge badge-green" style="font-size:10px"><i class='fa fa-check fa-xs'></i>Certifié</span>`:""}
-            ${d.urgent?`<span class="badge badge-red" style="font-size:10px"><i class='fa fa-bolt fa-xs'></i>Urgences</span>`:""}
+              ? `<span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span><span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span><span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis||0} ${T("avis_word")})</span>`
+              : `<span style='font-size:12px;color:rgba(255,255,255,.65)'>${T("not_rated_yet")}</span>`}
+            ${d.cert?`<span class="badge badge-green" style="font-size:10px"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
+            ${d.urgent?`<span class="badge badge-red" style="font-size:10px"><i class='fa fa-bolt fa-xs'></i>${T("badge_urgent")}</span>`:""}
           </div>
         </div>
         <div style="padding:44px 16px 16px">
           <!-- Créneaux -->
           <div class="card" style="margin-bottom:14px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div style="font-size:14px;font-weight:700"><i class='fa fa-calendar-days'></i> Créneaux disponibles</div>
-              <div style="font-size:16px;font-weight:800;color:var(--blue)">${d.prix != null ? `${d.prix.toLocaleString()} DA` : `<span style="font-size:13px;color:var(--text3)">Tarif à confirmer</span>`}</div>
+              <div style="font-size:14px;font-weight:700"><i class='fa fa-calendar-days'></i> ${T("available_slots")}</div>
+              <div style="font-size:16px;font-weight:800;color:var(--blue)">${d.prix != null ? `${d.prix.toLocaleString()} DA` : `<span style="font-size:13px;color:var(--text3)">${T("price_tbd")}</span>`}</div>
             </div>
             <div class="slots-grid" id="prof-slots"></div>
             <div id="slot-confirm-txt" class="hidden" style="background:var(--blue-l);border-radius:var(--r12);padding:10px;font-size:13px;color:var(--blue);margin:10px 0;display:flex;align-items:center;gap:6px"><i class='fa fa-check-circle'></i><span id="slot-txt"></span></div>
-            <button class="btn btn-primary btn-full btn-lg" style="margin-top:8px" onclick="confirmFromProfile('${d.id}')"><i class='fa fa-calendar-check'></i> Confirmer ce créneau</button>
+            <button class="btn btn-primary btn-full btn-lg" style="margin-top:8px" onclick="confirmFromProfile('${d.id}')"><i class='fa fa-calendar-check'></i> ${T("confirm_slot")}</button>
           </div>
           <!-- About -->
           <div class="card" style="margin-bottom:14px">
-            <div style="font-size:14px;font-weight:700;margin-bottom:10px">À propos</div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px">${T("about_doctor")}</div>
             <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">${d.desc||""}</p>
-            ${[["fa-location-dot","Adresse",d.addr||"—"],["fa-language","Langues",(d.langs||[]).join(", ")],["fa-clock","Disponibilité","Lun – Ven • 8h – 18h"]].map(([ic,lbl,val])=>`
+            ${[["fa-location-dot",T("addr_label"),d.addr||"—"],["fa-language",T("langs_label"),(d.langs||[]).join(", ")],["fa-clock",T("availability_label"),T("hours_default")]].map(([ic,lbl,val])=>`
               <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:12px">
                 <span style='color:var(--text3);display:flex;align-items:center;gap:4px'><i class='fa ${ic} fa-xs'></i>${lbl}</span>
-                <span style='font-weight:600;color:var(--text);text-align:right'>${val}</span>
+                <span style='font-weight:600;color:var(--text);text-align:end'>${val}</span>
               </div>`).join("")}
             <div style="margin-top:12px">
               ${(d.diplomes||[]).map(dp=>`<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:6px"><i class='fa fa-graduation-cap fa-xs' style='color:var(--blue);flex-shrink:0;margin-top:2px'></i>${dp}</div>`).join("")}
             </div>
           </div>
-          <button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> Prendre un RDV</button>
+          <button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> ${T("rdv")}</button>
           <div style="height:20px"></div>
         </div>
       </div>
@@ -2011,7 +2038,7 @@ function showDoctorModal(d){
     // [P1.6b] Masque les créneaux générés si la fiche n'est pas claimed+approved
     // (UX uniquement — le serveur bloque déjà la réservation via RLS).
     if (!(d.claimed && d.validationStatus === 'approved')) {
-      el.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:6px 0">${d.claimed ? "Validation en cours — réservation bientôt disponible." : "Ce médecin n'a pas encore activé les RDV en ligne."}</div>`;
+      el.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:6px 0">${d.claimed ? T("validation_pending_long") : T("booking_not_active")}</div>`;
       return;
     }
     const taken = getTakenSlots(d.id);
@@ -2370,6 +2397,9 @@ function onLangChange(){
   // Stats
   set('stats-doc-lbl', tr.sb1 || 'Médecins référencés');
   set('stats-wilaya-lbl', tr.sb2 || 'Wilayas');
+  // [I18N-RES] hero stats sans data-i18n (id only)
+  set('hs2', tr.hs2 || 'Wilayas');
+  set('hs4', tr.hero_booking || 'Réservation');
 
   // CTA Médecin
   set('cta-doc-title', tr.cta_doc_title || 'Vous êtes médecin ?');
