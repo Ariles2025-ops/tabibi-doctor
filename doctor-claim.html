@@ -81,7 +81,7 @@
   <!-- HERO -->
   <section class="dc-hero" aria-label="Vous êtes médecin">
     <h1><i class="fa fa-user-doctor" style="margin-inline-end:8px;opacity:.85"></i> <span data-i18n="you_are_doctor">Vous êtes médecin ?</span></h1>
-    <p><span data-i18n="claim_find_1">Trouvez votre fiche parmi</span> <span id="dc-count">—</span> <span data-i18n="claim_find_2">praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</span></p>
+    <p><span data-i18n="claim_find_1">Trouvez votre fiche parmi</span> <span id="dc-count">72 000+</span> <span data-i18n="claim_find_2">praticiens référencés en Algérie. Réclamez-la en 2 minutes pour gérer vos rendez-vous, vos tarifs et votre disponibilité.</span></p>
   </section>
 
   <!-- SEARCH -->
@@ -212,19 +212,19 @@ async function _dcFetchResults(opts){
   q.set('limit','20');
   try {
     var r = await fetch(_SB_URL + '/rest/v1/public_doctors?' + q.toString(), {
-      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-19' },
+      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, 'Range-Unit':'items', Range:'0-19' },
       signal: _dcAbort ? _dcAbort.signal : undefined
     });
     if(mySeq !== _dcSeq) return null;
-    if(!r.ok) return { total:0, rows:[] };
-    var cr = r.headers.get('content-range') || '';
-    var total = parseInt((cr.split('/')[1] || '0'), 10) || 0;
+    if(!r.ok) return { rows:[] };
+    // [PERF] count=exact retiré (statement_timeout 57014 sur ~72k). On ne lit plus le
+    // total (Content-Range = 0-19/*) ; l'affichage se base sur rows.length.
     var rows = await r.json();
-    return { total: total, rows: Array.isArray(rows) ? rows : [] };
+    return { rows: Array.isArray(rows) ? rows : [] };
   } catch(e){
     if(e && e.name === 'AbortError') return null;
     console.warn('[dc] fetch error', e && e.message);
-    return { total:0, rows:[] };
+    return { rows:[] };
   }
 }
 
@@ -245,9 +245,9 @@ function _renderResults(res){
     cline.textContent = _t('claim_zero_found','0 fiche trouvée');
     return;
   }
-  cline.textContent = (res.total > 20)
-    ? res.rows.length + ' ' + _t('claim_shown_of','affichées sur') + ' ' + res.total + ' — ' + _t('claim_refine','affinez par wilaya/spécialité')
-    : res.total + ' ' + _t('claim_profiles_found','fiche(s) trouvée(s)');
+  cline.textContent = (res.rows.length >= 20)
+    ? res.rows.length + '+ ' + _t('claim_profiles_found','fiche(s) trouvée(s)') + ' — ' + _t('claim_refine','affinez par wilaya/spécialité')
+    : res.rows.length + ' ' + _t('claim_profiles_found','fiche(s) trouvée(s)');
   // [Phase 14.1-fix] Event delegation au lieu d'inline onclick — évite tout
   // risque de parsing cassé sur noms exotiques (UTF-8, ', /, etc.). Le bouton
   // porte juste data-claim-legacy + data-claim-name, lus par le listener
@@ -278,6 +278,13 @@ async function dcSearch(){
     spec:  document.getElementById('dc-spec').value  || '',
     q:     (document.getElementById('dc-q').value||'').trim()
   };
+  // [PERF] Pas de requête à vide : sans terme NI wilaya NI spécialité, l'ORDER BY
+  // name_sort_key sur ~72k time-out (57014). On affiche le prompt, on ne fetch pas.
+  if(!opts.q && !opts.ville && !opts.spec){
+    document.getElementById('dc-list').innerHTML = '';
+    document.getElementById('dc-count-line').textContent = _t('claim_search_prompt','Saisissez votre nom puis sélectionnez la fiche qui correspond.');
+    return;
+  }
   _renderSkeleton();
   var res = await _dcFetchResults(opts);
   if(res) _renderResults(res);
@@ -482,28 +489,15 @@ document.addEventListener('click', function(e){
   if(e.target && e.target.id === 'dc-modal') dcCloseModal();
 });
 
-// Charge compteur total médecins (HEAD count=exact, 1 round-trip rapide)
-async function _loadTotalDoctorCount(){
-  try {
-    // [Phase 16.5 rollback] compteur total = public_doctors
-    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=id&full_name=not.match.[؀-ۿ]', {
-      method:'HEAD',
-      headers:{ apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, Prefer:'count=exact', 'Range-Unit':'items', Range:'0-0' }
-    });
-    var cr = r.headers.get('content-range') || '';
-    var t = parseInt((cr.split('/')[1] || '0'), 10) || 0;
-    if(t){
-      var el = document.getElementById('dc-count');
-      if(el) el.textContent = t.toLocaleString('fr-DZ');
-    }
-  } catch(e){ /* silencieux, le placeholder "—" reste affiché */ }
-}
+// [PERF] _loadTotalDoctorCount() retiré : HEAD count=exact sur ~72k = 2e requête lourde
+// au load (risque statement_timeout 57014). count=estimated/planned donnaient un total
+// faux (1001/4). Le total est désormais affiché EN DUR dans le HTML (#dc-count).
 
 // Init
 document.addEventListener('DOMContentLoaded', function(){
-  _loadTotalDoctorCount();
   _populateDropdowns();
-  // Premier load : afficher quelques exemples + count
+  // [PERF] dcSearch() à vide = no-op (affiche le prompt). La requête réelle part au
+  // 1er caractère/filtre. Plus de compteur héro requêté ici (total en dur, #dc-count).
   dcSearch();
   // [B2] Deep-link ?legacy_id=N (ou ?claim_legacy_id=N) → pré-ouvre la modale de claim
   // pour un médecin connecté arrivant depuis son espace (sans recherche manuelle).
