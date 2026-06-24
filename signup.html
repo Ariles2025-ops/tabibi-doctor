@@ -74,13 +74,11 @@
     </div>
   </div>
   <div class="card" style="max-width:400px;margin:0 auto">
-    <form onsubmit="doSignup(event)">
+    <form id="su-form" onsubmit="doSignup(event)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label" for="sf"><span data-i18n="first_name">Prénom</span> *</label><input class="form-control" id="sf" required autocomplete="given-name"></div>
         <div class="form-group"><label class="form-label" for="sl"><span data-i18n="last_name">Nom</span> *</label><input class="form-control" id="sl" required autocomplete="family-name"></div>
       </div>
-      <div class="form-group"><label class="form-label" for="se"><span data-i18n="email">Email</span> *</label>
-        <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i><input class="form-control" id="se" type="email" required style="padding-left:42px" autocomplete="email"></div></div>
       <div class="form-group"><label class="form-label" for="sp"><span data-i18n="phone">Téléphone</span> *</label>
         <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i><input class="form-control" id="sp" type="tel" required style="padding-left:42px" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" autocomplete="tel"></div></div>
       <div class="form-group"><label class="form-label" for="sw" data-i18n="wilaya">Wilaya</label>
@@ -102,10 +100,6 @@
           </small>
         </div>
       </div>
-      <div class="form-group"><label class="form-label" for="spw"><span data-i18n="password">Mot de passe</span> *</label>
-        <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-          <input class="form-control" id="spw" type="password" required minlength="8" style="padding-left:42px" placeholder="Min. 8 caractères" data-i18n-placeholder="ph_password_8_min_short" autocomplete="new-password">
-          <button type="button" class="ii-r" onclick="togglePw('spw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div></div>
       <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:14px">
         <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:10px;cursor:pointer">
           <input type="checkbox" id="cgu" required style="margin-top:3px;flex-shrink:0">
@@ -126,8 +120,24 @@
           <span data-i18n="consent_marketing">(Optionnel) J'accepte de recevoir des conseils santé et offres Tabibi par email. Désabonnement en 1 clic.</span>
         </label>
       </div>
-      <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-plus"></i> <span data-i18n="create_my_account">Créer mon compte</span></button>
+      <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
     </form>
+
+    <!-- ── ÉCRAN OTP (phase 2 : code SMS → vérification + création du profil) ── -->
+    <div id="su-screen-otp" class="hidden">
+      <form id="su-otp-form" onsubmit="verifyOtpAndCreateProfile(event)">
+        <div class="form-group"><label class="form-label" for="su-code">Code reçu par SMS</label>
+          <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="su-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
+          <div id="su-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-plus"></i> Créer mon compte</button>
+        <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px">
+          <a href="#" onclick="suResendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
+          <a href="#" onclick="suBackToForm(event)" style="color:var(--text3);font-weight:600">Modifier mes infos</a>
+        </div>
+      </form>
+    </div>
     <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text3)">
       <span data-i18n="already_registered">Déjà inscrit ?</span> <a href="login.html" style="color:var(--blue);font-weight:700" data-i18n="sign_in">Se connecter</a>
     </div>
@@ -176,399 +186,232 @@ function selRole(r,btn){
 }
 function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
 
-// [Phase 15.2 fix E] Guard global anti-double-submit. Si l'utilisateur double-clique
-// (ou si le listener est attaché 2x à cause d'un bug de hot-reload), on bloque
-// le 2e appel au lieu de partir en flux concurrent.
-window._signupInFlight = window._signupInFlight || false;
+// === État + helpers OTP (inscription par téléphone, modèle WhatsApp) ===
+// _pendingSignup : données du formulaire capturées en PHASE 1 (en mémoire).
+// RIEN n'est écrit en base avant verifyOtp (PHASE 2). Les consentements 18-07
+// ne sont horodatés ET écrits QUE dans l'upsert de la phase 2.
+var _pendingSignup = null;
 
+// Normalise un numéro saisi vers E.164 (Algérie). Retire le 0 initial.
+function toE164(raw){
+  var x = String(raw || "").replace(/[\s().\-]/g, "");
+  if (x.charAt(0) === "+") return x;
+  x = x.replace(/^0+/, "");      // 0555… → 555…
+  return "+213" + x;
+}
+// Traduit une erreur Supabase OTP en message FR clair.
+function mapOtpError(error){
+  var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
+  var code = (error && (error.code || error.name)) || "";
+  if (m.includes("captcha")) return "Vérification anti-robot échouée. Réessayez.";
+  if (code === "over_sms_send_rate_limit" || m.includes("rate") || m.includes("too many"))
+    return "Trop de demandes de code. Patientez quelques minutes avant de réessayer.";
+  if (m.includes("expired")) return "Code expiré. Demandez un nouveau code.";
+  if (m.includes("invalid") || m.includes("token")) return "Code incorrect. Vérifiez les 6 chiffres reçus par SMS.";
+  return "Échec de l'envoi/vérification du code. Réessayez.";
+}
+
+// ── PHASE 1 : valider le formulaire + envoyer l'OTP (AUCUNE écriture base) ──
 async function doSignup(e){
   e.preventDefault();
-  if (window._signupInFlight) {
-    console.warn('[signup] double-submit bloqué (un signup est déjà en cours)');
-    return;
-  }
-  window._signupInFlight = true;
-  const fn=sf.value.trim(),ln=sl.value.trim(),em=se.value.trim().toLowerCase(),ph=sp.value.trim(),wi=sw.value,pw=spw.value;
+  const fn = sf.value.trim(), ln = sl.value.trim(), ph = sp.value.trim(), wi = sw.value;
 
-  // ─── VALIDATIONS ───
-  if(pw.length<8){toastM(tabibiT('toast_password_too_short',"Mot de passe trop court (8 caractères minimum)"),"error");return;}
-  if(!fn || !ln){toastM(tabibiT('toast_firstname_lastname_required',"Prénom et nom obligatoires"),"error");return;}
-  if(!em || !em.includes('@')){toastM(tabibiT('toast_email_invalid',"Email invalide"),"error");return;}
-  if(!cgu.checked){toastM(tabibiT('toast_cgu_required',"Vous devez accepter les CGU pour créer un compte"),"error");return;}
-  if(!document.getElementById("privacy").checked){toastM(tabibiT('toast_privacy_required',"Vous devez consentir à la politique de confidentialité"),"error");return;}
-  if(cur==="patient" && !document.getElementById("medical-consent").checked){toastM(tabibiT('toast_health_consent_required',"Le consentement au traitement des données de santé est obligatoire"),"error");return;}
-  if(cur==="medecin"&&(!ssp.value||!sord.value.trim())){toastM(tabibiT('toast_spec_ordre_required',"Spécialité et N° d'Ordre obligatoires"),"error");return;}
+  if(!fn || !ln){ toastM(tabibiT('toast_firstname_lastname_required',"Prénom et nom obligatoires"),"error"); return; }
+  if(!ph){ toastM("Numéro de téléphone obligatoire","error"); return; }
+  if(!cgu.checked){ toastM(tabibiT('toast_cgu_required',"Vous devez accepter les CGU pour créer un compte"),"error"); return; }
+  if(!document.getElementById("privacy").checked){ toastM(tabibiT('toast_privacy_required',"Vous devez consentir à la politique de confidentialité"),"error"); return; }
+  if(cur==="patient" && !document.getElementById("medical-consent").checked){ toastM(tabibiT('toast_health_consent_required',"Le consentement au traitement des données de santé est obligatoire"),"error"); return; }
+  if(cur==="medecin" && (!ssp.value || !sord.value.trim())){ toastM(tabibiT('toast_spec_ordre_required',"Spécialité et N° d'Ordre obligatoires"),"error"); return; }
+  if(cur!=="patient" && cur!=="medecin" && cur!=="secretaire"){ toastM(tabibiT('toast_role_invalid',"Rôle invalide"),"error"); return; }
 
-  // ─── SÉCURITÉ : empêcher toute tentative d'inscription en tant qu'admin global ───
-  // Wave 4 (2026-05-19) : on autorise le rôle "secretaire" (multi-cabinet).
-  // "admin_cabinet" reste réservé à une promotion serveur via accept_cabinet_invitation.
-  if (cur !== "patient" && cur !== "medecin" && cur !== "secretaire") {
-    toastM(tabibiT('toast_role_invalid',"Rôle invalide"), "error");
-    return;
-  }
-
-  // ─── VALIDATION CODE CABINET (secrétariat) ───
   var cabCode = "";
-  if (cur === "secretaire") {
+  if(cur==="secretaire"){
     var scabEl = document.getElementById("scab");
     cabCode = scabEl ? scabEl.value.trim() : "";
-    if (!cabCode || cabCode.length < 10) {
-      toastM(tabibiT('toast_cabinet_code_required',"Le code d'invitation cabinet est obligatoire pour ce rôle."), "error");
-      return;
-    }
+    if(!cabCode || cabCode.length < 10){ toastM(tabibiT('toast_cabinet_code_required',"Le code d'invitation cabinet est obligatoire pour ce rôle."),"error"); return; }
   }
 
-  // Horodatage des consentements (preuve loi 18-07)
-  const consents={
-    cgu_accepted_at:new Date().toISOString(),
-    privacy_accepted_at:new Date().toISOString(),
-    medical_data_accepted_at: cur==="patient" ? new Date().toISOString() : null,
-    marketing_accepted_at:document.getElementById("marketing-consent").checked?new Date().toISOString():null,
-    consents_version:"1.0"
+  var phone = toE164(ph);
+  if(phone.length < 8){ toastM("Numéro de téléphone invalide","error"); return; }
+
+  // Anti-bruteforce local (chaque SMS coûte) : 5 / 60 s par numéro.
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + phone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
+  if(!window.tabibi || !window.tabibi.supabase){ toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."),"error"); return; }
+
+  // Capture EN MÉMOIRE uniquement. Les états de consentement sont mémorisés ;
+  // leurs horodatages + l'écriture base se font en phase 2, après verifyOtp.
+  _pendingSignup = {
+    role: cur, firstName: fn, lastName: ln, phone: phone, wilaya: wi,
+    specialty: (cur==="medecin") ? ssp.value : "",
+    cabinetCode: cabCode,
+    marketingConsent: document.getElementById("marketing-consent").checked
   };
 
   const btn = e.target.querySelector('button[type="submit"]');
   const origText = btn ? btn.innerHTML : "";
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Création en cours...'; }
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi du code…'; }
 
-  // ─── INSCRIPTION VIA SUPABASE AUTH ───
-  // [Phase 14.3 fix] Self-healing : si window.tabibi.auth manque (api.js ou
-  // supabase-client.js a fail silencieusement, ou bridge désactivé), on init
-  // un client Supabase EN INLINE et on appelle l'API directement. Évite
-  // tout silent fail signup. Aucune dépendance externe au-delà du SDK Supabase
-  // (chargé en ligne 422 via CDN).
-  console.log('[signup] doSignup() start role=' + cur + ' email=' + em.substring(0,3) + '***');
-  try {
-    var sbClient = (window.tabibi && window.tabibi.supabase) || null;
-    if (!sbClient) {
-      // Bootstrap inline
-      console.warn('[signup] window.tabibi.supabase absent, bootstrap inline');
-      var SB_URL_LOC = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co';
-      var SB_KEY_LOC = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
-      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        throw new Error("SDK Supabase non chargé — rechargez la page (Ctrl+R)");
-      }
-      if (!SB_KEY_LOC) {
-        throw new Error("Configuration manquante — contact@tabibi.doctor");
-      }
-      sbClient = window.supabase.createClient(SB_URL_LOC, SB_KEY_LOC, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
-      });
-      // Cache pour les usages downstream (claim auto, upsert users)
-      window.tabibi = window.tabibi || {};
-      window.tabibi.supabase = sbClient;
-    }
+  try{
+    // Captcha Turnstile obligatoire (protège le crédit SMS contre les bots).
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    // shouldCreateUser:true → crée le compte ; role + nom en metadata pour le
+    // trigger handle_new_auth_user (raw_user_meta_data->>'role').
+    var res = await window.tabibi.supabase.auth.signInWithOtp({
+      phone: phone,
+      options: { shouldCreateUser: true, captchaToken: captchaToken, data: { role: cur, first_name: fn, last_name: ln } }
+    });
+    if(res && res.error){ toastM(mapOtpError(res.error),"error"); return; }
 
-    // 1. Créer le compte Supabase Auth — call DIRECT au SDK, pas via wrapper
-    // [Phase 15.2 fix C] emailRedirectTo = origin + /auth/callback.html
-    // Doit être whitelist dans Supabase Auth Settings → URL Configuration
-    // (Site URL + Redirect URLs). Si l'URL n'est pas autorisée, Supabase
-    // rejette le redirect mais ne throw pas — c'est une source de réponse vide.
-    var emailRedirectTo = location.origin + '/auth/callback.html';
-    console.log('[signup] auth.signUp() POST /auth/v1/signup  emailRedirectTo=' + emailRedirectTo);
+    // → écran OTP (phase 2). Aucune donnée n'a touché la base.
+    var fEl = document.getElementById("su-form"); if(fEl) fEl.classList.add("hidden");
+    var oEl = document.getElementById("su-screen-otp"); if(oEl) oEl.classList.remove("hidden");
+    var tgt = document.getElementById("su-otp-target"); if(tgt) tgt.textContent = "Code envoyé au " + phone;
+    var codeEl = document.getElementById("su-code"); if(codeEl){ codeEl.value=""; codeEl.focus(); }
+  } catch(err){
+    toastM(mapOtpError(err),"error");
+  } finally {
+    if(btn){ btn.disabled = false; btn.innerHTML = origText; }
+  }
+}
 
-    // [Phase 15.2 fix A + D] Helper avec retry 1× sur réponse vide
-    async function _signUpOnce() {
-      return await sbClient.auth.signUp({
-        email: em,
-        password: pw,
-        options: {
-          data: { role: cur },
-          emailRedirectTo: emailRedirectTo
-        }
-      });
-    }
-    var _signupRes = await _signUpOnce();
+function suBackToForm(e){ if(e) e.preventDefault(); var o=document.getElementById("su-screen-otp"); if(o)o.classList.add("hidden"); var f=document.getElementById("su-form"); if(f)f.classList.remove("hidden"); }
 
-    // [Phase 15.2 fix A] LOG BRUT COMPLET avant toute destructuration.
-    // Permet de diagnostiquer cas edge SDK ou Auth Hooks Postgres custom.
-    try {
-      console.log('[signup] RAW response:', JSON.stringify(_signupRes, function(k, v){
-        // Mask password si présent par accident
-        if (k === 'password') return '***';
-        return v;
-      }, 2));
-    } catch (logErr) {
-      console.log('[signup] RAW response (non-serializable):', _signupRes);
-    }
+async function suResendOtp(e){
+  if(e) e.preventDefault();
+  if(!_pendingSignup){ suBackToForm(); return; }
+  try{
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var res = await window.tabibi.supabase.auth.signInWithOtp({
+      phone: _pendingSignup.phone,
+      options: { shouldCreateUser: true, captchaToken: captchaToken, data: { role: _pendingSignup.role, first_name: _pendingSignup.firstName, last_name: _pendingSignup.lastName } }
+    });
+    if(res && res.error){ toastM(mapOtpError(res.error),"error"); return; }
+    toastM("Nouveau code envoyé.","success");
+  } catch(err){ toastM(mapOtpError(err),"error"); }
+}
 
-    // [Phase 15.2 fix D] Retry 1× si data ET error sont tous deux null/undefined.
-    // Réseau flaky ou race condition côté serveur — un seul retry après 2s
-    // suffit en pratique, sinon on tombe dans le message informatif fix B.
-    var _isEmpty = (_signupRes && !_signupRes.data && !_signupRes.error);
-    if (_isEmpty) {
-      console.warn('[signup] Réponse vide détectée → retry dans 2 s …');
-      await new Promise(function(r){ setTimeout(r, 2000); });
-      _signupRes = await _signUpOnce();
-      try {
-        console.log('[signup] RAW response (retry):', JSON.stringify(_signupRes, null, 2));
-      } catch (e) {}
-    }
-    // [Phase 15.1 fix] Détection officielle Supabase duplicate vs nouveau signup.
-    // Référence : https://supabase.com/docs/reference/javascript/auth-signup
-    //
-    // Quand confirm_email=ON, Supabase retourne TOUJOURS data.user (avec id),
-    // que ce soit un nouveau signup OU un duplicate silencieux (anti-enumeration).
-    // La SEULE façon fiable de les distinguer :
-    //   - Nouveau user      → data.user.identities = [{...}]  (1+ entrée)
-    //   - Email déjà existe → data.user.identities = []       (array vide)
-    // data.session est null DANS LES DEUX CAS tant que l'email n'est pas confirmé.
-    //
-    // L'ancien check Phase 15 `!signupResult.user` levait un faux duplicate
-    // sur les signups réussis (data.user est toujours présent).
+// ── PHASE 2 : vérifier l'OTP → session active → écrire profil + consentements ──
+// RLS : INSERT/UPDATE sur public.users exigent auth.uid()=id → on écrit ICI,
+// jamais avant verifyOtp. Les consentements 18-07 sont horodatés + écrits
+// UNIQUEMENT dans l'upsert profileData ci-dessous (après que la session existe).
+async function verifyOtpAndCreateProfile(e){
+  if(e) e.preventDefault();
+  if(!_pendingSignup){ suBackToForm(); toastM("Session expirée, recommencez.","error"); return; }
+  var token = (document.getElementById("su-code").value || "").trim();
+  if(!/^[0-9]{4,8}$/.test(token)){ toastM("Code incorrect. Saisissez les 6 chiffres reçus.","error"); return; }
 
-    if (_signupRes.error) {
-      // Cas 1 : vraie erreur Supabase (400 format, network, etc.) → catch global
-      console.warn('[signup] Supabase error', _signupRes.error);
-      throw _signupRes.error;
-    }
+  var P = _pendingSignup;
+  const btn = e.target.querySelector('button[type="submit"]');
+  const origText = btn ? btn.innerHTML : "";
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Création en cours…'; }
 
-    // [Phase 15.2 fix B] Si APRÈS le retry data ET error sont TOUS DEUX
-    // absents → réponse Supabase totalement vide. Cause typique :
-    //   - emailRedirectTo non whitelist dans Supabase Auth → URL Configuration
-    //   - Auth Hook Postgres function qui swallow la réponse
-    //   - Bug SDK ou proxy/CDN qui mange le body
-    // Message explicite + log complet pour debug, PAS catch générique.
-    if (!_signupRes || (!_signupRes.data && !_signupRes.error)) {
-      console.error('[signup] Réponse Supabase TOTALEMENT VIDE après retry. Causes probables :',
-        '\n  1. emailRedirectTo (' + emailRedirectTo + ') non whitelist Supabase Auth → URL Configuration',
-        '\n  2. Auth Hook Postgres function qui intercepte sans répondre',
-        '\n  3. CDN/proxy qui drop le body de la réponse',
-        '\n  Raw object:', _signupRes);
-      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-      toastM(tabibiT('signup_err_empty_response', "Réponse Supabase vide. Ouvrez la console (F12) puis contactez support@tabibi.doctor avec la capture."), "error");
-      window._signupInFlight = false;
-      return;
-    }
+  try{
+    var vres = await window.tabibi.supabase.auth.verifyOtp({ phone: P.phone, token: token, type: "sms" });
+    if(vres && vres.error){ if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapOtpError(vres.error),"error"); return; }
 
-    var signupResult = _signupRes.data || {};
-    var u = signupResult.user || null;
-    var hasSession = !!(signupResult.session);
+    var sessUser = (vres.data && vres.data.user) || null;
+    if(!sessUser){ if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('signup_err_unexpected',"Erreur inattendue. Réessayez ou contactez support@tabibi.doctor"),"error"); return; }
 
-    // CAS NORMAL Supabase v2 : Confirm email activé → user=null + session=null + error=null
-    // Le compte EST créé, l'email de confirmation EST envoyé
-    if (!u && !hasSession && !_signupRes.error) {
-      console.log('[signup] OK - Confirm email mode: account created, verification email sent');
-      window.location.href = '/verify-email.html?email=' + encodeURIComponent(em);
-      return;
-    }
+    // [18-07] Horodatage des consentements — généré ET écrit ICI (post-OTP), jamais avant.
+    var nowIso = new Date().toISOString();
+    var consents = {
+      cgu_accepted_at: nowIso,
+      privacy_accepted_at: nowIso,
+      medical_data_accepted_at: P.role === "patient" ? nowIso : null,
+      marketing_accepted_at: P.marketingConsent ? nowIso : null,
+      consents_version: "1.0"
+    };
 
-    // Vrai cas anormal : tout est null ET error existe (à logger)
-    if (!u) {
-      console.warn('[signup] Réponse vraiment inattendue', signupResult, _signupRes.error);
-      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-      toastM(tabibiT('signup_err_unexpected', "Erreur inattendue. Réessayez ou contactez support@tabibi.doctor"), "error");
-      return;
-    }
-
-    // Cas 2 : duplicate silencieux détecté via identities vide
-    if (Array.isArray(u.identities) && u.identities.length === 0) {
-      console.log('[signup] DUPLICATE detected (identities=[]) email=' + em.substring(0,3) + '***');
-      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-      toastM(tabibiT('toast_email_already_used',
-        "Cet email est déjà utilisé. Connectez-vous ou utilisez 'Mot de passe oublié'."),
-        "warning");
-      return;
-    }
-
-    // Cas 3 : succès (nouveau user créé). Log info détaillée pour debug.
-    console.log('[signup] auth.signUp() OK user_id=' + u.id.substring(0,8) + '…'
-              + ' identities=' + ((u.identities || []).length)
-              + ' session=' + (signupResult.session ? 'yes' : 'no')
-              + ' confirmation_sent=' + (u.confirmation_sent_at ? 'yes' : 'no'));
-
-    // Si confirm_email=ON (config par défaut Supabase), session est null tant que
-    // l'utilisateur n'a pas cliqué le lien de confirmation. Dans ce cas on
-    // redirige TOUS les rôles vers /verify-email.html (au lieu de tenter dashboard
-    // sans session, ou modale médecin qui suppose le compte actif).
-    var needsEmailConfirm = !signupResult.session;
-
-    // 2. Compléter le profil dans public.users (la ligne est déjà créée par le
-    //    trigger de signup ; cet upsert remplit l'identité + les consentements).
+    // Compléter le profil (la ligne public.users est déjà créée par le trigger).
     const profileData = {
-      id: signupResult.user.id,
-      email: em,
-      first_name: fn,
-      last_name: ln,
-      full_name: fn + " " + ln,
-      role: cur,
-      phone: ph,
-      wilaya_fr: wi,
-      // [FIX #1] public.users n'a PAS de colonne `consents` : ce sont 4 colonnes
-      // timestamp dédiées. Envoyer `consents` faisait échouer TOUT l'upsert
-      // (PGRST204 colonne inconnue) → l'identité n'était jamais enregistrée.
+      id: sessUser.id,
+      email: sessUser.email || null,        // téléphone seul → email NULL
+      first_name: P.firstName,
+      last_name: P.lastName,
+      full_name: P.firstName + " " + P.lastName,
+      role: P.role,
+      phone: P.phone,
+      wilaya_fr: P.wilaya,
       consent_terms_at:       consents.cgu_accepted_at,
       consent_privacy_at:     consents.privacy_accepted_at,
       consent_health_data_at: consents.medical_data_accepted_at,
       consent_marketing_at:   consents.marketing_accepted_at,
       is_test: false
     };
+    if(P.role === "medecin") profileData.specialty_fr = P.specialty;
 
-    if (cur === "medecin") {
-      profileData.specialty_fr = ssp.value;
-      // [FIX #1] retiré `ordre_number` : pas de colonne sur public.users (le N° Ordre
-      // vit dans localStorage.tabibi_claim_ordre, puis sur doctor_profiles au claim).
-    }
-    // [FIX #1] secrétaire : retiré `cabinet_invite_code` (pas de colonne sur public.users) ;
-    // le rattachement cabinet est fait par la RPC accept_cabinet_invitation ci-dessous.
-
-    const { error: profileError } = await window.tabibi.supabase
-      .from('users')
-      .upsert(profileData, { onConflict: 'id' });
-
-    if (profileError) {
-      // [FIX #1] ne plus avaler l'erreur en silence : log en erreur + toast non bloquant.
-      // Le compte auth existe déjà → on n'interrompt pas le flux, mais l'échec
-      // d'enregistrement du profil doit être visible (QA + prod).
+    const { error: profileError } = await window.tabibi.supabase.from('users').upsert(profileData, { onConflict: 'id' });
+    if(profileError){
       console.error("[signup] users upsert FAILED:", profileError.message, profileError.code || "");
       toastM(tabibiT('signup_err_profile', "Compte créé, mais l'enregistrement de votre profil a échoué. Vous pourrez le compléter depuis votre espace."), "error");
     }
 
-    // 2.bis Si rôle secrétariat : vérifier puis rattacher au cabinet via RPC.
-    //       En V1 le code = UUID direct du cabinet ; une future EF tabibi-resolve-cabinet-code
-    //       pourra résoudre des codes courts. Si la RPC échoue on bloque la suite.
-    if (cur === "secretaire") {
-      try {
-        var validateRes = null;
-        // Optionnel : vérification douce si la RPC validate_cabinet_invitation existe
-        try {
-          validateRes = await window.tabibi.supabase
-            .rpc("validate_cabinet_invitation", { p_code: cabCode });
-        } catch(_v) { validateRes = null; }
-        const acceptRes = await window.tabibi.supabase
-          .rpc("accept_cabinet_invitation", { p_cabinet_id: cabCode });
-        if (acceptRes && acceptRes.error) {
+    // Secrétariat : rattachement cabinet via RPC (session active requise).
+    if(P.role === "secretaire"){
+      try{
+        try{ await window.tabibi.supabase.rpc("validate_cabinet_invitation", { p_code: P.cabinetCode }); } catch(_v){}
+        const acceptRes = await window.tabibi.supabase.rpc("accept_cabinet_invitation", { p_cabinet_id: P.cabinetCode });
+        if(acceptRes && acceptRes.error){
           console.warn("[signup] accept_cabinet_invitation:", acceptRes.error.message);
-          toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"), "error");
-          if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-          return;
+          toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"),"error");
+          if(btn){ btn.disabled=false; btn.innerHTML=origText; } return;
         }
-      } catch(rpcErr) {
+      } catch(rpcErr){
         console.warn("[signup] cabinet RPC error:", rpcErr && rpcErr.message);
-        toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"), "error");
-        if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-        return;
+        toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"),"error");
+        if(btn){ btn.disabled=false; btn.innerHTML=origText; } return;
       }
-      // Connexion conservée, redirection dashboard secrétariat
-      const userData = {
-        id: signupResult.user.id,
-        email: em,
-        role: "secretaire",
-        status: "active",
-        name: fn + " " + ln,
-        initials: ((fn[0]||"")+(ln[0]||"")).toUpperCase(),
-        firstName: fn, lastName: ln, phone: ph, ville: wi,
-        consents: consents, fromSupabase: true
-      };
-      try { localStorage.setItem("tabibi_user", JSON.stringify(userData)); } catch(e){}
-      try { localStorage.setItem("tabibi_role", "secretaire"); } catch(e){}
-      // [Phase 15 fix] Si email confirm requis → verify-email page (compat email confirm ON)
-      if (needsEmailConfirm) {
-        location.href = '/verify-email.html?email=' + encodeURIComponent(em) + '&role=secretaire';
-        return;
-      }
-      toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"), "success");
-      setTimeout(()=>location.href="secretaire-dashboard.html", 800);
+      _persistAndGo(sessUser.id, "secretaire", "active", P, consents);
+      toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"),"success");
+      setTimeout(function(){ location.href="secretaire-dashboard.html"; }, 800);
       return;
     }
 
-    // 3. Gérer la redirection selon le rôle
-    if (cur === "medecin") {
-      // MÉDECIN : compte en attente de validation manuelle
-      //
-      // [Phase 1 2026-05-21] AUTO-CLAIM AVANT signOut
-      // Si l'utilisateur vient d'un bandeau "Réclamer ma fiche" (URL ?claim_legacy_id=...),
-      // on appelle la RPC claim_my_doctor_profile MAINTENANT, tant que la session Supabase
-      // est encore active. Si ça échoue (réseau, RLS), tabibiClaim.autoClaim() stocke le
-      // legacy_id dans localStorage.tabibi_pending_claim_legacy_id et le retry se fera
-      // au prochain login médecin (cf. js/tabibi-claim.js -> consumePending()).
-      var claimLegacyId = _getClaimLegacyIdFromUrl();
-      if (claimLegacyId && window.tabibiClaim && typeof window.tabibiClaim.autoClaim === 'function') {
-        try {
-          var claimRes = await window.tabibiClaim.autoClaim(claimLegacyId);
-          if (claimRes && claimRes.ok) {
-            console.log('[signup] auto-claim OK legacy_id=' + claimLegacyId);
-          } else {
-            console.warn('[signup] auto-claim failed:', claimRes && claimRes.error,
-                         '-> stored for retry at next login');
-          }
-        } catch (claimErr) {
-          console.warn('[signup] auto-claim exception:', claimErr);
-          // fallback dur : stocker manuellement si le module a buggé
-          try { localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); } catch(_){}
-        }
-      } else if (claimLegacyId) {
-        // Module pas chargé -> fallback localStorage pur
-        try { localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); } catch(_){}
+    // Médecin : compte en attente de validation manuelle. Auto-claim si deep-link.
+    if(P.role === "medecin"){
+      var claimLegacyId = (typeof _getClaimLegacyIdFromUrl === 'function') ? _getClaimLegacyIdFromUrl() : null;
+      if(claimLegacyId && window.tabibiClaim && typeof window.tabibiClaim.autoClaim === 'function'){
+        try{ await window.tabibiClaim.autoClaim(claimLegacyId); }
+        catch(_c){ try{ localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); }catch(__){} }
+      } else if(claimLegacyId){
+        try{ localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); }catch(__){}
       }
-
-      // [Défaut #4-B] La déconnexion + redirection ne se font PLUS ici : le
-      // signOut auth.js navigue vers index.html et court-circuitait la modale
-      // "validation 48h". On déconnecte (a) avant le redirect verify-email,
-      // (b) à la fermeture de la modale (medecinPendingClose).
-      // [Phase 15 fix] Si confirm email requis → verify-email page (avec disclaimer
-      // validation 48h médecin via param pending_validation=1). Sinon (compat config
-      // sans confirm) → modale "validation 48h" qui s'affiche réellement.
-      if (needsEmailConfirm) {
-        // teardown SDK brut (NE navigue pas) puis redirect verify-email
-        try { await window.tabibi.supabase.auth.signOut(); } catch(e){}
-        localStorage.removeItem("tabibi_user");
-        localStorage.removeItem("tabibi_role");
-        location.href = '/verify-email.html?email=' + encodeURIComponent(em)
-                      + '&role=medecin&pending_validation=1';
-        return;
-      }
-      // Sans confirmation : la modale s'affiche (session encore active, overlay
-      // plein écran z-index 9999 — rien d'actionnable derrière). signOut + redirect
-      // index.html au clic "Retour à l'accueil" (medecinPendingClose).
-      showMedecinPendingModal(em, fn);
-      if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+      // Session active : la modale s'affiche ; signOut + redirect au clic de fermeture.
+      showMedecinPendingModal(P.phone, P.firstName);   // affiche le TÉLÉPHONE (pas d'email)
+      if(btn){ btn.disabled=false; btn.innerHTML=origText; }
       return;
-    } else {
-      // PATIENT : compte actif immédiatement
-      const userData = {
-        id: signupResult.user.id,
-        email: em,
-        role: "patient",
-        status: "active",
-        name: fn + " " + ln,
-        initials: ((fn[0]||"")+(ln[0]||"")).toUpperCase(),
-        firstName: fn,
-        lastName: ln,
-        phone: ph,
-        ville: wi,
-        consents: consents,
-        fromSupabase: true
-      };
-      localStorage.setItem("tabibi_user", JSON.stringify(userData));
-      localStorage.setItem("tabibi_role", "patient");
-      // [Phase 15 fix] Si email confirm requis → verify-email page (compat email confirm ON)
-      if (needsEmailConfirm) {
-        location.href = '/verify-email.html?email=' + encodeURIComponent(em) + '&role=patient';
-        return;
-      }
-      toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"), "success");
-      setTimeout(()=>location.href="patient-dashboard.html", 800);
     }
 
-  } catch(err) {
-    console.error("[signup] error:", err);
-    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-    const msg = (err && err.message) || "Erreur lors de l'inscription";
-    if (msg.toLowerCase().includes("already registered") || msg.toLowerCase().includes("exists")) {
-      toastM(tabibiT('toast_email_already_used',"Cet email est déjà utilisé. Connectez-vous."), "error");
-    } else {
-      toastM(msg, "error");
-    }
-  } finally {
-    // [Phase 15.2 fix E] TOUJOURS libérer le guard, même si setTimeout redirect
-    // ou return early. Évite l'utilisateur "bloqué" sur le bouton désactivé
-    // après erreur réseau silent.
-    window._signupInFlight = false;
+    // Patient : compte actif immédiatement.
+    _persistAndGo(sessUser.id, "patient", "active", P, consents);
+    toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"),"success");
+    setTimeout(function(){ location.href="patient-dashboard.html"; }, 800);
+
+  } catch(err){
+    console.error("[signup] verify/profile error:", err);
+    if(btn){ btn.disabled=false; btn.innerHTML=origText; }
+    toastM(mapOtpError(err),"error");
   }
 }
 
-function showMedecinPendingModal(email, prenom) {
+// localStorage user + role (réutilisé patient / secrétariat).
+function _persistAndGo(id, role, status, P, consents){
+  try{
+    localStorage.setItem("tabibi_user", JSON.stringify({
+      id: id, email: "", role: role, status: status,
+      name: P.firstName + " " + P.lastName,
+      initials: ((P.firstName[0]||"")+(P.lastName[0]||"")).toUpperCase(),
+      firstName: P.firstName, lastName: P.lastName, phone: P.phone, ville: P.wilaya,
+      consents: consents, fromSupabase: true
+    }));
+    localStorage.setItem("tabibi_role", role);
+  } catch(e){}
+}
+
+function showMedecinPendingModal(phone, prenom) {
   const modal = document.createElement('div');
   modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
   modal.innerHTML = `
@@ -582,7 +425,7 @@ function showMedecinPendingModal(email, prenom) {
         <br><br>
         ${tabibiT('med_pending_verify',"Notre équipe va vérifier vos qualifications (diplôme + Conseil de l'Ordre) sous <strong>48h ouvrées maximum</strong>.")}
         <br><br>
-        ${tabibiT('med_pending_email_1','Vous recevrez un email à ')}<strong>${email}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
+        Nous vous notifierons au <strong>${phone}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
       </p>
       <div style="background:#f0f9ff;border-radius:10px;padding:14px;margin-bottom:20px;text-align:start;font-size:13px;color:#0a4d3e">
         <strong>📋 ${tabibiT('next_step','Prochaine étape :')}</strong>

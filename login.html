@@ -54,23 +54,61 @@
     <p style="color:var(--text3);font-size:13px;margin-top:3px">La santé à portée de clic</p>
   </div>
   <div class="card" style="max-width:400px;margin:0 auto">
-    <!-- [Phase 14.2 fix] id="loginForm" REQUIS depuis le fix login-handler.js : fallback
-         catch-all retiré pour ne plus polluer signup.html. login-handler attache
-         son listener uniquement si form#loginForm OU form[data-form="login"]. -->
-    <form id="loginForm" onsubmit="doLogin(event)">
-      <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
-        <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
-          <input class="form-control" id="le" type="email" required style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
-      <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
-        <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-          <input class="form-control" id="lp" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
-          <button type="button" class="ii-r" onclick="togglePw('lp',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
-        <div style="text-align:right;margin-top:6px">
-          <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
+
+    <!-- ── ÉCRAN 1 : NUMÉRO DE TÉLÉPHONE ── -->
+    <div id="screen-phone">
+      <form id="otpPhoneForm" onsubmit="sendOtp(event)">
+        <div class="form-group"><label class="form-label" for="lp-phone">Numéro de téléphone</label>
+          <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">Indicatif Algérie <strong>+213</strong> ajouté automatiquement. Vous recevrez un code par SMS.</div>
         </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
+      </form>
+    </div>
+
+    <!-- ── ÉCRAN 2 : CODE OTP (6 chiffres) ── -->
+    <div id="screen-otp" class="hidden">
+      <form id="otpCodeForm" onsubmit="verifyOtp(event)">
+        <div class="form-group"><label class="form-label" for="lp-code">Code reçu par SMS</label>
+          <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
+          <div id="lp-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
+        <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px">
+          <a href="#" onclick="resendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
+          <a href="#" onclick="backToPhone(event)" style="color:var(--text3);font-weight:600">Changer de numéro</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── LIEN ADMIN ── -->
+    <div id="admin-link" style="text-align:center;margin-top:18px;font-size:12px">
+      <a href="#" onclick="showAdmin(event)" style="color:var(--text3);font-weight:600"><i class="fa fa-user-shield"></i> Connexion admin</a>
+    </div>
+
+    <!-- ── ÉCRAN 3 : ADMIN (email + mot de passe, flux existant inchangé) ── -->
+    <div id="screen-admin" class="hidden">
+      <form id="loginForm" onsubmit="doLogin(event)">
+        <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
+          <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="le" type="email" style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
+        <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
+          <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp" type="password" style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="ii-r" onclick="togglePw('lp',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+          <div style="text-align:right;margin-top:6px">
+            <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-shield"></i> Connexion admin</button>
+      </form>
+      <div style="text-align:center;margin-top:12px;font-size:12px">
+        <a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion par téléphone</a>
       </div>
-      <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
-    </form>
+    </div>
+
     <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text3)">
       Pas de compte ? <a href="signup.html" style="color:var(--blue);font-weight:700" data-i18n="create_account">Créer un compte</a>
     </div>
@@ -79,6 +117,169 @@
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <script>
 function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
+
+// ═══════════════════════════════════════════════════════════════════
+// AUTH PAR TÉLÉPHONE + OTP SMS (patients & médecins). L'admin garde
+// email/mot de passe (doLogin plus bas, inchangé). Client unique =
+// window.tabibi.supabase ; OTP via le client BRUT (le wrapper
+// window.tabibi.auth n'expose pas l'OTP — c'est normal).
+// ═══════════════════════════════════════════════════════════════════
+
+var _otpPhone = ""; // numéro E.164 mémorisé entre l'écran 1 et l'écran 2
+
+// Normalise un numéro saisi vers E.164 (Algérie). Retire le 0 initial.
+function toE164(raw){
+  var s = String(raw || "").replace(/[\s().\-]/g, "");
+  if (s.charAt(0) === "+") return s;
+  s = s.replace(/^0+/, "");        // 0555… → 555…
+  return "+213" + s;
+}
+
+// Traduit une erreur Supabase OTP en message FR clair.
+function mapOtpError(error){
+  var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
+  var code = (error && (error.code || error.name)) || "";
+  if (m.includes("captcha")) return "Vérification anti-robot échouée. Réessayez.";
+  if (code === "over_sms_send_rate_limit" || m.includes("rate") || m.includes("too many"))
+    return "Trop de demandes de code. Patientez quelques minutes avant de réessayer.";
+  if (m.includes("expired")) return "Code expiré. Demandez un nouveau code.";
+  if (m.includes("invalid") || m.includes("token")) return "Code incorrect. Vérifiez les 6 chiffres reçus par SMS.";
+  if (m.includes("signups not allowed") || m.includes("not found") || m.includes("should create"))
+    return "Aucun compte associé à ce numéro. Créez un compte d'abord.";
+  return "Échec de l'envoi/vérification du code. Réessayez.";
+}
+
+// ── Bascule d'écrans ──────────────────────────────────────────────────────
+function showScreen(which){
+  ["phone","otp","admin"].forEach(function(s){
+    var el = document.getElementById("screen-" + s);
+    if (el) el.classList.toggle("hidden", s !== which);
+  });
+  var adminLink = document.getElementById("admin-link");
+  if (adminLink) adminLink.classList.toggle("hidden", which !== "phone");
+}
+function showAdmin(e){ if(e) e.preventDefault(); showScreen("admin"); }
+function showPhone(e){ if(e) e.preventDefault(); showScreen("phone"); }
+function backToPhone(e){ if(e) e.preventDefault(); var c=document.getElementById("lp-code"); if(c) c.value=""; showScreen("phone"); }
+
+// ── Écran 1 → envoi du code ───────────────────────────────────────────────
+async function sendOtp(e){
+  if (e) e.preventDefault();
+  var phone = toE164(document.getElementById("lp-phone").value);
+  if (phone.length < 8) { toastM("Numéro de téléphone invalide", "error"); return; }
+
+  // Anti-bruteforce local (chaque SMS coûte) : 5 / 60 s par numéro.
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + phone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."), "error"); return;
+  }
+
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi du code…'; }
+
+  try {
+    // Captcha Turnstile (protège le crédit SMS contre les bots).
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var res = await window.tabibi.supabase.auth.signInWithOtp({
+      phone: phone,
+      options: { shouldCreateUser: false, captchaToken: captchaToken } // login : ne crée PAS de compte
+    });
+    if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
+    _otpPhone = phone;
+    var tgt = document.getElementById("lp-otp-target");
+    if (tgt) tgt.textContent = "Code envoyé au " + phone;
+    showScreen("otp");
+    var codeEl = document.getElementById("lp-code"); if (codeEl) { codeEl.value=""; codeEl.focus(); }
+  } catch (err) {
+    toastM(mapOtpError(err), "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+  }
+}
+
+// Renvoyer le code (sans quitter l'écran) — refait un captcha + signInWithOtp.
+async function resendOtp(e){
+  if (e) e.preventDefault();
+  if (!_otpPhone) { showScreen("phone"); return; }
+  try {
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: _otpPhone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
+    if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
+    toastM("Nouveau code envoyé.", "success");
+  } catch (err) { toastM(mapOtpError(err), "error"); }
+}
+
+// ── Écran 2 → vérification du code ────────────────────────────────────────
+async function verifyOtp(e){
+  if (e) e.preventDefault();
+  var token = (document.getElementById("lp-code").value || "").trim();
+  if (!/^[0-9]{4,8}$/.test(token)) { toastM("Code incorrect. Saisissez les 6 chiffres reçus.", "error"); return; }
+  if (!_otpPhone) { showScreen("phone"); toastM("Session expirée, recommencez.", "error"); return; }
+
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Vérification…'; }
+
+  try {
+    var res = await window.tabibi.supabase.auth.verifyOtp({ phone: _otpPhone, token: token, type: "sms" });
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapOtpError(res.error), "error"); return; }
+
+    // Session active → lire le profil (rôle + statut) depuis public.users.
+    var user = await window.tabibi.auth.getUser();
+    if (!user) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error"); return; }
+
+    var ok = await _afterAuth(user); // vérifs statut + localStorage + redirect
+    if (!ok && btn) { btn.disabled = false; btn.innerHTML = origText; }
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    toastM(mapOtpError(err), "error");
+  }
+}
+
+// Vérifs de statut (identiques au flux email) + persistance + redirection.
+// Retourne false (et a déjà toasté) si la connexion est bloquée.
+async function _afterAuth(user){
+  var userStatus = user.status || 'active';
+  var userRole = normalizeRole(user.role);
+
+  if (userRole === 'medecin' && userStatus === 'pending_verification') {
+    try { await window.tabibi.auth.signOut(); } catch(e){}
+    toastM(tabibiT('toast_doctor_pending',"Votre compte médecin est en cours de vérification (48h max). Vous serez notifié."), "info");
+    return false;
+  }
+  if (userStatus === 'suspended') {
+    try { await window.tabibi.auth.signOut(); } catch(e){}
+    toastM(tabibiT('toast_account_suspended',"Compte suspendu. Contactez contact@tabibi.doctor"), "error");
+    return false;
+  }
+  if (userStatus === 'rejected') {
+    try { await window.tabibi.auth.signOut(); } catch(e){}
+    toastM(tabibiT('toast_signup_rejected',"Inscription rejetée. Contactez contact@tabibi.doctor"), "error");
+    return false;
+  }
+
+  var fName = user.first_name || "";
+  var lName = user.last_name || "";
+  var displayName = (fName + " " + lName).trim() || user.full_name || user.phone || "";
+  var initials = ((fName[0]||displayName[0]||"?") + (lName[0]||"")).toUpperCase();
+
+  localStorage.setItem("tabibi_user", JSON.stringify({
+    id: user.id, email: user.email || "", role: userRole, status: userStatus,
+    name: displayName, initials: initials, firstName: fName, lastName: lName,
+    specialty: user.specialty_fr || user.specialty || "",
+    ville: user.wilaya_fr || user.ville || "Alger",
+    phone: user.phone || _otpPhone, isTest: !!user.is_test, fromSupabase: true
+  }));
+  localStorage.setItem("tabibi_role", userRole);
+  toastM("Connexion réussie !", "success");
+  var nextUrl = _safeNext() || redirectFor(userRole);
+  setTimeout(function(){ location.href = nextUrl; }, 400);
+  return true;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // SÉCURITÉ v10 : COMPTES DÉMO HARDCODÉS SUPPRIMÉS
