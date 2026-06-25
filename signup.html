@@ -81,6 +81,11 @@
       </div>
       <div class="form-group"><label class="form-label" for="sp"><span data-i18n="phone">Téléphone</span> *</label>
         <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i><input class="form-control" id="sp" type="tel" required style="padding-left:42px" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" autocomplete="tel"></div></div>
+      <div class="form-group"><label class="form-label" for="spw"><span data-i18n="password">Mot de passe</span> *</label>
+        <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+          <input class="form-control" id="spw" type="password" required minlength="6" style="padding-left:42px" placeholder="6 caractères minimum" data-i18n-placeholder="ph_password_6_min" autocomplete="new-password">
+          <button type="button" class="ii-r" onclick="togglePw('spw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px">Vous l'utiliserez pour vous connecter (numéro + mot de passe), sans SMS à chaque fois.</div></div>
       <div class="form-group"><label class="form-label" for="sw" data-i18n="wilaya">Wilaya</label>
         <select class="form-control" id="sw">
           <option value="" data-i18n="select_placeholder">— Sélectionnez —</option>
@@ -228,13 +233,24 @@ function mapOtpError(error){
   return "Échec de l'envoi/vérification du code. Réessayez.";
 }
 
+// Erreur du signUp({phone,password}) → message FR clair.
+function mapSignupError(error){
+  var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
+  if (m.includes("already") || m.includes("registered") || m.includes("exists"))
+    return "Ce numéro a déjà un compte. Connectez-vous.";
+  if (m.includes("password")) return "Mot de passe trop faible (6 caractères minimum).";
+  return mapOtpError(error);
+}
+
 // ── PHASE 1 : valider le formulaire + envoyer l'OTP (AUCUNE écriture base) ──
 async function doSignup(e){
   e.preventDefault();
   const fn = sf.value.trim(), ln = sl.value.trim(), ph = sp.value.trim(), wi = sw.value;
+  const pw = (document.getElementById("spw") ? document.getElementById("spw").value : "");
 
   if(!fn || !ln){ toastM(tabibiT('toast_firstname_lastname_required',"Prénom et nom obligatoires"),"error"); return; }
   if(!ph){ toastM("Numéro de téléphone obligatoire","error"); return; }
+  if(pw.length < 6){ toastM("Le mot de passe doit faire au moins 6 caractères.","error"); return; }
   if(!cgu.checked){ toastM(tabibiT('toast_cgu_required',"Vous devez accepter les CGU pour créer un compte"),"error"); return; }
   if(!document.getElementById("privacy").checked){ toastM(tabibiT('toast_privacy_required',"Vous devez consentir à la politique de confidentialité"),"error"); return; }
   if(cur==="patient" && !document.getElementById("medical-consent").checked){ toastM(tabibiT('toast_health_consent_required',"Le consentement au traitement des données de santé est obligatoire"),"error"); return; }
@@ -274,13 +290,16 @@ async function doSignup(e){
   try{
     // Captcha Turnstile obligatoire (protège le crédit SMS contre les bots).
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
-    // shouldCreateUser:true → crée le compte ; role + nom en metadata pour le
-    // trigger handle_new_auth_user (raw_user_meta_data->>'role').
-    var res = await window.tabibi.supabase.auth.signInWithOtp({
+    // signUp({phone,password}) : pose le MOT DE PASSE à la création ET envoie
+    // l'OTP SMS de vérification du numéro (1 seul SMS). channel:"sms" = canal SMS.
+    // role + nom en metadata → trigger handle_new_auth_user (raw_user_meta_data->>'role').
+    // Doc: supabase.com/docs/reference/javascript/auth-signup
+    var res = await window.tabibi.supabase.auth.signUp({
       phone: phone,
-      options: { shouldCreateUser: true, captchaToken: captchaToken, data: { role: cur, first_name: fn, last_name: ln } }
+      password: pw,
+      options: { channel: "sms", captchaToken: captchaToken, data: { role: cur, first_name: fn, last_name: ln } }
     });
-    if(res && res.error){ toastM(mapOtpError(res.error),"error"); return; }
+    if(res && res.error){ toastM(mapSignupError(res.error),"error"); return; }
 
     // → écran OTP (phase 2). Aucune donnée n'a touché la base.
     var fEl = document.getElementById("su-form"); if(fEl) fEl.classList.add("hidden");
@@ -301,10 +320,9 @@ async function suResendOtp(e){
   if(!_pendingSignup){ suBackToForm(); return; }
   try{
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
-    var res = await window.tabibi.supabase.auth.signInWithOtp({
-      phone: _pendingSignup.phone,
-      options: { shouldCreateUser: true, captchaToken: captchaToken, data: { role: _pendingSignup.role, first_name: _pendingSignup.firstName, last_name: _pendingSignup.lastName } }
-    });
+    // resend({type:"sms"}) = renvoyer l'OTP de confirmation du signUp.
+    // Doc: supabase.com/docs/reference/javascript/auth-resend
+    var res = await window.tabibi.supabase.auth.resend({ type: "sms", phone: _pendingSignup.phone, options: { captchaToken: captchaToken } });
     if(res && res.error){ toastM(mapOtpError(res.error),"error"); return; }
     toastM("Nouveau code envoyé.","success");
   } catch(err){ toastM(mapOtpError(err),"error"); }

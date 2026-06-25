@@ -55,31 +55,64 @@
   </div>
   <div class="card" style="max-width:400px;margin:0 auto">
 
-    <!-- ── ÉCRAN 1 : NUMÉRO DE TÉLÉPHONE ── -->
+    <!-- ── ÉCRAN 1 : CONNEXION (numéro + mot de passe, ZÉRO SMS) ── -->
     <div id="screen-phone">
-      <form id="otpPhoneForm" onsubmit="sendOtp(event)">
+      <form id="pwLoginForm" onsubmit="doPhoneLogin(event)">
         <div class="form-group"><label class="form-label" for="lp-phone">Numéro de téléphone</label>
           <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
             <input class="form-control" id="lp-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
-          <div style="font-size:11px;color:var(--text3);margin-top:6px">Indicatif Algérie <strong>+213</strong> ajouté automatiquement. Vous recevrez un code par SMS.</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">Indicatif Algérie <strong>+213</strong> ajouté automatiquement.</div>
         </div>
-        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
+        <div class="form-group"><label class="form-label" for="lp-pass">Mot de passe</label>
+          <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp-pass" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="ii-r" onclick="togglePw('lp-pass',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+          <div style="text-align:right;margin-top:6px">
+            <a href="#" onclick="showReset(event)" style="font-size:12px;color:var(--blue);font-weight:600">Mot de passe oublié ?</a>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
       </form>
     </div>
 
-    <!-- ── ÉCRAN 2 : CODE OTP (6 chiffres) ── -->
-    <div id="screen-otp" class="hidden">
-      <form id="otpCodeForm" onsubmit="verifyOtp(event)">
-        <div class="form-group"><label class="form-label" for="lp-code">Code reçu par SMS</label>
+    <!-- ── RESET 1/3 : numéro ── -->
+    <div id="screen-reset" class="hidden">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Entrez votre numéro : vous recevrez un code par SMS pour définir un nouveau mot de passe.</p>
+      <form id="resetPhoneForm" onsubmit="resetSendOtp(event)">
+        <div class="form-group"><label class="form-label" for="rs-phone">Numéro de téléphone</label>
+          <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="rs-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
+        <div style="text-align:center;margin-top:14px;font-size:12px"><a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion</a></div>
+      </form>
+    </div>
+
+    <!-- ── RESET 2/3 : code OTP ── -->
+    <div id="screen-reset-otp" class="hidden">
+      <form id="resetOtpForm" onsubmit="resetVerifyOtp(event)">
+        <div class="form-group"><label class="form-label" for="rs-code">Code reçu par SMS</label>
           <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="lp-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
-          <div id="lp-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+            <input class="form-control" id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
+          <div id="rs-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
         </div>
-        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Vérifier</button>
         <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px">
-          <a href="#" onclick="resendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
-          <a href="#" onclick="backToPhone(event)" style="color:var(--text3);font-weight:600">Changer de numéro</a>
+          <a href="#" onclick="resetResendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
+          <a href="#" onclick="showReset(event)" style="color:var(--text3);font-weight:600">Changer de numéro</a>
         </div>
+      </form>
+    </div>
+
+    <!-- ── RESET 3/3 : nouveau mot de passe ── -->
+    <div id="screen-reset-newpw" class="hidden">
+      <form id="resetNewPwForm" onsubmit="resetSetPassword(event)">
+        <div class="form-group"><label class="form-label" for="rs-newpw">Nouveau mot de passe</label>
+          <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="rs-newpw" type="password" required minlength="6" style="padding-left:42px" placeholder="6 caractères minimum" autocomplete="new-password">
+            <button type="button" class="ii-r" onclick="togglePw('rs-newpw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Définir le mot de passe</button>
       </form>
     </div>
 
@@ -125,8 +158,6 @@ function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="
 // window.tabibi.auth n'expose pas l'OTP — c'est normal).
 // ═══════════════════════════════════════════════════════════════════
 
-var _otpPhone = ""; // numéro E.164 mémorisé entre l'écran 1 et l'écran 2
-
 // Normalise un numéro saisi vers E.164 (Algérie). Retire le 0 initial.
 function toE164(raw){
   var s = String(raw || "").replace(/[\s().\-]/g, "");
@@ -151,7 +182,7 @@ function mapOtpError(error){
 
 // ── Bascule d'écrans ──────────────────────────────────────────────────────
 function showScreen(which){
-  ["phone","otp","admin"].forEach(function(s){
+  ["phone","reset","reset-otp","reset-newpw","admin"].forEach(function(s){
     var el = document.getElementById("screen-" + s);
     if (el) el.classList.toggle("hidden", s !== which);
   });
@@ -160,17 +191,30 @@ function showScreen(which){
 }
 function showAdmin(e){ if(e) e.preventDefault(); showScreen("admin"); }
 function showPhone(e){ if(e) e.preventDefault(); showScreen("phone"); }
-function backToPhone(e){ if(e) e.preventDefault(); var c=document.getElementById("lp-code"); if(c) c.value=""; showScreen("phone"); }
+function showReset(e){ if(e) e.preventDefault(); var p=document.getElementById("rs-phone"), l=document.getElementById("lp-phone"); if(p&&l) p.value=l.value||""; showScreen("reset"); }
 
-// ── Écran 1 → envoi du code ───────────────────────────────────────────────
-async function sendOtp(e){
+// Erreur de connexion mdp → message FR (ne révèle pas si numéro ou mdp est faux).
+function mapLoginError(error){
+  var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
+  if (m.includes("captcha")) return "Vérification anti-robot échouée. Réessayez.";
+  if (m.includes("rate") || m.includes("too many")) return "Trop de tentatives. Patientez une minute.";
+  if (m.includes("not confirmed") || m.includes("confirm"))
+    return "Numéro non vérifié. Terminez d'abord votre inscription.";
+  return "Numéro ou mot de passe incorrect.";
+}
+
+// ── CONNEXION : numéro + mot de passe (ZÉRO SMS) ──────────────────────────
+// Doc: supabase.com/docs/reference/javascript/auth-signinwithpassword
+async function doPhoneLogin(e){
   if (e) e.preventDefault();
   var phone = toE164(document.getElementById("lp-phone").value);
+  var pass = document.getElementById("lp-pass").value || "";
   if (phone.length < 8) { toastM("Numéro de téléphone invalide", "error"); return; }
+  if (!pass) { toastM("Mot de passe obligatoire", "error"); return; }
 
-  // Anti-bruteforce local (chaque SMS coûte) : 5 / 60 s par numéro.
+  // Anti-bruteforce mot de passe : 5 tentatives / 60 s par numéro.
   if (window.tabibiSec && window.tabibiSec.rateLimit) {
-    var lim = window.tabibiSec.rateLimit("otp:" + phone, 5, 60000);
+    var lim = window.tabibiSec.rateLimit("login:" + phone, 5, 60000);
     if (!lim.allowed) { toastM(lim.reason, "error"); return; }
   }
   if (!window.tabibi || !window.tabibi.supabase) {
@@ -179,64 +223,102 @@ async function sendOtp(e){
 
   var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
   var origText = btn ? btn.innerHTML : "";
-  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi du code…'; }
-
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Connexion…'; }
   try {
-    // Captcha Turnstile (protège le crédit SMS contre les bots).
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
-    var res = await window.tabibi.supabase.auth.signInWithOtp({
-      phone: phone,
-      options: { shouldCreateUser: false, captchaToken: captchaToken } // login : ne crée PAS de compte
-    });
+    var res = await window.tabibi.supabase.auth.signInWithPassword({ phone: phone, password: pass, options: { captchaToken: captchaToken } });
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapLoginError(res.error), "error"); return; }
+    var user = await window.tabibi.auth.getUser();
+    if (!user) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error"); return; }
+    var ok = await _afterAuth(user);
+    if (!ok && btn) { btn.disabled = false; btn.innerHTML = origText; }
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    toastM(mapLoginError(err), "error");
+  }
+}
+
+// ── MOT DE PASSE OUBLIÉ : reset par OTP SMS (1 SMS ponctuel, rare) ─────────
+var _resetPhone = "";
+async function resetSendOtp(e){
+  if (e) e.preventDefault();
+  var phone = toE164(document.getElementById("rs-phone").value);
+  if (phone.length < 8) { toastM("Numéro de téléphone invalide", "error"); return; }
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + phone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."), "error"); return;
+  }
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi du code…'; }
+  try {
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    // shouldCreateUser:false → ne réinitialise QUE des comptes existants.
+    var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: phone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
     if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
-    _otpPhone = phone;
-    var tgt = document.getElementById("lp-otp-target");
-    if (tgt) tgt.textContent = "Code envoyé au " + phone;
-    showScreen("otp");
-    var codeEl = document.getElementById("lp-code"); if (codeEl) { codeEl.value=""; codeEl.focus(); }
+    _resetPhone = phone;
+    var tgt = document.getElementById("rs-otp-target"); if (tgt) tgt.textContent = "Code envoyé au " + phone;
+    showScreen("reset-otp");
+    var c = document.getElementById("rs-code"); if (c) { c.value=""; c.focus(); }
   } catch (err) {
     toastM(mapOtpError(err), "error");
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = origText; }
   }
 }
-
-// Renvoyer le code (sans quitter l'écran) — refait un captcha + signInWithOtp.
-async function resendOtp(e){
+async function resetResendOtp(e){
   if (e) e.preventDefault();
-  if (!_otpPhone) { showScreen("phone"); return; }
+  if (!_resetPhone) { showScreen("reset"); return; }
   try {
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
-    var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: _otpPhone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
+    var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: _resetPhone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
     if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
     toastM("Nouveau code envoyé.", "success");
   } catch (err) { toastM(mapOtpError(err), "error"); }
 }
-
-// ── Écran 2 → vérification du code ────────────────────────────────────────
-async function verifyOtp(e){
+async function resetVerifyOtp(e){
   if (e) e.preventDefault();
-  var token = (document.getElementById("lp-code").value || "").trim();
+  var token = (document.getElementById("rs-code").value || "").trim();
   if (!/^[0-9]{4,8}$/.test(token)) { toastM("Code incorrect. Saisissez les 6 chiffres reçus.", "error"); return; }
-  if (!_otpPhone) { showScreen("phone"); toastM("Session expirée, recommencez.", "error"); return; }
-
+  if (!_resetPhone) { showScreen("reset"); toastM("Session expirée, recommencez.", "error"); return; }
   var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
   var origText = btn ? btn.innerHTML : "";
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Vérification…'; }
-
   try {
-    var res = await window.tabibi.supabase.auth.verifyOtp({ phone: _otpPhone, token: token, type: "sms" });
+    var res = await window.tabibi.supabase.auth.verifyOtp({ phone: _resetPhone, token: token, type: "sms" });
     if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapOtpError(res.error), "error"); return; }
-
-    // Session active → lire le profil (rôle + statut) depuis public.users.
-    var user = await window.tabibi.auth.getUser();
-    if (!user) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error"); return; }
-
-    var ok = await _afterAuth(user); // vérifs statut + localStorage + redirect
-    if (!ok && btn) { btn.disabled = false; btn.innerHTML = origText; }
+    // Session active (OTP vérifié) → écran nouveau mot de passe.
+    showScreen("reset-newpw");
+    var p = document.getElementById("rs-newpw"); if (p) { p.value=""; p.focus(); }
   } catch (err) {
     if (btn) { btn.disabled = false; btn.innerHTML = origText; }
     toastM(mapOtpError(err), "error");
+  }
+}
+// updateUser({password}) : pose le NOUVEAU mot de passe (session OTP active).
+// Doc: supabase.com/docs/reference/javascript/auth-updateuser
+async function resetSetPassword(e){
+  if (e) e.preventDefault();
+  var pass = document.getElementById("rs-newpw").value || "";
+  if (pass.length < 6) { toastM("Le mot de passe doit faire au moins 6 caractères.", "error"); return; }
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Mise à jour…'; }
+  try {
+    var res = await window.tabibi.supabase.auth.updateUser({ password: pass });
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM("Échec de la mise à jour du mot de passe. Réessayez.", "error"); return; }
+    toastM("Mot de passe mis à jour.", "success");
+    // Session déjà active → on enchaîne (profil + redirection par rôle).
+    var user = await window.tabibi.auth.getUser();
+    if (user) { var ok = await _afterAuth(user); if (ok) return; }
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    setTimeout(function(){ showPhone(); }, 600);
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    toastM("Échec de la mise à jour du mot de passe. Réessayez.", "error");
   }
 }
 
@@ -272,7 +354,7 @@ async function _afterAuth(user){
     name: displayName, initials: initials, firstName: fName, lastName: lName,
     specialty: user.specialty_fr || user.specialty || "",
     ville: user.wilaya_fr || user.ville || "Alger",
-    phone: user.phone || _otpPhone, isTest: !!user.is_test, fromSupabase: true
+    phone: user.phone || "", isTest: !!user.is_test, fromSupabase: true
   }));
   localStorage.setItem("tabibi_role", userRole);
   toastM("Connexion réussie !", "success");
