@@ -639,49 +639,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 </div>
 
 <!-- AUTH MODAL -->
-<div class="modal-bg hidden" id="auth-modal" role="dialog" aria-modal="true">
-  <div class="modal-sheet" id="modal-inner">
-    <div class="modal-handle"></div>
-    <div class="auth-logo">
-      <div class="logo-mark"></div>
-      <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span></div>
-      <p style="font-family:'Cairo',sans-serif;color:var(--text3);font-size:13px;margin-top:3px">طبيبي · La santé à portée de clic</p>
-    </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="atl" onclick="switchAuthTab('login')" role="tab" aria-selected="true">Connexion</button>
-      <button class="auth-tab" id="ats" onclick="switchAuthTab('signup')" role="tab" aria-selected="false">Inscription</button>
-    </div>
-    <!-- LOGIN -->
-    <form id="lform" class="modal-body" onsubmit="handleLogin(event)" novalidate style="padding-bottom:20px">
-      <div class="form-group">
-        <label class="form-label" for="l-em">E-mail</label>
-        <div class="input-wrap"><i class='ii-l fa fa-envelope'></i><input class="form-control has-l" type="email" id="l-em" placeholder="votre@email.com" data-i18n-placeholder="ph_email_generic" autocomplete="email" required></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="l-pw">Mot de passe</label>
-        <div class="input-wrap"><i class='ii-l fa fa-lock'></i><input class="form-control has-l has-r" type="password" id="l-pw" placeholder="••••••••" autocomplete="current-password" required><button type="button" class="ii-r" onclick="togglePwd('l-pw',this)"><i class='fa fa-eye'></i></button></div>
-      </div>
-      <p class="form-err hidden" id="lerr" role="alert"></p>
-      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:4px"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></button>
-      <p style="text-align:center;font-size:12px;margin-top:12px;color:var(--text3)">Pas de compte ? <a href="#" onclick="switchAuthTab('signup')" style="color:var(--blue);font-weight:700">S'inscrire</a></p>
-    </form>
-    <!-- SIGNUP -->
-    <form id="sform" class="modal-body hidden" onsubmit="handleSignup(event)" novalidate style="padding-bottom:20px">
-      <div class="role-cards" role="radiogroup">
-        <div class="role-card sel" onclick="pickRole(this,'patient')" role="radio" aria-checked="true" tabindex="0"><div class="role-card-ico"><i class='fa fa-user' style='color:var(--blue);font-size:22px'></i></div><h4>Patient</h4></div>
-        <div class="role-card" onclick="pickRole(this,'medecin')" role="radio" aria-checked="false" tabindex="0"><div class="role-card-ico"><i class='fa fa-user-doctor' style='color:var(--green);font-size:22px'></i></div><h4>Médecin</h4></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" for="s-fi">Prénom</label><input class="form-control" id="s-fi" required autocomplete="given-name"></div>
-        <div class="form-group"><label class="form-label" for="s-la">Nom</label><input class="form-control" id="s-la" required autocomplete="family-name"></div>
-      </div>
-      <div class="form-group"><label class="form-label" for="s-em">E-mail</label><div class="input-wrap"><i class='ii-l fa fa-envelope'></i><input class="form-control has-l" type="email" id="s-em" required autocomplete="email"></div></div>
-      <div class="form-group"><label class="form-label" for="s-pw">Mot de passe</label><div class="input-wrap"><i class='ii-l fa fa-lock'></i><input class="form-control has-l has-r" type="password" id="s-pw" required autocomplete="new-password" placeholder="6 caractères min." data-i18n-placeholder="ph_password_6_min"><button type="button" class="ii-r" onclick="togglePwd('s-pw',this)"><i class='fa fa-eye'></i></button></div></div>
-      <p class="form-err hidden" id="serr" role="alert"></p>
-      <button type="submit" class="btn btn-success btn-full btn-lg"><i class='fa fa-user-plus'></i> Créer mon compte</button>
-    </form>
-  </div>
-</div>
+<!-- [auth] Modale email/mdp retirée — connexion & inscription via pages OTP dédiées :
+     login.html (tél OTP patients/médecins + onglet admin email/mdp) · signup.html (tél OTP).
+     index.html ne contient plus AUCUN formulaire email/mot de passe. -->
 
 <!-- APP BAR -->
 <header class="app-bar" role="banner">
@@ -1234,202 +1194,14 @@ function redirectByRole(role) {
   window.location.href = map[role] || "patient-dashboard.html";
 }
 
-/* ══ AUTH MODAL ══════════════════════════════════════════════ */
-let _selRole = "patient";
-
+/* ══ AUTH (redirections) ═══════════════════════════════════════
+   Plus aucun formulaire email/mdp dans index.html : la modale d'auth
+   a été retirée. Patients & médecins s'authentifient via les pages OTP
+   dédiées (login.html / signup.html) ; l'admin garde email/mdp dans
+   login.html. openModal() reste un simple shim de redirection pour
+   préserver tous ses appelants (gates d'auth, boutons uarea, CTA). */
 function openModal(tab) {
-  const m = document.getElementById("auth-modal");
-  if (!m) return;
-  m.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-  switchAuthTab(tab || "login");
-  ["lerr","serr"].forEach(id => { const e=document.getElementById(id); if(e){e.textContent="";e.classList.add("hidden");} });
-}
-function closeModal() {
-  const m = document.getElementById("auth-modal");
-  if (m) { m.classList.add("hidden"); document.body.style.overflow=""; }
-}
-function switchAuthTab(tab) {
-  const lf=document.getElementById("lform"),sf=document.getElementById("sform");
-  const tl=document.getElementById("atl"),ts=document.getElementById("ats");
-  if(lf) lf.classList.toggle("hidden",tab!=="login");
-  if(sf) sf.classList.toggle("hidden",tab!=="signup");
-  if(tl) { tl.classList.toggle("active",tab==="login"); tl.setAttribute("aria-selected",tab==="login"); }
-  if(ts) { ts.classList.toggle("active",tab==="signup"); ts.setAttribute("aria-selected",tab==="signup"); }
-}
-function pickRole(el, role) {
-  // ═══════════════════════════════════════════════════════════════
-  // SÉCURITÉ v10 : ne JAMAIS accepter le rôle "admin" depuis l'UI
-  // ═══════════════════════════════════════════════════════════════
-  if (role === 'admin' || role === 'administrator') {
-    console.warn('[security] Tentative de sélection du rôle admin bloquée');
-    return;
-  }
-  // Whitelist stricte des rôles autorisés en inscription publique
-  if (role !== 'patient' && role !== 'medecin') {
-    console.warn('[security] Rôle invalide:', role);
-    return;
-  }
-  _selRole = role;
-  document.querySelectorAll(".role-card").forEach(c=>{c.classList.remove("sel");c.setAttribute("aria-checked","false");});
-  el.classList.add("sel"); el.setAttribute("aria-checked","true");
-}
-function togglePwd(id, btn) {
-  const inp = document.getElementById(id); if(!inp) return;
-  inp.type = inp.type==="password" ? "text" : "password";
-  btn.querySelector("i").className = inp.type==="password" ? "fa fa-eye" : "fa fa-eye-slash";
-}
-
-async function handleLogin(e) {
-  e.preventDefault();
-  const email = (document.getElementById("l-em")?.value||"").trim().toLowerCase();
-  const pass  = document.getElementById("l-pw")?.value||"";
-  const err   = document.getElementById("lerr");
-  if(err){err.textContent="";err.classList.add("hidden");}
-  if (!email||!pass) { _showErr(err,T("fill_all")); return; }
-
-  // Brute-force protection
-  if (window.tabibiSec && window.tabibiSec.rateLimit) {
-    const limit = window.tabibiSec.rateLimit('login:' + email, 5, 60000);
-    if (!limit.allowed) {
-      _showErr(err, limit.reason);
-      return;
-    }
-  }
-  // Validation email
-  if (window.tabibiSec && !window.tabibiSec.validateEmail(email)) {
-    _showErr(err, "Format d'email invalide");
-    return;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // v10 : Authentification via Supabase (plus de login local)
-  // ═══════════════════════════════════════════════════════════════
-  try {
-    if (!window.tabibi || !window.tabibi.auth) {
-      _showErr(err, "Service d'authentification indisponible");
-      return;
-    }
-    await window.tabibi.auth.signIn(email, pass);
-    const sbUser = await window.tabibi.auth.getUser();
-    if (!sbUser) {
-      _showErr(err, T("bad_creds"));
-      return;
-    }
-    // Vérifier statut (médecin pending)
-    const status = sbUser.status || 'active';
-    if (sbUser.role === 'medecin' && status === 'pending_verification') {
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      _showErr(err, "Votre compte médecin est en cours de vérification (48h max).");
-      return;
-    }
-    if (status === 'suspended' || status === 'rejected') {
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      _showErr(err, "Compte non actif. Contactez contact@tabibi.doctor");
-      return;
-    }
-    // Construire le profil utilisateur
-    const fName = sbUser.first_name || "";
-    const lName = sbUser.last_name || "";
-    let displayName = (fName + " " + lName).trim() || sbUser.full_name || email.split("@")[0];
-    const initials = ((fName[0]||displayName[0]||"?") + (lName[0]||"")).toUpperCase();
-    const u = {
-      id: sbUser.id,
-      email: sbUser.email || email,
-      role: sbUser.role || 'patient',
-      status: status,
-      name: displayName,
-      initials: initials,
-      avatar: { bg:"#dcfce7", tc:"#0a4d3e" }
-    };
-    saveUser(u);
-    closeModal();
-    renderUserUI();
-    toast(`${T("welcome")} ${u.name} !`,"success");
-    setTimeout(()=>redirectByRole(u.role), 900);
-  } catch(err2) {
-    console.warn("[login] error:", err2 && err2.message);
-    _showErr(err, T("bad_creds"));
-    document.getElementById("modal-inner")?.classList.add("shake");
-    setTimeout(()=>document.getElementById("modal-inner")?.classList.remove("shake"),420);
-  }
-}
-
-async function handleSignup(e) {
-  e.preventDefault();
-  const first=(document.getElementById("s-fi")?.value||"").trim();
-  const last =(document.getElementById("s-la")?.value||"").trim();
-  const email=(document.getElementById("s-em")?.value||"").trim().toLowerCase();
-  const pass =document.getElementById("s-pw")?.value||"";
-  const err  =document.getElementById("serr");
-  if(err){err.textContent="";err.classList.add("hidden");}
-  if (!first||!last||!email||!pass){_showErr(err,T("fill_all"));return;}
-  if (pass.length<6){_showErr(err,T("pass_short"));return;}
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){_showErr(err,"Email invalide.");return;}
-
-  // ═══════════════════════════════════════════════════════════════
-  // SÉCURITÉ v10 : forcer le rôle à patient ou medecin uniquement
-  // ═══════════════════════════════════════════════════════════════
-  let role = _selRole;
-  if (role !== 'patient' && role !== 'medecin') {
-    role = 'patient';  // fallback sécurisé
-  }
-  // Triple sécurité : on n'autorise JAMAIS "admin" depuis cette UI
-  if (role === 'admin' || role === 'administrator') {
-    _showErr(err, "Rôle non autorisé");
-    return;
-  }
-
-  try {
-    if (!window.tabibi || !window.tabibi.auth || !window.tabibi.supabase) {
-      _showErr(err, "Service d'inscription indisponible");
-      return;
-    }
-
-    // 1. Créer le compte Supabase Auth
-    const signupResult = await window.tabibi.auth.signUp(email, pass, role);
-    if (!signupResult || !signupResult.user) {
-      _showErr(err, "Erreur lors de la création du compte");
-      return;
-    }
-
-    // [Phase 16.5] Upsert client-side supprimé — trigger handle_new_auth_user()
-    // lit désormais raw_user_meta_data->>'role' et insère le bon rôle.
-    // L'upsert ici était un band-aid masquant le bug trigger (role='patient' hardcodé).
-
-    // 2. Si médecin → déconnexion + message d'attente
-    if (role === 'medecin') {
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      closeModal();
-      toast("✓ Inscription enregistrée. Vérification de votre compte sous 48h. Email envoyé à " + email, "success");
-      return;
-    }
-
-    // 4. Patient → connexion immédiate
-    const u = {
-      id: signupResult.user.id,
-      email: email,
-      role: 'patient',
-      status: 'active',
-      name: `${first} ${last}`,
-      initials: (first[0]+last[0]).toUpperCase(),
-      avatar: { bg:"#dcfce7", tc:"#0a4d3e" }
-    };
-    saveUser(u);
-    closeModal();
-    renderUserUI();
-    toast(T("signup_ok"),"success");
-    setTimeout(()=>redirectByRole('patient'),900);
-
-  } catch(err2) {
-    console.error('[signup] error:', err2);
-    const msg = (err2 && err2.message) || "Erreur lors de l'inscription";
-    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')) {
-      _showErr(err, "Cet email est déjà utilisé. Connectez-vous.");
-    } else {
-      _showErr(err, msg);
-    }
-  }
+  location.href = (tab === "signup") ? "signup.html" : "login.html";
 }
 
 function handleLogout() {
@@ -1437,8 +1209,6 @@ function handleLogout() {
   const onDash=["patient-dashboard","doctor-dashboard","admin-dashboard"].some(p=>window.location.pathname.includes(p));
   if(onDash) setTimeout(()=>window.location.href="index.html",600);
 }
-
-function _showErr(el,msg){if(!el)return;el.textContent=msg;el.classList.remove("hidden");}
 
 /* ══ USER UI ══════════════════════════════════════════════════ */
 function renderUserUI() {
@@ -1699,8 +1469,6 @@ function initApp(){
   loadUser();
   setLang(lang);
   renderUserUI();
-  document.getElementById("auth-modal")?.addEventListener("click",e=>{if(e.target===document.getElementById("auth-modal"))closeModal();});
-  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
   hideLoading();
 
   // Auto-filter from URL params (depuis pages SEO)
@@ -1746,7 +1514,7 @@ Object.assign(window,{
   TR,T,lang,setLang,
   DOCTORS,SPECS,CITIES,ACCOUNTS,DEMO_RDV,DEMO_DOC_RDV,generateSlots,TAKEN_SLOTS,
   user,loadUser,isLogged,getRole,login,logout,requireAuth,requireRole,redirectByRole,saveUser,
-  openModal,closeModal,switchAuthTab,pickRole,togglePwd,handleLogin,handleSignup,handleLogout,
+  openModal,handleLogout,
   renderUserUI,goDash,
   toast,showLoading,hideLoading,
   stars,dname,dspec,dcity,sname,searchByName,getParam,scrollTo$,daysUntil,
