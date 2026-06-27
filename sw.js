@@ -24,7 +24,7 @@
 // `navigator.serviceWorker.register('/sw.js')` nulle part). Nouveaux
 // précaches : tabibi-features.js, tabibi-analytics.js, tabibi-sw-register.js,
 // payment.html, notifications.html.
-const CACHE_VERSION = 'tabibi-v27-2026-06-23';
+const CACHE_VERSION = 'tabibi-v28-2026-06-27';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -77,6 +77,10 @@ self.addEventListener('fetch', event => {
   if (url.origin !== location.origin) return;
   if (url.hostname.includes('supabase.co') || url.pathname.startsWith('/api/')) return;
   if (req.mode === 'navigate' || (req.headers.get('accept') || '').includes('text/html')) {
+    event.respondWith(networkFirst(req));
+    return;
+  }
+  if (url.pathname.endsWith('/tabibi-i18n.js') || url.pathname.endsWith('tabibi-i18n.js')) {
     event.respondWith(networkFirst(req));
     return;
   }
