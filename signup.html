@@ -408,14 +408,18 @@ async function verifyOtpAndCreateProfile(e){
     // Médecin : compte en attente de validation manuelle. Auto-claim si deep-link.
     if(P.role === "medecin"){
       var claimLegacyId = (typeof _getClaimLegacyIdFromUrl === 'function') ? _getClaimLegacyIdFromUrl() : null;
+      var _profileId = null;   // [C3] id de la fiche claimée → cible de l'upload des pièces
       if(claimLegacyId && window.tabibiClaim && typeof window.tabibiClaim.autoClaim === 'function'){
-        try{ await window.tabibiClaim.autoClaim(claimLegacyId); }
+        try{
+          var _claimRes = await window.tabibiClaim.autoClaim(claimLegacyId);   // [C3] capturer le retour (jeté auparavant)
+          if(_claimRes && _claimRes.ok && _claimRes.data){ _profileId = _claimRes.data.profile_id || null; }   // [C3]
+        }
         catch(_c){ try{ localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); }catch(__){} }
       } else if(claimLegacyId){
         try{ localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); }catch(__){}
       }
       // Session active : la modale s'affiche ; signOut + redirect au clic de fermeture.
-      showMedecinPendingModal(P.phone, P.firstName);   // affiche le TÉLÉPHONE (pas d'email)
+      showMedecinPendingModal(P.phone, P.firstName, _profileId);   // [C3] _profileId → uploader in-app si fiche claimée
       if(btn){ btn.disabled=false; btn.innerHTML=origText; }
       return;
     }
@@ -446,9 +450,25 @@ function _persistAndGo(id, role, status, P, consents){
   } catch(e){}
 }
 
-function showMedecinPendingModal(phone, prenom) {
+function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId = id fiche claimée → uploader in-app
   const modal = document.createElement('div');
   modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
+  // [C3] Si la fiche est claimée (profile_id présent) → upload des 2 pièces DANS la session
+  // active (avant signOut), au lieu du seul renvoi par email (qui reste en fallback).
+  // Sans profile_id (signup SANS claim → pas de fiche, cas C2 non livré) → message neutre.
+  var docsBlock = profileId
+    ? `<div style="background:#f0f9ff;border-radius:10px;padding:14px;margin-bottom:16px;text-align:start;font-size:13px;color:#0a4d3e">
+        <strong>📋 Pièces justificatives</strong>
+        <br>Ajoutez dès maintenant votre <strong>carte de l'Ordre</strong> + votre <strong>pièce d'identité</strong> pour accélérer la validation.
+        <div id="med-pending-upload" style="margin-top:12px"></div>
+        <button id="med-pending-send" disabled style="width:100%;margin-top:12px;padding:12px;background:#0F7560;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;opacity:.5"><i class="fa fa-paper-plane"></i> Envoyer mes documents</button>
+        <div id="med-pending-upload-msg" style="margin-top:8px;font-size:12px"></div>
+        <div style="margin-top:8px;font-size:11px;color:#64748b">Vous pouvez aussi les envoyer à <strong>contact@tabibi.doctor</strong>.</div>
+      </div>`
+    : `<div style="background:#f0f9ff;border-radius:10px;padding:14px;margin-bottom:20px;text-align:start;font-size:13px;color:#0a4d3e">
+        <strong>📋 ${tabibiT('next_step','Prochaine étape :')}</strong>
+        <br>${tabibiT('med_pending_docs','Préparez vos documents (diplôme + attestation Ordre) pour les envoyer à <strong>contact@tabibi.doctor</strong>')}
+      </div>`;   // [C3] cas (b) sans claim : pas de fiche cible → message neutre (dépend de C2)
   modal.innerHTML = `
     <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:32px 24px;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,0.2)">
       <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#0a4d3e,#0F7560);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
@@ -462,16 +482,46 @@ function showMedecinPendingModal(phone, prenom) {
         <br><br>
         Nous vous notifierons au <strong>${phone}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
       </p>
-      <div style="background:#f0f9ff;border-radius:10px;padding:14px;margin-bottom:20px;text-align:start;font-size:13px;color:#0a4d3e">
-        <strong>📋 ${tabibiT('next_step','Prochaine étape :')}</strong>
-        <br>${tabibiT('med_pending_docs','Préparez vos documents (diplôme + attestation Ordre) pour les envoyer à <strong>contact@tabibi.doctor</strong>')}
-      </div>
+      ${docsBlock}
       <button onclick="medecinPendingClose()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
         ${tabibiT('back_home',"Retour à l'accueil")}
       </button>
     </div>
   `;
   document.body.appendChild(modal);
+
+  // [C3] Monte l'uploader des 2 pièces (réutilise tabibiDocUpload, comme medecin-profile.html)
+  // et câble « Envoyer mes documents » → submit(profileId). Session encore active (avant signOut).
+  if (profileId && window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {   // [C3]
+    var _up = window.tabibiDocUpload.setup({                                                          // [C3]
+      container: 'med-pending-upload',                                                                // [C3]
+      onValidChange: function (v) {                                                                   // [C3]
+        var b = document.getElementById('med-pending-send');                                          // [C3]
+        if (b) { b.disabled = !v; b.style.opacity = v ? '1' : '.5'; }                                 // [C3]
+      }                                                                                               // [C3]
+    });                                                                                               // [C3]
+    var _sendBtn = document.getElementById('med-pending-send');                                       // [C3]
+    var _msg = document.getElementById('med-pending-upload-msg');                                     // [C3]
+    if (_sendBtn) _sendBtn.onclick = async function () {                                              // [C3]
+      if (!_up.isValid()) return;                                                                     // [C3]
+      var _orig = _sendBtn.innerHTML;                                                                 // [C3]
+      _sendBtn.disabled = true; _sendBtn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi…'; // [C3]
+      try {                                                                                           // [C3]
+        var r = await _up.submit(profileId);                                                          // [C3]
+        if (r && r.ok) {                                                                              // [C3]
+          var _ul = document.getElementById('med-pending-upload'); if (_ul) _ul.style.display = 'none'; // [C3]
+          _sendBtn.style.display = 'none';                                                            // [C3]
+          if (_msg) { _msg.style.color = '#10b981'; _msg.innerHTML = '<i class="fa fa-check"></i> Documents envoyés ✓ — validation sous 48h.'; } // [C3]
+        } else {                                                                                      // [C3]
+          _sendBtn.disabled = false; _sendBtn.innerHTML = _orig;                                      // [C3]
+          if (_msg) { _msg.style.color = '#ef4444'; _msg.textContent = "Échec de l'envoi. Réessayez, ou envoyez vos pièces à contact@tabibi.doctor."; } // [C3]
+        }                                                                                             // [C3]
+      } catch (e) {                                                                                   // [C3]
+        _sendBtn.disabled = false; _sendBtn.innerHTML = _orig;                                        // [C3]
+        if (_msg) { _msg.style.color = '#ef4444'; _msg.textContent = "Échec de l'envoi. Réessayez, ou envoyez vos pièces à contact@tabibi.doctor."; } // [C3]
+      }                                                                                               // [C3]
+    };                                                                                                // [C3]
+  }                                                                                                   // [C3]
 }
 
 // [Défaut #4-B] Fermeture de la modale pending : déconnexion PUIS retour index.
@@ -536,6 +586,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 <script src="js/api.js"></script>
 <script src="js/tabibi-bridge.js"></script>
 <script src="js/tabibi-claim.js"></script>
+<script src="js/tabibi-doc-upload.js"></script><!-- [C3] uploader des 2 pièces, réutilisé dans la modale pending médecin -->
 <script src="js/tabibi-brevo.js"></script>
 <script src="js/tabibi-turnstile.js"></script>
 <script src="js/tabibi-sms.js"></script>
