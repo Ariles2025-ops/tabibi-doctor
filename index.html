@@ -212,19 +212,28 @@ body { font-family: var(--font-latin); }
 
 
 :root {
-  --blue:#0F7560; --blue-d:#0a4d3e; --blue-l:#eff6ff; --blue-xl:#f8faff;
-  --green:#2E8B57; --green-d:#007a22; --green-l:#f0fdf4;
-  --red:#D21010; --red-l:#fff0f0;
+  --blue:#0F7560; --blue-d:#0a4d3e; --blue-l:#e7f3ef; --blue-xl:#f8fafc;
+  --grad-brand:linear-gradient(155deg,#0F7560 0%,#0a4d3e 100%);
+  --hero-glass:rgba(255,255,255,.10); --hero-glass-2:rgba(255,255,255,.16); --hero-bd:rgba(255,255,255,.18);
+  --logo-bg:#0F7560; --logo-accent:#D4A437;
+  --ink:#0F2A24; --pastille:#e7f3ef; --pastille-bd:#d4e9e1;
+  --shadow-card:0 2px 8px rgba(16,40,34,.06),0 20px 40px rgba(16,40,34,.10);
+  --shadow-search:0 8px 24px rgba(16,40,34,.10),0 2px 6px rgba(16,40,34,.05);
+  --grad-hero:linear-gradient(180deg,#f0f7f4 0%,#f8fafc 100%);
+  --green:#2E8B57; --green-d:#0F7560; --green-l:#f0fdf4;
+  --red:#D21010; --red-d:#991b1b; --red-l:#fff0f0;
   --amber:#F59E0B; --amber-l:#fffbeb;
-  --white:#fff; --bg:#F9FAFB; --bg2:#F3F4F6;
-  --border:#E5E7EB; --text:#0D1117; --text2:#374151; --text3:#6B7280; --text4:#A0A8BB;
-  --s1:0 1px 4px rgba(0,0,0,.06); --s2:0 4px 14px rgba(0,0,0,.09);
-  --s3:0 8px 28px rgba(0,0,0,.12); --s4:0 16px 48px rgba(0,0,0,.16);
-  --sb:0 4px 18px rgba(37,99,235,.28); --sg:0 4px 18px rgba(0,158,45,.28);
-  --nav-h:56px; --tab-h:60px;
+  --white:#fff; --bg:#f8fafc; --bg2:#f1f5f9;
+  --border:#e2e8f0; --text:#0f172a; --text2:#475569; --text3:#64748b; --text4:#94a3b8;
+  --s1:0 1px 3px rgba(0,0,0,.04); --s2:0 4px 12px rgba(0,0,0,.06);
+  --s3:0 12px 36px rgba(0,0,0,.08); --s4:0 24px 64px rgba(0,0,0,.12);
+  --sb:0 4px 14px rgba(15,117,96,.24); --sg:0 4px 14px rgba(15,117,96,.24);
+  --nav-h:56px; --tab-h:64px;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
   --r8:8px; --r12:12px; --r16:16px; --r20:20px; --r24:24px; --rfull:999px;
-  --ease:cubic-bezier(.4,0,.2,1); --t1:.12s; --t2:.2s; --t3:.32s;
+  --ease:cubic-bezier(.4,0,.2,1); --t1:.15s; --t2:.2s; --t3:.3s;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-16:16px; --fs-18:18px; --fs-22:22px; --fs-28:28px;
+  --gutter:20px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;scroll-behavior:smooth;height:100%}
@@ -275,7 +284,7 @@ ul{list-style:none}
 .form-group{margin-bottom:14px}
 .form-label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
 .form-control{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:inherit;background:#fff;color:var(--text);transition:border var(--t1),box-shadow var(--t1);outline:none;appearance:none;-webkit-appearance:none}
-.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(15,117,96,.16)}
 .form-control::placeholder{color:var(--text4)}
 textarea.form-control{resize:vertical;min-height:88px}
 select.form-control{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;cursor:pointer}
@@ -298,7 +307,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .check-row input{accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer}
 
 /* ── SPLASH ─────────── */
-.splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#1034A6 0%,var(--blue) 52%,#1479D8 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:var(--safe-t);transition:opacity .4s ease}
+.splash{position:fixed;inset:0;z-index:9999;background:var(--grad-brand);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:var(--safe-t);transition:opacity .4s ease}
 .splash.hide{opacity:0;pointer-events:none}
 .splash-ring{width:96px;height:96px;border-radius:26px;margin-bottom:22px;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 40px rgba(0,0,0,.2)}
 .splash-cross{position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center}
@@ -324,12 +333,19 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .logo-mark::after{width:18px;height:3px}
 
 /* ── BOTTOM TAB BAR ─────────── */
-.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#fff;border-top:1px solid var(--border);height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 16px rgba(0,0,0,.07)}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#fff;border-top:1px solid var(--border);height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(6,1fr);box-shadow:0 -2px 16px rgba(0,0,0,.07)}
 .tab-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all var(--t1);border:none;background:none;font-family:inherit;padding:6px 2px;color:var(--text4);position:relative;text-decoration:none}
 .tab-item i{font-size:20px;transition:all var(--t1)}
 .tab-item span{font-size:10px;font-weight:600;transition:all var(--t1)}
 .tab-item.active{color:var(--blue)}
 .tab-item.active i{transform:scale(1.1)}
+/* CARTE overlay */
+.map-overlay{position:fixed;inset:0;z-index:1500;background:var(--bg);display:flex;flex-direction:column}
+.map-overlay[hidden]{display:none}
+.map-ov-bar{position:absolute;top:0;left:0;right:0;z-index:1600;padding:calc(var(--safe-t) + 10px) 14px 10px;display:flex;align-items:center;gap:10px;pointer-events:none}
+.map-ov-close{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-card);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:16px;cursor:pointer}
+[dir="rtl"] .map-ov-close i{transform:scaleX(-1)}
+#map-canvas{flex:1;width:100%;height:100%;background:var(--bg2)}
 .tab-dot{position:absolute;top:5px;right:calc(50% - 15px);min-width:16px;height:16px;background:var(--red);border-radius:8px;border:2px solid #fff;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px}
 .page{min-height:calc(100dvh - var(--nav-h) - var(--tab-h));padding-bottom:calc(var(--tab-h) + var(--safe-b) + 16px)}
 
@@ -340,16 +356,21 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .card-tap:active{transform:scale(.98);box-shadow:var(--s2)}
 
 /* ── DOCTOR CARD ─────────── */
-.doc-card{background:#fff;border-radius:var(--r20);padding:16px;box-shadow:var(--s1);border:1px solid var(--border);cursor:pointer;transition:transform var(--t2);position:relative;overflow:hidden}
+.doc-card{background:#fff;border-radius:var(--r16);padding:18px;box-shadow:var(--shadow-card);border:1px solid var(--border);cursor:pointer;transition:transform var(--t2);position:relative;overflow:hidden}
 .doc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--green));opacity:0;transition:opacity var(--t2)}
 .doc-card:active{transform:scale(.98)}
 .doc-card:active::before{opacity:1}
 .doc-row{display:flex;gap:12px;align-items:flex-start}
 [dir="rtl"] .doc-row{flex-direction:row-reverse}
-.doc-ava{width:56px;height:56px;border-radius:var(--r16);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;border:2px solid var(--border)}
-.doc-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px}
-.doc-spec{font-size:12px;color:var(--text3);margin-bottom:2px;display:flex;align-items:center;gap:4px}
-.doc-loc{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.doc-ava{width:52px;height:52px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;background:var(--pastille);color:var(--blue);border:1px solid var(--pastille-bd)}
+.doc-name{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:3px;letter-spacing:-.2px}
+.doc-spec{font-size:12px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.doc-loc{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.doc-loc i{color:var(--blue)}
+.doc-status{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:var(--rfull);font-size:11px;font-weight:700}
+.doc-status-on{background:var(--blue);color:#fff}
+.doc-status-pending,.doc-status-off{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.doc-btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border)}
 .doc-stars{display:flex;align-items:center;gap:5px;margin:10px 0}
 [dir="rtl"] .doc-stars{flex-direction:row-reverse}
 .sf{color:#F59E0B;font-size:12px;letter-spacing:1px}
@@ -359,53 +380,92 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 [dir="rtl"] .doc-tags{flex-direction:row-reverse}
 .doc-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg2);padding-top:12px}
 [dir="rtl"] .doc-footer{flex-direction:row-reverse}
-.doc-price{font-size:16px;font-weight:800;color:var(--text)}
+.doc-price{font-size:16px;font-weight:800;color:var(--ink)}
 .doc-price small{font-size:11px;color:var(--text3);font-weight:400}
 .fav-btn{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text4);font-size:14px;cursor:pointer;transition:all var(--t1);z-index:2}
 [dir="rtl"] .fav-btn{right:auto;left:12px}
 .fav-btn:active,.fav-btn.is-fav{color:var(--red);border-color:var(--red)}
 
 /* ── HERO MOBILE ─────────── */
-.hero-mobile{background:linear-gradient(155deg,#1034A6 0%,var(--blue) 52%,#1479D8 100%);padding:24px 16px 36px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
-.hero-mobile::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(255,255,255,.07) 0%,transparent 45%),radial-gradient(circle at 10% 80%,rgba(255,255,255,.05) 0%,transparent 40%);pointer-events:none}
-.hz{position:relative;z-index:1}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;padding:4px 12px;border-radius:var(--rfull);font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:.3px}
-.hero-dot{width:6px;height:6px;background:#4ade80;border-radius:50%;animation:hdot 2s infinite;flex-shrink:0}
-@keyframes hdot{0%,100%{opacity:1}50%{opacity:.5}}
-.hero-title{font-size:26px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:6px;letter-spacing:-.4px}
-.hero-title em{color:#86efac;font-style:normal}
-.hero-sub{font-size:13px;color:rgba(255,255,255,.72);margin-bottom:20px;line-height:1.6}
+/* ════════════════════════════════════════════════════════════════
+   LANGAGE VISUEL "TABIBI 2027" — version CLAIRE — index.html = référence
+   • Base : fond app blanc cassé #f8fafc, le vert NE remplit plus le héro
+   • Héro : carte BLANCHE élevée + halo vert radial ≤10% en décor
+   • Bento : cartes blanches, bordure 1px, ombres douces multi-couches
+   • Stats : blanches, chiffre vert #0F7560, 1ère = puce live or
+   • Signal or #D4A437 : puce "live" UNIQUEMENT
+   • Micro : :active scale .96/.97, transitions ≤150ms, reduced-motion ok
+   ════════════════════════════════════════════════════════════════ */
+/* PIVOT CLAIR : fond blanc cassé, carte héro blanche élevée, vert en ACCENT */
+.hero-mobile{background:var(--grad-hero);padding:20px var(--gutter) 24px;position:relative;overflow:hidden}
+.hero-illu{display:block;width:116px;height:auto;margin:0 auto 2px}
+.hero-greet{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.hero-wave{display:inline-block;transform-origin:70% 70%;animation:wave 2.4s ease-in-out infinite}
+@keyframes wave{0%,60%,100%{transform:rotate(0deg)}10%{transform:rotate(14deg)}20%{transform:rotate(-8deg)}30%{transform:rotate(14deg)}40%{transform:rotate(-4deg)}50%{transform:rotate(10deg)}}
+.hero-mobile::before{content:'';position:absolute;inset:0;background:radial-gradient(130% 70% at 88% -8%,rgba(15,117,96,.10) 0%,rgba(15,117,96,.03) 38%,transparent 64%);pointer-events:none;z-index:0}
+.hero-mobile>*{position:relative;z-index:1}
+.hz{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:var(--r20);padding:22px 18px;box-shadow:var(--shadow-card)}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:var(--pastille);border:1px solid var(--pastille-bd);color:var(--ink);padding:5px 13px;border-radius:var(--rfull);font-size:11px;font-weight:700;margin-bottom:14px;letter-spacing:.3px}
+.hero-dot{width:7px;height:7px;background:var(--logo-accent);border-radius:50%;animation:hdot 2.2s infinite;flex-shrink:0}
+@keyframes hdot{0%{box-shadow:0 0 0 0 rgba(212,164,55,.55)}70%{box-shadow:0 0 0 6px rgba(212,164,55,0)}100%{box-shadow:0 0 0 0 rgba(212,164,55,0)}}
+.hero-title{font-size:33px;font-weight:800;color:var(--ink);line-height:1.05;margin-bottom:8px;letter-spacing:-.7px}
+.hero-title em{color:var(--blue);font-style:normal}
+.hero-sub{font-size:14px;color:var(--text2);margin-bottom:18px;line-height:1.5;max-width:34ch}
 .hero-search-wrap{position:relative}
-.hero-search{background:#fff;border-radius:var(--r16);padding:13px 14px 13px 46px;font-size:15px;color:var(--text);border:none;outline:none;width:100%;font-family:inherit;box-shadow:var(--s3)}
+.hero-search{background:#fff;border-radius:var(--r16);padding:16px 16px 16px 52px;font-size:15px;color:var(--text);border:1px solid var(--border);outline:none;width:100%;font-family:inherit;box-shadow:var(--shadow-search);transition:box-shadow var(--t2),border-color var(--t1)}
+.hero-search:focus{border-color:var(--blue);box-shadow:var(--shadow-search),0 0 0 3px rgba(15,117,96,.16)}
 .hero-search::placeholder{color:var(--text4)}
-.hero-si{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
-[dir="rtl"] .hero-search{padding:13px 46px 13px 14px}
-[dir="rtl"] .hero-si{left:auto;right:15px}
-.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
-.hero-stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:var(--r12);padding:10px 6px;text-align:center}
-.hs-n{font-size:17px;font-weight:800;color:#fff}
-.hs-l{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px}
+.hero-si{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--blue);font-size:17px;pointer-events:none}
+[dir="rtl"] .hero-search{padding:16px 52px 16px 16px}
+[dir="rtl"] .hero-si{left:auto;right:19px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.hero-stat{background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:13px 6px;text-align:center;box-shadow:var(--s1);transition:transform var(--t1),box-shadow var(--t1)}
+.hero-stat:active{transform:translateY(-2px);box-shadow:var(--s2)}
+.hero-stat:first-child{position:relative}
+.hero-stat:first-child::after{content:'';position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--logo-accent);animation:hdot 2.2s infinite}
+.hs-n{font-size:20px;font-weight:800;color:var(--blue);letter-spacing:-.3px}
+.hs-l{font-size:10px;font-weight:600;color:var(--text3);margin-top:2px;letter-spacing:.2px}
+@media (prefers-reduced-motion:reduce){.hero-dot,.hero-stat:first-child::after,.hero-wave{animation:none}.hero-search,.btn,.spec-chip,.hero-stat{transition:none}}
+/* ── PREMIUM PASS ─────────── */
+.doc-ava.is-svg{background:none;border:none;padding:0;overflow:hidden}
+.doc-ava.is-svg svg{width:100%;height:100%;display:block}
+.ava-pile{display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.ava-pile svg{width:40px;height:40px;border-radius:50%;border:2px solid #fff;margin-left:-10px;box-shadow:var(--s1)}
+.ava-pile svg:first-child{margin-left:0}
+.brand-block{box-shadow:var(--shadow-card)}
+@media(hover:hover){
+  .doc-card:hover,.spec-chip:hover,.hero-stat:hover{transform:translateY(-2px);box-shadow:var(--s3)}
+  .btn:hover{filter:brightness(.97)}
+}
+@media(min-width:768px){
+  .app-bar{background:rgba(255,255,255,.72);border-bottom:1px solid rgba(15,42,36,.10)}
+  .tab-bar{display:none}
+  .page{padding-bottom:24px}
+}
+@media (prefers-reduced-motion:reduce){.doc-card:hover,.spec-chip:hover,.hero-stat:hover{transform:none}}
 
 /* ── SPECIALTIES ─────────── */
-.spec-scroll{display:flex;gap:10px;overflow-x:auto;padding:4px 16px 8px;scrollbar-width:none}
+.spec-scroll{display:flex;gap:10px;overflow-x:auto;padding:4px var(--gutter) 8px;scrollbar-width:none}
 .spec-scroll::-webkit-scrollbar{display:none}
-.spec-chip{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;padding:12px 14px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r16);min-width:76px;transition:all var(--t1)}
-.spec-chip:active,.spec-chip.active{border-color:var(--blue);background:var(--blue-l)}
-.spec-chip-icon{font-size:22px}
+.spec-chip{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;padding:14px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r16);min-width:80px;box-shadow:var(--s1);transition:transform var(--t1),border-color var(--t1),background var(--t1),box-shadow var(--t1)}
+.spec-chip:hover{box-shadow:var(--s2)}
+.spec-chip:active{transform:scale(.97)}
+.spec-chip.active{border-color:var(--blue);background:var(--blue);box-shadow:var(--s2)}
+.spec-chip-icon{width:44px;height:44px;border-radius:50%;background:var(--pastille);display:flex;align-items:center;justify-content:center;font-size:22px}
 .spec-chip-name{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap}
-.spec-chip.active .spec-chip-name{color:var(--blue)}
+.spec-chip.active .spec-chip-name{color:#fff}
 
 /* ── CHIP FILTERS ─────────── */
-.chip-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 16px;scrollbar-width:none}
+.chip-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px var(--gutter);scrollbar-width:none}
 .chip-scroll::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;padding:7px 14px;border-radius:var(--rfull);border:1.5px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all var(--t1);background:#fff;white-space:nowrap}
 .chip.active,.chip:active{background:var(--blue);color:#fff;border-color:var(--blue)}
 
 /* ── SECTION HEADERS ─────────── */
 .section{padding:20px 0}
-.sec-hdr{padding:0 16px 12px;display:flex;align-items:center;justify-content:space-between}
-.sec-title{font-size:16px;font-weight:800;color:var(--text)}
-.sec-link{font-size:13px;font-weight:600;color:var(--blue);cursor:pointer}
+.sec-hdr{padding:0 var(--gutter) 12px;display:flex;align-items:center;justify-content:space-between}
+.sec-title{font-size:var(--fs-18);font-weight:800;color:var(--text)}
+.sec-link{font-size:var(--fs-13);font-weight:600;color:var(--blue);cursor:pointer}
 
 /* ── STAT CARDS ─────────── */
 .stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px}
@@ -438,7 +498,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 [dir="rtl"] .rdv-side{align-items:flex-start}
 
 /* ── PROFILE HERO ─────────── */
-.profile-hero{background:linear-gradient(155deg,#1034A6 0%,var(--blue) 55%,#1479D8 100%);padding:24px 16px 52px;position:relative;margin-bottom:-36px}
+.profile-hero{background:var(--grad-brand);padding:24px 16px 52px;position:relative;margin-bottom:-36px}
 .profile-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg);clip-path:ellipse(60% 100% at 50% 100%)}
 .profile-ava-big{width:72px;height:72px;border-radius:var(--r20);border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px}
 .profile-name-big{font-size:20px;font-weight:800;color:#fff;margin-bottom:3px}
@@ -451,10 +511,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .slot-btn.taken{background:var(--bg2);color:var(--text4);cursor:not-allowed;border-color:transparent}
 
 /* ── HOW IT WORKS ─────────── */
-.steps-col{display:flex;flex-direction:column;gap:0;padding:0 16px}
+.steps-col{display:flex;flex-direction:column;gap:0;padding:0 var(--gutter)}
 .step-row{display:flex;gap:14px;align-items:flex-start;position:relative;padding-bottom:24px}
 [dir="rtl"] .step-row{flex-direction:row-reverse}
-.step-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:42px;bottom:0;width:2px;background:linear-gradient(to bottom,rgba(37,99,235,.25),rgba(37,99,235,.04))}
+.step-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:42px;bottom:0;width:2px;background:linear-gradient(to bottom,rgba(15,117,96,.25),rgba(15,117,96,.04))}
 [dir="rtl"] .step-row:not(:last-child)::before{left:auto;right:19px}
 .step-num{width:40px;height:40px;border-radius:var(--r12);flex-shrink:0;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;box-shadow:var(--sb);z-index:1}
 .step-info{flex:1;padding-top:7px}
@@ -462,7 +522,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .step-desc{font-size:13px;color:var(--text3);line-height:1.6}
 
 /* ── INSTALL BANNER ─────────── */
-.install-banner{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1034A6,var(--blue));padding:14px 16px calc(14px + var(--safe-b));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 24px rgba(0,0,0,.2);transform:translateY(100%);transition:transform var(--t3)}
+.install-banner{position:fixed;bottom:0;left:0;right:0;background:var(--grad-brand);padding:14px 16px calc(14px + var(--safe-b));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 24px rgba(0,0,0,.2);transform:translateY(100%);transition:transform var(--t3)}
 .install-banner.show{transform:translateY(0)}
 .ib-logo{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.22)}
 .ib-text{flex:1}
@@ -497,7 +557,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .role-card:active,.role-card.sel{border-color:var(--blue);background:var(--blue-l)}
 .role-card-ico{font-size:20px;margin-bottom:4px}
 .role-card h4{font-size:12px;font-weight:700;color:var(--text)}
-.hint-box{background:var(--blue-xl,#f8faff);border:1px solid rgba(37,99,235,.15);border-radius:var(--r12);padding:10px 12px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6}
+.hint-box{background:var(--blue-xl,#f8fafc);border:1px solid rgba(15,117,96,.15);border-radius:var(--r12);padding:10px 12px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6}
 
 /* ── PAYMENT METHODS ─────────── */
 .pay-card{display:flex;align-items:center;gap:12px;padding:14px;border:2px solid var(--border);border-radius:var(--r16);cursor:pointer;transition:all var(--t1);background:#fff;margin-bottom:10px}
@@ -541,7 +601,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .toast{background:rgba(13,17,23,.9);color:#fff;padding:11px 16px;border-radius:var(--r12);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:var(--s3);animation:tin .25s var(--ease);backdrop-filter:blur(8px);pointer-events:all;width:100%}
 .toast-success{background:rgba(0,140,35,.92)}
 .toast-error{background:rgba(210,16,16,.92)}
-.toast-info{background:rgba(37,99,235,.92)}
+.toast-info{background:rgba(15,117,96,.95)}
 @keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── LOADING ─────────── */
@@ -567,6 +627,56 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   .tab-bar{transform:translateX(-50%)}
   .toast-wrap{width:calc(390px - 32px);max-width:390px}
   .modal-sheet{max-width:390px}
+}
+
+/* ===== TABIBI DESKTOP LANDING (P1) — additif ≥1024px, mobile 100% intact ===== */
+@media (min-width: 1024px) {
+  /* Shell : lève le plafond 480px (cap ≥481px défini plus haut), large centré */
+  body { background: var(--bg2); }
+  .app-root { max-width: 1200px; box-shadow: var(--s2); }
+  .app-bar { padding-left: 28px; padding-right: 28px; }
+  .page { padding-left: 24px; padding-right: 24px; }
+
+  /* HERO large, contenu centré */
+  .hero-mobile { padding: 56px 24px 60px; border-radius: 0 0 36px 36px; }
+  .hero-mobile .hz { max-width: 860px; margin: 0 auto; text-align: center; }
+  .hero-title { font-size: 42px; line-height: 1.15; margin-bottom: 10px; }
+  .hero-sub { font-size: 17px; }
+  .hero-search-wrap { max-width: 640px; margin: 22px auto 0; }
+  .hero-search { padding: 18px 18px 18px 52px; font-size: 17px; }
+  .hero-stats { max-width: 520px; margin: 22px auto 0; }
+  #auth-cta-banner { max-width: 460px; margin: 18px auto 0; }
+
+  /* Sections : whitespace + largeur de lecture */
+  .section { padding: 40px 0; }
+  .sec-hdr { padding-left: 8px; padding-right: 8px; }
+  .sec-title { font-size: 22px; }
+
+  /* Filtres : 4 contrôles en ligne (les 2 sous-grilles côte à côte) */
+  #sec-search { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: end; }
+
+  /* Spécialités : grille étalée (remplace le scroll horizontal) */
+  .spec-scroll { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; overflow: visible; padding: 4px 8px 8px; }
+  .spec-chip { min-width: 0; width: 100%; }
+
+  /* Chips filtres : wrap au lieu du scroll */
+  .chip-scroll { flex-wrap: wrap; overflow: visible; padding: 8px; }
+
+  /* Grille médecins : 2 colonnes + hover (override l'inline display:flex) */
+  #docs-list { display: grid !important; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .doc-card { transition: transform var(--t2), box-shadow var(--t2); }
+  .doc-card:hover { transform: translateY(-2px); box-shadow: var(--s3); }
+
+  /* « Comment prendre RDV » → rangée value-props 3 colonnes */
+  .steps-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .step-row { padding-bottom: 0; }
+  .step-row:not(:last-child)::before { display: none; }
+
+  /* Footer : élargit le bloc interne (480px → 1100px), centré */
+  #tabibi-footer > div { max-width: 1100px !important; }
+}
+@media (min-width: 1280px) {
+  #docs-list { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
 </head>
@@ -645,7 +755,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 
 <!-- APP BAR -->
 <header class="app-bar" role="banner">
-  <div class="logo-mark" aria-hidden="true"></div>
+  <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <div class="app-bar-body">
     <div class="app-bar-title">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span></div>
     <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
@@ -664,6 +774,8 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- HERO -->
   <section class="hero-mobile">
     <div class="hz">
+      <svg class="hero-illu" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M48 28C86 8 146 16 168 54c20 35 9 92-34 110-40 17-92 7-104-38C18 92 16 46 48 28Z" fill="var(--pastille,#e7f3ef)"/><circle cx="158" cy="44" r="20" fill="none" stroke="var(--logo-bg,#0F7560)" stroke-width="4" opacity="0.35"/><rect x="64" y="62" width="84" height="78" rx="18" fill="var(--logo-bg,#0F7560)" opacity="0.08"/><rect x="62" y="56" width="84" height="78" rx="18" fill="#fff"/><rect x="98" y="74" width="12" height="42" rx="4" fill="var(--logo-bg,#0F7560)"/><rect x="83" y="89" width="42" height="12" rx="4" fill="var(--logo-bg,#0F7560)"/><path d="M28 132h16l6-16 9 30 7-20 5 6h14" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="50" r="6" fill="var(--logo-bg,#0F7560)" opacity="0.85"/><circle cx="158" cy="120" r="7" fill="var(--logo-accent,#D4A437)"/><circle cx="150" cy="92" r="4" fill="var(--logo-bg,#0F7560)" opacity="0.5"/></svg>
+      <div class="hero-greet"><span data-i18n="greeting">Bonjour</span> <span class="hero-wave" aria-hidden="true">👋</span></div>
       <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin en Algérie</span></div>
       <h1 class="hero-title" id="hero-t">Trouvez votre médecin en ligne en Algérie</h1>
       <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Réservez en ligne 24h/24 dans les 58 wilayas. Rapide, simple, sécurisé.</p>
@@ -679,12 +791,12 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     </div>
       <!-- AUTH CTA — visible si pas connecté (script en bas le masquera si user existe) -->
       <div id="auth-cta-banner" style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
-        <a href="login.html" class="btn btn-white btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></a>
-        <a href="signup.html" class="btn btn-lg" style="flex:1;min-width:140px;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
+        <a href="login.html" class="btn btn-lg" style="flex:1;min-width:140px;background:#fff;color:var(--ink);border:1.5px solid var(--border);font-weight:700"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></a>
+        <a href="signup.html" class="btn btn-primary btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
       </div>
       <!-- [Phase 14.3] CTA médecin — visible TOUS users (anon + patient) -->
-      <a href="doctor-claim.html" style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.10);border:1.5px dashed rgba(255,255,255,.35);border-radius:var(--r12);color:#fff;text-decoration:none;font-size:13px">
-        <span><i class="fa fa-user-doctor" style="margin-right:6px"></i> <span data-i18n="cta_doctor_claim">Vous êtes médecin ? Réclamez votre fiche</span></span>
+      <a href="doctor-claim.html" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:12px 14px;background:#fff;border:1.5px dashed var(--pastille-bd);border-radius:var(--r12);color:var(--ink);text-decoration:none;font-size:13px">
+        <span><i class="fa fa-user-doctor" style="margin-right:6px;color:var(--blue)"></i> <span data-i18n="cta_doctor_claim">Vous êtes médecin ? Réclamez votre fiche</span></span>
         <i class="fa fa-arrow-right" style="opacity:.7"></i>
       </a>
     </section>
@@ -699,7 +811,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   </section>
 
   <!-- SEARCH FILTERS -->
-  <div id="sec-search" style="padding:0 16px 8px">
+  <div id="sec-search" style="padding:0 var(--gutter) 8px">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <select class="form-control" id="f-ville" onchange="doFilter()" style="font-size:13px"><option value="" id="opt-allcities">Toutes les wilayas</option></select>
       <select class="form-control" id="f-spec" onchange="doFilter()" style="font-size:13px"><option value="" id="opt-allspecs">Toutes les spécialités</option></select>
@@ -725,7 +837,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       <h2 class="sec-title" id="st-docs">Médecins référencés en Algérie</h2>
       <span id="res-count" style="font-size:12px;color:var(--text3)" aria-live="polite"></span>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px;padding:0 16px" id="docs-list"></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:0 var(--gutter)" id="docs-list"></div>
     <div style="display:flex;justify-content:center;gap:6px;padding:16px;flex-wrap:wrap" id="pag"></div>
   </section>
 
@@ -741,18 +853,21 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 
   <!-- STATS -->
   <section class="section">
-    <div style="padding:0 16px">
-      <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r20);padding:28px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins référencés</div></div>
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">58</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas</div></div>
+    <div style="padding:0 var(--gutter)">
+      <div class="brand-block" style="background:var(--grad-brand);border-radius:var(--r20);padding:24px 22px">
+        <div class="ava-pile" aria-hidden="true"><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="tbP1"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbP1)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><circle cx="50" cy="22" r="6" fill="#3a2b22"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#f1c9a5"/><circle cx="50" cy="42" r="16" fill="#f1c9a5"/><circle cx="34" cy="43" r="3.2" fill="#f1c9a5"/><circle cx="66" cy="43" r="3.2" fill="#f1c9a5"/><path d="M33 45C33 27 41 22 50 22 59 22 67 27 67 45 67 37 60 33 50 33 40 33 33 37 33 45Z" fill="#3a2b22"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 52 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="tbP2"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbP2)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#cf9b6b"/><circle cx="50" cy="42" r="16" fill="#cf9b6b"/><circle cx="34" cy="43" r="3.2" fill="#cf9b6b"/><circle cx="66" cy="43" r="3.2" fill="#cf9b6b"/><path d="M37 50C38 60 43 66 50 66 57 66 62 60 63 50 60 56 56 58 50 58 44 58 40 56 37 50Z" fill="#2a2320"/><path d="M33 44C33 28 41 24 50 24 59 24 67 28 67 44 67 36 60 32 50 32 40 32 33 36 33 44Z" fill="#2a2320"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 51 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="tbP3"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbP3)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#b9824f"/><circle cx="50" cy="42" r="16" fill="#b9824f"/><circle cx="34" cy="43" r="3.2" fill="#b9824f"/><circle cx="66" cy="43" r="3.2" fill="#b9824f"/><path d="M33 44C33 28 41 23 50 23 59 23 67 28 67 44 67 36 60 32 50 32 40 32 33 36 33 44Z" fill="#3a2b22"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 52 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg><svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><clipPath id="tbP4"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbP4)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#ddae84"/><circle cx="50" cy="42" r="16" fill="#ddae84"/><circle cx="34" cy="43" r="3.2" fill="#ddae84"/><circle cx="66" cy="43" r="3.2" fill="#ddae84"/><path d="M32 45C30 25 40 18 50 18 60 18 70 25 68 45 68 40 62 34 50 34 38 34 32 40 32 45Z" fill="var(--logo-bg,#0F7560)"/><path d="M50 18C50 14 53 12 56 13" stroke="var(--logo-bg,#0F7560)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 52 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+          <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins référencés</div></div>
+          <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">58</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas</div></div>
+        </div>
       </div>
     </div>
   </section>
 
   <!-- CTA -->
   <section class="section" style="padding-bottom:8px">
-    <div style="padding:0 16px">
-      <div style="background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--r20);padding:26px;text-align:center">
+    <div style="padding:0 var(--gutter)">
+      <div class="brand-block" style="background:var(--blue);border-radius:var(--r20);padding:26px;text-align:center">
         <div style="font-size:32px;margin-bottom:10px"><i class='fa fa-user-doctor'></i></div>
         <h2 id="cta-doc-title" style="font-size:17px;font-weight:800;color:#fff;margin-bottom:8px">Vous êtes médecin ?</h2>
         <p id="cta-doc-sub" style="font-size:13px;color:rgba(255,255,255,.82);margin-bottom:16px">Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.</p>
@@ -766,6 +881,14 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 
 <!-- BOTTOM TAB BAR -->
 <nav class="tab-bar" id="tab-bar"></nav>
+
+<!-- CARTE — overlay plein écran (Leaflet lazy-init B5) -->
+<div id="map-overlay" class="map-overlay" hidden role="dialog" aria-label="Carte des médecins en Algérie">
+  <div class="map-ov-bar">
+    <button class="map-ov-close" onclick="closeMapOverlay()" aria-label="Fermer la carte"><i class="fa fa-arrow-left"></i></button>
+  </div>
+  <div id="map-canvas"></div>
+</div>
 <div id="uarea-mob" class="hidden"></div>
 
 <script>
@@ -789,7 +912,7 @@ const TR = {
     no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",
     cert:"Certifié",urgent:"Urgences",available:"Disponible",rdv:"Prendre RDV",
     found:"médecin(s) trouvé(s)",avis_word:"avis",consult_word:"consult.",
-    nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",
+    nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",nav_map:"Carte",greeting:"Bonjour",
     login:"Connexion",signup:"Inscription",my_account:"Mon compte",logout:"Déconnexion",
     hero_badge:"Médecins en Algérie",
     hero_title:"Trouvez votre",hero_title_em:"médecin en ligne",hero_title2:"en Algérie",
@@ -818,6 +941,7 @@ const TR = {
     // [I18N-RES 2026-06-18] cartes annuaire + modale fiche + hero stat (P0 #3)
     not_rated_yet:"Pas encore noté", badge_teleconsult:"Téléconsultation", badge_chifa:"Chifa", badge_card:"Carte",
     price_tbd:"Tarif à confirmer", validation_pending:"Validation en cours", badge_urgent:"Urgences",
+    status_bookable:"Réservable", status_unclaimed:"Fiche non réclamée", see_sheet:"Voir la fiche",
     available_slots:"Créneaux disponibles", confirm_slot:"Confirmer ce créneau", about_doctor:"À propos",
     addr_label:"Adresse", langs_label:"Langues", availability_label:"Disponibilité", hours_default:"Lun – Ven • 8h – 18h",
     validation_pending_long:"Validation en cours — réservation bientôt disponible.",
@@ -861,7 +985,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     no_docs:"لا يوجد طبيب مطابق",try_other:"حاول تغيير المعايير",
     cert:"معتمد",urgent:"طوارئ",available:"متاح",rdv:"حجز موعد",
     found:"طبيب(ة) وُجد(ت)",avis_word:"تقييم",consult_word:"استشارة",
-    nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",
+    nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",nav_map:"الخريطة",greeting:"مرحبا",
     login:"دخول",signup:"تسجيل",my_account:"حسابي",logout:"خروج",
     hero_badge:"أطباء في الجزائر",
     hero_title:"ابحث عن",hero_title_em:"طبيبك",hero_title2:"في كل أنحاء الجزائر",
@@ -890,6 +1014,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     // [I18N-RES 2026-06-18] cartes annuaire + modale fiche + hero stat (P0 #3)
     not_rated_yet:"لم يُقيَّم بعد", badge_teleconsult:"استشارة عن بُعد", badge_chifa:"شيفا", badge_card:"بطاقة",
     price_tbd:"السعر قيد التأكيد", validation_pending:"قيد التحقق", badge_urgent:"حالات طارئة",
+    status_bookable:"قابل للحجز", status_unclaimed:"ملف غير مُطالَب به", see_sheet:"عرض الملف",
     available_slots:"المواعيد المتاحة", confirm_slot:"تأكيد هذا الموعد", about_doctor:"نبذة",
     addr_label:"العنوان", langs_label:"اللغات", availability_label:"التوفّر", hours_default:"الاثنين – الجمعة • 08:00 – 18:00",
     validation_pending_long:"قيد التحقق — الحجز متاح قريبًا.",
@@ -933,7 +1058,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     no_docs:"No doctors found",try_other:"Try different criteria",
     cert:"Certified",urgent:"Urgent",available:"Available",rdv:"Book",
     found:"doctor(s) found",avis_word:"reviews",consult_word:"consult.",
-    nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",
+    nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",nav_map:"Map",greeting:"Hello",
     login:"Sign in",signup:"Sign up",my_account:"My account",logout:"Log out",
     hero_badge:"Doctors across Algeria",
     hero_title:"Find your",hero_title_em:"doctor",hero_title2:"across Algeria",
@@ -962,6 +1087,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     // [I18N-RES 2026-06-18] annuaire cards + profile modal + hero stat (P0 #3)
     not_rated_yet:"Not rated yet", badge_teleconsult:"Teleconsultation", badge_chifa:"Chifa", badge_card:"Card",
     price_tbd:"Price to confirm", validation_pending:"Validation pending", badge_urgent:"Emergencies",
+    status_bookable:"Bookable", status_unclaimed:"Unclaimed profile", see_sheet:"View profile",
     available_slots:"Available slots", confirm_slot:"Confirm this slot", about_doctor:"About",
     addr_label:"Address", langs_label:"Languages", availability_label:"Availability", hours_default:"Mon – Fri • 8am – 6pm",
     validation_pending_long:"Validation in progress — booking available soon.",
@@ -1220,7 +1346,7 @@ function renderUserUI() {
   }
   const rc={patient:T("patient_role"),medecin:T("medecin_role"),admin:T("admin_role")};
   const r=(user.role||"").toLowerCase(),lbl=rc[r]||(r?r:"");
-  const bg=user.avatar?.bg||"#dcfce7",tc=user.avatar?.tc||"#0a4d3e";
+  const bg=user.avatar?.bg||"#e7f3ef",tc=user.avatar?.tc||"#0a4d3e";
   const pill=`
     <div onclick="goDash()" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:var(--rfull);border:1.5px solid var(--border);cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${user.initials}</div>
@@ -1388,6 +1514,7 @@ function initTabBar(active){
   const items=[
     {id:"home",  icon:"fa-home",          i18n:"nav_home",  href:"index.html"},
     {id:"search",icon:"fa-search",         i18n:"nav_docs",  href:"index.html#search"},
+    {id:"carte", icon:"fa-map-location-dot",i18n:"nav_map",  href:"#carte"},
     {id:"rdv",   icon:"fa-calendar-check", i18n:"nav_rdv",   href:"#"},
     {id:"spec",  icon:"fa-stethoscope",    i18n:"nav_spec",  href:"index.html#spec"},
     {id:"profile",icon:"fa-user",          i18n:"nav_profile",href:"#"},
@@ -1399,9 +1526,23 @@ function initTabBar(active){
     </button>`).join("");
 }
 function tabClick(id,href){
+  if(id==="carte"){openMapOverlay();return;}
   if(id==="profile"){if(!isLogged()){openModal("login");return;}goDash();return;}
   if(id==="rdv"){if(!isLogged()){openModal("login");return;}goDash();return;}
   if(href&&href!=="#") window.location.href=href;
+}
+// [Carte] Overlay plein écran — lazy-init Leaflet au 1er tap (logique carte : B5).
+function openMapOverlay(){
+  const ov=document.getElementById("map-overlay");
+  if(!ov) return;
+  ov.hidden=false;
+  document.body.style.overflow="hidden";
+  // B5 : if(!window._mapInited){ injecter Leaflet puis initMap(); }
+}
+function closeMapOverlay(){
+  const ov=document.getElementById("map-overlay");
+  if(ov) ov.hidden=true;
+  document.body.style.overflow="";
 }
 
 /* ══ INSTALL PWA ══════════════════════════════════════════════ */
@@ -1674,15 +1815,23 @@ function buildPagination(cur, total){
 }
 
 
+// Avatar neutre (soignant générique) — placeholder décoratif si AUCUNE initiale calculable.
+const AVATAR_NEUTRAL = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><clipPath id="tbAvN5"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbAvN5)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#ddae84"/><circle cx="50" cy="42" r="16" fill="#ddae84"/><circle cx="34" cy="43" r="3.2" fill="#ddae84"/><circle cx="66" cy="43" r="3.2" fill="#ddae84"/><path d="M32 45C30 25 40 18 50 18 60 18 70 25 68 45 68 40 62 34 50 34 38 34 32 40 32 45Z" fill="var(--logo-bg,#0F7560)"/><path d="M50 18C50 14 53 12 56 13" stroke="var(--logo-bg,#0F7560)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 52 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg>`;
 function docCard(d){
   const n=dname(d),s=dspec(d),c=dcity(d),fav=isFav(d.id);
   const dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(n)) ? 'rtl' : 'ltr';
   const rk  = (dir==='rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
-  // [Phase 13] Avatar : photo_url si dispo (vide en M0, sera rempli au claim médecin),
-  // sinon initiales sur fond coloré (existant).
-  const avaHtml = d.photoUrl
-    ? `<img src="${d.photoUrl}" alt="" class="doc-ava" style="object-fit:cover;width:48px;height:48px;border-radius:var(--r12)" loading="lazy" onerror="this.outerHTML='<div class=\\'doc-ava\\' style=\\'background:${d.bg};color:${d.tc}\\'>${d.in}</div>'">`
-    : `<div class="doc-ava" style="background:${d.bg};color:${d.tc}">${d.in}</div>`;
+  // Avatar = MONOGRAMME (initiales) sur pastille verte pâle — données réelles only, pas de photo.
+  const avaHtml = (d.in && String(d.in).trim())
+    ? `<div class="doc-ava">${d.in}</div>`
+    : `<div class="doc-ava is-svg">${AVATAR_NEUTRAL}</div>`;
+  // Statut réel : Réservable (claimed+approved) / En validation (claimed, pending) / Fiche non réclamée.
+  const reservable = d.claimed && d.validationStatus === 'approved';
+  const statusBadge = reservable
+    ? `<span class="doc-status doc-status-on"><i class='fa fa-circle-check fa-xs'></i>${T("status_bookable")}</span>`
+    : (d.claimed
+        ? `<span class="doc-status doc-status-pending"><i class='fa fa-clock fa-xs'></i>${T("validation_pending")}</span>`
+        : `<span class="doc-status doc-status-off"><i class='fa fa-circle-info fa-xs'></i>${T("status_unclaimed")}</span>`);
   return `<article class="doc-card fu" onclick="goDoc('${d.id}')" tabindex="0" onkeydown="if(event.key==='Enter')goDoc('${d.id}')">
     <button class="fav-btn${fav?" is-fav":""}" data-fid="${d.id}" onclick="event.stopPropagation();toggleFav('${d.id}',this)" aria-label="Favori">
       <i class="${fav?"fa":"far"} fa-heart"></i>
@@ -1695,26 +1844,16 @@ function docCard(d){
         <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${c}</div>
       </div>
     </div>
-    <div class="doc-stars">
-      ${d.note != null
-        ? `<span class="sf">${stars(d.note)}</span><span class="rn">${d.note}</span><span class="rc">(${d.avis} ${T("avis_word")})</span>`
-        : `<span class="rc" style="color:var(--text3)">${T("not_rated_yet")}</span>`}
-    </div>
     <div class="doc-tags">
-      ${d.cert?`<span class="badge badge-green"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
+      ${statusBadge}
       ${d.telehealth?`<span class="badge badge-blue"><i class='fa fa-video fa-xs'></i>${T("badge_teleconsult")}</span>`:""}
-      ${d.acceptsChifa?`<span class="badge" style="background:#dcfce7;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>${T("badge_chifa")}</span>`:""}
-      ${d.acceptsCard?`<span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class='fa fa-credit-card fa-xs'></i>${T("badge_card")}</span>`:""}
-      ${d.acceptsCash?`<span class="badge" style="background:#fef3c7;color:#92400e"><i class='fa fa-money-bill-wave fa-xs'></i>${T("pay_cash")}</span>`:""}
-      ${d.claimed===false?`<a href="doctor-claim.html" onclick="event.stopPropagation()" class="badge" style="background:#fef3c7;color:#92400e;text-decoration:none;border:1px dashed #f59e0b" title="${T("claim_hint_title")}"><i class='fa fa-circle-info fa-xs'></i>${T("badge_unclaimed")}</a>`:""}
+      ${d.acceptsChifa?`<span class="badge" style="background:#e7f3ef;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>${T("badge_chifa")}</span>`:""}
     </div>
     <div class="doc-footer">
       <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">${T("price_tbd")}</span>`}</div>
-      ${(d.claimed && d.validationStatus === 'approved')
+      ${reservable
         ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')"><i class='fa fa-calendar-plus'></i>${T("rdv")}</button>`
-        : (d.claimed
-          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> ${T("validation_pending")}</span>`
-          : '')
+        : `<button class="btn btn-sm doc-btn-ghost" onclick="event.stopPropagation();goDoc('${d.id}')"><i class='fa fa-arrow-right'></i>${T("see_sheet")}</button>`
       }
     </div>
   </article>`;
@@ -1746,7 +1885,7 @@ function showDoctorModal(d){
     <div class="modal-sheet" style="max-height:95dvh">
       <div class="modal-handle"></div>
       <div style="position:relative">
-        <div style="background:linear-gradient(155deg,#1034A6,var(--blue),#1479D8);padding:20px 20px 50px;margin-bottom:-36px;position:relative">
+        <div style="background:var(--grad-brand);padding:20px 20px 50px;margin-bottom:-36px;position:relative">
           <div style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#fff;border:none" onclick="this.closest('.modal-bg').remove();document.body.style.overflow=''">×</div>
           <div style="width:64px;height:64px;border-radius:16px;background:${d.bg};color:${d.tc};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;border:3px solid rgba(255,255,255,.3);margin-bottom:10px">${d.in}</div>
           <div style="font-size:18px;font-weight:800;color:#fff">${n}</div>
@@ -2046,7 +2185,7 @@ function showPatientDashboardModal(){
       <div class="modal-body" style="padding-bottom:24px">
         <!-- User info -->
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:var(--r12);margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:50%;background:${user?.avatar?.bg||"#dcfce7"};color:${user?.avatar?.tc||"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
+          <div style="width:46px;height:46px;border-radius:50%;background:${user?.avatar?.bg||"#e7f3ef"};color:${user?.avatar?.tc||"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
           <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${user?.email||""}</div></div>
         </div>
         <!-- Stats -->
@@ -2677,7 +2816,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 <!-- ═══════════════════════════════════════════════════════════════
        CTA Waiting List patient — pré-lancement
        ═══════════════════════════════════════════════════════════════ -->
-<section style="padding:20px 16px;margin-top:20px">
+<section style="padding:20px var(--gutter);margin-top:20px">
   <a href="waiting-list.html" style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#0F7560,#0a4d3e);border-radius:18px;padding:18px 20px;color:#fff;text-decoration:none;box-shadow:0 8px 24px rgba(15,117,96,.25);position:relative;overflow:hidden;max-width:480px;margin:0 auto">
     <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚀</div>
     <div style="flex:1;min-width:0;position:relative;z-index:1">
@@ -2690,7 +2829,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 </section>
 
 
-<footer id="tabibi-footer" style="background:linear-gradient(180deg,#f8faff 0%,#eff6ff 100%);color:#0f172a;padding:32px 16px 18px;margin-top:40px;border-top:1px solid #dcfce7">
+<footer id="tabibi-footer" style="background:#f8fafc;color:#0f172a;padding:32px var(--gutter) 18px;margin-top:40px;border-top:1px solid #e7f3ef">
   <div style="max-width:480px;margin:0 auto">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0F7560,#0F7560);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">T</div>
@@ -2733,7 +2872,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       </div>
     </div>
 
-    <div style="background:#fff;border:1px solid #dcfce7;border-radius:12px;padding:14px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <div style="background:#fff;border:1px solid #e7f3ef;border-radius:12px;padding:14px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
       <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#0f172a"><i class='fa fa-headset' style='color:#2E8B57'></i> <span data-i18n="foot_support_24">Support 7j/7 — 8h à 22h</span></div>
       <a href="mailto:contact@tabibi.doctor" style="display:block;font-size:13px;color:#0F7560;padding:4px 0;text-decoration:none;font-weight:600"><i class='fa fa-envelope fa-xs'></i> contact@tabibi.doctor</a>
       <div id="foot-response" style="font-size:11px;color:#64748b;margin-top:4px"><i class='fa fa-clock fa-xs'></i> Réponse sous 24h ouvrées</div>
@@ -2746,7 +2885,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <a href="#" class="social-disabled" title="Bientôt disponible" aria-label="LinkedIn (bientôt disponible)" style="width:38px;height:38px;border-radius:50%;background:#0A66C2;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none"><i class='fab fa-linkedin-in'></i></a>
     </div>
 
-    <div style="border-top:1px solid #dcfce7;padding-top:14px;text-align:center;font-size:11px;color:#64748b">
+    <div style="border-top:1px solid #e7f3ef;padding-top:14px;text-align:center;font-size:11px;color:#64748b">
       © 2025 Tabibi DZ — Tous droits réservés · Algérie 🇩🇿<br>
       <span>Données de santé hébergées en Algérie · Conforme RGPD</span>
     </div>

@@ -5,19 +5,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --blue:#0F7560; --blue-d:#0a4d3e; --blue-l:#eff6ff; --blue-xl:#f8faff;
-  --green:#2E8B57; --green-d:#007a22; --green-l:#f0fdf4;
-  --red:#D21010; --red-l:#fff0f0;
+  /* CANON v4 — aligné identique à tokens-v2.css (source unique partagée) */
+  --blue:#0F7560; --blue-d:#0a4d3e; --blue-l:#e7f3ef; --blue-xl:#f8fafc;
+  --green:#2E8B57; --green-d:#0F7560; --green-l:#f0fdf4;
+  --red:#D21010; --red-d:#991b1b; --red-l:#fff0f0;
   --amber:#F59E0B; --amber-l:#fffbeb;
-  --white:#fff; --bg:#F3F5FA; --bg2:#E8ECF4;
-  --border:#E0E4EF; --text:#0D1117; --text2:#374151; --text3:#6B7280; --text4:#A0A8BB;
-  --s1:0 1px 4px rgba(0,0,0,.06); --s2:0 4px 14px rgba(0,0,0,.09);
-  --s3:0 8px 28px rgba(0,0,0,.12); --s4:0 16px 48px rgba(0,0,0,.16);
-  --sb:0 4px 18px rgba(37,99,235,.28); --sg:0 4px 18px rgba(0,158,45,.28);
-  --nav-h:56px; --tab-h:60px;
+  --white:#fff; --bg:#f8fafc; --bg2:#f1f5f9;
+  --border:#e2e8f0; --text:#0f172a; --text2:#475569; --text3:#64748b; --text4:#94a3b8;
+  --ink:#0F2A24; --pastille:#e7f3ef; --pastille-bd:#d4e9e1;
+  --s1:0 1px 3px rgba(0,0,0,.04); --s2:0 4px 12px rgba(0,0,0,.06);
+  --s3:0 12px 36px rgba(0,0,0,.08); --s4:0 24px 64px rgba(0,0,0,.12);
+  --sb:0 4px 14px rgba(15,117,96,.24); --sg:0 4px 14px rgba(15,117,96,.24);
+  --nav-h:56px; --tab-h:64px;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
   --r8:8px; --r12:12px; --r16:16px; --r20:20px; --r24:24px; --rfull:999px;
-  --ease:cubic-bezier(.4,0,.2,1); --t1:.12s; --t2:.2s; --t3:.32s;
+  --ease:cubic-bezier(.4,0,.2,1); --t1:.15s; --t2:.2s; --t3:.3s;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-16:16px; --fs-18:18px; --fs-22:22px; --fs-28:28px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;scroll-behavior:smooth;height:100%}
@@ -32,6 +35,9 @@ ul{list-style:none}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 .hidden{display:none!important}
 .container{max-width:480px;margin:0 auto;padding:0 16px}
+/* Titres partagés (homogénéité inter-écrans) */
+.h-page{font-size:var(--fs-22);font-weight:800;color:var(--text);line-height:1.2;margin:0 0 8px;letter-spacing:-.2px}
+.h-sec{font-size:var(--fs-18);font-weight:700;color:var(--text);line-height:1.3;margin:0 0 6px}
 
 /* ── A11Y QUICK WINS (WCAG 2.4.7 Focus Visible, 2.4.1 Bypass Blocks) ─────────── */
 /* Focus visible — outline contrast WCAG AA on all interactive */
@@ -121,7 +127,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .check-row input{accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer}
 
 /* ── SPLASH ─────────── */
-.splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#1034A6 0%,var(--blue) 52%,#1479D8 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:var(--safe-t);transition:opacity .4s ease}
+.splash{position:fixed;inset:0;z-index:9999;background:var(--grad-brand);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:var(--safe-t);transition:opacity .4s ease}
 .splash.hide{opacity:0;pointer-events:none}
 .splash-ring{width:96px;height:96px;border-radius:26px;margin-bottom:22px;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 40px rgba(0,0,0,.2)}
 .splash-cross{position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center}
@@ -187,7 +193,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .fav-btn:active,.fav-btn.is-fav{color:var(--red);border-color:var(--red)}
 
 /* ── HERO MOBILE ─────────── */
-.hero-mobile{background:linear-gradient(155deg,#1034A6 0%,var(--blue) 52%,#1479D8 100%);padding:24px 16px 36px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
+.hero-mobile{background:var(--grad-brand);padding:24px 16px 36px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
 .hero-mobile::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(255,255,255,.07) 0%,transparent 45%),radial-gradient(circle at 10% 80%,rgba(255,255,255,.05) 0%,transparent 40%);pointer-events:none}
 .hz{position:relative;z-index:1}
 .hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;padding:4px 12px;border-radius:var(--rfull);font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:.3px}
@@ -259,7 +265,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 [dir="rtl"] .rdv-side{align-items:flex-start}
 
 /* ── PROFILE HERO ─────────── */
-.profile-hero{background:linear-gradient(155deg,#1034A6 0%,var(--blue) 55%,#1479D8 100%);padding:24px 16px 52px;position:relative;margin-bottom:-36px}
+.profile-hero{background:var(--grad-brand);padding:24px 16px 52px;position:relative;margin-bottom:-36px}
 .profile-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg);clip-path:ellipse(60% 100% at 50% 100%)}
 .profile-ava-big{width:72px;height:72px;border-radius:var(--r20);border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px}
 .profile-name-big{font-size:20px;font-weight:800;color:#fff;margin-bottom:3px}
@@ -283,7 +289,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .step-desc{font-size:13px;color:var(--text3);line-height:1.6}
 
 /* ── INSTALL BANNER ─────────── */
-.install-banner{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1034A6,var(--blue));padding:14px 16px calc(14px + var(--safe-b));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 24px rgba(0,0,0,.2);transform:translateY(100%);transition:transform var(--t3)}
+.install-banner{position:fixed;bottom:0;left:0;right:0;background:var(--grad-brand);padding:14px 16px calc(14px + var(--safe-b));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 24px rgba(0,0,0,.2);transform:translateY(100%);transition:transform var(--t3)}
 .install-banner.show{transform:translateY(0)}
 .ib-logo{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.22)}
 .ib-text{flex:1}
@@ -395,4 +401,18 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   .tab-bar{transform:translateX(-50%)}
   .toast-wrap{max-width:460px}
   .modal-sheet{max-width:480px}
+}
+
+/* ===== TABIBI DESKTOP RESPONSIVE — additif, min-width only (mobile intact) ===== */
+@media (min-width: 1024px) {
+  body { background: var(--bg2); }
+  .app-root { max-width: 960px; box-shadow: var(--s2); }
+  .app-bar { padding-left: 28px; padding-right: 28px; }
+  .page { padding-left: 14px; padding-right: 14px; }
+  .tab-bar, .install-banner { max-width: 960px; }
+}
+@media (min-width: 1440px) {
+  .app-root,
+  .tab-bar,
+  .install-banner { max-width: 1100px; }
 }

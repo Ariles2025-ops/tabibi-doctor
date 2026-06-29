@@ -91,7 +91,7 @@
      3. NEUTRES, TEXTE, FONDS
      ────────────────────────────────────────────────────────────── */
 
-  --text:    #1A1A1A;   /* titres, texte principal */
+  --text:    #0f172a;   /* texte principal (canon) — titres héro de marque = --ink */
   --text2:   #475569;   /* texte courant */
   --text3:   #64748b;   /* métadonnées */
   --text4:   #94a3b8;   /* placeholders, désactivé */
@@ -126,6 +126,11 @@
   --fs-caption: 13px;
   --fs-small:   12px;
   --fs-micro:   11px;
+
+  /* Échelle typo CANON (8 paliers — 11·12·13·14·16·18·22·28) */
+  --fs-11: 11px; --fs-12: 12px; --fs-13: 13px; --fs-14: 14px;
+  --fs-16: 16px; --fs-18: 18px; --fs-22: 22px; --fs-28: 28px;
+  --gutter: 20px;
 
   --fw-regular:  400;
   --fw-medium:   500;
@@ -173,6 +178,24 @@
   --s2: 0 4px 12px rgba(0, 0, 0, 0.06);
   --s3: 0 12px 36px rgba(0, 0, 0, 0.08);
   --s4: 0 24px 64px rgba(0, 0, 0, 0.12);
+
+  /* Dégradé de marque (surfaces héro/splash/banner) */
+  --grad-brand: linear-gradient(155deg, #0F7560 0%, #0a4d3e 100%);
+
+  /* Tabibi 2027 — verre héro + élévation recherche + logo themeable */
+  --hero-glass:   rgba(255, 255, 255, 0.10);
+  --hero-glass-2: rgba(255, 255, 255, 0.16);
+  --hero-bd:      rgba(255, 255, 255, 0.18);
+  --logo-bg:     #0F7560;
+  --logo-accent: #D4A437;
+
+  /* Tabibi 2027 — version CLAIRE (fond blanc, vert en accent) */
+  --ink:          #0F2A24;   /* encre titres */
+  --pastille:     #e7f3ef;   /* pastille verte pâle (icônes, badge) */
+  --pastille-bd:  #d4e9e1;
+  --shadow-card:   0 2px 8px rgba(16, 40, 34, 0.06), 0 20px 40px rgba(16, 40, 34, 0.10);
+  --shadow-search: 0 8px 24px rgba(16, 40, 34, 0.10), 0 2px 6px rgba(16, 40, 34, 0.05);
+  --grad-hero:     linear-gradient(180deg, #f0f7f4 0%, #f8fafc 100%);
 
   /* Ombres colorées brand */
   --shadow-primary: 0 4px 14px rgba(15, 117, 96, 0.24);
@@ -250,7 +273,7 @@
 
   --blue:    var(--color-primary);       /* ex bleu → vert */
   --blue-d:  var(--color-primary-hover);
-  --blue-l:  var(--color-primary-light);
+  --blue-l:  #e7f3ef;                     /* canon : pale vert UNIQUE (= --pastille) */
   --blue-xl: var(--color-primary-50);
 
   --green:   var(--brand-green-500);
