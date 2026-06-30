@@ -19,6 +19,27 @@
    #tabibi-lang-switcher (position:fixed) → on le masque pour ne garder QUE celui du header. */
 #tabibi-lang-switcher { display: none !important; }
 
+/* Flèche retour vers l'accueil dans le header (le header style-accueil n'en a pas). */
+.app-bar-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -8px;
+  margin-right: -2px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: var(--text2);
+  text-decoration: none;
+  transition: color .15s, background .15s;
+}
+.app-bar-back:hover,
+.app-bar-back:focus-visible { color: var(--blue); background: var(--bg2); }
+.app-bar-back i { font-size: 16px; }
+[dir="rtl"] .app-bar-back { margin-left: -2px; margin-right: -8px; }
+[dir="rtl"] .app-bar-back i { transform: scaleX(-1); }   /* la flèche pointe vers l'accueil en RTL */
+
 /* Conteneur pleine largeur (override de la base auth.css 480) */
 .app-root {
   max-width: none;
@@ -77,3 +98,10 @@
   .auth-hero-form  { max-width: 440px; margin: 0; }
   .auth-formhead   { display: none; }                          /* logo/titre du form en doublon de l'aside */
 }
+
+/* ── RTL (arabe) — héro ───────────────────────────────────────────
+   La grille .auth-hero-grid s'inverse SEULE (welcome à droite, form
+   à gauche) — on ne force rien. On corrige juste les alignements. */
+[dir="rtl"] .auth-hero-aside     { text-align: right; }
+[dir="rtl"] .auth-hero-points    { padding-right: 0; }
+[dir="rtl"] .auth-hero-points li { justify-content: flex-start; }   /* icône (1er enfant) à droite, texte ensuite */

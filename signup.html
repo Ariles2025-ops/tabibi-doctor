@@ -49,6 +49,13 @@
   [dir="rtl"] .ii-r { right: auto; left: 14px; }
   [dir="rtl"] .input-wrap .form-control { padding-left: 14px !important; padding-right: 42px !important; }
   [dir="rtl"] select.form-control { background-position: left 14px center; }
+  /* Centre le 3e bouton de rôle (dernier impair) sous les deux premiers, même largeur qu'eux.
+     justify-self:center est insensible à la direction → reste centré en RTL. */
+  [role="radiogroup"] > .role-btn:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+    justify-self: center;
+    width: calc(50% - 4px);   /* = largeur d'une colonne (gap 8px ÷ 2) */
+  }
 </style>
 </head>
 <body>
@@ -56,10 +63,11 @@
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <header class="app-bar" role="banner">
+  <a href="index.html" class="app-bar-back" aria-label="Retour à l'accueil"><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
   <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <div class="app-bar-body">
     <div class="app-bar-title">Tabibi <span style="color:var(--green)"><span style="font-weight:800;letter-spacing:-.5px"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
-    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
+    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif" data-i18n="auth_header_sub">طبيبي · Médecins Algérie</div>
   </div>
   <div style="display:flex;gap:2px;background:var(--bg2);border-radius:var(--rfull);padding:2px;flex-shrink:0" role="group" aria-label="Langue">
     <button type="button" data-lang-btn="fr" onclick="window.tabibiLang&&window.tabibiLang.set('fr')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff">FR</button>
@@ -71,12 +79,12 @@
   <section class="auth-hero">
   <div class="auth-hero-grid">
   <aside class="auth-hero-aside">
-    <h1 class="auth-hero-title">Créez votre <em>compte gratuit</em></h1>
-    <p class="auth-hero-sub">Rejoignez Tabibi en quelques secondes — patients, médecins et secrétariats, partout en Algérie.</p>
+    <h1 class="auth-hero-title" data-i18n-html="auth_signup_title">Créez votre <em>compte gratuit</em></h1>
+    <p class="auth-hero-sub" data-i18n="auth_signup_sub">Rejoignez Tabibi en quelques secondes — patients, médecins et secrétariats, partout en Algérie.</p>
     <ul class="auth-hero-points">
-      <li><i class="fa fa-circle-check"></i> 100% gratuit, sans engagement</li>
-      <li><i class="fa fa-user-doctor"></i> Compte patient, médecin ou secrétariat</li>
-      <li><i class="fa fa-lock"></i> Vos données protégées (loi 18-07)</li>
+      <li><i class="fa fa-circle-check"></i> <span data-i18n="auth_signup_p1">100% gratuit, sans engagement</span></li>
+      <li><i class="fa fa-user-doctor"></i> <span data-i18n="auth_signup_p2">Compte patient, médecin ou secrétariat</span></li>
+      <li><i class="fa fa-lock"></i> <span data-i18n="auth_signup_p3">Vos données protégées (loi 18-07)</span></li>
     </ul>
   </aside>
   <div class="auth-hero-form">

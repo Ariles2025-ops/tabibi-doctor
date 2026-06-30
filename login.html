@@ -46,10 +46,11 @@
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <header class="app-bar" role="banner">
+  <a href="index.html" class="app-bar-back" aria-label="Retour à l'accueil"><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
   <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <div class="app-bar-body">
     <div class="app-bar-title">Tabibi <span style="color:var(--green)"><span style="font-weight:800;letter-spacing:-.5px"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
-    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
+    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif" data-i18n="auth_header_sub">طبيبي · Médecins Algérie</div>
   </div>
   <div style="display:flex;gap:2px;background:var(--bg2);border-radius:var(--rfull);padding:2px;flex-shrink:0" role="group" aria-label="Langue">
     <button type="button" data-lang-btn="fr" onclick="window.tabibiLang&&window.tabibiLang.set('fr')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff">FR</button>
@@ -61,12 +62,12 @@
   <section class="auth-hero">
   <div class="auth-hero-grid">
   <aside class="auth-hero-aside">
-    <h1 class="auth-hero-title">Connexion à <em>votre espace santé</em></h1>
-    <p class="auth-hero-sub">Gérez vos rendez-vous médicaux partout en Algérie — 58 wilayas, 24h/24.</p>
+    <h1 class="auth-hero-title" data-i18n-html="auth_login_title">Connexion à <em>votre espace santé</em></h1>
+    <p class="auth-hero-sub" data-i18n="auth_login_sub">Gérez vos rendez-vous médicaux partout en Algérie — 58 wilayas, 24h/24.</p>
     <ul class="auth-hero-points">
-      <li><i class="fa fa-user-check"></i> Patients, médecins et secrétariats</li>
-      <li><i class="fa fa-shield-heart"></i> Gratuit pour les patients</li>
-      <li><i class="fa fa-clock"></i> Prise de rendez-vous en ligne, 24h/24</li>
+      <li><i class="fa fa-user-check"></i> <span data-i18n="auth_login_p1">Patients, médecins et secrétariats</span></li>
+      <li><i class="fa fa-shield-heart"></i> <span data-i18n="auth_login_p2">Gratuit pour les patients</span></li>
+      <li><i class="fa fa-clock"></i> <span data-i18n="auth_login_p3">Prise de rendez-vous en ligne, 24h/24</span></li>
     </ul>
   </aside>
   <div class="auth-hero-form">
@@ -80,20 +81,20 @@
     <!-- ── ÉCRAN 1 : CONNEXION (numéro + mot de passe, ZÉRO SMS) ── -->
     <div id="screen-phone">
       <form id="pwLoginForm" onsubmit="doPhoneLogin(event)">
-        <div class="form-group"><label class="form-label" for="lp-phone">Numéro de téléphone</label>
+        <div class="form-group"><label class="form-label" for="lp-phone" data-i18n="phone_number">Numéro de téléphone</label>
           <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
             <input class="form-control" id="lp-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px">Indicatif Algérie <strong>+213</strong> ajouté automatiquement.</div>
         </div>
-        <div class="form-group"><label class="form-label" for="lp-pass">Mot de passe</label>
+        <div class="form-group"><label class="form-label" for="lp-pass" data-i18n="password">Mot de passe</label>
           <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
             <input class="form-control" id="lp-pass" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
             <button type="button" class="ii-r" onclick="togglePw('lp-pass',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
           <div style="text-align:right;margin-top:6px">
-            <a href="#" onclick="showReset(event)" style="font-size:12px;color:var(--blue);font-weight:600">Mot de passe oublié ?</a>
+            <a href="#" onclick="showReset(event)" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
           </div>
         </div>
-        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> <span data-i18n="sign_in">Se connecter</span></button>
       </form>
     </div>
 
@@ -101,7 +102,7 @@
     <div id="screen-reset" class="hidden">
       <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Entrez votre numéro : vous recevrez un code par SMS pour définir un nouveau mot de passe.</p>
       <form id="resetPhoneForm" onsubmit="resetSendOtp(event)">
-        <div class="form-group"><label class="form-label" for="rs-phone">Numéro de téléphone</label>
+        <div class="form-group"><label class="form-label" for="rs-phone" data-i18n="phone_number">Numéro de téléphone</label>
           <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
             <input class="form-control" id="rs-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
         </div>
@@ -113,7 +114,7 @@
     <!-- ── RESET 2/3 : code OTP ── -->
     <div id="screen-reset-otp" class="hidden">
       <form id="resetOtpForm" onsubmit="resetVerifyOtp(event)">
-        <div class="form-group"><label class="form-label" for="rs-code">Code reçu par SMS</label>
+        <div class="form-group"><label class="form-label" for="rs-code" data-i18n="sms_code">Code reçu par SMS</label>
           <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
             <input class="form-control" id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
           <div id="rs-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
@@ -129,7 +130,7 @@
     <!-- ── RESET 3/3 : nouveau mot de passe ── -->
     <div id="screen-reset-newpw" class="hidden">
       <form id="resetNewPwForm" onsubmit="resetSetPassword(event)">
-        <div class="form-group"><label class="form-label" for="rs-newpw">Nouveau mot de passe</label>
+        <div class="form-group"><label class="form-label" for="rs-newpw" data-i18n="new_password_label">Nouveau mot de passe</label>
           <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
             <input class="form-control" id="rs-newpw" type="password" required minlength="6" style="padding-left:42px" placeholder="6 caractères minimum" autocomplete="new-password">
             <button type="button" class="ii-r" onclick="togglePw('rs-newpw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
