@@ -38,6 +38,7 @@
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <link rel="stylesheet" href="styles/auth.css">
+<link rel="stylesheet" href="styles/auth-page.css">
 <style>
   /* ── RTL (mode arabe) — pilote i18n P0 #3 ─────────────────────────────────
      Les rangées flex (rôles, consentements checkbox+texte) s'inversent
@@ -54,12 +55,32 @@
 <a class="skip-link" href="#main">Aller au contenu</a>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
-<header class="app-bar">
-  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='login.html'" aria-label="Retour à la connexion"><i class="fa fa-arrow-left"></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Inscription</div><div class="app-bar-sub">Créez votre compte</div></div>
+<header class="app-bar" role="banner">
+  <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="app-bar-body">
+    <div class="app-bar-title">Tabibi <span style="color:var(--green)"><span style="font-weight:800;letter-spacing:-.5px"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
+    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
+  </div>
+  <div style="display:flex;gap:2px;background:var(--bg2);border-radius:var(--rfull);padding:2px;flex-shrink:0" role="group" aria-label="Langue">
+    <button type="button" data-lang-btn="fr" onclick="window.tabibiLang&&window.tabibiLang.set('fr')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff">FR</button>
+    <button type="button" data-lang-btn="ar" onclick="window.tabibiLang&&window.tabibiLang.set('ar')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:var(--text3)">AR</button>
+    <button type="button" data-lang-btn="en" onclick="window.tabibiLang&&window.tabibiLang.set('en')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:var(--text3)">EN</button>
+  </div>
 </header>
-<main id="main" class="page" style="padding:20px 16px 40px" role="main">
-  <div style="text-align:center;margin-bottom:20px">
+<main id="main" class="page" style="padding:0" role="main">
+  <section class="auth-hero">
+  <div class="auth-hero-grid">
+  <aside class="auth-hero-aside">
+    <h1 class="auth-hero-title">Créez votre <em>compte gratuit</em></h1>
+    <p class="auth-hero-sub">Rejoignez Tabibi en quelques secondes — patients, médecins et secrétariats, partout en Algérie.</p>
+    <ul class="auth-hero-points">
+      <li><i class="fa fa-circle-check"></i> 100% gratuit, sans engagement</li>
+      <li><i class="fa fa-user-doctor"></i> Compte patient, médecin ou secrétariat</li>
+      <li><i class="fa fa-lock"></i> Vos données protégées (loi 18-07)</li>
+    </ul>
+  </aside>
+  <div class="auth-hero-form">
+  <div class="auth-formhead" style="text-align:center;margin-bottom:20px">
     <svg class="logo-svg" width="52" height="52" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="display:block;margin:0 auto 12px"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h2 style="font-size:22px;font-weight:800" data-i18n="join_tabibi">Rejoindre Tabibi</h2>
   </div>
@@ -165,6 +186,9 @@
       <span data-i18n="already_registered">Déjà inscrit ?</span> <a href="login.html" style="color:var(--blue);font-weight:700" data-i18n="sign_in">Se connecter</a>
     </div>
   </div>
+      </div><!-- /auth-hero-form -->
+    </div><!-- /auth-hero-grid -->
+  </section>
 </main>
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <script>
