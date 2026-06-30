@@ -9,7 +9,7 @@
 <meta name="description" content="Espace médecin privé Tabibi.">
 <link rel="canonical" href="https://tabibi.doctor/doctor-dashboard.html">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#10b981">
+<meta name="theme-color" content="#2E8B57">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_dashboard">
 <title>Espace médecin | Tabibi</title>
@@ -52,7 +52,7 @@
     <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:none;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite"></span>
   </button>
   <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#2E8B57,#166534);color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(46,139,87,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">DR</span></button>
-  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
+  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fff0f0;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fff0f0';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
 </header>
 
 <div class="dropdown-menu hidden" id="notif-drop" style="position:absolute;top:54px;right:54px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:300px;z-index:300">
@@ -60,7 +60,7 @@
   <div id="med-notif-list" style="max-height:300px;overflow-y:auto"></div>
 </div>
 <div class="dropdown-menu hidden" id="user-drop" style="position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:240px;z-index:300;overflow:hidden">
-  <div style="padding:14px;background:linear-gradient(135deg,#d1fae5,#a7f3d0)"><div style="font-weight:700;font-size:13px" id="menu-name">--</div><div style="font-size:11px;color:var(--text3)" id="menu-spec">--</div></div>
+  <div style="padding:14px;background:linear-gradient(135deg,#f0fdf4,#a7f3d0)"><div style="font-weight:700;font-size:13px" id="menu-name">--</div><div style="font-size:11px;color:var(--text3)" id="menu-spec">--</div></div>
   <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-user" style="color:var(--green);width:20px"></i> Mon profil</a>
   <a href="doctor-reservation.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-calendar-week" style="color:var(--blue);width:20px"></i> Mes disponibilités</a>
   <!-- [FIX-AUDIT-2026-05] #2 : guillemets internes simples pour ne pas casser l'attribut onclick -->
@@ -81,7 +81,7 @@
 
   <!-- ═════ AUJOURD'HUI ═════ -->
   <div id="tab-today" class="tab-panel active">
-    <div style="background:linear-gradient(135deg,#047857,#10b981);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
+    <div style="background:linear-gradient(135deg,#047857,#2E8B57);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
       <div style="font-size:13px;opacity:.85" id="med-greet">Bonjour, Dr. <i class="fa fa-user-doctor"></i></div>
       <div style="font-size:22px;font-weight:800;margin-top:4px" id="med-name">--</div>
       <div style="font-size:12px;opacity:.85" id="med-spec-info">--</div>
@@ -195,7 +195,7 @@
             <label class="form-label" for="un-reason">Raison (optionnel)</label>
             <input class="form-control" id="un-reason" placeholder="Vacances famille, formation continue, congrès…" maxlength="200">
           </div>
-          <div id="un-error" class="hidden" role="alert" style="background:#fee2e2;border:1px solid #dc2626;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:12px;margin-top:8px"></div>
+          <div id="un-error" class="hidden" role="alert" style="background:#fff0f0;border:1px solid #dc2626;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:12px;margin-top:8px"></div>
         </div>
         <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
           <div style="display:flex;gap:8px">
@@ -249,7 +249,7 @@
   <!-- ═════ PROFIL ═════ -->
   <div id="tab-profile" class="tab-panel" style="padding:14px 16px">
     <div class="card" style="text-align:center;padding:24px">
-      <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
+      <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#f0fdf4;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
       <div style="font-size:18px;font-weight:700" id="prof-name">--</div>
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px" id="prof-spec">--</div>
       <!-- [Défaut #4-A2] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _gateCertBadge) -->
@@ -269,7 +269,7 @@
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
-function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0E5F46"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 async function logout(){
   if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
   // 1. Déconnexion Supabase (vraie session)
@@ -701,7 +701,7 @@ function renderPatients(){
   if(!list.length){document.getElementById("patients-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-users" style="font-size:42px;opacity:.3;margin-bottom:12px;display:block"></i>Aucun patient</div>`;return;}
   document.getElementById("patients-list").innerHTML = list.map(p=>`
     <div class="patient-row" onclick="alert(tabibiT('label_patient_file_colon','Dossier patient : ')+'${p.name}\\n${p.visits} '+tabibiT('label_consultations','consultation(s)')+'\\n'+tabibiT('label_last_colon','Dernière : ')+'${p.lastDate}')">
-      <div style="width:42px;height:42px;border-radius:50%;background:#dcfce7;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700">${p.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</div>
+      <div style="width:42px;height:42px;border-radius:50%;background:#e7f3ef;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700">${p.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</div>
       <div style="flex:1"><div style="font-weight:700;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${p.phone||"--"} · ${p.visits} consultation(s)</div></div>
       <div style="font-size:10px;color:var(--text3)">Dernier : ${p.lastDate}</div>
       <i class="fa fa-chevron-right" style="color:var(--text4)"></i>
@@ -930,7 +930,7 @@ async function loadUnavailSlots(_isRetry) {
   if (!list) return;
   if (!window.tabibiDoctor) {
     console.warn('[unavail] loadUnavailSlots: tabibiDoctor NOT LOADED (vérifier <script src> dans le HTML)');
-    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Service indisponible (recharger la page).</div>';
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fff0f0;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Service indisponible (recharger la page).</div>';
     return;
   }
   // [Phase 4.B.3-fix3] Sentinelle : on track si l'UI a été mise à jour pendant
@@ -981,14 +981,14 @@ async function loadUnavailSlots(_isRetry) {
     }).join(''));
   } catch (e) {
     console.error('[unavail] loadUnavailSlots EXCEPTION', e);
-    _setList('<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>');
+    _setList('<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fff0f0;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>');
   } finally {
     // [Phase 4.B.3-fix3] Garde-fou : si malgré try/catch/timeout on est resté
     // sur "Chargement..." (cas pathologique), on force un message d'erreur
     // avec bouton Réessayer plutôt que de laisser l'utilisateur figé.
     if (!_renderedSomething && list.innerHTML.indexOf('Chargement') !== -1) {
       console.warn('[unavail] finally: hang detecté, force-affichage erreur');
-      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Délai dépassé. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
+      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fff0f0;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Délai dépassé. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
     }
   }
 }

@@ -271,7 +271,7 @@
      des pages migrées sur components-v2.css.
      ────────────────────────────────────────────────────────────── */
 
-  --blue:    var(--color-primary);       /* ex bleu → vert */
+  --blue:    #0E5F46;                     /* vert Pro (palier validé) */
   --blue-d:  var(--color-primary-hover);
   --blue-l:  #e7f3ef;                     /* canon : pale vert UNIQUE (= --pastille) */
   --blue-xl: var(--color-primary-50);

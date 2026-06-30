@@ -7,7 +7,7 @@
 <meta name="description" content="Réservation médecin.">
 <link rel="canonical" href="https://tabibi.doctor/doctor-reservation.html">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0F7560">
+<meta name="theme-color" content="#0E5F46">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_reservation_self">
 <title>Réservation médecin | Tabibi</title>
@@ -153,7 +153,7 @@ function applyTpl(tpl){
   ad_rep.value="weekly";
   openAdd();
 }
-function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#2E8B57",error:"#D21010"};const d=document.createElement("div");d.style.cssText=`background:${col[t]};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 document.addEventListener("DOMContentLoaded",()=>{
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"null");
   if(!u||u.role!=="medecin"){location.href="login.html";return;}

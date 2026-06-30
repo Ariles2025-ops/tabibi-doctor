@@ -11,6 +11,8 @@
 <link rel="canonical" href="https://tabibi.doctor/doctor-analytics.html">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;width:100%;max-width:100%;background:#e2e8f0}
@@ -21,7 +23,7 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 .app-shell{width:100%;max-width:480px;min-height:100vh;margin:0 auto;background:#f8fafc;position:relative;box-shadow:0 0 40px rgba(0,0,0,.08)}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,#0f766e,#10b981);color:#fff;width:100%}
+.hdr{background:linear-gradient(135deg,#0f766e,#2E8B57);color:#fff;width:100%}
 .hdr-inner{padding:16px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .hdr a{color:rgba(255,255,255,.95);text-decoration:none;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.12)}
 .hdr h1{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -42,11 +44,11 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 /* TABS PÉRIODE */
 .tabs{display:flex;gap:4px;background:#fff;padding:4px;border-radius:10px;margin-bottom:14px;width:100%}
 .tab{flex:1;min-width:0;padding:9px 4px;background:none;border:none;font-family:inherit;font-weight:600;font-size:11px;color:#64748b;cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;min-height:38px;text-align:center}
-.tab.active{background:#10b981;color:#fff}
+.tab.active{background:#2E8B57;color:#fff}
 
 /* KPI - 2 colonnes */
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.kpi{background:#fff;border-radius:12px;padding:12px;border-left:3px solid #10b981;min-width:0;overflow:hidden}
+.kpi{background:#fff;border-radius:12px;padding:12px;border-left:3px solid #2E8B57;min-width:0;overflow:hidden}
 .kpi-num{font-size:22px;font-weight:800;line-height:1;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi-lbl{font-size:10px;color:#64748b;margin-top:6px;text-transform:uppercase;font-weight:600;letter-spacing:.2px;line-height:1.3}
 .kpi-evo{font-size:11px;font-weight:700;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -57,14 +59,14 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 /* CARDS */
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;overflow:hidden}
 .card h2{font-size:14px;font-weight:800;margin-bottom:14px;color:#0f172a;display:flex;align-items:center;gap:8px}
-.card h2 i{color:#10b981;flex-shrink:0;font-size:13px}
+.card h2 i{color:#2E8B57;flex-shrink:0;font-size:13px}
 
 /* CHARTS */
 .chart-wrap{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch}
 .chart-wrap::-webkit-scrollbar{display:none}
 .chart{display:flex;gap:4px;align-items:flex-end;height:140px;padding:18px 0 0 0;border-bottom:1px solid #e2e8f0;margin-bottom:8px;min-width:100%}
-.bar{flex:1;min-width:18px;background:linear-gradient(180deg,#34d399,#10b981);border-radius:5px 5px 0 0;position:relative;cursor:pointer;transition:.2s}
-.bar:hover{background:linear-gradient(180deg,#10b981,#059669)}
+.bar{flex:1;min-width:18px;background:linear-gradient(180deg,#34d399,#2E8B57);border-radius:5px 5px 0 0;position:relative;cursor:pointer;transition:.2s}
+.bar:hover{background:linear-gradient(180deg,#2E8B57,#059669)}
 .bar .val{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:#0f172a;white-space:nowrap}
 .chart-labels{display:flex;gap:4px;min-width:100%}
 .chart-labels span{flex:1;min-width:18px;text-align:center;font-size:9px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -74,8 +76,8 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 .spec-row{display:flex;align-items:center;gap:8px;min-width:0}
 .spec-row .lbl{flex-shrink:0;width:90px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .spec-row .bar-c{flex:1;background:#e2e8f0;height:7px;border-radius:4px;overflow:hidden;min-width:0}
-.spec-row .bar-c .fill{height:100%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:4px}
-.spec-row .val{font-size:11px;font-weight:700;color:#10b981;width:36px;text-align:right;flex-shrink:0}
+.spec-row .bar-c .fill{height:100%;background:linear-gradient(90deg,#34d399,#2E8B57);border-radius:4px}
+.spec-row .val{font-size:11px;font-weight:700;color:#2E8B57;width:36px;text-align:right;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -115,7 +117,7 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
       <div class="kpi-lbl">RDV ce mois</div>
       <div class="kpi-evo up" id="kpi-rdv-evo">—</div>
     </div>
-    <div class="kpi" style="border-left-color:#0F7560">
+    <div class="kpi" style="border-left-color:#0E5F46">
       <div class="kpi-num" id="kpi-patients">—</div>
       <div class="kpi-lbl">Patients uniques</div>
       <div class="kpi-evo up" id="kpi-patients-evo">—</div>

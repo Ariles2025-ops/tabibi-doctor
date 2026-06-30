@@ -124,12 +124,12 @@
 <!-- [Phase 16.5] Modal upload docs (recovery flow) -->
 <div id="docs-upload-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="docs-upload-title" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:16px;padding:22px 20px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)">
-    <h2 id="docs-upload-title" style="font-size:17px;font-weight:800;margin:0 0 8px;color:#0F7560"><i class="fa fa-id-card" style="margin-right:6px"></i> Compléter vos documents</h2>
+    <h2 id="docs-upload-title" style="font-size:17px;font-weight:800;margin:0 0 8px;color:#0E5F46"><i class="fa fa-id-card" style="margin-right:6px"></i> Compléter vos documents</h2>
     <div style="font-size:13px;color:#475569;margin-bottom:10px;line-height:1.5">Envoyez votre carte du Conseil de l'Ordre + pièce d'identité. Validation manuelle sous 48h ouvrées. Votre fiche restera invisible aux patients jusqu'à validation.</div>
     <div id="docs-upload-container"></div>
     <div style="display:flex;gap:10px;margin-top:18px">
       <button type="button" class="btn btn-ghost btn-sm" style="flex:1;background:#f1f5f9;color:#0f172a;border:1px solid #e2e8f0;padding:10px;border-radius:8px;font-weight:700;cursor:pointer" onclick="closeDocsUploadModal()">Annuler</button>
-      <button type="button" id="docs-upload-submit" class="btn btn-primary btn-sm" style="flex:1;background:#0F7560;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;opacity:.5" disabled onclick="submitDocsUpload()"><i class="fa fa-check"></i> Envoyer</button>
+      <button type="button" id="docs-upload-submit" class="btn btn-primary btn-sm" style="flex:1;background:#0E5F46;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;opacity:.5" disabled onclick="submitDocsUpload()"><i class="fa fa-check"></i> Envoyer</button>
     </div>
   </div>
 </div>
@@ -148,7 +148,7 @@
     </div>
     <!-- Progress bar -->
     <div style="background:rgba(255,255,255,.6);border-radius:999px;height:8px;overflow:hidden">
-      <div id="ob-progress-bar" style="height:100%;background:linear-gradient(90deg,#10b981,#047857);width:0%;transition:width .4s ease;border-radius:999px"></div>
+      <div id="ob-progress-bar" style="height:100%;background:linear-gradient(90deg,#2E8B57,#047857);width:0%;transition:width .4s ease;border-radius:999px"></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;font-weight:600">
       <span><span id="ob-progress-pct">0</span>% rempli</span>
@@ -157,11 +157,11 @@
   </div>
 
   <!-- COVER -->
-  <div style="background:linear-gradient(135deg,#047857,#10b981,#34d399);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
+  <div style="background:linear-gradient(135deg,#047857,#2E8B57,#34d399);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
     <div style="position:relative;display:inline-block;margin:0 auto 12px">
       <div id="ava" style="width:88px;height:88px;border-radius:24px;background:#fff;color:#047857;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:4px solid rgba(255,255,255,.3);background-size:cover;background-position:center">?</div>
       <!-- [Phase 4.B.1] Bouton upload photo (bucket doctor-photos, RLS folder <auth.uid()>/) -->
-      <button type="button" id="photo-btn" onclick="document.getElementById('photo-input').click()" aria-label="Changer ma photo" title="Changer ma photo" style="position:absolute;bottom:-6px;right:-6px;width:32px;height:32px;border-radius:50%;background:#fff;color:#047857;border:2px solid #d1fae5;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+      <button type="button" id="photo-btn" onclick="document.getElementById('photo-input').click()" aria-label="Changer ma photo" title="Changer ma photo" style="position:absolute;bottom:-6px;right:-6px;width:32px;height:32px;border-radius:50%;background:#fff;color:#047857;border:2px solid #f0fdf4;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
         <i class="fa fa-camera" aria-hidden="true"></i>
       </button>
       <input type="file" id="photo-input" accept="image/jpeg,image/png,image/webp" hidden onchange="onPhotoSelected(event)">
@@ -283,7 +283,7 @@
 
     <!-- 8. HORAIRES PAR DÉFAUT -->
     <div class="card section-card">
-      <div class="sec-title-bar"><i style="background:#dcfce7;color:#0a4d3e"><i class="fa fa-clock"></i></i>
+      <div class="sec-title-bar"><i style="background:#e7f3ef;color:#0a4d3e"><i class="fa fa-clock"></i></i>
         <div><div class="lbl">Horaires d'ouverture par défaut</div><div class="desc">Modèle pour générer vos créneaux</div></div></div>
       <div id="schedule-rows"></div>
       <a href="doctor-reservation.html" class="btn btn-soft btn-full" style="margin-top:8px"><i class="fa fa-calendar-week"></i> Gérer mes créneaux en détail</a>
@@ -344,8 +344,8 @@
     </div>
 
     <!-- SÉCURITÉ : 2FA -->
-    <div class="card section-card" style="border-left:3px solid #0F7560">
-      <div class="sec-title-bar" style="border-bottom-color:#dcfce7"><i style="background:#0F7560;color:#fff"><i class="fa fa-shield-halved"></i></i>
+    <div class="card section-card" style="border-left:3px solid #0E5F46">
+      <div class="sec-title-bar" style="border-bottom-color:#e7f3ef"><i style="background:#0E5F46;color:#fff"><i class="fa fa-shield-halved"></i></i>
         <div><div class="lbl" style="color:#0a4d3e">Sécurité du compte</div><div class="desc">Double authentification (2FA)</div></div></div>
       <div id="twofa-status" style="margin-bottom:12px"></div>
       <button id="twofa-toggle-btn" class="btn btn-primary btn-full" onclick="open2FASetup()"><i class="fa fa-lock"></i> Configurer la 2FA</button>
@@ -355,7 +355,7 @@
     <div id="twofa-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)close2FASetup()">
       <div style="background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:92dvh;overflow-y:auto">
         <div style="padding:18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:17px;font-weight:800"><i class="fa fa-shield-halved" style="color:#0F7560"></i> Activer la 2FA</div>
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-shield-halved" style="color:#0E5F46"></i> Activer la 2FA</div>
           <button onclick="close2FASetup()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
         </div>
         <div id="twofa-step-content" style="padding:18px"></div>
@@ -373,7 +373,7 @@
     <button class="btn btn-success btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> Sauvegarder toutes les modifications</button>
 
     <!-- [Phase 14.2] CTA spécifique onboarding : sauvegarde + redirect dashboard -->
-    <button id="ob-publish-btn" class="btn btn-primary btn-full btn-xl hidden" style="margin-top:10px;background:linear-gradient(135deg,#0F7560,#10b981);font-size:15px" onclick="saveAndPublish()">
+    <button id="ob-publish-btn" class="btn btn-primary btn-full btn-xl hidden" style="margin-top:10px;background:linear-gradient(135deg,#0E5F46,#2E8B57);font-size:15px" onclick="saveAndPublish()">
       <i class="fa fa-rocket"></i> <span data-i18n="ob_publish_btn">Sauvegarder et publier ma fiche</span>
     </button>
 
@@ -382,7 +382,7 @@
 </main>
 <div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <script>
-function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+function toastM(m,t){const c=document.getElementById("toast-container");const col={success:"#2E8B57",error:"#D21010"};const d=document.createElement("div");d.style.cssText=`background:${col[t]||"#0E5F46"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=m;c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 
 // [Phase 4.B.2 — 2026-05-21] tabibiDoctor extrait vers js/tabibi-doctor-dashboard.js
 // (chargé en bas de page, après supabase-client.js). API publique identique :
@@ -581,7 +581,7 @@ function renderDiplomas(){
   document.getElementById("diploma-list").innerHTML=d.map((v,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px">
     <i class="fa fa-certificate" style="color:#f59e0b"></i>
     <div style="flex:1;font-size:13px">${v}</div>
-    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fee2e2" onclick="rmDiploma(${i})" aria-label="Supprimer ce diplôme"><i class="fa fa-trash"></i></button>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="rmDiploma(${i})" aria-label="Supprimer ce diplôme"><i class="fa fa-trash"></i></button>
   </div>`).join("");
 }
 function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (ex: Doctorat en Médecine — Université d'Alger (2008))"));if(!v)return;const d=getDiplomas();d.push(v);setDiplomas(d);renderDiplomas();toastM(tabibiT('toast_diploma_added',"Diplôme ajouté"),"success");}
@@ -698,7 +698,7 @@ function render2FAStatus(){
   const btn = document.getElementById("twofa-toggle-btn");
   if (!statusEl || !btn) return;
   if (enabled) {
-    statusEl.innerHTML = '<div style="background:#d1fae5;color:#065f46;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600"><i class="fa fa-circle-check"></i> 2FA activée — vos connexions sont sécurisées</div>';
+    statusEl.innerHTML = '<div style="background:#f0fdf4;color:#065f46;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600"><i class="fa fa-circle-check"></i> 2FA activée — vos connexions sont sécurisées</div>';
     btn.innerHTML = '<i class="fa fa-circle-xmark"></i> Désactiver la 2FA';
     btn.className = 'btn btn-ghost btn-full';
     btn.style.color = 'var(--red)';
