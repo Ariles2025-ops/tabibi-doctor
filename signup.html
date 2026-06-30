@@ -630,4 +630,20 @@ document.addEventListener('DOMContentLoaded', async function () {
 <script src="js/tabibi-i18n.js"></script>
 <script src="js/tabibi-footer.js"></script>
 <script src="js/tabibi-sentry.js"></script>
+<!-- [LANG-ACTIVE] reflète la langue courante sur le sélecteur FR/AR/EN du header (même logique qu'index.html) -->
+<script>
+(function(){
+  function syncLangBtns(){
+    var l = (window.tabibiLang && window.tabibiLang.get) ? window.tabibiLang.get() : 'fr';
+    document.querySelectorAll('[data-lang-btn]').forEach(function(b){
+      var active = b.getAttribute('data-lang-btn') === l;
+      b.style.background = active ? 'var(--blue)' : 'transparent';
+      b.style.color      = active ? '#fff' : 'var(--text3)';
+    });
+  }
+  document.addEventListener('tabibi:lang-change', syncLangBtns);
+  if (document.readyState !== 'loading') syncLangBtns(); else document.addEventListener('DOMContentLoaded', syncLangBtns);
+  setTimeout(syncLangBtns, 300);
+})();
+</script>
 </body></html>
