@@ -1830,8 +1830,9 @@ function buildPagination(cur, total){
 const AVATAR_NEUTRAL = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><clipPath id="tbAvN5"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbAvN5)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#ddae84"/><circle cx="50" cy="42" r="16" fill="#ddae84"/><circle cx="34" cy="43" r="3.2" fill="#ddae84"/><circle cx="66" cy="43" r="3.2" fill="#ddae84"/><path d="M32 45C30 25 40 18 50 18 60 18 70 25 68 45 68 40 62 34 50 34 38 34 32 40 32 45Z" fill="var(--logo-bg,#0F7560)"/><path d="M50 18C50 14 53 12 56 13" stroke="var(--logo-bg,#0F7560)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 52 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg>`;
 function docCard(d){
   const n=dname(d),s=dspec(d),c=dcity(d),fav=isFav(d.id);
-  const dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(n)) ? 'rtl' : 'ltr';
-  const rk  = (dir==='rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
+  // [RTL] dir="auto" : le navigateur choisit la direction d'après le 1er caractère fort.
+  // Nom 100% arabe → rtl (aligné à droite) ; nom mixte latin+arabe → ltr (la partie latine se lit en premier, plus de troncature).
+  const rk  = ' dir="auto" data-rtl-keep="true"';
   // Avatar = MONOGRAMME (initiales) sur pastille verte pâle — données réelles only, pas de photo.
   const avaHtml = `<div class="doc-ava">${(d.in||'').toString().trim()}</div>`;
   // Statut réel : Réservable (claimed+approved) / En validation (claimed, pending) / Fiche non réclamée.
@@ -1848,7 +1849,7 @@ function docCard(d){
     <div class="doc-row">
       ${avaHtml}
       <div style="flex:1;min-width:0">
-        <div class="doc-name" dir="${dir}" data-rtl-keep="true">${n}</div>
+        <div class="doc-name" dir="auto" data-rtl-keep="true">${n}</div>
         <div class="doc-spec"${rk}><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
         <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${c}</div>
       </div>
@@ -2565,7 +2566,8 @@ function _buildDoctorCardsUrl(opts){
   // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
   // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
   q.set('order', 'name_sort_key.asc');
-  q.set('full_name', 'not.match.[؀-ۿ]');  // exclut les noms en écriture arabe (U+0600–U+06FF) côté serveur
+  // [ÉTAPE B] Filtre 'not.match.[؀-ۿ]' RETIRÉ (test RTL OK 390/1280 : docCard pose déjà dir="rtl").
+  // Les 2 969 fiches au nom en écriture arabe sont désormais incluses → liste = 75 033 (= indexed).
   return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
 }
 
@@ -2740,24 +2742,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   // pour avoir une UI réactive immédiate.
   populateSelects(); renderSpecs(); renderChips();
   renderUserUI(); initTabBar("home");
-  // Fetch compteur dynamique certifiés + indexés — màj après fallback immédiat
-  (async function() {
-    try {
-      var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co';
-      var _key = _SB_KEY;
-      var _h = { apikey: _key, Authorization: 'Bearer ' + _key, Prefer: 'count=exact' };
-      var _res = await Promise.all([
-        // X certifiés : vue public_doctors_listed (déjà filtrée is_claimed=true AND validation_status='approved')
-        fetch(_url + '/rest/v1/public_doctors_listed?select=id&limit=1', { headers: _h }),
-        // N indexés : total brut public_doctors
-        fetch(_url + '/rest/v1/public_doctors?select=id&limit=1', { headers: _h })
-      ]);
-      if (!_res[0].ok || !_res[1].ok) return;
-      var _cert = parseInt((_res[0].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
-      var _idx  = parseInt((_res[1].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
-      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert, indexed: _idx }; _updateDocCounterUI(); }
-    } catch(e) { /* fallback window._tabibiBadge déjà affiché */ }
-  })();
+  // [ÉTAPE C] Source unique des stats : 1 routine COUNT au load → window.TABIBI_STATS
+  _loadTabibiStats();
 
   // [Phase 5.6 fix BUG #1 v2] Fetch async des DISTINCT specialty_fr +
   // wilaya_fr depuis la DB → re-populate les <select> avec les VRAIES valeurs.
@@ -2778,20 +2764,55 @@ document.addEventListener("DOMContentLoaded",()=>{
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
 
-// Fallback last-known pour le compteur (affiché instantanément, remplacé par fetch async au load)
-window._tabibiBadge = { certified: 0, indexed: 0 };
+// [ÉTAPE C] SOURCE UNIQUE des stats — alimentée par _loadTabibiStats() au load.
+// Définitions : indexed = public_doctors | listed = public_doctors_listed
+//               certified = public_doctors?validation_status=eq.approved
+//               claimed   = public_doctors?is_claimed=eq.true
+// ⚠️ À VALIDER : la définition exacte de "certified" vs "listed" (vue/colonne) côté DB.
+window.TABIBI_STATS = { indexed: 0, listed: 0, certified: 0, claimed: 0 };
+
+async function _loadTabibiStats() {
+  var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || _SB_URL;
+  var _h = { apikey: _SB_KEY, Authorization: 'Bearer ' + _SB_KEY, Prefer: 'count=exact' };
+  var _cnt = function(path) {
+    return fetch(_url + '/rest/v1/' + path + (path.indexOf('?') < 0 ? '?' : '&') + 'select=id&limit=1', { headers: _h })
+      .then(function(r){ return r.ok ? (parseInt((r.headers.get('content-range') || '/0').split('/')[1], 10) || 0) : 0; })
+      .catch(function(){ return 0; });
+  };
+  try {
+    var r = await Promise.all([
+      _cnt('public_doctors'),                               // indexed (référencés)
+      _cnt('public_doctors_listed'),                        // listed (fiches publiables)
+      _cnt('public_doctors?validation_status=eq.approved'), // certified (validées)
+      _cnt('public_doctors?is_claimed=eq.true')             // claimed (réclamées)
+    ]);
+    window.TABIBI_STATS = { indexed: r[0], listed: r[1], certified: r[2], claimed: r[3] };
+  } catch (e) { /* garde les valeurs courantes */ }
+  _updateDocCounterUI();
+}
+
+// Tous les compteurs lisent window.TABIBI_STATS (plus aucun COUNT dupliqué dispersé).
 function _updateDocCounterUI() {
   var _lm = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
   var _loc = _lm[lang] || 'fr-DZ';
-  var _cert = window._tabibiBadge.certified;
-  var _idx  = window._tabibiBadge.indexed || 0;
+  var _S = window.TABIBI_STATS || { indexed: 0, certified: 0 };
+  var _cert = _S.certified || 0;
+  var _idx  = _S.indexed || 0;
   var _fc = _cert.toLocaleString(_loc);
   var _fi = _idx.toLocaleString(_loc);
   var _hb = document.getElementById('hbadge');
-  // Badge double : X certifiés (public_doctors_listed) + N indexés (public_doctors)
-  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مفهرس في الجزائر'
-                            : lang === 'en' ? _fc + ' certified · ' + _fi + ' indexed in Algeria'
-                            :                 _fc + ' médecin'+(_cert>1?'s':'')+' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' indexé'+(_idx>1?'s':'') + ' en Algérie';
+  // [ÉTAPE D] certified=0 → "N médecins référencés" ; certified>0 → "X certifiés · Y référencés"
+  if (_hb) {
+    if (_cert > 0) {
+      _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مُدرج في الجزائر'
+                      : lang === 'en' ? _fc + ' certified · ' + _fi + ' referenced in Algeria'
+                      :                 _fc + ' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' référencé'+(_idx>1?'s':'') + ' en Algérie';
+    } else {
+      _hb.textContent = lang === 'ar' ? _fi + ' طبيب مُدرج في الجزائر'
+                      : lang === 'en' ? _fi + ' doctors referenced in Algeria'
+                      :                 _fi + ' médecin'+(_idx>1?'s':'') + ' référencé'+(_idx>1?'s':'') + ' en Algérie';
+    }
+  }
   var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fi;
   var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fi;
   var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fi;
