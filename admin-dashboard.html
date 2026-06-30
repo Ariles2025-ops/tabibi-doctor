@@ -43,7 +43,7 @@
     <i class="fa fa-bell" style="font-size:14px"></i><span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
   </button>
   <button title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:800;font-size:13px;border:none;cursor:default;flex-shrink:0;box-shadow:0 2px 6px rgba(124,58,237,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">AT</span></button>
-  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
+  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fff0f0;color:#D21010;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#D21010';this.style.color='#fff'" onmouseout="this.style.background='#fff0f0';this.style.color='#D21010'"><i class="fa fa-right-from-bracket"></i></button>
 </header>
 
 <div class="dash-tabs" style="position:sticky;top:var(--nav-h);z-index:150;background:#fff;border-bottom:1px solid var(--border)">
@@ -151,7 +151,7 @@
 
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
-function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0E5F46"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 async function logout(){
   if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
   try {
@@ -221,7 +221,7 @@ function renderU(){
   document.getElementById("users-list").innerHTML=list.map(u=>{
     const initials = (u.n||'').split(" ").map(x=>x[0]||'').slice(0,2).join("");
     return `<div class="adm-row">
-    <div style="width:42px;height:42px;border-radius:50%;background:${u.r==="medecin"?"#dcfce7":u.r==="admin"?"#f3e8ff":"#dcfce7"};color:${u.r==="medecin"?"#166534":u.r==="admin"?"#7c3aed":"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-weight:700">${_esc(initials)}</div>
+    <div style="width:42px;height:42px;border-radius:50%;background:${u.r==="medecin"?"#e7f3ef":u.r==="admin"?"#f3e8ff":"#e7f3ef"};color:${u.r==="medecin"?"#166534":u.r==="admin"?"#7c3aed":"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-weight:700">${_esc(initials)}</div>
     <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:13px">${_esc(u.n)}</div><div style="font-size:11px;color:var(--text3)">${_esc(u.e)}${u.spec?' · '+_esc(u.spec):''}</div></div>
     <span class="badge ${u.r==="medecin"?"badge-green":u.r==="admin"?"badge-red":"badge-blue"}">${_esc(u.r)}</span>
     <span class="badge ${u.s==="active"?"badge-green":"badge-amber"}" style="font-size:9px">${_esc(u.s)}</span>
@@ -295,7 +295,7 @@ function renderD(){
 
 function doctorCard(d, isPending) {
   const initials = d.n.split(" ").slice(-2).map(x=>x[0]||'').join("").toUpperCase() || '?';
-  const bg = isPending ? '#fff7ed' : '#dcfce7';
+  const bg = isPending ? '#fff7ed' : '#e7f3ef';
   const tc = isPending ? '#92400e' : '#166534';
   const badge = isPending
     ? '<span class="badge badge-amber">⏳ Pending</span>'
