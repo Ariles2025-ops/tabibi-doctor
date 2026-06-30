@@ -18,13 +18,13 @@
       if (shell) {
         shell.innerHTML =
           '<div class="tc-card" style="text-align:center;padding:48px 24px;margin-top:48px;background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.12)">' +
-            '<i class="fa-solid fa-video" style="font-size:48px;color:#0F7560;opacity:.5;margin-bottom:16px"></i>' +
+            '<i class="fa-solid fa-video" style="font-size:48px;color:#0E5F46;opacity:.5;margin-bottom:16px"></i>' +
             '<h1 style="font-size:20px;margin-bottom:8px;color:#1A1A1A">Téléconsultation bientôt disponible</h1>' +
             '<p style="color:#666;font-size:14px;margin-bottom:24px;line-height:1.6">' +
               "Cette fonctionnalité sera activée prochainement, après validation du flux vidéo avec nos médecins partenaires. " +
               "En attendant, vous pouvez prendre un rendez-vous en cabinet." +
             '</p>' +
-            '<a href="/index.html" class="tc-btn tc-btn-primary" style="display:inline-block;background:#0F7560;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">' +
+            '<a href="/index.html" class="tc-btn tc-btn-primary" style="display:inline-block;background:#0E5F46;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">' +
               '<i class="fa-solid fa-search"></i> Trouver un médecin' +
             '</a>' +
           '</div>';
@@ -36,7 +36,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="description" content="Tabibi — Teleconsultation video securisee, vie privee garantie.">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0F7560">
+<meta name="theme-color" content="#0E5F46">
 <link rel="canonical" href="https://tabibi.doctor/teleconsultation.html">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="images/icon-192.png">
@@ -64,7 +64,7 @@
 
   /* Hero */
   .tc-hero {
-    background: linear-gradient(155deg, #0A5A4A 0%, #0F7560 52%, #1A8A73 100%);
+    background: linear-gradient(155deg, #0A5A4A 0%, #0E5F46 52%, #1A8A73 100%);
     color: #fff; border-radius: var(--tc-radius); padding: 24px;
     box-shadow: var(--tc-shadow); position: relative; overflow: hidden;
   }
@@ -97,7 +97,7 @@
     padding: 14px; margin-top: 14px; font-size: 13px; color: #6E561A;
   }
   .tc-consent label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
-  .tc-consent input[type="checkbox"] { margin-top: 3px; transform: scale(1.2); accent-color: #0F7560; }
+  .tc-consent input[type="checkbox"] { margin-top: 3px; transform: scale(1.2); accent-color: #0E5F46; }
   .tc-consent .tc-consent-detail { display: block; margin-top: 6px; font-size: 12px; opacity: .85; }
 
   /* Buttons */
@@ -107,10 +107,10 @@
     font-size: 15px; font-weight: 600; cursor: pointer;
     transition: 200ms ease; font-family: inherit;
   }
-  .tc-btn-primary { background: #0F7560; color: #fff; box-shadow: 0 4px 14px rgba(15,117,96,.22); width: 100%; }
+  .tc-btn-primary { background: #0E5F46; color: #fff; box-shadow: 0 4px 14px rgba(15,117,96,.22); width: 100%; }
   .tc-btn-primary:hover:not(:disabled) { background: #0A5A4A; }
   .tc-btn-primary:disabled { background: #D4D4D4; color: #fff; cursor: not-allowed; box-shadow: none; }
-  .tc-btn-secondary { background: #fff; color: #0F7560; border: 1.5px solid #0F7560; }
+  .tc-btn-secondary { background: #fff; color: #0E5F46; border: 1.5px solid #0E5F46; }
   .tc-btn-secondary:hover { background: #E6F3F0; }
   .tc-btn-danger { background: #fff; color: #D21010; border: 1.5px solid #D21010; }
 
@@ -124,7 +124,7 @@
   .tc-status.error  { background: #FFF0F0; color: #a40c0c; border: 1px solid #ffcfcf; }
 
   /* Spinner */
-  .tc-spinner { width: 36px; height: 36px; border: 3px solid #E5E5E5; border-top-color: #0F7560; border-radius: 50%; animation: tc-spin 1s linear infinite; margin: 0 auto; }
+  .tc-spinner { width: 36px; height: 36px; border: 3px solid #E5E5E5; border-top-color: #0E5F46; border-radius: 50%; animation: tc-spin 1s linear infinite; margin: 0 auto; }
   @keyframes tc-spin { to { transform: rotate(360deg); } }
 
   /* Daily iframe */
@@ -149,7 +149,7 @@
 
   /* Footer */
   .tc-footer { margin-top: 20px; padding: 14px; text-align: center; font-size: 12px; color: #666; }
-  .tc-footer a { color: #0F7560; text-decoration: none; }
+  .tc-footer a { color: #0E5F46; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -193,14 +193,14 @@
 
     <div class="tc-card">
       <div class="tc-row">
-        <i class="fa-solid fa-user-doctor" style="color:#0F7560; font-size:18px; width:24px;"></i>
+        <i class="fa-solid fa-user-doctor" style="color:#0E5F46; font-size:18px; width:24px;"></i>
         <div>
           <div class="tc-label" id="tc-other-label">Medecin</div>
           <div class="tc-val" id="tc-other-name">--</div>
         </div>
       </div>
       <div class="tc-row" id="tc-row-reason">
-        <i class="fa-solid fa-notes-medical" style="color:#0F7560; font-size:18px; width:24px;"></i>
+        <i class="fa-solid fa-notes-medical" style="color:#0E5F46; font-size:18px; width:24px;"></i>
         <div>
           <div class="tc-label" data-i18n-key="tc_label_reason">Motif</div>
           <div class="tc-val" id="tc-reason">--</div>
