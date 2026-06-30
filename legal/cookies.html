@@ -19,15 +19,17 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../styles/tokens-v2.css">
+<link rel="stylesheet" href="../styles/app.css">
 <style>
-:root{--blue:#0F7560;--blue-d:#0a4d3e;--blue-l:#dcfce7;--text:#0f172a;--text2:#475569;--text3:#64748b;--border:#e2e8f0;--bg:#f8fafc;--card:#fff;--ok-b:#10b981;--ok-l:#d1fae5}
+:root{--card:#fff;--ok-b:#2E8B57;--ok-l:#f0fdf4}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.65;-webkit-font-smoothing:antialiased}
 body[dir="rtl"]{font-family:'Cairo','Plus Jakarta Sans',sans-serif}
 .hdr{background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;padding:32px 16px 28px;text-align:center;position:relative}
 .hdr h1{font-size:28px;font-weight:800;margin-bottom:6px}
 .hdr p{font-size:14px;opacity:.85}
-.container{max-width:820px;margin:0 auto;padding:24px 16px 80px}
+.container{max-width:720px;margin:0 auto;padding:24px clamp(16px,4vw,40px) 80px}
 .card{background:var(--card);border-radius:16px;padding:28px 24px;margin-bottom:16px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 h2{font-size:20px;font-weight:800;margin:28px 0 12px;color:var(--blue-d);display:flex;align-items:center;gap:10px}
 h2:first-child{margin-top:0}

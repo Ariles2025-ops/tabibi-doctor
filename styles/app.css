@@ -406,13 +406,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 /* ===== TABIBI DESKTOP RESPONSIVE — additif, min-width only (mobile intact) ===== */
 @media (min-width: 1024px) {
   body { background: var(--bg2); }
-  .app-root { max-width: 960px; box-shadow: var(--s2); }
-  .app-bar { padding-left: 28px; padding-right: 28px; }
-  .page { padding-left: 14px; padding-right: 14px; }
-  .tab-bar, .install-banner { max-width: 960px; }
+  .app-root { max-width: 1100px; box-shadow: var(--s2); }
+  .app-bar { padding-left: clamp(24px,4vw,48px); padding-right: clamp(24px,4vw,48px); }
+  .page { padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px); }
+  /* largeur de travail confortable : le contenu remplit le shell centré (fini la colonne 480) */
+  .container { max-width: none; padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px); }
+  .tab-bar, .install-banner { max-width: 1100px; }
 }
 @media (min-width: 1440px) {
   .app-root,
   .tab-bar,
-  .install-banner { max-width: 1100px; }
+  .install-banner { max-width: 1240px; }
 }

@@ -80,7 +80,7 @@
   </button>
   <!-- USER MENU -->
   <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#0F7560,#0a4d3e);color:#fff;font-weight:800;font-size:13px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(15,117,96,.4);display:flex;align-items:center;justify-content:center"><span id="user-init"><i class="fa fa-user" style="font-size:14px"></i></span></button>
-  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
+  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fff0f0;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fff0f0';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
 </header>
 
 <!-- DROPDOWN NOTIFICATIONS -->
@@ -94,7 +94,7 @@
 
 <!-- DROPDOWN USER MENU -->
 <div class="dropdown-menu hidden" id="user-drop">
-  <div style="padding:14px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#dcfce7,#eff6ff)">
+  <div style="padding:14px;border-bottom:1px solid var(--border);background:linear-gradient(135deg,#e7f3ef,#f8fafc)">
     <div style="font-weight:700" id="menu-name">--</div>
     <div style="font-size:11px;color:var(--text3)" id="menu-email">--</div>
   </div>
@@ -271,7 +271,7 @@
 
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
-function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||col.info};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3500);}
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010",info:"#0F7560"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||col.info};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3500);}
 
 let currentSpec="all";
 let docPage=1;
@@ -609,7 +609,7 @@ function showBookingStep(step){
 }
 
 const PAY_METHODS_LIST=[
-  {id:"cash",name:"Espèces au cabinet",icon:"fa-money-bill",color:"#10b981",sub:"Payez sur place"},
+  {id:"cash",name:"Espèces au cabinet",icon:"fa-money-bill",color:"#2E8B57",sub:"Payez sur place"},
   {id:"edahabia",name:"Edahabia (Algérie Poste)",icon:"fa-credit-card",color:"#d97706",sub:"Paiement sécurisé"},
   {id:"cib",name:"Carte CIB",icon:"fa-credit-card",color:"#0a4d3e",sub:"Visa/Mastercard"},
   {id:"paymee",name:"Paymee",icon:"fa-mobile-screen",color:"#7c3aed",sub:"Par téléphone"},
@@ -761,7 +761,7 @@ function doFiltRdvRender(f){
       </div>
       ${r.reason?`<div style="font-size:12px;color:var(--text2);font-style:italic;padding:8px;background:var(--bg2);border-radius:8px;margin-bottom:8px">"${esc(r.reason)}"</div>`:""}
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bg2)">
-        <div><div style="font-size:10px;color:var(--text3)">${r.payMethod==="cash"?"<i class='fa fa-money-bill-wave'></i> À payer sur place":"<i class='fa fa-check-circle' style='color:#10b981'></i> "+(PAY_LABELS[r.payMethod]||r.payMethod)}</div><div style="font-size:16px;font-weight:800;color:var(--blue)">${(r.prix||0).toLocaleString()} DA</div></div>
+        <div><div style="font-size:10px;color:var(--text3)">${r.payMethod==="cash"?"<i class='fa fa-money-bill-wave'></i> À payer sur place":"<i class='fa fa-check-circle' style='color:#2E8B57'></i> "+(PAY_LABELS[r.payMethod]||r.payMethod)}</div><div style="font-size:16px;font-weight:800;color:var(--blue)">${(r.prix||0).toLocaleString()} DA</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${r.status==="Confirmed"||r.status==="Pending"?`<button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red-l)" onclick="cancelRdv('${r.id}')"><i class="fa fa-xmark"></i> Annuler</button>`:""}
           ${r.status==="Completed"&&!r.reviewed?`<button class="btn btn-soft btn-sm" onclick="openReview('${r.id}')"><i class="fa fa-star"></i> Noter</button>`:""}
@@ -849,7 +849,7 @@ function filtDoc(f,btn){
     const box=document.getElementById("docs-list");
     if(!box) return;
     if(!list.length){box.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--text3)"><i class="fa fa-folder-open" style="font-size:48px;opacity:.3;margin-bottom:14px;display:block"></i>Aucun document</div>`;return;}
-    const ICS={ordonnance:["fa-prescription","#0a4d3e","#dcfce7"],resultat:["fa-file-medical","#059669","#d1fae5"],certificat:["fa-stamp","#7c3aed","#f3e8ff"],recu:["fa-receipt","#f59e0b","#fef3c7"]};
+    const ICS={ordonnance:["fa-prescription","#0a4d3e","#e7f3ef"],resultat:["fa-file-medical","#059669","#f0fdf4"],certificat:["fa-stamp","#7c3aed","#f3e8ff"],recu:["fa-receipt","#f59e0b","#fef3c7"]};
     box.innerHTML=list.map(d=>{const ic=ICS[d.type]||["fa-file","#6b7280","#f3f4f6"];return `<div class="doc-file-card">
     <div class="ic" style="background:${ic[2]};color:${ic[1]}"><i class="fa ${ic[0]}"></i></div>
     <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name}</div><div style="font-size:11px;color:var(--text3)">${d.doctor} · ${d.date} · ${d.size}</div></div>
@@ -902,7 +902,7 @@ function renderOverview(){
         const dt=new Date(next.date);
         const dl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long"}));
         const days=Math.ceil((dt-new Date())/(1000*60*60*24));
-        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#dcfce7,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${next.doctorName}</div><div style="font-size:12px;color:var(--text2)">${next.spec} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
+        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${next.doctorName}</div><div style="font-size:12px;color:var(--text2)">${next.spec} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
       } else {
         nextEl.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3)" data-i18n="no_rdv">Aucun RDV prévu</div>`;
       }
