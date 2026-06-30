@@ -37,6 +37,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/auth.css">
 <style>
   /* ── RTL (mode arabe) — pilote i18n P0 #3 ─────────────────────────────────
      Les rangées flex (rôles, consentements checkbox+texte) s'inversent
@@ -59,10 +60,10 @@
 </header>
 <main id="main" class="page" style="padding:20px 16px 40px" role="main">
   <div style="text-align:center;margin-bottom:20px">
-    <div class="logo-mark" style="margin:0 auto 12px"></div>
+    <svg class="logo-svg" width="52" height="52" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="display:block;margin:0 auto 12px"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h2 style="font-size:22px;font-weight:800" data-i18n="join_tabibi">Rejoindre Tabibi</h2>
   </div>
-  <div class="card" style="max-width:400px;margin:0 auto 16px">
+  <div class="card" style="max-width:480px;margin:0 auto 16px">
     <div id="role-picker-label" style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px" data-i18n="i_am">Je suis :</div>
     <div role="radiogroup" aria-labelledby="role-picker-label" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <button type="button" role="radio" aria-checked="true" class="role-btn active" onclick="selRole('patient',this)" style="padding:14px;border:2px solid var(--blue);border-radius:12px;background:var(--blue-l);color:var(--blue);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
@@ -73,7 +74,7 @@
         <i class="fa fa-headset" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_secretaire">Secrétariat</span></button>
     </div>
   </div>
-  <div class="card" style="max-width:400px;margin:0 auto">
+  <div class="card" style="max-width:480px;margin:0 auto">
     <form id="su-form" onsubmit="doSignup(event)">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label" for="sf"><span data-i18n="first_name">Prénom</span> *</label><input class="form-control" id="sf" required autocomplete="given-name"></div>
