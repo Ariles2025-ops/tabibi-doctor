@@ -2762,10 +2762,11 @@ document.addEventListener("DOMContentLoaded",()=>{
 });
 
 // [ÉTAPE C] SOURCE UNIQUE des stats — alimentée par _loadTabibiStats() au load.
-// Définitions : indexed = public_doctors | listed = public_doctors_listed
-//               certified = public_doctors?validation_status=eq.approved
-//               claimed   = public_doctors?is_claimed=eq.true
-// ⚠️ À VALIDER : la définition exacte de "certified" vs "listed" (vue/colonne) côté DB.
+// Définitions : indexed = total vitrine EN DUR (count=estimated sous-évaluait :
+//               37 517 vs 75 033 réels, COALESCE dans le WHERE de la vue)
+//               certified = public_doctors?validation_status=eq.approved (estimated)
+// Label affiché partout où le total "référencés" apparaît :
+var TABIBI_DOCTOR_COUNT_LABEL = '75 000+';
 window.TABIBI_STATS = { indexed: 0, listed: 0, certified: 0, claimed: 0 };
 
 async function _loadTabibiStats() {
@@ -2777,13 +2778,12 @@ async function _loadTabibiStats() {
       .catch(function(){ return 0; });
   };
   try {
-    // [PERF 57014] count=estimated + 2 COUNT seulement : listed (vue inexistante
-    // post-rollback 16.5) et claimed (jamais affiché) supprimés.
+    // [PERF 57014] 1 seul COUNT (estimated) : certified. Le total "référencés"
+    // est EN DUR (TABIBI_DOCTOR_COUNT_LABEL) — estimated le sous-évaluait.
     var r = await Promise.all([
-      _cnt('public_doctors'),                               // indexed (référencés)
       _cnt('public_doctors?validation_status=eq.approved')  // certified (validées)
     ]);
-    window.TABIBI_STATS = { indexed: r[0], certified: r[1], listed: 0, claimed: 0 };
+    window.TABIBI_STATS = { indexed: 75000, certified: r[0], listed: 0, claimed: 0 };
   } catch (e) { /* garde les valeurs courantes */ }
   _updateDocCounterUI();
 }
@@ -2796,7 +2796,9 @@ function _updateDocCounterUI() {
   var _cert = _S.certified || 0;
   var _idx  = _S.indexed || 0;
   var _fc = _cert.toLocaleString(_loc);
-  var _fi = _idx.toLocaleString(_loc);
+  // Total vitrine : chaîne EN DUR (jamais de toLocaleString dessus) ;
+  // _idx reste numérique pour les seuls tests de pluriel (_idx>1).
+  var _fi = TABIBI_DOCTOR_COUNT_LABEL;
   var _hb = document.getElementById('hbadge');
   // [ÉTAPE D] certified=0 → "N médecins référencés" ; certified>0 → "X certifiés · Y référencés"
   if (_hb) {
