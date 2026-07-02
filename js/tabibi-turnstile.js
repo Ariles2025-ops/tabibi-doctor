@@ -87,7 +87,7 @@
         return resolve();
       }
 
-      const existing = document.querySelector('script[src*="turnstile"]');
+      const existing = document.querySelector('script[src*="challenges.cloudflare.com"]');
       if (existing) {
         existing.addEventListener('load', () => {
           TURNSTILE_CONFIG.loaded = true;
