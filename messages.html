@@ -36,8 +36,9 @@
 <div class="app-root">
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Messages</div></div>
-  <span style="width:36px"></span>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="messages_title">Messages</div></div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 
 <main class="page msg-shell" role="main">
@@ -45,8 +46,7 @@
   <!-- Disclaimer feature flag OFF -->
   <div class="msg-disclaimer" data-feature-not="messaging">
     <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
-    <strong>Messagerie bientôt disponible.</strong> Vous pourrez échanger avec un médecin
-    après un rendez-vous confirmé.
+    <span data-i18n-html="msg_disclaimer"><strong>Messagerie bientôt disponible.</strong> Vous pourrez échanger avec un médecin après un rendez-vous confirmé.</span>
   </div>
 
   <div id="conv-list" aria-live="polite"></div>
@@ -133,5 +133,7 @@ window.loadInbox = loadInbox;
 <script src="js/tabibi-messaging.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>

@@ -52,11 +52,8 @@
     <div class="app-bar-title">Tabibi <span style="color:var(--green)"><span style="font-weight:800;letter-spacing:-.5px"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
     <div class="app-bar-sub" style="font-family:'Cairo',sans-serif" data-i18n="auth_header_sub">طبيبي · Médecins Algérie</div>
   </div>
-  <div style="display:flex;gap:2px;background:var(--bg2);border-radius:var(--rfull);padding:2px;flex-shrink:0" role="group" aria-label="Langue">
-    <button type="button" data-lang-btn="fr" onclick="window.tabibiLang&&window.tabibiLang.set('fr')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:var(--blue);color:#fff">FR</button>
-    <button type="button" data-lang-btn="ar" onclick="window.tabibiLang&&window.tabibiLang.set('ar')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:var(--text3)">AR</button>
-    <button type="button" data-lang-btn="en" onclick="window.tabibiLang&&window.tabibiLang.set('en')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;background:transparent;color:var(--text3)">EN</button>
-  </div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 <main id="main" class="page" style="padding:0" role="main">
   <section class="auth-hero">
@@ -576,20 +573,6 @@ function toastM(m,t){const c=document.getElementById("toast-container");if(!c)re
 <script src="js/tabibi-i18n.js"></script>
 <script src="js/tabibi-footer.js"></script>
 <script src="js/tabibi-sentry.js"></script>
-<!-- [LANG-ACTIVE] reflète la langue courante sur le sélecteur FR/AR/EN du header (même logique qu'index.html) -->
-<script>
-(function(){
-  function syncLangBtns(){
-    var l = (window.tabibiLang && window.tabibiLang.get) ? window.tabibiLang.get() : 'fr';
-    document.querySelectorAll('[data-lang-btn]').forEach(function(b){
-      var active = b.getAttribute('data-lang-btn') === l;
-      b.style.background = active ? 'var(--blue)' : 'transparent';
-      b.style.color      = active ? '#fff' : 'var(--text3)';
-    });
-  }
-  document.addEventListener('tabibi:lang-change', syncLangBtns);
-  if (document.readyState !== 'loading') syncLangBtns(); else document.addEventListener('DOMContentLoaded', syncLangBtns);
-  setTimeout(syncLangBtns, 300);
-})();
-</script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body></html>

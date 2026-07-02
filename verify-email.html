@@ -38,7 +38,9 @@
 
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='index.html'" aria-label="Retour accueil"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Confirmation email</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="verify_email_header">Confirmation email</div></div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 
 <main class="page" role="main">
@@ -46,50 +48,47 @@
 
   <div class="vm-ico-wrap"><i class="fa fa-envelope-circle-check vm-ico" aria-hidden="true"></i></div>
 
-  <h1 class="h-page">Vérifiez votre email</h1>
+  <h1 class="h-page" data-i18n="vm_title">Vérifiez votre email</h1>
 
-  <p class="vm-sub">Nous venons d'envoyer un lien de confirmation à :</p>
+  <p class="vm-sub" data-i18n="vm_sub">Nous venons d'envoyer un lien de confirmation à :</p>
   <div class="vm-email-box" id="vm-email">votre adresse email</div>
 
   <div class="vm-steps" aria-label="Étapes à suivre">
     <div class="vm-step">
       <div class="vm-step-num">1</div>
-      <div>Ouvrez votre boîte de réception (et vérifiez vos <strong>spams</strong> / courriers indésirables)</div>
+      <div data-i18n-html="vm_step1">Ouvrez votre boîte de réception (et vérifiez vos <strong>spams</strong> / courriers indésirables)</div>
     </div>
     <div class="vm-step">
       <div class="vm-step-num">2</div>
-      <div>Cliquez sur le lien <strong>"Confirmer mon compte"</strong> dans l'email de Tabibi</div>
+      <div data-i18n-html="vm_step2">Cliquez sur le lien <strong>"Confirmer mon compte"</strong> dans l'email de Tabibi</div>
     </div>
     <div class="vm-step">
       <div class="vm-step-num">3</div>
-      <div>Vous serez automatiquement connecté et redirigé vers votre tableau de bord</div>
+      <div data-i18n="vm_step3">Vous serez automatiquement connecté et redirigé vers votre tableau de bord</div>
     </div>
   </div>
 
   <div class="vm-spam-tip">
     <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
-    <strong>Pas d'email reçu ?</strong> Vérifiez vos spams. L'email peut mettre jusqu'à 5 minutes à arriver.
-    Si rien dans 10 minutes, écrivez-nous : <a href="mailto:contact@tabibi.doctor" style="color:#78350f;text-decoration:underline;font-weight:700">contact@tabibi.doctor</a>
+    <span data-i18n-html="vm_spam_tip"><strong>Pas d'email reçu ?</strong> Vérifiez vos spams. L'email peut mettre jusqu'à 5 minutes à arriver. Si rien dans 10 minutes, écrivez-nous : <a href="mailto:contact@tabibi.doctor" style="color:#78350f;text-decoration:underline;font-weight:700">contact@tabibi.doctor</a></span>
   </div>
 
   <!-- Disclaimer additionnel médecin (validation manuelle 48h après confirm email) -->
   <div class="vm-medecin-extra hidden" id="vm-medecin-extra">
     <i class="fa fa-user-doctor" style="color:#1557A0;margin-right:6px"></i>
-    <strong>Compte médecin :</strong> après confirmation de votre email, notre équipe validera
-    manuellement votre profil sous 48h (vérification N° Ordre + identité). Vous recevrez un
-    second email dès activation.
+    <span data-i18n-html="vm_medecin_extra"><strong>Compte médecin :</strong> après confirmation de votre email, notre équipe validera manuellement votre profil sous 48h (vérification N° Ordre + identité). Vous recevrez un second email dès activation.</span>
   </div>
 
   <!-- [User-requested] Précise que le bouton est un fallback -->
-  <p class="vm-login-hint">
+  <p class="vm-login-hint" data-i18n="vm_login_hint">
     Le clic sur le lien dans l'email vous connectera automatiquement. Ce bouton n'est utile que si le lien ne fonctionne pas.
   </p>
 
   <div class="vm-actions">
-    <a href="login.html" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> J'ai confirmé, me connecter</a>
-    <button type="button" id="vm-resend" class="btn btn-ghost btn-lg" onclick="resendConfirmation()"><i class='fa fa-paper-plane'></i> <span id="vm-resend-label">Renvoyer l'email de confirmation</span></button>
+    <a href="login.html" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> <span data-i18n="vm_confirmed_login">J'ai confirmé, me connecter</span></a>
+    <button type="button" id="vm-resend" class="btn btn-ghost btn-lg" onclick="resendConfirmation()"><i class='fa fa-paper-plane'></i> <span id="vm-resend-label" data-i18n="resend_confirm_email">Renvoyer l'email de confirmation</span></button>
     <span id="vm-resend-msg" role="status" aria-live="polite" style="font-size:13px;color:var(--text2);min-height:18px;display:block"></span>
-    <a href="index.html" class="btn btn-ghost btn-lg"><i class='fa fa-home'></i> Retour à l'accueil</a>
+    <a href="index.html" class="btn btn-ghost btn-lg"><i class='fa fa-home'></i> <span data-i18n="back_home">Retour à l'accueil</span></a>
   </div>
 
 </div>
@@ -199,5 +198,10 @@
 </script>
 
 </div>
+<!-- [i18n] moteur (absent de cette page à l'origine) -->
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>

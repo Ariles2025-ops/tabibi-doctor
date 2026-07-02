@@ -773,11 +773,8 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <div class="app-bar-title">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
     <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
   </div>
-  <div style="display:flex;gap:2px;background:var(--bg2);border-radius:var(--rfull);padding:2px;flex-shrink:0" role="group" aria-label="Langue">
-    <button data-lang-btn="fr" onclick="setLang('fr')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;background:var(--blue);color:#fff">FR</button>
-    <button data-lang-btn="ar" onclick="setLang('ar')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;background:transparent;color:var(--text3)">AR</button>
-    <button data-lang-btn="en" onclick="setLang('en')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;background:transparent;color:var(--text3)">EN</button>
-  </div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
   <div id="uarea-desk" style="display:flex;align-items:center;gap:6px"></div>
 </header>
 
@@ -2938,6 +2935,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 <script src="js/tabibi-cookies.js"></script>
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 <!-- [Phase 7.4] Feature flags (video/payments/notifications/reviews/analytics/sentry) -->
 <script src="js/tabibi-features.js"></script>
