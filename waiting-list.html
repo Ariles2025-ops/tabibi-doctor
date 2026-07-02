@@ -261,11 +261,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .success-state.show { display: block; }
 .success-icon {
   width: 84px; height: 84px; margin: 0 auto 20px;
-  background: linear-gradient(135deg, #2E8B57, #059669);
+  background: linear-gradient(135deg, #2E8B57, #0E5F46);
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 42px;
   animation: bounce .6s ease;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, .3);
+  box-shadow: 0 8px 24px rgba(14, 95, 70, .3);
 }
 @keyframes bounce {
   0% { transform: scale(0); }
@@ -376,11 +376,9 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
       <div class="logo-icon"><i class="fa fa-plus" aria-hidden="true"></i></div>
       <div class="logo-text">Tabibi <span class="dz-d">D</span><span class="dz-z">Z</span></div>
     </a>
-    <div class="lang-switcher" role="group" aria-label="Langue">
-      <button class="lang-btn active" data-lang="fr" onclick="setLang('fr')" aria-pressed="true">FR</button>
-      <button class="lang-btn" data-lang="ar" onclick="setLang('ar')" aria-pressed="false">AR</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')" aria-pressed="false">EN</button>
-    </div>
+    <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js
+         (route vers tabibiLang.set → tabibi:lang-change → setLang local ré-applique I18N) -->
+    <div data-langbar></div>
   </header>
 
   <!-- Hero -->
@@ -948,6 +946,8 @@ function shareFB() {
 
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>
