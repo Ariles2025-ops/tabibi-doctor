@@ -1506,6 +1506,21 @@
     'Aucun rendez-vous': { ar: 'لا مواعيد', en: 'No appointments' },
     'Réservez votre premier RDV maintenant': { ar: 'احجز موعدك الأول الآن', en: 'Book your first appointment now' },
 
+    // ─── [GABARIT AUTH 2026] email-verified — textes libres (statiques + injectés JS) ───
+    'Vérification en cours...': { ar: 'جارٍ التحقّق...', en: 'Verifying...' },
+    'Validation de votre lien email.': { ar: 'جارٍ التحقّق من رابط بريدك الإلكتروني.', en: 'Validating your email link.' },
+    'Email vérifié !': { ar: 'تمّ التحقّق من البريد الإلكتروني!', en: 'Email verified!' },
+    'Votre compte est maintenant actif.': { ar: 'حسابك الآن مفعَّل.', en: 'Your account is now active.' },
+    'Bienvenue sur Tabibi. Vous pouvez vous connecter et commencer à prendre des RDV.': { ar: 'مرحبًا بك في طبيبي. يمكنك تسجيل الدخول والبدء في حجز المواعيد.', en: 'Welcome to Tabibi. You can log in and start booking appointments.' },
+    'Lien invalide': { ar: 'رابط غير صالح', en: 'Invalid link' },
+    'Lien expiré': { ar: 'انتهت صلاحية الرابط', en: 'Link expired' },
+    'Le lien a expire ou a deja ete utilise.': { ar: 'انتهت صلاحية الرابط أو سبق استخدامه.', en: 'The link has expired or was already used.' },
+    '← Retour connexion': { ar: '→ العودة إلى تسجيل الدخول', en: '← Back to login' },
+    'Retour connexion': { ar: 'العودة إلى تسجيل الدخول', en: 'Back to login' },
+    'Renvoyer un lien': { ar: 'إعادة إرسال الرابط', en: 'Resend a link' },
+    'Client non charge.': { ar: 'لم يتمّ تحميل العميل.', en: 'Client not loaded.' },
+    'Erreur inattendue': { ar: 'خطأ غير متوقّع', en: 'Unexpected error' },
+
     // ─── [PILOTE i18n 2026] messages + verify-email — textes libres générés en JS ───
     'Aucune conversation': { ar: 'لا توجد محادثات', en: 'No conversations' },
     'Vos échanges avec vos médecins apparaîtront ici.': { ar: 'ستظهر محادثاتك مع أطبائك هنا.', en: 'Your conversations with your doctors will appear here.' },
