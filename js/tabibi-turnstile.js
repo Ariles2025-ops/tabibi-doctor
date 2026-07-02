@@ -247,7 +247,6 @@
       await loadTurnstileScript();
       if (!_execContainer) {
         _execContainer = document.createElement('div');
-        _execContainer.style.display = 'none';
         document.body.appendChild(_execContainer);
       }
       return await new Promise((resolve) => {
@@ -255,7 +254,7 @@
         if (_execWidgetId === null) {
           _execWidgetId = window.turnstile.render(_execContainer, {
             sitekey: TURNSTILE_CONFIG.siteKey,
-            size: 'invisible',
+            appearance: 'interaction-only',
             callback: _execResolveOnce,
             'error-callback': () => _execResolveOnce(undefined),
             'expired-callback': () => _execResolveOnce(undefined)
