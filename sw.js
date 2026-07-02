@@ -24,7 +24,7 @@
 // `navigator.serviceWorker.register('/sw.js')` nulle part). Nouveaux
 // précaches : tabibi-features.js, tabibi-analytics.js, tabibi-sw-register.js,
 // payment.html, notifications.html.
-const CACHE_VERSION = 'tabibi-v29-2026-06-30';
+const CACHE_VERSION = 'tabibi-v30-2026-07-02';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -80,10 +80,10 @@ self.addEventListener('fetch', event => {
     event.respondWith(networkFirst(req));
     return;
   }
-  if (url.pathname.endsWith('/tabibi-i18n.js') || url.pathname.endsWith('tabibi-i18n.js')) {
-    event.respondWith(networkFirst(req));
-    return;
-  }
+  // Fichiers pilotés à chaud (dictionnaire i18n, feature flags) : toujours
+  // networkFirst — le précache/cacheFirst les gelait jusqu'au bump de version.
+  const NETWORK_FIRST_JS = ['tabibi-i18n.js', 'tabibi-features.js'];
+  if (NETWORK_FIRST_JS.some(f => url.pathname.endsWith(f))) { event.respondWith(networkFirst(req)); return; }
   if (/\.(css|js|png|jpg|jpeg|gif|webp|svg|woff2?|ttf|ico)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(req));
     return;
