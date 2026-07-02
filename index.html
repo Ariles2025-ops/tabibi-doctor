@@ -2448,7 +2448,7 @@ function animateCounters(total){if(!total)return;const targets=[document.getElem
 //   `consultation_fee_dzd`, `rating`, `is_urgent`, `gender` ne sont pas
 //   ajoutées à la vue. Tracked SQL_TODO TODO-SQL-004/005/006.
 //
-// Compteur via Prefer: count=exact + parsing header Content-Range "0-19/<TOTAL>".
+// Compteur via Prefer: count=estimated + parsing header Content-Range "0-19/<TOTAL>".
 // N'écrit JAMAIS sur hero-doc-count / stats-doc-count / foot-doc-count
 // (réservés exclusivement à animateCounters via fetchDoctorCount).
 // AbortController : annule un fetch en cours si l'utilisateur retape vite.
@@ -2589,7 +2589,7 @@ async function loadDoctorCards(opts, page){
       headers: {
         'apikey':       _SB_KEY,
         'Authorization':'Bearer ' + _SB_KEY,
-        'Prefer':       'count=exact',
+        'Prefer':       'count=estimated',
         'Range-Unit':   'items',
         'Range':        ((page-1)*PER) + '-' + (page*PER - 1)
       },
@@ -2770,20 +2770,20 @@ window.TABIBI_STATS = { indexed: 0, listed: 0, certified: 0, claimed: 0 };
 
 async function _loadTabibiStats() {
   var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || _SB_URL;
-  var _h = { apikey: _SB_KEY, Authorization: 'Bearer ' + _SB_KEY, Prefer: 'count=exact' };
+  var _h = { apikey: _SB_KEY, Authorization: 'Bearer ' + _SB_KEY, Prefer: 'count=estimated' };
   var _cnt = function(path) {
     return fetch(_url + '/rest/v1/' + path + (path.indexOf('?') < 0 ? '?' : '&') + 'select=id&limit=1', { headers: _h })
       .then(function(r){ return r.ok ? (parseInt((r.headers.get('content-range') || '/0').split('/')[1], 10) || 0) : 0; })
       .catch(function(){ return 0; });
   };
   try {
+    // [PERF 57014] count=estimated + 2 COUNT seulement : listed (vue inexistante
+    // post-rollback 16.5) et claimed (jamais affiché) supprimés.
     var r = await Promise.all([
       _cnt('public_doctors'),                               // indexed (référencés)
-      _cnt('public_doctors_listed'),                        // listed (fiches publiables)
-      _cnt('public_doctors?validation_status=eq.approved'), // certified (validées)
-      _cnt('public_doctors?is_claimed=eq.true')             // claimed (réclamées)
+      _cnt('public_doctors?validation_status=eq.approved')  // certified (validées)
     ]);
-    window.TABIBI_STATS = { indexed: r[0], listed: r[1], certified: r[2], claimed: r[3] };
+    window.TABIBI_STATS = { indexed: r[0], certified: r[1], listed: 0, claimed: 0 };
   } catch (e) { /* garde les valeurs courantes */ }
   _updateDocCounterUI();
 }
