@@ -348,6 +348,11 @@ function suBackToForm(e){ if(e) e.preventDefault(); var o=document.getElementByI
 async function suResendOtp(e){
   if(e) e.preventDefault();
   if(!_pendingSignup){ suBackToForm(); return; }
+  // Même bucket que l'envoi initial (doSignup, "otp:"+phone) : 5 SMS max / 60s.
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + _pendingSignup.phone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
   try{
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
     // resend({type:"sms"}) = renvoyer l'OTP de confirmation du signUp.

@@ -295,6 +295,11 @@ async function resetSendOtp(e){
 async function resetResendOtp(e){
   if (e) e.preventDefault();
   if (!_resetPhone) { showScreen("reset"); return; }
+  // Même bucket que l'envoi initial (resetSendOtp, "otp:"+phone) : 5 SMS max / 60s.
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + _resetPhone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
   try {
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
     var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: _resetPhone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
