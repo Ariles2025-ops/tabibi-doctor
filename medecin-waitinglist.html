@@ -23,9 +23,6 @@
 <style>
   body { background: #f8fafc; min-height:100vh; font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
   .wrap { max-width: 920px; margin: 0 auto; padding: 32px 16px; }
-  .lang-bar { display:flex; gap:6px; justify-content:flex-end; margin-bottom: 18px; }
-  .lang-btn { background:#fff; border:1px solid #e2e8f0; padding:6px 12px; border-radius:8px; cursor:pointer; font-size:12px; font-weight:600; }
-  .lang-btn.active { background:#0E5F46; color:#fff; border-color:#0E5F46; }
   .hero { background: linear-gradient(135deg, #0E5F46 0%, #0a5a4a 100%); color:#fff; border-radius:20px; padding: 44px 32px; margin-bottom:24px; text-align:center; box-shadow: 0 16px 48px rgba(15,117,96,0.18); }
   .hero h1 { font-size: 30px; font-weight: 800; margin: 0 0 12px; line-height: 1.2; }
   .hero p { font-size: 16px; margin: 0; opacity: 0.95; }
@@ -57,48 +54,46 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="lang-bar">
-    <button class="lang-btn active" data-lang="fr">Français</button>
-    <button class="lang-btn" data-lang="ar">العربية</button>
-  </div>
+  <!-- [i18n] sélecteur de langue factorisé (FR/AR/EN) -->
+  <div style="display:flex;justify-content:flex-end;margin-bottom:18px"><div data-langbar></div></div>
 
   <section class="hero">
-    <h1 id="h-title">Réservez votre profil Tabibi avant le grand public</h1>
-    <p id="h-sub">Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 7 septembre 2026. Inscrivez-vous maintenant et bénéficiez d'avantages réservés aux pionniers.</p>
+    <h1 id="h-title" data-i18n="mwl_h_title">Réservez votre profil Tabibi avant le grand public</h1>
+    <p id="h-sub" data-i18n="mwl_h_sub">Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 7 septembre 2026. Inscrivez-vous maintenant et bénéficiez d'avantages réservés aux pionniers.</p>
     <div class="badges">
-      <span class="badge"><i class="fa fa-gift"></i> <span id="b1">3 mois Pro gratuits</span></span>
-      <span class="badge"><i class="fa fa-handshake"></i> <span id="b2">Démo offerte en cabinet</span></span>
-      <span class="badge"><i class="fa fa-shield-halved"></i> <span id="b3">Hébergement Algérie</span></span>
+      <span class="badge"><i class="fa fa-gift"></i> <span id="b1" data-i18n="mwl_b1">3 mois Pro gratuits</span></span>
+      <span class="badge"><i class="fa fa-handshake"></i> <span id="b2" data-i18n="mwl_b2">Démo offerte en cabinet</span></span>
+      <span class="badge"><i class="fa fa-shield-halved"></i> <span id="b3" data-i18n="mwl_b3">Hébergement Algérie</span></span>
     </div>
   </section>
 
   <div class="grid">
     <div class="card">
-      <h2 id="why-title">Pourquoi rejoindre tôt ?</h2>
+      <h2 id="why-title" data-i18n="mwl_why_title">Pourquoi rejoindre tôt ?</h2>
       <ul class="benefits" style="list-style:none;padding:0;margin:0">
-        <li><i class="fa fa-check-circle"></i> <span id="why1"><strong>Profil prioritaire</strong> dans les résultats de recherche de votre spécialité</span></li>
-        <li><i class="fa fa-check-circle"></i> <span id="why2"><strong>3 mois Pro offerts</strong> dès le lancement</span></li>
-        <li><i class="fa fa-check-circle"></i> <span id="why3"><strong>Démo en cabinet</strong> par notre équipe terrain (Alger d'abord)</span></li>
-        <li><i class="fa fa-check-circle"></i> <span id="why4"><strong>Onboarding personnalisé</strong> de votre fiche, horaires, tarifs</span></li>
-        <li><i class="fa fa-check-circle"></i> <span id="why5"><strong>Tarif Pro stabilisé</strong> au prix de lancement pendant 1 an</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why1" data-i18n-html="mwl_why1"><strong>Profil prioritaire</strong> dans les résultats de recherche de votre spécialité</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why2" data-i18n-html="mwl_why2"><strong>3 mois Pro offerts</strong> dès le lancement</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why3" data-i18n-html="mwl_why3"><strong>Démo en cabinet</strong> par notre équipe terrain (Alger d'abord)</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why4" data-i18n-html="mwl_why4"><strong>Onboarding personnalisé</strong> de votre fiche, horaires, tarifs</span></li>
+        <li><i class="fa fa-check-circle"></i> <span id="why5" data-i18n-html="mwl_why5"><strong>Tarif Pro stabilisé</strong> au prix de lancement pendant 1 an</span></li>
       </ul>
     </div>
 
     <div class="card">
-      <h2 id="form-title">Je réserve ma place</h2>
+      <h2 id="form-title" data-i18n="mwl_form_title">Je réserve ma place</h2>
       <form id="wl-form" novalidate>
         <div class="form-group">
-          <label class="form-label" for="f_email" id="l_email">Email professionnel</label>
+          <label class="form-label" for="f_email" id="l_email" data-i18n="mwl_l_email">Email professionnel</label>
           <input class="form-control" id="f_email" type="email" required autocomplete="email" placeholder="vous@cabinet.dz">
         </div>
         <div class="form-group">
-          <label class="form-label" for="f_phone" id="l_phone">Téléphone (optionnel)</label>
+          <label class="form-label" for="f_phone" id="l_phone" data-i18n="mwl_l_phone">Téléphone (optionnel)</label>
           <input class="form-control" id="f_phone" type="tel" autocomplete="tel" placeholder="+213 5xx xx xx xx">
         </div>
         <div class="form-group">
-          <label class="form-label" for="f_spec" id="l_spec">Spécialité</label>
+          <label class="form-label" for="f_spec" id="l_spec" data-i18n="mwl_l_spec">Spécialité</label>
           <select class="form-control" id="f_spec" required>
-            <option value="">-- Choisir --</option>
+            <option value="" data-i18n="mwl_select_choose">-- Choisir --</option>
             <option value="generaliste">Médecine générale</option>
             <option value="cardiologie">Cardiologie</option>
             <option value="dentisterie">Dentisterie</option>
@@ -116,13 +111,13 @@
             <option value="chirurgie">Chirurgie</option>
             <option value="laboratoire">Laboratoire d'analyse</option>
             <option value="pharmacie">Pharmacie</option>
-            <option value="autre">Autre</option>
+            <option value="autre" data-i18n="mwl_spec_other">Autre</option>
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label" for="f_wilaya" id="l_wilaya">Wilaya d'exercice</label>
+          <label class="form-label" for="f_wilaya" id="l_wilaya" data-i18n="mwl_l_wilaya">Wilaya d'exercice</label>
           <select class="form-control" id="f_wilaya" required>
-            <option value="">-- Choisir --</option>
+            <option value="" data-i18n="mwl_select_choose">-- Choisir --</option>
             <option value="16">Alger</option>
             <option value="31">Oran</option>
             <option value="25">Constantine</option>
@@ -134,15 +129,15 @@
             <option value="6">Béjaïa</option>
             <option value="15">Tizi Ouzou</option>
             <option value="34">Bordj Bou Arreridj</option>
-            <option value="autre">Autre wilaya</option>
+            <option value="autre" data-i18n="mwl_wilaya_other">Autre wilaya</option>
           </select>
         </div>
         <label class="check-row">
           <input type="checkbox" id="f_consent" required>
-          <span id="l_consent">J'accepte que Tabibi me contacte une seule fois pour confirmer mon inscription. Aucun message commercial avant le lancement officiel.</span>
+          <span id="l_consent" data-i18n="mwl_l_consent">J'accepte que Tabibi me contacte une seule fois pour confirmer mon inscription. Aucun message commercial avant le lancement officiel.</span>
         </label>
         <button class="btn-primary" type="submit" id="submit-btn" style="margin-top:8px">
-          <i class="fa fa-paper-plane"></i> <span id="btn-txt">Réserver ma place</span>
+          <i class="fa fa-paper-plane"></i> <span id="btn-txt" data-i18n="mwl_btn_txt">Réserver ma place</span>
         </button>
         <div class="msg-ok" id="msg-ok"></div>
         <div class="msg-err" id="msg-err"></div>
@@ -150,8 +145,8 @@
 
       <div id="thank-you" style="display:none;text-align:center;padding:20px 0">
         <div style="font-size:48px;color:#2E8B57;margin-bottom:12px">✓</div>
-        <h2 style="margin:0 0 8px" id="ty-title">C'est noté !</h2>
-        <p style="font-size:14px;color:#475569;margin:0 0 16px" id="ty-sub">Vous figurez dans la liste prioritaire. Nous vous contactons en août pour caler la démo en cabinet.</p>
+        <h2 style="margin:0 0 8px" id="ty-title" data-i18n="mwl_ty_title">C'est noté !</h2>
+        <p style="font-size:14px;color:#475569;margin:0 0 16px" id="ty-sub" data-i18n="mwl_ty_sub">Vous figurez dans la liste prioritaire. Nous vous contactons en août pour caler la démo en cabinet.</p>
         <div class="share">
           <a href="#" id="sh-wa" target="_blank" rel="noopener"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>
           <a href="#" id="sh-fb" target="_blank" rel="noopener"><i class="fa-brands fa-facebook-f"></i> Facebook</a>
@@ -162,98 +157,18 @@
   </div>
 
   <div class="footer">
-    <p>Tabibi — La santé à portée de clic.<br>
-    <a href="legal/confidentialite.html">Politique de confidentialité</a> ·
-    <a href="legal/cgu.html">CGU</a> ·
-    <a href="legal/mentions-legales.html">Mentions légales</a></p>
+    <p><span data-i18n="pwl_footer_tagline">Tabibi — La santé à portée de clic.</span><br>
+    <a href="legal/confidentialite.html" data-i18n="pwl_footer_privacy">Politique de confidentialité</a> ·
+    <a href="legal/cgu.html" data-i18n="pwl_footer_cgu">CGU</a> ·
+    <a href="legal/mentions-legales.html" data-i18n="pwl_footer_legal">Mentions légales</a></p>
   </div>
 </div>
 
 <script>
-// ---- Mini i18n local FR/AR ----
-var I18N = {
-  fr: {
-    h_title:"Réservez votre profil Tabibi avant le grand public",
-    h_sub:"Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 7 septembre 2026. Inscrivez-vous maintenant et bénéficiez d'avantages réservés aux pionniers.",
-    b1:"3 mois Pro gratuits", b2:"Démo offerte en cabinet", b3:"Hébergement Algérie",
-    why_title:"Pourquoi rejoindre tôt ?",
-    why1:"<strong>Profil prioritaire</strong> dans les résultats de recherche de votre spécialité",
-    why2:"<strong>3 mois Pro offerts</strong> dès le lancement",
-    why3:"<strong>Démo en cabinet</strong> par notre équipe terrain (Alger d'abord)",
-    why4:"<strong>Onboarding personnalisé</strong> de votre fiche, horaires, tarifs",
-    why5:"<strong>Tarif Pro stabilisé</strong> au prix de lancement pendant 1 an",
-    form_title:"Je réserve ma place",
-    l_email:"Email professionnel", l_phone:"Téléphone (optionnel)",
-    l_spec:"Spécialité", l_wilaya:"Wilaya d'exercice",
-    l_consent:"J'accepte que Tabibi me contacte une seule fois pour confirmer mon inscription. Aucun message commercial avant le lancement officiel.",
-    btn_txt:"Réserver ma place",
-    ty_title:"C'est noté !",
-    ty_sub:"Vous figurez dans la liste prioritaire. Nous vous contactons en août pour caler la démo en cabinet.",
-    err_invalid:"Veuillez verifier vos informations.",
-    err_email:"Email invalide.",
-    err_consent:"Merci d'accepter le consentement.",
-    err_dup:"Merci, votre inscription a deja ete prise en compte.",
-    err_server:"Erreur reseau. Reessayez."
-  },
-  ar: {
-    h_title:"احجز ملفك على طبيبي قبل الافتتاح العام",
-    h_sub:"طبيبي، منصة جزائرية لحجز المواعيد الطبية عبر الإنترنت، تفتح أبوابها للأطباء في 7 سبتمبر 2026. سجل الآن واستفد من امتيازات حصرية للرواد.",
-    b1:"3 أشهر Pro مجاناً", b2:"عرض توضيحي مجاني في العيادة", b3:"استضافة في الجزائر",
-    why_title:"لماذا الانضمام مبكراً؟",
-    why1:"<strong>أولوية الظهور</strong> في نتائج البحث لتخصصكم",
-    why2:"<strong>3 أشهر Pro مجاناً</strong> منذ الافتتاح (بقيمة 13 500 د.ج)",
-    why3:"<strong>عرض في العيادة</strong> من فريقنا الميداني (الجزائر العاصمة أولاً)",
-    why4:"<strong>تخصيص الملف</strong> بياناتكم، أوقاتكم، أسعاركم",
-    why5:"<strong>تثبيت سعر Pro</strong> بسعر الافتتاح لمدة عام كامل",
-    form_title:"أحجز مكاني",
-    l_email:"البريد المهني", l_phone:"الهاتف (اختياري)",
-    l_spec:"التخصص", l_wilaya:"ولاية الممارسة",
-    l_consent:"أوافق أن يتواصل معي طبيبي مرة واحدة لتأكيد التسجيل. لا رسائل تجارية قبل الافتتاح الرسمي.",
-    btn_txt:"حجز مكاني",
-    ty_title:"تم التسجيل !",
-    ty_sub:"اسمكم على القائمة ذات الأولوية. سنتصل بكم في أوت لترتيب العرض في العيادة.",
-    err_invalid:"يرجى التحقق من معلوماتكم.",
-    err_email:"البريد الإلكتروني غير صالح.",
-    err_consent:"يرجى الموافقة على شروط التواصل.",
-    err_dup:"شكراً، تسجيلكم تم استلامه مسبقاً.",
-    err_server:"خطأ في الشبكة. أعد المحاولة."
-  }
-};
-
-function applyLang(lang) {
-  var t = I18N[lang] || I18N.fr;
-  document.documentElement.lang = lang;
-  document.body.dir = (lang === 'ar') ? 'rtl' : 'ltr';
-  var bind = {
-    'h-title':'h_title','h-sub':'h_sub','b1':'b1','b2':'b2','b3':'b3',
-    'why-title':'why_title','why1':'why1','why2':'why2','why3':'why3','why4':'why4','why5':'why5',
-    'form-title':'form_title','l_email':'l_email','l_phone':'l_phone','l_spec':'l_spec','l_wilaya':'l_wilaya',
-    'l_consent':'l_consent','btn-txt':'btn_txt','ty-title':'ty_title','ty-sub':'ty_sub'
-  };
-  Object.keys(bind).forEach(function(id){
-    var el = document.getElementById(id);
-    if (el) el.innerHTML = t[bind[id]];
-  });
-  try { localStorage.setItem('tabibi_lang', lang); } catch(e){}
-}
-
-document.querySelectorAll('.lang-btn').forEach(function(b){
-  b.addEventListener('click', function(){
-    document.querySelectorAll('.lang-btn').forEach(function(x){x.classList.remove('active');});
-    b.classList.add('active');
-    applyLang(b.dataset.lang);
-  });
-});
-
-// Init langue
-try {
-  var saved = localStorage.getItem('tabibi_lang');
-  if (saved && (saved === 'fr' || saved === 'ar')) {
-    document.querySelector('[data-lang="'+saved+'"]').click();
-  } else if ((navigator.language || '').toLowerCase().startsWith('ar')) {
-    document.querySelector('[data-lang="ar"]').click();
-  }
-} catch(e){}
+// [CONFORMITE 2026] i18n via moteur partagé (data-i18n + dico mwl_*/pwl_*, langbar
+// factorisé FR/AR/EN). Ancien système bespoke (I18N + applyLang + boutons FR/AR)
+// retiré ; ajoute l'anglais, unifie tabibi_lang, RTL géré par le moteur.
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 
 // ---- Tracking UTM ----
 function getUtm() {
@@ -269,8 +184,7 @@ function getUtm() {
 // ---- Submit ----
 document.getElementById('wl-form').addEventListener('submit', async function(e){
   e.preventDefault();
-  var lang = document.documentElement.lang === 'ar' ? 'ar' : 'fr';
-  var t = I18N[lang];
+  var lang = (window.tabibiLang && window.tabibiLang.get()) || 'fr';
   var ok = document.getElementById('msg-ok');
   var err = document.getElementById('msg-err');
   ok.style.display = 'none';
@@ -283,13 +197,13 @@ document.getElementById('wl-form').addEventListener('submit', async function(e){
   var consent = document.getElementById('f_consent').checked;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    err.textContent = t.err_email; err.style.display = 'block'; return;
+    err.textContent = _t('pwl_err_email','Email invalide.'); err.style.display = 'block'; return;
   }
   if (!spec || !wilaya) {
-    err.textContent = t.err_invalid; err.style.display = 'block'; return;
+    err.textContent = _t('mwl_err_invalid','Veuillez verifier vos informations.'); err.style.display = 'block'; return;
   }
   if (!consent) {
-    err.textContent = t.err_consent; err.style.display = 'block'; return;
+    err.textContent = _t('pwl_err_consent',"Merci d'accepter le consentement."); err.style.display = 'block'; return;
   }
 
   var btn = document.getElementById('submit-btn');
@@ -319,9 +233,9 @@ document.getElementById('wl-form').addEventListener('submit', async function(e){
     var r = await sb.from('waiting_list').insert(payload);
     if (r.error) {
       if (r.error.code === '23505' || (r.error.message || '').includes('duplicate')) {
-        err.textContent = t.err_dup;
+        err.textContent = _t('pwl_err_dup','Merci, votre inscription a deja ete prise en compte.');
       } else {
-        err.textContent = t.err_server;
+        err.textContent = _t('pwl_err_server','Erreur reseau. Reessayez.');
         if (window.Sentry) window.Sentry.captureException(r.error);
       }
       err.style.display = 'block';
@@ -335,13 +249,13 @@ document.getElementById('wl-form').addEventListener('submit', async function(e){
     ty.style.display = 'block';
     // Share links
     var shareUrl = encodeURIComponent('https://tabibi.doctor/medecin-waitinglist.html');
-    var shareText = encodeURIComponent(lang === 'ar' ? 'احجز ملف طبيبي قبل الافتتاح ✨' : 'Réservez votre profil Tabibi avant le grand public ✨');
+    var shareText = encodeURIComponent(_t('mwl_share_text','Réservez votre profil Tabibi avant le grand public ✨'));
     document.getElementById('sh-wa').href = 'https://wa.me/?text=' + shareText + '%20' + shareUrl;
     document.getElementById('sh-fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + shareUrl;
     document.getElementById('sh-tw').href = 'https://twitter.com/intent/tweet?text=' + shareText + '&url=' + shareUrl;
   } catch (e2) {
     console.error('[waitinglist] submit', e2);
-    err.textContent = t.err_server;
+    err.textContent = _t('pwl_err_server','Erreur reseau. Reessayez.');
     err.style.display = 'block';
     if (window.Sentry) window.Sentry.captureException(e2);
     btn.disabled = false;
@@ -353,6 +267,10 @@ document.getElementById('wl-form').addEventListener('submit', async function(e){
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
+<!-- [i18n] moteur de langue partagé + langbar factorisé -->
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>
