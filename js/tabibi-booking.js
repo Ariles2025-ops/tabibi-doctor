@@ -243,15 +243,16 @@
       dateIso = _isoDateAlgiers(new Date(date));
     }
     try {
-      // [Phase 5.2.1 review POINT 1] Noms params alignés sur la RPC prod
-      // déployée en commit 79a66a0 (doctor_id, target_date, slot_duration),
-      // PAS sur mon SQL `PHASE5_1bis_get_available_slots_rpc.sql` qui utilise
-      // les préfixes p_* (à hotpatcher pour cohérence — TODO Phase 5.2.5).
+      // [FIX 2026-07-03] Params réalignés sur la RPC réellement en prod : la
+      // version p_* (PHASE5_1bis) a remplacé l'ancienne signature 79a66a0 →
+      // l'appel (doctor_id, target_date, slot_duration) 404ait (PGRST202) et
+      // AUCUN créneau ne chargeait, pour aucun médecin. Vérifié par appel
+      // direct anon : p_doctor_id/p_date/p_slot_duration_min → HTTP 200.
       var r = await _withTimeout(
         s.rpc('get_available_slots', {
-          doctor_id:     doctorId,
-          target_date:   dateIso,
-          slot_duration: dur
+          p_doctor_id:         doctorId,
+          p_date:              dateIso,
+          p_slot_duration_min: dur
         }),
         8000,
         'get_available_slots'
