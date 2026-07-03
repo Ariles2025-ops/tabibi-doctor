@@ -1803,6 +1803,20 @@
     'Aucun rendez-vous': { ar: 'لا مواعيد', en: 'No appointments' },
     'Réservez votre premier RDV maintenant': { ar: 'احجز موعدك الأول الآن', en: 'Book your first appointment now' },
 
+    // ─── [CONFORMITE 2026] reservation — erreurs tabibi-booking (ERR_MSG_FR) injectées en JS ───
+    'Connexion requise pour confirmer le RDV.': { ar: 'تسجيل الدخول مطلوب لتأكيد الموعد.', en: 'Login required to confirm the appointment.' },
+    'Session expirée, reconnectez-vous puis réessayez.': { ar: 'انتهت الجلسة، سجّل الدخول ثم أعد المحاولة.', en: 'Session expired, log in again then retry.' },
+    'Données invalides. Vérifiez date et créneau.': { ar: 'بيانات غير صالحة. تحقّق من التاريخ والموعد.', en: 'Invalid data. Check the date and slot.' },
+    'Indiquez un motif de consultation.': { ar: 'حدّد سبب الاستشارة.', en: 'Provide a reason for the visit.' },
+    "Ce médecin n'accepte pas encore les RDV en ligne.": { ar: 'هذا الطبيب لا يقبل المواعيد عبر الإنترنت بعد.', en: 'This doctor does not accept online appointments yet.' },
+    "Ce créneau n'est plus disponible. Choisissez-en un autre.": { ar: 'هذا الموعد لم يعد متاحًا. اختر موعدًا آخر.', en: 'This slot is no longer available. Choose another one.' },
+    'RDV introuvable. Il a peut-être déjà été annulé.': { ar: 'الموعد غير موجود. ربما أُلغي من قبل.', en: 'Appointment not found. It may have already been cancelled.' },
+    'Action non autorisée.': { ar: 'إجراء غير مصرَّح به.', en: 'Action not allowed.' },
+    'Erreur réseau. Vérifiez votre connexion.': { ar: 'خطأ في الشبكة. تحقّق من اتصالك.', en: 'Network error. Check your connection.' },
+    'Délai dépassé. Réessayez dans un instant.': { ar: 'انتهت المهلة. أعد المحاولة بعد لحظات.', en: 'Timed out. Try again in a moment.' },
+    'Trop de demandes. Patientez quelques secondes.': { ar: 'طلبات كثيرة جدًا. انتظر بضع ثوانٍ.', en: 'Too many requests. Wait a few seconds.' },
+    'Erreur inattendue. Détails dans la console (F12).': { ar: 'خطأ غير متوقّع. التفاصيل في وحدة التحكّم (F12).', en: 'Unexpected error. Details in the console (F12).' },
+
     // ─── [CONFORMITE 2026] teleconsultation — messages d'état injectés en JS ───
     'Connexion en cours...': { ar: 'جارٍ الاتصال...', en: 'Connecting...' },
     "Impossible d'enregistrer votre choix.": { ar: 'تعذّر حفظ اختيارك.', en: 'Unable to save your choice.' },

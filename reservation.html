@@ -70,6 +70,8 @@
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
   <div class="app-bar-body"><div class="app-bar-title" data-i18n="confirm_rdv">Confirmer le RDV</div></div>
   <div id="uarea-desk"></div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 
 <!-- STEP INDICATOR — [Phase 5.2.3] passé de 3 à 4 steps (Date+Slot ajouté) -->
@@ -215,6 +217,11 @@
 // ── i18n helper (clés explicites, fallback FR ; tabibiT vient de tabibi-i18n.js) ──
 function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 
+// [FIX 2026-07-03] getParam vivait dans scripts/app.js, retiré Phase 16.5 →
+// ReferenceError à l'éval : TOUT le script mourait (calendrier/wizard jamais
+// rendus). Défini localement, même pattern que index/payment/verify-email.
+function getParam(k){ try { return new URLSearchParams(window.location.search).get(k) || ""; } catch(e){ return ""; } }
+
 // ── State ───────────────────────────────────────────────────────────────
 var doctorId    = getParam("doctor_id") || "";
 var doctorName  = decodeURIComponent(getParam("doctor_name") || "");
@@ -241,6 +248,12 @@ function _isAr(){
   try { return (localStorage.getItem('tabibi_lang') || document.documentElement.lang) === 'ar'; } catch(e){}
   return document.documentElement.dir === 'rtl';
 }
+function _isEn(){
+  try { return (localStorage.getItem('tabibi_lang') || document.documentElement.lang) === 'en'; } catch(e){}
+  return false;
+}
+// [I18N-RES] locale d'affichage dates pour les branches non-arabes (mandat : locale par langue)
+function _dateLocale(){ return _isEn() ? 'en-GB' : 'fr-FR'; }
 function _isoDay(d){ return _DF_ALGIERS.format(d); }
 function _todayIso(){ return _isoDay(new Date()); }
 function _addDaysIso(iso, n){
@@ -260,14 +273,14 @@ function _formatDayFr(iso){
     var mi  = parseInt(_MF_ALGIERS.format(d), 10) - 1;
     return wd + ' ' + day + ' ' + _AR_MONTHS[mi] + ' ' + _YF_ALGIERS.format(d);
   }
-  return new Intl.DateTimeFormat('fr-FR', {
+  return new Intl.DateTimeFormat(_dateLocale(), {
     weekday:'short', day:'numeric', month:'long', year:'numeric',
     timeZone:'Africa/Algiers'
   }).format(d);
 }
 function _formatTimeFr(isoTs){
   // ISO timestamptz → 'HH:MM' Algiers
-  return new Intl.DateTimeFormat('fr-FR', {
+  return new Intl.DateTimeFormat(_dateLocale(), {
     hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Africa/Algiers'
   }).format(new Date(isoTs));
 }
@@ -305,7 +318,7 @@ function _monthLabel(d){
     var mi = parseInt(_MF_ALGIERS.format(d), 10) - 1;
     return _AR_MONTHS[mi] + ' ' + _YF_ALGIERS.format(d);
   }
-  return new Intl.DateTimeFormat('fr-FR', {
+  return new Intl.DateTimeFormat(_dateLocale(), {
     month:'long', year:'numeric', timeZone:'Africa/Algiers'
   }).format(d);
 }
@@ -586,7 +599,15 @@ function init(){
 
   renderDoctorSummary();
   renderCalendar();
-  document.getElementById("pay-methods").innerHTML = renderPayMethods("cash");
+  // [FIX 2026-07-03] renderPayMethods vient de scripts/payments.js — 404 en prod
+  // (scripts/ est export-ignore au deploy) : l'appel non gardé crashait init() à
+  // mi-course (renderUserUI/initTabBar/hideLoading jamais exécutés). Gardé par
+  // typeof ; le paiement reste "cash" par défaut (bug payments.js signalé à part).
+  if (typeof renderPayMethods === 'function') {
+    document.getElementById("pay-methods").innerHTML = renderPayMethods("cash");
+  } else {
+    console.warn('[reservation] renderPayMethods absent (scripts/payments.js 404) — paiement par défaut : cash');
+  }
   window._pay = "cash";
 
   if(typeof renderUserUI === 'function') renderUserUI();
@@ -630,6 +651,8 @@ document.addEventListener('tabibi:lang-change', function(){
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>
