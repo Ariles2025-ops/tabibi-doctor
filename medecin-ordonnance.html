@@ -98,8 +98,8 @@
   .alert-info { background: var(--color-primary-light); color: var(--color-primary-hover); border-left: 3px solid var(--color-primary); }
   .alert-warn { background: var(--color-warning-light); color: var(--color-warning-on); border-left: 3px solid var(--color-warning); }
 
-  body[dir="rtl"] .preview-paper .ph-head { flex-direction: row-reverse; }
-  body[dir="rtl"] .topbar { flex-direction: row-reverse; }
+  html[dir="rtl"] .preview-paper .ph-head { flex-direction: row-reverse; }
+  html[dir="rtl"] .topbar { flex-direction: row-reverse; }
 </style>
 </head>
 <body>
@@ -110,11 +110,9 @@
     <img src="images/logo-mark.svg" alt="Tabibi">
     <b>Tabibi</b>
   </a>
-  <h1 id="t-pagetitle">Nouvelle ordonnance medicale</h1>
-  <div class="lang-bar">
-    <button class="lang-btn active" data-lang="fr">FR</button>
-    <button class="lang-btn" data-lang="ar">العربية</button>
-  </div>
+  <h1 id="t-pagetitle" data-i18n="mo_pagetitle">Nouvelle ordonnance medicale</h1>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js (remplace la lang-bar locale FR/AR) -->
+  <div data-langbar></div>
 </div>
 
 <main id="main" class="wrap" role="main">
@@ -122,46 +120,46 @@
   <div>
 
     <div class="card">
-      <h2><i class="fa fa-user-injured"></i> <span id="t-patient">Patient</span></h2>
+      <h2><i class="fa fa-user-injured"></i> <span id="t-patient" data-i18n="mo_patient">Patient</span></h2>
       <div id="patient-display" class="alert alert-info" style="display:none">
         <strong id="patient-name"></strong>
         <span style="float:right;font-size:11px;color:var(--text3)" id="patient-meta"></span>
       </div>
       <div class="field" id="patient-picker-wrap">
-        <label for="f_patient_id" id="l-patient">UUID Patient (provisoire — picker a venir)</label>
+        <label for="f_patient_id" id="l-patient" data-i18n="mo_patient_uuid_label">UUID Patient (provisoire — picker a venir)</label>
         <input id="f_patient_id" type="text" placeholder="ex: 00000000-0000-0000-0000-000000000000" autocomplete="off">
       </div>
       <div class="field">
-        <label for="f_appointment_id" id="l-appt">UUID Rendez-vous (optionnel — lie l'ordonnance a un RDV)</label>
-        <input id="f_appointment_id" type="text" placeholder="laisser vide si ordonnance hors-RDV" autocomplete="off">
+        <label for="f_appointment_id" id="l-appt" data-i18n="mo_appt_label">UUID Rendez-vous (optionnel — lie l'ordonnance a un RDV)</label>
+        <input id="f_appointment_id" type="text" placeholder="laisser vide si ordonnance hors-RDV" data-i18n-placeholder="mo_appt_ph" autocomplete="off">
       </div>
     </div>
 
     <div class="card">
-      <h2><i class="fa fa-pills"></i> <span id="t-meds">Medicaments</span></h2>
-      <p style="margin:0 0 12px;font-size:12px;color:var(--text3)" id="t-meds-help">
+      <h2><i class="fa fa-pills"></i> <span id="t-meds" data-i18n="mo_meds">Medicaments</span></h2>
+      <p style="margin:0 0 12px;font-size:12px;color:var(--text3)" id="t-meds-help" data-i18n="mo_meds_help">
         Saisissez chaque medicament avec sa posologie. Maximum 30 medicaments.
         Les stupefiants et psychotropes doivent etre prescrits sur le carnet a souches conforme (cadre legal separe DZ).
       </p>
       <div id="meds-list"></div>
       <button type="button" class="btn btn-ghost" id="btn-add-med">
-        <i class="fa fa-plus"></i> <span id="t-add-med">Ajouter un medicament</span>
+        <i class="fa fa-plus"></i> <span id="t-add-med" data-i18n="mo_add_med">Ajouter un medicament</span>
       </button>
     </div>
 
     <div class="card">
-      <h2><i class="fa fa-stethoscope"></i> <span id="t-diag">Diagnostic et notes</span></h2>
+      <h2><i class="fa fa-stethoscope"></i> <span id="t-diag" data-i18n="mo_diag_title">Diagnostic et notes</span></h2>
       <div class="field">
-        <label for="f_diagnosis" id="l-diag">Diagnostic (optionnel)</label>
-        <textarea id="f_diagnosis" maxlength="2000" placeholder="ex: Angine bacterienne, otite moyenne aigue droite..."></textarea>
+        <label for="f_diagnosis" id="l-diag" data-i18n="mo_diag_label">Diagnostic (optionnel)</label>
+        <textarea id="f_diagnosis" maxlength="2000" placeholder="ex: Angine bacterienne, otite moyenne aigue droite..." data-i18n-placeholder="mo_diag_ph"></textarea>
       </div>
       <div class="field">
-        <label for="f_notes" id="l-notes">Notes cliniques (optionnel)</label>
-        <textarea id="f_notes" maxlength="4000" placeholder="Conseils, recommandations, instructions complementaires..."></textarea>
+        <label for="f_notes" id="l-notes" data-i18n="mo_notes_label">Notes cliniques (optionnel)</label>
+        <textarea id="f_notes" maxlength="4000" placeholder="Conseils, recommandations, instructions complementaires..." data-i18n-placeholder="mo_notes_ph"></textarea>
       </div>
       <div class="field-row">
         <div class="field">
-          <label for="f_validity" id="l-valid">Validite (jours)</label>
+          <label for="f_validity" id="l-valid" data-i18n="mo_validity_label">Validite (jours)</label>
           <input id="f_validity" type="number" min="1" max="365" value="30">
         </div>
       </div>
@@ -169,22 +167,22 @@
 
     <div class="actions">
       <button type="button" class="btn btn-secondary" id="btn-save-draft">
-        <i class="fa fa-floppy-disk"></i> <span id="t-save">Sauvegarder brouillon</span>
+        <i class="fa fa-floppy-disk"></i> <span id="t-save" data-i18n="mo_save">Sauvegarder brouillon</span>
       </button>
       <button type="button" class="btn btn-primary" id="btn-sign">
-        <i class="fa fa-pen-nib"></i> <span id="t-sign">Signer et generer le PDF</span>
+        <i class="fa fa-pen-nib"></i> <span id="t-sign" data-i18n="mo_sign">Signer et generer le PDF</span>
       </button>
       <button type="button" class="btn btn-ghost" id="btn-cancel" onclick="history.back()">
-        <span id="t-cancel">Annuler</span>
+        <span id="t-cancel" data-i18n="mo_cancel">Annuler</span>
       </button>
     </div>
 
     <div id="signed-result" class="card" style="display:none;border-color:var(--color-success);background:var(--color-success-light)">
-      <h2 style="color:var(--color-success-hover)"><i class="fa fa-circle-check"></i> <span id="t-signed">Ordonnance signee !</span></h2>
+      <h2 style="color:var(--color-success-hover)"><i class="fa fa-circle-check"></i> <span id="t-signed" data-i18n="mo_signed">Ordonnance signee !</span></h2>
       <p style="margin:0 0 10px;font-size:14px"><strong id="signed-number"></strong></p>
       <div class="actions">
-        <a id="signed-download" href="#" target="_blank" class="btn btn-primary"><i class="fa fa-download"></i> Telecharger le PDF</a>
-        <a id="signed-verify" href="#" target="_blank" class="btn btn-secondary"><i class="fa fa-shield-halved"></i> Lien de verification</a>
+        <a id="signed-download" href="#" target="_blank" class="btn btn-primary"><i class="fa fa-download"></i> <span data-i18n="mo_download_pdf">Telecharger le PDF</span></a>
+        <a id="signed-verify" href="#" target="_blank" class="btn btn-secondary"><i class="fa fa-shield-halved"></i> <span data-i18n="mo_verify_link">Lien de verification</span></a>
       </div>
       <p style="margin:12px 0 0;font-size:11px;color:var(--text3)">
         SHA256 : <code id="signed-hash" style="font-size:10px"></code>
@@ -194,30 +192,30 @@
   </div>
 
   <aside class="preview-pane">
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px">Apercu en temps reel</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.5px" data-i18n="mo_preview_live">Apercu en temps reel</div>
     <div class="preview-paper" id="preview">
       <div class="ph-head">
         <div class="brand">Tabibi</div>
-        <div class="doctype">ORDONNANCE MEDICALE</div>
+        <div class="doctype" data-i18n="mo_doctype">ORDONNANCE MEDICALE</div>
       </div>
       <div class="doc-info">
-        <div class="label">Medecin</div>
+        <div class="label" data-i18n="mo_lab_doctor">Medecin</div>
         <div class="value" id="pv-doc">Dr ...</div>
         <div style="font-size:11px;color:var(--text3)" id="pv-spec">...</div>
       </div>
       <div class="pat-info">
-        <div class="label">Patient</div>
+        <div class="label" data-i18n="mo_lab_patient">Patient</div>
         <div class="value" id="pv-pat">—</div>
       </div>
       <hr>
-      <div><span class="ph-rx">Rx</span><strong>Traitement prescrit</strong></div>
+      <div><span class="ph-rx">Rx</span><strong data-i18n="mo_rx_title">Traitement prescrit</strong></div>
       <div id="pv-meds" style="margin-top:10px"></div>
       <div id="pv-diag-wrap" style="display:none;margin-top:10px">
-        <div class="label">Diagnostic</div>
+        <div class="label" data-i18n="mo_lab_diag">Diagnostic</div>
         <div id="pv-diag" style="font-size:12px"></div>
       </div>
       <div id="pv-notes-wrap" style="display:none;margin-top:10px">
-        <div class="label">Notes cliniques</div>
+        <div class="label" data-i18n="mo_lab_notes">Notes cliniques</div>
         <div id="pv-notes" style="font-size:12px"></div>
       </div>
       <div class="ph-foot" id="pv-foot">Document genere electroniquement par Tabibi</div>
@@ -280,6 +278,23 @@
     showToast._t = setTimeout(() => { toast.style.display = 'none'; }, 3500);
   }
 
+  // ── [CONFORMITE 2026] i18n via dico PARTAGÉ (clés mo_* dans js/tabibi-i18n.js).
+  // Statique = data-i18n (engine) ; dynamique (lignes médicament, aperçu,
+  // toasts) = tabibiT + re-étiquetage sur tabibi:lang-change (sans perdre la saisie).
+  function T(k, f) { return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+
+  // Le contenu des lignes (labels/placeholders/Supprimer) est traduit PAR
+  // L'ENGINE via data-i18n/data-i18n-placeholder (l'engine restaure sinon les
+  // placeholders d'origine à chaque applyAll). Ici : seul le préfixe N°.
+  function relabelMedRows() {
+    $$('.med-row .med-num').forEach((el, i) => { el.textContent = T('mo_num_prefix', 'No') + ' ' + (i + 1); });
+  }
+  document.addEventListener('tabibi:lang-change', () => {
+    relabelMedRows();
+    updatePreview();
+    if (currentDoctor) $('#pv-spec').textContent = currentDoctor.specialty_fr || T('mo_doctor_fallback', 'Medecin');
+  });
+
   // ── Render medication row ───────────────────────────────────────────
   function renderMedRow(idx, data) {
     data = data || {};
@@ -288,30 +303,30 @@
     row.dataset.idx = idx;
     row.innerHTML = `
       <div class="med-head">
-        <span class="med-num">No ${idx + 1}</span>
-        <button type="button" class="med-del"><i class="fa fa-xmark"></i> Supprimer</button>
+        <span class="med-num">${escapeHtml(T('mo_num_prefix', 'No'))} ${idx + 1}</span>
+        <button type="button" class="med-del"><i class="fa fa-xmark"></i> <span data-i18n="mo_delete">${escapeHtml(T('mo_delete', 'Supprimer'))}</span></button>
       </div>
       <div class="field">
-        <label>Nom du medicament *</label>
-        <input class="m-name" list="meds-datalist" type="text" placeholder="ex: Doliprane 1000mg" value="${data.name || ''}" maxlength="200" required>
+        <label data-i18n="mo_med_name">${escapeHtml(T('mo_med_name', 'Nom du medicament *'))}</label>
+        <input class="m-name" data-i18n-placeholder="mo_med_name_ph" list="meds-datalist" type="text" placeholder="${escapeHtml(T('mo_med_name_ph', 'ex: Doliprane 1000mg'))}" value="${data.name || ''}" maxlength="200" required>
       </div>
       <div class="field-row-3">
         <div class="field">
-          <label>Posologie</label>
-          <input class="m-dosage" type="text" placeholder="ex: 1 comprime" value="${data.dosage || ''}" maxlength="80">
+          <label data-i18n="mo_med_dosage">${escapeHtml(T('mo_med_dosage', 'Posologie'))}</label>
+          <input class="m-dosage" data-i18n-placeholder="mo_med_dosage_ph" type="text" placeholder="${escapeHtml(T('mo_med_dosage_ph', 'ex: 1 comprime'))}" value="${data.dosage || ''}" maxlength="80">
         </div>
         <div class="field">
-          <label>Frequence</label>
-          <input class="m-frequency" list="freq-datalist" type="text" placeholder="ex: 3 fois par jour" value="${data.frequency || ''}" maxlength="80">
+          <label data-i18n="mo_med_freq">${escapeHtml(T('mo_med_freq', 'Frequence'))}</label>
+          <input class="m-frequency" data-i18n-placeholder="mo_med_freq_ph" list="freq-datalist" type="text" placeholder="${escapeHtml(T('mo_med_freq_ph', 'ex: 3 fois par jour'))}" value="${data.frequency || ''}" maxlength="80">
         </div>
         <div class="field">
-          <label>Duree</label>
-          <input class="m-duration" type="text" placeholder="ex: 7 jours" value="${data.duration || ''}" maxlength="60">
+          <label data-i18n="mo_med_duration">${escapeHtml(T('mo_med_duration', 'Duree'))}</label>
+          <input class="m-duration" data-i18n-placeholder="mo_med_duration_ph" type="text" placeholder="${escapeHtml(T('mo_med_duration_ph', 'ex: 7 jours'))}" value="${data.duration || ''}" maxlength="60">
         </div>
       </div>
       <div class="field">
-        <label>Note (optionnel)</label>
-        <input class="m-notes" type="text" placeholder="ex: a prendre apres repas" value="${data.notes || ''}" maxlength="200">
+        <label data-i18n="mo_med_note">${escapeHtml(T('mo_med_note', 'Note (optionnel)'))}</label>
+        <input class="m-notes" data-i18n-placeholder="mo_med_note_ph" type="text" placeholder="${escapeHtml(T('mo_med_note_ph', 'ex: a prendre apres repas'))}" value="${data.notes || ''}" maxlength="200">
       </div>
     `;
     row.querySelector('.med-del').addEventListener('click', () => {
@@ -327,7 +342,7 @@
   function renumberRows() {
     $$('.med-row').forEach((r, i) => {
       r.dataset.idx = i;
-      r.querySelector('.med-num').textContent = 'No ' + (i + 1);
+      r.querySelector('.med-num').textContent = T('mo_num_prefix', 'No') + ' ' + (i + 1);
     });
   }
 
@@ -359,14 +374,14 @@
         <div class="meta">${[m.dosage, m.frequency, m.duration].filter(Boolean).map(escapeHtml).join(' — ') || '—'}</div>
         ${m.notes ? `<div class="meta"><em>${escapeHtml(m.notes)}</em></div>` : ''}
       </div>
-    `).join('') : '<div style="font-size:12px;color:var(--text3);font-style:italic">Aucun medicament saisi</div>';
+    `).join('') : '<div style="font-size:12px;color:var(--text3);font-style:italic">' + escapeHtml(T('mo_no_meds', 'Aucun medicament saisi')) + '</div>';
 
     $('#pv-meds').innerHTML = medsHtml;
     $('#pv-diag-wrap').style.display = diag ? '' : 'none';
     $('#pv-diag').textContent = diag;
     $('#pv-notes-wrap').style.display = notes ? '' : 'none';
     $('#pv-notes').textContent = notes;
-    $('#pv-foot').textContent = 'Document genere electroniquement par Tabibi le ' + new Date().toISOString().slice(0, 10);
+    $('#pv-foot').textContent = T('mo_foot_prefix', 'Document genere electroniquement par Tabibi le') + ' ' + new Date().toISOString().slice(0, 10);
   }
 
   function escapeHtml(s) {
@@ -392,23 +407,23 @@
     if (!supa) return;
     const { data: { user } } = await supa.auth.getUser();
     if (!user) {
-      showToast('Connexion requise', 'err');
+      showToast(T('mo_login_required', 'Connexion requise'), 'err');
       setTimeout(() => location.href = 'login.html', 1200);
       return;
     }
     const { data, error } = await supa.from('users').select('first_name, last_name, specialty_fr, role, is_verified').eq('id', user.id).maybeSingle();
     if (error || !data || (data.role !== 'medecin' && data.role !== 'doctor')) {
-      showToast('Acces medecin requis', 'err');
+      showToast(T('mo_doctor_required', 'Acces medecin requis'), 'err');
       setTimeout(() => location.href = 'login.html', 1500);
       return;
     }
     if (!data.is_verified) {
-      showToast('Compte non verifie : impossible de prescrire', 'err');
+      showToast(T('mo_not_verified', 'Compte non verifie : impossible de prescrire'), 'err');
       $('#btn-sign').disabled = true;
     }
     currentDoctor = { id: user.id, ...data };
     $('#pv-doc').textContent = `Dr ${data.first_name || ''} ${data.last_name || ''}`.trim();
-    $('#pv-spec').textContent = data.specialty_fr || 'Medecin';
+    $('#pv-spec').textContent = data.specialty_fr || T('mo_doctor_fallback', 'Medecin');
   }
 
   // ── Pre-fill appointment_id from URL ────────────────────────────────
@@ -441,7 +456,7 @@
   // ── Save draft ──────────────────────────────────────────────────────
   async function saveDraft() {
     const supa = window.tabibi && window.tabibi.supabase;
-    if (!supa) { showToast('Supabase indisponible', 'err'); return; }
+    if (!supa) { showToast(T('mo_service_unavailable', 'Service indisponible'), 'err'); return; }
 
     const pid  = $('#f_patient_id').value.trim();
     const appt = $('#f_appointment_id').value.trim() || null;
@@ -450,8 +465,8 @@
     const notes = $('#f_notes').value.trim() || null;
     const validity = parseInt($('#f_validity').value, 10) || 30;
 
-    if (!pid)        { showToast('Patient requis', 'err'); return; }
-    if (!meds.length) { showToast('Au moins un medicament requis', 'err'); return; }
+    if (!pid)        { showToast(T('mo_patient_required', 'Patient requis'), 'err'); return; }
+    if (!meds.length) { showToast(T('mo_med_required', 'Au moins un medicament requis'), 'err'); return; }
 
     $('#btn-save-draft').disabled = true;
     try {
@@ -465,7 +480,7 @@
           p_validity_days: validity,
         });
         if (error) throw error;
-        showToast('Brouillon mis a jour', 'ok');
+        showToast(T('mo_draft_updated', 'Brouillon mis a jour'), 'ok');
       } else {
         const { data, error } = await supa.rpc('create_prescription_draft', {
           p_patient_id: pid,
@@ -477,11 +492,11 @@
         });
         if (error) throw error;
         currentPrescriptionId = data;
-        showToast('Brouillon enregistre', 'ok');
+        showToast(T('mo_draft_saved', 'Brouillon enregistre'), 'ok');
       }
     } catch (e) {
       console.error('[save-draft]', e);
-      showToast(e.message || 'Erreur lors de la sauvegarde', 'err');
+      showToast(e.message || T('mo_save_error', 'Erreur lors de la sauvegarde'), 'err');
     } finally {
       $('#btn-save-draft').disabled = false;
     }
@@ -490,16 +505,16 @@
   // ── Sign (calls Edge Function) ──────────────────────────────────────
   async function signPrescription() {
     const supa = window.tabibi && window.tabibi.supabase;
-    if (!supa) { showToast('Supabase indisponible', 'err'); return; }
+    if (!supa) { showToast(T('mo_service_unavailable', 'Service indisponible'), 'err'); return; }
     if (!currentPrescriptionId) {
       await saveDraft();
       if (!currentPrescriptionId) return;
     }
 
-    if (!confirm('Apres signature, cette ordonnance sera IMMUABLE.\n\nConfirmer la signature electronique ?')) return;
+    if (!confirm(T('mo_confirm_sign', 'Apres signature, cette ordonnance sera IMMUABLE.\n\nConfirmer la signature electronique ?'))) return;
 
     $('#btn-sign').disabled = true;
-    $('#btn-sign').innerHTML = '<i class="fa fa-spinner fa-spin"></i> Signature en cours...';
+    $('#btn-sign').innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + escapeHtml(T('mo_signing', 'Signature en cours...'));
     try {
       const { error: gateErr } = await supa.rpc('request_prescription_signature', { p_prescription_id: currentPrescriptionId });
       if (gateErr) throw gateErr;
@@ -516,10 +531,10 @@
       });
       const payload = await resp.json();
       if (!resp.ok || !payload.success) {
-        throw new Error(payload.error || 'Erreur generation PDF');
+        throw new Error(payload.error || T('mo_pdf_error', 'Erreur generation PDF'));
       }
 
-      $('#signed-number').textContent = `Numero : ${payload.prescription_number}`;
+      $('#signed-number').textContent = T('mo_number', 'Numero') + ' : ' + payload.prescription_number;
       $('#signed-download').href = payload.pdf_url_signed_24h;
       $('#signed-verify').href = payload.verify_url;
       $('#signed-hash').textContent = payload.pdf_sha256;
@@ -527,46 +542,19 @@
       $('#btn-sign').style.display = 'none';
       $('#btn-save-draft').style.display = 'none';
 
-      showToast('Ordonnance signee et PDF genere', 'ok');
+      showToast(T('mo_signed_toast', 'Ordonnance signee et PDF genere'), 'ok');
       window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     } catch (e) {
       console.error('[sign]', e);
-      showToast(e.message || 'Erreur lors de la signature', 'err');
+      showToast(e.message || T('mo_sign_error', 'Erreur lors de la signature'), 'err');
       $('#btn-sign').disabled = false;
-      $('#btn-sign').innerHTML = '<i class="fa fa-pen-nib"></i> Signer et generer le PDF';
+      $('#btn-sign').innerHTML = '<i class="fa fa-pen-nib"></i> ' + escapeHtml(T('mo_sign', 'Signer et generer le PDF'));
     }
   }
 
-  // ── i18n minimal FR/AR ──────────────────────────────────────────────
-  const I18N = {
-    fr: {
-      pagetitle: 'Nouvelle ordonnance medicale', patient: 'Patient', meds: 'Medicaments',
-      add: 'Ajouter un medicament', diag: 'Diagnostic et notes', save: 'Sauvegarder brouillon',
-      sign: 'Signer et generer le PDF', cancel: 'Annuler', signed: 'Ordonnance signee !',
-    },
-    ar: {
-      pagetitle: 'وصفة طبية جديدة', patient: 'المريض', meds: 'الأدوية',
-      add: 'إضافة دواء', diag: 'التشخيص والملاحظات', save: 'حفظ مسودة',
-      sign: 'توقيع وإنشاء PDF', cancel: 'إلغاء', signed: 'تم توقيع الوصفة!',
-    }
-  };
-  function applyLang(lang) {
-    const t = I18N[lang] || I18N.fr;
-    document.documentElement.lang = lang;
-    document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
-    document.body.dir = document.documentElement.dir;
-    $('#t-pagetitle').textContent = t.pagetitle;
-    $('#t-patient').textContent = t.patient;
-    $('#t-meds').textContent = t.meds;
-    $('#t-add-med').textContent = t.add;
-    $('#t-diag').textContent = t.diag;
-    $('#t-save').textContent = t.save;
-    $('#t-sign').textContent = t.sign;
-    $('#t-cancel').textContent = t.cancel;
-    $('#t-signed').textContent = t.signed;
-    $$('.lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === lang));
-    try { localStorage.setItem('tabibi.lang', lang); } catch (e) {}
-  }
+  // ── [CONFORMITE 2026] dico local FR/AR supprimé → statique via data-i18n
+  //    (engine partagé) ; langue/dir/persistance via tabibi-lang.js (clé
+  //    unifiée tabibi_lang — l'ancienne clé 'tabibi.lang' désynchronisait la page).
 
   // ── Init ────────────────────────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', () => {
@@ -575,7 +563,7 @@
 
     $('#btn-add-med').addEventListener('click', () => {
       const idx = $$('.med-row').length;
-      if (idx >= 30) { showToast('Maximum 30 medicaments', 'err'); return; }
+      if (idx >= 30) { showToast(T('mo_max_meds', 'Maximum 30 medicaments'), 'err'); return; }
       renderMedRow(idx, {});
     });
 
@@ -585,16 +573,15 @@
     ['f_diagnosis', 'f_notes'].forEach((id) => $('#' + id).addEventListener('input', updatePreview));
     $('#f_patient_id').addEventListener('change', refreshPatientDisplay);
 
-    $$('.lang-bar .lang-btn').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.lang)));
-
-    const savedLang = (function() { try { return localStorage.getItem('tabibi.lang'); } catch (e) { return null; } })();
-    if (savedLang) applyLang(savedLang);
-
     loadDoctor().then(prefillFromUrl);
   });
 
 })();
 </script>
 
+<!-- [i18n] moteur (absent de cette page à l'origine) + sélecteur factorisé -->
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>
