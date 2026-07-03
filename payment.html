@@ -36,7 +36,9 @@
 <div class="app-root">
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Paiement</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="pmt_pagetitle">Paiement</div></div>
+  <!-- [i18n] sélecteur de langue factorisé -->
+  <div data-langbar></div>
 </header>
 
 <main class="page pay-shell" role="main">
@@ -44,25 +46,25 @@
   <!-- Récap RDV (récupéré depuis sessionStorage ou query string) -->
   <div class="pay-summary" id="summary-box" aria-label="Récapitulatif">
     <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">
-      <i class="fa fa-receipt" style="color:var(--blue)"></i> Récapitulatif
+      <i class="fa fa-receipt" style="color:var(--blue)"></i> <span data-i18n="pmt_summary">Récapitulatif</span>
     </div>
-    <div class="pay-row"><span style="color:var(--text3)">Médecin</span> <span id="s-doctor">—</span></div>
-    <div class="pay-row"><span style="color:var(--text3)">Date</span> <span id="s-date">—</span></div>
-    <div class="pay-row"><span style="color:var(--text3)">Type</span> <span id="s-type">Consultation</span></div>
-    <div class="pay-row total"><span>Total à payer</span> <span id="s-amount">— DA</span></div>
+    <div class="pay-row"><span style="color:var(--text3)" data-i18n="pmt_doctor">Médecin</span> <span id="s-doctor">—</span></div>
+    <div class="pay-row"><span style="color:var(--text3)" data-i18n="pmt_date">Date</span> <span id="s-date">—</span></div>
+    <div class="pay-row"><span style="color:var(--text3)" data-i18n="pmt_type">Type</span> <span id="s-type" data-i18n="pmt_type_consultation">Consultation</span></div>
+    <div class="pay-row total"><span data-i18n="pmt_total">Total à payer</span> <span id="s-amount">— DA</span></div>
   </div>
 
   <!-- Méthodes — toutes désactivées sauf "Payer au cabinet" (cash) -->
   <div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px">
-    <i class="fa fa-credit-card" style="color:var(--blue)"></i> Mode de paiement
+    <i class="fa fa-credit-card" style="color:var(--blue)"></i> <span data-i18n="pmt_method_title">Mode de paiement</span>
   </div>
 
   <!-- Cash : toujours dispo, sélectionné par défaut -->
   <div class="pay-method-card selected" id="pm-cash" onclick="selectMethod('cash')" tabindex="0" role="radio" aria-checked="true">
     <div class="ico"><i class="fa fa-money-bill-wave" style="color:var(--green-d)"></i></div>
     <div class="body">
-      <div class="name">Payer au cabinet (espèces)</div>
-      <div class="desc">Réglez directement au médecin lors de votre visite</div>
+      <div class="name" data-i18n="pmt_cash_name">Payer au cabinet (espèces)</div>
+      <div class="desc" data-i18n="pmt_cash_desc">Réglez directement au médecin lors de votre visite</div>
     </div>
     <i class="fa fa-check-circle" style="color:var(--blue);font-size:20px"></i>
   </div>
@@ -71,8 +73,8 @@
   <div class="pay-method-card disabled" data-feature="payments" id="pm-card" aria-disabled="true">
     <div class="ico"><i class="fa fa-credit-card" style="color:#1557A0"></i></div>
     <div class="body">
-      <div class="name">Carte bancaire <span class="badge">BIENTÔT</span></div>
-      <div class="desc">Visa, Mastercard — paiement sécurisé via Stripe</div>
+      <div class="name"><span data-i18n="pmt_card_name">Carte bancaire</span> <span class="badge" data-i18n="pmt_soon">BIENTÔT</span></div>
+      <div class="desc" data-i18n="pmt_card_desc">Visa, Mastercard — paiement sécurisé via Stripe</div>
     </div>
   </div>
 
@@ -80,38 +82,37 @@
   <div class="pay-method-card disabled" data-feature="payments" id="pm-edahabia" aria-disabled="true">
     <div class="ico"><i class="fa fa-mobile-screen" style="color:#0a4d3e"></i></div>
     <div class="body">
-      <div class="name">Edahabia <span class="badge">BIENTÔT</span></div>
-      <div class="desc">Carte postale algérienne — intégration SATIM en cours</div>
+      <div class="name">Edahabia <span class="badge" data-i18n="pmt_soon">BIENTÔT</span></div>
+      <div class="desc" data-i18n="pmt_edahabia_desc">Carte postale algérienne — intégration SATIM en cours</div>
     </div>
   </div>
 
   <div class="pay-method-card disabled" data-feature="payments" id="pm-cib" aria-disabled="true">
     <div class="ico"><i class="fa fa-building-columns" style="color:#1A1A1A"></i></div>
     <div class="body">
-      <div class="name">CIB <span class="badge">BIENTÔT</span></div>
-      <div class="desc">Carte interbancaire — intégration SATIM en cours</div>
+      <div class="name">CIB <span class="badge" data-i18n="pmt_soon">BIENTÔT</span></div>
+      <div class="desc" data-i18n="pmt_cib_desc">Carte interbancaire — intégration SATIM en cours</div>
     </div>
   </div>
 
   <!-- Message si feature flag OFF (visible aux utilisateurs) -->
   <div class="pay-disclaimer" data-feature-not="payments">
     <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
-    <strong>Paiement en ligne bientôt disponible.</strong> Pour l'instant, validez votre RDV
-    et réglez directement au cabinet le jour de la consultation. Vous recevrez votre reçu sur place.
+    <strong data-i18n="pmt_disclaimer_title">Paiement en ligne bientôt disponible.</strong> <span data-i18n="pmt_disclaimer_body">Pour l'instant, validez votre RDV et réglez directement au cabinet le jour de la consultation. Vous recevrez votre reçu sur place.</span>
   </div>
 
   <!-- CTA -->
   <button class="btn btn-success btn-full btn-xl" id="btn-confirm-pay" onclick="confirmPay()" style="margin-top:18px">
-    <i class="fa fa-check"></i> Confirmer le mode de paiement
+    <i class="fa fa-check"></i> <span data-i18n="pmt_confirm_btn">Confirmer le mode de paiement</span>
   </button>
 
   <a href="mes-rdv.html" class="btn btn-ghost btn-full btn-lg" style="margin-top:8px;text-decoration:none">
-    <i class="fa fa-list"></i> Voir mes rendez-vous
+    <i class="fa fa-list"></i> <span data-i18n="pmt_view_rdv">Voir mes rendez-vous</span>
   </a>
 
   <div class="pay-secure">
     <i class="fa fa-shield-halved" style="color:var(--blue)"></i>
-    Vos données de paiement sont chiffrées et conformes RGPD + loi DZ 18-07.
+    <span data-i18n="pmt_secure_note">Vos données de paiement sont chiffrées et conformes RGPD + loi DZ 18-07.</span>
   </div>
 
 </main>
@@ -127,6 +128,30 @@
 // Quand backend Edge Function webhook prêt (Phase 8.3 SQL_TODO-013),
 // passer window.TABIBI_FEATURES.payments=true → boutons cliquables.
 // ========================================================================
+// [CONFORMITE 2026] i18n dynamique : tabibiT (dico partagé, préfixe pmt_*).
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+function _numLocale(){
+  var l = 'fr';
+  try { l = (window.tabibiLang && window.tabibiLang.get()) || localStorage.getItem('tabibi_lang') || 'fr'; } catch(e){}
+  return l === 'ar' ? 'ar-DZ-u-nu-latn' : (l === 'en' ? 'en-GB' : 'fr-DZ');
+}
+// [FIX 2026-07-03] toast() vivait dans scripts/app.js (404). L'appel est gardé
+// (typeof) donc pas de crash, mais la confirmation de paiement était SILENCIEUSE
+// (aucun retour). Shim gardé = implémentation canonique d'index.html (CSS déjà
+// dans styles/app.css). Ne restaure PAS le module de paiement (chantier séparé).
+if(typeof window.toast !== 'function'){
+  window.toast = function(msg, type, ms){
+    type = type || 'info'; ms = ms || 3500;
+    var c = document.getElementById('toast-wrap');
+    if(!c){ c = document.createElement('div'); c.id = 'toast-wrap'; c.className = 'toast-wrap'; document.body.appendChild(c); }
+    var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
+    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    c.appendChild(t);
+    setTimeout(function(){ t.style.transition='all .28s'; t.style.opacity='0'; t.style.transform='translateY(-6px)'; setTimeout(function(){ t.remove(); }, 300); }, ms);
+  };
+}
 var _selectedMethod = 'cash';
 
 function selectMethod(m){
@@ -157,9 +182,9 @@ function init(){
   if(doctor) document.getElementById('s-doctor').textContent = doctor;
   if(date)   document.getElementById('s-date').textContent = date;
   if(amount > 0){
-    document.getElementById('s-amount').textContent = amount.toLocaleString('fr-DZ') + ' DA';
+    document.getElementById('s-amount').textContent = amount.toLocaleString(_numLocale()) + ' DA';
   } else {
-    document.getElementById('s-amount').textContent = 'À confirmer';
+    document.getElementById('s-amount').textContent = _t('pmt_amount_tbc', 'À confirmer');
   }
 }
 
@@ -168,7 +193,7 @@ function confirmPay(){
   // créé en pending via reservation.html). Le paiement réel sera traité
   // au cabinet (cash).
   if(typeof toast === 'function'){
-    toast('Mode de paiement enregistré : ' + _selectedMethod, 'success');
+    toast(_t('pmt_method_saved', 'Mode de paiement enregistré : ') + _selectedMethod, 'success');
   }
   setTimeout(function(){ location.href = 'mes-rdv.html'; }, 800);
 }
@@ -179,6 +204,8 @@ function goBackSafe(){
 }
 
 document.addEventListener('DOMContentLoaded', init);
+// [CONFORMITE 2026] re-render (montant localisé, « À confirmer ») au changement de langue.
+document.addEventListener('tabibi:lang-change', function(){ try { init(); } catch(e){} });
 window.selectMethod = selectMethod;
 window.confirmPay = confirmPay;
 window.goBackSafe = goBackSafe;
@@ -191,5 +218,7 @@ window.goBackSafe = goBackSafe;
 <script src="js/tabibi-features.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>
