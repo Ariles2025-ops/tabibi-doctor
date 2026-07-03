@@ -222,6 +222,29 @@ function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 // rendus). Défini localement, même pattern que index/payment/verify-email.
 function getParam(k){ try { return new URLSearchParams(window.location.search).get(k) || ""; } catch(e){ return ""; } }
 
+// [FIX 2026-07-03] toast() vivait aussi dans scripts/app.js (404). Les 8 appels
+// d'erreur/avertissement du wizard (jour/créneau manquant, motif requis, créneau
+// pris, lien invalide…) jetaient un ReferenceError SILENCIEUX → le patient
+// n'avait AUCUN retour. La réservation aboutissait (happy-path ne toaste pas),
+// mais tout le feedback d'erreur était mort. Shim gardé = implémentation
+// canonique d'index.html (CSS .toast-wrap/.toast déjà dans styles/app.css).
+if(typeof window.toast !== 'function'){
+  window.toast = function(msg, type, ms){
+    type = type || 'info'; ms = ms || 3500;
+    var c = document.getElementById('toast-wrap');
+    if(!c){ c = document.createElement('div'); c.id = 'toast-wrap'; c.className = 'toast-wrap'; document.body.appendChild(c); }
+    var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
+    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    c.appendChild(t);
+    setTimeout(function(){
+      t.style.transition = 'all .28s'; t.style.opacity = '0'; t.style.transform = 'translateY(-6px)';
+      setTimeout(function(){ t.remove(); }, 300);
+    }, ms);
+  };
+}
+
 // ── State ───────────────────────────────────────────────────────────────
 var doctorId    = getParam("doctor_id") || "";
 var doctorName  = decodeURIComponent(getParam("doctor_name") || "");
