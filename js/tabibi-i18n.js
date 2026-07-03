@@ -316,6 +316,8 @@
       mo_signing: 'Signature en cours...', mo_pdf_error: 'Erreur de génération du PDF',
       mo_number: 'Numéro', mo_signed_toast: 'Ordonnance signée et PDF généré',
       mo_sign_error: 'Erreur lors de la signature',
+      // [CONFORMITE 2026] doctor-profile
+      dp_pagetitle: 'Profil médecin',
       specialty: 'Spécialité', select_placeholder: '— Sélectionnez —',
       spec_cardio: 'Cardiologue', spec_dermato: 'Dermatologue', spec_pediatre: 'Pédiatre', spec_gyneco: 'Gynécologue',
       spec_dentiste: 'Dentiste', spec_ophtalmo: 'Ophtalmologue', spec_orl: 'ORL',
@@ -769,6 +771,8 @@
       mo_signing: 'جارٍ التوقيع...', mo_pdf_error: 'خطأ في إنشاء PDF',
       mo_number: 'الرقم', mo_signed_toast: 'تم توقيع الوصفة وإنشاء PDF',
       mo_sign_error: 'خطأ أثناء التوقيع',
+      // [CONFORMITE 2026] doctor-profile
+      dp_pagetitle: 'ملف الطبيب',
       specialty: 'التخصص', select_placeholder: '— اختر —',
       spec_cardio: 'طبيب قلب', spec_dermato: 'طبيب جلدية', spec_pediatre: 'طبيب أطفال', spec_gyneco: 'طبيب نساء وتوليد',
       spec_dentiste: 'طبيب أسنان', spec_ophtalmo: 'طبيب عيون', spec_orl: 'أنف وأذن وحنجرة',
@@ -1220,6 +1224,8 @@
       mo_signing: 'Signing...', mo_pdf_error: 'PDF generation error',
       mo_number: 'Number', mo_signed_toast: 'Prescription signed and PDF generated',
       mo_sign_error: 'Error while signing',
+      // [CONFORMITE 2026] doctor-profile
+      dp_pagetitle: 'Doctor profile',
       specialty: 'Specialty', select_placeholder: '— Select —',
       spec_cardio: 'Cardiologist', spec_dermato: 'Dermatologist', spec_pediatre: 'Pediatrician', spec_gyneco: 'Gynecologist',
       spec_dentiste: 'Dentist', spec_ophtalmo: 'Ophthalmologist', spec_orl: 'ENT',
@@ -1802,6 +1808,15 @@
     'Aucun RDV à venir pour le moment.': { ar: 'لا مواعيد قادمة حاليًا.', en: 'No upcoming appointments for now.' },
     'Aucun rendez-vous': { ar: 'لا مواعيد', en: 'No appointments' },
     'Réservez votre premier RDV maintenant': { ar: 'احجز موعدك الأول الآن', en: 'Book your first appointment now' },
+
+    // ─── [CONFORMITE 2026] doctor-profile — bloc claim WhatsApp + fallbacks injectés en JS ───
+    'Fiche non revendiquée': { ar: 'ملف غير مُطالَب به', en: 'Unclaimed profile' },
+    "C'est votre fiche ?": { ar: 'هل هذا ملفك؟', en: 'Is this your profile?' },
+    'Contactez notre équipe pour la revendiquer en quelques minutes.': { ar: 'تواصل مع فريقنا للمطالبة به في دقائق.', en: 'Contact our team to claim it in a few minutes.' },
+    'Réclamer via WhatsApp': { ar: 'المطالبة عبر واتساب', en: 'Claim via WhatsApp' },
+    'Fiche revendiquée par le médecin': { ar: 'ملف مُطالَب به من طرف الطبيب', en: 'Profile claimed by the doctor' },
+    'Doctorat en Médecine': { ar: 'دكتوراه في الطب', en: 'Doctorate in Medicine' },
+    'Praticien': { ar: 'ممارس', en: 'Practitioner' },
 
     // ─── [CONFORMITE 2026] reservation — erreurs tabibi-booking (ERR_MSG_FR) injectées en JS ───
     'Connexion requise pour confirmer le RDV.': { ar: 'تسجيل الدخول مطلوب لتأكيد الموعد.', en: 'Login required to confirm the appointment.' },

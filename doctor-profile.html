@@ -53,9 +53,11 @@
 <div class="app-root">
 <header class="app-bar">
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="history.back()" aria-label="Retour"><i class="fa fa-arrow-left"></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Profil médecin</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="dp_pagetitle">Profil médecin</div></div>
   <button type="button" class="btn btn-icon btn-icon-sm" id="fav-btn" onclick="toggleFav()" style="background:var(--bg2);color:var(--text3)" aria-label="Ajouter aux favoris"><i class="fa fa-heart"></i></button>
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="navigator.share?navigator.share({title:'Tabibi',text:document.title,url:location.href}):alert(tabibiT('alert_link_copied','Lien copié'))" aria-label="Partager le profil"><i class="fa fa-share-nodes"></i></button>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 <main class="page" style="padding:0 0 90px">
   <!-- COVER -->
@@ -631,6 +633,16 @@ document.addEventListener('tabibi:lang-change', function(){
     if (currentDoc) {
       if (typeof _injectPhase13Sections === 'function') _injectPhase13Sections(currentDoc);
       if (typeof _refreshReserveBtnState === 'function') _refreshReserveBtnState();
+      // [CONFORMITE 2026] re-localise tarif + compteur d'avis (posés via _t au load)
+      var d = currentDoc;
+      var priceEl = document.getElementById('d-price');
+      if (priceEl && d.prix == null) priceEl.textContent = _t('price_tbd', 'Tarif à confirmer');
+      var avisEl = document.getElementById('d-avis');
+      if (avisEl) {
+        avisEl.textContent = (d.note != null)
+          ? '(' + (d.avis || 0) + ' ' + _t('reviews_word', 'avis') + ')'
+          : _t('not_rated_yet', 'Pas encore noté');
+      }
     }
   } catch(e){}
 });
@@ -667,7 +679,7 @@ async function loadRealReviews(doctorId) {
     // Pas un UUID -> mode démo, on n'a pas de vrais avis Supabase.
     document.getElementById("rating-summary-real").innerHTML =
       window.tabibiReviewsUI.renderRatingSummary(null);
-    document.getElementById("rev-count").textContent = "0 avis";
+    document.getElementById("rev-count").textContent = "0 " + _t('reviews_word', 'avis');
     return;
   }
   _reviewDoctorId = doctorId;
@@ -679,7 +691,7 @@ async function loadRealReviews(doctorId) {
     document.getElementById("rating-summary-real").innerHTML =
       window.tabibiReviewsUI.renderRatingSummary(summary);
     document.getElementById("rev-count").textContent =
-      (summary && summary.total_reviews ? summary.total_reviews : 0) + " avis";
+      (summary && summary.total_reviews ? summary.total_reviews : 0) + " " + _t('reviews_word', 'avis');
 
     // 2. Liste avis (premiers 10)
     _reviewOffset = 0;
@@ -730,6 +742,8 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-footer.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body></html>
