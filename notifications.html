@@ -18,7 +18,7 @@
 <style>
   .notif-shell { padding: 14px 16px; max-width: 480px; margin: 0 auto; }
   .notif-card { background:#fff; border-radius: var(--r12); padding: 14px; margin-bottom: 10px; display:flex; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-  .notif-card.unread { border-left: 3px solid var(--blue); }
+  .notif-card.unread { border-inline-start: 3px solid var(--blue); }
   .notif-card .ico { width: 40px; height: 40px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 16px; flex-shrink: 0; }
   .notif-card .body { flex:1; min-width:0; }
   .notif-card .title { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
@@ -33,9 +33,11 @@
 <div class="app-root">
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Notifications</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="ntf_pagetitle">Notifications</div></div>
   <a id="notif-msg-link" href="messages.html" hidden class="btn btn-icon btn-icon-sm btn-ghost" aria-label="Messages"><i class="fa fa-comments"></i></a>
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="markAllRead()" aria-label="Tout marquer lu" id="btn-mark-all"><i class="fa fa-check-double"></i></button>
+  <!-- [i18n] sélecteur de langue factorisé -->
+  <div data-langbar></div>
 </header>
 
 <main class="page notif-shell" role="main">
@@ -43,8 +45,7 @@
   <!-- Disclaimer feature flag OFF -->
   <div class="notif-disclaimer" data-feature-not="notifications">
     <i class="fa fa-circle-info" style="color:#B07000;margin-right:6px"></i>
-    <strong>Notifications in-app bientôt disponibles.</strong> Pour l'instant, vous recevrez
-    confirmations et rappels par SMS au numéro renseigné dans votre profil.
+    <strong data-i18n="ntf_soon_title">Notifications in-app bientôt disponibles.</strong> <span data-i18n="ntf_soon_body">Pour l'instant, vous recevrez confirmations et rappels par SMS au numéro renseigné dans votre profil.</span>
   </div>
 
   <!-- Liste — vide si feature OFF, sinon fetch DB -->
@@ -63,6 +64,13 @@
 // triggers), passer flag à true → la liste se popule depuis Supabase.
 // ========================================================================
 
+// [CONFORMITE 2026] i18n dynamique : tabibiT (dico partagé, préfixe ntf_*).
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+function _dateLocale(){
+  var l = 'fr';
+  try { l = (window.tabibiLang && window.tabibiLang.get()) || localStorage.getItem('tabibi_lang') || 'fr'; } catch(e){}
+  return l === 'ar' ? 'ar-DZ-u-nu-latn' : (l === 'en' ? 'en-GB' : 'fr-FR');
+}
 function _esc(s){
   if(s == null) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
@@ -72,14 +80,14 @@ function _fmtRel(iso){
   try {
     var ms = Date.now() - new Date(iso).getTime();
     var s = Math.floor(ms/1000);
-    if(s < 60) return 'à l\'instant';
+    if(s < 60) return _t('ntf_now', 'à l\'instant');
     var m = Math.floor(s/60);
-    if(m < 60) return 'il y a ' + m + ' min';
+    if(m < 60) return _t('ntf_ago_min', 'il y a {n} min').replace('{n}', m);
     var h = Math.floor(m/60);
-    if(h < 24) return 'il y a ' + h + ' h';
+    if(h < 24) return _t('ntf_ago_h', 'il y a {n} h').replace('{n}', h);
     var d = Math.floor(h/24);
-    if(d < 7) return 'il y a ' + d + ' j';
-    return new Intl.DateTimeFormat('fr-FR', {day:'numeric',month:'short',timeZone:'Africa/Algiers'}).format(new Date(iso));
+    if(d < 7) return _t('ntf_ago_d', 'il y a {n} j').replace('{n}', d);
+    return new Intl.DateTimeFormat(_dateLocale(), {day:'numeric',month:'short',timeZone:'Africa/Algiers'}).format(new Date(iso));
   } catch(e){ return ''; }
 }
 
@@ -97,8 +105,8 @@ function _renderEmpty(){
   document.getElementById('notif-list').innerHTML =
     '<div class="notif-empty">' +
       '<i class="fa fa-bell-slash ico-big" aria-hidden="true"></i>' +
-      '<div style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:6px">Aucune notification</div>' +
-      '<div style="font-size:13px">Vos confirmations de RDV, rappels et autres alertes apparaîtront ici.</div>' +
+      '<div style="font-size:15px;font-weight:700;color:var(--text2);margin-bottom:6px">' + _esc(_t('ntf_empty_title','Aucune notification')) + '</div>' +
+      '<div style="font-size:13px">' + _esc(_t('ntf_empty_sub','Vos confirmations de RDV, rappels et autres alertes apparaîtront ici.')) + '</div>' +
     '</div>';
   var btn = document.getElementById('btn-mark-all');
   if(btn) btn.style.display = 'none';
@@ -161,6 +169,8 @@ document.addEventListener('DOMContentLoaded', function(){
   if(_ml){ if(window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging){ _ml.hidden = false; } else { _ml.remove(); } }
   loadNotifications();
 });
+// [CONFORMITE 2026] re-render (empty state + temps relatifs) au changement de langue.
+document.addEventListener('tabibi:lang-change', function(){ try { loadNotifications(); } catch(e){} });
 window.markAllRead = markAllRead;
 window.goBackSafe = goBackSafe;
 window.loadNotifications = loadNotifications;
@@ -174,5 +184,7 @@ window.loadNotifications = loadNotifications;
 <script src="js/tabibi-features.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>
