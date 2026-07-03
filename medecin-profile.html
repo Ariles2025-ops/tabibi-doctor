@@ -93,16 +93,17 @@
 <div class="app-root">
 <header class="app-bar">
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='doctor-dashboard.html'" aria-label="Retour au tableau de bord"><i class="fa fa-arrow-left"></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Profil médecin</div><div class="app-bar-sub">Compte professionnel</div></div>
-  <button class="btn btn-success btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> Sauver</button>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="mp_pagetitle">Profil médecin</div><div class="app-bar-sub" data-i18n="mp_pagesub">Compte professionnel</div></div>
+  <button class="btn btn-success btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> <span data-i18n="mp_save_short">Sauver</span></button>
+  <div data-langbar></div>
 </header>
 
 <!-- [Phase 4.B.1] Bandeau "Vous n'avez pas encore réclamé votre fiche" — affiché si get_my_doctor_profile() retourne null OU si update_my_doctor_profile retourne 'profile_not_found_or_not_claimed' -->
 <div id="not-claimed-banner" class="hidden" role="alert" aria-live="polite" style="margin:12px 16px 0;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:14px 16px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
   <i class="fa fa-circle-info" aria-hidden="true" style="font-size:20px;color:#b45309"></i>
   <div style="flex:1;min-width:200px">
-    <div style="font-weight:700;color:#78350f;margin-bottom:4px">Votre fiche médecin n'est pas encore liée à votre compte</div>
-    <div>Tabibi contient déjà votre fiche dans l'annuaire des 14&nbsp;508 médecins. Recherchez-vous dans l'annuaire et cliquez « Réclamer ma fiche » sur votre profil pour pouvoir l'éditer ici.</div>
+    <div style="font-weight:700;color:#78350f;margin-bottom:4px" data-i18n="mp_notclaimed_title">Votre fiche médecin n'est pas encore liée à votre compte</div>
+    <div data-i18n="mp_notclaimed_body">Tabibi contient déjà votre fiche dans l'annuaire des 14&nbsp;508 médecins. Recherchez-vous dans l'annuaire et cliquez « Réclamer ma fiche » sur votre profil pour pouvoir l'éditer ici.</div>
   </div>
   <a href="doctor-claim.html" class="btn btn-sm" style="background:#f59e0b;color:#fff;text-decoration:none;padding:8px 14px;border-radius:8px;font-weight:700;white-space:nowrap">
     <i class="fa fa-id-card" aria-hidden="true"></i> <span data-i18n="foot_claim_fiche">Réclamer ma fiche</span>
@@ -113,23 +114,23 @@
 <div id="docs-missing-banner" class="hidden" role="alert" aria-live="polite" style="margin:12px 16px 0;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:14px 16px;border-radius:12px;font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap">
   <i class="fa fa-circle-exclamation" aria-hidden="true" style="font-size:20px;color:#b45309"></i>
   <div style="flex:1;min-width:200px">
-    <div style="font-weight:700;color:#78350f;margin-bottom:4px">Documents de validation manquants</div>
-    <div>Pour activer votre fiche, envoyez votre carte du Conseil de l'Ordre + pièce d'identité. Validation manuelle sous 48h ouvrées.</div>
+    <div style="font-weight:700;color:#78350f;margin-bottom:4px" data-i18n="mp_docsmiss_title">Documents de validation manquants</div>
+    <div data-i18n="mp_docsmiss_body">Pour activer votre fiche, envoyez votre carte du Conseil de l'Ordre + pièce d'identité. Validation manuelle sous 48h ouvrées.</div>
   </div>
   <button type="button" class="btn btn-sm" style="background:#f59e0b;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;white-space:nowrap;cursor:pointer" onclick="openDocsUploadModal()">
-    <i class="fa fa-upload" aria-hidden="true"></i> Compléter mes documents
+    <i class="fa fa-upload" aria-hidden="true"></i> <span data-i18n="mp_complete_docs">Compléter mes documents</span>
   </button>
 </div>
 
 <!-- [Phase 16.5] Modal upload docs (recovery flow) -->
 <div id="docs-upload-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="docs-upload-title" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
   <div style="background:#fff;border-radius:16px;padding:22px 20px;max-width:480px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)">
-    <h2 id="docs-upload-title" style="font-size:17px;font-weight:800;margin:0 0 8px;color:#0E5F46"><i class="fa fa-id-card" style="margin-right:6px"></i> Compléter vos documents</h2>
-    <div style="font-size:13px;color:#475569;margin-bottom:10px;line-height:1.5">Envoyez votre carte du Conseil de l'Ordre + pièce d'identité. Validation manuelle sous 48h ouvrées. Votre fiche restera invisible aux patients jusqu'à validation.</div>
+    <h2 id="docs-upload-title" style="font-size:17px;font-weight:800;margin:0 0 8px;color:#0E5F46"><i class="fa fa-id-card" style="margin-right:6px"></i> <span data-i18n="mp_complete_docs_title">Compléter vos documents</span></h2>
+    <div style="font-size:13px;color:#475569;margin-bottom:10px;line-height:1.5" data-i18n="mp_upload_desc">Envoyez votre carte du Conseil de l'Ordre + pièce d'identité. Validation manuelle sous 48h ouvrées. Votre fiche restera invisible aux patients jusqu'à validation.</div>
     <div id="docs-upload-container"></div>
     <div style="display:flex;gap:10px;margin-top:18px">
-      <button type="button" class="btn btn-ghost btn-sm" style="flex:1;background:#f1f5f9;color:#0f172a;border:1px solid #e2e8f0;padding:10px;border-radius:8px;font-weight:700;cursor:pointer" onclick="closeDocsUploadModal()">Annuler</button>
-      <button type="button" id="docs-upload-submit" class="btn btn-primary btn-sm" style="flex:1;background:#0E5F46;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;opacity:.5" disabled onclick="submitDocsUpload()"><i class="fa fa-check"></i> Envoyer</button>
+      <button type="button" class="btn btn-ghost btn-sm" style="flex:1;background:#f1f5f9;color:#0f172a;border:1px solid #e2e8f0;padding:10px;border-radius:8px;font-weight:700;cursor:pointer" onclick="closeDocsUploadModal()" data-i18n="cancel">Annuler</button>
+      <button type="button" id="docs-upload-submit" class="btn btn-primary btn-sm" style="flex:1;background:#0E5F46;color:#fff;border:none;padding:10px;border-radius:8px;font-weight:700;cursor:pointer;opacity:.5" disabled onclick="submitDocsUpload()"><i class="fa fa-check"></i> <span data-i18n="mp_send">Envoyer</span></button>
     </div>
   </div>
 </div>
@@ -151,7 +152,7 @@
       <div id="ob-progress-bar" style="height:100%;background:linear-gradient(90deg,#2E8B57,#047857);width:0%;transition:width .4s ease;border-radius:999px"></div>
     </div>
     <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:11px;font-weight:600">
-      <span><span id="ob-progress-pct">0</span>% rempli</span>
+      <span><span id="ob-progress-pct">0</span><span data-i18n="mp_pct_filled">% rempli</span></span>
       <span id="ob-progress-missing" style="opacity:.85"></span>
     </div>
   </div>
@@ -169,15 +170,15 @@
     <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
     <p id="pspec" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
     <!-- [Défaut #4-A1] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _checkDocsMissing) -->
-    <span id="cert-badge" class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:none"><i class="fa fa-circle-check"></i> Médecin certifié Tabibi</span>
+    <span id="cert-badge" class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:none"><i class="fa fa-circle-check"></i> <span data-i18n="mp_certified">Médecin certifié Tabibi</span></span>
     <div id="photo-upload-status" class="hidden" style="margin-top:10px;font-size:12px;background:rgba(255,255,255,.18);padding:6px 12px;border-radius:8px;display:inline-block"></div>
   </div>
   <div style="padding:16px 16px 0">
     <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;padding:16px 8px">
-      <div><div id="rdv-month" style="font-size:20px;font-weight:800;color:var(--blue);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">RDV ce mois</div></div>
+      <div><div id="rdv-month" style="font-size:20px;font-weight:800;color:var(--blue);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="mp_stat_rdv_month">RDV ce mois</div></div>
       <div><div id="patients-count" style="font-size:20px;font-weight:800;color:var(--green);line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="tab_patients">Patients</div></div>
       <div><div id="rating" style="font-size:20px;font-weight:800;color:#f59e0b;line-height:1.1">—</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="rating">Note</div></div>
-      <div><div id="reviews-count" style="font-size:20px;font-weight:800;color:#7c3aed;line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px">Avis</div></div>
+      <div><div id="reviews-count" style="font-size:20px;font-weight:800;color:#7c3aed;line-height:1.1">0</div><div style="font-size:10px;color:var(--text3);margin-top:4px" data-i18n="mp_stat_reviews">Avis</div></div>
     </div>
   </div>
   <div style="padding:16px">
@@ -185,33 +186,33 @@
     <!-- 1. INFOS PERSO -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:var(--blue-l);color:var(--blue)"><i class="fa fa-id-card"></i></i>
-        <div><div class="lbl">Informations personnelles</div><div class="desc">Identité civile</div></div></div>
+        <div><div class="lbl" data-i18n="mp_perso_title">Informations personnelles</div><div class="desc" data-i18n="mp_perso_sub">Identité civile</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label" data-i18n="first_name">Prénom</label><input class="form-control" id="f_first"></div>
         <div class="form-group"><label class="form-label" data-i18n="last_name">Nom</label><input class="form-control" id="f_last"></div>
       </div>
-      <div class="form-group"><label class="form-label">Email professionnel</label><input class="form-control" id="f_email" disabled></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_email_pro">Email professionnel</label><input class="form-control" id="f_email" disabled></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label">Téléphone perso</label><input class="form-control" id="f_phone_perso" type="tel"></div>
-        <div class="form-group"><label class="form-label">Date naissance</label><input class="form-control" id="f_bd" type="date"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_phone_perso">Téléphone perso</label><input class="form-control" id="f_phone_perso" type="tel"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_birthdate">Date naissance</label><input class="form-control" id="f_bd" type="date"></div>
       </div>
     </div>
 
     <!-- 2. INFOS PROFESSIONNELLES -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:var(--green-l);color:var(--green)"><i class="fa fa-user-doctor"></i></i>
-        <div><div class="lbl">Informations professionnelles</div><div class="desc">Identifiant médical</div></div></div>
-      <div class="form-group"><label class="form-label">Spécialité principale</label>
+        <div><div class="lbl" data-i18n="mp_pro_title">Informations professionnelles</div><div class="desc" data-i18n="mp_pro_sub">Identifiant médical</div></div></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_main_spec">Spécialité principale</label>
         <select class="form-control" id="f_spec"><option>Cardiologie</option><option>Dermatologie</option><option>Pédiatrie</option><option>Gynécologie</option><option>Médecine Générale</option><option>Dentisterie</option><option>Ophtalmologie</option><option>ORL</option><option>Neurologie</option><option>Psychiatrie</option><option>Orthopédie</option></select></div>
-      <div class="form-group"><label class="form-label">Sous-spécialités (séparées par des virgules)</label>
+      <div class="form-group"><label class="form-label" data-i18n="mp_subspec">Sous-spécialités (séparées par des virgules)</label>
         <input class="form-control" id="f_subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties"></div>
-      <div class="form-group"><label class="form-label">N° Conseil National de l'Ordre</label><input class="form-control" id="f_ordre" placeholder="CO-2025-XXXX" data-i18n-placeholder="ph_ordre_number"></div>
-      <div class="form-group"><label class="form-label">Numéro RPPS / Identifiant médecin</label><input class="form-control" id="f_rpps"></div>
-      <div class="form-group"><label class="form-label">Année de début d'exercice</label><input class="form-control" id="f_start_year" type="number" min="1980" max="2026"></div>
-      <div class="form-group"><label class="form-label">Bio professionnelle (visible aux patients)</label>
+      <div class="form-group"><label class="form-label" data-i18n="mp_ordre">N° Conseil National de l'Ordre</label><input class="form-control" id="f_ordre" placeholder="CO-2025-XXXX" data-i18n-placeholder="ph_ordre_number"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_rpps">Numéro RPPS / Identifiant médecin</label><input class="form-control" id="f_rpps"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_start_year">Année de début d'exercice</label><input class="form-control" id="f_start_year" type="number" min="1980" max="2026"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_bio">Bio professionnelle (visible aux patients)</label>
         <textarea class="form-control" id="f_bio" rows="4" maxlength="2000" oninput="updateBioCounter()" placeholder="Cardiologue avec 15 ans d'expérience au CHU Mustapha Pacha..." data-i18n-placeholder="ph_doctor_bio"></textarea>
         <div class="form-hint" style="display:flex;justify-content:space-between;align-items:center">
-          <span>Cette bio apparaît sur votre profil public.</span>
+          <span data-i18n="mp_bio_hint">Cette bio apparaît sur votre profil public.</span>
           <span id="f_bio_counter" style="font-size:11px;color:var(--text3);font-variant-numeric:tabular-nums">0 / 2000</span>
         </div>
       </div>
@@ -220,15 +221,15 @@
     <!-- 3. DIPLÔMES & CERTIFICATIONS -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#fef3c7;color:#92400e"><i class="fa fa-graduation-cap"></i></i>
-        <div><div class="lbl">Diplômes & certifications</div><div class="desc">Parcours académique</div></div></div>
+        <div><div class="lbl" data-i18n="mp_diplomas_title">Diplômes & certifications</div><div class="desc" data-i18n="mp_diplomas_sub">Parcours académique</div></div></div>
       <div id="diploma-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
-      <button class="btn btn-soft btn-full" onclick="addDiploma()"><i class="fa fa-plus"></i> Ajouter un diplôme</button>
+      <button class="btn btn-soft btn-full" onclick="addDiploma()"><i class="fa fa-plus"></i> <span data-i18n="mp_add_diploma">Ajouter un diplôme</span></button>
     </div>
 
     <!-- 4. LANGUES -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#ccfbf1;color:#0f766e"><i class="fa fa-language"></i></i>
-        <div><div class="lbl">Langues parlées</div><div class="desc">Visible aux patients pour le filtre</div></div></div>
+        <div><div class="lbl" data-i18n="mp_langs_title">Langues parlées</div><div class="desc" data-i18n="mp_langs_sub">Visible aux patients pour le filtre</div></div></div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px">
         <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="lang_fr" checked> 🇫🇷 Français</label>
         <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="lang_ar" checked> 🇩🇿 العربية</label>
@@ -240,39 +241,39 @@
     <!-- 5. CABINET / ADRESSE -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-location-dot"></i></i>
-        <div><div class="lbl">Cabinet / Lieu d'exercice</div><div class="desc">Adresse visible aux patients</div></div></div>
-      <div class="form-group"><label class="form-label">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Nom de votre cabinet" data-i18n-placeholder="ph_cabinet_name"></div>
-      <div class="form-group"><label class="form-label">Adresse complète</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, wilaya" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
+        <div><div class="lbl" data-i18n="mp_cabinet_title">Cabinet / Lieu d'exercice</div><div class="desc" data-i18n="mp_cabinet_sub">Adresse visible aux patients</div></div></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_cabinet_name">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Nom de votre cabinet" data-i18n-placeholder="ph_cabinet_name"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_full_address">Adresse complète</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, wilaya" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label" data-i18n="wilaya">Wilaya</label>
           <select class="form-control" id="f_city"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option></select></div>
-        <div class="form-group"><label class="form-label">Code postal</label><input class="form-control" id="f_postal"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_postal">Code postal</label><input class="form-control" id="f_postal"></div>
       </div>
-      <div class="form-group"><label class="form-label">Téléphone cabinet</label><input class="form-control" id="f_phone_cab" type="tel" placeholder="0661 234 567" data-i18n-placeholder="ph_phone_dz"></div>
-      <div class="form-group"><label class="form-label">Site web (optionnel)</label><input class="form-control" id="f_web" type="url" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_phone_cab">Téléphone cabinet</label><input class="form-control" id="f_phone_cab" type="tel" placeholder="0661 234 567" data-i18n-placeholder="ph_phone_dz"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_website">Site web (optionnel)</label><input class="form-control" id="f_web" type="url" placeholder="https://..."></div>
     </div>
 
     <!-- 6. TARIFS & TYPES DE CONSULTATION -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#fed7aa;color:#9a3412"><i class="fa fa-coins"></i></i>
-        <div><div class="lbl">Tarifs & types de consultation</div><div class="desc">Visible aux patients</div></div></div>
+        <div><div class="lbl" data-i18n="mp_pricing_title">Tarifs & types de consultation</div><div class="desc" data-i18n="mp_pricing_sub">Visible aux patients</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label">Tarif consultation (DA)</label><input class="form-control" id="f_price" type="number" placeholder="2500"></div>
-        <div class="form-group"><label class="form-label">Tarif suivi (DA)</label><input class="form-control" id="f_price_followup" type="number" placeholder="1800"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_price_consult">Tarif consultation (DA)</label><input class="form-control" id="f_price" type="number" placeholder="2500"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_price_followup">Tarif suivi (DA)</label><input class="form-control" id="f_price_followup" type="number" placeholder="1800"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label">Tarif urgence (DA)</label><input class="form-control" id="f_price_urgent" type="number" placeholder="3500"></div>
-        <div class="form-group"><label class="form-label">Durée moyenne (min)</label><input class="form-control" id="f_duration" type="number" placeholder="30"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_price_urgent">Tarif urgence (DA)</label><input class="form-control" id="f_price_urgent" type="number" placeholder="3500"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_avg_duration">Durée moyenne (min)</label><input class="form-control" id="f_duration" type="number" placeholder="30"></div>
       </div>
-      <div class="row-setting"><div class="info"><div class="name">Téléconsultation disponible</div><div class="desc">RDV en visioconférence</div></div><div class="toggle-switch" data-key="telemedicine" onclick="toggleSwitch(this)"></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Visites à domicile</div><div class="desc">Pour patients non-mobiles</div></div><div class="toggle-switch" data-key="home_visits" onclick="toggleSwitch(this)"></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Urgences 24h/24</div><div class="desc">Disponible pour les urgences</div></div><div class="toggle-switch" data-key="urgent_24" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_teleconsult_avail">Téléconsultation disponible</div><div class="desc" data-i18n="mp_teleconsult_avail_d">RDV en visioconférence</div></div><div class="toggle-switch" data-key="telemedicine" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_home_visits">Visites à domicile</div><div class="desc" data-i18n="mp_home_visits_d">Pour patients non-mobiles</div></div><div class="toggle-switch" data-key="home_visits" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_urgent_24">Urgences 24h/24</div><div class="desc" data-i18n="mp_urgent_24_d">Disponible pour les urgences</div></div><div class="toggle-switch" data-key="urgent_24" onclick="toggleSwitch(this)"></div></div>
     </div>
 
     <!-- 7. ASSURANCES ACCEPTÉES -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:var(--green-l);color:var(--green)"><i class="fa fa-shield"></i></i>
-        <div><div class="lbl">Assurances & tiers payant acceptés</div><div class="desc">Conventionnement</div></div></div>
+        <div><div class="lbl" data-i18n="mp_ins_title">Assurances & tiers payant acceptés</div><div class="desc" data-i18n="mp_ins_sub">Conventionnement</div></div></div>
       <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
         <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="ins_cnas" checked> CNAS</label>
         <label style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer"><input type="checkbox" id="ins_casnos" checked> CASNOS</label>
@@ -284,27 +285,27 @@
     <!-- 8. HORAIRES PAR DÉFAUT -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#e7f3ef;color:#0a4d3e"><i class="fa fa-clock"></i></i>
-        <div><div class="lbl">Horaires d'ouverture par défaut</div><div class="desc">Modèle pour générer vos créneaux</div></div></div>
+        <div><div class="lbl" data-i18n="mp_hours_title">Horaires d'ouverture par défaut</div><div class="desc" data-i18n="mp_hours_sub">Modèle pour générer vos créneaux</div></div></div>
       <div id="schedule-rows"></div>
-      <a href="doctor-reservation.html" class="btn btn-soft btn-full" style="margin-top:8px"><i class="fa fa-calendar-week"></i> Gérer mes créneaux en détail</a>
+      <a href="doctor-reservation.html" class="btn btn-soft btn-full" style="margin-top:8px"><i class="fa fa-calendar-week"></i> <span data-i18n="mp_manage_slots">Gérer mes créneaux en détail</span></a>
     </div>
 
     <!-- [Phase 4.B.1] 8.bis TÉLÉCONSULTATION -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#ede9fe;color:#6d28d9"><i class="fa fa-video"></i></i>
-        <div><div class="lbl">Téléconsultation vidéo</div><div class="desc">Daily.co — patients à distance</div></div></div>
+        <div><div class="lbl" data-i18n="mp_tele_title">Téléconsultation vidéo</div><div class="desc" data-i18n="mp_tele_sub">Daily.co — patients à distance</div></div></div>
       <div class="row-setting">
         <div class="info">
-          <div class="name">Activer la téléconsultation</div>
-          <div class="desc">Les patients pourront prendre RDV en visio</div>
+          <div class="name" data-i18n="mp_tele_enable">Activer la téléconsultation</div>
+          <div class="desc" data-i18n="mp_tele_enable_d">Les patients pourront prendre RDV en visio</div>
         </div>
         <div id="t_telehealth" class="toggle-switch" data-key="telehealth_enabled" onclick="toggleTelehealth(this)" role="switch" aria-checked="false" tabindex="0"></div>
       </div>
       <div id="tele-fee-wrap" class="hidden" style="margin-top:10px">
         <div class="form-group">
-          <label class="form-label" for="f_telehealth_fee">Tarif téléconsultation (DA)</label>
+          <label class="form-label" for="f_telehealth_fee" data-i18n="mp_tele_fee">Tarif téléconsultation (DA)</label>
           <input class="form-control" id="f_telehealth_fee" type="number" min="0" placeholder="2000">
-          <div class="form-hint">Laissez vide pour utiliser le tarif consultation classique.</div>
+          <div class="form-hint" data-i18n="mp_tele_fee_hint">Laissez vide pour utiliser le tarif consultation classique.</div>
         </div>
       </div>
     </div>
@@ -312,50 +313,50 @@
     <!-- 9. ABONNEMENT -->
     <div class="card section-card" style="background:linear-gradient(135deg,#fef3c7,#fde68a);border:1px solid #f59e0b">
       <div class="sec-title-bar" style="border-bottom-color:rgba(0,0,0,.1)"><i style="background:#f59e0b;color:#fff"><i class="fa fa-crown"></i></i>
-        <div><div class="lbl">Mon abonnement Tabibi PRO</div><div class="desc">Plan actuel</div></div></div>
+        <div><div class="lbl" data-i18n="mp_sub_title">Mon abonnement Tabibi PRO</div><div class="desc" data-i18n="mp_sub_sub">Plan actuel</div></div></div>
       <div style="background:#fff;border-radius:12px;padding:14px;margin-bottom:10px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-          <div><div style="font-size:18px;font-weight:800;color:#92400e">Plan PRO</div><div style="font-size:12px;color:var(--text3)">Bientôt disponible</div></div>
-          <span class="badge badge-amber"><i class="fa fa-clock"></i> Bientôt</span>
+          <div><div style="font-size:18px;font-weight:800;color:#92400e" data-i18n="mp_plan_pro">Plan PRO</div><div style="font-size:12px;color:var(--text3)" data-i18n="mp_soon_available">Bientôt disponible</div></div>
+          <span class="badge badge-amber"><i class="fa fa-clock"></i> <span data-i18n="mp_soon">Bientôt</span></span>
         </div>
-        <div style="font-size:12px;color:var(--text3)">Les abonnements et paiements arrivent prochainement.</div>
+        <div style="font-size:12px;color:var(--text3)" data-i18n="mp_sub_note">Les abonnements et paiements arrivent prochainement.</div>
       </div>
-      <button class="btn btn-ghost btn-full" style="margin-bottom:6px"><i class="fa fa-file-invoice"></i> Voir mes factures</button>
-      <button class="btn btn-ghost btn-full" style="color:var(--red);border-color:#fca5a5"><i class="fa fa-xmark"></i> Annuler l'abonnement</button>
+      <button class="btn btn-ghost btn-full" style="margin-bottom:6px"><i class="fa fa-file-invoice"></i> <span data-i18n="mp_view_invoices">Voir mes factures</span></button>
+      <button class="btn btn-ghost btn-full" style="color:var(--red);border-color:#fca5a5"><i class="fa fa-xmark"></i> <span data-i18n="mp_cancel_sub">Annuler l'abonnement</span></button>
     </div>
 
     <!-- 10. NOTIFICATIONS -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#fce7f3;color:#9d174d"><i class="fa fa-bell"></i></i>
-        <div><div class="lbl" data-i18n="notifications">Notifications</div><div class="desc">Alertes professionnelles</div></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Nouveau RDV pris</div><div class="desc">SMS + Email</div></div><div class="toggle-switch on" data-key="notif_new_rdv" onclick="toggleSwitch(this)"></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Annulation par patient</div><div class="desc">Email immédiat</div></div><div class="toggle-switch on" data-key="notif_cancel" onclick="toggleSwitch(this)"></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Récapitulatif quotidien</div><div class="desc">Email à 8h chaque jour</div></div><div class="toggle-switch on" data-key="notif_daily" onclick="toggleSwitch(this)"></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Rappel paiement reçu</div><div class="desc">Notif après chaque paiement</div></div><div class="toggle-switch" data-key="notif_pay" onclick="toggleSwitch(this)"></div></div>
+        <div><div class="lbl" data-i18n="notifications">Notifications</div><div class="desc" data-i18n="mp_notif_sub">Alertes professionnelles</div></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_notif_newrdv">Nouveau RDV pris</div><div class="desc" data-i18n="mp_notif_newrdv_d">SMS + Email</div></div><div class="toggle-switch on" data-key="notif_new_rdv" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_notif_cancel">Annulation par patient</div><div class="desc" data-i18n="mp_notif_cancel_d">Email immédiat</div></div><div class="toggle-switch on" data-key="notif_cancel" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_notif_daily">Récapitulatif quotidien</div><div class="desc" data-i18n="mp_notif_daily_d">Email à 8h chaque jour</div></div><div class="toggle-switch on" data-key="notif_daily" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_notif_pay">Rappel paiement reçu</div><div class="desc" data-i18n="mp_notif_pay_d">Notif après chaque paiement</div></div><div class="toggle-switch" data-key="notif_pay" onclick="toggleSwitch(this)"></div></div>
     </div>
 
     <!-- 11. SÉCURITÉ -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-lock"></i></i>
-        <div><div class="lbl">Sécurité du compte</div><div class="desc">Protection professionnelle</div></div></div>
-      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="changePassword()"><i class="fa fa-key"></i> Changer le mot de passe</button>
-      <div class="row-setting"><div class="info"><div class="name">2FA obligatoire (recommandé)</div><div class="desc">SMS de vérification à chaque connexion</div></div><div class="toggle-switch on" data-key="sec_2fa" onclick="toggleSwitch(this)"></div></div>
-      <div class="row-setting"><div class="info"><div class="name">Verrouillage automatique</div><div class="desc">Après 15 min d'inactivité</div></div><div class="toggle-switch on" data-key="sec_lock" onclick="toggleSwitch(this)"></div></div>
+        <div><div class="lbl" data-i18n="mp_sec_title">Sécurité du compte</div><div class="desc" data-i18n="mp_sec_sub">Protection professionnelle</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="changePassword()"><i class="fa fa-key"></i> <span data-i18n="mp_change_password">Changer le mot de passe</span></button>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_2fa_required">2FA obligatoire (recommandé)</div><div class="desc" data-i18n="mp_2fa_required_d">SMS de vérification à chaque connexion</div></div><div class="toggle-switch on" data-key="sec_2fa" onclick="toggleSwitch(this)"></div></div>
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_autolock">Verrouillage automatique</div><div class="desc" data-i18n="mp_autolock_d">Après 15 min d'inactivité</div></div><div class="toggle-switch on" data-key="sec_lock" onclick="toggleSwitch(this)"></div></div>
     </div>
 
     <!-- SÉCURITÉ : 2FA -->
     <div class="card section-card" style="border-left:3px solid #0E5F46">
       <div class="sec-title-bar" style="border-bottom-color:#e7f3ef"><i style="background:#0E5F46;color:#fff"><i class="fa fa-shield-halved"></i></i>
-        <div><div class="lbl" style="color:#0a4d3e">Sécurité du compte</div><div class="desc">Double authentification (2FA)</div></div></div>
+        <div><div class="lbl" style="color:#0a4d3e" data-i18n="mp_sec_title">Sécurité du compte</div><div class="desc" data-i18n="mp_2fa_sub">Double authentification (2FA)</div></div></div>
       <div id="twofa-status" style="margin-bottom:12px"></div>
-      <button id="twofa-toggle-btn" class="btn btn-primary btn-full" onclick="open2FASetup()"><i class="fa fa-lock"></i> Configurer la 2FA</button>
+      <button id="twofa-toggle-btn" class="btn btn-primary btn-full" onclick="open2FASetup()"><i class="fa fa-lock"></i> <span data-i18n="mp_config_2fa">Configurer la 2FA</span></button>
     </div>
 
     <!-- MODAL 2FA -->
     <div id="twofa-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px" onclick="if(event.target===this)close2FASetup()">
       <div style="background:#fff;border-radius:18px;max-width:420px;width:100%;max-height:92dvh;overflow-y:auto">
         <div style="padding:18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:17px;font-weight:800"><i class="fa fa-shield-halved" style="color:#0E5F46"></i> Activer la 2FA</div>
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-shield-halved" style="color:#0E5F46"></i> <span data-i18n="mp_enable_2fa">Activer la 2FA</span></div>
           <button onclick="close2FASetup()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
         </div>
         <div id="twofa-step-content" style="padding:18px"></div>
@@ -365,19 +366,19 @@
     <!-- 12. ZONE DANGER -->
     <div class="card section-card" style="background:var(--red-l);border-left:3px solid var(--red)">
       <div class="sec-title-bar" style="border-bottom-color:#fca5a5"><i style="background:var(--red);color:#fff"><i class="fa fa-triangle-exclamation"></i></i>
-        <div><div class="lbl" style="color:var(--red)">Zone de danger</div><div class="desc">Désactivation du compte</div></div></div>
-      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px;color:#92400e;border-color:#fde68a" onclick="alert('Compte mis en pause — vos patients voient un message')"><i class="fa fa-pause"></i> Mettre en pause (vacances)</button>
-      <button class="btn btn-danger btn-full" style="justify-content:flex-start" onclick="if(confirm(tabibiT('confirm_delete_doctor_account','Supprimer définitivement votre compte médecin ?')))alert(tabibiT('alert_account_deleted','Compte supprimé'))"><i class="fa fa-trash"></i> Supprimer mon compte</button>
+        <div><div class="lbl" style="color:var(--red)" data-i18n="mp_danger_title">Zone de danger</div><div class="desc" data-i18n="mp_danger_sub">Désactivation du compte</div></div></div>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px;color:#92400e;border-color:#fde68a" onclick="alert('Compte mis en pause — vos patients voient un message')"><i class="fa fa-pause"></i> <span data-i18n="mp_pause_account">Mettre en pause (vacances)</span></button>
+      <button class="btn btn-danger btn-full" style="justify-content:flex-start" onclick="if(confirm(tabibiT('confirm_delete_doctor_account','Supprimer définitivement votre compte médecin ?')))alert(tabibiT('alert_account_deleted','Compte supprimé'))"><i class="fa fa-trash"></i> <span data-i18n="mp_delete_account">Supprimer mon compte</span></button>
     </div>
 
-    <button class="btn btn-success btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> Sauvegarder toutes les modifications</button>
+    <button class="btn btn-success btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> <span data-i18n="mp_save_all">Sauvegarder toutes les modifications</span></button>
 
     <!-- [Phase 14.2] CTA spécifique onboarding : sauvegarde + redirect dashboard -->
     <button id="ob-publish-btn" class="btn btn-primary btn-full btn-xl hidden" style="margin-top:10px;background:linear-gradient(135deg,#0E5F46,#2E8B57);font-size:15px" onclick="saveAndPublish()">
       <i class="fa fa-rocket"></i> <span data-i18n="ob_publish_btn">Sauvegarder et publier ma fiche</span>
     </button>
 
-    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> <span data-i18n="mp_logout">Se déconnecter</span></button>
   </div>
 </main>
 <div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
@@ -493,7 +494,7 @@ async function submitDocsUpload() {
     btn.disabled = false; btn.innerHTML = '<i class="fa fa-check"></i> Envoyer';
     return;
   }
-  if (typeof toastM === 'function') toastM('✅ Documents envoyés. Validation sous 48h ouvrées.', 'success');
+  if (typeof toastM === 'function') toastM(tabibiT('mp_toast_docs_sent','✅ Documents envoyés. Validation sous 48h ouvrées.'), 'success');
   closeDocsUploadModal();
   hideDocsMissingBanner();
 }
@@ -542,7 +543,7 @@ async function onPhotoSelected(event) {
     u.photo_url = res.publicUrl;
     try { localStorage.setItem('tabibi_user', JSON.stringify(u)); } catch (e) {}
     if (statusEl) { statusEl.textContent = '✓ Photo mise à jour'; setTimeout(function(){ statusEl.classList.add('hidden'); }, 2500); }
-    toastM('Photo de profil mise à jour ✓', 'success');
+    toastM(tabibiT('mp_toast_photo_updated','Photo de profil mise à jour ✓'), 'success');
   } else {
     // Rollback preview
     if (avaEl) { avaEl.style.backgroundImage = ''; avaEl.textContent = u.initials || '?'; }
@@ -560,13 +561,15 @@ async function onPhotoSelected(event) {
 }
 
 const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
+// [CONFORMITE 2026] libellés jours localisés (clés data conservées FR)
+const DAY_KEYS={Lundi:"day_monday",Mardi:"day_tuesday",Mercredi:"day_wednesday",Jeudi:"day_thursday",Vendredi:"day_friday",Samedi:"day_saturday",Dimanche:"day_sunday"};
 function renderSchedule(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   const sched=u.schedule||{Lundi:["09:00","17:00",true],Mardi:["09:00","17:00",true],Mercredi:["09:00","17:00",true],Jeudi:["09:00","17:00",true],Vendredi:["09:00","13:00",true],Samedi:["09:00","13:00",false],Dimanche:["","",false]};
   document.getElementById("schedule-rows").innerHTML=DAYS.map(d=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2)">
       <label style="display:flex;align-items:center;gap:6px;width:120px;font-size:13px;font-weight:600">
-        <input type="checkbox" data-day="${d}" data-fld="enabled" ${sched[d][2]?"checked":""}> ${d}</label>
+        <input type="checkbox" data-day="${d}" data-fld="enabled" ${sched[d][2]?"checked":""}> ${tabibiT(DAY_KEYS[d]||"", d)}</label>
       <input type="time" class="form-control" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="start" value="${sched[d][0]}">
       <span style="font-size:12px;color:var(--text3)">→</span>
       <input type="time" class="form-control" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="end" value="${sched[d][1]}">
@@ -581,11 +584,11 @@ function renderDiplomas(){
   document.getElementById("diploma-list").innerHTML=d.map((v,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px">
     <i class="fa fa-certificate" style="color:#f59e0b"></i>
     <div style="flex:1;font-size:13px">${v}</div>
-    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="rmDiploma(${i})" aria-label="Supprimer ce diplôme"><i class="fa fa-trash"></i></button>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="rmDiploma(${i})" aria-label="${tabibiT('mp_remove_diploma','Supprimer ce diplôme')}"><i class="fa fa-trash"></i></button>
   </div>`).join("");
 }
 function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (ex: Doctorat en Médecine — Université d'Alger (2008))"));if(!v)return;const d=getDiplomas();d.push(v);setDiplomas(d);renderDiplomas();toastM(tabibiT('toast_diploma_added',"Diplôme ajouté"),"success");}
-function rmDiploma(i){if(!confirm("Retirer ?"))return;const d=getDiplomas();d.splice(i,1);setDiplomas(d);renderDiplomas();}
+function rmDiploma(i){if(!confirm(tabibiT('mp_confirm_remove',"Retirer ?")))return;const d=getDiplomas();d.splice(i,1);setDiplomas(d);renderDiplomas();}
 
 async function loadProfile(){
   // [FIX session] Garde réseau-aware centralisée (remplace le check cache-first + retry bridge).
@@ -881,24 +884,24 @@ async function saveAll(){
       } else if (res.error === 'profile_not_found_or_not_claimed') {
         // Cas critique (cf. Ajustement 2) : user authentifié mais pas de fiche claim
         showNotClaimedBanner();
-        toastM("Vous devez d'abord réclamer votre fiche dans l'annuaire avant de pouvoir l'éditer.", "error");
+        toastM(tabibiT('mp_toast_claim_first',"Vous devez d'abord réclamer votre fiche dans l'annuaire avant de pouvoir l'éditer."), "error");
         return;
       } else if (res.error === 'bio_too_long') {
-        toastM("Bio trop longue (max 2000 caractères).", "error");
+        toastM(tabibiT('mp_toast_bio_long','Bio trop longue (max 2000 caractères).'), "error");
         return;
       } else if (res.error === 'invalid_fee' || res.error === 'invalid_telehealth_fee') {
-        toastM("Tarif invalide (doit être ≥ 0).", "error");
+        toastM(tabibiT('mp_toast_price_invalid','Tarif invalide (doit être ≥ 0).'), "error");
         return;
       } else if (res.error === 'working_hours_not_object') {
         toastM("Format des horaires invalide.", "error");
         return;
       } else if (res.error === 'not_authenticated') {
-        toastM("Session expirée. Reconnectez-vous.", "error");
+        toastM(tabibiT('mp_toast_session_expired','Session expirée. Reconnectez-vous.'), "error");
         return;
       } else {
         // Erreur réseau / inconnue : on continue vers le fallback localStorage
         console.warn('[saveAll] DB save failed, fallback localStorage:', res.error);
-        toastM("Sauvegarde DB échouée — copie locale gardée. Réessayez plus tard.", "error");
+        toastM(tabibiT('mp_toast_save_failed','Sauvegarde DB échouée — copie locale gardée. Réessayez plus tard.'), "error");
       }
     }
   } catch (e) {
@@ -996,7 +999,7 @@ async function saveAndPublish(){
   if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Publication…'; }
   try {
     await saveAll();
-    if(typeof toastM === 'function') toastM("✓ Votre fiche est publiée. Bienvenue !", 'success');
+    if(typeof toastM === 'function') toastM(tabibiT('mp_toast_published','✓ Votre fiche est publiée. Bienvenue !'), 'success');
     // Nettoie le N° Ordre temporaire
     try { localStorage.removeItem('tabibi_claim_ordre'); } catch(e){}
     setTimeout(function(){ location.href = 'doctor-dashboard.html'; }, 1500);
@@ -1007,6 +1010,8 @@ async function saveAndPublish(){
 }
 window.saveAndPublish = saveAndPublish;
 
+// [CONFORMITE 2026] re-render des listes JS (horaires, diplômes) au changement de langue.
+document.addEventListener("tabibi:lang-change",function(){ try{renderSchedule();}catch(e){} try{renderDiplomas();}catch(e){} });
 document.addEventListener("DOMContentLoaded",function(){
   loadProfile();
   try { render2FAStatus(); } catch(e) {}
@@ -1026,5 +1031,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue factorisé -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body></html>
