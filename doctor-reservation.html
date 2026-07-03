@@ -20,39 +20,42 @@
 <div class="app-root">
 <header class="app-bar">
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='doctor-dashboard.html'" aria-label="Retour au tableau de bord"><i class="fa fa-arrow-left"></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Mes disponibilités</div><div class="app-bar-sub">Gérer vos créneaux</div></div>
-  <button class="btn btn-success btn-sm" onclick="openAdd()"><i class="fa fa-plus"></i> Ajouter</button>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="drr_pagetitle">Mes disponibilités</div><div class="app-bar-sub" data-i18n="drr_pagesub">Gérer vos créneaux</div></div>
+  <button class="btn btn-success btn-sm" onclick="openAdd()"><i class="fa fa-plus"></i> <span data-i18n="drr_add">Ajouter</span></button>
 
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="window._noti=!window._noti;document.getElementById('mini-noti').classList.toggle('hidden')" title="Notifications" style="position:relative">
     <i class="fa fa-bell"></i><span style="position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 4px;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:8px;display:flex;align-items:center;justify-content:center">2</span>
   </button>
   <div id="mini-noti" class="hidden" style="position:absolute;top:54px;right:50px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:280px;padding:12px;z-index:300">
-    <div style="font-weight:700;font-size:13px;margin-bottom:10px"><i class="fa fa-bell"></i> Notifications</div>
-    <div style="font-size:12px;padding:8px;background:var(--blue-l);border-radius:8px;margin-bottom:6px"><strong>Nouveau RDV</strong><br><span style="color:var(--text3)">Patient ajouté à votre agenda</span></div>
-    <div style="font-size:12px;padding:8px;background:var(--bg2);border-radius:8px"><strong>Rappel</strong><br><span style="color:var(--text3)">Consultation dans 1h</span></div>
+    <div style="font-weight:700;font-size:13px;margin-bottom:10px"><i class="fa fa-bell"></i> <span data-i18n="drr_notifications">Notifications</span></div>
+    <div style="font-size:12px;padding:8px;background:var(--blue-l);border-radius:8px;margin-bottom:6px"><strong data-i18n="drr_noti_newrdv">Nouveau RDV</strong><br><span style="color:var(--text3)" data-i18n="drr_noti_newrdv_d">Patient ajouté à votre agenda</span></div>
+    <div style="font-size:12px;padding:8px;background:var(--bg2);border-radius:8px"><strong data-i18n="drr_noti_reminder">Rappel</strong><br><span style="color:var(--text3)" data-i18n="drr_noti_reminder_d">Consultation dans 1h</span></div>
   </div>
   <button class="btn btn-icon btn-icon-sm" onclick="window._um=!window._um;document.getElementById('mini-menu').classList.toggle('hidden')" title="Mon compte" style="background:var(--blue-l);color:var(--blue);font-weight:700" id="user-pill"><span id="user-init">?</span></button>
   <div id="mini-menu" class="hidden" style="position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:240px;z-index:300;overflow:hidden">
-    <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;text-decoration:none;color:var(--text);font-size:13px;border-bottom:1px solid var(--bg2)"><i class="fa fa-user" style="color:var(--blue);width:20px"></i> Mon profil</a>
+    <!-- [i18n] langbar dans le menu compte (header trop dense pour l'accueillir) -->
+    <div style="display:flex;justify-content:center;padding:10px 12px;border-bottom:1px solid var(--bg2)"><div data-langbar></div></div>
+    <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px 14px;text-decoration:none;color:var(--text);font-size:13px;border-bottom:1px solid var(--bg2)"><i class="fa fa-user" style="color:var(--blue);width:20px"></i> <span data-i18n="drr_my_profile">Mon profil</span></a>
     <a href="patient-profile.html#sec-notif" style="display:none"></a>
-    <button onclick="alert("Pour toute question, contactez-nous : contact@tabibi.doctor")" style="display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> Aide & FAQ</button>
-    <button onclick="if(confirm(tabibiT('confirm_logout_short','Se déconnecter ?'))){localStorage.removeItem('tabibi_user');location.href='index.html'}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> Se déconnecter</button>
+    <!-- [FIX 2026-07-03] guillemets doubles non échappés dans onclick -> attribut cassé (bouton mort). Passe en tabibiT (quotes simples). -->
+    <button onclick="alert(tabibiT('drr_help_contact','Pour toute question, contactez-nous : contact@tabibi.doctor'))" style="display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> <span data-i18n="drr_help">Aide & FAQ</span></button>
+    <button onclick="if(confirm(tabibiT('confirm_logout_short','Se déconnecter ?'))){localStorage.removeItem('tabibi_user');location.href='index.html'}" style="display:flex;align-items:center;gap:10px;padding:12px 14px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> <span data-i18n="drr_logout">Se déconnecter</span></button>
   </div>
 <button type="button" class="btn btn-icon btn-icon-sm" onclick="if(confirm(tabibiT('confirm_logout_short','Se d\u00e9connecter ?'))){localStorage.removeItem('tabibi_user');location.href='index.html'}" title="Se déconnecter" aria-label="Se déconnecter" style="background:var(--red-l);color:var(--red);margin-left:4px"><i class="fa fa-right-from-bracket"></i></button>
 </header>
 <main class="page" style="padding:16px">
   <div class="card" style="margin-bottom:14px">
-    <div style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fa fa-calendar-week" style="color:var(--blue)"></i> Cette semaine</div>
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fa fa-calendar-week" style="color:var(--blue)"></i> <span data-i18n="drr_this_week">Cette semaine</span></div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:14px" id="week-grid"></div>
     <div id="day-slots" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
   <div class="card">
-    <div style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fa fa-clock-rotate-left"></i> Modèles de récurrence</div>
-    <p style="font-size:12px;color:var(--text3);margin-bottom:10px">Définissez vos horaires habituels pour générer automatiquement vos créneaux.</p>
+    <div style="font-size:14px;font-weight:700;margin-bottom:12px"><i class="fa fa-clock-rotate-left"></i> <span data-i18n="drr_templates">Modèles de récurrence</span></div>
+    <p style="font-size:12px;color:var(--text3);margin-bottom:10px" data-i18n="drr_templates_sub">Définissez vos horaires habituels pour générer automatiquement vos créneaux.</p>
     <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn btn-soft btn-sm" onclick="applyTpl('matin')">Matin (8h-12h)</button>
-      <button class="btn btn-soft btn-sm" onclick="applyTpl('aprem')">Après-midi (14h-18h)</button>
-      <button class="btn btn-soft btn-sm" onclick="applyTpl('full')">Journée complète</button>
+      <button class="btn btn-soft btn-sm" onclick="applyTpl('matin')" data-i18n="drr_tpl_morning">Matin (8h-12h)</button>
+      <button class="btn btn-soft btn-sm" onclick="applyTpl('aprem')" data-i18n="drr_tpl_afternoon">Après-midi (14h-18h)</button>
+      <button class="btn btn-soft btn-sm" onclick="applyTpl('full')" data-i18n="drr_tpl_full">Journée complète</button>
     </div>
   </div>
 </main>
@@ -61,18 +64,18 @@
 <div class="modal-bg hidden" id="add-modal">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-hdr"><div class="modal-title">Ajouter des créneaux</div><button class="modal-close" onclick="closeAdd()">×</button></div>
+    <div class="modal-hdr"><div class="modal-title" data-i18n="drr_add_slots">Ajouter des créneaux</div><button class="modal-close" onclick="closeAdd()">×</button></div>
     <div class="modal-body" style="padding-bottom:20px">
-      <div class="form-group"><label class="form-label">Date</label><input class="form-control" type="date" id="ad-date"></div>
+      <div class="form-group"><label class="form-label" data-i18n="drr_date">Date</label><input class="form-control" type="date" id="ad-date"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label">Heure début</label><input class="form-control" type="time" id="ad-start" value="09:00"></div>
-        <div class="form-group"><label class="form-label">Heure fin</label><input class="form-control" type="time" id="ad-end" value="12:00"></div>
+        <div class="form-group"><label class="form-label" data-i18n="drr_start">Heure début</label><input class="form-control" type="time" id="ad-start" value="09:00"></div>
+        <div class="form-group"><label class="form-label" data-i18n="drr_end">Heure fin</label><input class="form-control" type="time" id="ad-end" value="12:00"></div>
       </div>
-      <div class="form-group"><label class="form-label">Durée par RDV (min)</label>
+      <div class="form-group"><label class="form-label" data-i18n="drr_duration">Durée par RDV (min)</label>
         <select class="form-control" id="ad-dur"><option>15</option><option>20</option><option selected>30</option><option>45</option><option>60</option></select></div>
-      <div class="form-group"><label class="form-label">Récurrence</label>
-        <select class="form-control" id="ad-rep"><option value="once">Une seule fois</option><option value="weekly">Toutes les semaines (4 sem.)</option></select></div>
-      <button class="btn btn-success btn-full btn-xl" onclick="saveSlots()"><i class="fa fa-check"></i> Générer les créneaux</button>
+      <div class="form-group"><label class="form-label" data-i18n="drr_recurrence">Récurrence</label>
+        <select class="form-control" id="ad-rep"><option value="once" data-i18n="drr_once">Une seule fois</option><option value="weekly" data-i18n="drr_weekly">Toutes les semaines (4 sem.)</option></select></div>
+      <button class="btn btn-success btn-full btn-xl" onclick="saveSlots()"><i class="fa fa-check"></i> <span data-i18n="drr_generate">Générer les créneaux</span></button>
     </div>
   </div>
 </div>
@@ -81,6 +84,16 @@
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
 const DAYS=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+// [FIX 2026-07-03] Les inputs du modal ont des id à TIRET (ad-date, ad-start...),
+// mais le JS les référençait via ad_date/ad_start (underscore) → globals nommés
+// inexistants → ReferenceError dans l'init (renderWeek jamais appelée, semaine
+// vide) et dans saveSlots/applyTpl. Alias explicites (script en bas de page,
+// éléments déjà présents). Sans rapport avec l'i18n.
+const ad_date=document.getElementById('ad-date'),
+      ad_start=document.getElementById('ad-start'),
+      ad_end=document.getElementById('ad-end'),
+      ad_dur=document.getElementById('ad-dur'),
+      ad_rep=document.getElementById('ad-rep');
 let currentDay=new Date().getDay()===0?6:new Date().getDay()-1;
 function getSlots(){return JSON.parse(localStorage.getItem("tabibi_doc_slots")||"[]");}
 function saveSlotsArr(s){localStorage.setItem("tabibi_doc_slots",JSON.stringify(s));}
@@ -92,7 +105,7 @@ function renderWeek(){
     const iso=date.toISOString().split("T")[0];
     const count=getSlots().filter(s=>s.date===iso).length;
     return `<button onclick="selDay(${i},'${iso}')" class="day-pill ${i===currentDay?'active':''}" style="padding:10px 4px;border-radius:10px;border:1.5px solid ${i===currentDay?'var(--blue)':'var(--border)'};background:${i===currentDay?'var(--blue-l)':'#fff'};color:${i===currentDay?'var(--blue)':'var(--text2)'};font-weight:700;font-size:11px">
-      <div>${d}</div><div style="font-size:14px;margin-top:2px">${date.getDate()}</div>
+      <div>${window.tabibiFormatDate?window.tabibiFormatDate(date,{weekday:"short"}):d}</div><div style="font-size:14px;margin-top:2px">${date.getDate()}</div>
       ${count?`<div style="margin-top:3px"><span class="badge badge-green" style="font-size:9px;padding:1px 5px">${count}</span></div>`:""}
     </button>`;
   }).join("");
@@ -106,11 +119,11 @@ function renderDay(){
   const iso=window._selIso||date.toISOString().split("T")[0];
   const slots=getSlots().filter(s=>s.date===iso).sort((a,b)=>a.time.localeCompare(b.time));
   const box=document.getElementById("day-slots");
-  if(!slots.length){box.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px"><i class="fa fa-calendar-xmark" style="font-size:32px;margin-bottom:8px;display:block"></i>Aucun créneau pour ce jour</div>`;return;}
+  if(!slots.length){box.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px"><i class="fa fa-calendar-xmark" style="font-size:32px;margin-bottom:8px;display:block"></i>${tabibiT("drr_no_slots","Aucun créneau pour ce jour")}</div>`;return;}
   box.innerHTML=slots.map((s,idx)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:${s.booked?"var(--red-l)":"var(--green-l)"};border-radius:10px">
     <i class="fa ${s.booked?"fa-lock":"fa-clock"}" style="color:${s.booked?"var(--red)":"var(--green)"}"></i>
-    <div style="flex:1"><div style="font-weight:700;font-size:14px">${s.time} (${s.duration||30} min)</div>
-      <div style="font-size:11px;color:var(--text3)">${s.booked?"Réservé par "+(s.patient||"patient"):"Disponible"}</div></div>
+    <div style="flex:1"><div style="font-weight:700;font-size:14px">${s.time} (${s.duration||30} ${tabibiT("label_min_unit","min")})</div>
+      <div style="font-size:11px;color:var(--text3)">${s.booked?tabibiT("drr_booked_by","Réservé par ")+(s.patient||tabibiT("drr_patient","patient")):tabibiT("drr_available","Disponible")}</div></div>
     ${!s.booked?`<button type="button" class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="delSlot('${iso}','${s.time}')" aria-label="Supprimer ce créneau"><i class="fa fa-trash"></i></button>`:""}
   </div>`).join("");
 }
@@ -161,6 +174,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   renderWeek();
 });
 window.openAdd=openAdd;window.closeAdd=closeAdd;window.saveSlots=saveSlots;window.delSlot=delSlot;window.applyTpl=applyTpl;window.selDay=selDay;
+// [CONFORMITE 2026] re-render (jours localisés, statuts créneaux) au changement de langue.
+document.addEventListener("tabibi:lang-change",function(){ try{renderWeek();}catch(e){} });
 </script>
 </div><script>document.addEventListener("DOMContentLoaded",()=>{var u=JSON.parse(localStorage.getItem("tabibi_user")||"null");if(u)document.getElementById("user-init").textContent=u.initials||"?";document.addEventListener("click",e=>{if(!e.target.closest("[id^='mini-']") && !e.target.closest("button[title='Notifications']") && !e.target.closest("#user-pill")){document.getElementById("mini-noti")?.classList.add("hidden");document.getElementById("mini-menu")?.classList.add("hidden");}});});</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -172,5 +187,7 @@ window.openAdd=openAdd;window.closeAdd=closeAdd;window.saveSlots=saveSlots;windo
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue factorisé -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body></html>
