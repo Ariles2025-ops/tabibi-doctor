@@ -24,7 +24,11 @@
 // `navigator.serviceWorker.register('/sw.js')` nulle part). Nouveaux
 // précaches : tabibi-features.js, tabibi-analytics.js, tabibi-sw-register.js,
 // payment.html, notifications.html.
-const CACHE_VERSION = 'tabibi-v30-2026-07-02';
+// [FIX 2026-07-04] Bump v31 : le précache v30 (02/07) gelait l'ANCIEN
+// tabibi-booking.js (signature RPC pré-fix du 03/07) pour tout visiteur
+// d'avant le 03/07 → faux 404 get_available_slots, 0 créneau. Le bump
+// purge les caches v30 à l'activation (cf. handler activate).
+const CACHE_VERSION = 'tabibi-v31-2026-07-04';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -82,7 +86,10 @@ self.addEventListener('fetch', event => {
   }
   // Fichiers pilotés à chaud (dictionnaire i18n, feature flags) : toujours
   // networkFirst — le précache/cacheFirst les gelait jusqu'au bump de version.
-  const NETWORK_FIRST_JS = ['tabibi-i18n.js', 'tabibi-features.js'];
+  // [FIX 2026-07-04] + tabibi-booking.js : le gel v30 a cassé le booking des
+  // visiteurs pré-03/07 (vieille signature RPC). Revalidation ETag quasi
+  // gratuite depuis la règle _headers /js/* no-cache + Cache Rule zone.
+  const NETWORK_FIRST_JS = ['tabibi-i18n.js', 'tabibi-features.js', 'tabibi-booking.js'];
   if (NETWORK_FIRST_JS.some(f => url.pathname.endsWith(f))) { event.respondWith(networkFirst(req)); return; }
   if (/\.(css|js|png|jpg|jpeg|gif|webp|svg|woff2?|ttf|ico)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(req));
