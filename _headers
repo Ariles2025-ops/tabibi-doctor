@@ -16,9 +16,10 @@
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
 
-# Fichiers pilotés à chaud (dictionnaire i18n, feature flags) : pas de fenêtre
-# de staleness 4h pour les visiteurs sans SW (complète le networkFirst du SW v30).
-/js/tabibi-i18n.js
-  Cache-Control: public, max-age=0, must-revalidate
-/js/tabibi-features.js
-  Cache-Control: public, max-age=0, must-revalidate
+# Tous les JS (dico i18n, feature flags, booking, etc.) : pas de fenêtre de
+# staleness 4h pour les visiteurs sans SW (complète le networkFirst du SW v30).
+# Revalidation ETag → 304 quasi gratuits. Corrige le faux 404 booking causé par
+# un tabibi-booking.js périmé en cache navigateur (sans règle, il héritait du
+# défaut Cloudflare Pages max-age=14400).
+/js/*
+  Cache-Control: no-cache, must-revalidate
