@@ -341,12 +341,15 @@ function refreshSlotPill(){
 
 // ── Calendar ────────────────────────────────────────────────────────────
 function _monthLabel(d){
+  // [FIX 2026-07-04] Pas de timeZone ici : calMonth = minuit LOCAL du 1er, et la
+  // grille lit ses composantes locales. Formaté en TZ Africa/Algiers depuis un
+  // fuseau à l'est (Paris été = UTC+2), l'instant retombait au 30 du mois
+  // précédent → « juin 2026 » affiché sur une grille de juillet.
   if (_isAr()) {
-    var mi = parseInt(_MF_ALGIERS.format(d), 10) - 1;
-    return _AR_MONTHS[mi] + ' ' + _YF_ALGIERS.format(d);
+    return _AR_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
   }
   return new Intl.DateTimeFormat(_dateLocale(), {
-    month:'long', year:'numeric', timeZone:'Africa/Algiers'
+    month:'long', year:'numeric'
   }).format(d);
 }
 function renderCalendar(){
