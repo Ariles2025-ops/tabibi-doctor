@@ -199,7 +199,11 @@
 <div id="uarea-mob" class="hidden"></div>
 
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
-<script src="scripts/payments.js"></script>
+<!-- [FIX 2026-07-04] scripts/payments.js → js/payments.js : scripts/ est
+     export-ignore (jamais dans dist/) donc 404 permanent en prod. Le stub
+     js/payments.js est cash-only (renderPayMethods retourne '', aucun
+     paiement en ligne réactivé). -->
+<script src="js/payments.js"></script>
 <script>
 // ========================================================================
 // [Phase 5.2.3] Refactor reservation.html : wizard 4 steps
@@ -622,14 +626,15 @@ function init(){
 
   renderDoctorSummary();
   renderCalendar();
-  // [FIX 2026-07-03] renderPayMethods vient de scripts/payments.js — 404 en prod
-  // (scripts/ est export-ignore au deploy) : l'appel non gardé crashait init() à
-  // mi-course (renderUserUI/initTabBar/hideLoading jamais exécutés). Gardé par
-  // typeof ; le paiement reste "cash" par défaut (bug payments.js signalé à part).
+  // [FIX 2026-07-03] renderPayMethods venait de scripts/payments.js — 404 en
+  // prod (scripts/ est export-ignore au deploy) : l'appel non gardé crashait
+  // init() à mi-course (renderUserUI/initTabBar/hideLoading jamais exécutés).
+  // [FIX 2026-07-04] Résolu : stub cash-only js/payments.js (retourne '').
+  // Le garde typeof reste en défense si le stub venait à manquer.
   if (typeof renderPayMethods === 'function') {
     document.getElementById("pay-methods").innerHTML = renderPayMethods("cash");
   } else {
-    console.warn('[reservation] renderPayMethods absent (scripts/payments.js 404) — paiement par défaut : cash');
+    console.warn('[reservation] renderPayMethods absent (js/payments.js) — paiement par défaut : cash');
   }
   window._pay = "cash";
 
