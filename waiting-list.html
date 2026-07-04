@@ -535,7 +535,10 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
 <div class="toast-container" id="toast-container" aria-live="assertive"></div>
 
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/[email protected]"></script>
+<!-- [FIX 2026-07-04] URL corrompue par l'obfuscation email Cloudflare
+     (@supabase/[email protected]) → "SDK Supabase non chargé", formulaire
+     liste d'attente mort. Remise à l'URL d'index/reservation/signup. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/tabibi-brevo.js"></script>
@@ -873,7 +876,7 @@ async function handleSubmit(e) {
         email: email,
         wilaya: wilaya,
         source: 'waiting-list-page',
-        language: currentLang,
+        lang: currentLang,  // [FIX 2026-07-04] colonne réelle = 'lang' (pas 'language') → l'insert 204ait, formulaire mort même SDK réparé
         user_agent: navigator.userAgent.substring(0, 200)
       }])
       .select()

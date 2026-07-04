@@ -194,9 +194,10 @@ function _formatDateTime(iso){
 function _doctorName(row){
   // Cherche les champs nom standardisés (la vue my_upcoming_appointments
   // peut exposer doctor_full_name, doctor_name, ou imbriqué).
-  // [TODO-SQL-003] vérifier le schéma exact de la vue.
+  // [FIX 2026-07-04] Schéma vue confirmé (sonde prod) : la colonne réelle est
+  // `doctor_name` — non lue jusqu'ici → carte affichait "Praticien / ?".
   var profile = {
-    full_name:     row.doctor_full_name    || row.full_name    || (row.doctor && row.doctor.full_name)    || null,
+    full_name:     row.doctor_full_name    || row.doctor_name  || row.full_name    || (row.doctor && row.doctor.full_name)    || null,
     full_name_ar:  row.doctor_full_name_ar || row.full_name_ar || (row.doctor && row.doctor.full_name_ar) || null,
     entity_type:   row.doctor_entity_type  || row.entity_type  || (row.doctor && row.doctor.entity_type)  || null
   };
@@ -208,7 +209,7 @@ function _doctorName(row){
 function _doctorInitials(row){
   if(window.tabibiDoctorName){
     return window.tabibiDoctorName.initials({
-      full_name:    row.doctor_full_name    || row.full_name    || null,
+      full_name:    row.doctor_full_name    || row.doctor_name  || row.full_name    || null,  // [FIX 2026-07-04] + doctor_name
       full_name_ar: row.doctor_full_name_ar || row.full_name_ar || null
     });
   }
@@ -379,6 +380,14 @@ function _renderSection(section){
   }
   document.getElementById('list-' + section).innerHTML = html;
   document.getElementById('count-' + section).textContent = list.length;
+  // [FIX 2026-07-04] La source my_upcoming_appointments ne renvoie que l'à-venir :
+  // "Passés"/"Annulés" resteraient à 0 en permanence (trompeur). On masque ces
+  // deux onglets tant qu'ils sont vides — ils réapparaissent automatiquement si
+  // une source tous-statuts est câblée un jour. "À venir" reste toujours visible.
+  if(section === 'past' || section === 'cancelled'){
+    var tabBtn = document.getElementById('tab-' + section);
+    if(tabBtn) tabBtn.classList.toggle('hidden', list.length === 0);
+  }
 }
 
 function _renderAll(){
