@@ -870,17 +870,18 @@ async function handleSubmit(e) {
       throw new Error(T('error_service'));
     }
 
-    const { data, error } = await window.tabibi.supabase
+    // [FIX 2026-07-04] pas de .select() après l'insert : RETURNING exige une
+    // policy SELECT, fermée pour anon (PII) → 42501 même avec la policy INSERT.
+    const { error } = await window.tabibi.supabase
       .from('waiting_list')
       .insert([{
         email: email,
         wilaya: wilaya,
         source: 'waiting-list-page',
+        role: 'patient',    // [FIX 2026-07-04] aligné sur patient-waitinglist.html L191 (medecin-waitinglist envoie 'medecin') — sans lui, leads non segmentables
         lang: currentLang,  // [FIX 2026-07-04] colonne réelle = 'lang' (pas 'language') → l'insert 204ait, formulaire mort même SDK réparé
         user_agent: navigator.userAgent.substring(0, 200)
-      }])
-      .select()
-      .single();
+      }]);
 
     if (error) {
       if (error.code === '23505' || /duplicate|unique/i.test(error.message)) {
@@ -897,12 +898,9 @@ async function handleSubmit(e) {
           count: formatNumber(500),
           lang: currentLang
         });
-        if (data && data.id) {
-          await window.tabibi.supabase
-            .from('waiting_list')
-            .update({ email_sent: true, email_sent_at: new Date().toISOString() })
-            .eq('id', data.id);
-        }
+        // [FIX 2026-07-04] update {email_sent, email_sent_at} retiré : colonnes
+        // inexistantes en prod et aucune policy UPDATE anon → PATCH voué à
+        // l'échec à chaque inscription. Suivi des envois = dashboard Brevo.
       } catch (e) {
         // best effort, no-op
       }
