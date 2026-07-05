@@ -352,6 +352,21 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
   .stat-label { font-size: 11px; }
 }
 
+/* [FIX 2026-07-04] Desktop : la page était figée sur la colonne mobile-first
+   de 720px (≈50% de vide à 1440px). On élargit le conteneur et on recadre
+   chaque bloc ; centrages via margin auto (insensibles à dir=rtl), le mobile
+   (≤600px) et les règles RTL existantes restent intouchés. */
+@media (min-width: 1024px) {
+  .container { max-width: 1120px; padding: 32px 48px; }
+  .hero { padding: 40px 0 44px; }
+  .hero h1 { font-size: 44px; }
+  .hero p { max-width: 640px; font-size: 17px; }
+  .stats { max-width: 780px; margin: 40px auto; gap: 20px; }
+  .stat-card { padding: 22px 16px; }
+  .form-card { max-width: 640px; margin-left: auto; margin-right: auto; padding: 40px 44px; }
+  .features { max-width: 940px; margin: 48px auto; gap: 20px; }
+}
+
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
