@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   // ── Identité de l'app ──────────────────────────────────────────────────
-  appId: 'com.tabibi.doctor',
+  appId: 'dz.tabibi.app',
   appName: 'Tabibi',
   webDir: 'www',        // Généré par scripts/build-mobile.sh (copie des assets web)
 

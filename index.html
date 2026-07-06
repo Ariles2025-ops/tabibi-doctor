@@ -385,6 +385,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .hero-stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:var(--r12);padding:10px 6px;text-align:center}
 .hs-n{font-size:17px;font-weight:800;color:#fff}
 .hs-l{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px}
+/* Héro mobile centré (demande fondateur) — desktop ≥768px inchangé */
+@media(max-width:767px){
+.hero-mobile .hz{text-align:center}
+.hero-mobile .hero-title,.hero-mobile .hero-sub{text-align:center}
+.hero-mobile .hero-search-wrap,.hero-mobile .hero-search{margin-inline:auto}
+.hero-mobile .hero-stats{justify-items:center}
+.hero-mobile .hero-stats,.hero-mobile #auth-cta-banner{margin-inline:auto}
+.hero-mobile #auth-cta-banner{justify-content:center}
+}
 
 /* ── SPECIALTIES ─────────── */
 .spec-scroll{display:flex;gap:10px;overflow-x:auto;padding:4px 16px 8px;scrollbar-width:none}
