@@ -8,7 +8,7 @@
 <meta name="description" content="Administration de votre cabinet medical sur Tabibi : equipe, abonnement, statistiques.">
 <link rel="canonical" href="https://tabibi.doctor/admin-cabinet.html">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0F7560">
+<meta name="theme-color" content="#0E5F46">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_admin_cabinet">
 <title>Administration cabinet | Tabibi</title>
@@ -20,12 +20,12 @@
 <style>
 .cab-section { background:#fff; border-radius:14px; padding:18px; box-shadow:var(--s1, 0 1px 3px rgba(0,0,0,.06)); margin-bottom:16px; }
 .cab-h { font-size:16px; font-weight:800; color:var(--text); margin:0 0 12px; display:flex; align-items:center; gap:10px; }
-.cab-h i { color:var(--color-primary, #0F7560); }
+.cab-h i { color:var(--color-primary, #0E5F46); }
 .member-row { display:grid; grid-template-columns:42px 1fr auto; gap:12px; align-items:center; padding:10px; border:1px solid var(--border, #e2e8f0); border-radius:10px; margin-bottom:8px; background:#fff; }
-.avatar-mini { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, var(--brand-green-700,#0F7560), var(--brand-green-900,#0a4d3e)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; }
+.avatar-mini { width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg, var(--brand-green-700,#0E5F46), var(--brand-green-900,#0a4d3e)); color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; }
 .role-pill { display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:700; }
 .role-pill.owner       { background:var(--brand-gold-50,#fffbeb);   color:var(--brand-gold-700,#a17a1f); }
-.role-pill.doctor      { background:var(--brand-green-50,#f0fdf4); color:var(--brand-green-700,#0F7560); }
+.role-pill.doctor      { background:var(--brand-green-50,#f0fdf4); color:var(--brand-green-700,#0E5F46); }
 .role-pill.secretaire  { background:#eef6ff;                       color:#1f4e9e; }
 .role-pill.admin       { background:#fdf2f8;                       color:#a21caf; }
 .stat-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:10px; }
@@ -34,13 +34,13 @@
 .stat-tile .l { font-size:11px; color:var(--text3,#64748b); text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
 .tier-badge { display:inline-block; padding:4px 10px; border-radius:8px; font-size:12px; font-weight:800; letter-spacing:.3px; }
 .tier-badge.solo       { background:#f1f5f9; color:#475569; }
-.tier-badge.pro        { background:var(--brand-green-100,#dcfce7); color:var(--brand-green-900,#0a4d3e); }
+.tier-badge.pro        { background:var(--brand-green-100,#e7f3ef); color:var(--brand-green-900,#0a4d3e); }
 .tier-badge.cabinet    { background:var(--brand-gold-100,#fef3c7); color:var(--brand-gold-700,#a17a1f); }
 .tier-badge.enterprise { background:linear-gradient(135deg,#1e1b4b,#312e81); color:#fff; }
 .toast { background:#fff; border-radius:12px; padding:14px 18px; box-shadow:0 12px 30px rgba(0,0,0,.15); margin-bottom:10px; font-weight:600; max-width:360px; }
 .toast.success { border-left:4px solid var(--color-success, #2E8B57); color:var(--text); }
 .toast.error   { border-left:4px solid var(--color-danger,  #D21010); color:var(--text); }
-.toast.info    { border-left:4px solid var(--color-primary, #0F7560); color:var(--text); }
+.toast.info    { border-left:4px solid var(--color-primary, #0E5F46); color:var(--text); }
 [dir="rtl"] .member-row { grid-template-columns:auto 1fr 42px; }
 </style>
 </head>
@@ -304,7 +304,7 @@ async function loadMembers(){
     // UTF-8/quotes/slashes (noms arabes, raison sociale clinique, etc.).
     const _escAttr = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     const removeBtn = (m.user_id === CURRENT_USER_ID || role === 'owner') ? ""
-      : `<button class="btn btn-icon btn-icon-sm js-remove-member" style="background:#fee2e2;color:#dc2626" data-member-id="${_escAttr(m.user_id)}" data-member-name="${_escAttr(m.full_name||'')}" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>`;
+      : `<button class="btn btn-icon btn-icon-sm js-remove-member" style="background:#fff0f0;color:#D21010" data-member-id="${_escAttr(m.user_id)}" data-member-name="${_escAttr(m.full_name||'')}" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>`;
     return `
       <div class="member-row">
         <div class="avatar-mini">${ini}</div>

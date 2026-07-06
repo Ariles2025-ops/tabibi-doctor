@@ -36,7 +36,7 @@
 :root {
   --blue: #0F7560;
   --blue-dark: #0a4d3e;
-  --blue-l: #f0f9ff;
+  --blue-l: #e7f3ef;
   --green: #2E8B57;
   --red: #D21010;
   --text: #0f172a;
@@ -48,13 +48,13 @@
   --r16: 16px;
   --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08);
   --shadow-md: 0 8px 24px rgba(15, 23, 42, 0.1);
-  --focus-ring: 0 0 0 4px rgba(30, 144, 255, 0.25);
+  --focus-ring: 0 0 0 4px rgba(15, 117, 96, 0.25);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f8fafc 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e7f3ef 50%, #f8fafc 100%);
   min-height: 100vh;
   color: var(--text);
   line-height: 1.6;
@@ -93,7 +93,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   background: linear-gradient(135deg, var(--blue), var(--blue-dark));
   display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 22px;
-  box-shadow: 0 4px 12px rgba(30, 144, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(15,117,96, 0.3);
 }
 .logo-text { font-size: 20px; font-weight: 800; letter-spacing: -.5px; }
 .logo-text .dz-d { color: var(--green); }
@@ -223,14 +223,14 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   font-size: 16px; font-weight: 700; cursor: pointer;
   transition: all .2s;
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  box-shadow: 0 4px 16px rgba(30, 144, 255, 0.3);
+  box-shadow: 0 4px 16px rgba(15,117,96, 0.3);
   margin-top: 8px;
   min-height: 56px;  /* Touch target large */
   font-family: inherit;
 }
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(30, 144, 255, 0.4);
+  box-shadow: 0 8px 24px rgba(15,117,96, 0.4);
 }
 .submit-btn:disabled {
   opacity: .65; cursor: not-allowed;
@@ -261,11 +261,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .success-state.show { display: block; }
 .success-icon {
   width: 84px; height: 84px; margin: 0 auto 20px;
-  background: linear-gradient(135deg, #10b981, #059669);
+  background: linear-gradient(135deg, #2E8B57, #0E5F46);
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
   color: #fff; font-size: 42px;
   animation: bounce .6s ease;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, .3);
+  box-shadow: 0 8px 24px rgba(14, 95, 70, .3);
 }
 @keyframes bounce {
   0% { transform: scale(0); }
@@ -336,7 +336,7 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
   animation: slideIn .3s ease;
 }
 .toast.error { background: var(--red); }
-.toast.success { background: #10b981; }
+.toast.success { background: #2E8B57; }
 @keyframes slideIn {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
@@ -350,6 +350,21 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
   .stat-card { min-width: 105px; padding: 14px 10px; }
   .stat-num { font-size: 24px; }
   .stat-label { font-size: 11px; }
+}
+
+/* [FIX 2026-07-04] Desktop : la page était figée sur la colonne mobile-first
+   de 720px (≈50% de vide à 1440px). On élargit le conteneur et on recadre
+   chaque bloc ; centrages via margin auto (insensibles à dir=rtl), le mobile
+   (≤600px) et les règles RTL existantes restent intouchés. */
+@media (min-width: 1024px) {
+  .container { max-width: 1120px; padding: 32px 48px; }
+  .hero { padding: 40px 0 44px; }
+  .hero h1 { font-size: 44px; }
+  .hero p { max-width: 640px; font-size: 17px; }
+  .stats { max-width: 780px; margin: 40px auto; gap: 20px; }
+  .stat-card { padding: 22px 16px; }
+  .form-card { max-width: 640px; margin-left: auto; margin-right: auto; padding: 40px 44px; }
+  .features { max-width: 940px; margin: 48px auto; gap: 20px; }
 }
 
 /* Reduce motion */
@@ -376,11 +391,9 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
       <div class="logo-icon"><i class="fa fa-plus" aria-hidden="true"></i></div>
       <div class="logo-text">Tabibi <span class="dz-d">D</span><span class="dz-z">Z</span></div>
     </a>
-    <div class="lang-switcher" role="group" aria-label="Langue">
-      <button class="lang-btn active" data-lang="fr" onclick="setLang('fr')" aria-pressed="true">FR</button>
-      <button class="lang-btn" data-lang="ar" onclick="setLang('ar')" aria-pressed="false">AR</button>
-      <button class="lang-btn" data-lang="en" onclick="setLang('en')" aria-pressed="false">EN</button>
-    </div>
+    <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js
+         (route vers tabibiLang.set → tabibi:lang-change → setLang local ré-applique I18N) -->
+    <div data-langbar></div>
   </header>
 
   <!-- Hero -->
@@ -390,7 +403,7 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
       Soyez parmi les <span class="highlight">1ers</span><br>
       à découvrir Tabibi
     </h1>
-    <p data-i18n="subtitle">
+    <p data-i18n-html="subtitle">
       Rejoignez la liste d'attente exclusive et recevez un <strong>accès prioritaire</strong> dès le lancement de la 1ère plateforme algérienne de prise de RDV médical.
     </p>
   </section>
@@ -406,7 +419,7 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
       <div class="stat-label" data-i18n="stat_doctors">Médecins prévus</div>
     </div>
     <div class="stat-card">
-      <div class="stat-num">48</div>
+      <div class="stat-num">58</div>
       <div class="stat-label" data-i18n="stat_wilayas">Wilayas</div>
     </div>
   </div>
@@ -537,7 +550,10 @@ html[dir="rtl"] .toast-container { right: auto; left: 20px; }
 <div class="toast-container" id="toast-container" aria-live="assertive"></div>
 
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/[email protected]"></script>
+<!-- [FIX 2026-07-04] URL corrompue par l'obfuscation email Cloudflare
+     (@supabase/[email protected]) → "SDK Supabase non chargé", formulaire
+     liste d'attente mort. Remise à l'URL d'index/reservation/signup. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/tabibi-brevo.js"></script>
@@ -869,17 +885,18 @@ async function handleSubmit(e) {
       throw new Error(T('error_service'));
     }
 
-    const { data, error } = await window.tabibi.supabase
+    // [FIX 2026-07-04] pas de .select() après l'insert : RETURNING exige une
+    // policy SELECT, fermée pour anon (PII) → 42501 même avec la policy INSERT.
+    const { error } = await window.tabibi.supabase
       .from('waiting_list')
       .insert([{
         email: email,
         wilaya: wilaya,
         source: 'waiting-list-page',
-        language: currentLang,
+        role: 'patient',    // [FIX 2026-07-04] aligné sur patient-waitinglist.html L191 (medecin-waitinglist envoie 'medecin') — sans lui, leads non segmentables
+        lang: currentLang,  // [FIX 2026-07-04] colonne réelle = 'lang' (pas 'language') → l'insert 204ait, formulaire mort même SDK réparé
         user_agent: navigator.userAgent.substring(0, 200)
-      }])
-      .select()
-      .single();
+      }]);
 
     if (error) {
       if (error.code === '23505' || /duplicate|unique/i.test(error.message)) {
@@ -896,12 +913,9 @@ async function handleSubmit(e) {
           count: formatNumber(500),
           lang: currentLang
         });
-        if (data && data.id) {
-          await window.tabibi.supabase
-            .from('waiting_list')
-            .update({ email_sent: true, email_sent_at: new Date().toISOString() })
-            .eq('id', data.id);
-        }
+        // [FIX 2026-07-04] update {email_sent, email_sent_at} retiré : colonnes
+        // inexistantes en prod et aucune policy UPDATE anon → PATCH voué à
+        // l'échec à chaque inscription. Suivi des envois = dashboard Brevo.
       } catch (e) {
         // best effort, no-op
       }
@@ -948,6 +962,8 @@ function shareFB() {
 
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>

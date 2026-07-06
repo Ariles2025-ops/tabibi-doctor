@@ -11,6 +11,8 @@
 <link rel="canonical" href="https://tabibi.doctor/doctor-analytics.html">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden;width:100%;max-width:100%;background:#e2e8f0}
@@ -21,7 +23,7 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 .app-shell{width:100%;max-width:480px;min-height:100vh;margin:0 auto;background:#f8fafc;position:relative;box-shadow:0 0 40px rgba(0,0,0,.08)}
 
 /* HEADER */
-.hdr{background:linear-gradient(135deg,#0f766e,#10b981);color:#fff;width:100%}
+.hdr{background:linear-gradient(135deg,#0f766e,#2E8B57);color:#fff;width:100%}
 .hdr-inner{padding:16px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 .hdr a{color:rgba(255,255,255,.95);text-decoration:none;font-size:12px;font-weight:600;display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,.12)}
 .hdr h1{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -42,29 +44,29 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 /* TABS PÉRIODE */
 .tabs{display:flex;gap:4px;background:#fff;padding:4px;border-radius:10px;margin-bottom:14px;width:100%}
 .tab{flex:1;min-width:0;padding:9px 4px;background:none;border:none;font-family:inherit;font-weight:600;font-size:11px;color:#64748b;cursor:pointer;border-radius:8px;transition:.15s;white-space:nowrap;min-height:38px;text-align:center}
-.tab.active{background:#10b981;color:#fff}
+.tab.active{background:#2E8B57;color:#fff}
 
 /* KPI - 2 colonnes */
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.kpi{background:#fff;border-radius:12px;padding:12px;border-left:3px solid #10b981;min-width:0;overflow:hidden}
+.kpi{background:#fff;border-radius:12px;padding:12px;border-left:3px solid #2E8B57;min-width:0;overflow:hidden}
 .kpi-num{font-size:22px;font-weight:800;line-height:1;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .kpi-lbl{font-size:10px;color:#64748b;margin-top:6px;text-transform:uppercase;font-weight:600;letter-spacing:.2px;line-height:1.3}
 .kpi-evo{font-size:11px;font-weight:700;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi-evo.up{color:#059669}
+.kpi-evo.up{color:#0E5F46}
 .kpi-evo.down{color:#dc2626}
 .kpi-evo.same{color:#64748b} /* [FIX-DESIGN-2026-05-19] WCAG AA contrast */
 
 /* CARDS */
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;overflow:hidden}
 .card h2{font-size:14px;font-weight:800;margin-bottom:14px;color:#0f172a;display:flex;align-items:center;gap:8px}
-.card h2 i{color:#10b981;flex-shrink:0;font-size:13px}
+.card h2 i{color:#2E8B57;flex-shrink:0;font-size:13px}
 
 /* CHARTS */
 .chart-wrap{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch}
 .chart-wrap::-webkit-scrollbar{display:none}
 .chart{display:flex;gap:4px;align-items:flex-end;height:140px;padding:18px 0 0 0;border-bottom:1px solid #e2e8f0;margin-bottom:8px;min-width:100%}
-.bar{flex:1;min-width:18px;background:linear-gradient(180deg,#34d399,#10b981);border-radius:5px 5px 0 0;position:relative;cursor:pointer;transition:.2s}
-.bar:hover{background:linear-gradient(180deg,#10b981,#059669)}
+.bar{flex:1;min-width:18px;background:linear-gradient(180deg,#34d399,#2E8B57);border-radius:5px 5px 0 0;position:relative;cursor:pointer;transition:.2s}
+.bar:hover{background:linear-gradient(180deg,#2E8B57,#0E5F46)}
 .bar .val{position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:#0f172a;white-space:nowrap}
 .chart-labels{display:flex;gap:4px;min-width:100%}
 .chart-labels span{flex:1;min-width:18px;text-align:center;font-size:9px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -74,8 +76,8 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 .spec-row{display:flex;align-items:center;gap:8px;min-width:0}
 .spec-row .lbl{flex-shrink:0;width:90px;font-size:11px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .spec-row .bar-c{flex:1;background:#e2e8f0;height:7px;border-radius:4px;overflow:hidden;min-width:0}
-.spec-row .bar-c .fill{height:100%;background:linear-gradient(90deg,#34d399,#10b981);border-radius:4px}
-.spec-row .val{font-size:11px;font-weight:700;color:#10b981;width:36px;text-align:right;flex-shrink:0}
+.spec-row .bar-c .fill{height:100%;background:linear-gradient(90deg,#34d399,#2E8B57);border-radius:4px}
+.spec-row .val{font-size:11px;font-weight:700;color:#2E8B57;width:36px;text-align:right;flex-shrink:0}
 </style>
 </head>
 <body>
@@ -84,8 +86,8 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 
 <header class="hdr">
   <div class="hdr-inner">
-    <h1><i class="fa fa-chart-line"></i> Analytics</h1>
-    <a href="doctor-dashboard.html"><i class="fa fa-arrow-left"></i> Retour</a>
+    <h1><i class="fa fa-chart-line"></i> <span data-i18n="dan_pagetitle">Analytics</span></h1>
+    <div style="display:flex;align-items:center;gap:8px;flex-shrink:0"><div data-langbar></div><a href="doctor-dashboard.html"><i class="fa fa-arrow-left"></i> <span data-i18n="dan_back">Retour</span></a></div>
   </div>
 </header>
 
@@ -95,45 +97,45 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
     <div class="upsell-head">
       <i class="fa fa-crown"></i>
       <div class="txt">
-        <h3>Statistiques avancées Tabibi Pro</h3>
-        <p>Passez à Tabibi Pro pour débloquer les statistiques en temps réel, l'export CSV et la comparaison annuelle.</p>
+        <h3 data-i18n="dan_upsell_title">Statistiques avancées Tabibi Pro</h3>
+        <p data-i18n="dan_upsell_desc">Passez à Tabibi Pro pour débloquer les statistiques en temps réel, l'export CSV et la comparaison annuelle.</p>
       </div>
     </div>
-    <a href="#" class="btn">Passer à Pro — bientôt disponible</a>
+    <a href="#" class="btn" data-i18n="dan_upsell_btn">Passer à Pro — bientôt disponible</a>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="switchPeriod('7j', this)">7 jours</button>
-    <button class="tab" onclick="switchPeriod('30j', this)">30 jours</button>
-    <button class="tab" onclick="switchPeriod('90j', this)">90 jours</button>
-    <button class="tab" onclick="switchPeriod('1an', this)">1 an</button>
+    <button class="tab active" onclick="switchPeriod('7j', this)" data-i18n="dan_tab_7j">7 jours</button>
+    <button class="tab" onclick="switchPeriod('30j', this)" data-i18n="dan_tab_30j">30 jours</button>
+    <button class="tab" onclick="switchPeriod('90j', this)" data-i18n="dan_tab_90j">90 jours</button>
+    <button class="tab" onclick="switchPeriod('1an', this)" data-i18n="dan_tab_1an">1 an</button>
   </div>
 
   <div class="kpis">
     <div class="kpi">
       <div class="kpi-num" id="kpi-rdv">—</div>
-      <div class="kpi-lbl">RDV ce mois</div>
+      <div class="kpi-lbl" data-i18n="dan_kpi_rdv">RDV ce mois</div>
       <div class="kpi-evo up" id="kpi-rdv-evo">—</div>
     </div>
-    <div class="kpi" style="border-left-color:#0F7560">
+    <div class="kpi" style="border-left-color:#0E5F46">
       <div class="kpi-num" id="kpi-patients">—</div>
-      <div class="kpi-lbl">Patients uniques</div>
+      <div class="kpi-lbl" data-i18n="dan_kpi_patients">Patients uniques</div>
       <div class="kpi-evo up" id="kpi-patients-evo">—</div>
     </div>
     <div class="kpi" style="border-left-color:#f59e0b">
       <div class="kpi-num" id="kpi-note">—</div>
-      <div class="kpi-lbl">Note moyenne</div>
-      <div class="kpi-evo same" id="kpi-note-evo">Stable</div>
+      <div class="kpi-lbl" data-i18n="dan_kpi_note">Note moyenne</div>
+      <div class="kpi-evo same" id="kpi-note-evo" data-i18n="dan_stable">Stable</div>
     </div>
     <div class="kpi" style="border-left-color:#dc2626">
       <div class="kpi-num" id="kpi-noshow">—</div>
-      <div class="kpi-lbl">Taux no-show</div>
+      <div class="kpi-lbl" data-i18n="dan_kpi_noshow">Taux no-show</div>
       <div class="kpi-evo down" id="kpi-noshow-evo">—</div>
     </div>
   </div>
 
   <div class="card">
-    <h2><i class="fa fa-chart-column"></i> Évolution mensuelle des RDV</h2>
+    <h2><i class="fa fa-chart-column"></i> <span data-i18n="dan_chart_monthly">Évolution mensuelle des RDV</span></h2>
     <div class="chart-wrap">
       <div class="chart" id="chart-monthly"></div>
       <div class="chart-labels" id="chart-monthly-labels"></div>
@@ -141,7 +143,7 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
   </div>
 
   <div class="card">
-    <h2><i class="fa fa-clock"></i> Heures de pointe</h2>
+    <h2><i class="fa fa-clock"></i> <span data-i18n="dan_chart_hours">Heures de pointe</span></h2>
     <div class="chart-wrap">
       <div class="chart" id="chart-hours" style="height:120px"></div>
       <div class="chart-labels" id="chart-hours-labels"></div>
@@ -149,12 +151,12 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
   </div>
 
   <div class="card">
-    <h2><i class="fa fa-ranking-star"></i> Motifs de consultation les plus fréquents</h2>
+    <h2><i class="fa fa-ranking-star"></i> <span data-i18n="dan_motifs">Motifs de consultation les plus fréquents</span></h2>
     <div class="specs-list" id="motifs-list"></div>
   </div>
 
   <div class="card">
-    <h2><i class="fa fa-circle-info"></i> Insights</h2>
+    <h2><i class="fa fa-circle-info"></i> <span data-i18n="dan_insights">Insights</span></h2>
     <div id="insights" style="font-size:13px;color:#475569;line-height:1.7"></div>
   </div>
 
@@ -165,6 +167,9 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 <script>
 // ─── Données démo (en prod : remplacer par appel Supabase) ───
 // [Phase 2 launch] Données démo neutralisées (aucune source Supabase câblée ; analytics PRO à venir).
+// [FIX] _t gardé : l'init tourne AVANT le chargement de tabibi-i18n.js (script en bas)
+// → tabibiT indéfini au 1er loadPeriod. Fallback FR au load, re-localisé au DOMContentLoaded + lang-change.
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 const DEMO = {
   '7j':  { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
   '30j': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
@@ -216,13 +221,13 @@ function renderMotifs(motifs) {
 
 function renderInsights(d) {
   const insights = [];
-  if (d.noshow > 10) insights.push(`⚠️ <b>Taux no-show élevé (${d.noshow}%)</b>. Activez les rappels SMS automatiques (plan Pro) pour réduire jusqu'à 60% les absences.`);
-  if (d.note >= 4.5) insights.push(`⭐ <b>Excellente note (${d.note}/5)</b>. Vos patients vous recommandent — pensez à les remercier !`);
+  if (d.noshow > 10) insights.push(_t('dan_insight_noshow',"⚠️ <b>Taux no-show élevé ({n}%)</b>. Activez les rappels SMS automatiques (plan Pro) pour réduire jusqu'à 60% les absences.").replace('{n}', d.noshow));
+  if (d.note >= 4.5) insights.push(_t('dan_insight_note',"⭐ <b>Excellente note ({n}/5)</b>. Vos patients vous recommandent — pensez à les remercier !").replace('{n}', d.note));
   const maxHourIdx = d.hours.indexOf(Math.max(...d.hours));
-  insights.push(`🕐 Vos créneaux les plus demandés : <b>${HOURS_LBL[maxHourIdx]}</b>. Ouvrez plus de créneaux à cette heure pour maximiser vos RDV.`);
+  insights.push(_t('dan_insight_hours',"🕐 Vos créneaux les plus demandés : <b>{h}</b>. Ouvrez plus de créneaux à cette heure pour maximiser vos RDV.").replace('{h}', HOURS_LBL[maxHourIdx]));
   if (d.patients < d.rdv) {
     const fid = ((d.rdv - d.patients) / d.rdv * 100).toFixed(0);
-    insights.push(`🔄 <b>Fidélité ${fid}%</b> — vos patients reviennent. C'est un excellent indicateur de qualité.`);
+    insights.push(_t('dan_insight_fidelity',"🔄 <b>Fidélité {n}%</b> — vos patients reviennent. C'est un excellent indicateur de qualité.").replace('{n}', fid));
   }
   document.getElementById('insights').innerHTML = insights.map(i => `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9">${i}</div>`).join('');
 }
@@ -233,21 +238,23 @@ function switchPeriod(period, btn) {
   loadPeriod(period);
 }
 
+let _curPeriod = "30j";
 function loadPeriod(period) {
+  _curPeriod = period;
   const d = DEMO[period];
   document.getElementById('kpi-rdv').textContent = d.rdv;
-  document.getElementById('kpi-rdv-evo').textContent = '+12% vs période préc.';
+  document.getElementById('kpi-rdv-evo').textContent = '+12% ' + _t('dan_vs_prev','vs période préc.');
   document.getElementById('kpi-patients').textContent = d.patients;
-  document.getElementById('kpi-patients-evo').textContent = '+8% vs période préc.';
+  document.getElementById('kpi-patients-evo').textContent = '+8% ' + _t('dan_vs_prev','vs période préc.');
   document.getElementById('kpi-note').textContent = d.note;
   document.getElementById('kpi-noshow').textContent = d.noshow + '%';
-  document.getElementById('kpi-noshow-evo').textContent = d.noshow > 10 ? '+2 pts (à surveiller)' : '-3 pts ✓';
+  document.getElementById('kpi-noshow-evo').textContent = d.noshow > 10 ? '+2 '+_t('dan_pts_watch','pts (à surveiller)') : '-3 '+_t('dan_pts_ok','pts ✓');
 
   // Chart mensuel
   let labels;
   if (period === '7j') labels = WEEKDAYS;
-  else if (period === '30j') labels = ['S1','S2','S3','S4','S5'];
-  else if (period === '90j') labels = ['M-2','M-1','M0'];
+  else if (period === '30j') labels = [1,2,3,4,5].map(n=>_t('dan_week_letter','S')+n);
+  else if (period === '90j') labels = ['-2','-1','0'].map(n=>_t('dan_month_letter','M')+n);
   else labels = MONTHS;
   renderChart(document.getElementById('chart-monthly'), document.getElementById('chart-monthly-labels'), d.monthly, labels);
 
@@ -266,7 +273,7 @@ function loadPeriod(period) {
   try {
     const u = JSON.parse(localStorage.getItem('tabibi_user') || 'null');
     if (!u || (u.role !== 'medecin' && u.role !== 'doctor')) {
-      alert(tabibiT('alert_doctor_only','Accès réservé aux médecins. Connectez-vous.'));
+      alert(_t('alert_doctor_only','Accès réservé aux médecins. Connectez-vous.'));
       location.href = 'login.html';
       return;
     }
@@ -277,10 +284,15 @@ function loadPeriod(period) {
   } catch(e) {}
   loadPeriod('30j');
 })();
+// [CONFORMITE 2026] re-render (KPIs, charts, labels mois/jours, insights) au changement de langue.
+document.addEventListener('tabibi:lang-change', function(){ try { loadPeriod(_curPeriod); } catch(e){} });
+document.addEventListener('DOMContentLoaded', function(){ try { loadPeriod(_curPeriod); } catch(e){} });
 </script>
 <script src="js/tabibi-cookies.js"></script>
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue factorisé -->
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>

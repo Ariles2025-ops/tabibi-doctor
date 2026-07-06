@@ -73,11 +73,9 @@
     <img src="images/logo-mark.svg" alt="Tabibi">
     <b>Tabibi</b>
   </a>
-  <h1 id="t-pagetitle">Verification d'ordonnance</h1>
-  <div class="lang-bar">
-    <button class="lang-btn active" data-lang="fr">FR</button>
-    <button class="lang-btn" data-lang="ar">العربية</button>
-  </div>
+  <h1 id="t-pagetitle" data-i18n="vp_pagetitle">Verification d'ordonnance</h1>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js (remplace la lang-bar locale FR/AR) -->
+  <div data-langbar></div>
 </div>
 
 <div class="main">
@@ -85,11 +83,11 @@
     <div class="status-badge load" id="badge">
       <i class="fa fa-spinner fa-spin"></i>
     </div>
-    <h2 class="verdict" id="verdict">Verification en cours...</h2>
-    <p class="verdict-sub" id="verdict-sub">Veuillez patienter.</p>
+    <h2 class="verdict" id="verdict" data-i18n="vp_loading">Verification en cours...</h2>
+    <p class="verdict-sub" id="verdict-sub" data-i18n="vp_loading_sub">Veuillez patienter.</p>
     <div class="info-grid" id="info-grid" style="display:none"></div>
     <div id="alert-slot"></div>
-    <p class="help" id="help">
+    <p class="help" id="help" data-i18n-html="vp_help">
       Outil de verification pour les pharmacies et les patients. Saisir le QR code ou le lien depuis l'ordonnance.<br>
       <a href="https://tabibi.doctor">tabibi.doctor</a>
     </p>
@@ -97,7 +95,7 @@
 </div>
 
 <div class="footer">
-  Tabibi — La sante plus simple en Algerie. <a href="https://tabibi.doctor/mentions-legales.html">Mentions legales</a>.
+  <span data-i18n-html="vp_footer">Tabibi — La sante plus simple en Algerie. <a href="https://tabibi.doctor/mentions-legales.html">Mentions legales</a>.</span>
 </div>
 
 <script src="js/config.js"></script>
@@ -109,57 +107,40 @@
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
 
-  // i18n
-  const I18N = {
-    fr: {
-      pagetitle: 'Verification d\'ordonnance',
-      loading: 'Verification en cours...', loadingSub: 'Veuillez patienter.',
-      valid: 'Ordonnance authentique', validSub: 'Cette ordonnance a bien ete emise par un medecin verifie sur Tabibi.',
-      expired: 'Ordonnance EXPIREE', expiredSub: 'Authentique, mais sa duree de validite est depassee.',
-      cancelled: 'Ordonnance ANNULEE', cancelledSub: 'Cette ordonnance a ete revoquee par le medecin prescripteur.',
-      invalid: 'Ordonnance INVALIDE', invalidSub: 'La signature ne correspond pas. Possible fraude ou alteration.',
-      notFound: 'Ordonnance INTROUVABLE', notFoundSub: 'Aucune ordonnance avec cet identifiant.',
-      paramsRequired: 'Lien incomplet', paramsRequiredSub: 'Le QR code ou le lien semble incomplet (id et signature requis).',
-      serverErr: 'Erreur serveur', serverErrSub: 'Reessayer dans quelques instants.',
-      labDoctor: 'Medecin', labSpecialty: 'Specialite', labPatient: 'Patient', labNumber: 'No ordonnance',
-      labIssue: 'Date d\'emission', labExpiry: 'Validite', labStatus: 'Statut',
-      expWarn: 'Cette ordonnance n\'est plus valable. Verifier avec le patient s\'il en possede une plus recente.',
-      cancelInfo: 'Le medecin a annule cette prescription. Ne pas delivrer.',
-      help: 'Outil de verification pour les pharmacies et les patients. Saisir le QR code ou le lien depuis l\'ordonnance.',
-    },
-    ar: {
-      pagetitle: 'التحقق من الوصفة الطبية',
-      loading: 'جاري التحقق...', loadingSub: 'يرجى الانتظار.',
-      valid: 'وصفة طبية موثقة', validSub: 'هذه الوصفة صادرة عن طبيب موثق على منصة طبيبي.',
-      expired: 'وصفة منتهية الصلاحية', expiredSub: 'موثقة، لكن مدة صلاحيتها انتهت.',
-      cancelled: 'وصفة ملغاة', cancelledSub: 'تم إلغاء هذه الوصفة من قبل الطبيب.',
-      invalid: 'وصفة غير صالحة', invalidSub: 'التوقيع غير مطابق. احتمال تزوير أو تعديل.',
-      notFound: 'الوصفة غير موجودة', notFoundSub: 'لا توجد وصفة بهذا المعرف.',
-      paramsRequired: 'رابط غير مكتمل', paramsRequiredSub: 'يبدو أن رمز QR أو الرابط غير مكتمل.',
-      serverErr: 'خطأ في الخادم', serverErrSub: 'يرجى المحاولة لاحقاً.',
-      labDoctor: 'الطبيب', labSpecialty: 'التخصص', labPatient: 'المريض', labNumber: 'رقم الوصفة',
-      labIssue: 'تاريخ الإصدار', labExpiry: 'الصلاحية حتى', labStatus: 'الحالة',
-      expWarn: 'هذه الوصفة لم تعد سارية. تحقق مع المريض من وجود وصفة أحدث.',
-      cancelInfo: 'ألغى الطبيب هذه الوصفة. لا تصرف الدواء.',
-      help: 'أداة تحقق للصيدليات والمرضى. أدخل رمز QR أو الرابط من الوصفة.',
-    }
-  };
-  let lang = 'fr';
-  function t() { return I18N[lang] || I18N.fr; }
-  function applyLang(l) {
-    lang = l;
-    const tt = t();
-    document.documentElement.lang = l;
-    document.documentElement.dir = (l === 'ar') ? 'rtl' : 'ltr';
-    document.body.dir = document.documentElement.dir;
-    $('#t-pagetitle').textContent = tt.pagetitle;
-    $('#help').innerHTML = tt.help + '<br><a href="https://tabibi.doctor">tabibi.doctor</a>';
-    $$('.lang-bar .lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === l));
-    try { localStorage.setItem('tabibi.lang', l); } catch (e) {}
+  // i18n — [CONFORMITE 2026] dico local FR/AR supprimé → dico PARTAGÉ (clés vp_*
+  // dans js/tabibi-i18n.js, FR/AR/EN). Le statique passe par data-i18n (engine) ;
+  // les verdicts dynamiques par tabibiT ci-dessous. La langue/dir/persistance
+  // sont gérées par tabibi-lang.js (clé unifiée tabibi_lang — l'ancienne clé
+  // locale 'tabibi.lang' désynchronisait cette page du reste du site).
+  function T(k, f) { return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+  function t() {
+    return {
+      valid: T('vp_valid', 'Ordonnance authentique'), validSub: T('vp_valid_sub', 'Cette ordonnance a bien ete emise par un medecin verifie sur Tabibi.'),
+      expired: T('vp_expired', 'Ordonnance EXPIREE'), expiredSub: T('vp_expired_sub', 'Authentique, mais sa duree de validite est depassee.'),
+      cancelled: T('vp_cancelled', 'Ordonnance ANNULEE'), cancelledSub: T('vp_cancelled_sub', 'Cette ordonnance a ete revoquee par le medecin prescripteur.'),
+      invalid: T('vp_invalid', 'Ordonnance INVALIDE'), invalidSub: T('vp_invalid_sub', 'La signature ne correspond pas. Possible fraude ou alteration.'),
+      notFound: T('vp_not_found', 'Ordonnance INTROUVABLE'), notFoundSub: T('vp_not_found_sub', 'Aucune ordonnance avec cet identifiant.'),
+      paramsRequired: T('vp_params_required', 'Lien incomplet'), paramsRequiredSub: T('vp_params_required_sub', 'Le QR code ou le lien semble incomplet (id et signature requis).'),
+      serverErr: T('vp_server_err', 'Erreur serveur'), serverErrSub: T('vp_server_err_sub', 'Reessayer dans quelques instants.'),
+      labDoctor: T('vp_lab_doctor', 'Medecin'), labSpecialty: T('vp_lab_specialty', 'Specialite'),
+      labPatient: T('vp_lab_patient', 'Patient'), labNumber: T('vp_lab_number', 'No ordonnance'),
+      labIssue: T('vp_lab_issue', "Date d'emission"), labExpiry: T('vp_lab_expiry', 'Validite'), labStatus: T('vp_lab_status', 'Statut'),
+      expWarn: T('vp_exp_warn', "Cette ordonnance n'est plus valable. Verifier avec le patient s'il en possede une plus recente."),
+      cancelInfo: T('vp_cancel_info', 'Le medecin a annule cette prescription. Ne pas delivrer.'),
+    };
   }
+  // Re-rendre le dernier verdict quand la langue change (le statique est
+  // re-traduit par l'engine ; le dynamique doit être re-généré).
+  let _lastState = null, _lastData = null;
+  document.addEventListener('tabibi:lang-change', () => { if (_lastState) render(_lastState, _lastData); });
 
   function render(state, data) {
+    _lastState = state; _lastData = data || null;
     const tt = t();
+    // Le verdict devient DYNAMIQUE : on retire les data-i18n du state loading
+    // initial pour que l'applyAll de l'engine n'écrase plus ces nœuds.
+    $('#verdict').removeAttribute('data-i18n');
+    $('#verdict-sub').removeAttribute('data-i18n');
     const badge = $('#badge');
     const verdict = $('#verdict');
     const sub = $('#verdict-sub');
@@ -269,14 +250,16 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    $$('.lang-bar .lang-btn').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.lang)));
-    const saved = (function() { try { return localStorage.getItem('tabibi.lang'); } catch (e) { return null; } })();
-    if (saved) applyLang(saved);
+    // Langue/boutons gérés par tabibi-lang.js + tabibi-langbar.js (fin de page).
     verify();
   });
 
 })();
 </script>
 
+<!-- [i18n] moteur (absent de cette page à l'origine) + sélecteur factorisé -->
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>

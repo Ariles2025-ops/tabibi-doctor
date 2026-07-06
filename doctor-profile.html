@@ -28,7 +28,7 @@
 <meta name="twitter:description" content="Consultez le profil du médecin, sa spécialité, ses créneaux disponibles et prenez rendez-vous en ligne sur Tabibi. Service gratuit, médecins certifiés.">
 <meta name="twitter:image" content="https://tabibi.doctor/assets/og-image.jpg">
 <meta name="twitter:image:alt" content="Tabibi — Trouvez votre médecin en Algérie">
-<meta name="theme-color" content="#0F7560">
+<meta name="theme-color" content="#0E5F46">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_profile_long">
 <title>Profil médecin | Tabibi — RDV en ligne en Algérie</title>
@@ -40,6 +40,12 @@
 .review-stars { color:#f59e0b; font-size:14px; margin-bottom:6px; }
 .map-embed { width:100%; height:200px; border-radius:12px; border:0; display:block; }
 .section-h { font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text);display:flex;align-items:center;gap:8px; }
+/* ── RTL (mode arabe) — pilote i18n P0 #3 ───────────────────────────────────
+   Les rangées flex (cover, tarif, horaires, boutons, .section-h) s'inversent
+   automatiquement sous dir=rtl. On force l'alignement des paragraphes texte et
+   le miroir de la flèche "retour annuaire" (état introuvable). */
+[dir="rtl"] #d-bio, [dir="rtl"] #d-addr { text-align: right; }
+[dir="rtl"] .fa-arrow-left { display: inline-block; transform: scaleX(-1); }
 </style>
 </head>
 <body>
@@ -47,15 +53,17 @@
 <div class="app-root">
 <header class="app-bar">
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="history.back()" aria-label="Retour"><i class="fa fa-arrow-left"></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Profil médecin</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="dp_pagetitle">Profil médecin</div></div>
   <button type="button" class="btn btn-icon btn-icon-sm" id="fav-btn" onclick="toggleFav()" style="background:var(--bg2);color:var(--text3)" aria-label="Ajouter aux favoris"><i class="fa fa-heart"></i></button>
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="navigator.share?navigator.share({title:'Tabibi',text:document.title,url:location.href}):alert(tabibiT('alert_link_copied','Lien copié'))" aria-label="Partager le profil"><i class="fa fa-share-nodes"></i></button>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 <main class="page" style="padding:0 0 90px">
   <!-- COVER -->
-  <div style="background:linear-gradient(135deg,#0a4d3e,#0F7560);padding:24px 16px 30px;color:#fff;position:relative">
+  <div style="background:linear-gradient(135deg,#0a4d3e,#0E5F46);padding:24px 16px 30px;color:#fff;position:relative">
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
-      <div id="d-ava" style="width:88px;height:88px;border-radius:22px;background:#fff;color:#0F7560;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:3px solid rgba(255,255,255,.4)">DR</div>
+      <div id="d-ava" style="width:88px;height:88px;border-radius:22px;background:#fff;color:#0E5F46;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:3px solid rgba(255,255,255,.4)">DR</div>
       <div style="flex:1;min-width:0">
         <div id="d-name" style="font-size:20px;font-weight:800">--</div>
         <div id="d-spec" style="font-size:13px;opacity:.85">--</div>
@@ -67,17 +75,17 @@
       </div>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <span class="badge" style="background:rgba(255,255,255,.2);color:#fff" id="b-cert"><i class="fa fa-check"></i> Certifié</span>
-      <span class="badge" style="background:rgba(255,255,255,.2);color:#fff" id="b-urg"><i class="fa fa-bolt"></i> Urgences</span>
-      <span class="badge" style="background:rgba(124,58,237,.4);color:#fff"><i class="fa fa-video"></i> Téléconsultation</span>
+      <span class="badge" style="background:rgba(255,255,255,.2);color:#fff" id="b-cert"><i class="fa fa-check"></i> <span data-i18n="badge_certified">Certifié</span></span>
+      <span class="badge" style="background:rgba(255,255,255,.2);color:#fff" id="b-urg"><i class="fa fa-bolt"></i> <span data-i18n="badge_urgent">Urgences</span></span>
+      <span class="badge" style="background:rgba(124,58,237,.4);color:#fff"><i class="fa fa-video"></i> <span data-i18n="badge_teleconsult">Téléconsultation</span></span>
       <span class="badge" style="background:rgba(255,255,255,.2);color:#fff" id="b-langs">FR · AR</span>
     </div>
   </div>
 
   <!-- TARIF -->
   <div style="padding:14px 16px">
-    <div class="card" style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#dcfce7,#eff6ff)">
-      <div><div style="font-size:11px;color:var(--blue);font-weight:700;text-transform:uppercase">PRIX CONSULTATION</div><div id="d-price" style="font-size:24px;font-weight:800;color:var(--blue)">-- DA</div><div style="font-size:11px;color:var(--text3)">Conventionné CNAS / CASNOS / CHIFA</div></div>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#e7f3ef,#f8fafc)">
+      <div><div style="font-size:11px;color:var(--blue);font-weight:700;text-transform:uppercase" data-i18n="consult_price_label">PRIX CONSULTATION</div><div id="d-price" style="font-size:24px;font-weight:800;color:var(--blue)">-- DA</div><div style="font-size:11px;color:var(--text3)" data-i18n="cnas_casnos_chifa">Conventionné CNAS / CASNOS / CHIFA</div></div>
       <i class="fa fa-coins" style="font-size:36px;color:var(--blue);opacity:.4"></i>
     </div>
   </div>
@@ -85,7 +93,7 @@
   <!-- BIOGRAPHIE -->
   <div style="padding:0 16px 14px">
     <div class="card">
-      <div class="section-h"><i class="fa fa-user" style="color:var(--blue)"></i> Présentation</div>
+      <div class="section-h"><i class="fa fa-user" style="color:var(--blue)"></i> <span data-i18n="presentation">Présentation</span></div>
       <p id="d-bio" style="font-size:13px;color:var(--text2);line-height:1.6">--</p>
     </div>
   </div>
@@ -93,7 +101,7 @@
   <!-- DIPLÔMES -->
   <div style="padding:0 16px 14px">
     <div class="card">
-      <div class="section-h"><i class="fa fa-graduation-cap" style="color:#f59e0b"></i> Diplômes & formations</div>
+      <div class="section-h"><i class="fa fa-graduation-cap" style="color:#f59e0b"></i> <span data-i18n="diplomas_training">Diplômes &amp; formations</span></div>
       <div id="d-dipl" style="font-size:12px"></div>
     </div>
   </div>
@@ -101,12 +109,12 @@
   <!-- ADRESSE + MAP -->
   <div style="padding:0 16px 14px">
     <div class="card">
-      <div class="section-h"><i class="fa fa-location-dot" style="color:var(--red)"></i> Adresse du cabinet</div>
+      <div class="section-h"><i class="fa fa-location-dot" style="color:var(--red)"></i> <span data-i18n="cabinet_address_label">Adresse du cabinet</span></div>
       <div id="d-addr" style="font-size:13px;font-weight:600;margin-bottom:10px">--</div>
       <iframe class="map-embed" id="d-map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
       <div style="margin-top:10px;display:flex;gap:8px">
-        <a id="d-direction" target="_blank" rel="noopener noreferrer" class="btn btn-soft btn-sm btn-full"><i class="fa fa-route"></i> Itinéraire</a>
-        <a id="d-call" class="btn btn-success btn-sm btn-full"><i class="fa fa-phone"></i> Appeler</a>
+        <a id="d-direction" target="_blank" rel="noopener noreferrer" class="btn btn-soft btn-sm btn-full"><i class="fa fa-route"></i> <span data-i18n="directions">Itinéraire</span></a>
+        <a id="d-call" class="btn btn-success btn-sm btn-full"><i class="fa fa-phone"></i> <span data-i18n="call">Appeler</span></a>
       </div>
     </div>
   </div>
@@ -114,15 +122,15 @@
   <!-- HORAIRES -->
   <div style="padding:0 16px 14px">
     <div class="card">
-      <div class="section-h"><i class="fa fa-clock" style="color:var(--green)"></i> Horaires d'ouverture</div>
+      <div class="section-h"><i class="fa fa-clock" style="color:var(--green)"></i> <span data-i18n="opening_hours">Horaires d'ouverture</span></div>
       <div style="font-size:12px">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span>Lundi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span>Mardi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span>Mercredi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span>Jeudi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span>Vendredi</span><strong>09:00 - 13:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span>Samedi</span><strong>09:00 - 13:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;color:var(--text4)"><span>Dimanche</span><strong>Fermé</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_monday">Lundi</span><strong>09:00 - 17:00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_tuesday">Mardi</span><strong>09:00 - 17:00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_wednesday">Mercredi</span><strong>09:00 - 17:00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_thursday">Jeudi</span><strong>09:00 - 17:00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_friday">Vendredi</span><strong>09:00 - 13:00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_saturday">Samedi</span><strong>09:00 - 13:00</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;color:var(--text4)"><span data-i18n="day_sunday">Dimanche</span><strong data-i18n="closed">Fermé</strong></div>
       </div>
     </div>
   </div>
@@ -131,19 +139,19 @@
   <div style="padding:0 16px 14px">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-        <div class="section-h" style="margin:0"><i class="fa fa-star" style="color:#f59e0b"></i> Avis patients</div>
+        <div class="section-h" style="margin:0"><i class="fa fa-star" style="color:#f59e0b"></i> <span data-i18n="patient_reviews">Avis patients</span></div>
         <span class="badge badge-amber" id="rev-count">0 avis</span>
       </div>
       <div id="rating-summary-real"></div>
       <div id="reviews-list" style="margin-top:14px"></div>
       <button id="load-more-reviews" style="display:none;margin:12px auto 0;padding:10px 18px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-family:inherit;font-weight:600;color:var(--text2);font-size:13px">
-        <i class="fa fa-chevron-down"></i> Voir plus d'avis
+        <i class="fa fa-chevron-down"></i> <span data-i18n="see_more_reviews">Voir plus d'avis</span>
       </button>
       <!-- Bouton "Noter ce médecin" (visible uniquement si patient + RDV completed) -->
       <div id="review-cta" style="display:none;margin-top:14px;padding:14px;background:linear-gradient(135deg,#fef3c7,#fed7aa);border-radius:12px;text-align:center">
-        <div style="font-size:13px;color:#92400e;margin-bottom:8px">Vous avez consulté ce médecin ?</div>
+        <div style="font-size:13px;color:#92400e;margin-bottom:8px" data-i18n="consulted_this_doctor">Vous avez consulté ce médecin ?</div>
         <button onclick="openMyReview()" class="btn btn-primary" style="background:#f59e0b;font-weight:700">
-          <i class="fa fa-star"></i> Donner mon avis
+          <i class="fa fa-star"></i> <span data-i18n="give_my_review">Donner mon avis</span>
         </button>
       </div>
     </div>
@@ -153,7 +161,7 @@
   <div style="position:fixed;bottom:0;left:0;right:0;background:#fff;padding:14px 16px;border-top:1px solid var(--border);box-shadow:0 -4px 20px rgba(0,0,0,.06);z-index:100">
     <div style="max-width:480px;margin:0 auto">
       <div style="display:flex;gap:8px">
-        <button id="reserve-btn" onclick="reserve()" class="btn btn-primary btn-xl" style="flex:1"><i class="fa fa-calendar-plus"></i> Réserver un RDV</button>
+        <button id="reserve-btn" onclick="reserve()" class="btn btn-primary btn-xl" style="flex:1"><i class="fa fa-calendar-plus"></i> <span data-i18n="book_appointment">Réserver un RDV</span></button>
         <button onclick="visio()" class="btn btn-soft btn-xl" style="background:#f3e8ff;color:#7c3aed" aria-label="Téléconsultation"><i class="fa fa-video"></i></button>
       </div>
       <!-- [Phase 5.2.2] Mention discrète sous le bouton — change selon état claim + auth -->
@@ -166,6 +174,9 @@
 // Code mort retiré (anciens avis hard-codés). Les vrais avis viennent de Supabase via tabibi-reviews.js
 
 let currentDoc=null;
+
+// [I18N-RES] helper clés explicites + fallback FR (tabibiT vient de tabibi-i18n.js)
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 
 // [FIX 2026-05-21] getDocId accepte UUID Supabase OU ID numerique CSV.
 // [FIX 2026-05-26] Lit aussi ?legacy_id= (URL canonique pour les fiches scrapées).
@@ -183,8 +194,8 @@ function isUuid(s){
 // [FIX 2026-05-21] Palette generee a partir du nom pour avatar (initiales)
 // [Phase 5.2.3-fix 2026-05-22] Utilise tabibiDoctorName.initials() (Unicode-safe).
 function _doctorAvatar(rowOrName){
-  var bg = ['#dbeafe','#dcfce7','#fef3c7','#fee2e2','#ede9fe','#cffafe','#fce7f3','#e0e7ff'];
-  var tc = ['#1d4ed8','#0a4d3e','#b45309','#b91c1c','#6d28d9','#0891b2','#be185d','#3730a3'];
+  var bg = ['#e7f3ef','#e7f3ef','#fef3c7','#fff0f0','#ede9fe','#cffafe','#fce7f3','#e0e7ff'];
+  var tc = ['#0E5F46','#0a4d3e','#b45309','#b91c1c','#6d28d9','#0891b2','#be185d','#3730a3'];
   // Compat : accepte soit un profile {full_name, entity_type, ...} soit une string.
   var profile = (typeof rowOrName === 'object' && rowOrName) ? rowOrName : { full_name: String(rowOrName || '') };
   var hashKey = profile.full_name || profile.full_name_ar || 'Dr';
@@ -293,12 +304,11 @@ function _renderNotFound(id){
   var main = document.querySelector('main') || document.body;
   main.innerHTML = '<div style="max-width:520px;margin:60px auto;padding:32px;text-align:center;background:#fff;border-radius:16px;box-shadow:0 4px 16px rgba(0,0,0,.06)">'
     + '<div style="font-size:48px;margin-bottom:12px">🩺</div>'
-    + '<h1 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#0f172a">Medecin introuvable</h1>'
+    + '<h1 style="font-size:22px;font-weight:800;margin:0 0 8px;color:#0f172a">' + _t('doctor_not_found', 'Médecin introuvable') + '</h1>'
     + '<p style="font-size:14px;color:#64748b;margin:0 0 18px">'
-    +   'La fiche du medecin <strong>' + esc(String(id || '')) + '</strong> n\'est pas disponible pour le moment. '
-    +   'Elle a peut-etre ete retiree ou le lien est obsolete.'
+    +   _t('doctor_not_found_body', "La fiche demandée n'est pas disponible pour le moment. Elle a peut-être été retirée ou le lien est obsolète.")
     + '</p>'
-    + '<a href="index.html" class="btn btn-primary"><i class="fa fa-arrow-left"></i> Retour a l\'annuaire</a>'
+    + '<a href="index.html" class="btn btn-primary"><i class="fa fa-arrow-left"></i> ' + _t('back_to_directory', "Retour à l'annuaire") + '</a>'
     + '</div>';
 }
 
@@ -321,23 +331,23 @@ function _injectPhase13Sections(d){
   var html = '';
   // Téléconsultation
   if (d.telehealth) {
-    var feeTxt = (d.telehealthFee != null) ? (d.telehealthFee.toLocaleString() + ' DA') : 'Tarif à confirmer';
-    html += '<div class="card" style="padding:14px;margin-bottom:10px;background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #93c5fd">'
+    var feeTxt = (d.telehealthFee != null) ? (d.telehealthFee.toLocaleString() + ' DA') : _t('price_tbd', 'Tarif à confirmer');
+    html += '<div class="card" style="padding:14px;margin-bottom:10px;background:linear-gradient(135deg,#f8fafc,#e7f3ef);border:1px solid #93c5fd">'
          +   '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
-         +     '<i class="fa fa-video" style="font-size:20px;color:#1d4ed8"></i>'
-         +     '<div style="font-size:14px;font-weight:700;color:#1d4ed8">Téléconsultation disponible</div>'
+         +     '<i class="fa fa-video" style="font-size:20px;color:#0E5F46"></i>'
+         +     '<div style="font-size:14px;font-weight:700;color:#0E5F46">' + _t('teleconsult_available', 'Téléconsultation disponible') + '</div>'
          +   '</div>'
-         +   '<div style="font-size:13px;color:var(--text2)">Consultation vidéo sécurisée — ' + esc(feeTxt) + '</div>'
+         +   '<div style="font-size:13px;color:var(--text2)">' + _t('secure_video_consult', 'Consultation vidéo sécurisée') + ' — ' + esc(feeTxt) + '</div>'
          + '</div>';
   }
   // Moyens de paiement acceptés (toujours afficher si au moins un)
   var pmBadges = [];
-  if (d.acceptsCash)  pmBadges.push('<span class="badge" style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-money-bill-wave fa-xs"></i> Espèces</span>');
-  if (d.acceptsCard)  pmBadges.push('<span class="badge" style="background:#dbeafe;color:#1d4ed8;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-credit-card fa-xs"></i> Carte</span>');
-  if (d.acceptsChifa) pmBadges.push('<span class="badge" style="background:#dcfce7;color:#0a4d3e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-id-card fa-xs"></i> Chifa</span>');
+  if (d.acceptsCash)  pmBadges.push('<span class="badge" style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-money-bill-wave fa-xs"></i> ' + _t('badge_cash','Espèces') + '</span>');
+  if (d.acceptsCard)  pmBadges.push('<span class="badge" style="background:#e7f3ef;color:#0E5F46;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-credit-card fa-xs"></i> ' + _t('badge_card','Carte') + '</span>');
+  if (d.acceptsChifa) pmBadges.push('<span class="badge" style="background:#e7f3ef;color:#0a4d3e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-id-card fa-xs"></i> ' + _t('badge_chifa','Chifa') + '</span>');
   if (pmBadges.length) {
     html += '<div class="card" style="padding:14px;margin-bottom:10px">'
-         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-wallet" style="color:var(--blue)"></i> Moyens de paiement acceptés</div>'
+         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-wallet" style="color:var(--blue)"></i> ' + _t('payment_methods_accepted','Moyens de paiement acceptés') + '</div>'
          +   '<div style="display:flex;flex-wrap:wrap">' + pmBadges.join('') + '</div>'
          + '</div>';
   }
@@ -345,14 +355,14 @@ function _injectPhase13Sections(d){
   var WH = d.workingHours;
   if (WH && typeof WH === 'object' && Object.keys(WH).length) {
     var DAYS = [
-      {k:'mon',l:'Lun'},{k:'tue',l:'Mar'},{k:'wed',l:'Mer'},{k:'thu',l:'Jeu'},
-      {k:'fri',l:'Ven'},{k:'sat',l:'Sam'},{k:'sun',l:'Dim'}
+      {k:'mon',l:_t('dow_mon','Lun')},{k:'tue',l:_t('dow_tue','Mar')},{k:'wed',l:_t('dow_wed','Mer')},{k:'thu',l:_t('dow_thu','Jeu')},
+      {k:'fri',l:_t('dow_fri','Ven')},{k:'sat',l:_t('dow_sat','Sam')},{k:'sun',l:_t('dow_sun','Dim')}
     ];
     var rows = DAYS.map(function(day){
       var slots = WH[day.k];
       var txt;
       if (!slots || !Array.isArray(slots) || !slots.length) {
-        txt = '<span style="color:var(--text3)">Fermé</span>';
+        txt = '<span style="color:var(--text3)">' + _t('closed','Fermé') + '</span>';
       } else {
         txt = slots.map(function(s){ return esc(s.open||'') + '–' + esc(s.close||''); }).join(' &middot; ');
       }
@@ -362,7 +372,7 @@ function _injectPhase13Sections(d){
            + '</div>';
     }).join('');
     html += '<div class="card" style="padding:14px;margin-bottom:10px">'
-         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-clock" style="color:var(--blue)"></i> Horaires d\'ouverture</div>'
+         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-clock" style="color:var(--blue)"></i> ' + _t('opening_hours',"Horaires d'ouverture") + '</div>'
          +   rows
          + '</div>';
   }
@@ -406,11 +416,11 @@ async function loadDoc(){
     var avaEl = document.getElementById("d-ava");
     if (d.photoUrl) {
       avaEl.innerHTML = '<img src="' + esc(d.photoUrl) + '" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit" loading="lazy" onerror="this.parentNode.textContent=\'' + esc(d.in || '?') + '\'">';
-      avaEl.style.background = d.bg || '#dbeafe';
+      avaEl.style.background = d.bg || '#e7f3ef';
     } else {
       avaEl.textContent = d.in || '?';
-      avaEl.style.background = d.bg || '#dbeafe';
-      avaEl.style.color = d.tc || '#1d4ed8';
+      avaEl.style.background = d.bg || '#e7f3ef';
+      avaEl.style.color = d.tc || '#0E5F46';
     }
     document.getElementById("d-name").textContent = d.fr || 'Dr ?';
     document.getElementById("d-spec").innerHTML = '<i class="fa fa-stethoscope fa-xs"></i> ' + esc(d.spec || '') + ' &middot; ' + esc(d.ville || '');
@@ -424,11 +434,11 @@ async function loadDoc(){
     if (d.note != null) {
       starsEl.textContent = "★".repeat(Math.round(d.note)) + "☆".repeat(5 - Math.round(d.note));
       noteEl.textContent  = d.note.toFixed(1);
-      avisEl.textContent  = "(" + (d.avis || 0) + " avis)";
+      avisEl.textContent  = "(" + (d.avis || 0) + " " + _t('reviews_word','avis') + ")";
       starsEl.style.display = ''; noteEl.style.display = '';
     } else {
       starsEl.style.display = 'none'; noteEl.style.display = 'none';
-      avisEl.textContent = 'Pas encore noté';
+      avisEl.textContent = _t('not_rated_yet','Pas encore noté');
       avisEl.style.color = 'var(--text3)';
     }
     // [Phase 13b] Prix : null → "Tarif à confirmer"
@@ -437,7 +447,7 @@ async function loadDoc(){
       priceEl.textContent = d.prix.toLocaleString() + " DA";
       priceEl.style.color = '';
     } else {
-      priceEl.textContent = "Tarif à confirmer";
+      priceEl.textContent = _t('price_tbd','Tarif à confirmer');
       priceEl.style.color = 'var(--text3)';
       priceEl.style.fontSize = '14px';
     }
@@ -579,7 +589,7 @@ function _refreshReserveBtnState() {
     btn.disabled = true;
     btn.style.opacity = '0.55';
     btn.style.cursor = 'not-allowed';
-    mention.textContent = "Ce médecin n'a pas encore activé les RDV en ligne.";
+    mention.textContent = _t('booking_not_active', "Ce médecin n'a pas encore activé les RDV en ligne.");
     mention.style.color = 'var(--text3)';
     return;
   }
@@ -589,7 +599,7 @@ function _refreshReserveBtnState() {
     btn.disabled = true;
     btn.style.opacity = '0.55';
     btn.style.cursor = 'not-allowed';
-    mention.textContent = "Validation en cours — ce médecin sera bientôt disponible.";
+    mention.textContent = _t('validation_pending_doctor', "Validation en cours — ce médecin sera bientôt disponible.");
     mention.style.color = 'var(--text3)';
     return;
   }
@@ -605,7 +615,7 @@ function _refreshReserveBtnState() {
   if (u && u.id) {
     mention.textContent = '';   // user loggé → pas de mention
   } else {
-    mention.textContent = "Connexion requise pour confirmer le RDV.";
+    mention.textContent = _t('login_required_booking', "Connexion requise pour confirmer le RDV.");
     mention.style.color = 'var(--text3)';
   }
 }
@@ -614,6 +624,28 @@ function visio(){
   alert(msg + (currentDoc ? " — " + currentDoc.fr : ""));
 }
 document.addEventListener("DOMContentLoaded", loadDoc);
+
+// [I18N-RES] Re-localise le contenu DYNAMIQUE au changement de langue (les labels
+// statiques data-i18n sont gérés par le moteur global). _injectPhase13Sections est
+// idempotent (#d-phase13-extras recréé), _refreshReserveBtnState resette textContent.
+document.addEventListener('tabibi:lang-change', function(){
+  try {
+    if (currentDoc) {
+      if (typeof _injectPhase13Sections === 'function') _injectPhase13Sections(currentDoc);
+      if (typeof _refreshReserveBtnState === 'function') _refreshReserveBtnState();
+      // [CONFORMITE 2026] re-localise tarif + compteur d'avis (posés via _t au load)
+      var d = currentDoc;
+      var priceEl = document.getElementById('d-price');
+      if (priceEl && d.prix == null) priceEl.textContent = _t('price_tbd', 'Tarif à confirmer');
+      var avisEl = document.getElementById('d-avis');
+      if (avisEl) {
+        avisEl.textContent = (d.note != null)
+          ? '(' + (d.avis || 0) + ' ' + _t('reviews_word', 'avis') + ')'
+          : _t('not_rated_yet', 'Pas encore noté');
+      }
+    }
+  } catch(e){}
+});
 </script>
 </div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
@@ -647,7 +679,7 @@ async function loadRealReviews(doctorId) {
     // Pas un UUID -> mode démo, on n'a pas de vrais avis Supabase.
     document.getElementById("rating-summary-real").innerHTML =
       window.tabibiReviewsUI.renderRatingSummary(null);
-    document.getElementById("rev-count").textContent = "0 avis";
+    document.getElementById("rev-count").textContent = "0 " + _t('reviews_word', 'avis');
     return;
   }
   _reviewDoctorId = doctorId;
@@ -659,7 +691,7 @@ async function loadRealReviews(doctorId) {
     document.getElementById("rating-summary-real").innerHTML =
       window.tabibiReviewsUI.renderRatingSummary(summary);
     document.getElementById("rev-count").textContent =
-      (summary && summary.total_reviews ? summary.total_reviews : 0) + " avis";
+      (summary && summary.total_reviews ? summary.total_reviews : 0) + " " + _t('reviews_word', 'avis');
 
     // 2. Liste avis (premiers 10)
     _reviewOffset = 0;
@@ -710,6 +742,8 @@ document.addEventListener("DOMContentLoaded", () => {
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-footer.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body></html>

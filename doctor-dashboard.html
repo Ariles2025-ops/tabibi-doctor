@@ -9,7 +9,7 @@
 <meta name="description" content="Espace médecin privé Tabibi.">
 <link rel="canonical" href="https://tabibi.doctor/doctor-dashboard.html">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#10b981">
+<meta name="theme-color" content="#2E8B57">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_dashboard">
 <title>Espace médecin | Tabibi</title>
@@ -47,25 +47,27 @@
       <div class="app-bar-sub" id="hdr-sub" style="font-size:11px;color:var(--text3);display:flex;align-items:center;gap:4px;margin-top:2px"><i class="fa fa-stethoscope fa-xs" style="color:var(--green)"></i> Praticien · Tabibi PRO</div>
     </div>
   </div>
+  <!-- [i18n] sélecteur de langue factorisé -->
+  <div data-langbar style="flex-shrink:0;margin-right:4px"></div>
   <a id="med-msg-link" href="messages.html" hidden title="Messages" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;border-radius:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-right:4px"><i class="fa fa-comments" style="font-size:14px"></i></a>
   <button class="btn btn-icon btn-icon-sm" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
     <i class="fa fa-bell" style="font-size:14px"></i><span id="med-notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:none;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite"></span>
   </button>
   <button onclick="toggleMenu()" aria-label="Mon compte" title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#2E8B57,#166534);color:#fff;font-weight:800;font-size:12px;border:none;cursor:pointer;flex-shrink:0;box-shadow:0 2px 6px rgba(46,139,87,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">DR</span></button>
-  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fee2e2;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fee2e2';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
+  <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fff0f0;color:#dc2626;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#dc2626';this.style.color='#fff'" onmouseout="this.style.background='#fff0f0';this.style.color='#dc2626'"><i class="fa fa-right-from-bracket"></i></button>
 </header>
 
 <div class="dropdown-menu hidden" id="notif-drop" style="position:absolute;top:54px;right:54px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:300px;z-index:300">
-  <div style="padding:12px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px"><i class="fa fa-bell"></i> Notifications</div>
+  <div style="padding:12px;border-bottom:1px solid var(--border);font-weight:700;font-size:13px"><i class="fa fa-bell"></i> <span data-i18n="dd_notifications">Notifications</span></div>
   <div id="med-notif-list" style="max-height:300px;overflow-y:auto"></div>
 </div>
 <div class="dropdown-menu hidden" id="user-drop" style="position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:240px;z-index:300;overflow:hidden">
-  <div style="padding:14px;background:linear-gradient(135deg,#d1fae5,#a7f3d0)"><div style="font-weight:700;font-size:13px" id="menu-name">--</div><div style="font-size:11px;color:var(--text3)" id="menu-spec">--</div></div>
-  <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-user" style="color:var(--green);width:20px"></i> Mon profil</a>
-  <a href="doctor-reservation.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-calendar-week" style="color:var(--blue);width:20px"></i> Mes disponibilités</a>
+  <div style="padding:14px;background:linear-gradient(135deg,#f0fdf4,#a7f3d0)"><div style="font-weight:700;font-size:13px" id="menu-name">--</div><div style="font-size:11px;color:var(--text3)" id="menu-spec">--</div></div>
+  <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-user" style="color:var(--green);width:20px"></i> <span data-i18n="dd_menu_profile">Mon profil</span></a>
+  <a href="doctor-reservation.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-calendar-week" style="color:var(--blue);width:20px"></i> <span data-i18n="dd_menu_availability">Mes disponibilités</span></a>
   <!-- [FIX-AUDIT-2026-05] #2 : guillemets internes simples pour ne pas casser l'attribut onclick -->
-  <button onclick="alert(tabibiT('alert_support_24h','Support : contact@tabibi.doctor — réponse sous 24h'))" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> Aide</button>
-  <button onclick="logout()" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> Se déconnecter</button>
+  <button onclick="alert(tabibiT('alert_support_24h','Support : contact@tabibi.doctor — réponse sous 24h'))" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> <span data-i18n="dd_menu_help">Aide</span></button>
+  <button onclick="logout()" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> <span data-i18n="dd_logout">Se déconnecter</span></button>
 </div>
 
 <div class="dash-tabs" style="position:sticky;top:var(--nav-h);z-index:150;background:#fff;border-bottom:1px solid var(--border)">
@@ -81,27 +83,27 @@
 
   <!-- ═════ AUJOURD'HUI ═════ -->
   <div id="tab-today" class="tab-panel active">
-    <div style="background:linear-gradient(135deg,#047857,#10b981);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
+    <div style="background:linear-gradient(135deg,#047857,#2E8B57);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
       <div style="font-size:13px;opacity:.85" id="med-greet">Bonjour, Dr. <i class="fa fa-user-doctor"></i></div>
       <div style="font-size:22px;font-weight:800;margin-top:4px" id="med-name">--</div>
       <div style="font-size:12px;opacity:.85" id="med-spec-info">--</div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        <a href="doctor-reservation.html" class="btn btn-white btn-sm"><i class="fa fa-plus" aria-hidden="true"></i> Ajouter créneaux</a>
+        <a href="doctor-reservation.html" class="btn btn-white btn-sm"><i class="fa fa-plus" aria-hidden="true"></i> <span data-i18n="dd_add_slots">Ajouter créneaux</span></a>
         <a href="medecin-ordonnance.html" class="btn btn-white btn-sm" data-i18n-title="new_prescription" title="Nouvelle ordonnance"><i class="fa fa-file-prescription" aria-hidden="true"></i> <span data-i18n="new_prescription_short">Ordonnance</span></a>
         <a href="teleconsultation.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-video" aria-hidden="true"></i> <span data-i18n="teleconsult_short">Téléconsult.</span></a>
         <a href="admin-cabinet.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-building" aria-hidden="true"></i> <span data-i18n="my_cabinet">Mon cabinet</span></a>
-        <a href="medecin-profile.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-eye" aria-hidden="true"></i> Mon profil</a>
+        <a href="medecin-profile.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-eye" aria-hidden="true"></i> <span data-i18n="dd_menu_profile">Mon profil</span></a>
       </div>
     </div>
     <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
-      <div class="card" style="padding:12px;border-left:3px solid var(--blue)"><div id="kpi-today" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)">RDV aujourd'hui</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">0</div><div style="font-size:11px;color:var(--text3)">Ce mois</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">—</div><div style="font-size:11px;color:var(--text3)">Revenus mois</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">—</div><div style="font-size:11px;color:var(--text3)">Note moyenne</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid var(--blue)"><div id="kpi-today" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_today">RDV aujourd'hui</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_month">Ce mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">—</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_revenue">Revenus mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">—</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_rating">Note moyenne</div></div>
     </div>
     <div style="padding:0 16px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:14px;font-weight:700"><i class="fa fa-clock" style="color:var(--blue)"></i> Consultations du jour</div>
+        <div style="font-size:14px;font-weight:700"><i class="fa fa-clock" style="color:var(--blue)"></i> <span data-i18n="dd_today_consults">Consultations du jour</span></div>
         <span class="badge badge-blue" id="today-count">0 RDV</span>
       </div>
       <div id="today-list"></div>
@@ -111,28 +113,29 @@
   <!-- ═════ AGENDA SEMAINE ═════ -->
   <div id="tab-agenda" class="tab-panel" style="padding:14px 16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-      <div style="font-size:15px;font-weight:700">Agenda — semaine</div>
-      <button onclick="openScheduleConfig()" class="btn btn-success btn-sm"><i class="fa fa-gear"></i> Mes horaires</button>
+      <div style="font-size:15px;font-weight:700" data-i18n="dd_agenda_week">Agenda — semaine</div>
+      <button onclick="openScheduleConfig()" class="btn btn-success btn-sm"><i class="fa fa-gear"></i> <span data-i18n="dd_my_schedule">Mes horaires</span></button>
     </div>
     <div class="cal-week" id="cal-week"></div>
-    <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:10px" id="day-lbl" data-i18n="today_appointments">RDV du jour</div>
+    <!-- [CONFORMITE 2026 B2] pas de data-i18n : renderAgenda écrit le libellé localisé (piège clobber) -->
+    <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:10px" id="day-lbl">RDV du jour</div>
     <div id="day-rdv-list"></div>
 
     <!-- Modal configuration horaires -->
     <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
       <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
         <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
-          <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> Configurer mes horaires</div>
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> <span data-i18n="dd_config_schedule">Configurer mes horaires</span></div>
           <button onclick="closeScheduleConfig()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
         </div>
         <div style="padding:18px;font-size:13px;color:var(--text3);line-height:1.5">
-          Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.
+          <span data-i18n="dd_schedule_intro">Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.</span>
         </div>
         <div id="schedule-days-config" style="padding:0 18px"></div>
         <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
           <div style="display:flex;gap:8px">
             <button onclick="closeScheduleConfig()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
-            <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> Enregistrer mes horaires</button>
+            <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> <span data-i18n="dd_save_schedule">Enregistrer mes horaires</span></button>
           </div>
         </div>
       </div>
@@ -144,19 +147,19 @@
          par doctor_profiles.user_id = auth.uid()). -->
     <div style="margin-top:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:14px;font-weight:700"><i class="fa fa-ban" style="color:#f59e0b"></i> Blocages exceptionnels</div>
-        <button id="btn-add-unavail" onclick="openUnavailModal()" class="btn btn-soft btn-sm"><i class="fa fa-plus"></i> Bloquer un créneau</button>
+        <div style="font-size:14px;font-weight:700"><i class="fa fa-ban" style="color:#f59e0b"></i> <span data-i18n="dd_blockages">Blocages exceptionnels</span></div>
+        <button id="btn-add-unavail" onclick="openUnavailModal()" class="btn btn-soft btn-sm"><i class="fa fa-plus"></i> <span data-i18n="dd_block_slot">Bloquer un créneau</span></button>
       </div>
       <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">
-        Vacances, formation, fermeture exceptionnelle… Ces blocages s'ajoutent à vos horaires normaux ci-dessus.
+        <span data-i18n="dd_blockages_intro">Vacances, formation, fermeture exceptionnelle… Ces blocages s'ajoutent à vos horaires normaux ci-dessus.</span>
       </div>
       <!-- Mini-bandeau "pas claim" — visible uniquement si médecin pas encore réclamé -->
       <div id="unavail-not-claimed" class="hidden" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
         <i class="fa fa-circle-info" aria-hidden="true"></i>
-        <span>Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités. <a href="doctor-claim.html" style="color:#78350f;font-weight:700;text-decoration:underline" data-i18n="foot_claim_fiche">Réclamer ma fiche</a></span>
+        <span><span data-i18n="dd_claim_intro">Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités.</span> <a href="doctor-claim.html" style="color:#78350f;font-weight:700;text-decoration:underline" data-i18n="foot_claim_fiche">Réclamer ma fiche</a></span>
       </div>
       <div id="unavail-list">
-        <div style="text-align:center;padding:18px;color:var(--text3);font-size:12px">Chargement...</div>
+        <div style="text-align:center;padding:18px;color:var(--text3);font-size:12px" data-i18n="dd_loading">Chargement...</div>
       </div>
     </div>
 
@@ -164,43 +167,43 @@
     <div id="unavail-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeUnavailModal()">
       <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
         <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
-          <div style="font-size:17px;font-weight:800"><i class="fa fa-ban" style="color:#f59e0b"></i> Bloquer un créneau</div>
+          <div style="font-size:17px;font-weight:800"><i class="fa fa-ban" style="color:#f59e0b"></i> <span data-i18n="dd_block_slot">Bloquer un créneau</span></div>
           <button onclick="closeUnavailModal()" aria-label="Fermer" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
         </div>
         <div style="padding:18px">
           <label style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px;cursor:pointer;margin-bottom:14px;font-size:13px;font-weight:600">
-            <input type="checkbox" id="un-allday" onchange="toggleUnavailAllDay()"> Toute la journée (cache les heures)
+            <input type="checkbox" id="un-allday" onchange="toggleUnavailAllDay()"> <span data-i18n="dd_allday">Toute la journée (cache les heures)</span>
           </label>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
             <div class="form-group">
-              <label class="form-label" for="un-start-date">Du (date) *</label>
+              <label class="form-label" for="un-start-date" data-i18n="dd_from_date">Du (date) *</label>
               <input class="form-control" type="date" id="un-start-date" required>
             </div>
             <div class="form-group un-time-field">
-              <label class="form-label" for="un-start-time">Heure début *</label>
+              <label class="form-label" for="un-start-time" data-i18n="dd_start_time">Heure début *</label>
               <input class="form-control" type="time" id="un-start-time" value="09:00" required>
             </div>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
             <div class="form-group">
-              <label class="form-label" for="un-end-date">Au (date) *</label>
+              <label class="form-label" for="un-end-date" data-i18n="dd_to_date">Au (date) *</label>
               <input class="form-control" type="date" id="un-end-date" required>
             </div>
             <div class="form-group un-time-field">
-              <label class="form-label" for="un-end-time">Heure fin *</label>
+              <label class="form-label" for="un-end-time" data-i18n="dd_end_time">Heure fin *</label>
               <input class="form-control" type="time" id="un-end-time" value="18:00" required>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" for="un-reason">Raison (optionnel)</label>
-            <input class="form-control" id="un-reason" placeholder="Vacances famille, formation continue, congrès…" maxlength="200">
+            <label class="form-label" for="un-reason" data-i18n="dd_reason_opt">Raison (optionnel)</label>
+            <input class="form-control" id="un-reason" placeholder="Vacances famille, formation continue, congrès…" data-i18n-placeholder="dd_reason_ph" maxlength="200">
           </div>
-          <div id="un-error" class="hidden" role="alert" style="background:#fee2e2;border:1px solid #dc2626;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:12px;margin-top:8px"></div>
+          <div id="un-error" class="hidden" role="alert" style="background:#fff0f0;border:1px solid #dc2626;color:#991b1b;padding:10px 14px;border-radius:10px;font-size:12px;margin-top:8px"></div>
         </div>
         <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
           <div style="display:flex;gap:8px">
-            <button type="button" onclick="closeUnavailModal()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)">Annuler</button>
-            <button type="button" id="btn-save-unavail" onclick="saveUnavailSlot()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> Bloquer ce créneau</button>
+            <button type="button" onclick="closeUnavailModal()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
+            <button type="button" id="btn-save-unavail" onclick="saveUnavailSlot()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> <span data-i18n="dd_block_this">Bloquer ce créneau</span></button>
           </div>
         </div>
       </div>
@@ -210,9 +213,9 @@
   <!-- ═════ TOUS LES RDV ═════ -->
   <div id="tab-rdv" class="tab-panel" style="padding:14px 16px">
     <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none">
-      <button class="chip active" data-fr="all" onclick="filtMRdv('all',this)">Tous</button>
+      <button class="chip active" data-fr="all" onclick="filtMRdv('all',this)" data-i18n="dd_rdv_all">Tous</button>
       <button class="chip" data-fr="today" onclick="filtMRdv('today',this)" data-i18n="tab_today">Aujourd'hui</button>
-      <button class="chip" data-fr="Pending" onclick="filtMRdv('Pending',this)">En attente</button>
+      <button class="chip" data-fr="Pending" onclick="filtMRdv('Pending',this)" data-i18n="dd_rdv_pending">En attente</button>
       <button class="chip" data-fr="Confirmed" onclick="filtMRdv('Confirmed',this)" data-i18n="confirmed_rdv">Confirmés</button>
       <button class="chip" data-fr="Completed" onclick="filtMRdv('Completed',this)" data-i18n="completed_rdv">Terminés</button>
     </div>
@@ -230,18 +233,18 @@
 
   <!-- ═════ STATISTIQUES ═════ -->
   <div id="tab-stats" class="tab-panel" style="padding:14px 16px">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px"><i class="fa fa-chart-column" style="color:var(--blue)"></i> Statistiques mensuelles</div>
+    <div style="font-size:15px;font-weight:700;margin-bottom:14px"><i class="fa fa-chart-column" style="color:var(--blue)"></i> <span data-i18n="dd_stats_monthly">Statistiques mensuelles</span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="stats-cards"></div>
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins" style="color:#f59e0b"></i> Revenus par semaine (DA)</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins" style="color:#f59e0b"></i> <span data-i18n="dd_stats_revenue">Revenus par semaine (DA)</span></div>
       <div id="rev-bars"></div>
     </div>
     <div class="card" style="margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-stethoscope" style="color:var(--blue)"></i> Types de consultations</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-stethoscope" style="color:var(--blue)"></i> <span data-i18n="dd_stats_types">Types de consultations</span></div>
       <div id="type-bars"></div>
     </div>
     <div class="card">
-      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-credit-card" style="color:#7c3aed"></i> Modes de paiement</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-credit-card" style="color:#7c3aed"></i> <span data-i18n="dd_stats_paymethods">Modes de paiement</span></div>
       <div id="pay-bars"></div>
     </div>
   </div>
@@ -249,18 +252,18 @@
   <!-- ═════ PROFIL ═════ -->
   <div id="tab-profile" class="tab-panel" style="padding:14px 16px">
     <div class="card" style="text-align:center;padding:24px">
-      <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#d1fae5;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
+      <div id="prof-ava" style="width:88px;height:88px;border-radius:22px;background:#f0fdf4;color:#065f46;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:800;margin:0 auto 14px">DR</div>
       <div style="font-size:18px;font-weight:700" id="prof-name">--</div>
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px" id="prof-spec">--</div>
       <!-- [Défaut #4-A2] Badge caché par défaut ; révélé SSI validation_status==='approved' (via _gateCertBadge) -->
-      <span id="dash-cert-badge" class="badge badge-green" style="display:none"><i class="fa fa-check"></i> Certifié Tabibi</span>
+      <span id="dash-cert-badge" class="badge badge-green" style="display:none"><i class="fa fa-check"></i> <span data-i18n="dd_certified">Certifié Tabibi</span></span>
       <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px">
-        <a href="medecin-profile.html" class="btn btn-success btn-full btn-lg"><i class="fa fa-pen"></i> Modifier mon profil</a>
-        <a href="medecin-profile.html#sec-pricing" class="btn btn-soft btn-full"><i class="fa fa-coins"></i> Tarifs & types consultation</a>
-        <a href="doctor-reservation.html" class="btn btn-soft btn-full"><i class="fa fa-calendar-week"></i> Mes disponibilités</a>
-        <a href="medecin-profile.html#sec-notif" class="btn btn-soft btn-full"><i class="fa fa-bell"></i> Notifications</a>
-        <a href="medecin-profile.html#sec-sec" class="btn btn-soft btn-full"><i class="fa fa-lock"></i> Sécurité</a>
-        <button class="btn btn-danger btn-full" onclick="logout()" style="margin-top:8px"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>
+        <a href="medecin-profile.html" class="btn btn-success btn-full btn-lg"><i class="fa fa-pen"></i> <span data-i18n="dd_edit_profile">Modifier mon profil</span></a>
+        <a href="medecin-profile.html#sec-pricing" class="btn btn-soft btn-full"><i class="fa fa-coins"></i> <span data-i18n="dd_pricing">Tarifs & types consultation</span></a>
+        <a href="doctor-reservation.html" class="btn btn-soft btn-full"><i class="fa fa-calendar-week"></i> <span data-i18n="dd_menu_availability">Mes disponibilités</span></a>
+        <a href="medecin-profile.html#sec-notif" class="btn btn-soft btn-full"><i class="fa fa-bell"></i> <span data-i18n="dd_notifications">Notifications</span></a>
+        <a href="medecin-profile.html#sec-sec" class="btn btn-soft btn-full"><i class="fa fa-lock"></i> <span data-i18n="dd_security">Sécurité</span></a>
+        <button class="btn btn-danger btn-full" onclick="logout()" style="margin-top:8px"><i class="fa fa-right-from-bracket"></i> <span data-i18n="dd_logout">Se déconnecter</span></button>
       </div>
     </div>
   </div>
@@ -269,7 +272,7 @@
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
 <script>
-function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0F7560"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010"};const d=document.createElement("div");d.setAttribute("role","status");d.style.cssText=`background:${col[t]||"#0E5F46"};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15)`;d.textContent=String(m==null?"":m);c.appendChild(d);setTimeout(()=>d.remove(),3000);}
 async function logout(){
   if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
   // 1. Déconnexion Supabase (vraie session)
@@ -373,28 +376,28 @@ function openScheduleConfig(){
             <input type="checkbox" ${s.on?'checked':''} onchange="toggleScheduleDay('${d.key}',this.checked)" style="width:18px;height:18px;accent-color:var(--green)">
             <span style="font-weight:700;font-size:14px">${d.label}</span>
           </label>
-          ${!s.on ? '<span style="font-size:11px;color:var(--text3);font-weight:600">Fermé</span>' : ''}
+          ${!s.on ? '<span style="font-size:11px;color:var(--text3);font-weight:600">'+tabibiT('dd_closed','Fermé')+'</span>' : ''}
         </div>
         <div id="sched-${d.key}-times" style="${s.on?'':'display:none'}">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px">
-            <span style="min-width:60px;color:var(--text3)">Matin :</span>
+            <span style="min-width:60px;color:var(--text3)">${tabibiT('dd_morning','Matin :')}</span>
             <input type="time" value="${s.start1||''}" onchange="updateScheduleTime('${d.key}','start1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span>—</span>
             <input type="time" value="${s.end1||''}" onchange="updateScheduleTime('${d.key}','end1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
           </div>
           <div style="display:flex;align-items:center;gap:6px;font-size:12px">
-            <span style="min-width:60px;color:var(--text3)">A-midi :</span>
+            <span style="min-width:60px;color:var(--text3)">${tabibiT('dd_afternoon','A-midi :')}</span>
             <input type="time" value="${s.start2||''}" onchange="updateScheduleTime('${d.key}','start2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span>—</span>
             <input type="time" value="${s.end2||''}" onchange="updateScheduleTime('${d.key}','end2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
-            <span style="font-size:10px;color:var(--text3);margin-left:auto">(optionnel)</span>
+            <span style="font-size:10px;color:var(--text3);margin-left:auto">${tabibiT('dd_optional','(optionnel)')}</span>
           </div>
         </div>
       </div>`;
   }).join('') + `
     <div style="background:var(--blue-l);border-radius:12px;padding:12px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px">
-        <span style="font-weight:700;font-size:14px;flex:1">Durée d'une consultation</span>
+        <span style="font-weight:700;font-size:14px;flex:1">${tabibiT('dd_consult_duration',"Durée d'une consultation")}</span>
         <select onchange="window._tempSchedule.durationMin=parseInt(this.value)" style="padding:6px 10px;border:1.5px solid var(--blue);border-radius:8px;font-size:13px;font-weight:600;background:#fff;color:var(--blue)">
           <option value="15" ${sched.durationMin===15?'selected':''}>15 min</option>
           <option value="20" ${sched.durationMin===20?'selected':''}>20 min</option>
@@ -534,31 +537,31 @@ function renderToday(){
   const today = new Date().toISOString().split("T")[0];
   const todays = rdvs.filter(r=>r.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
   document.getElementById("kpi-today").textContent = todays.length;
-  document.getElementById("today-count").textContent = todays.length+" RDV";
+  document.getElementById("today-count").textContent = todays.length+" "+tabibiT('dd_rdv_unit','RDV');
   // [Phase 2 launch] RDV du mois courant — vrai count depuis les RDV Supabase (kpi-month).
   var _ym = today.slice(0,7);
   var _km = document.getElementById("kpi-month");
   if (_km) _km.textContent = rdvs.filter(function(r){ return (r.date||"").slice(0,7) === _ym; }).length;
   if(!todays.length){
-    document.getElementById("today-list").innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-day" style="font-size:42px;margin-bottom:12px;display:block;opacity:.4"></i>Aucun RDV aujourd'hui</div>`;
+    document.getElementById("today-list").innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-day" style="font-size:42px;margin-bottom:12px;display:block;opacity:.4"></i>${tabibiT('dd_no_rdv_today',"Aucun RDV aujourd'hui")}</div>`;
     return;
   }
   document.getElementById("today-list").innerHTML = todays.map(r=>`
     <div class="appt-card ${r.urgent?'urgent':r.status==='Pending'?'pending':r.status==='Completed'?'completed':''}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
         <div style="flex:1"><div style="font-size:18px;font-weight:800;color:var(--blue)">${r.time}</div>
-          <div style="font-weight:700;font-size:14px;margin-top:4px">${esc(r.patientName)} ${r.urgent?'<span class="badge badge-red" style="font-size:9px"><i class="fa fa-bolt" style="color:#f59e0b"></i> URGENT</span>':''}</div>
+          <div style="font-weight:700;font-size:14px;margin-top:4px">${esc(r.patientName)} ${r.urgent?'<span class="badge badge-red" style="font-size:9px"><i class="fa fa-bolt" style="color:#f59e0b"></i> '+tabibiT('dd_urgent','URGENT')+'</span>':''}</div>
           <div style="font-size:12px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${esc(r.patientPhone||"")}</div></div>
-        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${r.status==='Confirmed'?'Confirmé':r.status==='Pending'?'En attente':'Terminé'}</span>
+        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${tabibiT('dd_status_'+String(r.status).toLowerCase(), r.status)}</span>
       </div>
       <div style="font-size:12px;font-style:italic;color:var(--text2);padding:6px 8px;background:rgba(255,255,255,.5);border-radius:6px;margin-bottom:8px">"${esc(r.motif)}"</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${r.status==="Pending"?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> Confirmer</button>
-          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${r.id}')"><i class="fa fa-xmark"></i> Refuser</button>`:""}
-        ${r.status==="Confirmed"?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> Marquer terminé</button>`:""}
-        ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${esc(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> Appeler</a>`:""}
-        <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${r.id}')"><i class="fa fa-envelope"></i> Email</button>
-        <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${esc(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${esc(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${r.duree||30} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> Détails</button>
+        ${r.status==="Pending"?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> ${tabibiT('dd_confirm','Confirmer')}</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${r.id}')"><i class="fa fa-xmark"></i> ${tabibiT('dd_refuse','Refuser')}</button>`:""}
+        ${r.status==="Confirmed"?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>`:""}
+        ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${esc(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> ${tabibiT('dd_call','Appeler')}</a>`:""}
+        <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${r.id}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${esc(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${esc(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${r.duree||30} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> ${tabibiT('dd_details','Détails')}</button>
       </div>
     </div>`).join("");
 }
@@ -567,7 +570,7 @@ function renderAgenda(){
   const today = new Date();
   const monday = new Date(today); monday.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
   const rdvs = getDocRdvs();
-  const days = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"];
+  const days = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]; // fallback ; label réel = tabibiFormatDate(weekday:short) ci-dessous
   document.getElementById("cal-week").innerHTML = days.map((d,i)=>{
     const dt=new Date(monday);dt.setDate(monday.getDate()+i);
     const iso=dt.toISOString().split("T")[0];
@@ -575,14 +578,14 @@ function renderAgenda(){
     const isToday=iso===today.toISOString().split("T")[0];
     const isSel=iso===currentDay;
     return `<button class="cal-day ${isToday?'today':''} ${cnt>0?'has-rdv':''}" style="${isSel?'background:var(--blue);color:#fff;border-color:var(--blue)':''}" onclick="selDay('${iso}')">
-      <div style="font-size:10px">${d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${dt.getDate()}</div>
-      ${cnt>0?`<div style="font-size:9px;margin-top:2px">${cnt} RDV</div>`:''}
+      <div style="font-size:10px">${window.tabibiFormatDate?window.tabibiFormatDate(dt,{weekday:'short'}):d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${dt.getDate()}</div>
+      ${cnt>0?`<div style="font-size:9px;margin-top:2px">${cnt} ${tabibiT('dd_rdv_unit','RDV')}</div>`:''}
     </button>`;
   }).join("");
   const dayRdvs = rdvs.filter(r=>r.date===currentDay).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
   const dlb = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(currentDay), {weekday:"long",day:"numeric",month:"long"}) : new Date(currentDay).toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long"}));
-  document.getElementById("day-lbl").textContent = "RDV du "+dlb+" ("+dayRdvs.length+")";
-  if(!dayRdvs.length){document.getElementById("day-rdv-list").innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">Aucun RDV ce jour</div>`;return;}
+  document.getElementById("day-lbl").textContent = tabibiT('dd_agenda_daylabel','RDV du {d} ({n})').replace('{d}',dlb).replace('{n}',dayRdvs.length);
+  if(!dayRdvs.length){document.getElementById("day-rdv-list").innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">${tabibiT('dd_no_rdv_day','Aucun RDV ce jour')}</div>`;return;}
   document.getElementById("day-rdv-list").innerHTML = dayRdvs.map(r=>`
     <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:10px;margin-bottom:8px;border-left:3px solid ${r.status==='Confirmed'?'var(--blue)':r.status==='Pending'?'#f59e0b':'var(--green)'}">
       <div style="font-size:16px;font-weight:800;color:var(--blue);width:54px">${r.time}</div>
@@ -599,14 +602,14 @@ function filtMRdv(f,btn){
   const today = new Date().toISOString().split("T")[0];
   if(f==="today") list = list.filter(r=>r.date===today);
   else if(f!=="all") list = list.filter(r=>r.status===f);
-  if(!list.length){document.getElementById("rdv-full-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-xmark" style="font-size:48px;opacity:.3;margin-bottom:14px;display:block"></i>Aucun rendez-vous</div>`;return;}
+  if(!list.length){document.getElementById("rdv-full-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-xmark" style="font-size:48px;opacity:.3;margin-bottom:14px;display:block"></i>${tabibiT('dd_no_rdv','Aucun rendez-vous')}</div>`;return;}
   document.getElementById("rdv-full-list").innerHTML = list.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).map(r=>{
     const dlb = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(r.date), {weekday:"short",day:"numeric",month:"short"}) : new Date(r.date).toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short"}));
     return `<div class="appt-card ${r.urgent?'urgent':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div><div style="font-weight:700;font-size:14px">${esc(r.patientName)}</div>
-          <div style="font-size:11px;color:var(--text3)">${dlb} · ${r.time} · ${r.duree||30}min</div></div>
-        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${r.status}</span>
+          <div style="font-size:11px;color:var(--text3)">${dlb} · ${r.time} · ${r.duree||30} ${tabibiT('label_min_unit','min')}</div></div>
+        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${tabibiT('dd_status_'+String(r.status).toLowerCase(), r.status)}</span>
       </div>
       <div style="font-size:12px;color:var(--text2)">"${esc(r.motif)}"</div>
     </div>`;
@@ -674,7 +677,7 @@ async function confRdv(id){
   toastM(tabibiT('toast_rdv_confirmed',"RDV confirmé"),"success");renderToday();
 }
 async function cancRdv(id){
-  if(!confirm("Refuser ce RDV ?"))return;
+  if(!confirm(tabibiT('dd_confirm_refuse',"Refuser ce RDV ?")))return;
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
   if(i<0) return;
   const ok = await updateRdvStatusInSupabase(r[i].sbId,'cancelled');
@@ -698,12 +701,12 @@ function renderPatients(){
   let list = Object.values(map);
   const q = (document.getElementById("patient-search")?.value||"").toLowerCase();
   if(q) list = list.filter(p=>p.name.toLowerCase().includes(q));
-  if(!list.length){document.getElementById("patients-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-users" style="font-size:42px;opacity:.3;margin-bottom:12px;display:block"></i>Aucun patient</div>`;return;}
+  if(!list.length){document.getElementById("patients-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-users" style="font-size:42px;opacity:.3;margin-bottom:12px;display:block"></i>${tabibiT('dd_no_patient','Aucun patient')}</div>`;return;}
   document.getElementById("patients-list").innerHTML = list.map(p=>`
     <div class="patient-row" onclick="alert(tabibiT('label_patient_file_colon','Dossier patient : ')+'${p.name}\\n${p.visits} '+tabibiT('label_consultations','consultation(s)')+'\\n'+tabibiT('label_last_colon','Dernière : ')+'${p.lastDate}')">
-      <div style="width:42px;height:42px;border-radius:50%;background:#dcfce7;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700">${p.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</div>
-      <div style="flex:1"><div style="font-weight:700;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${p.phone||"--"} · ${p.visits} consultation(s)</div></div>
-      <div style="font-size:10px;color:var(--text3)">Dernier : ${p.lastDate}</div>
+      <div style="width:42px;height:42px;border-radius:50%;background:#e7f3ef;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700">${p.name.split(" ").map(x=>x[0]).slice(0,2).join("")}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${p.name}</div><div style="font-size:11px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${p.phone||"--"} · ${p.visits} ${tabibiT('label_consultations','consultation(s)')}</div></div>
+      <div style="font-size:10px;color:var(--text3)">${tabibiT('label_last_colon','Dernière : ')}${p.lastDate}</div>
       <i class="fa fa-chevron-right" style="color:var(--text4)"></i>
     </div>`).join("");
 }
@@ -711,7 +714,7 @@ function renderPatients(){
 function renderStats(){
   // [Phase 2 launch] Stats détaillées (revenus, note, paiements, taux présence) non
   // branchées sur Supabase (avis + paiements feature-OFF) → état vide, pas de faux chiffres.
-  var _empty = '<div style="padding:24px 8px;text-align:center;color:var(--text3);font-size:13px"><i class="fa fa-chart-column" style="display:block;font-size:22px;margin-bottom:8px;color:var(--text4)"></i>Statistiques détaillées bientôt disponibles.</div>';
+  var _empty = '<div style="padding:24px 8px;text-align:center;color:var(--text3);font-size:13px"><i class="fa fa-chart-column" style="display:block;font-size:22px;margin-bottom:8px;color:var(--text4)"></i>'+tabibiT('dd_stats_soon','Statistiques détaillées bientôt disponibles.')+'</div>';
   var _sc = document.getElementById("stats-cards"); if (_sc) _sc.innerHTML = _empty;
   ["rev-bars","type-bars","pay-bars"].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=""; });
 }
@@ -741,14 +744,14 @@ function _fmtRel(iso){
   if(!iso) return "";
   try {
     var s = Math.floor((Date.now() - new Date(iso).getTime())/1000);
-    if(s < 60) return "à l'instant";
+    if(s < 60) return tabibiT('ntf_now', "à l'instant");
     var m = Math.floor(s/60);
-    if(m < 60) return "il y a " + m + " min";
+    if(m < 60) return tabibiT('ntf_ago_min','il y a {n} min').replace('{n}', m);
     var h = Math.floor(m/60);
-    if(h < 24) return "il y a " + h + " h";
+    if(h < 24) return tabibiT('ntf_ago_h','il y a {n} h').replace('{n}', h);
     var d = Math.floor(h/24);
-    if(d < 7) return "il y a " + d + " j";
-    return new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short",timeZone:"Africa/Algiers"}).format(new Date(iso));
+    if(d < 7) return tabibiT('ntf_ago_d','il y a {n} j').replace('{n}', d);
+    return (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(iso),{day:"numeric",month:"short"}) : new Intl.DateTimeFormat("fr-FR",{day:"numeric",month:"short",timeZone:"Africa/Algiers"}).format(new Date(iso)));
   } catch(e){ return ""; }
 }
 
@@ -762,7 +765,7 @@ function _notifSetBadge(n){
 
 function _notifRenderEmpty(){
   var box = document.getElementById("med-notif-list");
-  if(box) box.innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--text3);font-size:12px"><i class="fa fa-bell-slash" style="display:block;font-size:20px;margin-bottom:8px;color:var(--text4)"></i>Aucune notification</div>';
+  if(box) box.innerHTML = '<div style="padding:24px 12px;text-align:center;color:var(--text3);font-size:12px"><i class="fa fa-bell-slash" style="display:block;font-size:20px;margin-bottom:8px;color:var(--text4)"></i>'+tabibiT('ntf_empty_title','Aucune notification')+'</div>';
 }
 
 // Charge les vraies notifs depuis Supabase et peuple la cloche + le badge.
@@ -819,6 +822,18 @@ async function _gateCertBadge() {
     // incertitude → reste caché (display:none par défaut)
   } catch (e) { console.warn('[Défaut #4-A2] _gateCertBadge', e && e.message); }
 }
+
+// [CONFORMITE 2026 B2] re-render de la couche dynamique (statuts, cartes, listes,
+// dates localisées, états vides) au changement de langue. Les panneaux masqués sont
+// re-rendus aussi (idempotent) pour être corrects dès l'affichage de l'onglet.
+document.addEventListener("tabibi:lang-change", function(){
+  try { renderToday(); } catch(e){}
+  try { renderAgenda(); } catch(e){}
+  try { var _ab = document.querySelector("[data-fr].active"); filtMRdv(_ab ? _ab.dataset.fr : "all", _ab); } catch(e){}
+  try { renderPatients(); } catch(e){}
+  try { renderStats(); } catch(e){}
+  try { renderProfile(); } catch(e){}
+});
 
 document.addEventListener("DOMContentLoaded", async ()=>{
   // [FIX session] Garde centralisée réseau-aware (remplace l'ancien waitForUser cache-first).
@@ -930,7 +945,7 @@ async function loadUnavailSlots(_isRetry) {
   if (!list) return;
   if (!window.tabibiDoctor) {
     console.warn('[unavail] loadUnavailSlots: tabibiDoctor NOT LOADED (vérifier <script src> dans le HTML)');
-    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Service indisponible (recharger la page).</div>';
+    list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fff0f0;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Service indisponible (recharger la page).</div>';
     return;
   }
   // [Phase 4.B.3-fix3] Sentinelle : on track si l'UI a été mise à jour pendant
@@ -981,14 +996,14 @@ async function loadUnavailSlots(_isRetry) {
     }).join(''));
   } catch (e) {
     console.error('[unavail] loadUnavailSlots EXCEPTION', e);
-    _setList('<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>');
+    _setList('<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fff0f0;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Erreur de chargement. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>');
   } finally {
     // [Phase 4.B.3-fix3] Garde-fou : si malgré try/catch/timeout on est resté
     // sur "Chargement..." (cas pathologique), on force un message d'erreur
     // avec bouton Réessayer plutôt que de laisser l'utilisateur figé.
     if (!_renderedSomething && list.innerHTML.indexOf('Chargement') !== -1) {
       console.warn('[unavail] finally: hang detecté, force-affichage erreur');
-      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fee2e2;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Délai dépassé. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
+      list.innerHTML = '<div style="text-align:center;padding:18px;color:var(--red);font-size:12px;background:#fff0f0;border-radius:10px"><i class="fa fa-triangle-exclamation"></i> Délai dépassé. <button onclick="loadUnavailSlots()" style="background:none;border:none;color:var(--red);text-decoration:underline;cursor:pointer;font-weight:700">Réessayer</button></div>';
     }
   }
 }
@@ -1223,6 +1238,8 @@ async function deleteUnavail(id) {
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 <!-- Push : déclenché au chargement du dashboard (contexte stable post-login, natif only) -->
 <script>

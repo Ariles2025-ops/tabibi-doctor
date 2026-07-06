@@ -38,7 +38,7 @@
   .rdv-card .btn-cancel:hover:not(:disabled) { background:#FFEEEC; }
   .rdv-card .btn-cancel:disabled { opacity:.4;cursor:not-allowed; }
   .rdv-card .btn-msg { font-size:12px;padding:6px 10px;background:var(--green-l);border:1px solid var(--green);color:var(--green-d);border-radius:var(--r8);cursor:pointer;font-weight:600; }
-  .rdv-card .btn-msg:hover:not(:disabled) { background:#d1fae5; }
+  .rdv-card .btn-msg:hover:not(:disabled) { background:#f0fdf4; }
   .rdv-card .btn-msg:disabled { opacity:.5;cursor:default; }
   .rdv-empty { text-align:center;padding:48px 16px;color:var(--text3); }
   .rdv-empty .ico { font-size:48px;color:var(--text3);opacity:.4;margin-bottom:14px; }
@@ -65,20 +65,22 @@
 
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Mes rendez-vous</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="rdv_pagetitle">Mes rendez-vous</div></div>
   <div id="uarea-desk"></div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 
 <!-- TABS — À venir / Passés / Annulés -->
 <div class="rdv-tabs" role="tablist" aria-label="Sections de rendez-vous">
   <button class="rdv-tab active" id="tab-upcoming" onclick="showTab('upcoming')" role="tab" aria-selected="true">
-    À venir <span class="count" id="count-upcoming">0</span>
+    <span data-i18n="rdv_tab_upcoming">À venir</span> <span class="count" id="count-upcoming">0</span>
   </button>
   <button class="rdv-tab" id="tab-past" onclick="showTab('past')" role="tab" aria-selected="false">
-    Passés <span class="count" id="count-past">0</span>
+    <span data-i18n="rdv_tab_past">Passés</span> <span class="count" id="count-past">0</span>
   </button>
   <button class="rdv-tab" id="tab-cancelled" onclick="showTab('cancelled')" role="tab" aria-selected="false">
-    Annulés <span class="count" id="count-cancelled">0</span>
+    <span data-i18n="rdv_tab_cancelled">Annulés</span> <span class="count" id="count-cancelled">0</span>
   </button>
 </div>
 
@@ -88,9 +90,9 @@
   <div id="auth-wall" class="rdv-section hidden">
     <div class="rdv-empty">
       <i class='fa fa-user-lock ico'></i>
-      <div class="title">Connexion requise</div>
-      <div class="sub">Connectez-vous pour voir vos rendez-vous médicaux.</div>
-      <a id="auth-wall-login" href="#" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> Se connecter</a>
+      <div class="title" data-i18n="rdv_auth_title">Connexion requise</div>
+      <div class="sub" data-i18n="rdv_auth_sub">Connectez-vous pour voir vos rendez-vous médicaux.</div>
+      <a id="auth-wall-login" href="#" class="btn btn-primary btn-lg"><i class='fa fa-right-to-bracket'></i> <span data-i18n="sign_in">Se connecter</span></a>
     </div>
   </div>
 
@@ -98,7 +100,7 @@
   <div id="global-error" class="rdv-section hidden">
     <div class="rdv-msg is-error" id="global-error-msg"></div>
     <div style="text-align:center;margin-top:10px">
-      <button class="btn btn-ghost btn-lg" onclick="loadAppointments()"><i class='fa fa-rotate'></i> Réessayer</button>
+      <button class="btn btn-ghost btn-lg" onclick="loadAppointments()"><i class='fa fa-rotate'></i> <span data-i18n="tc_btn_retry">Réessayer</span></button>
     </div>
   </div>
 
@@ -141,15 +143,19 @@
 var MESRDV_CODES = Object.freeze({
   ERR_MESRDV_TOO_LATE_TO_CANCEL: 'ERR_MESRDV_TOO_LATE_TO_CANCEL'
 });
-var MESRDV_MSG_FR = {
-  ERR_MESRDV_TOO_LATE_TO_CANCEL: "Annulation impossible moins de 24h avant le RDV. Contactez le cabinet."
-};
+// [CONFORMITE 2026] i18n via dico PARTAGÉ (clés rdv_* dans js/tabibi-i18n.js).
+// Statique = data-i18n (engine) ; dynamique (cartes, statuts, dates, toasts)
+// = tabibiT + re-render sur tabibi:lang-change.
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+
 function mesrdvMessage(code){
-  if(MESRDV_MSG_FR[code]) return MESRDV_MSG_FR[code];
+  if(code === MESRDV_CODES.ERR_MESRDV_TOO_LATE_TO_CANCEL){
+    return _t('rdv_too_late', "Annulation impossible moins de 24h avant le RDV. Contactez le cabinet.");
+  }
   if(window.tabibiBooking && window.tabibiBooking.errorMessage){
     return window.tabibiBooking.errorMessage(code);
   }
-  return "Erreur inattendue.";
+  return _t('rdv_unexpected', "Erreur inattendue.");
 }
 
 // ── State ───────────────────────────────────────────────────────────────
@@ -159,22 +165,25 @@ var _currentTab = 'upcoming';
 var _cancelInFlight = false;
 
 // ── TZ + formats ────────────────────────────────────────────────────────
-var _DF_DATE_FR = new Intl.DateTimeFormat('fr-FR', {
-  weekday:'long', day:'numeric', month:'long', year:'numeric',
-  timeZone:'Africa/Algiers'
-});
-var _DF_TIME_FR = new Intl.DateTimeFormat('fr-FR', {
-  hour:'2-digit', minute:'2-digit', hour12:false,
-  timeZone:'Africa/Algiers'
-});
+// [CONFORMITE 2026] locale d'affichage par langue (ar-DZ = chiffres latins,
+// cohérent reservation.html) ; formatters recréés à chaque appel (bascule live).
+function _dateLocale(){
+  var l = 'fr';
+  try { l = (window.tabibiLang && window.tabibiLang.get()) || localStorage.getItem('tabibi_lang') || 'fr'; } catch(e){}
+  return l === 'ar' ? 'ar-DZ-u-nu-latn' : (l === 'en' ? 'en-GB' : 'fr-FR');
+}
 function _formatDate(iso){
   if(!iso) return '—';
-  try { return _DF_DATE_FR.format(new Date(iso)); }
+  try { return new Intl.DateTimeFormat(_dateLocale(), {
+    weekday:'long', day:'numeric', month:'long', year:'numeric', timeZone:'Africa/Algiers'
+  }).format(new Date(iso)); }
   catch(e) { return '—'; }
 }
 function _formatTime(iso){
   if(!iso) return '—';
-  try { return _DF_TIME_FR.format(new Date(iso)); }
+  try { return new Intl.DateTimeFormat(_dateLocale(), {
+    hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Africa/Algiers'
+  }).format(new Date(iso)); }
   catch(e) { return '—'; }
 }
 function _formatDateTime(iso){
@@ -185,9 +194,10 @@ function _formatDateTime(iso){
 function _doctorName(row){
   // Cherche les champs nom standardisés (la vue my_upcoming_appointments
   // peut exposer doctor_full_name, doctor_name, ou imbriqué).
-  // [TODO-SQL-003] vérifier le schéma exact de la vue.
+  // [FIX 2026-07-04] Schéma vue confirmé (sonde prod) : la colonne réelle est
+  // `doctor_name` — non lue jusqu'ici → carte affichait "Praticien / ?".
   var profile = {
-    full_name:     row.doctor_full_name    || row.full_name    || (row.doctor && row.doctor.full_name)    || null,
+    full_name:     row.doctor_full_name    || row.doctor_name  || row.full_name    || (row.doctor && row.doctor.full_name)    || null,
     full_name_ar:  row.doctor_full_name_ar || row.full_name_ar || (row.doctor && row.doctor.full_name_ar) || null,
     entity_type:   row.doctor_entity_type  || row.entity_type  || (row.doctor && row.doctor.entity_type)  || null
   };
@@ -199,7 +209,7 @@ function _doctorName(row){
 function _doctorInitials(row){
   if(window.tabibiDoctorName){
     return window.tabibiDoctorName.initials({
-      full_name:    row.doctor_full_name    || row.full_name    || null,
+      full_name:    row.doctor_full_name    || row.doctor_name  || row.full_name    || null,  // [FIX 2026-07-04] + doctor_name
       full_name_ar: row.doctor_full_name_ar || row.full_name_ar || null
     });
   }
@@ -214,13 +224,13 @@ function _consultLocation(row){
   // Détecte téléconsultation vs cabinet — heuristique sur consult_type / cabinet
   var ctype = (row.consult_type || '').toLowerCase();
   if(ctype.indexOf('visio') !== -1 || ctype.indexOf('tele') !== -1){
-    return { kind: 'visio', label: 'Téléconsultation' };
+    return { kind: 'visio', label: _t('badge_teleconsult', 'Téléconsultation') };
   }
   var addr = row.cabinet_address || (row.cabinet && row.cabinet.address) || '';
   if(addr) return { kind: 'cabinet', label: addr };
   var ville = row.cabinet_city || row.wilaya_fr || (row.cabinet && row.cabinet.city) || '';
   if(ville) return { kind: 'cabinet', label: ville };
-  return { kind: 'cabinet', label: 'Cabinet' };
+  return { kind: 'cabinet', label: _t('rdv_cabinet', 'Cabinet') };
 }
 
 // ── Group appointments en 3 buckets ─────────────────────────────────────
@@ -277,10 +287,10 @@ function _renderCard(row, opts){
   var when = row.starts_at || row.scheduled_at;
   var canCancel = _canCancel(row);
   var statusBadge = '';
-  if(status === 'cancelled') statusBadge = '<span class="badge-sm is-status-cancelled">Annulé</span>';
-  else if(status === 'completed') statusBadge = '<span class="badge-sm is-status-completed">Terminé</span>';
-  else if(status === 'pending') statusBadge = '<span class="badge-sm is-status-pending">En attente</span>';
-  else if(status === 'no_show') statusBadge = '<span class="badge-sm is-status-cancelled">Absent</span>';
+  if(status === 'cancelled') statusBadge = '<span class="badge-sm is-status-cancelled">' + _escapeHtml(_t('rdv_status_cancelled', 'Annulé')) + '</span>';
+  else if(status === 'completed') statusBadge = '<span class="badge-sm is-status-completed">' + _escapeHtml(_t('rdv_status_completed', 'Terminé')) + '</span>';
+  else if(status === 'pending') statusBadge = '<span class="badge-sm is-status-pending">' + _escapeHtml(_t('rdv_status_pending', 'En attente')) + '</span>';
+  else if(status === 'no_show') statusBadge = '<span class="badge-sm is-status-cancelled">' + _escapeHtml(_t('rdv_status_noshow', 'Absent')) + '</span>';
 
   var locBadge = '<span class="badge-sm is-' + loc.kind + '">'
                + '<i class="fa fa-' + (loc.kind === 'visio' ? 'video' : 'location-dot') + '"></i> '
@@ -294,17 +304,17 @@ function _renderCard(row, opts){
     reasonHtml = '<div class="reason">' + _escapeHtml(row.reason) + '</div>';
   }
   if(status === 'cancelled' && row.cancellation_reason){
-    reasonHtml += '<div class="reason"><em>Motif annulation : ' + _escapeHtml(row.cancellation_reason) + '</em></div>';
+    reasonHtml += '<div class="reason"><em>' + _escapeHtml(_t('rdv_cancel_reason_label', 'Motif annulation :')) + ' ' + _escapeHtml(row.cancellation_reason) + '</em></div>';
   }
 
   // Bouton "Annuler" (RDV a venir) — inchange.
   var cancelBtn = '';
   if(opts.section === 'upcoming'){
     var disabledAttr = canCancel ? '' : 'disabled';
-    var title = canCancel ? 'Annuler ce RDV' : 'Annulation impossible <24h avant le RDV';
+    var title = canCancel ? _t('rdv_cancel_title', 'Annuler ce RDV') : _t('rdv_cancel_too_late_title', 'Annulation impossible <24h avant le RDV');
     cancelBtn = '<button class="btn-cancel" '+disabledAttr+' title="' + _escapeAttr(title) + '" '
               + 'onclick="doCancel(\''+ _escapeAttr(row.id) +'\')">'
-              + '<i class="fa fa-xmark"></i> Annuler</button>';
+              + '<i class="fa fa-xmark"></i> ' + _escapeHtml(_t('rdv_cancel', 'Annuler')) + '</button>';
   }
   // [MSG] Bouton "Message" GATED : rendu UNIQUEMENT si features.messaging=true
   // (sinon ABSENT du DOM), et seulement sur un RDV confirme/honore avec doctor_id.
@@ -313,7 +323,7 @@ function _renderCard(row, opts){
      && row.doctor_id
      && window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging){
     msgBtn = '<button class="btn-msg" onclick="openMessage(\''+ _escapeAttr(row.doctor_id) +'\', this)">'
-           + '<i class="fa fa-comment-dots"></i> Message</button>';
+           + '<i class="fa fa-comment-dots"></i> ' + _escapeHtml(_t('rdv_message', 'Message')) + '</button>';
   }
   var actionsHtml = (cancelBtn || msgBtn) ? ('<div class="actions">' + cancelBtn + msgBtn + '</div>') : '';
 
@@ -331,16 +341,16 @@ function _renderCard(row, opts){
 
 function _renderEmpty(section){
   var msgMap = {
-    upcoming:  { title:"Aucun rendez-vous à venir", sub:"Trouvez un médecin et réservez en quelques clics." },
-    past:      { title:"Aucun rendez-vous passé",   sub:"Votre historique apparaîtra ici après votre 1ère consultation." },
-    cancelled: { title:"Aucun rendez-vous annulé",  sub:"Vos annulations apparaîtront ici." }
+    upcoming:  { title:_t('rdv_empty_upcoming_title', "Aucun rendez-vous à venir"), sub:_t('rdv_empty_upcoming_sub', "Trouvez un médecin et réservez en quelques clics.") },
+    past:      { title:_t('rdv_empty_past_title', "Aucun rendez-vous passé"),   sub:_t('rdv_empty_past_sub', "Votre historique apparaîtra ici après votre 1ère consultation.") },
+    cancelled: { title:_t('rdv_empty_cancelled_title', "Aucun rendez-vous annulé"),  sub:_t('rdv_empty_cancelled_sub', "Vos annulations apparaîtront ici.") }
   };
   var m = msgMap[section] || msgMap.upcoming;
   return '<div class="rdv-empty">'
        + '<i class="fa fa-calendar-xmark ico"></i>'
-       + '<div class="title">'+m.title+'</div>'
-       + '<div class="sub">'+m.sub+'</div>'
-       + '<a href="index.html" class="btn btn-primary btn-lg"><i class="fa fa-search"></i> Trouver un médecin</a>'
+       + '<div class="title">'+_escapeHtml(m.title)+'</div>'
+       + '<div class="sub">'+_escapeHtml(m.sub)+'</div>'
+       + '<a href="index.html" class="btn btn-primary btn-lg"><i class="fa fa-search"></i> '+_escapeHtml(_t('rdv_find_doctor', 'Trouver un médecin'))+'</a>'
        + '</div>';
 }
 
@@ -355,7 +365,7 @@ async function openMessage(doctorId, btn){
     throw new Error('no_conv');
   } catch(e){
     if(btn) btn.disabled = false;
-    alert('Messagerie indisponible pour ce rendez-vous');
+    alert(_t('rdv_msg_unavailable', 'Messagerie indisponible pour ce rendez-vous'));
   }
 }
 window.openMessage = openMessage;
@@ -370,6 +380,14 @@ function _renderSection(section){
   }
   document.getElementById('list-' + section).innerHTML = html;
   document.getElementById('count-' + section).textContent = list.length;
+  // [FIX 2026-07-04] La source my_upcoming_appointments ne renvoie que l'à-venir :
+  // "Passés"/"Annulés" resteraient à 0 en permanence (trompeur). On masque ces
+  // deux onglets tant qu'ils sont vides — ils réapparaissent automatiquement si
+  // une source tous-statuts est câblée un jour. "À venir" reste toujours visible.
+  if(section === 'past' || section === 'cancelled'){
+    var tabBtn = document.getElementById('tab-' + section);
+    if(tabBtn) tabBtn.classList.toggle('hidden', list.length === 0);
+  }
 }
 
 function _renderAll(){
@@ -420,6 +438,29 @@ function _hideError(){
   document.getElementById('global-error').classList.add('hidden');
 }
 
+// [FIX 2026-07-03] toast() était un global de scripts/app.js (retiré Phase
+// 16.5, scripts/ export-ignore au déploiement) → ReferenceError sur TOUS les
+// chemins de doCancel : le RDV était bien annulé en base mais l'UI ne se
+// rafraîchissait jamais (loadAppointments jamais atteint). Copie locale de
+// l'implémentation canonique d'index.html (CSS .toast-wrap/.toast déjà dans
+// styles/app.css). Guard typeof : ne redéfinit pas si un global revient.
+if(typeof window.toast !== 'function'){
+  window.toast = function(msg, type, ms){
+    type = type || 'info'; ms = ms || 3500;
+    var c = document.getElementById('toast-wrap');
+    if(!c){ c = document.createElement('div'); c.id = 'toast-wrap'; c.className = 'toast-wrap'; document.body.appendChild(c); }
+    var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
+    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    c.appendChild(t);
+    setTimeout(function(){
+      t.style.transition = 'all .28s'; t.style.opacity = '0'; t.style.transform = 'translateY(-6px)';
+      setTimeout(function(){ t.remove(); }, 300);
+    }, ms);
+  };
+}
+
 // ── Load + cancel ───────────────────────────────────────────────────────
 async function loadAppointments(){
   _hideError();
@@ -431,7 +472,7 @@ async function loadAppointments(){
   _renderSkeleton();
 
   if(!window.tabibiBooking){
-    _showError("Module de réservation indisponible. Rechargez la page.");
+    _showError(_t('err_booking_module', 'Module de réservation indisponible. Rechargez la page.'));
     return;
   }
 
@@ -453,7 +494,7 @@ async function loadAppointments(){
 
 async function doCancel(id){
   if(_cancelInFlight){
-    toast("Annulation déjà en cours…", "info");
+    toast(_t('rdv_cancel_inflight', "Annulation déjà en cours…"), "info");
     return;
   }
   // Re-check >24h client-side au moment du clic (au cas où l'utilisateur
@@ -463,7 +504,7 @@ async function doCancel(id){
     toast(mesrdvMessage(MESRDV_CODES.ERR_MESRDV_TOO_LATE_TO_CANCEL), "warning");
     return;
   }
-  if(!confirm("Annuler ce rendez-vous ?\nVous pourrez en reprendre un nouveau si besoin.")){
+  if(!confirm(_t('rdv_confirm_cancel', "Annuler ce rendez-vous ?\nVous pourrez en reprendre un nouveau si besoin."))){
     return;
   }
   _cancelInFlight = true;
@@ -474,7 +515,7 @@ async function doCancel(id){
   _cancelInFlight = false;
 
   if(r.ok){
-    toast("Rendez-vous annulé.", "success");
+    toast(_t('rdv_cancelled_ok', "Rendez-vous annulé."), "success");
     // Refresh complet pour récupérer le nouveau status + déplacer la card
     // de "À venir" vers "Annulés" proprement.
     loadAppointments();
@@ -485,7 +526,7 @@ async function doCancel(id){
     return;
   }
   toast(mesrdvMessage(r.error), "error");
-  if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fa fa-xmark"></i> Annuler'; }
+  if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fa fa-xmark"></i> ' + _escapeHtml(_t('rdv_cancel', 'Annuler')); }
 }
 
 // ── Escape helpers (XSS-safe innerHTML) ────────────────────────────────
@@ -516,6 +557,12 @@ function init(){
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// [CONFORMITE 2026] re-render des listes (statuts, dates, vides) au changement
+// de langue — le statique est géré par l'engine. Pas pendant le chargement.
+document.addEventListener('tabibi:lang-change', function(){
+  try { if(!document.querySelector('.rdv-skeleton')) _renderAll(); } catch(e){}
+});
 window.showTab = showTab;
 window.doCancel = doCancel;
 window.goBackSafe = goBackSafe;
@@ -537,6 +584,8 @@ window.loadAppointments = loadAppointments;
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>

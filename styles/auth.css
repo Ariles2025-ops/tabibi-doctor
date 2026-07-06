@@ -1,0 +1,48 @@
+/* ============================================================
+   styles/auth.css — Gabarit AUTH canon (factorisé)
+   480px, centré H+V, scroll-safe (min-height + flex, jamais height).
+
+   Lié par : login, signup, verify-email, forgot-password,
+             reset-password, email-verified.
+   NON lié par onboarding-medecin (gabarit 520 distinct, inchangé).
+
+   Ne gère que le LAYOUT + le fond. La largeur de la CARTE (480px)
+   reste définie par chaque page sur son propre sélecteur
+   (.card inline / .auth-wrap / .card), pour ne rien renommer.
+   ============================================================ */
+
+/* Fond canon — commun à toutes les pages auth */
+body { background: var(--bg); }
+
+/* ── Pattern A : pages à shell applicatif (.app-root + main.page) ──
+   login, signup, verify-email.
+   Colonne 480 centrée horizontalement, app-bar en haut,
+   contenu centré verticalement dans l'espace restant. */
+.app-root {
+  max-width: 480px;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  box-shadow: none;
+}
+main.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* ── Pattern B : pages à carte directe dans <body> (PAS de .app-root) ──
+   forgot-password, reset-password, email-verified.
+   Le <body> centre la carte H+V. Le :not(:has(.app-root)) évite
+   d'appliquer ce centrage aux pages Pattern A. */
+body:not(:has(.app-root)) {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  box-sizing: border-box;
+}

@@ -16,17 +16,17 @@
 <link rel="stylesheet" href="../styles/components.css">
 <style>
   body { background:#f8fafc; min-height:100vh; }
-  .wrap { max-width:760px; margin:32px auto; padding:0 16px; }
+  .wrap { max-width:720px; margin:32px auto; padding:0 clamp(16px,4vw,40px); }
   .hd { background:linear-gradient(135deg,#0F7560 0%,#0a5a4a 100%); color:#fff; border-radius:16px; padding:28px 24px; margin-bottom:20px; }
   .hd h1 { margin:0 0 8px; font-size:24px; font-weight:800; }
   .hd p { margin:0; font-size:14px; opacity:.92; }
   .card { background:#fff; border-radius:14px; padding:22px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,.04); }
   .card-hd { display:flex; align-items:center; gap:14px; margin-bottom:10px; }
   .card-ico { width:42px; height:42px; border-radius:10px; display:flex; align-items:center; justify-content:center; flex-shrink:0; font-size:18px; }
-  .ico-blue { background:#dcfce7; color:#0a4d3e; }
+  .ico-blue { background:#e7f3ef; color:#0a4d3e; }
   .ico-amber { background:#fef3c7; color:#b45309; }
   .ico-red { background:#fee2e2; color:#b91c1c; }
-  .ico-green { background:#dcfce7; color:#15803d; }
+  .ico-green { background:#e7f3ef; color:#15803d; }
   .card h2 { margin:0; font-size:16px; font-weight:700; color:var(--text); }
   .card .desc { font-size:13px; color:var(--text3); margin:6px 0 14px; line-height:1.55; }
   .auth-required { background:#fef3c7; color:#92400e; padding:14px 16px; border-radius:10px; font-size:13px; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
@@ -156,7 +156,7 @@
 </div>
 
 <script>
-function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{d.parentNode&&d.parentNode.removeChild(d)},3500);}
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010",info:"#0F7560"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{d.parentNode&&d.parentNode.removeChild(d)},3500);}
 
 function waitForSupabase() {
   return new Promise(function(resolve){

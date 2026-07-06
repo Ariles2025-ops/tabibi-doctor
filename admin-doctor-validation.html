@@ -19,15 +19,15 @@
 .dv-tab.active{color:#7c3aed;border-bottom-color:#7c3aed}
 .dv-cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:10px;font-size:11px;padding:0 5px;margin-left:6px;font-weight:800}
 .dv-cnt.p{background:#fef3c7;color:#92400e}
-.dv-cnt.a{background:#dcfce7;color:#166534}
-.dv-cnt.r{background:#fee2e2;color:#991b1b}
+.dv-cnt.a{background:#e7f3ef;color:#166534}
+.dv-cnt.r{background:#fff0f0;color:#991b1b}
 .dv-filters{padding:10px 16px;display:flex;gap:8px;align-items:center;background:#fff;border-bottom:1px solid var(--bg2)}
 .dv-search{flex:1;min-width:0;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px}
 .dv-search:focus{outline:none;border-color:#7c3aed}
 .dv-wsel{padding:9px 8px;border:1.5px solid var(--border);border-radius:10px;font-size:12px;background:#fff;max-width:120px}
 .dv-card{background:#fff;border-radius:14px;padding:16px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06);border:1px solid var(--border)}
 .dv-card.p-card{border-left:3px solid #f59e0b}
-.dv-card.r-card{border-left:3px solid #ef4444}
+.dv-card.r-card{border-left:3px solid #D21010}
 .dv-hdr{display:flex;gap:12px;align-items:flex-start}
 .dv-avi{width:50px;height:50px;border-radius:12px;object-fit:cover;flex-shrink:0}
 .dv-ini{width:50px;height:50px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex-shrink:0;background:#ede9fe;color:#7c3aed}
@@ -39,10 +39,10 @@
 .dv-doc-btn:hover:not(:disabled){border-color:#7c3aed;color:#7c3aed;background:#f5f3ff}
 .dv-doc-btn:disabled{opacity:.4;cursor:not-allowed}
 .dv-acts{display:flex;gap:8px;margin-top:4px}
-.btn-val{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.15s;background:#dcfce7;color:#166534;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-val{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.15s;background:#e7f3ef;color:#166534;display:flex;align-items:center;justify-content:center;gap:6px}
 .btn-val:hover:not([disabled]){background:#166534;color:#fff}
 .btn-val[disabled]{opacity:.4;cursor:not-allowed}
-.btn-rej{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.15s;background:#fee2e2;color:#991b1b;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-rej{flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:.15s;background:#fff0f0;color:#991b1b;display:flex;align-items:center;justify-content:center;gap:6px}
 .btn-rej:hover{background:#991b1b;color:#fff}
 .btn-aud{padding:10px 12px;border-radius:10px;font-size:12px;cursor:pointer;border:none;transition:.15s;background:var(--bg2);color:var(--text2);display:flex;align-items:center;gap:6px;white-space:nowrap}
 .btn-aud:hover{background:#ede9fe;color:#7c3aed}
@@ -59,12 +59,12 @@
 .m-doc{font-size:14px;font-weight:700;color:#7c3aed;background:#f5f3ff;padding:10px 14px;border-radius:10px;margin-bottom:16px}
 .chklist label{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--bg2);font-size:14px;cursor:pointer}
 .chklist label:last-child{border-bottom:none}
-.chklist input[type=checkbox]{width:18px;height:18px;accent-color:#0F7560;flex-shrink:0}
+.chklist input[type=checkbox]{width:18px;height:18px;accent-color:#0E5F46;flex-shrink:0}
 .preset-wrap{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
 .preset{padding:7px 12px;border-radius:8px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:#fff;cursor:pointer;transition:.15s}
-.preset:hover,.preset.sel{border-color:#ef4444;color:#ef4444;background:#fef2f2}
+.preset:hover,.preset.sel{border-color:#D21010;color:#D21010;background:#fef2f2}
 .ta-reason{width:100%;padding:12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;resize:vertical;min-height:90px;font-family:inherit;box-sizing:border-box}
-.ta-reason:focus{outline:none;border-color:#ef4444}
+.ta-reason:focus{outline:none;border-color:#D21010}
 .char-c{font-size:11px;color:var(--text3);text-align:right;margin:4px 0 14px}
 .char-c.ok{color:var(--green)}
 .aud-tbl{width:100%;font-size:12px;border-collapse:collapse;margin-top:12px}
@@ -113,7 +113,7 @@
 
 <!-- Modal: Valider -->
 <div class="dv-modal" id="m-val" role="dialog" aria-modal="true">
-  <div class="m-title"><i class="fa fa-circle-check" style="color:#10b981"></i> Confirmer la validation</div>
+  <div class="m-title"><i class="fa fa-circle-check" style="color:#2E8B57"></i> Confirmer la validation</div>
   <div class="m-doc" id="mv-name"></div>
   <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Cochez les 3 points avant de valider :</p>
   <div class="chklist">
@@ -123,7 +123,7 @@
   </div>
   <div style="display:flex;gap:10px;margin-top:20px">
     <button class="btn btn-ghost btn-lg" style="flex:1" onclick="closeModals()">Annuler</button>
-    <button class="btn btn-lg" id="btn-val" style="flex:1;background:#10b981;color:#fff;opacity:.5;cursor:not-allowed" disabled onclick="doValidate()"><i class="fa fa-check"></i> Valider</button>
+    <button class="btn btn-lg" id="btn-val" style="flex:1;background:#2E8B57;color:#fff;opacity:.5;cursor:not-allowed" disabled onclick="doValidate()"><i class="fa fa-check"></i> Valider</button>
   </div>
 </div>
 
@@ -142,7 +142,7 @@
   <div class="char-c" id="char-c">0 / 20 caractères minimum</div>
   <div style="display:flex;gap:10px">
     <button class="btn btn-ghost btn-lg" style="flex:1" onclick="closeModals()">Annuler</button>
-    <button class="btn btn-lg" id="btn-rej" style="flex:1;background:#ef4444;color:#fff;opacity:.5;cursor:not-allowed" disabled onclick="doReject()"><i class="fa fa-xmark"></i> Confirmer le rejet</button>
+    <button class="btn btn-lg" id="btn-rej" style="flex:1;background:#D21010;color:#fff;opacity:.5;cursor:not-allowed" disabled onclick="doReject()"><i class="fa fa-xmark"></i> Confirmer le rejet</button>
   </div>
 </div>
 
@@ -162,7 +162,7 @@
 // ─── Utils ───────────────────────────────────────────────────
 function esc(s){if(s==null)return'';return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function escA(s){return String(s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;');}
-function toastM(m,t){const c=document.getElementById('toast-container');if(!c)return;const col={success:'#10b981',error:'#ef4444',info:'#7c3aed',warn:'#f59e0b'};const d=document.createElement('div');d.style.cssText=`background:${col[t]||'#0F7560'};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15);text-align:center`;d.textContent=String(m==null?'':m);c.appendChild(d);setTimeout(()=>d.remove(),3500);}
+function toastM(m,t){const c=document.getElementById('toast-container');if(!c)return;const col={success:'#2E8B57',error:'#D21010',info:'#7c3aed',warn:'#f59e0b'};const d=document.createElement('div');d.style.cssText=`background:${col[t]||'#0E5F46'};color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;margin-bottom:8px;box-shadow:0 8px 28px rgba(0,0,0,.15);text-align:center`;d.textContent=String(m==null?'':m);c.appendChild(d);setTimeout(()=>d.remove(),3500);}
 function fmtD(iso){if(!iso)return'–';try{return new Date(iso).toLocaleDateString('fr-DZ',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});}catch(e){return iso;}}
 
 // ─── State ───────────────────────────────────────────────────
@@ -255,10 +255,10 @@ function renderCard(d){
 
   const docsHtml=`<div class="dv-docs">
     <button class="dv-doc-btn" onclick="prevDoc('${escA(id)}','ordre')" ${hasO?'':'disabled'}>
-      <i class="fa fa-id-card"></i> Carte Ordre${hasO?'':' <span style="color:#ef4444;font-size:10px">(manquant)</span>'}
+      <i class="fa fa-id-card"></i> Carte Ordre${hasO?'':' <span style="color:#D21010;font-size:10px">(manquant)</span>'}
     </button>
     <button class="dv-doc-btn" onclick="prevDoc('${escA(id)}','id')" ${hasI?'':'disabled'}>
-      <i class="fa fa-passport"></i> Pièce identité${hasI?'':' <span style="color:#ef4444;font-size:10px">(manquant)</span>'}
+      <i class="fa fa-passport"></i> Pièce identité${hasI?'':' <span style="color:#D21010;font-size:10px">(manquant)</span>'}
     </button>
   </div>`;
 
@@ -469,7 +469,7 @@ async function openAud(docId,docName){
     document.getElementById('aud-body').innerHTML=`<table class="aud-tbl"><thead><tr><th>Date</th><th>Action</th><th>Motif</th><th>Admin</th></tr></thead><tbody>${rows}</tbody></table>`;
   }catch(e){
     console.error('[dv] openAud:',e);
-    document.getElementById('aud-body').innerHTML=`<p style="color:#ef4444;font-size:13px">${esc(e.message||'Erreur historique')}</p>`;
+    document.getElementById('aud-body').innerHTML=`<p style="color:#D21010;font-size:13px">${esc(e.message||'Erreur historique')}</p>`;
   }
 }
 

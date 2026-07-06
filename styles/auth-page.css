@@ -1,0 +1,107 @@
+/* ============================================================
+   styles/auth-page.css — login + signup alignés sur l'ACCUEIL (index.html)
+   UN seul design responsive :
+   - Header = composant accueil (logo croix+pouls, "Tabibi DZ", sous-titre, FR/AR/EN).
+   - Conteneur pleine largeur façon accueil : gouttière clamp(24,4vw,64) en desktop.
+   - Héro 2 colonnes en desktop (welcome à gauche, formulaire à droite),
+     fond --grad-hero, edge-to-edge avec gouttière — comme la bande héro d'index.
+   - Mobile <768 : formulaire centré 480 utilisable (existant préservé).
+   Lié UNIQUEMENT par login.html + signup.html (chargé APRÈS auth.css → override).
+   ============================================================ */
+
+:root {
+  --gutter: 20px;                                              /* fallback (tokens accueil non liés ici) */
+  --grad-hero: linear-gradient(180deg, #f0f7f4 0%, #f8fafc 100%);
+}
+
+/* Pas de doublon de sélecteur de langue : le header porte FR/AR/EN (comme l'accueil).
+   tabibi-lang.js (nécessaire pour window.tabibiLang.set) injecte un switcher FLOTTANT
+   #tabibi-lang-switcher (position:fixed) → on le masque pour ne garder QUE celui du header. */
+#tabibi-lang-switcher { display: none !important; }
+
+/* Flèche retour vers l'accueil dans le header (le header style-accueil n'en a pas). */
+.app-bar-back {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-left: -8px;
+  margin-right: -2px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  color: var(--text2);
+  text-decoration: none;
+  transition: color .15s, background .15s;
+}
+.app-bar-back:hover,
+.app-bar-back:focus-visible { color: var(--blue); background: var(--bg2); }
+.app-bar-back i { font-size: 16px; }
+[dir="rtl"] .app-bar-back { margin-left: -2px; margin-right: -8px; }
+[dir="rtl"] .app-bar-back i { transform: scaleX(-1); }   /* la flèche pointe vers l'accueil en RTL */
+
+/* Conteneur pleine largeur (override de la base auth.css 480) */
+.app-root {
+  max-width: none;
+  width: 100%;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: none;
+  background: var(--bg);
+}
+
+/* Bande héro : contient le formulaire (et l'aside en desktop) */
+.auth-hero {
+  flex: 1;
+  background: var(--grad-hero);
+  padding: 24px var(--gutter) 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+}
+.auth-hero-grid { width: 100%; }
+.auth-hero-aside { display: none; }                            /* mobile : pas d'aside */
+.auth-hero-form  { width: 100%; max-width: 480px; margin: 0 auto; }  /* mobile : form 480 centré */
+
+/* Aside welcome (desktop) */
+.auth-hero-title { font-size: clamp(30px, 3vw, 46px); font-weight: 800; line-height: 1.07; letter-spacing: -.6px; color: var(--ink); margin: 0 0 12px; }
+.auth-hero-title em { color: var(--blue); font-style: normal; }
+.auth-hero-sub   { font-size: 16px; color: var(--text2); line-height: 1.5; max-width: 46ch; margin: 0 0 20px; }
+.auth-hero-points{ list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 11px; }
+.auth-hero-points li { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text2); }
+.auth-hero-points li i { color: var(--blue); width: 18px; text-align: center; }
+
+/* Tablette 768–1023 : pleine largeur, header + contenu centrés (pas encore 2 col) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .app-bar { padding-inline: max(var(--gutter), calc((100% - 720px) / 2)); }
+  .auth-hero { padding: 40px var(--gutter) 48px; }
+}
+
+/* Desktop ≥1024 : header gouttière + héro 2 colonnes pleine largeur */
+@media (min-width: 1024px) {
+  :root { --gutter: clamp(24px, 4vw, 64px); }
+  .app-bar { padding-inline: var(--gutter); }
+
+  .auth-hero { padding: 56px 0; }
+  .auth-hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 440px);
+    column-gap: clamp(40px, 5vw, 96px);
+    align-items: center;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: var(--gutter);
+  }
+  .auth-hero-aside { display: block; max-width: 560px; }
+  .auth-hero-form  { max-width: 440px; margin: 0; }
+  .auth-formhead   { display: none; }                          /* logo/titre du form en doublon de l'aside */
+}
+
+/* ── RTL (arabe) — héro ───────────────────────────────────────────
+   La grille .auth-hero-grid s'inverse SEULE (welcome à droite, form
+   à gauche) — on ne force rien. On corrige juste les alignements. */
+[dir="rtl"] .auth-hero-aside     { text-align: right; }
+[dir="rtl"] .auth-hero-points    { padding-right: 0; }
+[dir="rtl"] .auth-hero-points li { justify-content: flex-start; }   /* icône (1er enfant) à droite, texte ensuite */

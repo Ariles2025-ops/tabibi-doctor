@@ -18,13 +18,13 @@
       if (shell) {
         shell.innerHTML =
           '<div class="tc-card" style="text-align:center;padding:48px 24px;margin-top:48px;background:#fff;border-radius:16px;box-shadow:0 8px 28px rgba(0,0,0,.12)">' +
-            '<i class="fa-solid fa-video" style="font-size:48px;color:#0F7560;opacity:.5;margin-bottom:16px"></i>' +
+            '<i class="fa-solid fa-video" style="font-size:48px;color:#0E5F46;opacity:.5;margin-bottom:16px"></i>' +
             '<h1 style="font-size:20px;margin-bottom:8px;color:#1A1A1A">Téléconsultation bientôt disponible</h1>' +
             '<p style="color:#666;font-size:14px;margin-bottom:24px;line-height:1.6">' +
               "Cette fonctionnalité sera activée prochainement, après validation du flux vidéo avec nos médecins partenaires. " +
               "En attendant, vous pouvez prendre un rendez-vous en cabinet." +
             '</p>' +
-            '<a href="/index.html" class="tc-btn tc-btn-primary" style="display:inline-block;background:#0F7560;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">' +
+            '<a href="/index.html" class="tc-btn tc-btn-primary" style="display:inline-block;background:#0E5F46;color:#fff;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">' +
               '<i class="fa-solid fa-search"></i> Trouver un médecin' +
             '</a>' +
           '</div>';
@@ -36,7 +36,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="description" content="Tabibi — Teleconsultation video securisee, vie privee garantie.">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0F7560">
+<meta name="theme-color" content="#0E5F46">
 <link rel="canonical" href="https://tabibi.doctor/teleconsultation.html">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="images/icon-192.png">
@@ -62,9 +62,16 @@
 
   .tc-shell { max-width: 980px; margin: 0 auto; padding: 16px; }
 
+  /* Header (logo + langbar — même patron que waiting-list).
+     HORS .tc-shell : le fallback feature video=false remplace innerHTML de
+     .tc-shell au DOMContentLoaded et effacerait le header/langbar. */
+  .tc-topwrap { max-width: 980px; margin: 0 auto; padding: 16px 16px 0; }
+  .tc-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .tc-logo { font-weight: 800; font-size: 18px; color: #1A1A1A; text-decoration: none; letter-spacing: -0.3px; }
+
   /* Hero */
   .tc-hero {
-    background: linear-gradient(155deg, #0A5A4A 0%, #0F7560 52%, #1A8A73 100%);
+    background: linear-gradient(155deg, #0A5A4A 0%, #0E5F46 52%, #1A8A73 100%);
     color: #fff; border-radius: var(--tc-radius); padding: 24px;
     box-shadow: var(--tc-shadow); position: relative; overflow: hidden;
   }
@@ -97,7 +104,7 @@
     padding: 14px; margin-top: 14px; font-size: 13px; color: #6E561A;
   }
   .tc-consent label { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
-  .tc-consent input[type="checkbox"] { margin-top: 3px; transform: scale(1.2); accent-color: #0F7560; }
+  .tc-consent input[type="checkbox"] { margin-top: 3px; transform: scale(1.2); accent-color: #0E5F46; }
   .tc-consent .tc-consent-detail { display: block; margin-top: 6px; font-size: 12px; opacity: .85; }
 
   /* Buttons */
@@ -107,10 +114,10 @@
     font-size: 15px; font-weight: 600; cursor: pointer;
     transition: 200ms ease; font-family: inherit;
   }
-  .tc-btn-primary { background: #0F7560; color: #fff; box-shadow: 0 4px 14px rgba(15,117,96,.22); width: 100%; }
+  .tc-btn-primary { background: #0E5F46; color: #fff; box-shadow: 0 4px 14px rgba(15,117,96,.22); width: 100%; }
   .tc-btn-primary:hover:not(:disabled) { background: #0A5A4A; }
   .tc-btn-primary:disabled { background: #D4D4D4; color: #fff; cursor: not-allowed; box-shadow: none; }
-  .tc-btn-secondary { background: #fff; color: #0F7560; border: 1.5px solid #0F7560; }
+  .tc-btn-secondary { background: #fff; color: #0E5F46; border: 1.5px solid #0E5F46; }
   .tc-btn-secondary:hover { background: #E6F3F0; }
   .tc-btn-danger { background: #fff; color: #D21010; border: 1.5px solid #D21010; }
 
@@ -124,7 +131,7 @@
   .tc-status.error  { background: #FFF0F0; color: #a40c0c; border: 1px solid #ffcfcf; }
 
   /* Spinner */
-  .tc-spinner { width: 36px; height: 36px; border: 3px solid #E5E5E5; border-top-color: #0F7560; border-radius: 50%; animation: tc-spin 1s linear infinite; margin: 0 auto; }
+  .tc-spinner { width: 36px; height: 36px; border: 3px solid #E5E5E5; border-top-color: #0E5F46; border-radius: 50%; animation: tc-spin 1s linear infinite; margin: 0 auto; }
   @keyframes tc-spin { to { transform: rotate(360deg); } }
 
   /* Daily iframe */
@@ -149,17 +156,27 @@
 
   /* Footer */
   .tc-footer { margin-top: 20px; padding: 14px; text-align: center; font-size: 12px; color: #666; }
-  .tc-footer a { color: #0F7560; text-decoration: none; }
+  .tc-footer a { color: #0E5F46; text-decoration: none; }
 </style>
 </head>
 <body>
+
+<!-- Header : logo + sélecteur de langue (patron waiting-list).
+     HORS .tc-shell — survit au fallback video=false qui réécrit le shell. -->
+<div class="tc-topwrap">
+  <header class="tc-top">
+    <a href="index.html" class="tc-logo" aria-label="Tabibi DZ — Retour à l'accueil">Tabibi <span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></a>
+    <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+    <div data-langbar></div>
+  </header>
+</div>
 
 <div class="tc-shell">
 
   <!-- ECRAN 1 : Chargement -->
   <section id="tc-loading" class="tc-card" style="text-align:center; padding: 40px 20px;">
     <div class="tc-spinner" aria-hidden="true"></div>
-    <p style="margin-top: 16px; color: #666; font-size: 14px;" data-i18n-key="tc_loading">
+    <p style="margin-top: 16px; color: #666; font-size: 14px;" data-i18n="tc_loading">
       Chargement de votre teleconsultation...
     </p>
   </section>
@@ -167,14 +184,14 @@
   <!-- ECRAN 2 : Erreur (auth, session, expire, etc.) -->
   <section id="tc-error" class="tc-card tc-hidden" style="text-align:center;">
     <i class="fa-solid fa-circle-exclamation" style="font-size: 42px; color: #D21010;"></i>
-    <h2 style="margin: 16px 0 6px; font-size: 18px;" data-i18n-key="tc_error_title">Impossible de demarrer la consultation</h2>
+    <h2 style="margin: 16px 0 6px; font-size: 18px;" data-i18n="tc_error_title">Impossible de demarrer la consultation</h2>
     <p id="tc-error-msg" style="color: #666; font-size: 14px; margin: 0 0 18px;"></p>
     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
-      <button id="tc-error-retry" class="tc-btn tc-btn-secondary" data-i18n-key="tc_btn_retry">
-        <i class="fa-solid fa-rotate-right"></i> Reessayer
+      <button id="tc-error-retry" class="tc-btn tc-btn-secondary">
+        <i class="fa-solid fa-rotate-right"></i> <span data-i18n="tc_btn_retry">Reessayer</span>
       </button>
-      <a href="/patient-dashboard.html" class="tc-btn tc-btn-secondary" data-i18n-key="tc_btn_back">
-        <i class="fa-solid fa-arrow-left"></i> Retour au tableau de bord
+      <a href="/patient-dashboard.html" class="tc-btn tc-btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> <span data-i18n="tc_btn_back">Retour au tableau de bord</span>
       </a>
     </div>
   </section>
@@ -182,27 +199,27 @@
   <!-- ECRAN 3 : Pre-join (infos + consentement + bouton rejoindre) -->
   <section id="tc-prejoin" class="tc-hidden">
     <div class="tc-hero">
-      <h1 id="tc-hero-title" data-i18n-key="tc_hero_title">Teleconsultation</h1>
+      <h1 id="tc-hero-title" data-i18n="tc_hero_title">Teleconsultation</h1>
       <p class="tc-sub" id="tc-hero-sub"></p>
       <div class="tc-meta">
         <span class="tc-chip"><i class="fa-solid fa-calendar"></i> <span id="tc-meta-date"></span></span>
         <span class="tc-chip"><i class="fa-solid fa-clock"></i> <span id="tc-meta-time"></span></span>
-        <span class="tc-chip"><i class="fa-solid fa-shield-halved"></i> <span data-i18n-key="tc_meta_secure">Connexion chiffree</span></span>
+        <span class="tc-chip"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="tc_meta_secure">Connexion chiffree</span></span>
       </div>
     </div>
 
     <div class="tc-card">
       <div class="tc-row">
-        <i class="fa-solid fa-user-doctor" style="color:#0F7560; font-size:18px; width:24px;"></i>
+        <i class="fa-solid fa-user-doctor" style="color:#0E5F46; font-size:18px; width:24px;"></i>
         <div>
           <div class="tc-label" id="tc-other-label">Medecin</div>
           <div class="tc-val" id="tc-other-name">--</div>
         </div>
       </div>
       <div class="tc-row" id="tc-row-reason">
-        <i class="fa-solid fa-notes-medical" style="color:#0F7560; font-size:18px; width:24px;"></i>
+        <i class="fa-solid fa-notes-medical" style="color:#0E5F46; font-size:18px; width:24px;"></i>
         <div>
-          <div class="tc-label" data-i18n-key="tc_label_reason">Motif</div>
+          <div class="tc-label" data-i18n="tc_label_reason">Motif</div>
           <div class="tc-val" id="tc-reason">--</div>
         </div>
       </div>
@@ -212,8 +229,8 @@
         <label>
           <input type="checkbox" id="tc-consent-check">
           <span>
-            <strong data-i18n-key="tc_consent_title">J'accepte l'enregistrement de ma consultation</strong>
-            <span class="tc-consent-detail" data-i18n-key="tc_consent_detail">
+            <strong data-i18n="tc_consent_title">J'accepte l'enregistrement de ma consultation</strong>
+            <span class="tc-consent-detail" data-i18n="tc_consent_detail">
               Optionnel. Vous pouvez refuser sans impacter la consultation. L'enregistrement est conserve 30 jours puis supprime. Vous pouvez demander sa suppression a tout moment via votre tableau de bord. Conforme RGPD art. 9 (donnees de sante) et loi DZ 18-07.
             </span>
           </span>
@@ -225,11 +242,11 @@
       <div style="margin-top: 18px;">
         <button id="tc-join-btn" class="tc-btn tc-btn-primary" disabled>
           <i class="fa-solid fa-video"></i>
-          <span data-i18n-key="tc_btn_join">Rejoindre la consultation</span>
+          <span data-i18n="tc_btn_join">Rejoindre la consultation</span>
         </button>
       </div>
 
-      <p style="margin: 12px 0 0; font-size: 11px; color: #666; text-align: center;" data-i18n-key="tc_btn_join_hint">
+      <p style="margin: 12px 0 0; font-size: 11px; color: #666; text-align: center;" data-i18n="tc_btn_join_hint">
         Le bouton s'active 15 minutes avant l'heure du rendez-vous.
       </p>
     </div>
@@ -241,7 +258,7 @@
     <div style="text-align:center; margin-top:14px;">
       <button id="tc-leave-btn" class="tc-btn tc-btn-danger">
         <i class="fa-solid fa-phone-slash"></i>
-        <span data-i18n-key="tc_btn_leave">Quitter la consultation</span>
+        <span data-i18n="tc_btn_leave">Quitter la consultation</span>
       </button>
     </div>
   </section>
@@ -249,16 +266,16 @@
   <!-- ECRAN 5 : Termine -->
   <section id="tc-ended" class="tc-card tc-hidden" style="text-align:center;">
     <i class="fa-solid fa-circle-check" style="font-size: 42px; color: #1f7a4e;"></i>
-    <h2 style="margin: 16px 0 6px; font-size: 18px;" data-i18n-key="tc_ended_title">Consultation terminee</h2>
-    <p style="color: #666; font-size: 14px; margin: 0 0 18px;" data-i18n-key="tc_ended_sub">Merci d'avoir utilise Tabibi. Vous pouvez retourner a votre tableau de bord.</p>
+    <h2 style="margin: 16px 0 6px; font-size: 18px;" data-i18n="tc_ended_title">Consultation terminee</h2>
+    <p style="color: #666; font-size: 14px; margin: 0 0 18px;" data-i18n="tc_ended_sub">Merci d'avoir utilise Tabibi. Vous pouvez retourner a votre tableau de bord.</p>
     <a href="/patient-dashboard.html" class="tc-btn tc-btn-primary" style="display:inline-flex; width:auto;">
-      <i class="fa-solid fa-arrow-right"></i> <span data-i18n-key="tc_btn_dashboard">Tableau de bord</span>
+      <i class="fa-solid fa-arrow-right"></i> <span data-i18n="tc_btn_dashboard">Tableau de bord</span>
     </a>
   </section>
 
   <div class="tc-footer">
-    <span data-i18n-key="tc_footer_brand">Tabibi -- Sante. Confiance. Algerie.</span>
-    -- <a href="/legal/confidentialite.html" data-i18n-key="tc_footer_privacy">Confidentialite</a>
+    <span data-i18n="tc_footer_brand">Tabibi -- Sante. Confiance. Algerie.</span>
+    -- <a href="/legal/confidentialite.html" data-i18n="tc_footer_privacy">Confidentialite</a>
   </div>
 
 </div>
@@ -656,5 +673,7 @@
 
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>

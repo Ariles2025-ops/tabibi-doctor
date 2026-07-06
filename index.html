@@ -212,19 +212,28 @@ body { font-family: var(--font-latin); }
 
 
 :root {
-  --blue:#0F7560; --blue-d:#0a4d3e; --blue-l:#eff6ff; --blue-xl:#f8faff;
-  --green:#2E8B57; --green-d:#007a22; --green-l:#f0fdf4;
-  --red:#D21010; --red-l:#fff0f0;
+  --blue:#0E5F46; --blue-d:#0a4536; --blue-l:#eef4f2; --blue-xl:#f8fafc;
+  --grad-brand:linear-gradient(155deg,#0E5F46 0%,#0a3d30 100%);
+  --hero-glass:rgba(255,255,255,.10); --hero-glass-2:rgba(255,255,255,.16); --hero-bd:rgba(255,255,255,.18);
+  --logo-bg:#0E5F46; --logo-accent:#D4A437;
+  --ink:#0F2A24; --pastille:#e7f3ef; --pastille-bd:#d4e9e1;
+  --shadow-card:0 1px 2px rgba(16,40,34,.04),0 6px 18px rgba(16,40,34,.06);
+  --shadow-search:0 8px 24px rgba(16,40,34,.10),0 2px 6px rgba(16,40,34,.05);
+  --grad-hero:linear-gradient(180deg,#f0f7f4 0%,#f8fafc 100%);
+  --green:#2E8B57; --green-d:#0F7560; --green-l:#f0fdf4;
+  --red:#D21010; --red-d:#991b1b; --red-l:#fff0f0;
   --amber:#F59E0B; --amber-l:#fffbeb;
-  --white:#fff; --bg:#F9FAFB; --bg2:#F3F4F6;
-  --border:#E5E7EB; --text:#0D1117; --text2:#374151; --text3:#6B7280; --text4:#A0A8BB;
-  --s1:0 1px 4px rgba(0,0,0,.06); --s2:0 4px 14px rgba(0,0,0,.09);
-  --s3:0 8px 28px rgba(0,0,0,.12); --s4:0 16px 48px rgba(0,0,0,.16);
-  --sb:0 4px 18px rgba(37,99,235,.28); --sg:0 4px 18px rgba(0,158,45,.28);
-  --nav-h:56px; --tab-h:60px;
+  --white:#fff; --bg:#f8fafc; --bg2:#f1f5f9;
+  --border:#e2e8f0; --text:#0f172a; --text2:#475569; --text3:#64748b; --text4:#94a3b8;
+  --s1:0 1px 3px rgba(0,0,0,.04); --s2:0 4px 12px rgba(0,0,0,.06);
+  --s3:0 12px 36px rgba(0,0,0,.08); --s4:0 24px 64px rgba(0,0,0,.12);
+  --sb:0 4px 14px rgba(15,117,96,.24); --sg:0 4px 14px rgba(15,117,96,.24);
+  --nav-h:56px; --tab-h:64px;
   --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
-  --r8:8px; --r12:12px; --r16:16px; --r20:20px; --r24:24px; --rfull:999px;
-  --ease:cubic-bezier(.4,0,.2,1); --t1:.12s; --t2:.2s; --t3:.32s;
+  --r8:8px; --r12:12px; --r16:14px; --r20:14px; --r24:16px; --rfull:999px;
+  --ease:cubic-bezier(.4,0,.2,1); --t1:.15s; --t2:.2s; --t3:.3s;
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-14:14px; --fs-16:16px; --fs-18:18px; --fs-22:22px; --fs-28:28px;
+  --gutter:20px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:16px;scroll-behavior:smooth;height:100%}
@@ -275,7 +284,7 @@ ul{list-style:none}
 .form-group{margin-bottom:14px}
 .form-label{display:block;font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;letter-spacing:.3px;text-transform:uppercase}
 .form-control{width:100%;padding:13px 14px;border:1.5px solid var(--border);border-radius:var(--r12);font-size:15px;font-family:inherit;background:#fff;color:var(--text);transition:border var(--t1),box-shadow var(--t1);outline:none;appearance:none;-webkit-appearance:none}
-.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(15,117,96,.16)}
 .form-control::placeholder{color:var(--text4)}
 textarea.form-control{resize:vertical;min-height:88px}
 select.form-control{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px;cursor:pointer}
@@ -298,7 +307,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .check-row input{accent-color:var(--blue);width:17px;height:17px;flex-shrink:0;cursor:pointer}
 
 /* ── SPLASH ─────────── */
-.splash{position:fixed;inset:0;z-index:9999;background:linear-gradient(155deg,#1034A6 0%,var(--blue) 52%,#1479D8 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:var(--safe-t);transition:opacity .4s ease}
+.splash{position:fixed;inset:0;z-index:9999;background:var(--grad-brand);display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:var(--safe-t);transition:opacity .4s ease}
 .splash.hide{opacity:0;pointer-events:none}
 .splash-ring{width:96px;height:96px;border-radius:26px;margin-bottom:22px;background:rgba(255,255,255,.13);border:2px solid rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 40px rgba(0,0,0,.2)}
 .splash-cross{position:relative;width:52px;height:52px;display:flex;align-items:center;justify-content:center}
@@ -324,12 +333,19 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .logo-mark::after{width:18px;height:3px}
 
 /* ── BOTTOM TAB BAR ─────────── */
-.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#fff;border-top:1px solid var(--border);height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(5,1fr);box-shadow:0 -2px 16px rgba(0,0,0,.07)}
+.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:200;background:#fff;border-top:1px solid var(--border);height:calc(var(--tab-h) + var(--safe-b));padding-bottom:var(--safe-b);display:grid;grid-template-columns:repeat(6,1fr);box-shadow:0 -2px 16px rgba(0,0,0,.07)}
 .tab-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;transition:all var(--t1);border:none;background:none;font-family:inherit;padding:6px 2px;color:var(--text4);position:relative;text-decoration:none}
 .tab-item i{font-size:20px;transition:all var(--t1)}
 .tab-item span{font-size:10px;font-weight:600;transition:all var(--t1)}
 .tab-item.active{color:var(--blue)}
 .tab-item.active i{transform:scale(1.1)}
+/* CARTE overlay */
+.map-overlay{position:fixed;inset:0;z-index:1500;background:var(--bg);display:flex;flex-direction:column}
+.map-overlay[hidden]{display:none}
+.map-ov-bar{position:absolute;top:0;left:0;right:0;z-index:1600;padding:calc(var(--safe-t) + 10px) 14px 10px;display:flex;align-items:center;gap:10px;pointer-events:none}
+.map-ov-close{pointer-events:auto;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-card);display:flex;align-items:center;justify-content:center;color:var(--ink);font-size:16px;cursor:pointer}
+[dir="rtl"] .map-ov-close i{transform:scaleX(-1)}
+#map-canvas{flex:1;width:100%;height:100%;background:var(--bg2)}
 .tab-dot{position:absolute;top:5px;right:calc(50% - 15px);min-width:16px;height:16px;background:var(--red);border-radius:8px;border:2px solid #fff;font-size:9px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px}
 .page{min-height:calc(100dvh - var(--nav-h) - var(--tab-h));padding-bottom:calc(var(--tab-h) + var(--safe-b) + 16px)}
 
@@ -340,16 +356,21 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .card-tap:active{transform:scale(.98);box-shadow:var(--s2)}
 
 /* ── DOCTOR CARD ─────────── */
-.doc-card{background:#fff;border-radius:var(--r20);padding:16px;box-shadow:var(--s1);border:1px solid var(--border);cursor:pointer;transition:transform var(--t2);position:relative;overflow:hidden}
+.doc-card{background:#fff;border-radius:var(--r16);padding:18px;box-shadow:var(--shadow-card);border:1px solid var(--border);cursor:pointer;transition:transform var(--t2);position:relative;overflow:hidden}
 .doc-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--blue),var(--green));opacity:0;transition:opacity var(--t2)}
 .doc-card:active{transform:scale(.98)}
 .doc-card:active::before{opacity:1}
 .doc-row{display:flex;gap:12px;align-items:flex-start}
 [dir="rtl"] .doc-row{flex-direction:row-reverse}
-.doc-ava{width:56px;height:56px;border-radius:var(--r16);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;border:2px solid var(--border)}
-.doc-name{font-size:15px;font-weight:700;color:var(--text);margin-bottom:2px}
-.doc-spec{font-size:12px;color:var(--text3);margin-bottom:2px;display:flex;align-items:center;gap:4px}
-.doc-loc{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:4px}
+.doc-ava{width:50px;height:50px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;background:#f1f5f9;color:var(--blue);border:1px solid var(--border)}
+.doc-name{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:3px;letter-spacing:-.2px}
+.doc-spec{font-size:12px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;gap:5px}
+.doc-loc{font-size:12px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.doc-loc i{color:var(--blue)}
+.doc-status{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:var(--rfull);font-size:11px;font-weight:700}
+.doc-status-on{background:var(--blue);color:#fff}
+.doc-status-pending,.doc-status-off{background:var(--bg2);color:var(--text2);border:1px solid var(--border)}
+.doc-btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--border)}
 .doc-stars{display:flex;align-items:center;gap:5px;margin:10px 0}
 [dir="rtl"] .doc-stars{flex-direction:row-reverse}
 .sf{color:#F59E0B;font-size:12px;letter-spacing:1px}
@@ -359,32 +380,53 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 [dir="rtl"] .doc-tags{flex-direction:row-reverse}
 .doc-footer{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--bg2);padding-top:12px}
 [dir="rtl"] .doc-footer{flex-direction:row-reverse}
-.doc-price{font-size:16px;font-weight:800;color:var(--text)}
+.doc-price{font-size:16px;font-weight:800;color:var(--ink)}
 .doc-price small{font-size:11px;color:var(--text3);font-weight:400}
 .fav-btn{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.92);border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--text4);font-size:14px;cursor:pointer;transition:all var(--t1);z-index:2}
 [dir="rtl"] .fav-btn{right:auto;left:12px}
 .fav-btn:active,.fav-btn.is-fav{color:var(--red);border-color:var(--red)}
 
 /* ── HERO MOBILE ─────────── */
-.hero-mobile{background:linear-gradient(155deg,#1034A6 0%,var(--blue) 52%,#1479D8 100%);padding:24px 16px 36px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
-.hero-mobile::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 80% 15%,rgba(255,255,255,.07) 0%,transparent 45%),radial-gradient(circle at 10% 80%,rgba(255,255,255,.05) 0%,transparent 40%);pointer-events:none}
-.hz{position:relative;z-index:1}
-.hero-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);color:#fff;padding:4px 12px;border-radius:var(--rfull);font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:.3px}
-.hero-dot{width:6px;height:6px;background:#4ade80;border-radius:50%;animation:hdot 2s infinite;flex-shrink:0}
-@keyframes hdot{0%,100%{opacity:1}50%{opacity:.5}}
-.hero-title{font-size:26px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:6px;letter-spacing:-.4px}
-.hero-title em{color:#86efac;font-style:normal}
-.hero-sub{font-size:13px;color:rgba(255,255,255,.72);margin-bottom:20px;line-height:1.6}
+/* ════════════════════════════════════════════════════════════════
+   LANGAGE VISUEL "TABIBI 2027" — version CLAIRE — index.html = référence
+   • Base : fond app blanc cassé #f8fafc, le vert NE remplit plus le héro
+   • Héro : carte BLANCHE élevée + halo vert radial ≤10% en décor
+   • Bento : cartes blanches, bordure 1px, ombres douces multi-couches
+   • Stats : blanches, chiffre vert #0F7560, 1ère = puce live or
+   • Signal or #D4A437 : puce "live" UNIQUEMENT
+   • Micro : :active scale .96/.97, transitions ≤150ms, reduced-motion ok
+   ════════════════════════════════════════════════════════════════ */
+/* PIVOT CLAIR : fond blanc cassé, carte héro blanche élevée, vert en ACCENT */
+.hero-mobile{background:var(--grad-hero);padding:20px var(--gutter) 24px;position:relative;overflow:hidden}
+.hero-illu{display:block;width:116px;height:auto;margin:0 auto 2px}
+.hero-flag{width:64px;height:auto;border-radius:10px;box-shadow:var(--s2);margin:0 auto 12px;animation:flagfloat 3.6s ease-in-out infinite}
+@keyframes flagfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.hero-col-l{display:contents}
+.hero-greet{font-size:14px;font-weight:600;color:var(--text2);margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:6px}
+.hero-wave{display:inline-block;transform-origin:70% 70%;animation:wave 2.4s ease-in-out infinite}
+@keyframes wave{0%,60%,100%{transform:rotate(0deg)}10%{transform:rotate(14deg)}20%{transform:rotate(-8deg)}30%{transform:rotate(14deg)}40%{transform:rotate(-4deg)}50%{transform:rotate(10deg)}}
+.hero-mobile::before{content:'';position:absolute;inset:0;background:radial-gradient(130% 70% at 88% -8%,rgba(15,117,96,.10) 0%,rgba(15,117,96,.03) 38%,transparent 64%);pointer-events:none;z-index:0}
+.hero-mobile>*{position:relative;z-index:1}
+.hz{position:relative;z-index:1;background:#fff;border:1px solid var(--border);border-radius:var(--r20);padding:22px 18px;box-shadow:var(--shadow-card);text-align:center}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:var(--pastille);border:1px solid var(--pastille-bd);color:var(--ink);padding:5px 13px;border-radius:var(--rfull);font-size:11px;font-weight:700;margin-bottom:14px;letter-spacing:.3px}
+.hero-dot{width:7px;height:7px;background:var(--logo-accent);border-radius:50%;animation:hdot 2.2s infinite;flex-shrink:0}
+@keyframes hdot{0%{box-shadow:0 0 0 0 rgba(212,164,55,.55)}70%{box-shadow:0 0 0 6px rgba(212,164,55,0)}100%{box-shadow:0 0 0 0 rgba(212,164,55,0)}}
+.hero-title{font-size:33px;font-weight:800;color:var(--ink);line-height:1.05;margin-bottom:8px;letter-spacing:-.7px}
+.hero-title em{color:var(--blue);font-style:normal}
+.hero-sub{font-size:14px;color:var(--text2);margin:0 auto 18px;line-height:1.5;max-width:34ch}
 .hero-search-wrap{position:relative}
-.hero-search{background:#fff;border-radius:var(--r16);padding:13px 14px 13px 46px;font-size:15px;color:var(--text);border:none;outline:none;width:100%;font-family:inherit;box-shadow:var(--s3)}
+.hero-search{background:#fff;border-radius:var(--r16);padding:16px 16px 16px 52px;font-size:15px;color:var(--text);border:1px solid var(--border);outline:none;width:100%;font-family:inherit;box-shadow:var(--shadow-search);transition:box-shadow var(--t2),border-color var(--t1)}
+.hero-search:focus{border-color:var(--blue);box-shadow:var(--shadow-search),0 0 0 3px rgba(15,117,96,.16)}
 .hero-search::placeholder{color:var(--text4)}
-.hero-si{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:16px;pointer-events:none}
-[dir="rtl"] .hero-search{padding:13px 46px 13px 14px}
-[dir="rtl"] .hero-si{left:auto;right:15px}
-.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:16px}
-.hero-stat{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:var(--r12);padding:10px 6px;text-align:center}
-.hs-n{font-size:17px;font-weight:800;color:#fff}
-.hs-l{font-size:10px;color:rgba(255,255,255,.6);margin-top:1px}
+.hero-si{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--blue);font-size:17px;pointer-events:none}
+[dir="rtl"] .hero-search{padding:16px 52px 16px 16px}
+[dir="rtl"] .hero-si{left:auto;right:19px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+.hero-stat{background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:13px 6px;text-align:center;box-shadow:var(--s1);transition:transform var(--t1),box-shadow var(--t1)}
+.hero-stat:active{transform:translateY(-2px);box-shadow:var(--s2)}
+.hero-stat:first-child{position:relative}
+.hs-n{font-size:20px;font-weight:800;color:var(--blue);letter-spacing:-.3px}
+.hs-l{font-size:10px;font-weight:600;color:var(--text3);margin-top:2px;letter-spacing:.2px}
 /* Héro mobile centré (demande fondateur) — desktop ≥768px inchangé */
 @media(max-width:767px){
 .hero-mobile .hz{text-align:center}
@@ -394,27 +436,47 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .hero-mobile .hero-stats,.hero-mobile #auth-cta-banner{margin-inline:auto}
 .hero-mobile #auth-cta-banner{justify-content:center}
 }
+@media (prefers-reduced-motion:reduce){.hero-dot,.hero-wave,.hero-flag{animation:none}.hero-search,.btn,.spec-chip,.hero-stat{transition:none}}
+/* ── PREMIUM PASS ─────────── */
+.doc-ava.is-svg{background:none;border:none;padding:0;overflow:hidden}
+.doc-ava.is-svg svg{width:100%;height:100%;display:block}
+.ava-pile{display:flex;align-items:center;justify-content:center;margin-bottom:14px}
+.ava-pile svg{width:40px;height:40px;border-radius:50%;border:2px solid #fff;margin-left:-10px;box-shadow:var(--s1)}
+.ava-pile svg:first-child{margin-left:0}
+.brand-block{box-shadow:var(--shadow-card)}
+@media(hover:hover){
+  .doc-card:hover,.spec-chip:hover,.hero-stat:hover{transform:translateY(-2px);box-shadow:var(--s3)}
+  .btn:hover{filter:brightness(.97)}
+}
+@media(min-width:768px){
+  .app-bar{background:rgba(255,255,255,.72);border-bottom:1px solid rgba(15,42,36,.10)}
+  .tab-bar{display:none}
+  .page{padding-bottom:24px}
+}
+@media (prefers-reduced-motion:reduce){.doc-card:hover,.spec-chip:hover,.hero-stat:hover{transform:none}}
 
 /* ── SPECIALTIES ─────────── */
-.spec-scroll{display:flex;gap:10px;overflow-x:auto;padding:4px 16px 8px;scrollbar-width:none}
+.spec-scroll{display:flex;gap:10px;overflow-x:auto;padding:4px var(--gutter) 8px;scrollbar-width:none}
 .spec-scroll::-webkit-scrollbar{display:none}
-.spec-chip{display:flex;flex-direction:column;align-items:center;gap:5px;flex-shrink:0;cursor:pointer;padding:12px 14px;background:#fff;border:1.5px solid var(--border);border-radius:var(--r16);min-width:76px;transition:all var(--t1)}
-.spec-chip:active,.spec-chip.active{border-color:var(--blue);background:var(--blue-l)}
-.spec-chip-icon{font-size:22px}
+.spec-chip{display:flex;flex-direction:column;align-items:center;gap:8px;flex-shrink:0;cursor:pointer;padding:14px 12px;background:#fff;border:1px solid var(--border);border-radius:var(--r16);min-width:80px;box-shadow:var(--s1);transition:transform var(--t1),border-color var(--t1),background var(--t1),box-shadow var(--t1)}
+.spec-chip:hover{box-shadow:var(--s2)}
+.spec-chip:active{transform:scale(.97)}
+.spec-chip.active{border-color:var(--blue);background:var(--blue);box-shadow:var(--s2)}
+.spec-chip-icon{width:44px;height:44px;border-radius:50%;background:var(--pastille);display:flex;align-items:center;justify-content:center;font-size:22px}
 .spec-chip-name{font-size:11px;font-weight:600;color:var(--text2);white-space:nowrap}
-.spec-chip.active .spec-chip-name{color:var(--blue)}
+.spec-chip.active .spec-chip-name{color:#fff}
 
 /* ── CHIP FILTERS ─────────── */
-.chip-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px 16px;scrollbar-width:none}
+.chip-scroll{display:flex;gap:8px;overflow-x:auto;padding:8px var(--gutter);scrollbar-width:none}
 .chip-scroll::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;padding:7px 14px;border-radius:var(--rfull);border:1.5px solid var(--border);font-size:12px;font-weight:600;color:var(--text2);cursor:pointer;transition:all var(--t1);background:#fff;white-space:nowrap}
 .chip.active,.chip:active{background:var(--blue);color:#fff;border-color:var(--blue)}
 
 /* ── SECTION HEADERS ─────────── */
-.section{padding:20px 0}
-.sec-hdr{padding:0 16px 12px;display:flex;align-items:center;justify-content:space-between}
-.sec-title{font-size:16px;font-weight:800;color:var(--text)}
-.sec-link{font-size:13px;font-weight:600;color:var(--blue);cursor:pointer}
+.section{padding:24px 0;border-top:1px solid var(--border)}
+.sec-hdr{padding:0 var(--gutter) 12px;display:flex;align-items:center;justify-content:space-between}
+.sec-title{font-size:var(--fs-18);font-weight:800;color:var(--text)}
+.sec-link{font-size:var(--fs-13);font-weight:600;color:var(--blue);cursor:pointer}
 
 /* ── STAT CARDS ─────────── */
 .stats-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:0 16px}
@@ -447,7 +509,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 [dir="rtl"] .rdv-side{align-items:flex-start}
 
 /* ── PROFILE HERO ─────────── */
-.profile-hero{background:linear-gradient(155deg,#1034A6 0%,var(--blue) 55%,#1479D8 100%);padding:24px 16px 52px;position:relative;margin-bottom:-36px}
+.profile-hero{background:var(--grad-brand);padding:24px 16px 52px;position:relative;margin-bottom:-36px}
 .profile-hero::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:40px;background:var(--bg);clip-path:ellipse(60% 100% at 50% 100%)}
 .profile-ava-big{width:72px;height:72px;border-radius:var(--r20);border:3px solid rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:800;margin-bottom:12px}
 .profile-name-big{font-size:20px;font-weight:800;color:#fff;margin-bottom:3px}
@@ -460,10 +522,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .slot-btn.taken{background:var(--bg2);color:var(--text4);cursor:not-allowed;border-color:transparent}
 
 /* ── HOW IT WORKS ─────────── */
-.steps-col{display:flex;flex-direction:column;gap:0;padding:0 16px}
+.steps-col{display:flex;flex-direction:column;gap:0;padding:0 var(--gutter)}
 .step-row{display:flex;gap:14px;align-items:flex-start;position:relative;padding-bottom:24px}
 [dir="rtl"] .step-row{flex-direction:row-reverse}
-.step-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:42px;bottom:0;width:2px;background:linear-gradient(to bottom,rgba(37,99,235,.25),rgba(37,99,235,.04))}
+.step-row:not(:last-child)::before{content:'';position:absolute;left:19px;top:42px;bottom:0;width:2px;background:linear-gradient(to bottom,rgba(15,117,96,.25),rgba(15,117,96,.04))}
 [dir="rtl"] .step-row:not(:last-child)::before{left:auto;right:19px}
 .step-num{width:40px;height:40px;border-radius:var(--r12);flex-shrink:0;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;box-shadow:var(--sb);z-index:1}
 .step-info{flex:1;padding-top:7px}
@@ -471,7 +533,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .step-desc{font-size:13px;color:var(--text3);line-height:1.6}
 
 /* ── INSTALL BANNER ─────────── */
-.install-banner{position:fixed;bottom:0;left:0;right:0;background:linear-gradient(135deg,#1034A6,var(--blue));padding:14px 16px calc(14px + var(--safe-b));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 24px rgba(0,0,0,.2);transform:translateY(100%);transition:transform var(--t3)}
+.install-banner{position:fixed;bottom:0;left:0;right:0;background:var(--grad-brand);padding:14px 16px calc(14px + var(--safe-b));display:flex;align-items:center;gap:12px;z-index:400;box-shadow:0 -4px 24px rgba(0,0,0,.2);transform:translateY(100%);transition:transform var(--t3)}
 .install-banner.show{transform:translateY(0)}
 .ib-logo{width:44px;height:44px;background:rgba(255,255,255,.15);border-radius:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.22)}
 .ib-text{flex:1}
@@ -506,7 +568,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .role-card:active,.role-card.sel{border-color:var(--blue);background:var(--blue-l)}
 .role-card-ico{font-size:20px;margin-bottom:4px}
 .role-card h4{font-size:12px;font-weight:700;color:var(--text)}
-.hint-box{background:var(--blue-xl,#f8faff);border:1px solid rgba(37,99,235,.15);border-radius:var(--r12);padding:10px 12px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6}
+.hint-box{background:var(--blue-xl,#f8fafc);border:1px solid rgba(15,117,96,.15);border-radius:var(--r12);padding:10px 12px;font-size:12px;color:var(--blue);margin-bottom:14px;line-height:1.6}
 
 /* ── PAYMENT METHODS ─────────── */
 .pay-card{display:flex;align-items:center;gap:12px;padding:14px;border:2px solid var(--border);border-radius:var(--r16);cursor:pointer;transition:all var(--t1);background:#fff;margin-bottom:10px}
@@ -550,7 +612,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .toast{background:rgba(13,17,23,.9);color:#fff;padding:11px 16px;border-radius:var(--r12);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;box-shadow:var(--s3);animation:tin .25s var(--ease);backdrop-filter:blur(8px);pointer-events:all;width:100%}
 .toast-success{background:rgba(0,140,35,.92)}
 .toast-error{background:rgba(210,16,16,.92)}
-.toast-info{background:rgba(37,99,235,.92)}
+.toast-info{background:rgba(15,117,96,.95)}
 @keyframes tin{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
 
 /* ── LOADING ─────────── */
@@ -570,12 +632,73 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .shake{animation:shake .38s var(--ease)}
 
 /* ── DESKTOP: center app ─────────── */
-@media(min-width:481px){body{background:var(--bg);display:block}.app-root{width:100%;max-width:480px;min-height:100dvh;background:var(--bg);position:relative;margin:0 auto;box-shadow:none}
+@media(min-width:481px) and (max-width:767px){body{background:var(--bg);display:block}.app-root{width:100%;max-width:480px;min-height:100dvh;background:var(--bg);position:relative;margin:0 auto;box-shadow:none}
   .tab-bar,.install-banner{max-width:390px;left:50%;right:auto;width:390px;transform:translateX(-50%)}
   .install-banner.show{transform:translateX(-50%) translateY(0)}
   .tab-bar{transform:translateX(-50%)}
   .toast-wrap{width:calc(390px - 32px);max-width:390px}
   .modal-sheet{max-width:390px}
+}
+
+/* ===== TABLETTE (768–1023px) : grilles 2/3 col, héro empilé centré ===== */
+@media (min-width:768px) and (max-width:1023px){
+  body{background:var(--bg)}
+  .app-root{max-width:none;box-shadow:none;background:var(--bg)}
+  .app-bar{padding-inline:max(var(--gutter),calc((100% - 1000px)/2))}
+  .hero-mobile{padding:40px var(--gutter) 44px}
+  .hz{max-width:620px;margin:0 auto}
+  .section>*{max-width:1000px;margin-inline:auto}
+  #sec-search,.chip-scroll{max-width:1000px;margin-inline:auto}
+  .spec-scroll{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;overflow:visible}
+  .spec-chip{min-width:0;width:100%}
+  .chip-scroll{flex-wrap:wrap;overflow:visible}
+  #docs-list{display:grid!important;grid-template-columns:repeat(2,1fr);gap:14px}
+  #tabibi-footer>div{max-width:1000px!important;margin:0 auto}
+}
+
+/* ===== DESKTOP SITE WEB (≥1024px) : PLEINE LARGEUR, padding latéral clamp, grilles auto-fill ===== */
+@media (min-width:1024px){
+  :root{--gutter:clamp(24px,4vw,64px)}     /* gouttière desktop : tous les var(--gutter) suivent */
+  body{background:var(--bg)}
+  .app-root{max-width:none;box-shadow:none;background:var(--bg)}
+  .app-bar{padding-inline:var(--gutter)}
+
+  /* Bande héro mint edge-to-edge ; contenu 2 colonnes étalé pleine largeur */
+  .hero-mobile{padding:64px 0;border-radius:0}
+  .hz{max-width:none;margin:0;padding-inline:var(--gutter);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);column-gap:clamp(40px,5vw,96px);align-items:center;text-align:left;background:transparent;border:0;box-shadow:none;border-radius:0}
+  .hero-col-l{display:block;grid-column:1;grid-row:1 / span 2;align-self:center;max-width:640px}  /* largeur de lecture confortable */
+  .hero-illu{grid-column:2;grid-row:1;width:clamp(340px,26vw,440px);margin:0 auto 8px}
+  .hero-flag{width:88px;margin:0 auto 16px}
+  .hero-stats{grid-column:2;grid-row:2;max-width:none;margin:8px 0 0;gap:14px}
+  .hero-greet{justify-content:flex-start}
+  .hero-title{font-size:clamp(40px,3.2vw,52px);line-height:1.07;margin-bottom:12px}
+  .hero-sub{font-size:17px;max-width:46ch;margin:0 0 22px}
+  .hero-search-wrap{margin:0}
+  #auth-cta-banner{margin:18px 0 0;padding-inline:var(--gutter);justify-content:flex-start}
+  #auth-cta-banner>a{flex:0 1 240px!important}
+  .hero-mobile>a{padding-inline:var(--gutter)}
+
+  /* Sections pleine largeur, padding latéral clamp (via var(--gutter)) */
+  .section{padding:clamp(40px,4vw,64px) 0}
+  .sec-title{font-size:22px}
+  #sec-search{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:end}
+  .chip-scroll{flex-wrap:wrap;overflow:visible}
+  /* Grilles qui REMPLISSENT et s'adaptent (pas de cartes étirées) */
+  .spec-scroll{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;overflow:visible}
+  .spec-chip{min-width:0;width:100%}
+  #docs-list{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+  .doc-card{transition:transform var(--t2),box-shadow var(--t2)}
+  .steps-col{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(24px,3vw,48px)}
+  .step-row{padding-bottom:0}
+  .step-row:not(:last-child)::before{display:none}
+
+  /* Bandes promo edge-to-edge (stats + CTA médecin) : fond pleine largeur, contenu centré */
+  .promo-band{padding:0!important}
+  .promo-band>.brand-block{border-radius:0!important;padding:44px var(--gutter)!important;box-shadow:none}
+  .promo-band>.brand-block>*{max-width:1040px;margin-inline:auto}
+
+  /* Footer multi-colonnes edge-to-edge */
+  #tabibi-footer>div{max-width:none!important;margin:0;padding-inline:var(--gutter)}
 }
 </style>
 </head>
@@ -648,62 +771,19 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 </div>
 
 <!-- AUTH MODAL -->
-<div class="modal-bg hidden" id="auth-modal" role="dialog" aria-modal="true">
-  <div class="modal-sheet" id="modal-inner">
-    <div class="modal-handle"></div>
-    <div class="auth-logo">
-      <div class="logo-mark"></div>
-      <div style="font-size:22px;font-weight:800;letter-spacing:-.5px">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span></div>
-      <p style="font-family:'Cairo',sans-serif;color:var(--text3);font-size:13px;margin-top:3px">طبيبي · La santé à portée de clic</p>
-    </div>
-    <div class="auth-tabs">
-      <button class="auth-tab active" id="atl" onclick="switchAuthTab('login')" role="tab" aria-selected="true">Connexion</button>
-      <button class="auth-tab" id="ats" onclick="switchAuthTab('signup')" role="tab" aria-selected="false">Inscription</button>
-    </div>
-    <!-- LOGIN -->
-    <form id="lform" class="modal-body" onsubmit="handleLogin(event)" novalidate style="padding-bottom:20px">
-      <div class="form-group">
-        <label class="form-label" for="l-em">E-mail</label>
-        <div class="input-wrap"><i class='ii-l fa fa-envelope'></i><input class="form-control has-l" type="email" id="l-em" placeholder="votre@email.com" data-i18n-placeholder="ph_email_generic" autocomplete="email" required></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="l-pw">Mot de passe</label>
-        <div class="input-wrap"><i class='ii-l fa fa-lock'></i><input class="form-control has-l has-r" type="password" id="l-pw" placeholder="••••••••" autocomplete="current-password" required><button type="button" class="ii-r" onclick="togglePwd('l-pw',this)"><i class='fa fa-eye'></i></button></div>
-      </div>
-      <p class="form-err hidden" id="lerr" role="alert"></p>
-      <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:4px"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></button>
-      <p style="text-align:center;font-size:12px;margin-top:12px;color:var(--text3)">Pas de compte ? <a href="#" onclick="switchAuthTab('signup')" style="color:var(--blue);font-weight:700">S'inscrire</a></p>
-    </form>
-    <!-- SIGNUP -->
-    <form id="sform" class="modal-body hidden" onsubmit="handleSignup(event)" novalidate style="padding-bottom:20px">
-      <div class="role-cards" role="radiogroup">
-        <div class="role-card sel" onclick="pickRole(this,'patient')" role="radio" aria-checked="true" tabindex="0"><div class="role-card-ico"><i class='fa fa-user' style='color:var(--blue);font-size:22px'></i></div><h4>Patient</h4></div>
-        <div class="role-card" onclick="pickRole(this,'medecin')" role="radio" aria-checked="false" tabindex="0"><div class="role-card-ico"><i class='fa fa-user-doctor' style='color:var(--green);font-size:22px'></i></div><h4>Médecin</h4></div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" for="s-fi">Prénom</label><input class="form-control" id="s-fi" required autocomplete="given-name"></div>
-        <div class="form-group"><label class="form-label" for="s-la">Nom</label><input class="form-control" id="s-la" required autocomplete="family-name"></div>
-      </div>
-      <div class="form-group"><label class="form-label" for="s-em">E-mail</label><div class="input-wrap"><i class='ii-l fa fa-envelope'></i><input class="form-control has-l" type="email" id="s-em" required autocomplete="email"></div></div>
-      <div class="form-group"><label class="form-label" for="s-pw">Mot de passe</label><div class="input-wrap"><i class='ii-l fa fa-lock'></i><input class="form-control has-l has-r" type="password" id="s-pw" required autocomplete="new-password" placeholder="6 caractères min." data-i18n-placeholder="ph_password_6_min"><button type="button" class="ii-r" onclick="togglePwd('s-pw',this)"><i class='fa fa-eye'></i></button></div></div>
-      <p class="form-err hidden" id="serr" role="alert"></p>
-      <button type="submit" class="btn btn-success btn-full btn-lg"><i class='fa fa-user-plus'></i> Créer mon compte</button>
-    </form>
-  </div>
-</div>
+<!-- [auth] Modale email/mdp retirée — connexion & inscription via pages OTP dédiées :
+     login.html (tél OTP patients/médecins + onglet admin email/mdp) · signup.html (tél OTP).
+     index.html ne contient plus AUCUN formulaire email/mot de passe. -->
 
 <!-- APP BAR -->
 <header class="app-bar" role="banner">
-  <div class="logo-mark" aria-hidden="true"></div>
+  <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <div class="app-bar-body">
-    <div class="app-bar-title">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span></div>
+    <div class="app-bar-title">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
     <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
   </div>
-  <div style="display:flex;gap:2px;background:var(--bg2);border-radius:var(--rfull);padding:2px;flex-shrink:0" role="group" aria-label="Langue">
-    <button data-lang-btn="fr" onclick="setLang('fr')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;background:var(--blue);color:#fff">FR</button>
-    <button data-lang-btn="ar" onclick="setLang('ar')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;background:transparent;color:var(--text3)">AR</button>
-    <button data-lang-btn="en" onclick="setLang('en')" style="padding:3px 7px;border-radius:var(--rfull);border:none;font-size:10px;font-weight:700;cursor:pointer;transition:all .12s;background:transparent;color:var(--text3)">EN</button>
-  </div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
   <div id="uarea-desk" style="display:flex;align-items:center;gap:6px"></div>
 </header>
 
@@ -713,12 +793,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- HERO -->
   <section class="hero-mobile">
     <div class="hz">
+      <svg class="hero-illu hero-flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Algérie"><defs><clipPath id="dzclip"><rect width="60" height="40" rx="6"/></clipPath><mask id="dzcr"><rect width="60" height="40" fill="#fff"/><circle cx="33.5" cy="20" r="7.2" fill="#000"/></mask></defs><g clip-path="url(#dzclip)"><rect width="30" height="40" fill="#006233"/><rect x="30" width="30" height="40" fill="#FFFFFF"/><circle cx="30" cy="20" r="9" fill="#D21034" mask="url(#dzcr)"/><path d="M35.5 15.8 36.48 18.66 39.49 18.7 37.08 20.51 37.97 23.4 35.5 21.66 33.03 23.4 33.92 20.51 31.51 18.7 34.52 18.66Z" fill="#D21034"/></g><rect x="0.5" y="0.5" width="59" height="39" rx="5.5" fill="none" stroke="rgba(16,40,34,.12)"/></svg>
+      <div class="hero-col-l">
       <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin en Algérie</span></div>
-      <h1 class="hero-title" id="hero-t">Trouvez votre médecin en ligne en Algérie</h1>
-      <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Réservez en ligne 24h/24 dans les 58 wilayas. Rapide, simple, sécurisé.</p>
+      <h1 class="hero-title" id="hero-t">Votre santé ne devrait jamais attendre.</h1>
+      <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Prenez rendez-vous avec un médecin partout en Algérie — 58 wilayas, 24h/24.</p>
       <div class="hero-search-wrap">
         <i class='hero-si fa fa-search' aria-hidden='true'></i>
         <input class="hero-search" type="search" id="name-search" data-i18n="s_ph" data-i18n-placeholder="ph_hero_search" placeholder="Dr. Benali, Cardiologie, Alger..." oninput="doFilter()" autocomplete="off">
+      </div>
       </div>
       <div class="hero-stats">
         <div class="hero-stat"><div class="hs-n" id="hero-doc-count">0</div><div class="hs-l" id="hs1" data-i18n="nav_doctors">Médecins</div></div>
@@ -728,12 +811,12 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     </div>
       <!-- AUTH CTA — visible si pas connecté (script en bas le masquera si user existe) -->
       <div id="auth-cta-banner" style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
-        <a href="login.html" class="btn btn-white btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></a>
-        <a href="signup.html" class="btn btn-lg" style="flex:1;min-width:140px;background:rgba(255,255,255,.15);color:#fff;border:1.5px solid rgba(255,255,255,.4);font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
+        <a href="login.html" class="btn btn-lg" style="flex:1;min-width:140px;background:#fff;color:var(--ink);border:1.5px solid var(--border);font-weight:700"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></a>
+        <a href="signup.html" class="btn btn-primary btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
       </div>
       <!-- [Phase 14.3] CTA médecin — visible TOUS users (anon + patient) -->
-      <a href="doctor-claim.html" style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding:10px 14px;background:rgba(255,255,255,.10);border:1.5px dashed rgba(255,255,255,.35);border-radius:var(--r12);color:#fff;text-decoration:none;font-size:13px">
-        <span><i class="fa fa-user-doctor" style="margin-right:6px"></i> <span data-i18n="cta_doctor_claim">Vous êtes médecin ? Réclamez votre fiche</span></span>
+      <a href="doctor-claim.html" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:12px 14px;background:#fff;border:1.5px dashed var(--pastille-bd);border-radius:var(--r12);color:var(--ink);text-decoration:none;font-size:13px">
+        <span><i class="fa fa-user-doctor" style="margin-right:6px;color:var(--blue)"></i> <span data-i18n="cta_doctor_claim">Vous êtes médecin ? Réclamez votre fiche</span></span>
         <i class="fa fa-arrow-right" style="opacity:.7"></i>
       </a>
     </section>
@@ -748,7 +831,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   </section>
 
   <!-- SEARCH FILTERS -->
-  <div id="sec-search" style="padding:0 16px 8px">
+  <div id="sec-search" style="padding:0 var(--gutter) 8px">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
       <select class="form-control" id="f-ville" onchange="doFilter()" style="font-size:13px"><option value="" id="opt-allcities">Toutes les wilayas</option></select>
       <select class="form-control" id="f-spec" onchange="doFilter()" style="font-size:13px"><option value="" id="opt-allspecs">Toutes les spécialités</option></select>
@@ -774,7 +857,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       <h2 class="sec-title" id="st-docs">Médecins référencés en Algérie</h2>
       <span id="res-count" style="font-size:12px;color:var(--text3)" aria-live="polite"></span>
     </div>
-    <div style="display:flex;flex-direction:column;gap:12px;padding:0 16px" id="docs-list"></div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding:0 var(--gutter)" id="docs-list"></div>
     <div style="display:flex;justify-content:center;gap:6px;padding:16px;flex-wrap:wrap" id="pag"></div>
   </section>
 
@@ -790,22 +873,22 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 
   <!-- STATS -->
   <section class="section">
-    <div style="padding:0 16px">
-      <div style="background:linear-gradient(135deg,var(--blue),var(--blue-d));border-radius:var(--r20);padding:28px 22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800" id="stats-doc-count">0</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-doc-lbl">Médecins référencés</div></div>
-        <div style="text-align:center;color:#fff"><div style="font-size:28px;font-weight:800">58</div><div style="font-size:12px;opacity:.8;margin-top:4px" id="stats-wilaya-lbl">Wilayas</div></div>
+    <div style="padding:0 var(--gutter)">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;box-shadow:var(--s1)">
+        <div style="text-align:center"><div style="font-size:28px;font-weight:800;color:var(--blue)" id="stats-doc-count">0</div><div style="font-size:12px;color:var(--text3);margin-top:4px;font-weight:600" id="stats-doc-lbl">Médecins référencés</div></div>
+        <div style="text-align:center;border-left:1px solid var(--border)"><div style="font-size:28px;font-weight:800;color:var(--blue)">58</div><div style="font-size:12px;color:var(--text3);margin-top:4px;font-weight:600" id="stats-wilaya-lbl">Wilayas</div></div>
       </div>
     </div>
   </section>
 
   <!-- CTA -->
   <section class="section" style="padding-bottom:8px">
-    <div style="padding:0 16px">
-      <div style="background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--r20);padding:26px;text-align:center">
-        <div style="font-size:32px;margin-bottom:10px"><i class='fa fa-user-doctor'></i></div>
-        <h2 id="cta-doc-title" style="font-size:17px;font-weight:800;color:#fff;margin-bottom:8px">Vous êtes médecin ?</h2>
-        <p id="cta-doc-sub" style="font-size:13px;color:rgba(255,255,255,.82);margin-bottom:16px">Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.</p>
-        <button class="btn btn-white btn-lg" onclick="openModal('signup')"><i class='fa fa-user-plus'></i> <span id="cta-doc-btn">Rejoindre Tabibi</span></button>
+    <div style="padding:0 var(--gutter)">
+      <div style="background:#fff;border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:var(--r16);padding:24px;text-align:center;box-shadow:var(--s1)">
+        <div style="font-size:24px;margin-bottom:10px;color:var(--blue)"><i class='fa fa-user-doctor'></i></div>
+        <h2 id="cta-doc-title" style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Vous êtes médecin ?</h2>
+        <p id="cta-doc-sub" style="font-size:13px;color:var(--text2);margin-bottom:16px">Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.</p>
+        <button class="btn btn-primary btn-lg" onclick="openModal('signup')"><i class='fa fa-user-plus'></i> <span id="cta-doc-btn">Rejoindre Tabibi</span></button>
       </div>
     </div>
   </section>
@@ -815,6 +898,14 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 
 <!-- BOTTOM TAB BAR -->
 <nav class="tab-bar" id="tab-bar"></nav>
+
+<!-- CARTE — overlay plein écran (Leaflet lazy-init B5) -->
+<div id="map-overlay" class="map-overlay" hidden role="dialog" aria-label="Carte des médecins en Algérie">
+  <div class="map-ov-bar">
+    <button class="map-ov-close" onclick="closeMapOverlay()" aria-label="Fermer la carte"><i class="fa fa-arrow-left"></i></button>
+  </div>
+  <div id="map-canvas"></div>
+</div>
 <div id="uarea-mob" class="hidden"></div>
 
 <script>
@@ -838,11 +929,11 @@ const TR = {
     no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",
     cert:"Certifié",urgent:"Urgences",available:"Disponible",rdv:"Prendre RDV",
     found:"médecin(s) trouvé(s)",avis_word:"avis",consult_word:"consult.",
-    nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",
+    nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",nav_map:"Carte",greeting:"Bonjour",
     login:"Connexion",signup:"Inscription",my_account:"Mon compte",logout:"Déconnexion",
     hero_badge:"Médecins en Algérie",
     hero_title:"Trouvez votre",hero_title_em:"médecin en ligne",hero_title2:"en Algérie",
-    hero_sub:"Réservez en ligne 24h/24 partout en Algérie, dans les 58 wilayas.",
+    hero_sub:"Prenez rendez-vous avec un médecin partout en Algérie — 58 wilayas, 24h/24.",
     s_ph:"Dr. Benali, Cardiologie, Alger...",
     all_cities:"Toutes les wilayas",all_specs:"Toutes les spécialités",
     chip_urg:"Urgences",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
@@ -864,6 +955,16 @@ const TR = {
     review_ok:"Avis envoyé avec succès !",rating_req:"Sélectionnez une note",comment_req:"Ajoutez un commentaire",
     install_title:"Installer Tabibi",install_sub:"Accédez à votre médecin sans navigateur",install_btn:"Installer",
     hs1:"Médecins",hs2:"Wilayas",hs3:"Patients",hs4:"Note moy.",
+    // [I18N-RES 2026-06-18] cartes annuaire + modale fiche + hero stat (P0 #3)
+    not_rated_yet:"Pas encore noté", badge_teleconsult:"Téléconsultation", badge_chifa:"Chifa", badge_card:"Carte",
+    price_tbd:"Tarif à confirmer", validation_pending:"Validation en cours", badge_urgent:"Urgences",
+    status_bookable:"Réservable", status_unclaimed:"Fiche non réclamée", see_sheet:"Voir la fiche",
+    available_slots:"Créneaux disponibles", confirm_slot:"Confirmer ce créneau", about_doctor:"À propos",
+    addr_label:"Adresse", langs_label:"Langues", availability_label:"Disponibilité", hours_default:"Lun – Ven • 8h – 18h",
+    validation_pending_long:"Validation en cours — réservation bientôt disponible.",
+    booking_not_active:"Ce médecin n'a pas encore activé les RDV en ligne.",
+    doctor_validating:"Ce médecin est en cours de validation.",
+    hero_booking:"Réservation", claim_hint_title:"Vous êtes ce médecin ? Cliquez pour réclamer votre fiche.",
     sb1:"Médecins référencés",sb2:"Wilayas",sb3:"Patients satisfaits",sb4:"Taux de satisfaction",
     patient_role:"Patient",medecin_role:"Médecin",admin_role:"Admin",
     today_rdv:"Consultations du jour",next_rdv:"Prochain rendez-vous",
@@ -901,11 +1002,11 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     no_docs:"لا يوجد طبيب مطابق",try_other:"حاول تغيير المعايير",
     cert:"معتمد",urgent:"طوارئ",available:"متاح",rdv:"حجز موعد",
     found:"طبيب(ة) وُجد(ت)",avis_word:"تقييم",consult_word:"استشارة",
-    nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",
+    nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",nav_map:"الخريطة",greeting:"مرحبا",
     login:"دخول",signup:"تسجيل",my_account:"حسابي",logout:"خروج",
     hero_badge:"أطباء في الجزائر",
     hero_title:"ابحث عن",hero_title_em:"طبيبك",hero_title2:"في كل أنحاء الجزائر",
-    hero_sub:"احجز موعدك أونلاين مع أطباء في 58 ولاية. سريع وبسيط وآمن.",
+    hero_sub:"احجز موعدًا مع طبيب في كل أنحاء الجزائر — 58 ولاية، 24/24.",
     s_ph:"د. بن علي، قلب، الجزائر...",
     all_cities:"كل الولايات",all_specs:"كل التخصصات",
     chip_urg:"طوارئ",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
@@ -927,6 +1028,16 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     review_ok:"تم إرسال التقييم!",rating_req:"اختر تقييماً",comment_req:"أضف تعليقاً",
     install_title:"تثبيت طبيبي",install_sub:"الوصول إلى طبيبك بدون متصفح",install_btn:"تثبيت",
     hs1:"طبيب",hs2:"ولاية",hs3:"مريض",hs4:"التقييم",
+    // [I18N-RES 2026-06-18] cartes annuaire + modale fiche + hero stat (P0 #3)
+    not_rated_yet:"لم يُقيَّم بعد", badge_teleconsult:"استشارة عن بُعد", badge_chifa:"شيفا", badge_card:"بطاقة",
+    price_tbd:"السعر قيد التأكيد", validation_pending:"قيد التحقق", badge_urgent:"حالات طارئة",
+    status_bookable:"قابل للحجز", status_unclaimed:"ملف غير مُطالَب به", see_sheet:"عرض الملف",
+    available_slots:"المواعيد المتاحة", confirm_slot:"تأكيد هذا الموعد", about_doctor:"نبذة",
+    addr_label:"العنوان", langs_label:"اللغات", availability_label:"التوفّر", hours_default:"الاثنين – الجمعة • 08:00 – 18:00",
+    validation_pending_long:"قيد التحقق — الحجز متاح قريبًا.",
+    booking_not_active:"لم يُفعّل هذا الطبيب الحجز عبر الإنترنت بعد.",
+    doctor_validating:"هذا الطبيب قيد التحقق.",
+    hero_booking:"الحجز", claim_hint_title:"هل أنت هذا الطبيب؟ انقر للمطالبة بملفك.",
     sb1:"طبيب مُدرج",sb2:"ولاية",sb3:"مريض راضٍ",sb4:"معدل الرضا",
     patient_role:"مريض",medecin_role:"طبيب",admin_role:"مدير",
     today_rdv:"استشارات اليوم",next_rdv:"الموعد القادم",
@@ -964,11 +1075,11 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     no_docs:"No doctors found",try_other:"Try different criteria",
     cert:"Certified",urgent:"Urgent",available:"Available",rdv:"Book",
     found:"doctor(s) found",avis_word:"reviews",consult_word:"consult.",
-    nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",
+    nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",nav_map:"Map",greeting:"Hello",
     login:"Sign in",signup:"Sign up",my_account:"My account",logout:"Log out",
     hero_badge:"Doctors across Algeria",
     hero_title:"Find your",hero_title_em:"doctor",hero_title2:"across Algeria",
-    hero_sub:"Book appointments online 24/7 across all 58 wilayas.",
+    hero_sub:"Book an appointment with a doctor anywhere in Algeria — 58 wilayas, 24/7.",
     s_ph:"Dr. Benali, Cardiology, Algiers...",
     all_cities:"All cities",all_specs:"All specialties",
     chip_urg:"Urgent",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
@@ -990,6 +1101,16 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     review_ok:"Review sent successfully!",rating_req:"Please select a rating",comment_req:"Add a comment",
     install_title:"Install Tabibi",install_sub:"Access your doctor without a browser",install_btn:"Install",
     hs1:"Doctors",hs2:"Wilayas",hs3:"Patients",hs4:"Avg. rating",
+    // [I18N-RES 2026-06-18] annuaire cards + profile modal + hero stat (P0 #3)
+    not_rated_yet:"Not rated yet", badge_teleconsult:"Teleconsultation", badge_chifa:"Chifa", badge_card:"Card",
+    price_tbd:"Price to confirm", validation_pending:"Validation pending", badge_urgent:"Emergencies",
+    status_bookable:"Bookable", status_unclaimed:"Unclaimed profile", see_sheet:"View profile",
+    available_slots:"Available slots", confirm_slot:"Confirm this slot", about_doctor:"About",
+    addr_label:"Address", langs_label:"Languages", availability_label:"Availability", hours_default:"Mon – Fri • 8am – 6pm",
+    validation_pending_long:"Validation in progress — booking available soon.",
+    booking_not_active:"This doctor hasn't enabled online booking yet.",
+    doctor_validating:"This doctor is being validated.",
+    hero_booking:"Booking", claim_hint_title:"Are you this doctor? Click to claim your profile.",
     sb1:"Referenced doctors",sb2:"Wilayas",sb3:"Happy patients",sb4:"Satisfaction rate",
     patient_role:"Patient",medecin_role:"Doctor",admin_role:"Admin",
     today_rdv:"Today's consultations",next_rdv:"Next appointment",
@@ -1216,202 +1337,14 @@ function redirectByRole(role) {
   window.location.href = map[role] || "patient-dashboard.html";
 }
 
-/* ══ AUTH MODAL ══════════════════════════════════════════════ */
-let _selRole = "patient";
-
+/* ══ AUTH (redirections) ═══════════════════════════════════════
+   Plus aucun formulaire email/mdp dans index.html : la modale d'auth
+   a été retirée. Patients & médecins s'authentifient via les pages OTP
+   dédiées (login.html / signup.html) ; l'admin garde email/mdp dans
+   login.html. openModal() reste un simple shim de redirection pour
+   préserver tous ses appelants (gates d'auth, boutons uarea, CTA). */
 function openModal(tab) {
-  const m = document.getElementById("auth-modal");
-  if (!m) return;
-  m.classList.remove("hidden");
-  document.body.style.overflow = "hidden";
-  switchAuthTab(tab || "login");
-  ["lerr","serr"].forEach(id => { const e=document.getElementById(id); if(e){e.textContent="";e.classList.add("hidden");} });
-}
-function closeModal() {
-  const m = document.getElementById("auth-modal");
-  if (m) { m.classList.add("hidden"); document.body.style.overflow=""; }
-}
-function switchAuthTab(tab) {
-  const lf=document.getElementById("lform"),sf=document.getElementById("sform");
-  const tl=document.getElementById("atl"),ts=document.getElementById("ats");
-  if(lf) lf.classList.toggle("hidden",tab!=="login");
-  if(sf) sf.classList.toggle("hidden",tab!=="signup");
-  if(tl) { tl.classList.toggle("active",tab==="login"); tl.setAttribute("aria-selected",tab==="login"); }
-  if(ts) { ts.classList.toggle("active",tab==="signup"); ts.setAttribute("aria-selected",tab==="signup"); }
-}
-function pickRole(el, role) {
-  // ═══════════════════════════════════════════════════════════════
-  // SÉCURITÉ v10 : ne JAMAIS accepter le rôle "admin" depuis l'UI
-  // ═══════════════════════════════════════════════════════════════
-  if (role === 'admin' || role === 'administrator') {
-    console.warn('[security] Tentative de sélection du rôle admin bloquée');
-    return;
-  }
-  // Whitelist stricte des rôles autorisés en inscription publique
-  if (role !== 'patient' && role !== 'medecin') {
-    console.warn('[security] Rôle invalide:', role);
-    return;
-  }
-  _selRole = role;
-  document.querySelectorAll(".role-card").forEach(c=>{c.classList.remove("sel");c.setAttribute("aria-checked","false");});
-  el.classList.add("sel"); el.setAttribute("aria-checked","true");
-}
-function togglePwd(id, btn) {
-  const inp = document.getElementById(id); if(!inp) return;
-  inp.type = inp.type==="password" ? "text" : "password";
-  btn.querySelector("i").className = inp.type==="password" ? "fa fa-eye" : "fa fa-eye-slash";
-}
-
-async function handleLogin(e) {
-  e.preventDefault();
-  const email = (document.getElementById("l-em")?.value||"").trim().toLowerCase();
-  const pass  = document.getElementById("l-pw")?.value||"";
-  const err   = document.getElementById("lerr");
-  if(err){err.textContent="";err.classList.add("hidden");}
-  if (!email||!pass) { _showErr(err,T("fill_all")); return; }
-
-  // Brute-force protection
-  if (window.tabibiSec && window.tabibiSec.rateLimit) {
-    const limit = window.tabibiSec.rateLimit('login:' + email, 5, 60000);
-    if (!limit.allowed) {
-      _showErr(err, limit.reason);
-      return;
-    }
-  }
-  // Validation email
-  if (window.tabibiSec && !window.tabibiSec.validateEmail(email)) {
-    _showErr(err, "Format d'email invalide");
-    return;
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // v10 : Authentification via Supabase (plus de login local)
-  // ═══════════════════════════════════════════════════════════════
-  try {
-    if (!window.tabibi || !window.tabibi.auth) {
-      _showErr(err, "Service d'authentification indisponible");
-      return;
-    }
-    await window.tabibi.auth.signIn(email, pass);
-    const sbUser = await window.tabibi.auth.getUser();
-    if (!sbUser) {
-      _showErr(err, T("bad_creds"));
-      return;
-    }
-    // Vérifier statut (médecin pending)
-    const status = sbUser.status || 'active';
-    if (sbUser.role === 'medecin' && status === 'pending_verification') {
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      _showErr(err, "Votre compte médecin est en cours de vérification (48h max).");
-      return;
-    }
-    if (status === 'suspended' || status === 'rejected') {
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      _showErr(err, "Compte non actif. Contactez contact@tabibi.doctor");
-      return;
-    }
-    // Construire le profil utilisateur
-    const fName = sbUser.first_name || "";
-    const lName = sbUser.last_name || "";
-    let displayName = (fName + " " + lName).trim() || sbUser.full_name || email.split("@")[0];
-    const initials = ((fName[0]||displayName[0]||"?") + (lName[0]||"")).toUpperCase();
-    const u = {
-      id: sbUser.id,
-      email: sbUser.email || email,
-      role: sbUser.role || 'patient',
-      status: status,
-      name: displayName,
-      initials: initials,
-      avatar: { bg:"#dcfce7", tc:"#0a4d3e" }
-    };
-    saveUser(u);
-    closeModal();
-    renderUserUI();
-    toast(`${T("welcome")} ${u.name} !`,"success");
-    setTimeout(()=>redirectByRole(u.role), 900);
-  } catch(err2) {
-    console.warn("[login] error:", err2 && err2.message);
-    _showErr(err, T("bad_creds"));
-    document.getElementById("modal-inner")?.classList.add("shake");
-    setTimeout(()=>document.getElementById("modal-inner")?.classList.remove("shake"),420);
-  }
-}
-
-async function handleSignup(e) {
-  e.preventDefault();
-  const first=(document.getElementById("s-fi")?.value||"").trim();
-  const last =(document.getElementById("s-la")?.value||"").trim();
-  const email=(document.getElementById("s-em")?.value||"").trim().toLowerCase();
-  const pass =document.getElementById("s-pw")?.value||"";
-  const err  =document.getElementById("serr");
-  if(err){err.textContent="";err.classList.add("hidden");}
-  if (!first||!last||!email||!pass){_showErr(err,T("fill_all"));return;}
-  if (pass.length<6){_showErr(err,T("pass_short"));return;}
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){_showErr(err,"Email invalide.");return;}
-
-  // ═══════════════════════════════════════════════════════════════
-  // SÉCURITÉ v10 : forcer le rôle à patient ou medecin uniquement
-  // ═══════════════════════════════════════════════════════════════
-  let role = _selRole;
-  if (role !== 'patient' && role !== 'medecin') {
-    role = 'patient';  // fallback sécurisé
-  }
-  // Triple sécurité : on n'autorise JAMAIS "admin" depuis cette UI
-  if (role === 'admin' || role === 'administrator') {
-    _showErr(err, "Rôle non autorisé");
-    return;
-  }
-
-  try {
-    if (!window.tabibi || !window.tabibi.auth || !window.tabibi.supabase) {
-      _showErr(err, "Service d'inscription indisponible");
-      return;
-    }
-
-    // 1. Créer le compte Supabase Auth
-    const signupResult = await window.tabibi.auth.signUp(email, pass, role);
-    if (!signupResult || !signupResult.user) {
-      _showErr(err, "Erreur lors de la création du compte");
-      return;
-    }
-
-    // [Phase 16.5] Upsert client-side supprimé — trigger handle_new_auth_user()
-    // lit désormais raw_user_meta_data->>'role' et insère le bon rôle.
-    // L'upsert ici était un band-aid masquant le bug trigger (role='patient' hardcodé).
-
-    // 2. Si médecin → déconnexion + message d'attente
-    if (role === 'medecin') {
-      try { await window.tabibi.auth.signOut(); } catch(e){}
-      closeModal();
-      toast("✓ Inscription enregistrée. Vérification de votre compte sous 48h. Email envoyé à " + email, "success");
-      return;
-    }
-
-    // 4. Patient → connexion immédiate
-    const u = {
-      id: signupResult.user.id,
-      email: email,
-      role: 'patient',
-      status: 'active',
-      name: `${first} ${last}`,
-      initials: (first[0]+last[0]).toUpperCase(),
-      avatar: { bg:"#dcfce7", tc:"#0a4d3e" }
-    };
-    saveUser(u);
-    closeModal();
-    renderUserUI();
-    toast(T("signup_ok"),"success");
-    setTimeout(()=>redirectByRole('patient'),900);
-
-  } catch(err2) {
-    console.error('[signup] error:', err2);
-    const msg = (err2 && err2.message) || "Erreur lors de l'inscription";
-    if (msg.toLowerCase().includes('already') || msg.toLowerCase().includes('exists')) {
-      _showErr(err, "Cet email est déjà utilisé. Connectez-vous.");
-    } else {
-      _showErr(err, msg);
-    }
-  }
+  location.href = (tab === "signup") ? "signup.html" : "login.html";
 }
 
 function handleLogout() {
@@ -1419,8 +1352,6 @@ function handleLogout() {
   const onDash=["patient-dashboard","doctor-dashboard","admin-dashboard"].some(p=>window.location.pathname.includes(p));
   if(onDash) setTimeout(()=>window.location.href="index.html",600);
 }
-
-function _showErr(el,msg){if(!el)return;el.textContent=msg;el.classList.remove("hidden");}
 
 /* ══ USER UI ══════════════════════════════════════════════════ */
 function renderUserUI() {
@@ -1432,7 +1363,7 @@ function renderUserUI() {
   }
   const rc={patient:T("patient_role"),medecin:T("medecin_role"),admin:T("admin_role")};
   const r=(user.role||"").toLowerCase(),lbl=rc[r]||(r?r:"");
-  const bg=user.avatar?.bg||"#dcfce7",tc=user.avatar?.tc||"#0a4d3e";
+  const bg=user.avatar?.bg||"#e7f3ef",tc=user.avatar?.tc||"#0a4d3e";
   const pill=`
     <div onclick="goDash()" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:var(--rfull);border:1.5px solid var(--border);cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
       <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${user.initials}</div>
@@ -1600,6 +1531,7 @@ function initTabBar(active){
   const items=[
     {id:"home",  icon:"fa-home",          i18n:"nav_home",  href:"index.html"},
     {id:"search",icon:"fa-search",         i18n:"nav_docs",  href:"index.html#search"},
+    {id:"carte", icon:"fa-map-location-dot",i18n:"nav_map",  href:"#carte"},
     {id:"rdv",   icon:"fa-calendar-check", i18n:"nav_rdv",   href:"#"},
     {id:"spec",  icon:"fa-stethoscope",    i18n:"nav_spec",  href:"index.html#spec"},
     {id:"profile",icon:"fa-user",          i18n:"nav_profile",href:"#"},
@@ -1611,9 +1543,23 @@ function initTabBar(active){
     </button>`).join("");
 }
 function tabClick(id,href){
+  if(id==="carte"){openMapOverlay();return;}
   if(id==="profile"){if(!isLogged()){openModal("login");return;}goDash();return;}
   if(id==="rdv"){if(!isLogged()){openModal("login");return;}goDash();return;}
   if(href&&href!=="#") window.location.href=href;
+}
+// [Carte] Overlay plein écran — lazy-init Leaflet au 1er tap (logique carte : B5).
+function openMapOverlay(){
+  const ov=document.getElementById("map-overlay");
+  if(!ov) return;
+  ov.hidden=false;
+  document.body.style.overflow="hidden";
+  // B5 : if(!window._mapInited){ injecter Leaflet puis initMap(); }
+}
+function closeMapOverlay(){
+  const ov=document.getElementById("map-overlay");
+  if(ov) ov.hidden=true;
+  document.body.style.overflow="";
 }
 
 /* ══ INSTALL PWA ══════════════════════════════════════════════ */
@@ -1681,8 +1627,6 @@ function initApp(){
   loadUser();
   setLang(lang);
   renderUserUI();
-  document.getElementById("auth-modal")?.addEventListener("click",e=>{if(e.target===document.getElementById("auth-modal"))closeModal();});
-  document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
   hideLoading();
 
   // Auto-filter from URL params (depuis pages SEO)
@@ -1728,7 +1672,7 @@ Object.assign(window,{
   TR,T,lang,setLang,
   DOCTORS,SPECS,CITIES,ACCOUNTS,DEMO_RDV,DEMO_DOC_RDV,generateSlots,TAKEN_SLOTS,
   user,loadUser,isLogged,getRole,login,logout,requireAuth,requireRole,redirectByRole,saveUser,
-  openModal,closeModal,switchAuthTab,pickRole,togglePwd,handleLogin,handleSignup,handleLogout,
+  openModal,handleLogout,
   renderUserUI,goDash,
   toast,showLoading,hideLoading,
   stars,dname,dspec,dcity,sname,searchByName,getParam,scrollTo$,daysUntil,
@@ -1888,15 +1832,22 @@ function buildPagination(cur, total){
 }
 
 
+// Avatar neutre (soignant générique) — placeholder décoratif si AUCUNE initiale calculable.
+const AVATAR_NEUTRAL = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs><clipPath id="tbAvN5"><circle cx="50" cy="50" r="50"/></clipPath></defs><circle cx="50" cy="50" r="50" fill="var(--pastille,#e7f3ef)"/><g clip-path="url(#tbAvN5)"><path d="M14 104C16 77 33 70 50 70 67 70 84 77 86 104Z" fill="#fff"/><path d="M41 71 59 71 50 90Z" fill="var(--logo-bg,#0F7560)"/><path d="M45 71 55 71 50 82Z" fill="#f1f5f9"/><rect x="45" y="54" width="10" height="13" rx="5" fill="#ddae84"/><circle cx="50" cy="42" r="16" fill="#ddae84"/><circle cx="34" cy="43" r="3.2" fill="#ddae84"/><circle cx="66" cy="43" r="3.2" fill="#ddae84"/><path d="M32 45C30 25 40 18 50 18 60 18 70 25 68 45 68 40 62 34 50 34 38 34 32 40 32 45Z" fill="var(--logo-bg,#0F7560)"/><path d="M50 18C50 14 53 12 56 13" stroke="var(--logo-bg,#0F7560)" stroke-width="2.4" fill="none" stroke-linecap="round"/><circle cx="44.5" cy="42" r="1.8" fill="#0F2A24"/><circle cx="55.5" cy="42" r="1.8" fill="#0F2A24"/><path d="M45 48Q50 52 55 48" stroke="#0F2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M43 72C39 80 44 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M57 72C61 80 56 86 50 87" stroke="var(--logo-bg,#0F7560)" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="5" fill="var(--logo-accent,#D4A437)"/><circle cx="50" cy="92" r="2.4" fill="#b88d2d"/></g></svg>`;
 function docCard(d){
   const n=dname(d),s=dspec(d),c=dcity(d),fav=isFav(d.id);
-  const dir = (window.tabibiDoctorName && tabibiDoctorName.isArabic && tabibiDoctorName.isArabic(n)) ? 'rtl' : 'ltr';
-  const rk  = (dir==='rtl') ? ' dir="rtl" data-rtl-keep="true"' : '';
-  // [Phase 13] Avatar : photo_url si dispo (vide en M0, sera rempli au claim médecin),
-  // sinon initiales sur fond coloré (existant).
-  const avaHtml = d.photoUrl
-    ? `<img src="${d.photoUrl}" alt="" class="doc-ava" style="object-fit:cover;width:48px;height:48px;border-radius:var(--r12)" loading="lazy" onerror="this.outerHTML='<div class=\\'doc-ava\\' style=\\'background:${d.bg};color:${d.tc}\\'>${d.in}</div>'">`
-    : `<div class="doc-ava" style="background:${d.bg};color:${d.tc}">${d.in}</div>`;
+  // [RTL] dir="auto" : le navigateur choisit la direction d'après le 1er caractère fort.
+  // Nom 100% arabe → rtl (aligné à droite) ; nom mixte latin+arabe → ltr (la partie latine se lit en premier, plus de troncature).
+  const rk  = ' dir="auto" data-rtl-keep="true"';
+  // Avatar = MONOGRAMME (initiales) sur pastille verte pâle — données réelles only, pas de photo.
+  const avaHtml = `<div class="doc-ava">${(d.in||'').toString().trim()}</div>`;
+  // Statut réel : Réservable (claimed+approved) / En validation (claimed, pending) / Fiche non réclamée.
+  const reservable = d.claimed && d.validationStatus === 'approved';
+  const statusBadge = reservable
+    ? `<span class="doc-status doc-status-on"><i class='fa fa-circle-check fa-xs'></i>${T("status_bookable")}</span>`
+    : (d.claimed
+        ? `<span class="doc-status doc-status-pending"><i class='fa fa-clock fa-xs'></i>${T("validation_pending")}</span>`
+        : `<span class="doc-status doc-status-off"><i class='fa fa-circle-info fa-xs'></i>${T("status_unclaimed")}</span>`);
   return `<article class="doc-card fu" onclick="goDoc('${d.id}')" tabindex="0" onkeydown="if(event.key==='Enter')goDoc('${d.id}')">
     <button class="fav-btn${fav?" is-fav":""}" data-fid="${d.id}" onclick="event.stopPropagation();toggleFav('${d.id}',this)" aria-label="Favori">
       <i class="${fav?"fa":"far"} fa-heart"></i>
@@ -1904,31 +1855,21 @@ function docCard(d){
     <div class="doc-row">
       ${avaHtml}
       <div style="flex:1;min-width:0">
-        <div class="doc-name" dir="${dir}" data-rtl-keep="true">${n}</div>
+        <div class="doc-name" dir="auto" data-rtl-keep="true">${n}</div>
         <div class="doc-spec"${rk}><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
         <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${c}</div>
       </div>
     </div>
-    <div class="doc-stars">
-      ${d.note != null
-        ? `<span class="sf">${stars(d.note)}</span><span class="rn">${d.note}</span><span class="rc">(${d.avis} ${T("avis_word")})</span>`
-        : `<span class="rc" style="color:var(--text3)">Pas encore noté</span>`}
-    </div>
     <div class="doc-tags">
-      ${d.cert?`<span class="badge badge-green"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
-      ${d.telehealth?`<span class="badge badge-blue"><i class='fa fa-video fa-xs'></i>Téléconsultation</span>`:""}
-      ${d.acceptsChifa?`<span class="badge" style="background:#dcfce7;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>Chifa</span>`:""}
-      ${d.acceptsCard?`<span class="badge" style="background:#dbeafe;color:#1d4ed8"><i class='fa fa-credit-card fa-xs'></i>Carte</span>`:""}
-      ${d.acceptsCash?`<span class="badge" style="background:#fef3c7;color:#92400e"><i class='fa fa-money-bill-wave fa-xs'></i>Espèces</span>`:""}
-      ${d.claimed===false?`<a href="doctor-claim.html" onclick="event.stopPropagation()" class="badge" style="background:#fef3c7;color:#92400e;text-decoration:none;border:1px dashed #f59e0b" title="Vous êtes ce médecin ? Cliquez pour réclamer votre fiche."><i class='fa fa-circle-info fa-xs'></i>Non réclamée</a>`:""}
+      ${statusBadge}
+      ${d.telehealth?`<span class="badge badge-blue"><i class='fa fa-video fa-xs'></i>${T("badge_teleconsult")}</span>`:""}
+      ${d.acceptsChifa?`<span class="badge" style="background:#e7f3ef;color:#0a4d3e"><i class='fa fa-id-card fa-xs'></i>${T("badge_chifa")}</span>`:""}
     </div>
     <div class="doc-footer">
-      <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">Tarif à confirmer</span>`}</div>
-      ${(d.claimed && d.validationStatus === 'approved')
+      <div class="doc-price">${d.prix != null ? `${d.prix.toLocaleString()} DA <small>/${T("consult_word")}</small>` : `<span style="color:var(--text3);font-weight:600">${T("price_tbd")}</span>`}</div>
+      ${reservable
         ? `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();bookDoc('${d.id}')"><i class='fa fa-calendar-plus'></i>${T("rdv")}</button>`
-        : (d.claimed
-          ? `<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;padding:6px 10px;border-radius:8px;display:inline-flex;align-items:center;gap:5px"><i class='fa fa-clock fa-xs'></i> Validation en cours</span>`
-          : '')
+        : `<button class="btn btn-sm doc-btn-ghost" onclick="event.stopPropagation();goDoc('${d.id}')"><i class='fa fa-arrow-right'></i>${T("see_sheet")}</button>`
       }
     </div>
   </article>`;
@@ -1946,7 +1887,7 @@ function bookDoc(id){
   if(!d) return;
   // [Phase 16.4 / P1.6b] garde : réservable SSI fiche claimed + approved
   if(!(d.claimed && d.validationStatus === 'approved')){
-    toast(d.claimed ? "Ce médecin est en cours de validation." : "Ce médecin n'a pas encore activé les RDV en ligne.","info"); return;
+    toast(d.claimed ? T("doctor_validating") : T("booking_not_active"),"info"); return;
   }
   showBookingModal(d);
 }
@@ -1960,44 +1901,44 @@ function showDoctorModal(d){
     <div class="modal-sheet" style="max-height:95dvh">
       <div class="modal-handle"></div>
       <div style="position:relative">
-        <div style="background:linear-gradient(155deg,#1034A6,var(--blue),#1479D8);padding:20px 20px 50px;margin-bottom:-36px;position:relative">
+        <div style="background:var(--grad-brand);padding:20px 20px 50px;margin-bottom:-36px;position:relative">
           <div style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#fff;border:none" onclick="this.closest('.modal-bg').remove();document.body.style.overflow=''">×</div>
           <div style="width:64px;height:64px;border-radius:16px;background:${d.bg};color:${d.tc};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;border:3px solid rgba(255,255,255,.3);margin-bottom:10px">${d.in}</div>
           <div style="font-size:18px;font-weight:800;color:#fff">${n}</div>
           <div style="font-size:13px;color:rgba(255,255,255,.75)">${s} · ${c}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
             ${d.note != null
-              ? `<span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span><span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span><span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis||0} avis)</span>`
-              : `<span style='font-size:12px;color:rgba(255,255,255,.65)'>Pas encore noté</span>`}
-            ${d.cert?`<span class="badge badge-green" style="font-size:10px"><i class='fa fa-check fa-xs'></i>Certifié</span>`:""}
-            ${d.urgent?`<span class="badge badge-red" style="font-size:10px"><i class='fa fa-bolt fa-xs'></i>Urgences</span>`:""}
+              ? `<span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span><span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span><span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis||0} ${T("avis_word")})</span>`
+              : `<span style='font-size:12px;color:rgba(255,255,255,.65)'>${T("not_rated_yet")}</span>`}
+            ${d.cert?`<span class="badge badge-green" style="font-size:10px"><i class='fa fa-check fa-xs'></i>${T("cert")}</span>`:""}
+            ${d.urgent?`<span class="badge badge-red" style="font-size:10px"><i class='fa fa-bolt fa-xs'></i>${T("badge_urgent")}</span>`:""}
           </div>
         </div>
         <div style="padding:44px 16px 16px">
           <!-- Créneaux -->
           <div class="card" style="margin-bottom:14px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-              <div style="font-size:14px;font-weight:700"><i class='fa fa-calendar-days'></i> Créneaux disponibles</div>
-              <div style="font-size:16px;font-weight:800;color:var(--blue)">${d.prix != null ? `${d.prix.toLocaleString()} DA` : `<span style="font-size:13px;color:var(--text3)">Tarif à confirmer</span>`}</div>
+              <div style="font-size:14px;font-weight:700"><i class='fa fa-calendar-days'></i> ${T("available_slots")}</div>
+              <div style="font-size:16px;font-weight:800;color:var(--blue)">${d.prix != null ? `${d.prix.toLocaleString()} DA` : `<span style="font-size:13px;color:var(--text3)">${T("price_tbd")}</span>`}</div>
             </div>
             <div class="slots-grid" id="prof-slots"></div>
             <div id="slot-confirm-txt" class="hidden" style="background:var(--blue-l);border-radius:var(--r12);padding:10px;font-size:13px;color:var(--blue);margin:10px 0;display:flex;align-items:center;gap:6px"><i class='fa fa-check-circle'></i><span id="slot-txt"></span></div>
-            <button class="btn btn-primary btn-full btn-lg" style="margin-top:8px" onclick="confirmFromProfile('${d.id}')"><i class='fa fa-calendar-check'></i> Confirmer ce créneau</button>
+            <button class="btn btn-primary btn-full btn-lg" style="margin-top:8px" onclick="confirmFromProfile('${d.id}')"><i class='fa fa-calendar-check'></i> ${T("confirm_slot")}</button>
           </div>
           <!-- About -->
           <div class="card" style="margin-bottom:14px">
-            <div style="font-size:14px;font-weight:700;margin-bottom:10px">À propos</div>
+            <div style="font-size:14px;font-weight:700;margin-bottom:10px">${T("about_doctor")}</div>
             <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">${d.desc||""}</p>
-            ${[["fa-location-dot","Adresse",d.addr||"—"],["fa-language","Langues",(d.langs||[]).join(", ")],["fa-clock","Disponibilité","Lun – Ven • 8h – 18h"]].map(([ic,lbl,val])=>`
+            ${[["fa-location-dot",T("addr_label"),d.addr||"—"],["fa-language",T("langs_label"),(d.langs||[]).join(", ")],["fa-clock",T("availability_label"),T("hours_default")]].map(([ic,lbl,val])=>`
               <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:12px">
                 <span style='color:var(--text3);display:flex;align-items:center;gap:4px'><i class='fa ${ic} fa-xs'></i>${lbl}</span>
-                <span style='font-weight:600;color:var(--text);text-align:right'>${val}</span>
+                <span style='font-weight:600;color:var(--text);text-align:end'>${val}</span>
               </div>`).join("")}
             <div style="margin-top:12px">
               ${(d.diplomes||[]).map(dp=>`<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:6px"><i class='fa fa-graduation-cap fa-xs' style='color:var(--blue);flex-shrink:0;margin-top:2px'></i>${dp}</div>`).join("")}
             </div>
           </div>
-          <button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> Prendre un RDV</button>
+          <button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> ${T("rdv")}</button>
           <div style="height:20px"></div>
         </div>
       </div>
@@ -2020,7 +1961,7 @@ function showDoctorModal(d){
     // [P1.6b] Masque les créneaux générés si la fiche n'est pas claimed+approved
     // (UX uniquement — le serveur bloque déjà la réservation via RLS).
     if (!(d.claimed && d.validationStatus === 'approved')) {
-      el.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:6px 0">${d.claimed ? "Validation en cours — réservation bientôt disponible." : "Ce médecin n'a pas encore activé les RDV en ligne."}</div>`;
+      el.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:6px 0">${d.claimed ? T("validation_pending_long") : T("booking_not_active")}</div>`;
       return;
     }
     const taken = getTakenSlots(d.id);
@@ -2260,7 +2201,7 @@ function showPatientDashboardModal(){
       <div class="modal-body" style="padding-bottom:24px">
         <!-- User info -->
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:var(--r12);margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:50%;background:${user?.avatar?.bg||"#dcfce7"};color:${user?.avatar?.tc||"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
+          <div style="width:46px;height:46px;border-radius:50%;background:${user?.avatar?.bg||"#e7f3ef"};color:${user?.avatar?.tc||"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
           <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${user?.email||""}</div></div>
         </div>
         <!-- Stats -->
@@ -2379,6 +2320,9 @@ function onLangChange(){
   // Stats
   set('stats-doc-lbl', tr.sb1 || 'Médecins référencés');
   set('stats-wilaya-lbl', tr.sb2 || 'Wilayas');
+  // [I18N-RES] hero stats sans data-i18n (id only)
+  set('hs2', tr.hs2 || 'Wilayas');
+  set('hs4', tr.hero_booking || 'Réservation');
 
   // CTA Médecin
   set('cta-doc-title', tr.cta_doc_title || 'Vous êtes médecin ?');
@@ -2391,9 +2335,9 @@ function onLangChange(){
 
   // Hero title COMPLET (phrase entière, pas juste un mot)
   const heroFullTitle = {
-    fr: 'Trouvez votre médecin en ligne en Algérie',
-    ar: 'ابحث عن طبيبك في كل أنحاء الجزائر',
-    en: 'Find your doctor across Algeria'
+    fr: 'Votre santé ne devrait jamais attendre.',
+    ar: 'صحتك لا يجب أن تنتظر.',
+    en: 'Your health should never wait.'
   };
   set('hero-t', heroFullTitle[lang] || heroFullTitle.fr);
 
@@ -2513,7 +2457,7 @@ function animateCounters(total){if(!total)return;const targets=[document.getElem
 //   `consultation_fee_dzd`, `rating`, `is_urgent`, `gender` ne sont pas
 //   ajoutées à la vue. Tracked SQL_TODO TODO-SQL-004/005/006.
 //
-// Compteur via Prefer: count=exact + parsing header Content-Range "0-19/<TOTAL>".
+// Compteur via Prefer: count=estimated + parsing header Content-Range "0-19/<TOTAL>".
 // N'écrit JAMAIS sur hero-doc-count / stats-doc-count / foot-doc-count
 // (réservés exclusivement à animateCounters via fetchDoctorCount).
 // AbortController : annule un fetch en cours si l'utilisateur retape vite.
@@ -2628,7 +2572,8 @@ function _buildDoctorCardsUrl(opts){
   // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
   // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
   q.set('order', 'name_sort_key.asc');
-  q.set('full_name', 'not.match.[؀-ۿ]');  // exclut les noms en écriture arabe (U+0600–U+06FF) côté serveur
+  // [ÉTAPE B] Filtre 'not.match.[؀-ۿ]' RETIRÉ (test RTL OK 390/1280 : docCard pose déjà dir="rtl").
+  // Les 2 969 fiches au nom en écriture arabe sont désormais incluses → liste = 75 033 (= indexed).
   return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
 }
 
@@ -2653,7 +2598,7 @@ async function loadDoctorCards(opts, page){
       headers: {
         'apikey':       _SB_KEY,
         'Authorization':'Bearer ' + _SB_KEY,
-        'Prefer':       'count=exact',
+        'Prefer':       'count=estimated',
         'Range-Unit':   'items',
         'Range':        ((page-1)*PER) + '-' + (page*PER - 1)
       },
@@ -2803,24 +2748,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   // pour avoir une UI réactive immédiate.
   populateSelects(); renderSpecs(); renderChips();
   renderUserUI(); initTabBar("home");
-  // Fetch compteur dynamique certifiés + indexés — màj après fallback immédiat
-  (async function() {
-    try {
-      var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co';
-      var _key = _SB_KEY;
-      var _h = { apikey: _key, Authorization: 'Bearer ' + _key, Prefer: 'count=exact' };
-      var _res = await Promise.all([
-        // X certifiés : vue public_doctors_listed (déjà filtrée is_claimed=true AND validation_status='approved')
-        fetch(_url + '/rest/v1/public_doctors_listed?select=id&limit=1', { headers: _h }),
-        // N indexés : total brut public_doctors
-        fetch(_url + '/rest/v1/public_doctors?select=id&limit=1', { headers: _h })
-      ]);
-      if (!_res[0].ok || !_res[1].ok) return;
-      var _cert = parseInt((_res[0].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
-      var _idx  = parseInt((_res[1].headers.get('content-range') || '/0').split('/')[1], 10) || 0;
-      if (_cert > 0 || _idx > 0) { window._tabibiBadge = { certified: _cert, indexed: _idx }; _updateDocCounterUI(); }
-    } catch(e) { /* fallback window._tabibiBadge déjà affiché */ }
-  })();
+  // [ÉTAPE C] Source unique des stats : 1 routine COUNT au load → window.TABIBI_STATS
+  _loadTabibiStats();
 
   // [Phase 5.6 fix BUG #1 v2] Fetch async des DISTINCT specialty_fr +
   // wilaya_fr depuis la DB → re-populate les <select> avec les VRAIES valeurs.
@@ -2841,20 +2770,57 @@ document.addEventListener("DOMContentLoaded",()=>{
   setTimeout(()=>{const s=document.getElementById("splash");if(s){s.classList.add("hide");setTimeout(()=>s.remove(),420);}},1800);
 });
 
-// Fallback last-known pour le compteur (affiché instantanément, remplacé par fetch async au load)
-window._tabibiBadge = { certified: 0, indexed: 0 };
+// [ÉTAPE C] SOURCE UNIQUE des stats — alimentée par _loadTabibiStats() au load.
+// Définitions : indexed = total vitrine EN DUR (count=estimated sous-évaluait :
+//               37 517 vs 75 033 réels, COALESCE dans le WHERE de la vue)
+//               certified = public_doctors?validation_status=eq.approved (estimated)
+// Label affiché partout où le total "référencés" apparaît :
+var TABIBI_DOCTOR_COUNT_LABEL = '75 000+';
+window.TABIBI_STATS = { indexed: 0, listed: 0, certified: 0, claimed: 0 };
+
+async function _loadTabibiStats() {
+  var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || _SB_URL;
+  var _h = { apikey: _SB_KEY, Authorization: 'Bearer ' + _SB_KEY, Prefer: 'count=estimated' };
+  var _cnt = function(path) {
+    return fetch(_url + '/rest/v1/' + path + (path.indexOf('?') < 0 ? '?' : '&') + 'select=id&limit=1', { headers: _h })
+      .then(function(r){ return r.ok ? (parseInt((r.headers.get('content-range') || '/0').split('/')[1], 10) || 0) : 0; })
+      .catch(function(){ return 0; });
+  };
+  try {
+    // [PERF 57014] 1 seul COUNT (estimated) : certified. Le total "référencés"
+    // est EN DUR (TABIBI_DOCTOR_COUNT_LABEL) — estimated le sous-évaluait.
+    var r = await Promise.all([
+      _cnt('public_doctors?validation_status=eq.approved')  // certified (validées)
+    ]);
+    window.TABIBI_STATS = { indexed: 75000, certified: r[0], listed: 0, claimed: 0 };
+  } catch (e) { /* garde les valeurs courantes */ }
+  _updateDocCounterUI();
+}
+
+// Tous les compteurs lisent window.TABIBI_STATS (plus aucun COUNT dupliqué dispersé).
 function _updateDocCounterUI() {
   var _lm = { fr: 'fr-DZ', ar: 'ar-DZ', en: 'en-US' };
   var _loc = _lm[lang] || 'fr-DZ';
-  var _cert = window._tabibiBadge.certified;
-  var _idx  = window._tabibiBadge.indexed || 0;
+  var _S = window.TABIBI_STATS || { indexed: 0, certified: 0 };
+  var _cert = _S.certified || 0;
+  var _idx  = _S.indexed || 0;
   var _fc = _cert.toLocaleString(_loc);
-  var _fi = _idx.toLocaleString(_loc);
+  // Total vitrine : chaîne EN DUR (jamais de toLocaleString dessus) ;
+  // _idx reste numérique pour les seuls tests de pluriel (_idx>1).
+  var _fi = TABIBI_DOCTOR_COUNT_LABEL;
   var _hb = document.getElementById('hbadge');
-  // Badge double : X certifiés (public_doctors_listed) + N indexés (public_doctors)
-  if (_hb) _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مفهرس في الجزائر'
-                            : lang === 'en' ? _fc + ' certified · ' + _fi + ' indexed in Algeria'
-                            :                 _fc + ' médecin'+(_cert>1?'s':'')+' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' indexé'+(_idx>1?'s':'') + ' en Algérie';
+  // [ÉTAPE D] certified=0 → "N médecins référencés" ; certified>0 → "X certifiés · Y référencés"
+  if (_hb) {
+    if (_cert > 0) {
+      _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مُدرج في الجزائر'
+                      : lang === 'en' ? _fc + ' certified · ' + _fi + ' referenced in Algeria'
+                      :                 _fc + ' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' référencé'+(_idx>1?'s':'') + ' en Algérie';
+    } else {
+      _hb.textContent = lang === 'ar' ? _fi + ' طبيب مُدرج في الجزائر'
+                      : lang === 'en' ? _fi + ' doctors referenced in Algeria'
+                      :                 _fi + ' médecin'+(_idx>1?'s':'') + ' référencé'+(_idx>1?'s':'') + ' en Algérie';
+    }
+  }
   var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fi;
   var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fi;
   var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fi;
@@ -2888,20 +2854,19 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 <!-- ═══════════════════════════════════════════════════════════════
        CTA Waiting List patient — pré-lancement
        ═══════════════════════════════════════════════════════════════ -->
-<section style="padding:20px 16px;margin-top:20px">
-  <a href="waiting-list.html" style="display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#0F7560,#0a4d3e);border-radius:18px;padding:18px 20px;color:#fff;text-decoration:none;box-shadow:0 8px 24px rgba(15,117,96,.25);position:relative;overflow:hidden;max-width:480px;margin:0 auto">
-    <div style="width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🚀</div>
-    <div style="flex:1;min-width:0;position:relative;z-index:1">
-      <div id="cta-wl-title" style="font-weight:800;font-size:15px;margin-bottom:2px">Rejoignez la waiting list</div>
-      <div id="cta-wl-sub" style="font-size:12px;opacity:.85;line-height:1.4">Soyez parmi les 1ers à découvrir Tabibi · Inscription gratuite</div>
+<section style="padding:20px var(--gutter);margin-top:20px">
+  <a href="waiting-list.html" style="display:flex;align-items:center;gap:14px;background:#fff;border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:14px;padding:16px 18px;color:var(--ink);text-decoration:none;box-shadow:var(--s1);max-width:480px;margin:0 auto">
+    <div style="width:44px;height:44px;border-radius:12px;background:#eef4f2;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;color:var(--blue)"><i class="fa fa-paper-plane"></i></div>
+    <div style="flex:1;min-width:0">
+      <div id="cta-wl-title" style="font-weight:800;font-size:14px;margin-bottom:2px">Rejoignez la waiting list</div>
+      <div id="cta-wl-sub" style="font-size:12px;color:var(--text3);line-height:1.4">Soyez parmi les 1ers à découvrir Tabibi · Inscription gratuite</div>
     </div>
-    <i class="fa fa-arrow-right" style="font-size:14px;opacity:.7;flex-shrink:0"></i>
-    <div style="position:absolute;right:-30px;top:-30px;width:120px;height:120px;background:rgba(255,255,255,.08);border-radius:50%;pointer-events:none"></div>
+    <i class="fa fa-arrow-right" style="font-size:14px;color:var(--blue);flex-shrink:0"></i>
   </a>
 </section>
 
 
-<footer id="tabibi-footer" style="background:linear-gradient(180deg,#f8faff 0%,#eff6ff 100%);color:#0f172a;padding:32px 16px 18px;margin-top:40px;border-top:1px solid #dcfce7">
+<footer id="tabibi-footer" style="background:#f8fafc;color:#0f172a;padding:32px var(--gutter) 18px;margin-top:40px;border-top:1px solid #e7f3ef">
   <div style="max-width:480px;margin:0 auto">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0F7560,#0F7560);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">T</div>
@@ -2944,7 +2909,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       </div>
     </div>
 
-    <div style="background:#fff;border:1px solid #dcfce7;border-radius:12px;padding:14px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <div style="background:#fff;border:1px solid #e7f3ef;border-radius:12px;padding:14px;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.05)">
       <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:#0f172a"><i class='fa fa-headset' style='color:#2E8B57'></i> <span data-i18n="foot_support_24">Support 7j/7 — 8h à 22h</span></div>
       <a href="mailto:contact@tabibi.doctor" style="display:block;font-size:13px;color:#0F7560;padding:4px 0;text-decoration:none;font-weight:600"><i class='fa fa-envelope fa-xs'></i> contact@tabibi.doctor</a>
       <div id="foot-response" style="font-size:11px;color:#64748b;margin-top:4px"><i class='fa fa-clock fa-xs'></i> Réponse sous 24h ouvrées</div>
@@ -2957,7 +2922,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <a href="#" class="social-disabled" title="Bientôt disponible" aria-label="LinkedIn (bientôt disponible)" style="width:38px;height:38px;border-radius:50%;background:#0A66C2;display:flex;align-items:center;justify-content:center;color:#fff;text-decoration:none"><i class='fab fa-linkedin-in'></i></a>
     </div>
 
-    <div style="border-top:1px solid #dcfce7;padding-top:14px;text-align:center;font-size:11px;color:#64748b">
+    <div style="border-top:1px solid #e7f3ef;padding-top:14px;text-align:center;font-size:11px;color:#64748b">
       © 2025 Tabibi DZ — Tous droits réservés · Algérie 🇩🇿<br>
       <span>Données de santé hébergées en Algérie · Conforme RGPD</span>
     </div>
@@ -2976,11 +2941,11 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
 <script src="js/tabibi-brevo.js"></script>
 <script src="js/tabibi-turnstile.js"></script>
 <script src="js/tabibi-sms.js"></script>
-<script src="js/login-handler.js"></script>
 <script src="js/tabibi-network.js"></script>
 <script src="js/tabibi-cookies.js"></script>
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 <!-- [Phase 7.4] Feature flags (video/payments/notifications/reviews/analytics/sentry) -->
 <script src="js/tabibi-features.js"></script>

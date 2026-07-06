@@ -10,7 +10,10 @@
  * Dépend de :
  *   - window.tabibi.supabase (js/supabase-client.js)
  *   - RPC public.get_available_slots (Phase 5.1bis)
- *   - Table public.appointments + vue my_upcoming_appointments
+ *   - Table public.appointments (lecture directe, tous statuts — [FIX
+ *     2026-07-04] remplace la vue my_upcoming_appointments qui ne
+ *     renvoyait que les RDV futurs pending/confirmed)
+ *   - Vue public.public_doctors (hydratation nom/spécialité médecin)
  *   - Enum public.appointment_status (pending|confirmed|cancelled|completed|no_show)
  *
  * Pattern anti-régression Phase 4.B.3-fix3 :
@@ -26,7 +29,7 @@
  *   • createAppointment({doctorId, scheduledAt, durationMinutes=30,
  *                        reason, notesPatient, consultType, payMethod, prix})
  *       → {ok, data: appointmentRow, error?}
- *   • listMyAppointments()
+ *   • listMyAppointments()   — tous statuts, RDV du patient connecté
  *       → {ok, data: [row, ...], error?}
  *   • cancelMyAppointment(appointmentId, reason)
  *       → {ok, data: updatedRow, error?}
@@ -243,15 +246,16 @@
       dateIso = _isoDateAlgiers(new Date(date));
     }
     try {
-      // [Phase 5.2.1 review POINT 1] Noms params alignés sur la RPC prod
-      // déployée en commit 79a66a0 (doctor_id, target_date, slot_duration),
-      // PAS sur mon SQL `PHASE5_1bis_get_available_slots_rpc.sql` qui utilise
-      // les préfixes p_* (à hotpatcher pour cohérence — TODO Phase 5.2.5).
+      // [FIX 2026-07-03] Params réalignés sur la RPC réellement en prod : la
+      // version p_* (PHASE5_1bis) a remplacé l'ancienne signature 79a66a0 →
+      // l'appel (doctor_id, target_date, slot_duration) 404ait (PGRST202) et
+      // AUCUN créneau ne chargeait, pour aucun médecin. Vérifié par appel
+      // direct anon : p_doctor_id/p_date/p_slot_duration_min → HTTP 200.
       var r = await _withTimeout(
         s.rpc('get_available_slots', {
-          doctor_id:     doctorId,
-          target_date:   dateIso,
-          slot_duration: dur
+          p_doctor_id:         doctorId,
+          p_date:              dateIso,
+          p_slot_duration_min: dur
         }),
         8000,
         'get_available_slots'
@@ -364,9 +368,17 @@
   }
 
   // ───────────────────────────────────────────────────────────────────
-  // listMyAppointments() — utilise la vue my_upcoming_appointments
+  // listMyAppointments() — lit public.appointments (TOUS statuts)
   // ───────────────────────────────────────────────────────────────────
-  // RLS appliquée via la vue (patient_id=auth.uid() côté table source).
+  // [FIX 2026-07-04] La vue my_upcoming_appointments ne renvoie QUE les
+  // RDV futurs pending/confirmed → onglets "Passés"/"Annulés" de
+  // mes-rdv.html toujours vides (le groupement client tournait sur des
+  // données déjà filtrées) et stats patient-dashboard (passées/dépensé)
+  // toujours à 0. Constaté en prod le 2026-07-04 : RDV cancelled en base
+  // absent des 3 onglets. Lecture directe de la table — la RLS
+  // "Patients see own appointments" (patient_id=auth.uid()) l'autorise,
+  // vérifié par select direct en session patient. Nom/spécialité médecin
+  // hydratés via _hydrateDoctorInfo (la table ne porte pas ces champs).
   async function listMyAppointments() {
     var s = sb();
     if (!s) return { ok: false, error: CODES.ERR_UNKNOWN, data: [] };
@@ -379,16 +391,63 @@
       return { ok: false, error: CODES.ERR_AUTH_REQUIRED, data: [] };
     }
     try {
-      var listPromise = s.from('my_upcoming_appointments').select('*');
+      // .eq(patient_id) redondant avec la RLS mais explicite + exploite
+      // l'index (patient_id) au lieu d'un scan filtré par policy seule.
+      var listPromise = s.from('appointments')
+        .select('*')
+        .eq('patient_id', sessRes.session.user.id)
+        .order('scheduled_at', { ascending: false });
       var r = await _withTimeout(listPromise, 8000, 'list_my_appointments');
       if (r.error) {
         console.warn('[tabibiBooking] listMyAppointments error', r.error.code, r.error.message);
         return { ok: false, error: _mapPostgrestError(r.error), data: [], raw: r.error };
       }
-      return { ok: true, data: r.data || [] };
+      var rows = await _hydrateDoctorInfo(s, r.data || []);
+      return { ok: true, data: rows };
     } catch (e) {
       console.warn('[tabibiBooking] listMyAppointments exception', e && e.message);
       return { ok: false, error: _mapTimeoutOrNetwork(e), data: [], raw: e };
+    }
+  }
+
+  // [FIX 2026-07-04] Hydrate les infos médecin depuis public_doctors
+  // (vue annuaire, lisible anon+authenticated — cf. CRIT-4). Champs
+  // alignés sur ce que lisent mes-rdv.html (_doctorName / _doctorSpec /
+  // _consultLocation). Best-effort : toute erreur → rows renvoyées
+  // telles quelles, l'UI retombe sur "Praticien" ; idem pour un médecin
+  // désactivé/rejeté (exclu de public_doctors par son WHERE).
+  async function _hydrateDoctorInfo(s, rows) {
+    var ids = [];
+    rows.forEach(function (row) {
+      if (row.doctor_id && ids.indexOf(row.doctor_id) === -1) ids.push(row.doctor_id);
+    });
+    if (!ids.length) return rows;
+    try {
+      var q = s.from('public_doctors')
+        .select('id, full_name, full_name_ar, entity_type, specialty_fr, address, city, wilaya_fr')
+        .in('id', ids);
+      var r = await _withTimeout(q, 8000, 'hydrate_doctor_info');
+      if (r.error || !Array.isArray(r.data)) {
+        console.warn('[tabibiBooking] _hydrateDoctorInfo error', r.error && r.error.message);
+        return rows;
+      }
+      var byId = {};
+      r.data.forEach(function (d) { byId[d.id] = d; });
+      rows.forEach(function (row) {
+        var d = byId[row.doctor_id];
+        if (!d) return;
+        row.doctor_full_name    = d.full_name;
+        row.doctor_full_name_ar = d.full_name_ar;
+        row.doctor_entity_type  = d.entity_type;
+        row.doctor_specialty_fr = d.specialty_fr;
+        row.cabinet_address     = d.address;
+        row.cabinet_city        = d.city;
+        row.wilaya_fr           = d.wilaya_fr;
+      });
+      return rows;
+    } catch (e) {
+      console.warn('[tabibiBooking] _hydrateDoctorInfo exception', e && e.message);
+      return rows;
     }
   }
 

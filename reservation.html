@@ -7,7 +7,7 @@
 <meta name="description" content="Réservation en cours.">
 <link rel="canonical" href="https://tabibi.doctor/reservation.html">
 <meta name="robots" content="noindex,nofollow">
-<meta name="theme-color" content="#0F7560"><meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0E5F46"><meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_reservation_ongoing">
 <title>Réservation en cours | Tabibi</title>
@@ -40,6 +40,24 @@
   .rdv-slots-msg.is-error { background:#FFEEEC;color:var(--red); }
   .rdv-auth-wall { background:#FFF7E6;border:1px solid #FFD580;border-radius:var(--r12);padding:14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start; }
   .rdv-auth-wall i { color:#B07000;margin-top:2px; }
+
+  /* ── RTL (mode arabe) — pilote i18n P0 #3 ─────────────────────────────────
+     Les conteneurs flex (étapes, summary médecin, rangées de boutons,
+     auth-wall) s'inversent AUTOMATIQUEMENT sous dir=rtl — pas de row-reverse.
+     On ne traite ici que l'alignement texte, le miroir des chevrons calendrier
+     et celui des flèches directionnelles (Retour / Continuer / back app-bar). */
+  [dir="rtl"] .app-bar-title { text-align: right; }
+  [dir="rtl"] .form-label,
+  [dir="rtl"] .form-control,
+  [dir="rtl"] .rdv-slots-msg,
+  [dir="rtl"] .rdv-slots-panel .rdv-slots-msg { text-align: right; }
+  [dir="rtl"] .rdv-cal-head .month { text-align: center; }
+  /* Chevrons de navigation mois ‹ › : miroir pour pointer dans le bon sens */
+  [dir="rtl"] .rdv-cal-nav { transform: scaleX(-1); }
+  /* Flèches directionnelles FontAwesome (inline → besoin d'inline-block) */
+  [dir="rtl"] .page .fa-arrow-left,
+  [dir="rtl"] .page .fa-arrow-right,
+  [dir="rtl"] .app-bar .fa-arrow-left { display: inline-block; transform: scaleX(-1); }
 </style>
 </head>
 <body>
@@ -50,16 +68,18 @@
 
 <header class="app-bar">
   <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Confirmer le RDV</div></div>
+  <div class="app-bar-body"><div class="app-bar-title" data-i18n="confirm_rdv">Confirmer le RDV</div></div>
   <div id="uarea-desk"></div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
 
 <!-- STEP INDICATOR — [Phase 5.2.3] passé de 3 à 4 steps (Date+Slot ajouté) -->
 <div style="display:flex;border-bottom:2px solid var(--border);background:#fff" role="tablist" aria-label="Étapes">
-  <div class="auth-tab active" id="si1" style="flex:1;border-bottom:2px solid var(--blue);color:var(--blue);font-size:13px" role="tab" aria-selected="true">1 · Date</div>
-  <div class="auth-tab" id="si2" style="flex:1;font-size:13px" role="tab" aria-selected="false">2 · Détails</div>
-  <div class="auth-tab" id="si3" style="flex:1;font-size:13px" role="tab" aria-selected="false">3 · Paiement</div>
-  <div class="auth-tab" id="si4" style="flex:1;font-size:13px" role="tab" aria-selected="false">4 · OK</div>
+  <div class="auth-tab active" id="si1" style="flex:1;border-bottom:2px solid var(--blue);color:var(--blue);font-size:13px" role="tab" aria-selected="true" data-i18n="step1_date">1 · Date</div>
+  <div class="auth-tab" id="si2" style="flex:1;font-size:13px" role="tab" aria-selected="false" data-i18n="step2_details">2 · Détails</div>
+  <div class="auth-tab" id="si3" style="flex:1;font-size:13px" role="tab" aria-selected="false" data-i18n="step3_payment">3 · Paiement</div>
+  <div class="auth-tab" id="si4" style="flex:1;font-size:13px" role="tab" aria-selected="false" data-i18n="step4_ok">4 · OK</div>
 </div>
 
 <main class="page" role="main">
@@ -71,7 +91,7 @@
       <div style="font-size:15px;font-weight:700" id="a-name">...</div>
       <div style="font-size:12px;color:var(--text3)" id="a-spec"></div>
       <div style="display:flex;align-items:center;gap:8px;margin-top:4px;flex-wrap:wrap">
-        <span id="a-slot" style="background:var(--blue-l);color:var(--blue);padding:3px 10px;border-radius:var(--rfull);font-size:12px;font-weight:600">Choisissez un créneau</span>
+        <span id="a-slot" style="background:var(--blue-l);color:var(--blue);padding:3px 10px;border-radius:var(--rfull);font-size:12px;font-weight:600" data-i18n="pick_slot">Choisissez un créneau</span>
         <span id="a-prix" style="font-size:13px;font-weight:700;color:var(--blue)">— DA</span>
       </div>
     </div>
@@ -80,8 +100,8 @@
   <!-- ── STEP 1: DATE + SLOT ── [Phase 5.2.3 NEW] -->
   <div id="step1" style="padding:16px">
     <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:10px">
-      <i class='fa fa-calendar-days' style='color:var(--blue);margin-right:6px'></i>
-      Choisissez un jour et un créneau
+      <i class='fa fa-calendar-days' style='color:var(--blue);margin-inline-end:6px'></i>
+      <span data-i18n="pick_day_slot">Choisissez un jour et un créneau</span>
     </div>
 
     <!-- Calendrier 90 jours, lazy fetch on click -->
@@ -92,10 +112,10 @@
         <button class="rdv-cal-nav" id="cal-next" onclick="calNav(1)" aria-label="Mois suivant">›</button>
       </div>
       <div class="rdv-cal-dow" aria-hidden="true">
-        <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+        <div data-i18n="dow_mon">Lun</div><div data-i18n="dow_tue">Mar</div><div data-i18n="dow_wed">Mer</div><div data-i18n="dow_thu">Jeu</div><div data-i18n="dow_fri">Ven</div><div data-i18n="dow_sat">Sam</div><div data-i18n="dow_sun">Dim</div>
       </div>
       <div class="rdv-cal-grid" id="cal-grid" role="grid"></div>
-      <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center">
+      <div style="font-size:11px;color:var(--text3);margin-top:8px;text-align:center" data-i18n="cal_hint">
         Disponibilité chargée à la sélection · 90 jours max
       </div>
     </div>
@@ -103,38 +123,38 @@
     <!-- Créneaux du jour sélectionné -->
     <div class="rdv-slots-panel" id="slots-panel" aria-live="polite">
       <div class="rdv-slots-msg">
-        <i class='fa fa-hand-pointer' style='margin-right:6px'></i>
-        Cliquez sur un jour ci-dessus pour voir les créneaux.
+        <i class='fa fa-hand-pointer' style='margin-inline-end:6px'></i>
+        <span data-i18n="click_day_hint">Cliquez sur un jour ci-dessus pour voir les créneaux.</span>
       </div>
     </div>
 
     <button class="btn btn-primary btn-full btn-xl" id="btn-step1-next" onclick="toStep(2)" disabled style="margin-top:14px;opacity:.5">
-      Continuer <i class='fa fa-arrow-right'></i>
+      <span data-i18n="continue">Continuer</span> <i class='fa fa-arrow-right'></i>
     </button>
   </div>
 
   <!-- ── STEP 2: DETAILS ── (anciennement Step 1) -->
   <div id="step2" class="hidden" style="padding:16px">
     <div class="form-group">
-      <label class="form-label" for="reason">Motif de consultation <span style="color:var(--red)">*</span></label>
+      <label class="form-label" for="reason"><span data-i18n="reason_label">Motif de consultation</span> <span style="color:var(--red)">*</span></label>
       <textarea class="form-control" id="reason" placeholder="Décrivez brièvement vos symptômes ou le motif de votre visite..." data-i18n-placeholder="ph_visit_reason" rows="3" required></textarea>
     </div>
     <div class="form-group">
-      <label class="form-label" for="ctype">Type de consultation</label>
+      <label class="form-label" for="ctype" data-i18n="consult_type_label">Type de consultation</label>
       <select class="form-control" id="ctype">
-        <option value="premiere">Première consultation</option>
-        <option value="suivi">Consultation de suivi</option>
-        <option value="urgence">Urgence</option>
-        <option value="controle">Contrôle résultats</option>
+        <option value="premiere" data-i18n="consult_first">Première consultation</option>
+        <option value="suivi" data-i18n="consult_followup">Consultation de suivi</option>
+        <option value="urgence" data-i18n="consult_urgent">Urgence</option>
+        <option value="controle" data-i18n="consult_checkresults">Contrôle résultats</option>
       </select>
     </div>
     <div class="form-group">
-      <label class="form-label" for="notes">Notes supplémentaires</label>
+      <label class="form-label" for="notes" data-i18n="notes_label">Notes supplémentaires</label>
       <textarea class="form-control" id="notes" placeholder="Allergies connues, médicaments en cours, antécédents importants..." data-i18n-placeholder="ph_medical_notes" rows="2"></textarea>
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost btn-lg" onclick="toStep(1)" style="flex:1"><i class='fa fa-arrow-left'></i> Retour</button>
-      <button class="btn btn-primary btn-xl" onclick="toStep(3)" style="flex:2">Continuer <i class='fa fa-arrow-right'></i></button>
+      <button class="btn btn-ghost btn-lg" onclick="toStep(1)" style="flex:1"><i class='fa fa-arrow-left'></i> <span data-i18n="back">Retour</span></button>
+      <button class="btn btn-primary btn-xl" onclick="toStep(3)" style="flex:2"><span data-i18n="continue">Continuer</span> <i class='fa fa-arrow-right'></i></button>
     </div>
   </div>
 
@@ -145,19 +165,19 @@
     <div id="auth-wall" class="rdv-auth-wall hidden" role="alert">
       <i class='fa fa-circle-info'></i>
       <div style="flex:1;font-size:13px">
-        <div style="font-weight:700;margin-bottom:4px">Connexion requise pour confirmer</div>
-        <div style="color:var(--text2);margin-bottom:8px">Créez un compte ou connectez-vous — vos choix de RDV seront conservés.</div>
-        <a id="auth-wall-login" href="#" class="btn btn-primary btn-sm"><i class='fa fa-right-to-bracket'></i> Se connecter / S'inscrire</a>
+        <div style="font-weight:700;margin-bottom:4px" data-i18n="auth_required_title">Connexion requise pour confirmer</div>
+        <div style="color:var(--text2);margin-bottom:8px" data-i18n="auth_required_body">Créez un compte ou connectez-vous — vos choix de RDV seront conservés.</div>
+        <a id="auth-wall-login" href="#" class="btn btn-primary btn-sm"><i class='fa fa-right-to-bracket'></i> <span data-i18n="login_or_signup">Se connecter / S'inscrire</span></a>
       </div>
     </div>
     <div style="font-size:14px;font-weight:700;color:var(--text2);margin-bottom:14px" data-i18n="pay_title">Mode de paiement</div>
     <div id="pay-methods"></div>
     <div style="background:var(--bg2);border-radius:var(--r12);padding:12px 14px;font-size:12px;color:var(--text3);margin-top:4px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
       <i class='fa fa-shield-halved fa-sm' style='color:var(--blue)'></i>
-      Paiement 100% sécurisé · Données chiffrées SSL/TLS
+      <span data-i18n="payment_secure">Paiement 100% sécurisé · Données chiffrées SSL/TLS</span>
     </div>
     <div style="display:flex;gap:10px">
-      <button class="btn btn-ghost btn-lg" onclick="toStep(2)" style="flex:1"><i class='fa fa-arrow-left'></i> Retour</button>
+      <button class="btn btn-ghost btn-lg" onclick="toStep(2)" style="flex:1"><i class='fa fa-arrow-left'></i> <span data-i18n="back">Retour</span></button>
       <button class="btn btn-success btn-xl" id="btn-confirm" onclick="confirmRDV()" style="flex:2"><i class='fa fa-calendar-check'></i> <span data-i18n="confirm_rdv">Confirmer le RDV</span></button>
     </div>
   </div>
@@ -166,11 +186,11 @@
   <div id="step4" class="hidden" style="padding:24px;text-align:center">
     <div style="width:80px;height:80px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 20px;animation:fadeup .4s ease" aria-hidden="true"><i class='fa fa-circle-check' style='color:var(--green)'></i></div>
     <h1 style="font-size:20px;font-weight:800;margin-bottom:8px" data-i18n="rdv_ok">RDV confirmé !</h1>
-    <p style="font-size:14px;color:var(--text3);margin-bottom:20px">Votre RDV a été enregistré. Vous recevrez une confirmation par SMS prochainement.</p>
-    <div class="card" id="confirm-summary" style="text-align:left;margin-bottom:16px"></div>
+    <p style="font-size:14px;color:var(--text3);margin-bottom:20px" data-i18n="rdv_ok_body">Votre RDV a été enregistré. Vous recevrez une confirmation par SMS prochainement.</p>
+    <div class="card" id="confirm-summary" style="text-align:start;margin-bottom:16px"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
-      <a href="mes-rdv.html" class="btn btn-primary btn-full btn-lg"><i class='fa fa-calendar'></i> Voir mes rendez-vous</a>
-      <a href="index.html" class="btn btn-ghost btn-full btn-lg"><i class='fa fa-home'></i> Retour à l'accueil</a>
+      <a href="mes-rdv.html" class="btn btn-primary btn-full btn-lg"><i class='fa fa-calendar'></i> <span data-i18n="see_my_appointments">Voir mes rendez-vous</span></a>
+      <a href="index.html" class="btn btn-ghost btn-full btn-lg"><i class='fa fa-home'></i> <span data-i18n="back_home">Retour à l'accueil</span></a>
     </div>
   </div>
 
@@ -179,7 +199,11 @@
 <div id="uarea-mob" class="hidden"></div>
 
 <!-- [Phase 16.5] scripts/app.js retiré (404) -->
-<script src="scripts/payments.js"></script>
+<!-- [FIX 2026-07-04] scripts/payments.js → js/payments.js : scripts/ est
+     export-ignore (jamais dans dist/) donc 404 permanent en prod. Le stub
+     js/payments.js est cash-only (renderPayMethods retourne '', aucun
+     paiement en ligne réactivé). -->
+<script src="js/payments.js"></script>
 <script>
 // ========================================================================
 // [Phase 5.2.3] Refactor reservation.html : wizard 4 steps
@@ -193,6 +217,37 @@
 // • ERR_SLOT_TAKEN : refresh auto des slots du jour sélectionné + retour Step 1.
 // • ERR_AUTH_REQUIRED : affiche auth-wall + link login.html?next=...
 // ========================================================================
+
+// ── i18n helper (clés explicites, fallback FR ; tabibiT vient de tabibi-i18n.js) ──
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+
+// [FIX 2026-07-03] getParam vivait dans scripts/app.js, retiré Phase 16.5 →
+// ReferenceError à l'éval : TOUT le script mourait (calendrier/wizard jamais
+// rendus). Défini localement, même pattern que index/payment/verify-email.
+function getParam(k){ try { return new URLSearchParams(window.location.search).get(k) || ""; } catch(e){ return ""; } }
+
+// [FIX 2026-07-03] toast() vivait aussi dans scripts/app.js (404). Les 8 appels
+// d'erreur/avertissement du wizard (jour/créneau manquant, motif requis, créneau
+// pris, lien invalide…) jetaient un ReferenceError SILENCIEUX → le patient
+// n'avait AUCUN retour. La réservation aboutissait (happy-path ne toaste pas),
+// mais tout le feedback d'erreur était mort. Shim gardé = implémentation
+// canonique d'index.html (CSS .toast-wrap/.toast déjà dans styles/app.css).
+if(typeof window.toast !== 'function'){
+  window.toast = function(msg, type, ms){
+    type = type || 'info'; ms = ms || 3500;
+    var c = document.getElementById('toast-wrap');
+    if(!c){ c = document.createElement('div'); c.id = 'toast-wrap'; c.className = 'toast-wrap'; document.body.appendChild(c); }
+    var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
+    var t = document.createElement('div');
+    t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
+    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    c.appendChild(t);
+    setTimeout(function(){
+      t.style.transition = 'all .28s'; t.style.opacity = '0'; t.style.transform = 'translateY(-6px)';
+      setTimeout(function(){ t.remove(); }, 300);
+    }, ms);
+  };
+}
 
 // ── State ───────────────────────────────────────────────────────────────
 var doctorId    = getParam("doctor_id") || "";
@@ -210,6 +265,22 @@ var calMonth     = null;          // Date pointing to 1st of currently viewed mo
 var _DF_ALGIERS = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Africa/Algiers', year:'numeric', month:'2-digit', day:'2-digit'
 });
+var _MF_ALGIERS = new Intl.DateTimeFormat('en-CA', { timeZone:'Africa/Algiers', month:'numeric' });
+var _YF_ALGIERS = new Intl.DateTimeFormat('en-CA', { timeZone:'Africa/Algiers', year:'numeric' });
+// [I18N-RES] Mois MAGHRÉBINS figés : Intl('ar-DZ') les renvoie côté Node, mais l'ICU
+// du WebView client peut sortir les mois du Machrek (يناير…) → on hardcode le maghrébin.
+var _AR_MONTHS = ['جانفي','فيفري','مارس','أفريل','ماي','جوان','جويلية','أوت','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+function _isAr(){
+  try { if (window.tabibiI18n && typeof tabibiI18n.lang === 'function') return tabibiI18n.lang() === 'ar'; } catch(e){}
+  try { return (localStorage.getItem('tabibi_lang') || document.documentElement.lang) === 'ar'; } catch(e){}
+  return document.documentElement.dir === 'rtl';
+}
+function _isEn(){
+  try { return (localStorage.getItem('tabibi_lang') || document.documentElement.lang) === 'en'; } catch(e){}
+  return false;
+}
+// [I18N-RES] locale d'affichage dates pour les branches non-arabes (mandat : locale par langue)
+function _dateLocale(){ return _isEn() ? 'en-GB' : 'fr-FR'; }
 function _isoDay(d){ return _DF_ALGIERS.format(d); }
 function _todayIso(){ return _isoDay(new Date()); }
 function _addDaysIso(iso, n){
@@ -220,17 +291,23 @@ function _addDaysIso(iso, n){
 }
 function _maxIso(){ return _addDaysIso(_todayIso(), 90); }
 function _formatDayFr(iso){
-  // 'YYYY-MM-DD' → 'mer. 22 mai 2026'
+  // 'YYYY-MM-DD' → FR 'mer. 22 mai 2026' | AR 'الأربعاء 22 ماي 2026' (mois maghrébin, chiffres latins)
   var p = iso.split('-');
   var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), 12, 0, 0);
-  return new Intl.DateTimeFormat('fr-FR', {
+  if (_isAr()) {
+    var wd  = new Intl.DateTimeFormat('ar-DZ', { weekday:'short', timeZone:'Africa/Algiers' }).format(d);
+    var day = new Intl.DateTimeFormat('ar-DZ-u-nu-latn', { day:'numeric', timeZone:'Africa/Algiers' }).format(d);
+    var mi  = parseInt(_MF_ALGIERS.format(d), 10) - 1;
+    return wd + ' ' + day + ' ' + _AR_MONTHS[mi] + ' ' + _YF_ALGIERS.format(d);
+  }
+  return new Intl.DateTimeFormat(_dateLocale(), {
     weekday:'short', day:'numeric', month:'long', year:'numeric',
     timeZone:'Africa/Algiers'
   }).format(d);
 }
 function _formatTimeFr(isoTs){
   // ISO timestamptz → 'HH:MM' Algiers
-  return new Intl.DateTimeFormat('fr-FR', {
+  return new Intl.DateTimeFormat(_dateLocale(), {
     hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Africa/Algiers'
   }).format(new Date(isoTs));
 }
@@ -245,7 +322,7 @@ function _initials(name){
 function renderDoctorSummary(){
   var ava = document.getElementById("a-ava");
   ava.textContent = _initials(doctorName);
-  document.getElementById("a-name").textContent = doctorName || "Médecin";
+  document.getElementById("a-name").textContent = doctorName || _t('doctor', "Médecin");
   document.getElementById("a-spec").textContent = specName || "";
   document.getElementById("a-prix").textContent =
     (prix>0 ? prix.toLocaleString() : "—") + " DA";
@@ -258,14 +335,21 @@ function refreshSlotPill(){
                    + _formatDayFr(selectedDate) + " · "
                    + _formatTimeFr(selectedSlot.slot_start);
   } else {
-    pill.textContent = "Choisissez un créneau";
+    pill.textContent = _t('pick_slot', "Choisissez un créneau");
   }
 }
 
 // ── Calendar ────────────────────────────────────────────────────────────
 function _monthLabel(d){
-  return new Intl.DateTimeFormat('fr-FR', {
-    month:'long', year:'numeric', timeZone:'Africa/Algiers'
+  // [FIX 2026-07-04] Pas de timeZone ici : calMonth = minuit LOCAL du 1er, et la
+  // grille lit ses composantes locales. Formaté en TZ Africa/Algiers depuis un
+  // fuseau à l'est (Paris été = UTC+2), l'instant retombait au 30 du mois
+  // précédent → « juin 2026 » affiché sur une grille de juillet.
+  if (_isAr()) {
+    return _AR_MONTHS[d.getMonth()] + ' ' + d.getFullYear();
+  }
+  return new Intl.DateTimeFormat(_dateLocale(), {
+    month:'long', year:'numeric'
   }).format(d);
 }
 function renderCalendar(){
@@ -345,10 +429,10 @@ async function onDayClick(dateIso){
   }
 
   // Loading
-  panel.innerHTML = '<div class="rdv-slots-msg"><i class="fa fa-spinner fa-spin"></i> Chargement des créneaux…</div>';
+  panel.innerHTML = '<div class="rdv-slots-msg"><i class="fa fa-spinner fa-spin"></i> ' + _t('loading_slots', 'Chargement des créneaux…') + '</div>';
 
   if(!window.tabibiBooking){
-    panel.innerHTML = '<div class="rdv-slots-msg is-error">Erreur : module de réservation indisponible. Rechargez la page.</div>';
+    panel.innerHTML = '<div class="rdv-slots-msg is-error">' + _t('err_booking_module', 'Module de réservation indisponible. Rechargez la page.') + '</div>';
     return;
   }
 
@@ -366,7 +450,7 @@ function renderSlotsFromCache(dateIso){
   var slots = slotsCache.get(dateIso) || [];
   var panel = document.getElementById("slots-panel");
   if(slots.length === 0){
-    panel.innerHTML = '<div class="rdv-slots-msg"><i class="fa fa-circle-info"></i> Aucun créneau disponible ce jour. Choisissez un autre jour.</div>';
+    panel.innerHTML = '<div class="rdv-slots-msg"><i class="fa fa-circle-info"></i> ' + _t('no_slots_day', 'Aucun créneau disponible ce jour. Choisissez un autre jour.') + '</div>';
     renderCalendar();        // re-render pour griser la case
     return;
   }
@@ -375,7 +459,7 @@ function renderSlotsFromCache(dateIso){
          + '" onclick="onSlotClick('+idx+')">'+_formatTimeFr(s.slot_start)+'</button>';
   }).join('');
   panel.innerHTML = '<div style="font-size:12px;color:var(--text3);margin-bottom:8px">'
-                  + _formatDayFr(dateIso) + ' — ' + slots.length + ' créneau(x)</div>'
+                  + _formatDayFr(dateIso) + ' — ' + slots.length + ' ' + _t('slots_unit', 'créneau(x)') + '</div>'
                   + '<div class="rdv-slots-grid">'+pills+'</div>';
 }
 
@@ -403,14 +487,14 @@ function toStep(n){
   // Validations transitions
   if(n === 2){
     if(!selectedDate || !selectedSlot){
-      toast("Choisissez un jour et un créneau.", "error");
+      toast(_t('pick_day_slot', "Choisissez un jour et un créneau"), "error");
       return;
     }
   }
   if(n === 3){
     var reason = document.getElementById("reason")?.value.trim();
     if(!reason){
-      toast(typeof T==='function' ? T("reason_req") : "Indiquez un motif de consultation.", "error");
+      toast(_t("reason_req", "Indiquez un motif de consultation."), "error");
       return;
     }
   }
@@ -432,11 +516,11 @@ function toStep(n){
 // ── Confirm RDV (INSERT via tabibiBooking) ──────────────────────────────
 async function confirmRDV(){
   if(!selectedSlot || !selectedDate){
-    toast("Créneau manquant. Revenez à l'étape 1.", "error");
+    toast(_t('err_slot_missing', "Créneau manquant. Revenez à l'étape 1."), "error");
     return;
   }
   if(!window.tabibiBooking){
-    toast("Module de réservation indisponible. Rechargez la page.", "error");
+    toast(_t('err_booking_module', "Module de réservation indisponible. Rechargez la page."), "error");
     return;
   }
 
@@ -451,7 +535,7 @@ async function confirmRDV(){
   var btn = document.getElementById("btn-confirm");
   if(btn){
     btn.disabled = true;
-    btn.innerHTML = "<i class='fa fa-spinner fa-spin'></i> Enregistrement…";
+    btn.innerHTML = "<i class='fa fa-spinner fa-spin'></i> " + _t('saving', 'Enregistrement…');
   }
 
   var r = await window.tabibiBooking.createAppointment({
@@ -469,18 +553,18 @@ async function confirmRDV(){
     // Succès → Step 4
     toStep(4);
     document.getElementById("confirm-summary").innerHTML = [
-      ["Médecin",    doctorName || "—"],
-      ["Spécialité", specName || "—"],
-      ["Date",       _formatDayFr(selectedDate)],
-      ["Heure",      _formatTimeFr(selectedSlot.slot_start)],
-      ["Motif",      reason],
-      ["Paiement",   (typeof PAY_METHODS!=='undefined' && PAY_METHODS[payMethod] && typeof T==='function')
+      [_t('doctor', "Médecin"),        doctorName || "—"],
+      [_t('sum_specialty', "Spécialité"), specName || "—"],
+      [_t('sum_date', "Date"),         _formatDayFr(selectedDate)],
+      [_t('sum_time', "Heure"),        _formatTimeFr(selectedSlot.slot_start)],
+      [_t('sum_reason', "Motif"),      reason],
+      [_t('sum_payment', "Paiement"),  (typeof PAY_METHODS!=='undefined' && PAY_METHODS[payMethod] && typeof T==='function')
                        ? T(PAY_METHODS[payMethod].key) : payMethod],
-      ["Montant",    (prix>0 ? prix.toLocaleString() : "—") + " DA"]
+      [_t('sum_amount', "Montant"),    (prix>0 ? prix.toLocaleString() : "—") + " DA"]
     ].map(function(kv){
       return '<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:13px">'
            + '<span style="color:var(--text3)">'+kv[0]+'</span>'
-           + '<span style="font-weight:600;text-align:right;max-width:200px;overflow:hidden;text-overflow:ellipsis">'+kv[1]+'</span>'
+           + '<span style="font-weight:600;text-align:end;max-width:200px;overflow:hidden;text-overflow:ellipsis">'+kv[1]+'</span>'
            + '</div>';
     }).join("");
     return;
@@ -500,13 +584,13 @@ async function confirmRDV(){
       login.href = "login.html?next=" + encodeURIComponent(current);
     }
     toast(msg, "warning");
-    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> "+_t('confirm_rdv','Confirmer le RDV'); }
     return;
   }
 
   // ERR_SLOT_TAKEN → refresh auto des slots du jour + retour Step 1
   if(r.error === 'ERR_SLOT_TAKEN'){
-    toast("Ce créneau vient d'être pris. Voici les créneaux mis à jour.", "warning");
+    toast(_t('err_slot_taken', "Ce créneau vient d'être pris. Voici les créneaux mis à jour."), "warning");
     slotsCache.delete(selectedDate);   // invalide cache pour fresh fetch
     var dateToRefresh = selectedDate;
     selectedSlot = null;
@@ -515,14 +599,14 @@ async function confirmRDV(){
     toStep(1);
     // Re-fetch (async)
     onDayClick(dateToRefresh);
-    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+    if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> "+_t('confirm_rdv','Confirmer le RDV'); }
     return;
   }
 
   // Autres erreurs (ERR_INVALID_INPUT, ERR_RLS_DENIED, ERR_NETWORK,
   // ERR_TIMEOUT, ERR_RATE_LIMIT, ERR_DOCTOR_NOT_CLAIMED, ERR_UNKNOWN…)
   toast(msg, "error");
-  if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> Confirmer le RDV"; }
+  if(btn){ btn.disabled=false; btn.innerHTML="<i class='fa fa-calendar-check'></i> "+_t('confirm_rdv','Confirmer le RDV'); }
 }
 
 // ── Init ────────────────────────────────────────────────────────────────
@@ -534,7 +618,7 @@ function init(){
 
   // Validation params URL
   if(!doctorId){
-    toast("Lien invalide : médecin manquant.", "error");
+    toast(_t('err_invalid_link', "Lien invalide : médecin manquant."), "error");
     setTimeout(function(){ location.href = "index.html"; }, 1500);
     return;
   }
@@ -545,7 +629,16 @@ function init(){
 
   renderDoctorSummary();
   renderCalendar();
-  document.getElementById("pay-methods").innerHTML = renderPayMethods("cash");
+  // [FIX 2026-07-03] renderPayMethods venait de scripts/payments.js — 404 en
+  // prod (scripts/ est export-ignore au deploy) : l'appel non gardé crashait
+  // init() à mi-course (renderUserUI/initTabBar/hideLoading jamais exécutés).
+  // [FIX 2026-07-04] Résolu : stub cash-only js/payments.js (retourne '').
+  // Le garde typeof reste en défense si le stub venait à manquer.
+  if (typeof renderPayMethods === 'function') {
+    document.getElementById("pay-methods").innerHTML = renderPayMethods("cash");
+  } else {
+    console.warn('[reservation] renderPayMethods absent (js/payments.js) — paiement par défaut : cash');
+  }
   window._pay = "cash";
 
   if(typeof renderUserUI === 'function') renderUserUI();
@@ -565,6 +658,16 @@ window.goBackSafe = goBackSafe;
 window.calNav = calNav;
 window.onDayClick = onDayClick;
 window.onSlotClick = onSlotClick;
+
+// [I18N-RES] Re-localise le calendrier (mois, pill créneau, jour sélectionné) au
+// changement de langue — les labels statiques sont déjà gérés par le moteur i18n.
+document.addEventListener('tabibi:lang-change', function(){
+  try {
+    if (typeof renderDoctorSummary === 'function') renderDoctorSummary();
+    if (calMonth && typeof renderCalendar === 'function') renderCalendar();
+    if (selectedDate && slotsCache.has(selectedDate) && typeof renderSlotsFromCache === 'function') renderSlotsFromCache(selectedDate);
+  } catch(e){}
+});
 </script>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -579,6 +682,8 @@ window.onSlotClick = onSlotClick;
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>

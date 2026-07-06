@@ -112,32 +112,30 @@
     <img src="images/logo-mark.svg" alt="Tabibi">
     <b>Tabibi</b>
   </a>
-  <h1 id="t-pagetitle">Mes ordonnances</h1>
-  <div class="lang-bar">
-    <button class="lang-btn active" data-lang="fr">FR</button>
-    <button class="lang-btn" data-lang="ar">العربية</button>
-  </div>
+  <h1 id="t-pagetitle" data-i18n="po_pagetitle">Mes ordonnances</h1>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js (remplace la lang-bar locale FR/AR) -->
+  <div data-langbar></div>
 </div>
 
 <div class="wrap">
 
   <div class="header-card">
-    <h2 id="t-title">Mes ordonnances numeriques</h2>
-    <p id="t-sub">Toutes vos ordonnances signees electroniquement, accessibles a tout moment.</p>
+    <h2 id="t-title" data-i18n="po_title">Mes ordonnances numeriques</h2>
+    <p id="t-sub" data-i18n="po_sub">Toutes vos ordonnances signees electroniquement, accessibles a tout moment.</p>
   </div>
 
   <div class="tabs" role="tablist">
     <button class="tab active" data-filter="active" role="tab">
-      <span id="t-tab-active">Actives</span> <span class="tab-count" id="cnt-active">0</span>
+      <span id="t-tab-active" data-i18n="po_tab_active">Actives</span> <span class="tab-count" id="cnt-active">0</span>
     </button>
     <button class="tab" data-filter="expired" role="tab">
-      <span id="t-tab-expired">Expirees</span> <span class="tab-count" id="cnt-expired">0</span>
+      <span id="t-tab-expired" data-i18n="po_tab_expired">Expirees</span> <span class="tab-count" id="cnt-expired">0</span>
     </button>
     <button class="tab" data-filter="cancelled" role="tab">
-      <span id="t-tab-cancelled">Annulees</span> <span class="tab-count" id="cnt-cancelled">0</span>
+      <span id="t-tab-cancelled" data-i18n="po_tab_cancelled">Annulees</span> <span class="tab-count" id="cnt-cancelled">0</span>
     </button>
     <button class="tab" data-filter="all" role="tab">
-      <span id="t-tab-all">Toutes</span> <span class="tab-count" id="cnt-all">0</span>
+      <span id="t-tab-all" data-i18n="po_tab_all">Toutes</span> <span class="tab-count" id="cnt-all">0</span>
     </button>
   </div>
 
@@ -154,10 +152,10 @@
 <!-- Modal details -->
 <div class="modal" id="modal" role="dialog" aria-modal="true">
   <div class="modal-content">
-    <h3 id="m-title">Detail de l'ordonnance</h3>
+    <h3 id="m-title" data-i18n="po_modal_title">Detail de l'ordonnance</h3>
     <div id="m-body"></div>
     <div style="text-align:right;margin-top:20px">
-      <button class="btn btn-secondary" onclick="document.getElementById('modal').classList.remove('open')">Fermer</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('modal').classList.remove('open')" data-i18n="po_close">Fermer</button>
     </div>
   </div>
 </div>
@@ -191,9 +189,17 @@
     return String(s || '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // [CONFORMITE 2026] i18n via dico PARTAGÉ (clés po_* dans js/tabibi-i18n.js).
+  // Statique = data-i18n (engine) ; dynamique (statuts, cartes, vides, toasts,
+  // dates) = tabibiT ci-dessous + re-render sur tabibi:lang-change.
+  function T(k, f) { return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+  const DATE_LOCALES = { fr: 'fr-FR', ar: 'ar-DZ', en: 'en-GB' };
+  function curLang() { try { return (window.tabibiLang && window.tabibiLang.get()) || 'fr'; } catch (e) { return 'fr'; } }
+  document.addEventListener('tabibi:lang-change', () => { if (state.all.length || !$('.skeleton')) applyFilter(); });
+
   function fmtDate(iso) {
     if (!iso) return '—';
-    try { return new Date(iso).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); }
+    try { return new Date(iso).toLocaleDateString(DATE_LOCALES[curLang()] || 'fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }); }
     catch (e) { return iso; }
   }
 
@@ -209,18 +215,18 @@
   }
 
   function statusBadge(p) {
-    if (p.status === 'cancelled') return '<span class="status cancelled">Annulee</span>';
-    if (isExpired(p))             return '<span class="status expired">Expiree</span>';
-    if (p.status === 'delivered') return '<span class="status delivered">Recue</span>';
-    if (p.status === 'signed')    return '<span class="status signed">Active</span>';
-    return '<span class="status draft">Brouillon</span>';
+    if (p.status === 'cancelled') return '<span class="status cancelled">' + escapeHtml(T('po_status_cancelled', 'Annulee')) + '</span>';
+    if (isExpired(p))             return '<span class="status expired">' + escapeHtml(T('po_status_expired', 'Expiree')) + '</span>';
+    if (p.status === 'delivered') return '<span class="status delivered">' + escapeHtml(T('po_status_delivered', 'Recue')) + '</span>';
+    if (p.status === 'signed')    return '<span class="status signed">' + escapeHtml(T('po_status_active', 'Active')) + '</span>';
+    return '<span class="status draft">' + escapeHtml(T('po_status_draft', 'Brouillon')) + '</span>';
   }
 
   async function downloadPdf(prescriptionId) {
     const supa = window.tabibi.supabase;
     try {
       const { data: presc } = await supa.from('prescriptions').select('pdf_storage_path').eq('id', prescriptionId).maybeSingle();
-      if (!presc || !presc.pdf_storage_path) { showToast('PDF indisponible', 'err'); return; }
+      if (!presc || !presc.pdf_storage_path) { showToast(T('po_pdf_unavailable', 'PDF indisponible'), 'err'); return; }
       const { data, error } = await supa.storage.from('prescriptions').createSignedUrl(presc.pdf_storage_path, 60 * 60 * 24);
       if (error) throw error;
 
@@ -228,7 +234,7 @@
       await supa.rpc('mark_prescription_delivered', { p_prescription_id: prescriptionId, p_channel: 'download' });
     } catch (e) {
       console.error(e);
-      showToast('Erreur telechargement', 'err');
+      showToast(T('po_download_error', 'Erreur telechargement'), 'err');
     }
   }
 
@@ -236,14 +242,14 @@
     const supa = window.tabibi.supabase;
     try {
       const { data: presc } = await supa.from('prescriptions').select('pdf_storage_path, prescription_number').eq('id', prescriptionId).maybeSingle();
-      if (!presc || !presc.pdf_storage_path) { showToast('PDF indisponible', 'err'); return; }
+      if (!presc || !presc.pdf_storage_path) { showToast(T('po_pdf_unavailable', 'PDF indisponible'), 'err'); return; }
       const { data } = await supa.storage.from('prescriptions').createSignedUrl(presc.pdf_storage_path, 60 * 60 * 24);
       const text = encodeURIComponent(`Ordonnance ${presc.prescription_number} de ${doctorName} via Tabibi : ${data.signedUrl}`);
       window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
       await supa.rpc('mark_prescription_delivered', { p_prescription_id: prescriptionId, p_channel: 'whatsapp' });
     } catch (e) {
       console.error(e);
-      showToast('Erreur partage', 'err');
+      showToast(T('po_share_error', 'Erreur partage'), 'err');
     }
   }
 
@@ -251,7 +257,7 @@
     const meds = Array.isArray(p.medications) ? p.medications : [];
     const html = `
       <div style="margin-bottom:14px;font-size:12px;color:var(--text3)">
-        ${escapeHtml(p.prescription_number)} — emise le ${fmtDate(p.issue_date)} par
+        ${escapeHtml(p.prescription_number)} — ${escapeHtml(T('po_issued_on', 'emise le'))} ${fmtDate(p.issue_date)} ${escapeHtml(T('po_by', 'par'))}
         <strong>Dr ${escapeHtml(p.doctor_first_name || '')} ${escapeHtml(p.doctor_last_name || '')}</strong>
       </div>
       <ul class="meds-detail">
@@ -264,7 +270,7 @@
         `).join('')}
       </ul>
       <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border);font-size:12px;color:var(--text3)">
-        Hash d'integrite : <code style="font-size:10px;word-break:break-all">${escapeHtml(p.pdf_sha256 || '—')}</code>
+        ${escapeHtml(T('po_integrity_hash', "Hash d'integrite :"))} <code style="font-size:10px;word-break:break-all">${escapeHtml(p.pdf_sha256 || '—')}</code>
       </div>
     `;
     $('#m-body').innerHTML = html;
@@ -283,20 +289,20 @@
         <div class="presc-head">
           <div>
             <div class="presc-doctor">${escapeHtml(doctorName)}</div>
-            <div class="presc-specialty">${escapeHtml(p.doctor_specialty || 'Medecin')}</div>
+            <div class="presc-specialty">${escapeHtml(p.doctor_specialty || T('po_doctor_fallback', 'Medecin'))}</div>
             <div class="presc-number">${escapeHtml(p.prescription_number)}</div>
           </div>
           ${statusBadge(p)}
         </div>
         <div class="presc-dates">
-          <div><strong>Emise :</strong> ${fmtDate(p.issue_date)}</div>
-          <div><strong>Valide jusqu'au :</strong> ${fmtDate(p.expiry_date)}</div>
+          <div><strong>${escapeHtml(T('po_issued', 'Emise :'))}</strong> ${fmtDate(p.issue_date)}</div>
+          <div><strong>${escapeHtml(T('po_valid_until', "Valide jusqu'au :"))}</strong> ${fmtDate(p.expiry_date)}</div>
         </div>
         <div class="meds-preview">${pills || '—'}${more}</div>
         <div class="presc-actions">
-          <button class="btn btn-secondary" data-act="detail" data-id="${p.id}"><i class="fa fa-eye"></i> Detail</button>
-          ${canDownload ? `<button class="btn btn-primary" data-act="download" data-id="${p.id}"><i class="fa fa-download"></i> PDF</button>` : ''}
-          ${canDownload ? `<button class="btn btn-whatsapp" data-act="whatsapp" data-id="${p.id}" data-doc="${escapeHtml(doctorName)}"><i class="fa-brands fa-whatsapp"></i> Partager</button>` : ''}
+          <button class="btn btn-secondary" data-act="detail" data-id="${p.id}"><i class="fa fa-eye"></i> ${escapeHtml(T('po_detail', 'Detail'))}</button>
+          ${canDownload ? `<button class="btn btn-primary" data-act="download" data-id="${p.id}"><i class="fa fa-download"></i> ${escapeHtml(T('po_pdf', 'PDF'))}</button>` : ''}
+          ${canDownload ? `<button class="btn btn-whatsapp" data-act="whatsapp" data-id="${p.id}" data-doc="${escapeHtml(doctorName)}"><i class="fa-brands fa-whatsapp"></i> ${escapeHtml(T('po_share', 'Partager'))}</button>` : ''}
         </div>
       </div>
     `;
@@ -318,8 +324,11 @@
       $('#list').innerHTML = `
         <div class="empty">
           <i class="fa fa-file-prescription"></i>
-          <h3>Aucune ordonnance ${f === 'active' ? 'active' : f === 'expired' ? 'expiree' : f === 'cancelled' ? 'annulee' : ''}</h3>
-          <p>Vos ordonnances signees apparaitront ici.</p>
+          <h3>${escapeHtml(f === 'active' ? T('po_empty_active', 'Aucune ordonnance active')
+                 : f === 'expired' ? T('po_empty_expired', 'Aucune ordonnance expiree')
+                 : f === 'cancelled' ? T('po_empty_cancelled', 'Aucune ordonnance annulee')
+                 : T('po_empty_all', 'Aucune ordonnance'))}</h3>
+          <p>${escapeHtml(T('po_empty_sub', 'Vos ordonnances signees apparaitront ici.'))}</p>
         </div>`;
     } else {
       $('#list').innerHTML = slice.map(renderCard).join('');
@@ -357,7 +366,7 @@
 
   async function load() {
     const supa = window.tabibi && window.tabibi.supabase;
-    if (!supa) { showToast('Supabase indisponible', 'err'); return; }
+    if (!supa) { showToast(T('po_service_unavailable', 'Service indisponible'), 'err'); return; }
     const { data: { user } } = await supa.auth.getUser();
     if (!user) { location.href = 'login.html'; return; }
 
@@ -367,7 +376,7 @@
       .limit(500);
     if (error) {
       console.error(error);
-      $('#list').innerHTML = `<div class="empty"><i class="fa fa-triangle-exclamation"></i><h3>Erreur de chargement</h3><p>${escapeHtml(error.message)}</p></div>`;
+      $('#list').innerHTML = `<div class="empty"><i class="fa fa-triangle-exclamation"></i><h3>${escapeHtml(T('po_load_error', 'Erreur de chargement'))}</h3><p>${escapeHtml(error.message)}</p></div>`;
       return;
     }
     state.all = (data || []).filter((p) => p.status !== 'draft');
@@ -384,33 +393,9 @@
       applyFilter();
     }));
 
-    // i18n minimal
-    const I18N = {
-      fr: { pagetitle: 'Mes ordonnances', title: 'Mes ordonnances numeriques',
-            sub: 'Toutes vos ordonnances signees electroniquement, accessibles a tout moment.',
-            active: 'Actives', expired: 'Expirees', cancelled: 'Annulees', all: 'Toutes' },
-      ar: { pagetitle: 'وصفاتي الطبية', title: 'وصفاتي الطبية الرقمية',
-            sub: 'جميع وصفاتك الموقعة إلكترونياً، متاحة في أي وقت.',
-            active: 'سارية', expired: 'منتهية', cancelled: 'ملغاة', all: 'الكل' }
-    };
-    function applyLang(lang) {
-      const t = I18N[lang] || I18N.fr;
-      document.documentElement.lang = lang;
-      document.documentElement.dir = (lang === 'ar') ? 'rtl' : 'ltr';
-      document.body.dir = document.documentElement.dir;
-      $('#t-pagetitle').textContent = t.pagetitle;
-      $('#t-title').textContent = t.title;
-      $('#t-sub').textContent = t.sub;
-      $('#t-tab-active').textContent = t.active;
-      $('#t-tab-expired').textContent = t.expired;
-      $('#t-tab-cancelled').textContent = t.cancelled;
-      $('#t-tab-all').textContent = t.all;
-      $$('.lang-bar .lang-btn').forEach((b) => b.classList.toggle('active', b.dataset.lang === lang));
-      try { localStorage.setItem('tabibi.lang', lang); } catch (e) {}
-    }
-    $$('.lang-bar .lang-btn').forEach((b) => b.addEventListener('click', () => applyLang(b.dataset.lang)));
-    const saved = (function() { try { return localStorage.getItem('tabibi.lang'); } catch (e) { return null; } })();
-    if (saved) applyLang(saved);
+    // [CONFORMITE 2026] dico local FR/AR supprimé → statique via data-i18n
+    // (engine partagé) ; langue/dir/persistance via tabibi-lang.js (clé unifiée
+    // tabibi_lang — l'ancienne clé locale 'tabibi.lang' désynchronisait la page).
 
     // Modal close on backdrop click
     $('#modal').addEventListener('click', (e) => {
@@ -423,5 +408,9 @@
 })();
 </script>
 
+<!-- [i18n] moteur (absent de cette page à l'origine) + sélecteur factorisé -->
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
 </body>
 </html>

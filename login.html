@@ -31,54 +31,365 @@
 <meta name="twitter:description" content="Connectez-vous à votre espace Tabibi pour gérer vos rendez-vous médicaux en Algérie. Accès patient, médecin et professionnel de santé.">
 <meta name="twitter:image" content="https://tabibi.doctor/assets/og-image.jpg">
 <meta name="twitter:image:alt" content="Tabibi — Trouvez votre médecin en Algérie">
-<meta name="theme-color" content="#0F7560">
+<meta name="theme-color" content="#0E5F46">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_login_long">
 <title>Connexion à Tabibi | Espace patient et médecin</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<link rel="stylesheet" href="styles/auth.css">
+<link rel="stylesheet" href="styles/auth-page.css">
 </head>
 <body>
 <a class="skip-link" href="#main">Aller au contenu</a>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
-<header class="app-bar">
-  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="location.href='index.html'" aria-label="Retour à l'accueil"><i class="fa fa-arrow-left"></i></button>
-  <div class="app-bar-body"><div class="app-bar-title">Connexion</div><div class="app-bar-sub">Accédez à votre espace</div></div>
+<header class="app-bar" role="banner">
+  <a href="index.html" class="app-bar-back" aria-label="Retour à l'accueil"><i class="fa fa-arrow-left" aria-hidden="true"></i></a>
+  <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="app-bar-body">
+    <div class="app-bar-title">Tabibi <span style="color:var(--green)"><span style="font-weight:800;letter-spacing:-.5px"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
+    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif" data-i18n="auth_header_sub">طبيبي · Médecins Algérie</div>
+  </div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
 </header>
-<main id="main" class="page" style="padding:20px 16px 40px" role="main">
-  <div style="text-align:center;margin-bottom:24px">
-    <div class="logo-mark" style="margin:0 auto 12px"></div>
+<main id="main" class="page" style="padding:0" role="main">
+  <section class="auth-hero">
+  <div class="auth-hero-grid">
+  <aside class="auth-hero-aside">
+    <h1 class="auth-hero-title" data-i18n-html="auth_login_title">Connexion à <em>votre espace santé</em></h1>
+    <p class="auth-hero-sub" data-i18n="auth_login_sub">Gérez vos rendez-vous médicaux partout en Algérie — 58 wilayas, 24h/24.</p>
+    <ul class="auth-hero-points">
+      <li><i class="fa fa-user-check"></i> <span data-i18n="auth_login_p1">Patients, médecins et secrétariats</span></li>
+      <li><i class="fa fa-shield-heart"></i> <span data-i18n="auth_login_p2">Gratuit pour les patients</span></li>
+      <li><i class="fa fa-clock"></i> <span data-i18n="auth_login_p3">Prise de rendez-vous en ligne, 24h/24</span></li>
+    </ul>
+  </aside>
+  <div class="auth-hero-form">
+  <div class="auth-formhead" style="text-align:center;margin-bottom:24px">
+    <svg class="logo-svg" width="52" height="52" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="display:block;margin:0 auto 12px"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h2 style="font-size:22px;font-weight:800">Tabibi <span style="font-weight:800"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></h2>
     <p style="color:var(--text3);font-size:13px;margin-top:3px">La santé à portée de clic</p>
   </div>
-  <div class="card" style="max-width:400px;margin:0 auto">
-    <!-- [Phase 14.2 fix] id="loginForm" REQUIS depuis le fix login-handler.js : fallback
-         catch-all retiré pour ne plus polluer signup.html. login-handler attache
-         son listener uniquement si form#loginForm OU form[data-form="login"]. -->
-    <form id="loginForm" onsubmit="doLogin(event)">
-      <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
-        <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
-          <input class="form-control" id="le" type="email" required style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
-      <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
-        <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-          <input class="form-control" id="lp" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
-          <button type="button" class="ii-r" onclick="togglePw('lp',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
-        <div style="text-align:right;margin-top:6px">
-          <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
+  <div class="card" style="max-width:480px;margin:0 auto">
+
+    <!-- ── ÉCRAN 1 : CONNEXION (numéro + mot de passe, ZÉRO SMS) ── -->
+    <div id="screen-phone">
+      <form id="pwLoginForm" onsubmit="doPhoneLogin(event)">
+        <div class="form-group"><label class="form-label" for="lp-phone" data-i18n="phone_number">Numéro de téléphone</label>
+          <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">Indicatif Algérie <strong>+213</strong> ajouté automatiquement.</div>
         </div>
+        <div class="form-group"><label class="form-label" for="lp-pass" data-i18n="password">Mot de passe</label>
+          <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp-pass" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="ii-r" onclick="togglePw('lp-pass',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+          <div style="text-align:right;margin-top:6px">
+            <a href="#" onclick="showReset(event)" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> <span data-i18n="sign_in">Se connecter</span></button>
+      </form>
+    </div>
+
+    <!-- ── RESET 1/3 : numéro ── -->
+    <div id="screen-reset" class="hidden">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Entrez votre numéro : vous recevrez un code par SMS pour définir un nouveau mot de passe.</p>
+      <form id="resetPhoneForm" onsubmit="resetSendOtp(event)">
+        <div class="form-group"><label class="form-label" for="rs-phone" data-i18n="phone_number">Numéro de téléphone</label>
+          <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="rs-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
+        <div style="text-align:center;margin-top:14px;font-size:12px"><a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion</a></div>
+      </form>
+    </div>
+
+    <!-- ── RESET 2/3 : code OTP ── -->
+    <div id="screen-reset-otp" class="hidden">
+      <form id="resetOtpForm" onsubmit="resetVerifyOtp(event)">
+        <div class="form-group"><label class="form-label" for="rs-code" data-i18n="sms_code">Code reçu par SMS</label>
+          <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
+          <div id="rs-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Vérifier</button>
+        <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px">
+          <a href="#" onclick="resetResendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
+          <a href="#" onclick="showReset(event)" style="color:var(--text3);font-weight:600">Changer de numéro</a>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── RESET 3/3 : nouveau mot de passe ── -->
+    <div id="screen-reset-newpw" class="hidden">
+      <form id="resetNewPwForm" onsubmit="resetSetPassword(event)">
+        <div class="form-group"><label class="form-label" for="rs-newpw" data-i18n="new_password_label">Nouveau mot de passe</label>
+          <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="rs-newpw" type="password" required minlength="6" style="padding-left:42px" placeholder="6 caractères minimum" autocomplete="new-password">
+            <button type="button" class="ii-r" onclick="togglePw('rs-newpw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Définir le mot de passe</button>
+      </form>
+    </div>
+
+    <!-- ── LIEN ADMIN ── -->
+    <div id="admin-link" style="text-align:center;margin-top:18px;font-size:12px">
+      <a href="#" onclick="showAdmin(event)" style="color:var(--text3);font-weight:600"><i class="fa fa-user-shield"></i> Connexion admin</a>
+    </div>
+
+    <!-- ── ÉCRAN 3 : ADMIN (email + mot de passe, flux existant inchangé) ── -->
+    <div id="screen-admin" class="hidden">
+      <form id="loginForm" onsubmit="doLogin(event)">
+        <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
+          <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="le" type="email" style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
+        <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
+          <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
+            <input class="form-control" id="lp" type="password" style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="ii-r" onclick="togglePw('lp',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
+          <div style="text-align:right;margin-top:6px">
+            <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-shield"></i> Connexion admin</button>
+      </form>
+      <div style="text-align:center;margin-top:12px;font-size:12px">
+        <a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion par téléphone</a>
       </div>
-      <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> Se connecter</button>
-    </form>
+    </div>
+
     <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text3)">
       Pas de compte ? <a href="signup.html" style="color:var(--blue);font-weight:700" data-i18n="create_account">Créer un compte</a>
     </div>
   </div>
+      </div><!-- /auth-hero-form -->
+    </div><!-- /auth-hero-grid -->
+  </section>
 </main>
 <div id="toast-container" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
 <script>
 function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
+
+// ═══════════════════════════════════════════════════════════════════
+// AUTH PAR TÉLÉPHONE + OTP SMS (patients & médecins). L'admin garde
+// email/mot de passe (doLogin plus bas, inchangé). Client unique =
+// window.tabibi.supabase ; OTP via le client BRUT (le wrapper
+// window.tabibi.auth n'expose pas l'OTP — c'est normal).
+// ═══════════════════════════════════════════════════════════════════
+
+// Normalise un numéro saisi vers E.164 (Algérie). Retire le 0 initial.
+function toE164(raw){
+  var s = String(raw || "").replace(/[\s().\-]/g, "");
+  if (s.charAt(0) === "+") return s;
+  s = s.replace(/^0+/, "");        // 0555… → 555…
+  return "+213" + s;
+}
+
+// Traduit une erreur Supabase OTP en message FR clair.
+function mapOtpError(error){
+  var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
+  var code = (error && (error.code || error.name)) || "";
+  if (m.includes("captcha")) return "Vérification anti-robot échouée. Réessayez.";
+  if (code === "over_sms_send_rate_limit" || m.includes("rate") || m.includes("too many"))
+    return "Trop de demandes de code. Patientez quelques minutes avant de réessayer.";
+  if (m.includes("expired")) return "Code expiré. Demandez un nouveau code.";
+  if (m.includes("invalid") || m.includes("token")) return "Code incorrect. Vérifiez les 6 chiffres reçus par SMS.";
+  if (m.includes("signups not allowed") || m.includes("not found") || m.includes("should create"))
+    return "Aucun compte associé à ce numéro. Créez un compte d'abord.";
+  return "Échec de l'envoi/vérification du code. Réessayez.";
+}
+
+// ── Bascule d'écrans ──────────────────────────────────────────────────────
+function showScreen(which){
+  ["phone","reset","reset-otp","reset-newpw","admin"].forEach(function(s){
+    var el = document.getElementById("screen-" + s);
+    if (el) el.classList.toggle("hidden", s !== which);
+  });
+  var adminLink = document.getElementById("admin-link");
+  if (adminLink) adminLink.classList.toggle("hidden", which !== "phone");
+}
+function showAdmin(e){ if(e) e.preventDefault(); showScreen("admin"); }
+function showPhone(e){ if(e) e.preventDefault(); showScreen("phone"); }
+function showReset(e){ if(e) e.preventDefault(); var p=document.getElementById("rs-phone"), l=document.getElementById("lp-phone"); if(p&&l) p.value=l.value||""; showScreen("reset"); }
+
+// Erreur de connexion mdp → message FR (ne révèle pas si numéro ou mdp est faux).
+function mapLoginError(error){
+  var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
+  if (m.includes("captcha")) return "Vérification anti-robot échouée. Réessayez.";
+  if (m.includes("rate") || m.includes("too many")) return "Trop de tentatives. Patientez une minute.";
+  if (m.includes("not confirmed") || m.includes("confirm"))
+    return "Numéro non vérifié. Terminez d'abord votre inscription.";
+  return "Numéro ou mot de passe incorrect.";
+}
+
+// ── CONNEXION : numéro + mot de passe (ZÉRO SMS) ──────────────────────────
+// Doc: supabase.com/docs/reference/javascript/auth-signinwithpassword
+async function doPhoneLogin(e){
+  if (e) e.preventDefault();
+  var phone = toE164(document.getElementById("lp-phone").value);
+  var pass = document.getElementById("lp-pass").value || "";
+  if (phone.length < 8) { toastM("Numéro de téléphone invalide", "error"); return; }
+  if (!pass) { toastM("Mot de passe obligatoire", "error"); return; }
+
+  // Anti-bruteforce mot de passe : 5 tentatives / 60 s par numéro.
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("login:" + phone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."), "error"); return;
+  }
+
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Connexion…'; }
+  try {
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var res = await window.tabibi.supabase.auth.signInWithPassword({ phone: phone, password: pass, options: { captchaToken: captchaToken } });
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapLoginError(res.error), "error"); return; }
+    var user = await window.tabibi.auth.getUser();
+    if (!user) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error"); return; }
+    var ok = await _afterAuth(user);
+    if (!ok && btn) { btn.disabled = false; btn.innerHTML = origText; }
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    toastM(mapLoginError(err), "error");
+  }
+}
+
+// ── MOT DE PASSE OUBLIÉ : reset par OTP SMS (1 SMS ponctuel, rare) ─────────
+var _resetPhone = "";
+async function resetSendOtp(e){
+  if (e) e.preventDefault();
+  var phone = toE164(document.getElementById("rs-phone").value);
+  if (phone.length < 8) { toastM("Numéro de téléphone invalide", "error"); return; }
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + phone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
+  if (!window.tabibi || !window.tabibi.supabase) {
+    toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."), "error"); return;
+  }
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi du code…'; }
+  try {
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    // shouldCreateUser:false → ne réinitialise QUE des comptes existants.
+    var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: phone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
+    if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
+    _resetPhone = phone;
+    var tgt = document.getElementById("rs-otp-target"); if (tgt) tgt.textContent = "Code envoyé au " + phone;
+    showScreen("reset-otp");
+    var c = document.getElementById("rs-code"); if (c) { c.value=""; c.focus(); }
+  } catch (err) {
+    toastM(mapOtpError(err), "error");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+  }
+}
+async function resetResendOtp(e){
+  if (e) e.preventDefault();
+  if (!_resetPhone) { showScreen("reset"); return; }
+  // Même bucket que l'envoi initial (resetSendOtp, "otp:"+phone) : 5 SMS max / 60s.
+  if (window.tabibiSec && window.tabibiSec.rateLimit) {
+    var lim = window.tabibiSec.rateLimit("otp:" + _resetPhone, 5, 60000);
+    if (!lim.allowed) { toastM(lim.reason, "error"); return; }
+  }
+  try {
+    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: _resetPhone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
+    if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
+    toastM("Nouveau code envoyé.", "success");
+  } catch (err) { toastM(mapOtpError(err), "error"); }
+}
+async function resetVerifyOtp(e){
+  if (e) e.preventDefault();
+  var token = (document.getElementById("rs-code").value || "").trim();
+  if (!/^[0-9]{4,8}$/.test(token)) { toastM("Code incorrect. Saisissez les 6 chiffres reçus.", "error"); return; }
+  if (!_resetPhone) { showScreen("reset"); toastM("Session expirée, recommencez.", "error"); return; }
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Vérification…'; }
+  try {
+    var res = await window.tabibi.supabase.auth.verifyOtp({ phone: _resetPhone, token: token, type: "sms" });
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapOtpError(res.error), "error"); return; }
+    // Session active (OTP vérifié) → écran nouveau mot de passe.
+    showScreen("reset-newpw");
+    var p = document.getElementById("rs-newpw"); if (p) { p.value=""; p.focus(); }
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    toastM(mapOtpError(err), "error");
+  }
+}
+// updateUser({password}) : pose le NOUVEAU mot de passe (session OTP active).
+// Doc: supabase.com/docs/reference/javascript/auth-updateuser
+async function resetSetPassword(e){
+  if (e) e.preventDefault();
+  var pass = document.getElementById("rs-newpw").value || "";
+  if (pass.length < 6) { toastM("Le mot de passe doit faire au moins 6 caractères.", "error"); return; }
+  var btn = e && e.target ? e.target.querySelector('button[type="submit"]') : null;
+  var origText = btn ? btn.innerHTML : "";
+  if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Mise à jour…'; }
+  try {
+    var res = await window.tabibi.supabase.auth.updateUser({ password: pass });
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM("Échec de la mise à jour du mot de passe. Réessayez.", "error"); return; }
+    toastM("Mot de passe mis à jour.", "success");
+    // Session déjà active → on enchaîne (profil + redirection par rôle).
+    var user = await window.tabibi.auth.getUser();
+    if (user) { var ok = await _afterAuth(user); if (ok) return; }
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    setTimeout(function(){ showPhone(); }, 600);
+  } catch (err) {
+    if (btn) { btn.disabled = false; btn.innerHTML = origText; }
+    toastM("Échec de la mise à jour du mot de passe. Réessayez.", "error");
+  }
+}
+
+// Vérifs de statut (identiques au flux email) + persistance + redirection.
+// Retourne false (et a déjà toasté) si la connexion est bloquée.
+async function _afterAuth(user){
+  var userStatus = user.status || 'active';
+  var userRole = normalizeRole(user.role);
+
+  if (userRole === 'medecin' && userStatus === 'pending_verification') {
+    try { await window.tabibi.auth.signOut(); } catch(e){}
+    toastM(tabibiT('toast_doctor_pending',"Votre compte médecin est en cours de vérification (48h max). Vous serez notifié."), "info");
+    return false;
+  }
+  if (userStatus === 'suspended') {
+    try { await window.tabibi.auth.signOut(); } catch(e){}
+    toastM(tabibiT('toast_account_suspended',"Compte suspendu. Contactez contact@tabibi.doctor"), "error");
+    return false;
+  }
+  if (userStatus === 'rejected') {
+    try { await window.tabibi.auth.signOut(); } catch(e){}
+    toastM(tabibiT('toast_signup_rejected',"Inscription rejetée. Contactez contact@tabibi.doctor"), "error");
+    return false;
+  }
+
+  var fName = user.first_name || "";
+  var lName = user.last_name || "";
+  var displayName = (fName + " " + lName).trim() || user.full_name || user.phone || "";
+  var initials = ((fName[0]||displayName[0]||"?") + (lName[0]||"")).toUpperCase();
+
+  localStorage.setItem("tabibi_user", JSON.stringify({
+    id: user.id, email: user.email || "", role: userRole, status: userStatus,
+    name: displayName, initials: initials, firstName: fName, lastName: lName,
+    specialty: user.specialty_fr || user.specialty || "",
+    ville: user.wilaya_fr || user.ville || "Alger",
+    phone: user.phone || "", isTest: !!user.is_test, fromSupabase: true
+  }));
+  localStorage.setItem("tabibi_role", userRole);
+  toastM("Connexion réussie !", "success");
+  var nextUrl = _safeNext() || redirectFor(userRole);
+  setTimeout(function(){ location.href = nextUrl; }, 400);
+  return true;
+}
 
 // ═══════════════════════════════════════════════════════════════════
 // SÉCURITÉ v10 : COMPTES DÉMO HARDCODÉS SUPPRIMÉS
@@ -248,7 +559,7 @@ async function doLogin(e){
   }
 }
 
-function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#10b981",error:"#ef4444",info:"#0F7560"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{if(d.remove)d.remove();else if(d.parentNode)d.parentNode.removeChild(d);},3000);}
+function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010",info:"#0E5F46"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{if(d.remove)d.remove();else if(d.parentNode)d.parentNode.removeChild(d);},3000);}
 </script>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -267,4 +578,6 @@ function toastM(m,t){const c=document.getElementById("toast-container");if(!c)re
 <script src="js/tabibi-i18n.js"></script>
 <script src="js/tabibi-footer.js"></script>
 <script src="js/tabibi-sentry.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
 </body></html>
