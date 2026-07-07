@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- [DAWINI 2026-07-08] Écran patient : recherche de médicament + suivi. -->
+<meta name="description" content="Trouvez votre médicament en pharmacie près de chez vous.">
+<link rel="canonical" href="https://tabibi.doctor/dawini.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0E5F46">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="dw_title">
+<title>Dawini | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<!-- [DAWINI 2026-07-08] Typo du design v4 (Plus Jakarta Sans + Cairo AR) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* [DAWINI] Styles inline (1 page) — à migrer en CSS partagé si réutilisé. */
+  .dw-shell { padding: 14px 16px 80px; max-width: 560px; margin: 0 auto; }
+  .dw-card { background:#fff; border-radius: var(--r16); padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 14px; }
+  .dw-intro { display:flex; gap: 12px; align-items:flex-start; background: var(--pastille, #e7f3ef); border:1px solid var(--pastille-bd, #d4e9e1); border-radius: var(--r12); padding: 12px; font-size: 12.5px; color: var(--text2); line-height: 1.5; margin-bottom: 14px; }
+  .dw-intro i { color: var(--blue); margin-top: 2px; }
+  .dw-chiprow { display:flex; gap: 8px; }
+  .dw-chiprow input { flex: 1; }
+  .dw-chips { display:flex; flex-wrap:wrap; gap: 8px; margin-top: 10px; }
+  .dw-chip { display:inline-flex; align-items:center; gap: 7px; background: var(--blue-l); color: var(--blue); border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 700; }
+  .dw-chip button { background:none; border:0; color: inherit; cursor:pointer; font-size: 14px; line-height: 1; padding: 0; }
+  .dw-photo { border: 1.5px dashed var(--border); border-radius: var(--r12); padding: 16px; text-align:center; color: var(--text3); font-size: 13px; cursor:pointer; transition: border-color .15s; }
+  .dw-photo:hover { border-color: var(--blue); }
+  .dw-photo img { max-width: 100%; max-height: 180px; border-radius: 8px; display:block; margin: 0 auto 8px; }
+  .dw-gps { display:flex; gap: 8px; align-items:center; }
+  .dw-gps select { flex: 1; }
+  .dw-consent { display:flex; gap: 10px; align-items:flex-start; font-size: 12.5px; color: var(--text2); line-height: 1.5; margin: 14px 0; }
+  .dw-consent input { margin-top: 3px; flex: none; }
+  .dw-req { border:1px solid var(--border); border-radius: var(--r12); padding: 14px; margin-bottom: 12px; }
+  .dw-req .meds { font-weight: 700; font-size: 14.5px; }
+  .dw-req .meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .dw-badge { display:inline-flex; align-items:center; gap:5px; border-radius: 8px; padding: 4px 9px; font-size: 11.5px; font-weight: 700; }
+  .dw-badge.pending  { background:#FFF7E6; color:#B07000; }
+  .dw-badge.answered { background: var(--blue-l); color: var(--blue); }
+  .dw-badge.closed, .dw-badge.expired { background: var(--bg2); color: var(--text3); }
+  .dw-resp { background: var(--bg2); border-radius: var(--r12); padding: 12px; margin-top: 10px; }
+  .dw-resp .ph-name { font-weight: 700; font-size: 14px; }
+  .dw-resp .ph-meta { font-size: 12px; color: var(--text2); margin: 3px 0 8px; line-height: 1.45; }
+  .dw-resp .tags { display:flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+  .dw-tag { background:#e7f3ef; color: var(--green-d, #0E5F46); border-radius: 7px; padding: 3px 8px; font-size: 11px; font-weight: 700; }
+  .dw-tag.gen { background:#FEF3C7; color:#92400E; }
+  .dw-resp .actions { display:flex; gap: 8px; }
+  .dw-resp .actions a { flex:1; text-align:center; font-size: 12.5px; padding: 9px 6px; border-radius: var(--r8); font-weight: 700; text-decoration: none; }
+  .dw-empty { padding: 34px 16px; text-align:center; color: var(--text3); font-size: 13px; }
+  .dw-empty i { font-size: 40px; opacity:.35; display:block; margin-bottom: 10px; }
+  .dw-off { padding: 60px 20px; text-align: center; }
+  .dw-off i { font-size: 52px; color: var(--blue); opacity: .5; margin-bottom: 16px; display: block; }
+  [dir="rtl"] .dw-intro, [dir="rtl"] .dw-consent { text-align: right; }
+
+  /* ═══ [DAWINI 2026-07-08] SKIN v4 PREMIUM — aligné tabibi-landing-v4.html ═══
+     Palette « Tabibi 2027 » : émeraude #0F7560 · ivoire #FBF9F4 · sable #F4EEE2
+     · or #D4A437 · lignes #E7E0D2 · encre #0F2A24. Typo Plus Jakarta Sans (+ Cairo AR).
+     Peau uniquement — aucune logique modifiée. */
+  :root{
+    --emerald:#0F7560; --emerald-d:#0E5F46; --ink:#0F2A24; --ivory:#FBF9F4;
+    --sand:#F4EEE2; --v4line:#E7E0D2; --gold:#D4A437; --slate:#5C6B63;
+    /* remap tokens app → v4 (boutons, liens, focus suivent automatiquement) */
+    --blue:#0F7560; --blue-l:#E7F1EC; --border:#E7E0D2; --bg2:#F4EEE2;
+    --text2:#43584F; --text3:#5C6B63; --green-d:#0E5F46;
+  }
+  body{ font-family:'Plus Jakarta Sans',system-ui,sans-serif; background:var(--ivory); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  html[lang="ar"] body, [dir="rtl"] body{ font-family:'Cairo','Plus Jakarta Sans',sans-serif; }
+  .page{ background:var(--ivory); }
+  .app-bar{ background:rgba(251,249,244,.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--v4line); }
+  .app-bar-title{ font-weight:800; letter-spacing:-.5px; color:var(--ink); }
+  .tab-bar{ background:rgba(251,249,244,.92); border-top:1px solid var(--v4line); }
+  h2{ font-weight:800; letter-spacing:-.5px; color:var(--ink); }
+  .btn{ border-radius:999px; font-weight:700; }
+  .btn-primary{ background:var(--emerald); }
+  .btn-primary:hover, .btn-primary:active{ background:var(--emerald-d); }
+  .form-control{ border-radius:13px; border:1.5px solid var(--v4line); background:#fff; }
+  .form-control:focus{ border-color:var(--emerald); box-shadow:0 0 0 3px rgba(15,117,96,.12); }
+  .dw-card{ border:1px solid var(--v4line); border-radius:24px; box-shadow:0 16px 40px rgba(5,39,29,.08); }
+  .dw-intro{ background:var(--sand); border:1px solid var(--v4line); border-radius:16px; color:var(--slate); }
+  .dw-intro i{ color:var(--gold); }
+  .dw-chip{ background:var(--sand); color:var(--emerald-d); border:1px solid var(--v4line); }
+  .dw-photo{ border:1.5px dashed var(--v4line); border-radius:16px; background:#fff; color:var(--slate); }
+  .dw-photo:hover{ border-color:var(--emerald); }
+  .dw-req{ background:#fff; border:1px solid var(--v4line); border-radius:20px; box-shadow:0 6px 18px rgba(16,40,34,.06); }
+  .dw-badge{ border-radius:999px; }
+  .dw-badge.pending{ background:rgba(212,164,55,.16); color:#8A6A1F; }
+  .dw-badge.answered{ background:#E7F1EC; color:var(--emerald-d); }
+  .dw-resp{ background:var(--sand); border-radius:16px; }
+  .dw-tag{ background:#E7F1EC; color:var(--emerald-d); border-radius:999px; }
+  .dw-tag.gen{ background:rgba(212,164,55,.18); color:#8A6A1F; }
+  .dw-resp .actions a{ border-radius:999px; }
+</style>
+</head>
+<body>
+<div class="app-root">
+<div class="loading-screen" id="loading"><div class="spinner"></div></div>
+
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body"><div class="app-bar-title" id="dw-page-title">Dawini</div></div>
+  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
+  <div data-langbar></div>
+</header>
+
+<main class="page" role="main">
+
+  <!-- Feature OFF (TABIBI_FEATURES.dawini=false) — pattern teleconsultation -->
+  <div id="dw-off" class="dw-off" hidden>
+    <i class="fa fa-prescription-bottle-medical" aria-hidden="true"></i>
+    <div style="font-size:17px;font-weight:800;margin-bottom:8px"><span id="dw-off-name">Dawini</span> — <span data-i18n="dw_soon_title">bientôt disponible</span></div>
+    <div style="font-size:13.5px;color:var(--text2);max-width:38ch;margin:0 auto" data-i18n="dw_soon_sub">Cette fonctionnalité sera activée wilaya par wilaya avec nos pharmacies partenaires.</div>
+  </div>
+
+  <div id="dw-main" class="dw-shell" hidden>
+
+    <div class="dw-intro">
+      <i class="fa fa-circle-info" aria-hidden="true"></i>
+      <span data-i18n="dw_intro">Décrivez le médicament que vous cherchez : les pharmacies partenaires de votre wilaya sont prévenues et vous répondent directement. Tabibi met en relation — aucun conseil médical n'est fourni.</span>
+    </div>
+
+    <!-- ── Nouvelle demande ─────────────────────────────────────────── -->
+    <section class="dw-card" aria-labelledby="dw-new-title">
+      <h2 id="dw-new-title" style="font-size:16px;margin-bottom:12px" data-i18n="dw_new_title">Chercher un médicament</h2>
+
+      <div class="form-group">
+        <label class="form-label" for="dw-med" data-i18n="dw_meds_label">Médicament(s)</label>
+        <div class="dw-chiprow">
+          <input class="form-control" id="dw-med" maxlength="80" data-i18n-placeholder="dw_search_ph" placeholder="Ex : Amoxicilline 1g…">
+          <button class="btn btn-primary" type="button" onclick="addMed()" aria-label="Ajouter"><i class="fa fa-plus"></i></button>
+        </div>
+        <div class="dw-chips" id="dw-chips" aria-live="polite"></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" data-i18n="dw_photo_label">Photo de l'ordonnance ou de la boîte (optionnel)</label>
+        <div class="dw-photo" id="dw-photo-zone" onclick="document.getElementById('dw-file').click()" role="button" tabindex="0">
+          <span id="dw-photo-hint"><i class="fa fa-camera" aria-hidden="true"></i> <span data-i18n="dw_photo_hint">Prendre en photo ou choisir une image (JPEG/PNG, 5 MB max)</span></span>
+        </div>
+        <input type="file" id="dw-file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden onchange="onPhoto(this)">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dw-wilaya" data-i18n="dw_wilaya">Votre wilaya</label>
+        <div class="dw-gps">
+          <select class="form-control" id="dw-wilaya"></select>
+          <button class="btn btn-ghost" type="button" onclick="useGps()" id="dw-gps-btn" title="Me localiser"><i class="fa fa-location-crosshairs"></i></button>
+        </div>
+        <div id="dw-gps-state" style="font-size:11.5px;color:var(--text3);margin-top:5px" hidden></div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="dw-note" data-i18n="dw_note_label">Précision (optionnel)</label>
+        <textarea class="form-control" id="dw-note" rows="2" maxlength="300" data-i18n-placeholder="dw_note_ph" placeholder="Ex : dosage enfant, urgent…"></textarea>
+      </div>
+
+      <label class="dw-consent">
+        <input type="checkbox" id="dw-consent">
+        <span data-i18n="dw_consent">J'accepte que ma demande (médicaments et photo éventuelle) soit transmise aux pharmacies partenaires de ma wilaya. Mes coordonnées ne sont communiquées qu'aux pharmacies qui acceptent ma demande. (Loi 18-07)</span>
+      </label>
+
+      <button class="btn btn-primary btn-full btn-lg" id="dw-send" onclick="submitRequest()">
+        <i class="fa fa-paper-plane"></i> <span data-i18n="dw_send">Envoyer aux pharmacies</span>
+      </button>
+    </section>
+
+    <!-- ── Suivi des demandes ───────────────────────────────────────── -->
+    <section aria-labelledby="dw-track-title">
+      <h2 id="dw-track-title" style="font-size:16px;margin:20px 0 10px" data-i18n="dw_my_requests">Mes demandes</h2>
+      <div id="dw-list" aria-live="polite"></div>
+    </section>
+
+  </div>
+</main>
+
+<nav class="tab-bar" id="tab-bar"></nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/capacitor-bridge.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
+<script src="assets/dz-wilaya-centroids.js"></script>
+<script src="js/tabibi-dawini.js"></script>
+<script src="js/tabibi-dawini-demo.js"></script><!-- [DEMO] inerte sans ?demo=1 -->
+<script src="js/tabibi-sentry.js"></script>
+<script>
+// ========================================================================
+// [DAWINI 2026-07-08] dawini.html — écran patient
+// ------------------------------------------------------------------------
+// • Garde : session requise (redirection login avec next), flag
+//   TABIBI_FEATURES.dawini sinon écran « bientôt » (pattern teleconsultation).
+// • Recherche : chips médicaments (max 10) + photo (bucket privé) +
+//   wilaya (repli) / GPS (tri distance) + consentement 18-07 OBLIGATOIRE.
+// • Suivi : polling 20 s via tabibiDawini.startPolling (pas de Realtime v1).
+// ========================================================================
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+function _esc(s){ var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+function goBackSafe(){ if (history.length > 1) history.back(); else window.location = 'patient-dashboard.html'; }
+
+var state = { meds: [], imagePath: null, lat: null, lng: null, sending: false, poller: null };
+
+// ── Wilayas (DZ_WILAYAS = {code:{name,lat,lng}}) ─────────────────────────
+function fillWilayas(){
+  var sel = document.getElementById('dw-wilaya');
+  var opts = ['<option value="" data-i18n="dw_wilaya_pick">' + _esc(_t('dw_wilaya_pick','Choisir la wilaya…')) + '</option>'];
+  Object.keys(window.DZ_WILAYAS || {}).forEach(function(code){
+    opts.push('<option value="' + code + '">' + _esc(window.DZ_WILAYAS[code].name) + ' (' + String(code).padStart(2,'0') + ')</option>');
+  });
+  sel.innerHTML = opts.join('');
+}
+
+function useGps(){
+  var st = document.getElementById('dw-gps-state');
+  st.hidden = false;
+  st.textContent = _t('dw_gps_wait','Localisation en cours…');
+  if (!navigator.geolocation){ st.textContent = _t('dw_gps_ko','GPS indisponible — choisissez votre wilaya.'); return; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    state.lat = pos.coords.latitude; state.lng = pos.coords.longitude;
+    // Wilaya la plus proche (centroïdes chefs-lieux)
+    var best = null, bestD = 1e9;
+    Object.keys(window.DZ_WILAYAS || {}).forEach(function(code){
+      var w = window.DZ_WILAYAS[code];
+      var d = window.tabibiDawini.distanceKm(state.lat, state.lng, w.lat, w.lng);
+      if (d != null && d < bestD){ bestD = d; best = code; }
+    });
+    if (best) document.getElementById('dw-wilaya').value = best;
+    st.textContent = _t('dw_gps_ok','Position enregistrée — les pharmacies seront triées par distance.');
+  }, function(){
+    st.textContent = _t('dw_gps_ko','GPS indisponible — choisissez votre wilaya.');
+  }, { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 });
+}
+
+// ── Chips médicaments ────────────────────────────────────────────────────
+function addMed(){
+  var inp = document.getElementById('dw-med');
+  var v = (inp.value || '').trim();
+  if (!v) return;
+  if (state.meds.length >= 10){ toastM(_t('dw_err_max_meds','10 médicaments maximum par demande.'), 'warning'); return; }
+  if (state.meds.indexOf(v) === -1) state.meds.push(v);
+  inp.value = ''; inp.focus();
+  renderChips();
+}
+function removeMed(i){ state.meds.splice(i, 1); renderChips(); }
+function renderChips(){
+  document.getElementById('dw-chips').innerHTML = state.meds.map(function(m, i){
+    return '<span class="dw-chip">' + _esc(m) + '<button type="button" onclick="removeMed(' + i + ')" aria-label="Retirer">×</button></span>';
+  }).join('');
+}
+document.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('dw-med').addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); addMed(); }
+  });
+});
+
+// ── Photo ────────────────────────────────────────────────────────────────
+async function onPhoto(input){
+  var f = input.files && input.files[0];
+  if (!f) return;
+  var zone = document.getElementById('dw-photo-zone');
+  zone.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + _esc(_t('dw_photo_up','Envoi de la photo…'));
+  var r = await window.tabibiDawini.uploadOrdonnance(f);
+  if (!r.ok){
+    zone.innerHTML = '<span style="color:var(--red)">' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</span>';
+    state.imagePath = null;
+    return;
+  }
+  state.imagePath = r.data;
+  var url = URL.createObjectURL(f);
+  zone.innerHTML = '<img src="' + url + '" alt="Ordonnance"><button class="btn btn-ghost" type="button" onclick="clearPhoto(event)" style="font-size:12px"><i class="fa fa-trash"></i> ' + _esc(_t('dw_photo_rm','Retirer')) + '</button>';
+}
+function clearPhoto(e){
+  e.stopPropagation();
+  state.imagePath = null;
+  document.getElementById('dw-file').value = '';
+  document.getElementById('dw-photo-zone').innerHTML =
+    '<i class="fa fa-camera" aria-hidden="true"></i> ' + _esc(_t('dw_photo_hint','Prendre en photo ou choisir une image (JPEG/PNG, 5 MB max)'));
+}
+
+// ── Envoi ────────────────────────────────────────────────────────────────
+async function submitRequest(){
+  if (state.sending) return;
+  var inp = document.getElementById('dw-med');
+  if ((inp.value || '').trim()) addMed();  // médicament tapé mais pas ajouté
+  var wilaya = document.getElementById('dw-wilaya').value;
+  if (!state.meds.length){ toastM(_t('dw_err_meds','Ajoutez au moins un médicament.'), 'error'); return; }
+  if (!wilaya){ toastM(_t('dw_err_wilaya','Choisissez votre wilaya.'), 'error'); return; }
+  if (!document.getElementById('dw-consent').checked){ toastM(_t('dw_err_consent','Le consentement est requis pour transmettre votre demande.'), 'error'); return; }
+
+  state.sending = true;
+  var btn = document.getElementById('dw-send');
+  btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + _esc(_t('dw_sending','Envoi…'));
+
+  var r = await window.tabibiDawini.createRequest({
+    medicaments: state.meds,
+    wilayaCode: wilaya,
+    imagePath: state.imagePath,
+    note: document.getElementById('dw-note').value,
+    lat: state.lat, lng: state.lng
+  });
+
+  state.sending = false;
+  btn.disabled = false;
+  btn.innerHTML = '<i class="fa fa-paper-plane"></i> ' + _esc(_t('dw_send','Envoyer aux pharmacies'));
+
+  if (!r.ok){ toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
+
+  toastM(_t('dw_sent_ok','Demande envoyée aux pharmacies de votre wilaya.'), 'success');
+  state.meds = []; renderChips();
+  document.getElementById('dw-note').value = '';
+  document.getElementById('dw-consent').checked = false;
+  clearPhoto({ stopPropagation: function(){} });
+  loadRequests();
+}
+
+// ── Suivi ────────────────────────────────────────────────────────────────
+function _statusBadge(s){
+  var map = {
+    pending:  ['pending',  _t('dw_status_pending','En attente de réponses')],
+    answered: ['answered', _t('dw_status_answered','Réponses reçues')],
+    closed:   ['closed',   _t('dw_status_closed','Clôturée')],
+    expired:  ['expired',  _t('dw_status_expired','Expirée')]
+  };
+  var m = map[s] || map.pending;
+  return '<span class="dw-badge ' + m[0] + '">' + _esc(m[1]) + '</span>';
+}
+
+function _respCard(resp, req){
+  var ph = resp.pharmacie || {};
+  var dist = window.tabibiDawini.distanceKm(req.latitude, req.longitude, ph.latitude, ph.longitude);
+  if (dist == null && window.DZ_WILAYAS && window.DZ_WILAYAS[req.wilaya_code]) {
+    var c = window.DZ_WILAYAS[req.wilaya_code];
+    dist = window.tabibiDawini.distanceKm(c.lat, c.lng, ph.latitude, ph.longitude);
+  }
+  var tags = [];
+  if (resp.disponible) tags.push('<span class="dw-tag"><i class="fa fa-check"></i> ' + _esc(_t('dw_tag_dispo','Disponible')) + '</span>');
+  if (resp.generique)  tags.push('<span class="dw-tag gen"><i class="fa fa-pills"></i> ' + _esc(_t('dw_generic_avail','Générique disponible')) + '</span>');
+  var mapsUrl = ph.latitude != null
+    ? 'https://maps.google.com/?q=' + ph.latitude + ',' + ph.longitude
+    : 'https://maps.google.com/?q=' + encodeURIComponent((ph.nom || '') + ' ' + (ph.adresse || ''));
+  return '<div class="dw-resp">' +
+    '<div class="ph-name">' + _esc(ph.nom || _t('dw_pharmacy','Pharmacie')) + '</div>' +
+    '<div class="ph-meta">' + _esc(ph.adresse || '') +
+      (dist != null ? ' · <b>' + dist + ' km</b>' : '') + '</div>' +
+    (tags.length ? '<div class="tags">' + tags.join('') + '</div>' : '') +
+    (resp.commentaire ? '<div class="ph-meta"><i class="fa fa-comment-dots"></i> ' + _esc(resp.commentaire) + '</div>' : '') +
+    '<div class="actions">' +
+      '<a href="' + mapsUrl + '" target="_blank" rel="noopener" style="background:var(--blue-l);color:var(--blue)"><i class="fa fa-route"></i> ' + _esc(_t('dw_itinerary','Itinéraire')) + '</a>' +
+      (ph.telephone ? '<a href="tel:' + _esc(ph.telephone) + '" style="background:var(--green-l,#e7f3ef);color:var(--green-d,#0E5F46)"><i class="fa fa-phone"></i> ' + _esc(_t('dw_call','Appeler')) + '</a>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+async function loadRequests(){
+  var r = await window.tabibiDawini.listMyRequests();
+  var box = document.getElementById('dw-list');
+  if (!r.ok){ box.innerHTML = '<div class="dw-empty">' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</div>'; return; }
+  if (!r.data.length){
+    box.innerHTML = '<div class="dw-empty"><i class="fa fa-prescription-bottle-medical"></i>' + _esc(_t('dw_no_requests','Aucune demande pour l\'instant.')) + '</div>';
+    return;
+  }
+  box.innerHTML = r.data.map(function(req){
+    var accepted = (req.responses || []).filter(function(x){ return x.status === 'accepted'; });
+    var when = '';
+    try { when = (typeof tabibiFormatDate === 'function') ? tabibiFormatDate(req.created_at, {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : new Date(req.created_at).toLocaleString(); } catch(e){}
+    return '<article class="dw-req">' +
+      '<div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">' +
+        '<div><div class="meds">' + _esc((req.medicaments || []).join(', ')) + '</div>' +
+        '<div class="meta">' + _esc(when) + (req.image_path ? ' · <i class="fa fa-image"></i>' : '') + '</div></div>' +
+        _statusBadge(req.status) +
+      '</div>' +
+      (accepted.length
+        ? accepted.map(function(x){ return _respCard(x, req); }).join('')
+        : (req.status === 'pending'
+            ? '<div class="meta" style="margin-top:8px"><i class="fa fa-hourglass-half"></i> ' + _esc(_t('dw_waiting','Les pharmacies de votre wilaya ont été prévenues…')) + '</div>'
+            : '')) +
+      ((req.status === 'pending' || req.status === 'answered')
+        ? '<button class="btn btn-ghost" style="margin-top:10px;font-size:12px" onclick="closeReq(\'' + req.id + '\')"><i class="fa fa-check"></i> ' + _esc(_t('dw_close_req','J\'ai trouvé — clôturer')) + '</button>'
+        : '') +
+    '</article>';
+  }).join('');
+}
+
+async function closeReq(id){
+  var r = await window.tabibiDawini.closeRequest(id);
+  if (r.ok){ toastM(_t('dw_closed_ok','Demande clôturée.'), 'success'); loadRequests(); }
+  else toastM(window.tabibiDawini.errorMessage(r.error), 'error');
+}
+
+// toast minimal si le shim global n'existe pas (pattern [FIX 2026-07-03])
+function toastM(msg, kind){
+  if (typeof window.toast === 'function') return window.toast(msg, kind);
+  console[(kind === 'error') ? 'warn' : 'log']('[dawini]', msg);
+  alert(msg);
+}
+
+// ── Init : garde session + flag + i18n dynamique ─────────────────────────
+async function init(){
+  document.getElementById('loading').classList.add('hidden');
+  var name = (window.tabibiDawini && window.tabibiDawini.featureName()) || 'Dawini';
+  document.getElementById('dw-page-title').textContent = name;
+  document.getElementById('dw-off-name').textContent = name;
+  document.title = name + ' | Tabibi';
+
+  if (!window.TABIBI_FEATURES || !window.TABIBI_FEATURES.dawini){
+    document.getElementById('dw-off').hidden = false;
+    return;
+  }
+
+  // [DEMO DAWINI] en mode démo (tabibi-dawini-demo.js), pas de session requise
+  if (!window.TABIBI_DAWINI_DEMO){
+    var s = window.tabibi && window.tabibi.supabase;
+    var session = null;
+    try { session = s ? (await s.auth.getSession()).data.session : null; } catch(e){}
+    if (!session){
+      window.location = 'login.html?next=' + encodeURIComponent('/dawini.html');
+      return;
+    }
+  }
+
+  document.getElementById('dw-main').hidden = false;
+  fillWilayas();
+  window.tabibiDawini.expireOld();
+  // [DAWINI] Polling 20 s (décision fondateur — pas de Realtime v1)
+  state.poller = window.tabibiDawini.startPolling(loadRequests, 20000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+// Re-render à chaque changement de langue (les data-i18n statiques sont
+// gérés par le moteur ; on rafraîchit la partie dynamique).
+window.addEventListener('tabibi:lang-change', function(){ fillWilayas(); loadRequests(); });
+</script>
+</body>
+</html>

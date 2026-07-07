@@ -24,12 +24,18 @@ window.TABIBI_CONFIG = {
   // Puis copier le DSN ici. Tant que la valeur contient "REPLACE_", Sentry est DESACTIVE.
   SENTRY_DSN: 'REPLACE_WITH_SENTRY_DSN',
 
+  // ---- Dawini (localisation de medicaments en temps reel) -------------
+  // [DAWINI 2026-07-08] Nom de la fonctionnalite — modifiable en UN SEUL
+  // endroit (utilise par dawini.html, dawini-pharmacie.html, tabibi-dawini.js).
+  DAWINI_NAME: 'Dawini',
+
   // ---- Redirections post-login (par role) ----------------------------
   REDIRECTS: {
     patient: 'patient-dashboard.html',
     doctor: 'doctor-dashboard.html',
     medecin: 'doctor-dashboard.html',  // alias FR
     admin: 'admin-dashboard.html',
+    pharmacie: 'dawini-pharmacie.html',  // [DAWINI 2026-07-08] compte pharmacie → espace Dawini
     afterLogout: 'index.html',
     notLoggedIn: 'login.html',
     afterPasswordReset: 'login.html?reset=ok',

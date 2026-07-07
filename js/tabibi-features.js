@@ -14,6 +14,7 @@
  *   window.TABIBI_FEATURES.reviews
  *   window.TABIBI_FEATURES.analytics
  *   window.TABIBI_FEATURES.sentry
+ *   window.TABIBI_FEATURES.dawini
  *
  * Override runtime (debug / QA, jamais en prod) :
  *   localStorage.setItem('tabibi_features_override', JSON.stringify({video:true}))
@@ -73,6 +74,16 @@
     //   - Compte Plausible non créé
     //   - Script injection désactivé pour éviter erreur 404 + bruit
     analytics: false,
+
+    // [DAWINI 2026-07-08] Localisation de medicaments (« Dawini ») :
+    //   - DB : migrations/DAWINI_step1_schema.sql — A EXECUTER (SQL Editor)
+    //   - Front : dawini.html + dawini-pharmacie.html + js/tabibi-dawini.js
+    //   - Zones : table dawini_zones (activation wilaya par wilaya)
+    //   - Push FCM : en attente du projet Firebase dz.tabibi.app
+    //   → ON (decision fondateur 2026-07-08) : design v4 valide en local.
+    //     ⚠️ AVANT deploiement : executer la migration + creer 1 pharmacie test,
+    //     sinon les pages afficheront des erreurs reseau (tables absentes).
+    dawini: true,
 
     // Sentry frontend errors (Phase 12) :
     //   - Compte Sentry non créé / DSN non configuré

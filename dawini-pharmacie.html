@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<!-- [DAWINI 2026-07-08] Interface pharmacie : réception + réponse + mini-dashboard. -->
+<meta name="description" content="Espace pharmacie Dawini.">
+<link rel="canonical" href="https://tabibi.doctor/dawini-pharmacie.html">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0E5F46">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<meta name="tabibi-page-key" content="dw_ph_title">
+<title>Dawini — Espace pharmacie | Tabibi</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<!-- [DAWINI 2026-07-08] Typo du design v4 (Plus Jakarta Sans + Cairo AR) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* [DAWINI] Styles inline (1 page) — mini-dashboard pattern secretaire. */
+  .dwp-shell { padding: 14px 16px 80px; max-width: 720px; margin: 0 auto; }
+  .dwp-kpis { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .dwp-kpi { background:#fff; border-radius: var(--r12); padding: 14px 10px; text-align:center; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .dwp-kpi b { display:block; font-size: 22px; color: var(--blue); }
+  .dwp-kpi span { font-size: 11px; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+  .dwp-req { background:#fff; border-radius: var(--r16); padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 12px; }
+  .dwp-req .meds { font-weight: 800; font-size: 15px; }
+  .dwp-req .meta { font-size: 12px; color: var(--text3); margin-top: 3px; }
+  .dwp-req .note { background: var(--bg2); border-radius: var(--r8); padding: 9px 11px; font-size: 12.5px; color: var(--text2); margin-top: 9px; }
+  .dwp-img { margin-top: 10px; }
+  .dwp-img img { max-width: 100%; max-height: 260px; border-radius: var(--r8); display: block; }
+  .dwp-form { border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px; }
+  .dwp-check { display:flex; align-items:center; gap: 9px; font-size: 13.5px; font-weight: 600; margin-bottom: 9px; }
+  .dwp-actions { display:flex; gap: 10px; margin-top: 12px; }
+  .dwp-actions .btn { flex: 1; justify-content: center; font-weight: 700; }
+  .dwp-done { background: var(--bg2); border-radius: var(--r12); padding: 11px 13px; font-size: 12.5px; color: var(--text2); margin-top: 10px; }
+  .dwp-done.acc { background:#e7f3ef; color: var(--green-d, #0E5F46); }
+  .dwp-contact { background:#e7f3ef; border:1px solid #d4e9e1; border-radius: var(--r12); padding: 11px 13px; font-size: 13px; margin-top: 10px; }
+  .dwp-empty { padding: 40px 16px; text-align:center; color: var(--text3); font-size: 13px; }
+  .dwp-empty i { font-size: 40px; opacity:.35; display:block; margin-bottom: 10px; }
+  .dwp-guard { padding: 60px 20px; text-align:center; }
+  .dwp-guard i { font-size: 52px; color: var(--red); opacity:.5; margin-bottom: 16px; display:block; }
+  .dwp-newdot { display:inline-block; width:8px; height:8px; border-radius:50%; background: var(--red); margin-inline-start: 6px; animation: dwpulse 1.6s infinite; }
+  @keyframes dwpulse { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+  /* ═══ [DAWINI 2026-07-08] SKIN v4 PREMIUM — aligné tabibi-landing-v4.html ═══
+     Palette « Tabibi 2027 » : émeraude #0F7560 · ivoire #FBF9F4 · sable #F4EEE2
+     · or #D4A437 · lignes #E7E0D2 · encre #0F2A24. Typo Plus Jakarta Sans (+ Cairo AR).
+     Peau uniquement — aucune logique modifiée. */
+  :root{
+    --emerald:#0F7560; --emerald-d:#0E5F46; --ink:#0F2A24; --ivory:#FBF9F4;
+    --sand:#F4EEE2; --v4line:#E7E0D2; --gold:#D4A437; --slate:#5C6B63;
+    /* remap tokens app → v4 (boutons, liens, focus suivent automatiquement) */
+    --blue:#0F7560; --blue-l:#E7F1EC; --border:#E7E0D2; --bg2:#F4EEE2;
+    --text2:#43584F; --text3:#5C6B63; --green-d:#0E5F46;
+  }
+  body{ font-family:'Plus Jakarta Sans',system-ui,sans-serif; background:var(--ivory); color:var(--ink); -webkit-font-smoothing:antialiased; }
+  html[lang="ar"] body, [dir="rtl"] body{ font-family:'Cairo','Plus Jakarta Sans',sans-serif; }
+  .page{ background:var(--ivory); }
+  .app-bar{ background:rgba(251,249,244,.85); backdrop-filter:blur(12px); border-bottom:1px solid var(--v4line); }
+  .app-bar-title{ font-weight:800; letter-spacing:-.5px; color:var(--ink); }
+  .tab-bar{ background:rgba(251,249,244,.92); border-top:1px solid var(--v4line); }
+  h2{ font-weight:800; letter-spacing:-.5px; color:var(--ink); }
+  .btn{ border-radius:999px; font-weight:700; }
+  .btn-primary{ background:var(--emerald); }
+  .btn-primary:hover, .btn-primary:active{ background:var(--emerald-d); }
+  .form-control{ border-radius:13px; border:1.5px solid var(--v4line); background:#fff; }
+  .form-control:focus{ border-color:var(--emerald); box-shadow:0 0 0 3px rgba(15,117,96,.12); }
+  .dwp-kpi{ background:#fff; border:1px solid var(--v4line); border-radius:18px; box-shadow:0 6px 18px rgba(16,40,34,.05); }
+  .dwp-kpi b{ color:var(--emerald); font-weight:800; letter-spacing:-.3px; }
+  .dwp-kpi span{ color:var(--slate); }
+  .dwp-req{ border:1px solid var(--v4line); border-radius:24px; box-shadow:0 16px 40px rgba(5,39,29,.08); }
+  .dwp-req .note{ background:var(--sand); border-radius:14px; }
+  .dwp-form{ border-top:1px solid var(--v4line); }
+  .dwp-done{ background:var(--sand); border-radius:14px; }
+  .dwp-done.acc, .dwp-contact{ background:#E7F1EC; border-color:#D5E7DF; }
+  .dwp-newdot{ background:var(--gold); }
+</style>
+</head>
+<body>
+<div class="app-root">
+<div class="loading-screen" id="loading"><div class="spinner"></div></div>
+
+<header class="app-bar">
+  <button class="btn btn-icon btn-icon-sm btn-ghost" onclick="goBackSafe()" aria-label="Retour"><i class='fa fa-arrow-left'></i></button>
+  <div class="app-bar-body">
+    <div class="app-bar-title"><span id="dwp-page-title">Dawini</span> — <span data-i18n="dw_ph_space">Espace pharmacie</span></div>
+    <div class="app-bar-sub" id="dwp-pharm-name"></div>
+  </div>
+  <div data-langbar></div>
+</header>
+
+<main class="page" role="main">
+
+  <!-- Garde : pas une pharmacie -->
+  <div id="dwp-guard" class="dwp-guard" hidden>
+    <i class="fa fa-user-lock" aria-hidden="true"></i>
+    <div style="font-size:16px;font-weight:800;margin-bottom:8px" data-i18n="dw_ph_not_pharmacy">Accès réservé aux pharmacies partenaires</div>
+    <div style="font-size:13px;color:var(--text2);max-width:40ch;margin:0 auto 18px" data-i18n="dw_ph_not_pharmacy_sub">Ce compte n'est pas relié à une fiche pharmacie. Contactez Tabibi pour devenir partenaire.</div>
+    <a class="btn btn-primary" href="index.html" data-i18n="dw_ph_back_home">Retour à l'accueil</a>
+  </div>
+
+  <div id="dwp-main" class="dwp-shell" hidden>
+
+    <!-- Mini-dashboard -->
+    <div class="dwp-kpis" aria-label="Statistiques">
+      <div class="dwp-kpi"><b id="kpi-total">0</b><span data-i18n="dw_ph_kpi_total">Demandes zone</span></div>
+      <div class="dwp-kpi"><b id="kpi-acc">0</b><span data-i18n="dw_ph_kpi_acc">Acceptées</span></div>
+      <div class="dwp-kpi"><b id="kpi-ref">0</b><span data-i18n="dw_ph_kpi_ref">Refusées</span></div>
+    </div>
+
+    <h2 style="font-size:16px;margin:6px 0 10px">
+      <span data-i18n="dw_ph_pending">Demandes de votre wilaya</span><span class="dwp-newdot" id="dwp-dot" hidden></span>
+    </h2>
+    <div id="dwp-list" aria-live="polite"></div>
+
+  </div>
+</main>
+
+<nav class="tab-bar" id="tab-bar"></nav>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tabibi-bridge.js"></script>
+<script src="js/tabibi-features.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-langbar.js"></script>
+<script src="js/tabibi-dawini.js"></script>
+<script src="js/tabibi-dawini-demo.js"></script><!-- [DEMO] inerte sans ?demo=1 -->
+<script src="js/tabibi-sentry.js"></script>
+<script>
+// ========================================================================
+// [DAWINI 2026-07-08] dawini-pharmacie.html — interface pharmacie
+// ------------------------------------------------------------------------
+// • Garde : session + fiche pharmacies liée (user_id), sinon écran refus
+//   (pattern secretaire-dashboard : session → rôle → toast/écran).
+// • Réception : polling 20 s (décision fondateur, pas de Realtime v1) ;
+//   les notifications in-app/push arrivent par la table notifications.
+// • Fiche : image ordonnance (URL signée), médicaments, note.
+// • Réponse : dispo / générique / médicaments précisés / commentaire,
+//   puis Accepter ou Refuser (RPC dawini_respond, unicité serveur).
+// • Contact patient : APRÈS acceptation uniquement (RPC 18-07).
+// ========================================================================
+function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+function _esc(s){ var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+function goBackSafe(){ if (history.length > 1) history.back(); else window.location = 'index.html'; }
+function toastM(msg, kind){
+  if (typeof window.toast === 'function') return window.toast(msg, kind);
+  console[(kind === 'error') ? 'warn' : 'log']('[dawini-ph]', msg);
+  alert(msg);
+}
+
+var state = { pharmacy: null, poller: null, lastCount: 0, imgUrls: {} };
+
+// ── Rendu d'une demande ──────────────────────────────────────────────────
+function _reqCard(req){
+  var when = '';
+  try { when = (typeof tabibiFormatDate === 'function') ? tabibiFormatDate(req.created_at, {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : new Date(req.created_at).toLocaleString(); } catch(e){}
+  var html = '<article class="dwp-req" data-id="' + _esc(req.id) + '">' +
+    '<div class="meds"><i class="fa fa-pills" style="color:var(--blue)"></i> ' + _esc((req.medicaments || []).join(', ')) + '</div>' +
+    '<div class="meta">' + _esc(when) + ' · ' + _esc(_t('dw_ph_wilaya','Wilaya')) + ' ' + String(req.wilaya_code).padStart(2,'0') + '</div>' +
+    (req.note ? '<div class="note"><i class="fa fa-comment-dots"></i> ' + _esc(req.note) + '</div>' : '');
+
+  // Image d'ordonnance : URL signée chargée à la demande (bouton)
+  if (req.image_path){
+    var cached = state.imgUrls[req.id];
+    html += cached
+      ? '<div class="dwp-img"><img src="' + _esc(cached) + '" alt="Ordonnance"></div>'
+      : '<button class="btn btn-ghost" style="margin-top:9px;font-size:12.5px" onclick="showImage(\'' + req.id + '\',\'' + _esc(req.image_path) + '\')"><i class="fa fa-image"></i> ' + _esc(_t('dw_ph_view_img','Voir l\'ordonnance')) + '</button>';
+  }
+
+  if (req.my_response){
+    var r = req.my_response;
+    html += '<div class="dwp-done' + (r.status === 'accepted' ? ' acc' : '') + '">' +
+      (r.status === 'accepted'
+        ? '<i class="fa fa-check"></i> ' + _esc(_t('dw_ph_done_acc','Acceptée')) + (r.generique ? ' · ' + _esc(_t('dw_ph_generic','Générique')) : '')
+        : '<i class="fa fa-xmark"></i> ' + _esc(_t('dw_ph_done_ref','Refusée'))) +
+      (r.commentaire ? ' — ' + _esc(r.commentaire) : '') +
+      '</div>';
+    if (r.status === 'accepted'){
+      html += '<div class="dwp-contact" id="contact-' + _esc(req.id) + '">' +
+        '<button class="btn btn-ghost" style="font-size:12.5px" onclick="showContact(\'' + req.id + '\')"><i class="fa fa-address-card"></i> ' + _esc(_t('dw_ph_contact','Voir les coordonnées du patient')) + '</button>' +
+        '</div>';
+    }
+  } else {
+    // Formulaire de réponse
+    html += '<div class="dwp-form">' +
+      '<label class="dwp-check"><input type="checkbox" id="dispo-' + _esc(req.id) + '" checked> <span data-i18n="dw_ph_dispo">Médicament disponible</span></label>' +
+      '<label class="dwp-check"><input type="checkbox" id="gen-' + _esc(req.id) + '"> <span data-i18n="dw_ph_generic_chk">J\'ai le générique</span></label>' +
+      '<input class="form-control" id="meds-' + _esc(req.id) + '" maxlength="200" style="margin-bottom:8px" placeholder="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '">' +
+      '<input class="form-control" id="com-' + _esc(req.id) + '" maxlength="300" placeholder="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '">' +
+      '<div class="dwp-actions">' +
+        '<button class="btn btn-primary" onclick="answer(\'' + _esc(req.id) + '\', true)"><i class="fa fa-check"></i> ' + _esc(_t('dw_ph_accept','Accepter')) + '</button>' +
+        '<button class="btn btn-ghost" style="border:1.5px solid var(--red);color:var(--red)" onclick="answer(\'' + _esc(req.id) + '\', false)"><i class="fa fa-xmark"></i> ' + _esc(_t('dw_ph_refuse','Refuser')) + '</button>' +
+      '</div>' +
+    '</div>';
+  }
+  return html + '</article>';
+}
+
+async function showImage(reqId, path){
+  var r = await window.tabibiDawini.getImageUrl(path);
+  if (!r.ok){ toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
+  state.imgUrls[reqId] = r.data;
+  loadZone(true);
+}
+
+async function showContact(reqId){
+  var box = document.getElementById('contact-' + reqId);
+  var r = await window.tabibiDawini.getPatientContact(reqId);
+  if (!r.ok){ toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
+  box.innerHTML = '<i class="fa fa-user"></i> <b>' + _esc(r.data.nom) + '</b>' +
+    (r.data.tel ? ' · <a href="tel:' + _esc(r.data.tel) + '" style="font-weight:700;color:var(--blue)"><i class="fa fa-phone"></i> ' + _esc(r.data.tel) + '</a>' : '');
+}
+
+async function answer(reqId, accepted){
+  var meds = (document.getElementById('meds-' + reqId).value || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+  var r = await window.tabibiDawini.respond({
+    requestId:   reqId,
+    accepted:    accepted,
+    disponible:  document.getElementById('dispo-' + reqId).checked,
+    generique:   document.getElementById('gen-' + reqId).checked,
+    medsDispo:   meds,
+    commentaire: document.getElementById('com-' + reqId).value
+  });
+  if (!r.ok){ toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
+  toastM(accepted ? _t('dw_ph_acc_ok','Réponse envoyée — le patient est prévenu.') : _t('dw_ph_ref_ok','Demande refusée.'), 'success');
+  loadZone(true);
+  loadStats();
+}
+
+// ── Chargements ──────────────────────────────────────────────────────────
+async function loadZone(silent){
+  var r = await window.tabibiDawini.listZoneRequests();
+  var box = document.getElementById('dwp-list');
+  if (!r.ok){
+    if (!silent) box.innerHTML = '<div class="dwp-empty">' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</div>';
+    return;
+  }
+  var pending = r.data.filter(function(q){ return !q.my_response; });
+  document.getElementById('dwp-dot').hidden = !pending.length;
+  if (pending.length > state.lastCount && state.lastCount > 0){
+    toastM(_t('dw_ph_new','Nouvelle demande Dawini !'), 'info');
+  }
+  state.lastCount = pending.length;
+  box.innerHTML = r.data.length
+    ? r.data.map(_reqCard).join('')
+    : '<div class="dwp-empty"><i class="fa fa-inbox"></i>' + _esc(_t('dw_ph_empty','Aucune demande dans votre wilaya pour l\'instant.')) + '</div>';
+}
+
+async function loadStats(){
+  var r = await window.tabibiDawini.stats();
+  if (!r.ok || !r.data) return;
+  document.getElementById('kpi-total').textContent = r.data.zone_total || 0;
+  document.getElementById('kpi-acc').textContent   = r.data.mine_accepted || 0;
+  document.getElementById('kpi-ref').textContent   = r.data.mine_refused || 0;
+}
+
+// ── Init : session → fiche pharmacie → polling ───────────────────────────
+async function init(){
+  document.getElementById('loading').classList.add('hidden');
+  var name = (window.tabibiDawini && window.tabibiDawini.featureName()) || 'Dawini';
+  document.getElementById('dwp-page-title').textContent = name;
+  document.title = name + ' — ' + _t('dw_ph_space','Espace pharmacie') + ' | Tabibi';
+
+  // [DEMO DAWINI] en mode démo (tabibi-dawini-demo.js), pas de session requise
+  if (!window.TABIBI_DAWINI_DEMO){
+    var s = window.tabibi && window.tabibi.supabase;
+    var session = null;
+    try { session = s ? (await s.auth.getSession()).data.session : null; } catch(e){}
+    if (!session){
+      window.location = 'login.html?next=' + encodeURIComponent('/dawini-pharmacie.html');
+      return;
+    }
+  }
+
+  var ph = await window.tabibiDawini.myPharmacy();
+  if (!ph.ok){
+    document.getElementById('dwp-guard').hidden = false;
+    return;
+  }
+  state.pharmacy = ph.data;
+  document.getElementById('dwp-pharm-name').textContent = ph.data.nom;
+  document.getElementById('dwp-main').hidden = false;
+
+  window.tabibiDawini.expireOld();
+  loadStats();
+  // [DAWINI] Polling 20 s (décision fondateur — pas de Realtime v1)
+  state.poller = window.tabibiDawini.startPolling(function(){ return loadZone(true); }, 20000);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('tabibi:lang-change', function(){ loadZone(true); loadStats(); });
+</script>
+</body>
+</html>
