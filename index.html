@@ -700,6 +700,152 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   /* Footer multi-colonnes edge-to-edge */
   #tabibi-footer>div{max-width:none!important;margin:0;padding-inline:var(--gutter)}
 }
+
+/* ═══ [V4 2026-07-08] Accueil « avec visages » — design tabibi-landing-v4 ═══
+   Ambiance ivoire (#FBF9F4) + sable (#F4EEE2) + lignes chaudes (#E7E0D2),
+   boutons pilule, carte de réservation produit dans le héro (Doctolib-style).
+   Peau + 1 bloc décoratif — la logique app (recherche, i18n, auth) est intacte. */
+:root{ --bg:#FBF9F4; --bg2:#F4EEE2; --border:#E7E0D2; --blue-l:#E7F1EC;
+       --pastille:#F4EEE2; --pastille-bd:#E7E0D2; }
+.btn{ border-radius:999px; }
+.hero-mobile{ background:linear-gradient(180deg,#FBF9F4,#F4EEE2); }
+.hero-flag{ display:none; }  /* v4 : pas de drapeau dans le héro (demande fondateur) */
+.hero-visual{ position:relative; max-width:420px; margin:22px auto 6px; }
+.bookcard{ position:relative; background:#fff; border:1px solid #E7E0D2; border-radius:24px; padding:24px; box-shadow:0 40px 90px rgba(6,82,64,.16); z-index:2; text-align:start; }
+.bookcard-ghost{ position:absolute; inset:26px -10px -14px 26px; background:#F4EEE2; border-radius:26px; transform:rotate(3.5deg); z-index:1; }
+.bc-doc{ display:flex; align-items:center; gap:13px; padding-bottom:16px; border-bottom:1px solid #E7E0D2; }
+.bc-ava{ width:54px; height:54px; border-radius:16px; object-fit:cover; flex:none; }
+.bc-id{ flex:1; min-width:0; }
+.bc-id b{ font-size:16.5px; font-weight:800; display:block; line-height:1.2; }
+.bc-id small{ font-size:12.5px; color:var(--text3); font-weight:500; }
+.bc-verified{ display:inline-flex; align-items:center; gap:5px; color:#0E5F46; background:#F4EEE2; padding:5px 9px; border-radius:8px; font-weight:700; font-size:12px; }
+.bc-day{ font-size:11.5px; font-weight:700; color:#0E5F46; margin:15px 0 9px; text-transform:uppercase; letter-spacing:.6px; }
+.bc-slots{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+.bc-slots span{ border:1.5px solid #E7E0D2; border-radius:11px; padding:9px 0; text-align:center; font-size:14px; font-weight:700; color:var(--ink); background:#fff; }
+.bc-slots .sel{ background:var(--blue); border-color:var(--blue); color:#fff; box-shadow:0 6px 16px rgba(15,117,96,.35); }
+.bc-btn{ margin-top:14px; background:var(--blue); color:#fff; border-radius:13px; padding:13px; text-align:center; font-weight:700; font-size:14.5px; display:flex; align-items:center; justify-content:center; gap:8px; }
+.bc-note{ margin-top:11px; text-align:center; font-size:11.5px; color:var(--text3); font-weight:500; }
+.badge-float{ position:absolute; background:#fff; border-radius:16px; padding:11px 14px; box-shadow:0 20px 46px rgba(6,82,64,.16); display:flex; align-items:center; gap:10px; z-index:3; }
+.badge-float .dot{ width:34px; height:34px; border-radius:10px; display:grid; place-items:center; color:#fff; flex:none; }
+.badge-float b{ font-size:13px; font-weight:700; display:block; line-height:1.2; }
+.badge-float small{ font-size:11.5px; color:var(--text3); }
+.bf1{ top:-14px; inset-inline-start:6px; }
+.bf2{ bottom:-14px; inset-inline-end:6px; }
+@media (min-width:1024px){
+  .hero-visual{ grid-column:2; grid-row:1; margin:0 auto; width:100%; }
+  .bf1{ top:-26px; inset-inline-start:-20px; }
+  .bf2{ bottom:-26px; inset-inline-end:-12px; }
+}
+
+/* ═══ [V4B 2026-07-08] Sections vitrines v4 : bande confiance, praticiens (photos),
+   preuve sociale, téléconsultation, comparatif, download+QR, FAQ ═══ */
+.v4strip{ background:#EFE7D6; border-top:1px solid #E7E0D2; border-bottom:1px solid #E7E0D2; padding:20px var(--gutter); display:flex; flex-wrap:wrap; gap:12px 26px; justify-content:space-around; }
+.v4strip .item{ display:flex; align-items:center; gap:10px; color:#0E5F46; font-weight:600; font-size:14px; }
+.v4strip .item i{ color:#0F7560; }
+.v4-sechead{ max-width:660px; margin:0 auto 24px; text-align:center; padding:0 var(--gutter); }
+.v4-eyebrow{ display:inline-flex; align-items:center; gap:8px; color:#0F7560; font-weight:700; font-size:12px; letter-spacing:1.4px; text-transform:uppercase; }
+.v4-sechead h2{ font-size:24px; margin:10px 0 8px; letter-spacing:-.5px; color:var(--ink); }
+.v4-sechead p{ font-size:14.5px; color:var(--text2); }
+.v4-docgrid{ display:grid; grid-template-columns:repeat(2,1fr); gap:14px; padding:0 var(--gutter); }
+.v4-doccard{ background:#fff; border:1px solid #E7E0D2; border-radius:20px; overflow:hidden; transition:transform .2s, box-shadow .2s; }
+.v4-doccard:hover{ transform:translateY(-4px); box-shadow:0 24px 50px rgba(6,82,64,.12); }
+.v4-doccard .photo{ aspect-ratio:1/1; position:relative; background:linear-gradient(160deg,#DDE9E1,#EDE6D6); overflow:hidden; }
+.v4-doccard .photo img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.v4-doccard .info{ padding:14px; }
+.v4-doccard .vname{ font-size:16px; font-weight:800; color:var(--ink); }
+.v4-doccard .spec{ font-size:13px; color:var(--text3); margin:2px 0 10px; }
+.v4-doccard .meta{ display:flex; align-items:center; justify-content:space-between; font-size:12.5px; }
+.v4-verified{ display:inline-flex; align-items:center; gap:5px; color:#0E5F46; background:#F4EEE2; padding:4px 8px; border-radius:8px; font-weight:700; font-size:11.5px; }
+.v4-rate{ color:#D4A437; font-weight:700; }
+.v4-counter{ display:flex; align-items:center; justify-content:center; gap:12px; background:#fff; border:1px solid #E7E0D2; border-radius:999px; padding:12px 22px; width:max-content; max-width:calc(100% - 2*var(--gutter)); margin:0 auto 22px; box-shadow:0 10px 30px rgba(16,40,34,.07); }
+.v4-cnum{ font-size:22px; font-weight:800; color:#0F7560; letter-spacing:-.5px; }
+.v4-cnum::after{ content:''; display:inline-block; width:8px; height:8px; border-radius:50%; background:#0F7560; margin-inline-start:8px; vertical-align:middle; animation:v4pulse 1.6s infinite; }
+@keyframes v4pulse{ 0%,100%{opacity:.25} 50%{opacity:1} }
+@media (prefers-reduced-motion:reduce){ .v4-cnum::after{ animation:none; } }
+.v4-clab{ font-size:13px; font-weight:600; color:var(--text2); }
+.v4-revgrid{ display:grid; grid-template-columns:1fr; gap:12px; padding:0 var(--gutter); }
+.v4-rev{ background:#fff; border:1px solid #E7E0D2; border-radius:20px; padding:18px; margin:0; }
+.v4-rstars{ color:#D4A437; letter-spacing:2.5px; font-size:14px; margin-bottom:8px; }
+.v4-rev blockquote{ font-size:13.5px; line-height:1.55; color:var(--ink); font-weight:500; margin:0; }
+.v4-rev figcaption{ margin-top:10px; font-size:12px; color:var(--text3); font-weight:600; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.v4-rbadge{ display:inline-flex; align-items:center; gap:4px; background:#F4EEE2; color:#0E5F46; border-radius:7px; padding:3px 8px; font-size:10.5px; font-weight:700; }
+.v4-tele{ background:linear-gradient(120deg,rgba(11,122,91,.07),rgba(198,161,91,.09)); border-top:1px solid #E7E0D2; border-bottom:1px solid #E7E0D2; padding:22px var(--gutter); display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+.v4-tele .ti{ width:48px; height:48px; border-radius:14px; background:#0F7560; color:#fff; display:grid; place-items:center; flex:none; font-size:19px; }
+.v4-tele h3{ font-size:17px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin:0; color:var(--ink); }
+.v4-soon{ background:#D4A437; color:#fff; font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; border-radius:999px; padding:3px 10px; }
+.v4-tele p{ font-size:13px; color:var(--text2); margin:3px 0 0; max-width:60ch; }
+.v4-tele .cta{ margin-inline-start:auto; }
+.v4-cmp{ margin:0 var(--gutter); background:#fff; border:1px solid #E7E0D2; border-radius:20px; overflow:hidden; }
+.v4-cmp-h,.v4-cmp-r{ display:grid; grid-template-columns:1fr 52px 86px; align-items:center; padding:12px 14px; gap:8px; }
+.v4-cmp-h{ background:#F4EEE2; font-size:11px; text-transform:uppercase; letter-spacing:.8px; color:var(--text2); font-weight:700; }
+.v4-cmp-h strong{ color:#0E5F46; text-align:center; }
+.v4-cmp-h span:last-child{ text-align:center; }
+.v4-cmp-r{ border-top:1px solid #E7E0D2; font-size:13px; font-weight:500; color:var(--ink); }
+.v4-cmp-r .y{ color:#0F7560; font-size:17px; text-align:center; }
+.v4-cmp-r .n{ color:var(--text3); opacity:.7; text-align:center; font-size:12px; }
+.v4-download{ margin:0 var(--gutter); background:#0F7560; color:#fff; border-radius:26px; padding:40px 24px; text-align:center; position:relative; overflow:hidden; }
+.v4-download h2{ font-size:24px; color:#fff; margin-bottom:10px; letter-spacing:-.5px; }
+.v4-download p{ font-size:14.5px; color:#D7EDE4; max-width:540px; margin:0 auto 22px; }
+.v4-stores{ display:flex; gap:12px; justify-content:center; flex-wrap:wrap; position:relative; }
+.v4-store{ display:inline-flex; align-items:center; gap:11px; border-radius:14px; padding:11px 20px; text-decoration:none; transition:transform .18s; }
+.v4-store:hover{ transform:translateY(-2px); }
+.v4-store small{ display:block; font-size:10.5px; opacity:.65; font-weight:500; line-height:1.1; text-align:start; }
+.v4-store b{ font-size:15px; font-weight:700; line-height:1.25; display:block; text-align:start; }
+.v4-ring{ position:absolute; border:2px solid rgba(255,255,255,.14); border-radius:50%; }
+.v4-ring.r1{ width:320px; height:320px; top:-140px; inset-inline-start:-100px; }
+.v4-ring.r2{ width:240px; height:240px; bottom:-120px; inset-inline-end:-70px; }
+.v4-qrbox{ display:flex; align-items:center; gap:14px; justify-content:center; margin-top:22px; position:relative; }
+.v4-qr{ width:92px; height:92px; background:#fff; border-radius:14px; padding:8px; flex:none; display:block; }
+.v4-qr svg{ width:100%; height:100%; display:block; }
+.v4-qrbox small{ font-size:12.5px; color:#D7EDE4; text-align:start; line-height:1.45; font-weight:600; max-width:22ch; }
+.v4-faq{ max-width:780px; margin:0 auto; padding:0 var(--gutter); }
+.v4-faq details{ border-bottom:1px solid #E7E0D2; padding:4px 2px; }
+.v4-faq summary{ list-style:none; cursor:pointer; font-weight:700; font-size:15px; padding:16px 0; display:flex; justify-content:space-between; align-items:center; gap:16px; color:var(--ink); }
+.v4-faq summary::-webkit-details-marker{ display:none; }
+.v4-faq .pl{ color:#0F7560; font-size:22px; flex:none; transition:.2s; }
+.v4-faq details[open] .pl{ transform:rotate(45deg); }
+.v4-faq details p{ padding:0 0 16px; color:var(--text2); font-size:13.5px; max-width:640px; }
+#tabibi-footer{ background:#FBF9F4 !important; border-top:1px solid #E7E0D2 !important; }
+@media (min-width:768px){
+  .v4-docgrid{ grid-template-columns:repeat(4,1fr); gap:18px; }
+  .v4-revgrid{ grid-template-columns:repeat(3,1fr); gap:16px; }
+  .v4-sechead h2{ font-size:30px; }
+  .v4-cmp{ max-width:720px; margin:0 auto; }
+  .v4-cmp-h,.v4-cmp-r{ grid-template-columns:1fr 96px 150px; padding:14px 20px; }
+  .v4-download{ padding:56px 40px; }
+  .v4-download h2{ font-size:32px; }
+  .v4strip .item{ font-size:15px; }
+}
+
+/* ═══ [DAWINI PREMIUM 2026-07-08] Bande fonctionnalité Dawini en tête d'accueil (design v4) ═══ */
+.dwh{ padding:26px var(--gutter) 6px; }
+.dwh-card{ position:relative; background:#fff; border:1px solid #E7E0D2; border-radius:26px; overflow:hidden; box-shadow:0 24px 60px rgba(6,82,64,.10); }
+.dwh-l{ padding:24px 22px; }
+.dwh-new{ display:inline-flex; align-items:center; gap:7px; background:rgba(212,164,55,.16); color:#8A6A1F; border-radius:999px; padding:5px 12px; font-size:11px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; }
+.dwh-l h2{ font-size:22px; font-weight:800; letter-spacing:-.5px; color:var(--ink); margin:12px 0 8px; }
+.dwh-name{ color:#0F7560; }
+.dwh-l p{ font-size:13.5px; color:var(--text2); line-height:1.6; max-width:52ch; margin:0 0 14px; }
+.dwh-points{ display:flex; flex-direction:column; gap:8px; margin-bottom:18px; }
+.dwh-points span{ display:flex; align-items:flex-start; gap:9px; font-size:13px; font-weight:600; color:var(--ink); }
+.dwh-points i{ color:#0F7560; margin-top:2px; }
+.dwh-r{ position:relative; background:linear-gradient(160deg,#0F7560,#0E5F46); padding:26px 22px; display:grid; place-items:center; overflow:hidden; }
+.dwh-r::before, .dwh-r::after{ content:''; position:absolute; border:2px solid rgba(255,255,255,.12); border-radius:50%; }
+.dwh-r::before{ width:220px; height:220px; top:-90px; inset-inline-end:-70px; }
+.dwh-r::after{ width:160px; height:160px; bottom:-70px; inset-inline-start:-50px; }
+.dwh-mock{ position:relative; z-index:1; width:100%; max-width:340px; display:flex; flex-direction:column; gap:10px; }
+.dwh-mock-req{ background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.25); color:#fff; border-radius:14px; padding:10px 13px; font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.dwh-mock-req .b{ margin-inline-start:auto; background:rgba(212,164,55,.92); color:#fff; border-radius:999px; padding:3px 9px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.5px; }
+.dwh-mock-resp{ background:#fff; border-radius:18px; padding:14px; box-shadow:0 18px 44px rgba(2,30,22,.35); }
+.dwh-mock-resp .top{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; color:var(--ink); flex-wrap:wrap; }
+.dwh-mock-resp .ok{ margin-inline-start:auto; display:inline-flex; align-items:center; gap:5px; background:#E7F1EC; color:#0E5F46; border-radius:999px; padding:4px 10px; font-size:11px; font-weight:700; }
+.dwh-mock-resp small{ display:block; font-size:11.5px; color:var(--text3); margin:5px 0 10px; }
+.dwh-mock-actions{ display:flex; gap:8px; }
+.dwh-mock-actions span{ flex:1; text-align:center; border:1.5px solid #E7E0D2; border-radius:999px; padding:7px 6px; font-size:11.5px; font-weight:700; color:#0E5F46; display:inline-flex; align-items:center; justify-content:center; gap:6px; }
+@media (min-width:900px){
+  .dwh-card{ display:grid; grid-template-columns:1.15fr .85fr; align-items:stretch; }
+  .dwh-l{ padding:30px; }
+  .dwh-l h2{ font-size:26px; }
+}
 </style>
 </head>
 <body>
@@ -808,6 +954,25 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <div class="hero-stat"><div class="hs-n">58</div><div class="hs-l" id="hs2">Wilayas</div></div>
         <div class="hero-stat"><div class="hs-n">24/7</div><div class="hs-l" id="hs4">Réservation</div></div>
       </div>
+      <!-- [V4 2026-07-08] Carte de réservation produit (design v4 « avec visages »).
+           Décoratif (aria-hidden) : montre le produit, ne réserve rien.
+           ⚠️ Photo Unsplash PLACEHOLDER — remplacer par une photo licenciée avant prod. -->
+      <div class="hero-visual" aria-hidden="true">
+        <div class="bookcard-ghost"></div>
+        <div class="bookcard">
+          <div class="bc-doc">
+            <img class="bc-ava" src="https://images.unsplash.com/photo-1645066928295-2506defde470?auto=format&fit=facearea&facepad=3.5&w=160&h=160&q=80" alt="" loading="lazy">
+            <div class="bc-id"><b>Dr. Sofiane M.</b><small><span data-i18n="bc_spec">Généraliste</span> · Constantine</small></div>
+            <span class="bc-verified"><i class="fa fa-check"></i> <span data-i18n="bc_verified">Vérifié</span></span>
+          </div>
+          <div class="bc-day"><span data-i18n="bc_day">Aujourd'hui</span> · <span data-i18n="bc_slots">12 créneaux disponibles</span></div>
+          <div class="bc-slots"><span dir="ltr">09:00</span><span dir="ltr">09:30</span><span class="sel" dir="ltr">10:30</span><span dir="ltr">11:00</span><span dir="ltr">14:00</span><span dir="ltr">15:30</span></div>
+          <div class="bc-btn"><i class="fa fa-check"></i> <span data-i18n="bc_confirm">Confirmer le RDV</span> · <span dir="ltr">10:30</span></div>
+          <div class="bc-note"><span data-i18n="bc_note1">Rappel SMS automatique</span> · <span data-i18n="bc_note2">Paiement au cabinet</span></div>
+        </div>
+        <div class="badge-float bf1"><span class="dot" style="background:var(--blue)"><i class="fa fa-check"></i></span><span><b data-i18n="bc_bf1">RDV confirmé</b><small>Dr. Amine · 09:30</small></span></div>
+        <div class="badge-float bf2"><span class="dot" style="background:#D4A437"><i class="fa fa-star"></i></span><span><b data-i18n="bc_bf2">Médecin vérifié</b><small data-i18n="bc_bf2b">Identité contrôlée</small></span></div>
+      </div>
     </div>
       <!-- AUTH CTA — visible si pas connecté (script en bas le masquera si user existe) -->
       <div id="auth-cta-banner" style="display:flex;gap:10px;margin-top:18px;flex-wrap:wrap">
@@ -821,6 +986,42 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       </a>
     </section>
 
+  <!-- [DAWINI PREMIUM 2026-07-08] Fonctionnalité Dawini mise en avant (design v4).
+       Masquée automatiquement si TABIBI_FEATURES.dawini = false (helper data-feature). -->
+  <section class="dwh" id="sec-dawini" data-feature="dawini">
+    <div class="dwh-card">
+      <div class="dwh-l">
+        <span class="dwh-new"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i> <span data-i18n="dwh_new">Nouveau</span></span>
+        <h2><span class="dwh-name">Dawini</span> — <span data-i18n="dwh_h">trouvez votre médicament en pharmacie</span></h2>
+        <p data-i18n="dwh_p">Décrivez le médicament que vous cherchez, ajoutez la photo de l'ordonnance si besoin : les pharmacies partenaires de votre wilaya sont prévenues et vous répondent en direct.</p>
+        <div class="dwh-points">
+          <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Réponses des pharmacies en temps réel</span></span>
+          <span><i class="fa fa-location-dot" aria-hidden="true"></i> <span data-i18n="dwh_pt2">Pharmacies de votre wilaya, triées par distance</span></span>
+          <span><i class="fa fa-lock" aria-hidden="true"></i> <span data-i18n="dwh_pt3">Vos coordonnées ne sont partagées qu'avec la pharmacie qui accepte</span></span>
+        </div>
+        <a class="btn btn-primary btn-lg dwh-cta" href="dawini.html"><i class="fa fa-prescription-bottle-medical" aria-hidden="true"></i> <span data-i18n="dwh_cta">Chercher un médicament</span></a>
+      </div>
+      <div class="dwh-r" aria-hidden="true">
+        <div class="dwh-mock">
+          <div class="dwh-mock-req"><i class="fa fa-pills"></i> Amoxicilline 1g <span class="b" data-i18n="dwh_m_sent">Envoyée aux pharmacies</span></div>
+          <div class="dwh-mock-resp">
+            <div class="top">Pharmacie El Chifa <span class="ok"><i class="fa fa-check"></i> <span data-i18n="dwh_m_avail">Disponible</span></span></div>
+            <small data-i18n="dwh_m_meta">Alger-Centre · 1,6 km · générique disponible</small>
+            <div class="dwh-mock-actions"><span><i class="fa fa-route"></i> <span data-i18n="dwh_m_route">Itinéraire</span></span><span><i class="fa fa-phone"></i> <span data-i18n="dwh_m_call">Appeler</span></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- [V4B 2026-07-08] Bande confiance (design v4) -->
+  <div class="v4strip" aria-label="Garanties Tabibi">
+    <div class="item"><i class="fa fa-shield-halved" aria-hidden="true"></i> <span data-i18n="v4_s1">Médecins vérifiés</span></div>
+    <div class="item"><i class="fa fa-calendar-check" aria-hidden="true"></i> <span data-i18n="v4_s2">RDV en 30 secondes</span></div>
+    <div class="item"><i class="fa fa-server" aria-hidden="true"></i> <span data-i18n="v4_s3">Données hébergées en Algérie 🇩🇿</span></div>
+    <div class="item"><i class="fa fa-lock" aria-hidden="true"></i> <span data-i18n="v4_s4">Conforme RGPD</span></div>
+  </div>
+
   <!-- SPECIALTIES -->
   <section class="section" id="sec-spec">
     <div class="sec-hdr">
@@ -828,6 +1029,35 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       <span class="sec-link" id="see-all-btn" onclick="scrollTo$('sec-docs')">Voir tout →</span>
     </div>
     <div class="spec-scroll" id="spec-scroll"></div>
+  </section>
+
+  <!-- [V4B 2026-07-08] Vitrine praticiens (design v4).
+       ⚠️ Photos Unsplash PLACEHOLDERS (casting validé fondateur) — remplacer par
+       les portraits licenciés des praticiens réels avant prod. -->
+  <section class="section" id="sec-vitrine">
+    <div class="v4-sechead">
+      <span class="v4-eyebrow" data-i18n="v4_doce">Nos praticiens</span>
+      <h2 data-i18n="v4_doch2">Des médecins de confiance, près de chez vous</h2>
+      <p data-i18n="v4_docp">Chaque médecin est vérifié : identité, diplôme et cabinet contrôlés avant d'apparaître sur Tabibi.</p>
+    </div>
+    <div class="v4-docgrid">
+      <div class="v4-doccard">
+        <div class="photo"><img src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=700&q=80" alt="Portrait de la Dre Nadia K., dermatologue" loading="lazy"></div>
+        <div class="info"><div class="vname">Dr. Nadia K.</div><div class="spec"><span data-i18n="v4_d1s">Dermatologue</span> · <span data-i18n="v4_w_alger">Alger</span></div><div class="meta"><span class="v4-verified"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_verif">Vérifié</span></span><span class="v4-rate" dir="ltr">★ 4.9</span></div></div>
+      </div>
+      <div class="v4-doccard">
+        <div class="photo"><img src="https://images.unsplash.com/photo-1758691463582-11aea602cd4a?auto=format&fit=crop&crop=faces&w=700&h=700&q=80" alt="Portrait du Dr Yacine B., cardiologue" loading="lazy"></div>
+        <div class="info"><div class="vname">Dr. Yacine B.</div><div class="spec"><span data-i18n="v4_d2s">Cardiologue</span> · <span data-i18n="v4_w_oran">Oran</span></div><div class="meta"><span class="v4-verified"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_verif">Vérifié</span></span><span class="v4-rate" dir="ltr">★ 5.0</span></div></div>
+      </div>
+      <div class="v4-doccard">
+        <div class="photo"><img src="https://images.unsplash.com/photo-1645066928295-2506defde470?auto=format&fit=facearea&facepad=6&w=700&h=700&q=80" alt="Portrait du Dr Sofiane M., médecin généraliste" loading="lazy"></div>
+        <div class="info"><div class="vname">Dr. Sofiane M.</div><div class="spec"><span data-i18n="v4_d3s">Généraliste</span> · <span data-i18n="v4_w_const">Constantine</span></div><div class="meta"><span class="v4-verified"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_verif">Vérifié</span></span><span class="v4-rate" dir="ltr">★ 4.8</span></div></div>
+      </div>
+      <div class="v4-doccard">
+        <div class="photo"><img src="https://images.unsplash.com/photo-1594824476967-48c8b964273f?auto=format&fit=crop&w=700&q=80" alt="Portrait de la Dre Lila H., pédiatre" loading="lazy"></div>
+        <div class="info"><div class="vname">Dr. Lila H.</div><div class="spec"><span data-i18n="v4_d4s">Pédiatre</span> · <span data-i18n="v4_w_annaba">Annaba</span></div><div class="meta"><span class="v4-verified"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_verif">Vérifié</span></span><span class="v4-rate" dir="ltr">★ 4.9</span></div></div>
+      </div>
+    </div>
   </section>
 
   <!-- SEARCH FILTERS -->
@@ -861,6 +1091,28 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <div style="display:flex;justify-content:center;gap:6px;padding:16px;flex-wrap:wrap" id="pag"></div>
   </section>
 
+  <!-- [V4B 2026-07-08] Preuve sociale (design v4).
+       ⚠️ Compteur + avis = CONTENU DE DÉMONSTRATION validé maquette — à remplacer
+       par de vrais chiffres/avis avant lancement public. -->
+  <section class="section" id="sec-avis" style="padding-top:0">
+    <div class="v4-counter"><span class="v4-cnum" dir="ltr">1 247</span><span class="v4-clab" data-i18n="v4_cnt">RDV pris cette semaine sur Tabibi</span></div>
+    <div class="v4-revgrid">
+      <figure class="v4-rev"><div class="v4-rstars" aria-label="5 étoiles">★★★★★</div><blockquote data-i18n="v4_r1">« Pédiatre trouvé et RDV pris en deux minutes, sans appeler dix cabinets. »</blockquote><figcaption>Amina R. · <span data-i18n="v4_r1w">Alger</span> <span class="v4-rbadge"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_rb">Avis vérifié</span></span></figcaption></figure>
+      <figure class="v4-rev"><div class="v4-rstars" aria-label="5 étoiles">★★★★★</div><blockquote data-i18n="v4_r2">« Le badge “Vérifié” change tout : on sait chez qui on va. »</blockquote><figcaption>Karim B. · <span data-i18n="v4_r2w">Oran</span> <span class="v4-rbadge"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_rb">Avis vérifié</span></span></figcaption></figure>
+      <figure class="v4-rev"><div class="v4-rstars" aria-label="5 étoiles">★★★★★</div><blockquote data-i18n="v4_r3">« Rappel SMS la veille, paiement au cabinet avec la Chifa. Simple. »</blockquote><figcaption>Yasmine T. · <span data-i18n="v4_r3w">Constantine</span> <span class="v4-rbadge"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_rb">Avis vérifié</span></span></figcaption></figure>
+    </div>
+  </section>
+
+  <!-- [V4B 2026-07-08] Bande téléconsultation (design v4, « Bientôt ») -->
+  <div class="v4-tele">
+    <span class="ti"><i class="fa fa-video" aria-hidden="true"></i></span>
+    <div>
+      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-soon" data-i18n="v4_tes">Bientôt</span></h3>
+      <p data-i18n="v4_tep">Consultez à distance un praticien vérifié, où que vous soyez en Algérie — après validation du flux vidéo avec nos médecins partenaires.</p>
+    </div>
+    <a class="btn btn-primary cta" href="waiting-list.html" data-i18n="v4_tec">Être prévenu</a>
+  </div>
+
   <!-- HOW IT WORKS -->
   <section class="section" style="background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
     <div class="sec-hdr" style="padding-bottom:16px"><h2 class="sec-title" style="font-size:18px" id="hiw-title">Comment prendre RDV en ligne ?</h2></div>
@@ -868,6 +1120,22 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       <div class="step-row fu fu1"><div class="step-num">1</div><div class="step-info"><div class="step-title" id="s1t">Recherchez</div><div class="step-desc" id="s1d">Filtrez par nom, ville, spécialité, note et prix.</div></div></div>
       <div class="step-row fu fu2"><div class="step-num">2</div><div class="step-info"><div class="step-title" id="s2t">Réservez</div><div class="step-desc" id="s2d">Choisissez un créneau et confirmez votre RDV en ligne.</div></div></div>
       <div class="step-row fu fu3" style="padding-bottom:0"><div class="step-num">3</div><div class="step-info"><div class="step-title" id="s3t">Consultez</div><div class="step-desc" id="s3d">Recevez un SMS de confirmation et rencontrez votre médecin.</div></div></div>
+    </div>
+  </section>
+
+  <!-- [V4B 2026-07-08] Comparatif Tabibi vs annuaires (design v4) -->
+  <section class="section" id="sec-diff" style="padding-top:0">
+    <div class="v4-sechead">
+      <span class="v4-eyebrow" data-i18n="v4_cpe">La différence Tabibi</span>
+      <h2 data-i18n="v4_cph2">Pourquoi Tabibi, et pas un simple annuaire ?</h2>
+    </div>
+    <div class="v4-cmp" role="table" aria-label="Comparatif Tabibi vs annuaires classiques">
+      <div class="v4-cmp-h" role="row"><span></span><strong data-i18n="v4_cpa">Tabibi</strong><span data-i18n="v4_cpb">Annuaires classiques</span></div>
+      <div class="v4-cmp-r" role="row"><span data-i18n="v4_cp1">Identité, diplôme et cabinet vérifiés</span><strong class="y">✓</strong><span class="n">—</span></div>
+      <div class="v4-cmp-r" role="row"><span data-i18n="v4_cp2">Données de santé hébergées en Algérie 🇩🇿</span><strong class="y">✓</strong><span class="n">—</span></div>
+      <div class="v4-cmp-r" role="row"><span data-i18n="v4_cp3">FR · AR · EN avec arabe RTL soigné</span><strong class="y">✓</strong><span class="n" data-i18n="v4_cpp">partiel</span></div>
+      <div class="v4-cmp-r" role="row"><span data-i18n="v4_cp4">Paiement au cabinet — espèces ou Chifa, gratuit patients</span><strong class="y">✓</strong><span class="n" data-i18n="v4_cpv">variable</span></div>
+      <div class="v4-cmp-r" role="row"><span data-i18n="v4_cp5">Réservation instantanée + rappels SMS</span><strong class="y">✓</strong><span class="n">—</span></div>
     </div>
   </section>
 
@@ -890,6 +1158,36 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <p id="cta-doc-sub" style="font-size:13px;color:var(--text2);margin-bottom:16px">Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.</p>
         <button class="btn btn-primary btn-lg" onclick="openModal('signup')"><i class='fa fa-user-plus'></i> <span id="cta-doc-btn">Rejoindre Tabibi</span></button>
       </div>
+    </div>
+  </section>
+
+  <!-- [V4B 2026-07-08] Télécharger l'app + QR (design v4) — cible : telecharger.html -->
+  <section class="section" id="sec-download">
+    <div class="v4-download">
+      <span class="v4-ring r1" aria-hidden="true"></span><span class="v4-ring r2" aria-hidden="true"></span>
+      <div style="position:relative">
+        <h2 data-i18n="v4_dlh">Prenez votre santé en main</h2>
+        <p data-i18n="v4_dlp">Rejoignez les premiers utilisateurs de la 1ʳᵉ plateforme algérienne de rendez-vous médical.</p>
+        <div class="v4-stores">
+          <a class="v4-store" href="telecharger.html" style="background:#fff;color:var(--ink)" aria-label="Télécharger sur Google Play"><i class="fab fa-google-play" style="font-size:20px" aria-hidden="true"></i><span><small data-i18n="v4_dl_on">Disponible sur</small><b>Google Play</b></span></a>
+          <a class="v4-store" href="telecharger.html" style="background:rgba(255,255,255,.14);color:#fff" aria-label="Bientôt sur App Store"><i class="fab fa-apple" style="font-size:22px" aria-hidden="true"></i><span><small data-i18n="v4_dl_soon">Bientôt sur</small><b>App Store</b></span></a>
+        </div>
+        <a class="v4-qrbox" href="telecharger.html" style="text-decoration:none">
+          <span class="v4-qr"><svg viewBox="0 0 31 31" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges" role="img" aria-label="QR code — télécharger Tabibi"><rect width="31" height="31" fill="#fff"/><path d="M1 1h1v1h-1zM2 1h1v1h-1zM3 1h1v1h-1zM4 1h1v1h-1zM5 1h1v1h-1zM6 1h1v1h-1zM7 1h1v1h-1zM10 1h1v1h-1zM11 1h1v1h-1zM15 1h1v1h-1zM20 1h1v1h-1zM23 1h1v1h-1zM24 1h1v1h-1zM25 1h1v1h-1zM26 1h1v1h-1zM27 1h1v1h-1zM28 1h1v1h-1zM29 1h1v1h-1zM1 2h1v1h-1zM7 2h1v1h-1zM9 2h1v1h-1zM10 2h1v1h-1zM14 2h1v1h-1zM18 2h1v1h-1zM19 2h1v1h-1zM20 2h1v1h-1zM21 2h1v1h-1zM23 2h1v1h-1zM29 2h1v1h-1zM1 3h1v1h-1zM3 3h1v1h-1zM4 3h1v1h-1zM5 3h1v1h-1zM7 3h1v1h-1zM11 3h1v1h-1zM12 3h1v1h-1zM13 3h1v1h-1zM16 3h1v1h-1zM19 3h1v1h-1zM20 3h1v1h-1zM23 3h1v1h-1zM25 3h1v1h-1zM26 3h1v1h-1zM27 3h1v1h-1zM29 3h1v1h-1zM1 4h1v1h-1zM3 4h1v1h-1zM4 4h1v1h-1zM5 4h1v1h-1zM7 4h1v1h-1zM10 4h1v1h-1zM11 4h1v1h-1zM13 4h1v1h-1zM14 4h1v1h-1zM17 4h1v1h-1zM19 4h1v1h-1zM23 4h1v1h-1zM25 4h1v1h-1zM26 4h1v1h-1zM27 4h1v1h-1zM29 4h1v1h-1zM1 5h1v1h-1zM3 5h1v1h-1zM4 5h1v1h-1zM5 5h1v1h-1zM7 5h1v1h-1zM9 5h1v1h-1zM11 5h1v1h-1zM12 5h1v1h-1zM13 5h1v1h-1zM14 5h1v1h-1zM17 5h1v1h-1zM19 5h1v1h-1zM20 5h1v1h-1zM21 5h1v1h-1zM23 5h1v1h-1zM25 5h1v1h-1zM26 5h1v1h-1zM27 5h1v1h-1zM29 5h1v1h-1zM1 6h1v1h-1zM7 6h1v1h-1zM10 6h1v1h-1zM13 6h1v1h-1zM15 6h1v1h-1zM16 6h1v1h-1zM17 6h1v1h-1zM18 6h1v1h-1zM19 6h1v1h-1zM20 6h1v1h-1zM23 6h1v1h-1zM29 6h1v1h-1zM1 7h1v1h-1zM2 7h1v1h-1zM3 7h1v1h-1zM4 7h1v1h-1zM5 7h1v1h-1zM6 7h1v1h-1zM7 7h1v1h-1zM9 7h1v1h-1zM11 7h1v1h-1zM13 7h1v1h-1zM15 7h1v1h-1zM17 7h1v1h-1zM19 7h1v1h-1zM21 7h1v1h-1zM23 7h1v1h-1zM24 7h1v1h-1zM25 7h1v1h-1zM26 7h1v1h-1zM27 7h1v1h-1zM28 7h1v1h-1zM29 7h1v1h-1zM10 8h1v1h-1zM12 8h1v1h-1zM13 8h1v1h-1zM16 8h1v1h-1zM18 8h1v1h-1zM19 8h1v1h-1zM1 9h1v1h-1zM3 9h1v1h-1zM5 9h1v1h-1zM7 9h1v1h-1zM10 9h1v1h-1zM12 9h1v1h-1zM17 9h1v1h-1zM18 9h1v1h-1zM25 9h1v1h-1zM28 9h1v1h-1zM1 10h1v1h-1zM6 10h1v1h-1zM10 10h1v1h-1zM12 10h1v1h-1zM14 10h1v1h-1zM16 10h1v1h-1zM17 10h1v1h-1zM21 10h1v1h-1zM22 10h1v1h-1zM23 10h1v1h-1zM26 10h1v1h-1zM29 10h1v1h-1zM2 11h1v1h-1zM5 11h1v1h-1zM7 11h1v1h-1zM12 11h1v1h-1zM15 11h1v1h-1zM16 11h1v1h-1zM17 11h1v1h-1zM23 11h1v1h-1zM24 11h1v1h-1zM25 11h1v1h-1zM27 11h1v1h-1zM28 11h1v1h-1zM29 11h1v1h-1zM3 12h1v1h-1zM4 12h1v1h-1zM5 12h1v1h-1zM8 12h1v1h-1zM9 12h1v1h-1zM10 12h1v1h-1zM12 12h1v1h-1zM14 12h1v1h-1zM15 12h1v1h-1zM17 12h1v1h-1zM18 12h1v1h-1zM21 12h1v1h-1zM22 12h1v1h-1zM23 12h1v1h-1zM24 12h1v1h-1zM25 12h1v1h-1zM28 12h1v1h-1zM1 13h1v1h-1zM2 13h1v1h-1zM5 13h1v1h-1zM7 13h1v1h-1zM8 13h1v1h-1zM13 13h1v1h-1zM15 13h1v1h-1zM16 13h1v1h-1zM17 13h1v1h-1zM18 13h1v1h-1zM20 13h1v1h-1zM21 13h1v1h-1zM22 13h1v1h-1zM23 13h1v1h-1zM26 13h1v1h-1zM28 13h1v1h-1zM29 13h1v1h-1zM1 14h1v1h-1zM2 14h1v1h-1zM5 14h1v1h-1zM8 14h1v1h-1zM9 14h1v1h-1zM11 14h1v1h-1zM12 14h1v1h-1zM13 14h1v1h-1zM15 14h1v1h-1zM16 14h1v1h-1zM18 14h1v1h-1zM21 14h1v1h-1zM22 14h1v1h-1zM23 14h1v1h-1zM26 14h1v1h-1zM29 14h1v1h-1zM1 15h1v1h-1zM4 15h1v1h-1zM5 15h1v1h-1zM7 15h1v1h-1zM9 15h1v1h-1zM10 15h1v1h-1zM13 15h1v1h-1zM14 15h1v1h-1zM17 15h1v1h-1zM21 15h1v1h-1zM26 15h1v1h-1zM28 15h1v1h-1zM29 15h1v1h-1zM3 16h1v1h-1zM5 16h1v1h-1zM6 16h1v1h-1zM8 16h1v1h-1zM11 16h1v1h-1zM12 16h1v1h-1zM13 16h1v1h-1zM18 16h1v1h-1zM19 16h1v1h-1zM20 16h1v1h-1zM21 16h1v1h-1zM24 16h1v1h-1zM26 16h1v1h-1zM28 16h1v1h-1zM2 17h1v1h-1zM3 17h1v1h-1zM7 17h1v1h-1zM9 17h1v1h-1zM10 17h1v1h-1zM11 17h1v1h-1zM18 17h1v1h-1zM23 17h1v1h-1zM26 17h1v1h-1zM28 17h1v1h-1zM29 17h1v1h-1zM3 18h1v1h-1zM4 18h1v1h-1zM8 18h1v1h-1zM9 18h1v1h-1zM10 18h1v1h-1zM12 18h1v1h-1zM13 18h1v1h-1zM14 18h1v1h-1zM17 18h1v1h-1zM18 18h1v1h-1zM21 18h1v1h-1zM22 18h1v1h-1zM23 18h1v1h-1zM26 18h1v1h-1zM27 18h1v1h-1zM29 18h1v1h-1zM1 19h1v1h-1zM3 19h1v1h-1zM5 19h1v1h-1zM6 19h1v1h-1zM7 19h1v1h-1zM11 19h1v1h-1zM12 19h1v1h-1zM15 19h1v1h-1zM18 19h1v1h-1zM19 19h1v1h-1zM22 19h1v1h-1zM24 19h1v1h-1zM25 19h1v1h-1zM28 19h1v1h-1zM29 19h1v1h-1zM2 20h1v1h-1zM4 20h1v1h-1zM5 20h1v1h-1zM8 20h1v1h-1zM10 20h1v1h-1zM13 20h1v1h-1zM14 20h1v1h-1zM15 20h1v1h-1zM16 20h1v1h-1zM17 20h1v1h-1zM18 20h1v1h-1zM19 20h1v1h-1zM22 20h1v1h-1zM23 20h1v1h-1zM24 20h1v1h-1zM26 20h1v1h-1zM28 20h1v1h-1zM1 21h1v1h-1zM6 21h1v1h-1zM7 21h1v1h-1zM8 21h1v1h-1zM10 21h1v1h-1zM11 21h1v1h-1zM13 21h1v1h-1zM15 21h1v1h-1zM17 21h1v1h-1zM18 21h1v1h-1zM21 21h1v1h-1zM22 21h1v1h-1zM23 21h1v1h-1zM24 21h1v1h-1zM25 21h1v1h-1zM9 22h1v1h-1zM12 22h1v1h-1zM15 22h1v1h-1zM17 22h1v1h-1zM20 22h1v1h-1zM21 22h1v1h-1zM25 22h1v1h-1zM27 22h1v1h-1zM28 22h1v1h-1zM29 22h1v1h-1zM1 23h1v1h-1zM2 23h1v1h-1zM3 23h1v1h-1zM4 23h1v1h-1zM5 23h1v1h-1zM6 23h1v1h-1zM7 23h1v1h-1zM10 23h1v1h-1zM14 23h1v1h-1zM19 23h1v1h-1zM20 23h1v1h-1zM21 23h1v1h-1zM23 23h1v1h-1zM25 23h1v1h-1zM26 23h1v1h-1zM28 23h1v1h-1zM29 23h1v1h-1zM1 24h1v1h-1zM7 24h1v1h-1zM10 24h1v1h-1zM12 24h1v1h-1zM17 24h1v1h-1zM18 24h1v1h-1zM21 24h1v1h-1zM25 24h1v1h-1zM26 24h1v1h-1zM1 25h1v1h-1zM3 25h1v1h-1zM4 25h1v1h-1zM5 25h1v1h-1zM7 25h1v1h-1zM9 25h1v1h-1zM10 25h1v1h-1zM17 25h1v1h-1zM18 25h1v1h-1zM21 25h1v1h-1zM22 25h1v1h-1zM23 25h1v1h-1zM24 25h1v1h-1zM25 25h1v1h-1zM29 25h1v1h-1zM1 26h1v1h-1zM3 26h1v1h-1zM4 26h1v1h-1zM5 26h1v1h-1zM7 26h1v1h-1zM10 26h1v1h-1zM12 26h1v1h-1zM17 26h1v1h-1zM18 26h1v1h-1zM21 26h1v1h-1zM24 26h1v1h-1zM25 26h1v1h-1zM27 26h1v1h-1zM28 26h1v1h-1zM29 26h1v1h-1zM1 27h1v1h-1zM3 27h1v1h-1zM4 27h1v1h-1zM5 27h1v1h-1zM7 27h1v1h-1zM9 27h1v1h-1zM11 27h1v1h-1zM12 27h1v1h-1zM15 27h1v1h-1zM17 27h1v1h-1zM19 27h1v1h-1zM20 27h1v1h-1zM24 27h1v1h-1zM25 27h1v1h-1zM26 27h1v1h-1zM29 27h1v1h-1zM1 28h1v1h-1zM7 28h1v1h-1zM10 28h1v1h-1zM12 28h1v1h-1zM13 28h1v1h-1zM14 28h1v1h-1zM18 28h1v1h-1zM19 28h1v1h-1zM20 28h1v1h-1zM21 28h1v1h-1zM24 28h1v1h-1zM28 28h1v1h-1zM1 29h1v1h-1zM2 29h1v1h-1zM3 29h1v1h-1zM4 29h1v1h-1zM5 29h1v1h-1zM6 29h1v1h-1zM7 29h1v1h-1zM9 29h1v1h-1zM10 29h1v1h-1zM13 29h1v1h-1zM14 29h1v1h-1zM15 29h1v1h-1zM18 29h1v1h-1zM20 29h1v1h-1zM21 29h1v1h-1zM23 29h1v1h-1zM24 29h1v1h-1zM25 29h1v1h-1zM26 29h1v1h-1zM28 29h1v1h-1zM29 29h1v1h-1z" fill="#0F2A24"/></svg></span>
+          <small data-i18n="v4_qrl">Scannez pour télécharger l'application Tabibi</small>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- [V4B 2026-07-08] FAQ (design v4) -->
+  <section class="section" id="sec-faq" style="padding-top:0">
+    <div class="v4-sechead"><span class="v4-eyebrow">FAQ</span><h2 data-i18n="v4_fh2">Questions fréquentes</h2></div>
+    <div class="v4-faq">
+      <details open><summary><span data-i18n="v4_f1q">L'application est-elle gratuite ?</span><span class="pl" aria-hidden="true">+</span></summary><p data-i18n="v4_f1a">Oui, Tabibi est 100 % gratuite pour les patients. Vous réglez uniquement la consultation, directement au cabinet — en espèces ou avec la carte Chifa.</p></details>
+      <details><summary><span data-i18n="v4_f2q">Comment savez-vous qu'un médecin est fiable ?</span><span class="pl" aria-hidden="true">+</span></summary><p data-i18n="v4_f2a">Chaque praticien passe une vérification avant publication : identité, diplôme et cabinet. Le badge « Vérifié » n'apparaît qu'après validation.</p></details>
+      <details><summary><span data-i18n="v4_f3q">Mes données de santé sont-elles protégées ?</span><span class="pl" aria-hidden="true">+</span></summary><p data-i18n="v4_f3a">Vos informations sont chiffrées et ne sont accessibles qu'à vous et aux médecins que vous consultez, avec votre consentement.</p></details>
+      <details><summary><span data-i18n="v4_f4q">Je suis médecin, comment rejoindre Tabibi ?</span><span class="pl" aria-hidden="true">+</span></summary><p data-i18n="v4_f4a">Créez votre fiche depuis l'espace médecin, gérez vos disponibilités et recevez vos rendez-vous en ligne.</p></details>
     </div>
   </section>
 
