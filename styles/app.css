@@ -408,7 +408,11 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   body { background: var(--bg2); }
   .app-root { max-width: 1100px; box-shadow: var(--s2); }
   .app-bar { padding-left: clamp(24px,4vw,48px); padding-right: clamp(24px,4vw,48px); }
-  .page { padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px); }
+  .page { padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px);
+          /* [V4D 2026-07-08] Fin du « mobile étiré » : colonne de lecture centrée par
+             défaut sur TOUTES les pages. Les pages à layout desktop dédié (index,
+             dawini, dawini-pharmacie) neutralisent via leur CSS inline. */
+          max-width: 760px; margin-inline: auto; }
   /* largeur de travail confortable : le contenu remplit le shell centré (fini la colonne 480) */
   .container { max-width: none; padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px); }
   .tab-bar, .install-banner { max-width: 1100px; }

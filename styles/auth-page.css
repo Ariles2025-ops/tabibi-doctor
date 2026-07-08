@@ -81,6 +81,9 @@
 
 /* Desktop ≥1024 : header gouttière + héro 2 colonnes pleine largeur */
 @media (min-width: 1024px) {
+  /* [V4D 2026-07-08] neutralise le cap .page global (app.css) : ces pages ont
+     leur propre layout desktop (split aside + formulaire, conteneur 1180). */
+  .page { max-width: none; margin-inline: 0; }
   :root { --gutter: clamp(24px, 4vw, 64px); }
   .app-bar { padding-inline: var(--gutter); }
 
