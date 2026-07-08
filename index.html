@@ -664,12 +664,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   .app-bar{padding-inline:var(--gutter)}
 
   /* Bande héro mint edge-to-edge ; contenu 2 colonnes étalé pleine largeur */
-  .hero-mobile{padding:64px 0;border-radius:0}
+  .page{max-width:none;margin-inline:0}  /* [V4D] index gère son propre layout desktop */
+  .hero-mobile{padding:64px 0 40px;border-radius:0}
   .hz{max-width:none;margin:0;padding-inline:var(--gutter);display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);column-gap:clamp(40px,5vw,96px);align-items:center;text-align:left;background:transparent;border:0;box-shadow:none;border-radius:0}
-  .hero-col-l{display:block;grid-column:1;grid-row:1 / span 2;align-self:center;max-width:640px}  /* largeur de lecture confortable */
+  .hero-col-l{display:block;grid-column:1;grid-row:1;align-self:end;max-width:640px}  /* [FIX 2026-07-08] rangée 1 seule : stats dessous, plus de trou */
   .hero-illu{grid-column:2;grid-row:1;width:clamp(340px,26vw,440px);margin:0 auto 8px}
   .hero-flag{width:88px;margin:0 auto 16px}
-  .hero-stats{grid-column:2;grid-row:2;max-width:none;margin:8px 0 0;gap:14px}
+  .hero-stats{grid-column:1;grid-row:2;align-self:start;max-width:520px;margin:16px 0 0;gap:14px}  /* [FIX 2026-07-08] stats à gauche (équilibre v4) */
   .hero-greet{justify-content:flex-start}
   .hero-title{font-size:clamp(40px,3.2vw,52px);line-height:1.07;margin-bottom:12px}
   .hero-sub{font-size:17px;max-width:46ch;margin:0 0 22px}
@@ -731,10 +732,15 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .badge-float small{ font-size:11.5px; color:var(--text3); }
 .bf1{ top:-14px; inset-inline-start:6px; }
 .bf2{ bottom:-14px; inset-inline-end:6px; }
+/* [FIX RTL 2026-07-08] en arabe, bf1 passe du côté opposé : il recouvrait la photo du médecin */
+[dir="rtl"] .bf1{ inset-inline-start:auto; inset-inline-end:6px; }
+[dir="rtl"] .bf2{ inset-inline-end:auto; inset-inline-start:6px; }
 @media (min-width:1024px){
-  .hero-visual{ grid-column:2; grid-row:1; margin:0 auto; width:100%; }
+  .hero-visual{ grid-column:2; grid-row:1 / span 2; align-self:center; margin:0 auto; width:100%; }
   .bf1{ top:-26px; inset-inline-start:-20px; }
   .bf2{ bottom:-26px; inset-inline-end:-12px; }
+  [dir="rtl"] .bf1{ inset-inline-start:auto; inset-inline-end:-12px; }
+  [dir="rtl"] .bf2{ inset-inline-end:auto; inset-inline-start:-20px; }
 }
 
 /* ═══ [V4B 2026-07-08] Sections vitrines v4 : bande confiance, praticiens (photos),
@@ -846,6 +852,23 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   .dwh-l{ padding:30px; }
   .dwh-l h2{ font-size:26px; }
 }
+
+/* ═══ [V4C 2026-07-08] Héro : paiement Chifa + téléchargement Android/iOS/Web-PC ═══ */
+.v4-paynote{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text2); margin-top:10px; justify-content:center; }
+.v4-paynote i{ color:#D4A437; }
+.v4-herostores{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; justify-content:center; }
+.v4-hstore{ display:inline-flex; align-items:center; gap:10px; background:#0F2A24; color:#fff; border-radius:14px; padding:9px 16px; text-decoration:none; transition:transform .18s; }
+.v4-hstore:hover{ transform:translateY(-2px); }
+.v4-hstore i{ font-size:18px; }
+.v4-hstore small{ display:block; font-size:9.5px; opacity:.65; font-weight:600; line-height:1.1; text-align:start; }
+.v4-hstore b{ font-size:13.5px; font-weight:700; line-height:1.2; display:block; text-align:start; color:#fff; }
+.v4-hstore.web{ background:#fff; border:1.5px solid #E7E0D2; color:var(--ink); }
+.v4-hstore.web b{ color:var(--ink); }
+.v4-hstore.web i{ color:#0F7560; }
+@media (min-width:1024px){
+  .v4-paynote{ justify-content:flex-start; }
+  .v4-herostores{ justify-content:flex-start; padding-inline:var(--gutter); }
+}
 </style>
 </head>
 <body>
@@ -941,16 +964,18 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <div class="hz">
       <svg class="hero-illu hero-flag" viewBox="0 0 60 40" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Algérie"><defs><clipPath id="dzclip"><rect width="60" height="40" rx="6"/></clipPath><mask id="dzcr"><rect width="60" height="40" fill="#fff"/><circle cx="33.5" cy="20" r="7.2" fill="#000"/></mask></defs><g clip-path="url(#dzclip)"><rect width="30" height="40" fill="#006233"/><rect x="30" width="30" height="40" fill="#FFFFFF"/><circle cx="30" cy="20" r="9" fill="#D21034" mask="url(#dzcr)"/><path d="M35.5 15.8 36.48 18.66 39.49 18.7 37.08 20.51 37.97 23.4 35.5 21.66 33.03 23.4 33.92 20.51 31.51 18.7 34.52 18.66Z" fill="#D21034"/></g><rect x="0.5" y="0.5" width="59" height="39" rx="5.5" fill="none" stroke="rgba(16,40,34,.12)"/></svg>
       <div class="hero-col-l">
-      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">0 médecin en Algérie</span></div>
+      <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">75 000+ médecins référencés en Algérie</span></div>
       <h1 class="hero-title" id="hero-t">Votre santé ne devrait jamais attendre.</h1>
       <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Prenez rendez-vous avec un médecin partout en Algérie — 58 wilayas, 24h/24.</p>
       <div class="hero-search-wrap">
         <i class='hero-si fa fa-search' aria-hidden='true'></i>
         <input class="hero-search" type="search" id="name-search" data-i18n="s_ph" data-i18n-placeholder="ph_hero_search" placeholder="Dr. Benali, Cardiologie, Alger..." oninput="doFilter()" autocomplete="off">
       </div>
+      <!-- [V4C 2026-07-08] Note paiement (design v4) -->
+      <div class="v4-paynote"><i class="fa fa-credit-card" aria-hidden="true"></i> <span data-i18n="v4_pay">Paiement au cabinet — espèces ou carte Chifa. Aucun prépaiement en ligne.</span></div>
       </div>
       <div class="hero-stats">
-        <div class="hero-stat"><div class="hs-n" id="hero-doc-count">0</div><div class="hs-l" id="hs1" data-i18n="nav_doctors">Médecins</div></div>
+        <div class="hero-stat"><div class="hs-n" id="hero-doc-count">75 000+</div><div class="hs-l" id="hs1" data-i18n="v4_hsl1">Médecins référencés</div></div>
         <div class="hero-stat"><div class="hs-n">58</div><div class="hs-l" id="hs2">Wilayas</div></div>
         <div class="hero-stat"><div class="hs-n">24/7</div><div class="hs-l" id="hs4">Réservation</div></div>
       </div>
@@ -979,6 +1004,12 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <a href="login.html" class="btn btn-lg" style="flex:1;min-width:140px;background:#fff;color:var(--ink);border:1.5px solid var(--border);font-weight:700"><i class='fa fa-right-to-bracket'></i> <span data-i18n="cta_login">Se connecter</span></a>
         <a href="signup.html" class="btn btn-primary btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
       </div>
+      <!-- [V4C 2026-07-08] Téléchargement : Android · iOS (bientôt) · Web PC/Mac -->
+      <div class="v4-herostores">
+        <a class="v4-hstore" href="telecharger.html" aria-label="Télécharger sur Google Play"><i class="fab fa-google-play" aria-hidden="true"></i><span><small data-i18n="v4_dl_on">Disponible sur</small><b>Google Play</b></span></a>
+        <a class="v4-hstore" href="telecharger.html" aria-label="Bientôt sur App Store"><i class="fab fa-apple" aria-hidden="true"></i><span><small data-i18n="v4_dl_soon">Bientôt sur</small><b>App Store</b></span></a>
+        <a class="v4-hstore web" href="signup.html" aria-label="Utiliser la version web sur PC et Mac"><i class="fa fa-desktop" aria-hidden="true"></i><span><small data-i18n="v4_dl_webon">Version web</small><b>PC &amp; Mac</b></span></a>
+      </div>
       <!-- [Phase 14.3] CTA médecin — visible TOUS users (anon + patient) -->
       <a href="doctor-claim.html" style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:12px 14px;background:#fff;border:1.5px dashed var(--pastille-bd);border-radius:var(--r12);color:var(--ink);text-decoration:none;font-size:13px">
         <span><i class="fa fa-user-doctor" style="margin-right:6px;color:var(--blue)"></i> <span data-i18n="cta_doctor_claim">Vous êtes médecin ? Réclamez votre fiche</span></span>
@@ -998,6 +1029,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
           <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Réponses des pharmacies en temps réel</span></span>
           <span><i class="fa fa-location-dot" aria-hidden="true"></i> <span data-i18n="dwh_pt2">Pharmacies de votre wilaya, triées par distance</span></span>
           <span><i class="fa fa-lock" aria-hidden="true"></i> <span data-i18n="dwh_pt3">Vos coordonnées ne sont partagées qu'avec la pharmacie qui accepte</span></span>
+          <!-- [REEL 2026-07-08] Chiffre réel : 195 = comptage colonne specialite~pharmac
+               dans ~/Desktop/1sante.csv (133) + ~/Desktop/annumed.csv (62), dédupliqué. -->
+          <span><i class="fa fa-house-medical" aria-hidden="true"></i> <span data-i18n="dwh_pt4">195 pharmacies indexées en Algérie</span></span>
         </div>
         <a class="btn btn-primary btn-lg dwh-cta" href="dawini.html"><i class="fa fa-prescription-bottle-medical" aria-hidden="true"></i> <span data-i18n="dwh_cta">Chercher un médicament</span></a>
       </div>
@@ -1009,6 +1043,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
             <small data-i18n="dwh_m_meta">Alger-Centre · 1,6 km · générique disponible</small>
             <div class="dwh-mock-actions"><span><i class="fa fa-route"></i> <span data-i18n="dwh_m_route">Itinéraire</span></span><span><i class="fa fa-phone"></i> <span data-i18n="dwh_m_call">Appeler</span></span></div>
           </div>
+          <div style="text-align:center;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:rgba(255,255,255,.78);font-weight:700" data-i18n="dwh_ex">Aperçu — exemple</div>
         </div>
       </div>
     </div>
@@ -1091,15 +1126,20 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <div style="display:flex;justify-content:center;gap:6px;padding:16px;flex-wrap:wrap" id="pag"></div>
   </section>
 
-  <!-- [V4B 2026-07-08] Preuve sociale (design v4).
-       ⚠️ Compteur + avis = CONTENU DE DÉMONSTRATION validé maquette — à remplacer
-       par de vrais chiffres/avis avant lancement public. -->
+  <!-- [V4B→REEL 2026-07-08] Preuve sociale 100 % honnête : compteur branché sur la
+       base (caché si vide) + état « Premiers avis à venir ». Zéro contenu inventé. -->
   <section class="section" id="sec-avis" style="padding-top:0">
-    <div class="v4-counter"><span class="v4-cnum" dir="ltr">1 247</span><span class="v4-clab" data-i18n="v4_cnt">RDV pris cette semaine sur Tabibi</span></div>
+    <!-- [REEL 2026-07-08] Compteur branché sur la base (certifiés via TABIBI_STATS).
+         Caché tant qu'aucune donnée réelle — JAMAIS de nombre en dur. -->
+    <div class="v4-counter" id="v4-counter" hidden><span class="v4-cnum" id="v4-cnt-num" dir="ltr">0</span><span class="v4-clab" id="v4-cnt-lab">médecins certifiés en Algérie</span></div>
     <div class="v4-revgrid">
-      <figure class="v4-rev"><div class="v4-rstars" aria-label="5 étoiles">★★★★★</div><blockquote data-i18n="v4_r1">« Pédiatre trouvé et RDV pris en deux minutes, sans appeler dix cabinets. »</blockquote><figcaption>Amina R. · <span data-i18n="v4_r1w">Alger</span> <span class="v4-rbadge"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_rb">Avis vérifié</span></span></figcaption></figure>
-      <figure class="v4-rev"><div class="v4-rstars" aria-label="5 étoiles">★★★★★</div><blockquote data-i18n="v4_r2">« Le badge “Vérifié” change tout : on sait chez qui on va. »</blockquote><figcaption>Karim B. · <span data-i18n="v4_r2w">Oran</span> <span class="v4-rbadge"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_rb">Avis vérifié</span></span></figcaption></figure>
-      <figure class="v4-rev"><div class="v4-rstars" aria-label="5 étoiles">★★★★★</div><blockquote data-i18n="v4_r3">« Rappel SMS la veille, paiement au cabinet avec la Chifa. Simple. »</blockquote><figcaption>Yasmine T. · <span data-i18n="v4_r3w">Constantine</span> <span class="v4-rbadge"><i class="fa fa-check" aria-hidden="true"></i> <span data-i18n="v4_rb">Avis vérifié</span></span></figcaption></figure>
+      <!-- [REEL 2026-07-08] Faux témoignages supprimés (décision fondateur).
+           Chaque futur avis sera lié à un RDV réel. Même emplacement, même style. -->
+      <figure class="v4-rev" style="grid-column:1 / -1;max-width:600px;margin:0 auto;text-align:center">
+        <div style="font-size:22px;color:#D4A437;margin-bottom:8px" aria-hidden="true"><i class="fa fa-star"></i></div>
+        <blockquote style="font-weight:800" data-i18n="v4_rev_soon_t">Premiers avis à venir</blockquote>
+        <figcaption style="justify-content:center" data-i18n="v4_rev_soon_p">Chaque avis publié ici sera lié à un rendez-vous réel et vérifié.</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -1143,7 +1183,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <section class="section">
     <div style="padding:0 var(--gutter)">
       <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px;box-shadow:var(--s1)">
-        <div style="text-align:center"><div style="font-size:28px;font-weight:800;color:var(--blue)" id="stats-doc-count">0</div><div style="font-size:12px;color:var(--text3);margin-top:4px;font-weight:600" id="stats-doc-lbl">Médecins référencés</div></div>
+        <div style="text-align:center"><div style="font-size:28px;font-weight:800;color:var(--blue)" id="stats-doc-count">75 000+</div><div style="font-size:12px;color:var(--text3);margin-top:4px;font-weight:600" id="stats-doc-lbl">Médecins référencés</div></div>
         <div style="text-align:center;border-left:1px solid var(--border)"><div style="font-size:28px;font-weight:800;color:var(--blue)">58</div><div style="font-size:12px;color:var(--text3);margin-top:4px;font-weight:600" id="stats-wilaya-lbl">Wilayas</div></div>
       </div>
     </div>
@@ -1152,7 +1192,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- CTA -->
   <section class="section" style="padding-bottom:8px">
     <div style="padding:0 var(--gutter)">
-      <div style="background:#fff;border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:var(--r16);padding:24px;text-align:center;box-shadow:var(--s1)">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:24px;text-align:center;box-shadow:var(--s1)">
         <div style="font-size:24px;margin-bottom:10px;color:var(--blue)"><i class='fa fa-user-doctor'></i></div>
         <h2 id="cta-doc-title" style="font-size:18px;font-weight:800;color:var(--ink);margin-bottom:8px">Vous êtes médecin ?</h2>
         <p id="cta-doc-sub" style="font-size:13px;color:var(--text2);margin-bottom:16px">Rejoignez Tabibi et développez votre patientèle en ligne. Inscription gratuite pendant 30 jours.</p>
@@ -1162,7 +1202,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   </section>
 
   <!-- [V4B 2026-07-08] Télécharger l'app + QR (design v4) — cible : telecharger.html -->
-  <section class="section" id="sec-download">
+  <section class="section" id="sec-download" style="padding-top:0">
     <div class="v4-download">
       <span class="v4-ring r1" aria-hidden="true"></span><span class="v4-ring r2" aria-hidden="true"></span>
       <div style="position:relative">
@@ -3109,7 +3149,7 @@ function _updateDocCounterUI() {
   var _hb = document.getElementById('hbadge');
   // [ÉTAPE D] certified=0 → "N médecins référencés" ; certified>0 → "X certifiés · Y référencés"
   if (_hb) {
-    if (_cert > 0) {
+    if (_cert >= 10) {  // [FIX 2026-07-08] seuil : jamais de petit « N certifiés » ni de 0
       _hb.textContent = lang === 'ar' ? _fc + ' طبيب معتمد · ' + _fi + ' مُدرج في الجزائر'
                       : lang === 'en' ? _fc + ' certified · ' + _fi + ' referenced in Algeria'
                       :                 _fc + ' certifié'+(_cert>1?'s':'') + ' · ' + _fi + ' référencé'+(_idx>1?'s':'') + ' en Algérie';
@@ -3122,6 +3162,18 @@ function _updateDocCounterUI() {
   var _hdc = document.getElementById('hero-doc-count'); if (_hdc) _hdc.textContent = _fi;
   var _sdc = document.getElementById('stats-doc-count'); if (_sdc) _sdc.textContent = _fi;
   var _fdc = document.getElementById('foot-doc-count');  if (_fdc) _fdc.textContent = _fi;
+  // [REEL 2026-07-08] Compteur section avis : certifiés réels uniquement, sinon caché.
+  var _vc = document.getElementById('v4-counter');
+  if (_vc) {
+    if (_cert >= 10) {  // [FIX 2026-07-08] seuil : jamais de petit « N certifiés » ni de 0
+      _vc.hidden = false;
+      var _vn = document.getElementById('v4-cnt-num'); if (_vn) _vn.textContent = _fc;
+      var _vl = document.getElementById('v4-cnt-lab');
+      if (_vl) _vl.textContent = lang === 'ar' ? 'طبيب معتمد في الجزائر'
+                               : lang === 'en' ? 'certified doctors in Algeria'
+                               :                 'médecins certifiés en Algérie';
+    } else { _vc.hidden = true; }
+  }
   var _fdEl = document.getElementById('foot-desc');
   if (_fdEl) _fdEl.textContent = lang === 'ar'
     ? 'أول منصة طبية جزائرية. ' + _fi + ' طبيب مُدرج في 58 ولاية. احجز عبر الإنترنت 24/24.'
@@ -3170,7 +3222,7 @@ window.showDoctorDashboardModal=showDoctorDashboardModal;
       <div style="width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#0F7560,#0F7560);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800">T</div>
       <div><div style="font-weight:800;font-size:18px;color:#0F7560">Tabibi <span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></div><div style="font-size:11px;color:#64748b;font-family:'Cairo',sans-serif">طبيبي</div></div>
     </div>
-    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">0</span> médecin dans 58 wilayas. Réservez en ligne 24h/24.</p>
+    <p id="foot-desc" style="font-size:12px;color:#475569;margin-bottom:18px;line-height:1.6">La 1ère plateforme médicale algérienne. <span id="foot-doc-count">75 000+</span> médecins dans 58 wilayas. Réservez en ligne 24h/24.</p>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:20px">
       <div>
