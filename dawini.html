@@ -96,6 +96,30 @@
   .dw-tag{ background:#E7F1EC; color:var(--emerald-d); border-radius:999px; }
   .dw-tag.gen{ background:rgba(212,164,55,.18); color:#8A6A1F; }
   .dw-resp .actions a{ border-radius:999px; }
+
+  /* ═══ [DAWINI PREMIUM 2026-07-08] En-tête émeraude + format PC (2 colonnes) ═══ */
+  .dw-hero{ position:relative; overflow:hidden; background:linear-gradient(160deg,#0F7560,#0E5F46); color:#fff; border-radius:24px; padding:22px 20px; margin-bottom:14px; box-shadow:0 24px 60px rgba(6,82,64,.18); }
+  .dw-hero::before{ content:''; position:absolute; width:220px; height:220px; border:2px solid rgba(255,255,255,.13); border-radius:50%; top:-90px; inset-inline-end:-60px; }
+  .dw-hero::after{ content:''; position:absolute; width:150px; height:150px; border:2px solid rgba(255,255,255,.10); border-radius:50%; bottom:-70px; inset-inline-start:-50px; }
+  .dw-hero-badge{ display:inline-flex; align-items:center; gap:7px; background:rgba(212,164,55,.95); color:#fff; border-radius:999px; padding:4px 11px; font-size:10.5px; font-weight:800; letter-spacing:1.1px; text-transform:uppercase; }
+  .dw-hero h1{ font-size:22px; font-weight:800; letter-spacing:-.5px; margin:10px 0 6px; line-height:1.15; color:#fff; }
+  .dw-hero .dw-hero-name{ color:#F0CE74; }
+  .dw-hero p{ font-size:13px; color:#D7EDE4; max-width:60ch; margin:0; }
+  .dw-hero-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:14px; position:relative; z-index:1; }
+  .dw-hero-chips span{ display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.22); border-radius:999px; padding:6px 12px; font-size:11.5px; font-weight:700; }
+  @media (min-width:1024px){
+    .page{ max-width:none; margin-inline:0; }  /* [V4D] layout desktop dédié */
+    .dw-shell{ max-width:1160px; display:grid; grid-template-columns:1.05fr .95fr; column-gap:28px; align-items:start; padding-top:26px; }
+    .dw-hero{ grid-column:1 / -1; padding:26px 28px; width:100%; }
+    .dw-hero h1{ font-size:28px; }
+    .dw-hero p{ font-size:14px; }
+    .dw-hero-chips span{ font-size:12.5px; }
+    .dw-intro{ grid-column:1 / -1; width:100%; }
+    .dw-card{ grid-column:1; grid-row:3 / span 2; margin-bottom:0; padding:24px; }
+    #dw-track-title{ grid-column:2; grid-row:3; margin:0 0 10px !important; font-size:18px !important; }
+    #dw-list{ grid-column:2; grid-row:4; }
+    .dw-req{ background:#fff; box-shadow:0 6px 18px rgba(16,40,34,.05); }
+  }
 </style>
 </head>
 <body>
@@ -119,6 +143,18 @@
   </div>
 
   <div id="dw-main" class="dw-shell" hidden>
+
+    <!-- [DAWINI PREMIUM 2026-07-08] En-tête premium (design v4) -->
+    <div class="dw-hero">
+      <span class="dw-hero-badge"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i> <span data-i18n="dwh_new">Nouveau</span></span>
+      <h1><span class="dw-hero-name">Dawini</span> — <span data-i18n="dw_hero_h">votre médicament, en temps réel</span></h1>
+      <p data-i18n="dw_hero_p">Les pharmacies partenaires de votre wilaya reçoivent votre demande et vous répondent directement.</p>
+      <div class="dw-hero-chips">
+        <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Réponses des pharmacies en temps réel</span></span>
+        <span><i class="fa fa-location-dot" aria-hidden="true"></i> <span data-i18n="dwh_pt2">Pharmacies de votre wilaya, triées par distance</span></span>
+        <span><i class="fa fa-lock" aria-hidden="true"></i> <span data-i18n="dw_hero_c3">Consentement — loi 18-07</span></span>
+      </div>
+    </div>
 
     <div class="dw-intro">
       <i class="fa fa-circle-info" aria-hidden="true"></i>

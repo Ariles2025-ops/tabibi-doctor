@@ -79,6 +79,17 @@
   .dwp-done{ background:var(--sand); border-radius:14px; }
   .dwp-done.acc, .dwp-contact{ background:#E7F1EC; border-color:#D5E7DF; }
   .dwp-newdot{ background:var(--gold); }
+
+  /* [DAWINI PREMIUM 2026-07-08] Format PC : shell large + KPIs généreux */
+  @media (min-width:1024px){
+    .page{ max-width:none; margin-inline:0; }  /* [V4D] layout desktop dédié */
+    .dwp-shell{ max-width:1020px; padding-top:26px; }
+    .dwp-kpis{ gap:16px; }
+    .dwp-kpi{ padding:22px 12px; border-radius:20px; }
+    .dwp-kpi b{ font-size:30px; }
+    .dwp-kpi span{ font-size:12px; }
+    .dwp-req{ padding:22px; }
+  }
 </style>
 </head>
 <body>
