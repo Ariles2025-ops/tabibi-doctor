@@ -16,6 +16,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
 .section-card { margin-bottom: 14px; }
 .sec-title-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
@@ -76,10 +78,10 @@
         <div id="health-qr" style="width:56px;height:56px;background:#fff;border:2px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--text)"><i class="fa fa-qrcode"></i></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">
-        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-blood" style="font-size:18px;font-weight:800;color:#dc2626">A+</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_blood">Sang</div></div>
-        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-imc" style="font-size:18px;font-weight:800;color:#16a34a">23.7</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_imc">IMC</div></div>
-        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-age" style="font-size:18px;font-weight:800;color:#0F7560">35 ans</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_age">Âge</div></div>
-        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-allergies" style="font-size:14px;font-weight:800;color:#f59e0b;line-height:1.6">⚠ 1</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_allergy">Allergie</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-blood" style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_blood">Sang</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-imc" style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_imc">IMC</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-age" style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_age">Âge</div></div>
+        <div style="background:rgba(255,255,255,.7);padding:10px 4px;border-radius:8px"><div id="hc-allergies" style="font-size:14px;font-weight:800;color:var(--text3);line-height:1.6">—</div><div style="font-size:9px;color:var(--text3);text-transform:uppercase" data-i18n="pp_hc_allergy">Allergie</div></div>
       </div>
       <div style="margin-top:12px;font-size:11px;color:var(--text3);text-align:center"><i class="fa fa-shield"></i> <span data-i18n="pp_hc_qr_hint">Affichez ce QR aux médecins pour un accès rapide à votre dossier</span></div>
     </div>
@@ -89,10 +91,10 @@
       <div class="sec-title-bar"><i style="background:#fff0f0;color:#dc2626"><i class="fa fa-heart-pulse"></i></i>
         <div><div class="lbl" data-i18n="pp_health_title">Indicateurs santé</div><div class="desc" data-i18n="pp_health_sub">Suivi mensuel</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-        <div style="padding:10px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b"><div style="font-size:11px;color:#92400e;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_tension">Tension</div><div style="font-size:18px;font-weight:800">12/8</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_normal">Normale</div></div>
-        <div style="padding:10px;background:#e7f3ef;border-radius:8px;border-left:3px solid #16a34a"><div style="font-size:11px;color:#166534;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_glycemia">Glycémie</div><div style="font-size:18px;font-weight:800">0.9 g/L</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_normal">Normale</div></div>
-        <div style="padding:10px;background:#e7f3ef;border-radius:8px;border-left:3px solid #0F7560"><div style="font-size:11px;color:#0a4d3e;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_cholesterol">Cholestérol</div><div style="font-size:18px;font-weight:800">1.8 g/L</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_optimal">Optimal</div></div>
-        <div style="padding:10px;background:#f3e8ff;border-radius:8px;border-left:3px solid #7c3aed"><div style="font-size:11px;color:#6b21a8;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_pulse">Pouls</div><div style="font-size:18px;font-weight:800">72 bpm</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_atrest">Au repos</div></div>
+        <div style="padding:10px;background:#fef3c7;border-radius:8px;border-left:3px solid #f59e0b"><div style="font-size:11px;color:#92400e;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_tension">Tension</div><div style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_nodata">Aucune donnée</div></div>
+        <div style="padding:10px;background:#e7f3ef;border-radius:8px;border-left:3px solid #16a34a"><div style="font-size:11px;color:#166534;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_glycemia">Glycémie</div><div style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_nodata">Aucune donnée</div></div>
+        <div style="padding:10px;background:#e7f3ef;border-radius:8px;border-left:3px solid #0F7560"><div style="font-size:11px;color:#0a4d3e;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_cholesterol">Cholestérol</div><div style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_nodata">Aucune donnée</div></div>
+        <div style="padding:10px;background:#f3e8ff;border-radius:8px;border-left:3px solid #7c3aed"><div style="font-size:11px;color:#6b21a8;font-weight:700;text-transform:uppercase" data-i18n="pp_vital_pulse">Pouls</div><div style="font-size:18px;font-weight:800;color:var(--text3)">—</div><div style="font-size:10px;color:var(--text3)" data-i18n="pp_vital_nodata">Aucune donnée</div></div>
       </div>
       <button class="btn btn-soft btn-full btn-sm" onclick="alert(tabibiT('alert_module_measures_soon','Module mesures · Bientôt disponible'))"><i class="fa fa-plus"></i> <span data-i18n="pp_add_measure">Ajouter une mesure</span></button>
     </div>
@@ -204,7 +206,7 @@
       <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="changePassword()"><i class="fa fa-key"></i> <span data-i18n="pp_change_password">Changer le mot de passe</span></button>
       <div class="row-setting"><div class="info"><div class="name" data-i18n="pp_2fa_name">Authentification 2FA (SMS)</div><div class="desc" data-i18n="pp_2fa_desc">Code de vérification par SMS</div></div><div class="toggle-switch" data-key="sec_2fa" onclick="toggleSwitch(this)"></div></div>
       <div class="row-setting"><div class="info"><div class="name" data-i18n="pp_bio_name">Connexion biométrique</div><div class="desc" data-i18n="pp_bio_desc">Face ID / Touch ID si disponible</div></div><div class="toggle-switch on" data-key="sec_bio" onclick="toggleSwitch(this)"></div></div>
-      <button class="btn btn-soft btn-full" style="justify-content:flex-start;margin-top:8px" onclick="viewSessions()"><i class="fa fa-clock-rotate-left"></i> <span data-i18n="pp_view_sessions">Voir mes sessions actives</span></button>
+      <button class="btn btn-soft btn-full" style="justify-content:flex-start;margin-top:8px;opacity:.55;cursor:not-allowed" disabled title="Bientôt disponible" aria-disabled="true"><i class="fa fa-clock-rotate-left"></i> <span data-i18n="pp_view_sessions">Voir mes sessions actives</span> <span style="margin-inline-start:auto;font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800">BIENTÔT</span></button>
     </div>
 
     <!-- 8. CONFIDENTIALITÉ -->
@@ -250,8 +252,8 @@
     <div class="card section-card danger-card" id="sec-danger">
       <div class="sec-title-bar" style="border-bottom-color:#fca5a5"><i style="background:var(--red);color:#fff"><i class="fa fa-triangle-exclamation"></i></i>
         <div><div class="lbl" style="color:var(--red)" data-i18n="pp_danger_title">Zone de danger</div><div class="desc" data-i18n="pp_danger_sub">Actions irréversibles</div></div></div>
-      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px;color:#92400e;border-color:#fde68a" onclick="if(confirm(tabibiT('confirm_suspend_account','Suspendre votre compte temporairement ?')))alert(tabibiT('alert_account_suspended','Compte suspendu — réactivez via support'))"><i class="fa fa-pause"></i> <span data-i18n="pp_suspend">Suspendre mon compte</span></button>
-      <button class="btn btn-danger btn-full" style="justify-content:flex-start" onclick="deleteAccount()"><i class="fa fa-trash"></i> <span data-i18n="pp_delete_account">Supprimer définitivement mon compte</span></button>
+      <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px;opacity:.55;cursor:not-allowed" disabled title="Bientôt disponible" aria-disabled="true"><i class="fa fa-pause"></i> <span data-i18n="pp_suspend">Suspendre mon compte</span> <span style="margin-inline-start:auto;font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800">BIENTÔT</span></button>
+      <button class="btn btn-danger btn-full" style="justify-content:flex-start;opacity:.55;cursor:not-allowed" disabled title="Bientôt disponible — contactez contact@tabibi.doctor" aria-disabled="true"><i class="fa fa-trash"></i> <span data-i18n="pp_delete_account">Supprimer définitivement mon compte</span> <span style="margin-inline-start:auto;font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800">BIENTÔT</span></button>
     </div>
 
     <!-- BOUTONS GLOBAUX -->
@@ -461,13 +463,26 @@ async function saveAll(){
   toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"),"success");
 }
 
-function changePassword(){
-  const old=prompt(tabibiT("pp_prompt_old_password","Ancien mot de passe :")); if(!old)return;
-  const nw=prompt(tabibiT('prompt_new_password_long',"Nouveau mot de passe (min. 8 car.) :")); if(!nw||nw.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}
+async function changePassword(){
+  // [SEC 2026-07-09] VRAI changement via Supabase (fini le faux succès).
+  // L'« ancien mot de passe » n'est pas requis : la session authentifiée suffit.
+  const nw=prompt(tabibiT('prompt_new_password_long',"Nouveau mot de passe (min. 8 car.) :")); if(!nw)return;
+  if(nw.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}
   const conf=prompt(tabibiT('prompt_confirm_short',"Confirmer :")); if(nw!==conf){toastM(tabibiT('toast_passwords_mismatch',"Ne correspondent pas"),"error");return;}
-  toastM(tabibiT('toast_password_changed',"Mot de passe changé !"),"success");
+  try{
+    const sb = await getSupabase();
+    const { error } = await sb.auth.updateUser({ password: nw });
+    if (error) throw error;
+    toastM(tabibiT('toast_password_changed',"Mot de passe changé !"),"success");
+  }catch(e){
+    console.warn('[changePassword]', e);
+    toastM(tabibiT('toast_password_change_failed',"Échec du changement — réessayez."),"error");
+  }
 }
-function viewSessions(){alert(tabibiT('alert_active_sessions_demo',"Sessions actives :\n• Cet appareil (Mac · Chrome) — actuel\n• iPhone 15 (Safari) — il y a 2 jours\n\nDéconnectez-vous des autres sessions depuis l'admin."));}
+function viewSessions(){
+  // [SEC 2026-07-09] plus de sessions INVENTÉES : fonctionnalité honnêtement absente
+  toastM(tabibiT('pp_sessions_soon',"Gestion des sessions bientôt disponible."),"info");
+}
 function changeAvatar(){alert(tabibiT('alert_change_avatar_demo',"Choisissez une image (à brancher avec un input file dans la version production)"));}
 function exportData(format){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
@@ -479,13 +494,21 @@ function exportData(format){
   } else { window.print(); }
 }
 function deleteAccount(){
-  if(!confirm(tabibiT('confirm_delete_account_warning',"⚠️ Supprimer DÉFINITIVEMENT votre compte ?\nTous vos RDV, favoris et données médicales seront effacés.\nCette action est IRRÉVERSIBLE."))) return;
-  if(prompt(tabibiT('pp_prompt_delete_confirm','Tapez "SUPPRIMER" pour confirmer :'))!=="SUPPRIMER"){toastM(tabibiT('toast_cancelled_short',"Annulé"),"info");return;}
-  localStorage.clear();
-  alert(tabibiT('alert_account_deleted_bye',"Compte supprimé. Au revoir."));
+  // [SEC 2026-07-09] AUCUNE suppression tant que l'implémentation réelle (RPC +
+  // purge Supabase) n'est pas validée. L'ancien code faisait localStorage.clear()
+  // + « Compte supprimé » alors que le compte Supabase existait toujours.
+  toastM(tabibiT('pp_delete_soon',"La suppression de compte arrive bientôt. En attendant : contact@tabibi.doctor"),"info");
+}
+async function logout(){
+  // [SEC 2026-07-09] révoque la session Supabase (alignement patient-dashboard)
+  if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
+  try {
+    if (window.tabibi && window.tabibi.auth) { await window.tabibi.auth.signOut(); }
+    else { const sb = await getSupabase(); if (sb) await sb.auth.signOut(); }
+  } catch(e) { console.warn('[logout]', e); }
+  localStorage.removeItem("tabibi_user");
   location.href="index.html";
 }
-function logout(){localStorage.removeItem("tabibi_user");location.href="index.html";}
 
 /* FAMILLE */
 function getFamily(){return JSON.parse(localStorage.getItem("tabibi_family")||"[]");}

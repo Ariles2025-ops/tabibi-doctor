@@ -68,6 +68,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
 .section-card { margin-bottom: 14px; }
 .sec-title-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
@@ -853,7 +855,7 @@ async function saveAll(){
 
   // [Phase 4.B.1] Si session Supabase active, pousser vers la DB via RPC.
   // Sinon : comportement localStorage-only legacy.
-  var didDbSave = false;
+  var didDbSave = false; window._mpDidDbSave = false;  // [SEC 2026-07-09] exposé pour saveAndPublish
   try {
     if (window.tabibiDoctor && await window.tabibiDoctor.hasSession()) {
       // Mapping form -> params RPC update_my_doctor_profile
@@ -879,7 +881,7 @@ async function saveAll(){
       };
       var res = await window.tabibiDoctor.updateMyProfile(params);
       if (res.ok) {
-        didDbSave = true;
+        didDbSave = true; window._mpDidDbSave = true;
         hideNotClaimedBanner();
       } else if (res.error === 'profile_not_found_or_not_claimed') {
         // Cas critique (cf. Ajustement 2) : user authentifié mais pas de fiche claim
@@ -916,8 +918,31 @@ async function saveAll(){
     toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"), "success");
   }
 }
-function changePassword(){const o=prompt(tabibiT('prompt_old_password',"Ancien mot de passe :"));if(!o)return;const n=prompt(tabibiT('prompt_new_password',"Nouveau (min 8) :"));if(!n||n.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}toastM(tabibiT('toast_password_changed',"Mot de passe changé"),"success");}
-function logout(){localStorage.removeItem("tabibi_user");location.href="index.html";}
+async function changePassword(){
+  // [SEC 2026-07-09] VRAI changement via Supabase (fini le faux succès).
+  const n=prompt(tabibiT('prompt_new_password',"Nouveau mot de passe (min 8) :")); if(!n)return;
+  if(n.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}
+  const c=prompt(tabibiT('prompt_confirm_short',"Confirmer :")); if(n!==c){toastM(tabibiT('toast_passwords_mismatch',"Ne correspondent pas"),"error");return;}
+  try{
+    const sb = await getSupabase();
+    const { error } = await sb.auth.updateUser({ password: n });
+    if (error) throw error;
+    toastM(tabibiT('toast_password_changed',"Mot de passe changé"),"success");
+  }catch(e){
+    console.warn('[changePassword]', e);
+    toastM(tabibiT('toast_password_change_failed',"Échec du changement — réessayez."),"error");
+  }
+}
+async function logout(){
+  // [SEC 2026-07-09] révoque la session Supabase
+  if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
+  try {
+    if (window.tabibi && window.tabibi.auth) { await window.tabibi.auth.signOut(); }
+    else { const sb = await getSupabase(); if (sb) await sb.auth.signOut(); }
+  } catch(e) { console.warn('[logout]', e); }
+  localStorage.removeItem("tabibi_user");
+  location.href="index.html";
+}
 // ========================================================================
 // [Phase 14.2] Mode onboarding — activé via ?onboarding=1 (post-claim)
 // Affiche banner + progress bar + bouton "Publier ma fiche".
@@ -999,12 +1024,15 @@ async function saveAndPublish(){
   if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Publication…'; }
   try {
     await saveAll();
+    // [SEC 2026-07-09] ne publie le succès QUE si la sauvegarde DB a réellement abouti
+    if(!window._mpDidDbSave){ throw new Error('save_failed'); }
     if(typeof toastM === 'function') toastM(tabibiT('mp_toast_published','✓ Votre fiche est publiée. Bienvenue !'), 'success');
     // Nettoie le N° Ordre temporaire
     try { localStorage.removeItem('tabibi_claim_ordre'); } catch(e){}
     setTimeout(function(){ location.href = 'doctor-dashboard.html'; }, 1500);
   } catch(e){
     console.warn('[onboarding] saveAndPublish', e);
+    if(typeof toastM === 'function') toastM(tabibiT('mp_toast_publish_failed','Échec de la publication — vérifiez votre connexion et réessayez.'), 'error');
     if(btn){ btn.disabled = false; btn.innerHTML = '<i class="fa fa-rocket"></i> Sauvegarder et publier ma fiche'; }
   }
 }

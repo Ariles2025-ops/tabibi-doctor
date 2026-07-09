@@ -15,6 +15,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
   .pay-shell { padding: 16px; max-width: 480px; margin: 0 auto; }
   .pay-summary { background:#fff; border-radius: var(--r12); padding: 18px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
@@ -192,8 +194,11 @@ function confirmPay(){
   // M0 : juste rediriger vers mes-rdv avec confirmation (le RDV est déjà
   // créé en pending via reservation.html). Le paiement réel sera traité
   // au cabinet (cash).
+  // [SEC 2026-07-09] persiste le choix + affiche le libellé traduit (fini l'id interne)
+  try{ localStorage.setItem('tabibi_payment_method', _selectedMethod); }catch(e){}
+  var _lbl = _t('pmt_'+_selectedMethod+'_name', _selectedMethod);
   if(typeof toast === 'function'){
-    toast(_t('pmt_method_saved', 'Mode de paiement enregistré : ') + _selectedMethod, 'success');
+    toast(_t('pmt_method_saved', 'Mode de paiement enregistré : ') + _lbl, 'success');
   }
   setTimeout(function(){ location.href = 'mes-rdv.html'; }, 800);
 }
