@@ -42,6 +42,39 @@
   .rdv-card .btn-msg { font-size:12px;padding:6px 10px;background:var(--green-l);border:1px solid var(--green);color:var(--green-d);border-radius:var(--r8);cursor:pointer;font-weight:600; }
   .rdv-card .btn-msg:hover:not(:disabled) { background:#f0fdf4; }
   .rdv-card .btn-msg:disabled { opacity:.5;cursor:default; }
+  /* [UX 2026-07-09] Modal annulation — remplace le confirm() natif (bloquant,
+     hors design system). Même langage que les modals espace patient/médecin :
+     feuille ivoire, arrondis, pastille sable, CTA "garder" primaire émeraude,
+     action destructive SECONDAIRE sobre. Bottom-sheet mobile, centré desktop. */
+  .cxl-back { position:fixed;inset:0;background:rgba(5,39,29,.45);backdrop-filter:blur(4px);
+    z-index:1200;display:flex;align-items:flex-end;justify-content:center;
+    opacity:0;pointer-events:none;transition:opacity .2s; }
+  .cxl-back.open { opacity:1;pointer-events:auto; }
+  .cxl-card { background:var(--bg,#FBF9F4);border:1px solid var(--border);
+    border-radius:24px 24px 0 0;width:100%;max-width:420px;
+    padding:26px 22px calc(20px + env(safe-area-inset-bottom));text-align:center;
+    box-shadow:0 -16px 40px rgba(5,39,29,.18); }
+  @media (prefers-reduced-motion:no-preference){
+    .cxl-card { transform:translateY(18px);transition:transform .22s ease; }
+    .cxl-back.open .cxl-card { transform:none; }
+  }
+  @media (min-width:640px){
+    .cxl-back { align-items:center;padding:20px; }
+    .cxl-card { border-radius:24px;padding-bottom:24px;box-shadow:0 24px 60px rgba(5,39,29,.22); }
+  }
+  .cxl-ico { width:56px;height:56px;border-radius:50%;background:var(--bg2,#F4EEE2);
+    color:#B07000;display:flex;align-items:center;justify-content:center;
+    font-size:22px;margin:0 auto 14px; }
+  .cxl-title { font-size:17px;font-weight:800;margin-bottom:6px; }
+  .cxl-body { font-size:13.5px;color:var(--text3);line-height:1.5;margin-bottom:18px; }
+  .cxl-keep { display:block;width:100%;padding:13px;border:0;border-radius:999px;
+    background:var(--blue);color:#fff;font-size:14.5px;font-weight:700;cursor:pointer;
+    font-family:inherit;margin-bottom:10px; }
+  .cxl-keep:hover { background:var(--blue-d,#0E5F46); }
+  .cxl-confirm { display:block;width:100%;padding:12px;border:1px solid var(--border);
+    border-radius:999px;background:transparent;color:var(--red);font-size:13.5px;
+    font-weight:600;cursor:pointer;font-family:inherit; }
+  .cxl-confirm:hover { background:#FFF5F4;border-color:#F3D9D5; }
   .rdv-empty { text-align:center;padding:48px 16px;color:var(--text3); }
   .rdv-empty .ico { font-size:48px;color:var(--text3);opacity:.4;margin-bottom:14px; }
   .rdv-empty .title { font-size:16px;font-weight:700;color:var(--text2);margin-bottom:6px; }
@@ -494,7 +527,39 @@ async function loadAppointments(){
   _renderAll();
 }
 
-async function doCancel(id){
+// [UX 2026-07-09] confirm() natif → modal cxl-* (cohérent design system,
+// non bloquant). doCancel garde les gardes puis ouvre le modal ; la
+// confirmation déclenche _confirmCancelRdv() qui exécute l'annulation.
+var _pendingCancelId = null;
+function _openCancelModal(){
+  var m = document.getElementById('cxl-modal');
+  if(!m) return false;
+  m.classList.add('open');
+  m.setAttribute('aria-hidden', 'false');
+  var keep = document.getElementById('cxl-keep');
+  if(keep) keep.focus();
+  return true;
+}
+function _closeCancelModal(){
+  var m = document.getElementById('cxl-modal');
+  if(!m) return;
+  m.classList.remove('open');
+  m.setAttribute('aria-hidden', 'true');
+  _pendingCancelId = null;
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var m = document.getElementById('cxl-modal');
+  if(!m) return;
+  // Clic sur le voile (hors carte) = garder le RDV
+  m.addEventListener('click', function(e){ if(e.target === m) _closeCancelModal(); });
+  document.getElementById('cxl-keep').addEventListener('click', _closeCancelModal);
+  document.getElementById('cxl-confirm').addEventListener('click', _confirmCancelRdv);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && m.classList.contains('open')) _closeCancelModal();
+  });
+});
+
+function doCancel(id){
   if(_cancelInFlight){
     toast(_t('rdv_cancel_inflight', "Annulation déjà en cours…"), "info");
     return;
@@ -506,9 +571,17 @@ async function doCancel(id){
     toast(mesrdvMessage(MESRDV_CODES.ERR_MESRDV_TOO_LATE_TO_CANCEL), "warning");
     return;
   }
-  if(!confirm(_t('rdv_confirm_cancel', "Annuler ce rendez-vous ?\nVous pourrez en reprendre un nouveau si besoin."))){
-    return;
+  _pendingCancelId = id;
+  if(!_openCancelModal()){
+    // Filet : si le modal manque au DOM, retomber sur confirm() natif
+    if(confirm(_t('rdv_confirm_cancel', "Annuler ce rendez-vous ?\nVous pourrez en reprendre un nouveau si besoin."))) _confirmCancelRdv();
   }
+}
+
+async function _confirmCancelRdv(){
+  var id = _pendingCancelId;
+  _closeCancelModal();
+  if(!id || _cancelInFlight) return;
   _cancelInFlight = true;
   var btn = document.querySelector('.rdv-card[data-id="'+id+'"] .btn-cancel');
   if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> …'; }
@@ -589,5 +662,16 @@ window.loadAppointments = loadAppointments;
 <!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
 <script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
+
+<!-- [UX 2026-07-09] Modal annulation RDV (remplace confirm() natif) -->
+<div class="cxl-back" id="cxl-modal" role="dialog" aria-modal="true" aria-labelledby="cxl-title" aria-hidden="true">
+  <div class="cxl-card" role="document">
+    <div class="cxl-ico" aria-hidden="true"><i class="fa fa-calendar-xmark"></i></div>
+    <div class="cxl-title" id="cxl-title" data-i18n="rdv_cm_title">Annuler ce rendez-vous ?</div>
+    <div class="cxl-body" data-i18n="rdv_cm_body">Vous pourrez en reprendre un nouveau si besoin.</div>
+    <button type="button" class="cxl-keep" id="cxl-keep" data-i18n="rdv_cm_keep">Garder le RDV</button>
+    <button type="button" class="cxl-confirm" id="cxl-confirm" data-i18n="rdv_cm_confirm">Oui, annuler le RDV</button>
+  </div>
+</div>
 </body>
 </html>
