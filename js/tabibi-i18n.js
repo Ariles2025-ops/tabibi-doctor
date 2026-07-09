@@ -146,7 +146,7 @@
 
       // [I18N-RES 2026-06-18] reservation.html — chemin critique (pilote P0 #3)
       confirm_rdv: 'Confirmer le RDV', pay_title: 'Mode de paiement',
-      rdv_ok: 'RDV confirmé !', rdv_ok_body: 'Votre RDV a été enregistré. Vous recevrez une confirmation par SMS prochainement.',
+      rdv_ok: 'RDV confirmé !', rdv_ok_body: 'Votre RDV est enregistré — retrouvez-le à tout moment dans « Mes rendez-vous ».',
       payment_secure: 'Paiement 100% sécurisé · Données chiffrées SSL/TLS',
       reason_req: 'Indiquez un motif de consultation.',
       step1_date: '1 · Date', step2_details: '2 · Détails', step3_payment: '3 · Paiement', step4_ok: '4 · OK',
@@ -1424,7 +1424,7 @@
 
       // [I18N-RES 2026-06-18] reservation.html — chemin critique (pilote P0 #3)
       confirm_rdv: 'تأكيد الموعد', pay_title: 'طريقة الدفع',
-      rdv_ok: 'تم تأكيد الموعد !', rdv_ok_body: 'تم تسجيل موعدك. ستصلك رسالة تأكيد قريبًا عبر SMS.',
+      rdv_ok: 'تم تأكيد الموعد !', rdv_ok_body: 'تم تسجيل موعدك — تجده في أي وقت في « مواعيدي ».',
       payment_secure: 'دفع آمن 100% · بيانات مشفّرة SSL/TLS',
       reason_req: 'يرجى إدخال سبب الاستشارة.',
       step1_date: '1 · التاريخ', step2_details: '2 · التفاصيل', step3_payment: '3 · الدفع', step4_ok: '4 · تم',
@@ -2700,7 +2700,7 @@
 
       // [I18N-RES 2026-06-18] reservation.html — chemin critique (pilote P0 #3)
       confirm_rdv: 'Confirm appointment', pay_title: 'Payment method',
-      rdv_ok: 'Appointment confirmed!', rdv_ok_body: 'Your appointment has been saved. You will receive an SMS confirmation soon.',
+      rdv_ok: 'Appointment confirmed!', rdv_ok_body: 'Your appointment is saved — find it anytime in “My appointments”.',
       payment_secure: '100% secure payment · SSL/TLS encrypted data',
       reason_req: 'Please enter a reason for the consultation.',
       step1_date: '1 · Date', step2_details: '2 · Details', step3_payment: '3 · Payment', step4_ok: '4 · OK',
