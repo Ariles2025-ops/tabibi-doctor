@@ -1307,7 +1307,7 @@ const TR = {
     fill_all:"Veuillez remplir tous les champs.",pass_short:"Mot de passe : 6 caractères minimum.",
     signup_ok:"Compte créé avec succès !",fav_add:"Ajouté aux favoris <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"Retiré des favoris",
     conn_req:"Connectez-vous pour réserver",reset_ok:"Filtres réinitialisés",
-    no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",
+    no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",docs_load_err:"Impossible de charger les médecins",docs_load_err_sub:"Vérifiez votre connexion.",retry:"Réessayer",
     cert:"Certifié",urgent:"Urgences",available:"Disponible",rdv:"Prendre RDV",
     found:"médecin(s) trouvé(s)",avis_word:"avis",consult_word:"consult.",
     nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",nav_map:"Carte",greeting:"Bonjour",
@@ -3105,6 +3105,13 @@ async function loadDoctorCards(opts, page){
     if(!res.ok){
       console.warn('[Tabibi] loadDoctorCards HTTP', res.status);
       if(rc) rc.textContent = '';
+      // [INTÉGRITÉ 2026-07-09] plus d'échec silencieux : état d'erreur + Réessayer
+      var _dl=document.getElementById('docs-list');
+      if(_dl) _dl.innerHTML = '<div style="text-align:center;padding:34px 16px;color:var(--text3)">'
+        + '<div style="width:52px;height:52px;border-radius:50%;background:#F4EEE2;color:#B49B62;display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 10px"><i class="fa fa-triangle-exclamation"></i></div>'
+        + '<div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:3px">' + T('docs_load_err') + '</div>'
+        + '<div style="font-size:12.5px;margin-bottom:9px">' + T('docs_load_err_sub') + '</div>'
+        + '<a onclick="doFilter(true)" style="font-size:12.5px;font-weight:700;color:#0E5F46;border-bottom:1px dashed #0F7560;cursor:pointer">' + T('retry') + '</a></div>';
       return;
     }
     // Total via header "Content-Range: 0-19/<TOTAL>"
@@ -3192,6 +3199,12 @@ async function loadDoctorCards(opts, page){
   } catch(e) {
     if(e && e.name === 'AbortError') return;
     console.warn('[Tabibi] loadDoctorCards exception:', e && e.message);
+      var _dl=document.getElementById('docs-list');
+      if(_dl) _dl.innerHTML = '<div style="text-align:center;padding:34px 16px;color:var(--text3)">'
+        + '<div style="width:52px;height:52px;border-radius:50%;background:#F4EEE2;color:#B49B62;display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 10px"><i class="fa fa-triangle-exclamation"></i></div>'
+        + '<div style="font-size:14px;font-weight:800;color:var(--ink);margin-bottom:3px">' + T('docs_load_err') + '</div>'
+        + '<div style="font-size:12.5px;margin-bottom:9px">' + T('docs_load_err_sub') + '</div>'
+        + '<a onclick="doFilter(true)" style="font-size:12.5px;font-weight:700;color:#0E5F46;border-bottom:1px dashed #0F7560;cursor:pointer">' + T('retry') + '</a></div>';
     if(rc) rc.textContent = '';
   }
 }

@@ -115,10 +115,10 @@
         <div class="form-group"><label class="form-label" for="sl"><span data-i18n="last_name">Nom</span> *</label><input class="form-control" id="sl" required autocomplete="family-name"></div>
       </div>
       <div class="form-group"><label class="form-label" for="sp"><span data-i18n="phone">Téléphone</span> *</label>
-        <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i><input class="form-control" id="sp" type="tel" required style="padding-left:42px" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" autocomplete="tel"></div></div>
+        <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i><input class="form-control" id="sp" type="tel" required style="padding-inline-start:42px" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" autocomplete="tel"></div></div>
       <div class="form-group"><label class="form-label" for="spw"><span data-i18n="password">Mot de passe</span> *</label>
         <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-          <input class="form-control" id="spw" type="password" required minlength="6" style="padding-left:42px" placeholder="6 caractères minimum" data-i18n-placeholder="ph_password_6_min" autocomplete="new-password">
+          <input class="form-control" id="spw" type="password" required minlength="6" style="padding-inline-start:42px" placeholder="6 caractères minimum" data-i18n-placeholder="ph_password_6_min" autocomplete="new-password">
           <button type="button" class="ii-r" onclick="togglePw('spw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
         <div style="font-size:11px;color:var(--text3);margin-top:6px">Vous l'utiliserez pour vous connecter (numéro + mot de passe), sans SMS à chaque fois.</div></div>
       <div class="form-group"><label class="form-label" for="sw" data-i18n="wilaya">Wilaya</label>
@@ -150,7 +150,7 @@
           <label class="form-label" for="scab" data-i18n="cabinet_invite_code">Code invitation cabinet *</label>
           <div class="input-wrap">
             <i class="fa fa-key ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="scab" placeholder="cab_xxxxxxxx-xxxx-xxxx" maxlength="50" style="padding-left:42px" autocomplete="off">
+            <input class="form-control" id="scab" placeholder="cab_xxxxxxxx-xxxx-xxxx" maxlength="50" style="padding-inline-start:42px" autocomplete="off">
           </div>
           <small style="color:var(--text3);font-size:11px">
             <span data-i18n="cabinet_invite_help">Demandez ce code à l'administrateur du cabinet qui vous a invité.</span>
@@ -185,7 +185,7 @@
       <form id="su-otp-form" onsubmit="verifyOtpAndCreateProfile(event)">
         <div class="form-group"><label class="form-label" for="su-code">Code reçu par SMS</label>
           <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="su-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
+            <input class="form-control" id="su-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-inline-start:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
           <div id="su-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
         </div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-plus"></i> Créer mon compte</button>

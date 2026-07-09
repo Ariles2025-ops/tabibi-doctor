@@ -125,14 +125,13 @@
   <div style="padding:0 16px 14px">
     <div class="card">
       <div class="section-h"><i class="fa fa-clock" style="color:var(--green)"></i> <span data-i18n="opening_hours">Horaires d'ouverture</span></div>
-      <div style="font-size:12px">
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_monday">Lundi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_tuesday">Mardi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_wednesday">Mercredi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_thursday">Jeudi</span><strong>09:00 - 17:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_friday">Vendredi</span><strong>09:00 - 13:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bg2)"><span data-i18n="day_saturday">Samedi</span><strong>09:00 - 13:00</strong></div>
-        <div style="display:flex;justify-content:space-between;padding:6px 0;color:var(--text4)"><span data-i18n="day_sunday">Dimanche</span><strong data-i18n="closed">Fermé</strong></div>
+      <!-- [INTÉGRITÉ 2026-07-09] Fini les horaires INVENTÉS (identiques pour tous).
+           Par défaut : état honnête ; loadDoc remplit avec les VRAIS working_hours. -->
+      <div style="font-size:12px" id="dp-hours-body">
+        <div style="text-align:center;padding:14px 8px;color:var(--text3)">
+          <i class="fa fa-clock" style="font-size:22px;color:var(--bg2);display:block;margin-bottom:6px"></i>
+          <span data-i18n="dp_hours_unknown">Horaires non communiqués par ce cabinet.</span>
+        </div>
       </div>
     </div>
   </div>
@@ -373,10 +372,10 @@ function _injectPhase13Sections(d){
            +   '<span style="color:var(--text2)">' + txt + '</span>'
            + '</div>';
     }).join('');
-    html += '<div class="card" style="padding:14px;margin-bottom:10px">'
-         +   '<div style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:8px"><i class="fa fa-clock" style="color:var(--blue)"></i> ' + _t('opening_hours',"Horaires d'ouverture") + '</div>'
-         +   rows
-         + '</div>';
+    // [INTÉGRITÉ 2026-07-09] les VRAIS horaires remplacent l'état « non communiqués »
+    // dans la carte Horaires existante (fini la carte dupliquée).
+    var hb = document.getElementById('dp-hours-body');
+    if (hb) hb.innerHTML = rows;
   }
   // Bio si dispo et différente de la phrase générique (déjà rendue dans #d-bio)
   // → on n'insère PAS bio ici pour éviter doublon

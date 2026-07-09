@@ -87,12 +87,12 @@
       <form id="pwLoginForm" onsubmit="doPhoneLogin(event)">
         <div class="form-group"><label class="form-label" for="lp-phone" data-i18n="phone_number">Numéro de téléphone</label>
           <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="lp-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
+            <input class="form-control" id="lp-phone" type="tel" inputmode="tel" required style="padding-inline-start:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
           <div style="font-size:11px;color:var(--text3);margin-top:6px">Indicatif Algérie <strong>+213</strong> ajouté automatiquement.</div>
         </div>
         <div class="form-group"><label class="form-label" for="lp-pass" data-i18n="password">Mot de passe</label>
           <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="lp-pass" type="password" required style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+            <input class="form-control" id="lp-pass" type="password" required style="padding-inline-start:42px" placeholder="••••••••" autocomplete="current-password">
             <button type="button" class="ii-r" onclick="togglePw('lp-pass',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
           <div style="text-align:right;margin-top:6px">
             <a href="#" onclick="showReset(event)" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
@@ -108,7 +108,7 @@
       <form id="resetPhoneForm" onsubmit="resetSendOtp(event)">
         <div class="form-group"><label class="form-label" for="rs-phone" data-i18n="phone_number">Numéro de téléphone</label>
           <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="rs-phone" type="tel" inputmode="tel" required style="padding-left:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
+            <input class="form-control" id="rs-phone" type="tel" inputmode="tel" required style="padding-inline-start:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
         </div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
         <div style="text-align:center;margin-top:14px;font-size:12px"><a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion</a></div>
@@ -120,7 +120,7 @@
       <form id="resetOtpForm" onsubmit="resetVerifyOtp(event)">
         <div class="form-group"><label class="form-label" for="rs-code" data-i18n="sms_code">Code reçu par SMS</label>
           <div class="input-wrap"><i class="fa fa-key ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-left:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
+            <input class="form-control" id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-inline-start:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
           <div id="rs-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
         </div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Vérifier</button>
@@ -136,7 +136,7 @@
       <form id="resetNewPwForm" onsubmit="resetSetPassword(event)">
         <div class="form-group"><label class="form-label" for="rs-newpw" data-i18n="new_password_label">Nouveau mot de passe</label>
           <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="rs-newpw" type="password" required minlength="6" style="padding-left:42px" placeholder="6 caractères minimum" autocomplete="new-password">
+            <input class="form-control" id="rs-newpw" type="password" required minlength="6" style="padding-inline-start:42px" placeholder="6 caractères minimum" autocomplete="new-password">
             <button type="button" class="ii-r" onclick="togglePw('rs-newpw',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
         </div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Définir le mot de passe</button>
@@ -153,10 +153,10 @@
       <form id="loginForm" onsubmit="doLogin(event)">
         <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
           <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="le" type="email" style="padding-left:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
+            <input class="form-control" id="le" type="email" style="padding-inline-start:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
         <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
           <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="lp" type="password" style="padding-left:42px" placeholder="••••••••" autocomplete="current-password">
+            <input class="form-control" id="lp" type="password" style="padding-inline-start:42px" placeholder="••••••••" autocomplete="current-password">
             <button type="button" class="ii-r" onclick="togglePw('lp',this)" aria-label="Afficher/masquer le mot de passe"><i class="fa fa-eye" aria-hidden="true"></i></button></div>
           <div style="text-align:right;margin-top:6px">
             <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
