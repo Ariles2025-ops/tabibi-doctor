@@ -86,3 +86,12 @@ android/app/build/
 android/local.properties
 android/app/release/
 www/
+
+# --- Outillage local + spikes (jamais versionnés) ---
+# .claude/ : config preview/session Claude Code, propre à chaque machine.
+# otp-spike.sh + TEST_booking_e2e.sql : spikes/scripts de test ponctuels.
+# *.disabled : fichiers désactivés localement (ex. google-services.json).
+.claude/
+scripts/otp-spike.sh
+migrations/TEST_booking_e2e.sql
+android/**/*.disabled
