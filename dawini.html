@@ -16,6 +16,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <!-- [DAWINI 2026-07-08] Typo du design v4 (Plus Jakarta Sans + Cairo AR) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -120,6 +122,30 @@
     #dw-list{ grid-column:2; grid-row:4; }
     .dw-req{ background:#fff; box-shadow:0 6px 18px rgba(16,40,34,.05); }
   }
+
+  /* ═══ [DW-UX 2026-07-09] Toasts premium + micro-interactions + états ═══ */
+  #dw-toasts{ position:fixed; bottom:max(20px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:900; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+  .dw-toast{ display:flex; align-items:center; gap:8px; background:#0F2A24; color:#fff; border-radius:999px; padding:11px 18px; font-size:13px; font-weight:600; box-shadow:0 18px 40px rgba(2,30,22,.35); opacity:0; transform:translateY(8px); transition:opacity .22s, transform .22s; max-width:min(92vw, 480px); }
+  .dw-toast.in{ opacity:1; transform:none; }
+  .dw-toast.success i{ color:#7FE0BC; }
+  .dw-toast.error{ background:#7C2D22; } .dw-toast.error i{ color:#FFC9BC; }
+  .dw-toast.info i{ color:#F0CE74; }
+  .dw-loading{ display:flex; align-items:center; justify-content:center; gap:9px; padding:26px; color:#5C6B63; font-size:13px; font-weight:600; }
+  .dw-loading i{ color:#0F7560; }
+  .dw-empty2{ text-align:center; padding:26px 16px 30px; }
+  .dw-empty2 .ic{ width:52px; height:52px; border-radius:50%; background:#F4EEE2; color:#B49B62; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 10px; }
+  .dw-empty2 b{ display:block; font-size:14px; font-weight:800; color:#0F2A24; margin-bottom:3px; }
+  .dw-empty2 p{ font-size:12.5px; color:#5C6B63; margin:0; max-width:44ch; margin-inline:auto; }
+  .dw-empty2 a{ display:inline-block; margin-top:9px; font-size:12.5px; font-weight:700; color:#0E5F46; border-bottom:1px dashed #0F7560; cursor:pointer; text-decoration:none; }
+
+  .dw-req{ transition:transform .18s, box-shadow .18s; }
+  @media (hover:hover){ .dw-req:hover{ transform:translateY(-2px); box-shadow:0 14px 32px rgba(16,40,34,.10); } }
+  .dw-chip{ animation:dwPop .18s ease; }
+  @keyframes dwPop{ from{ transform:scale(.85); opacity:0; } to{ transform:none; opacity:1; } }
+  #dw-med{ font-size:15px; padding:13px 14px; }
+  #dw-med:focus{ box-shadow:0 0 0 3px rgba(15,117,96,.14), 0 10px 26px rgba(15,117,96,.10); }
+  .dw-card, .dw-photo, .btn{ transition:box-shadow .18s, border-color .18s, background .18s, transform .15s; }
+  @media (prefers-reduced-motion:reduce){ .dw-chip{ animation:none; } .dw-req{ transition:none; } }
 </style>
 </head>
 <body>
@@ -150,7 +176,7 @@
       <h1><span class="dw-hero-name">Dawini</span> — <span data-i18n="dw_hero_h">votre médicament, en temps réel</span></h1>
       <p data-i18n="dw_hero_p">Les pharmacies partenaires de votre wilaya reçoivent votre demande et vous répondent directement.</p>
       <div class="dw-hero-chips">
-        <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Réponses des pharmacies en temps réel</span></span>
+        <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Disponibilité indiquée par la pharmacie</span></span>
         <span><i class="fa fa-location-dot" aria-hidden="true"></i> <span data-i18n="dwh_pt2">Pharmacies de votre wilaya, triées par distance</span></span>
         <span><i class="fa fa-lock" aria-hidden="true"></i> <span data-i18n="dw_hero_c3">Consentement — loi 18-07</span></span>
       </div>
@@ -400,11 +426,17 @@ function _respCard(resp, req){
 }
 
 async function loadRequests(){
-  var r = await window.tabibiDawini.listMyRequests();
   var box = document.getElementById('dw-list');
-  if (!r.ok){ box.innerHTML = '<div class="dw-empty">' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</div>'; return; }
+  // [DW-UX 2026-07-09] état de chargement au premier passage
+  if (!box.dataset.loaded){ box.innerHTML = '<div class="dw-loading"><i class="fa fa-spinner fa-spin"></i> ' + _esc(_t('dw_loading','Chargement…')) + '</div>'; }
+  var r = await window.tabibiDawini.listMyRequests();
+  if (!r.ok){
+    box.innerHTML = '<div class="dw-empty2"><div class="ic"><i class="fa fa-triangle-exclamation"></i></div><b>' + _esc(_t('dw_err_load','Impossible de charger vos demandes')) + '</b><p>' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</p><a onclick="loadRequests()">' + _esc(_t('dw_retry','Réessayer')) + '</a></div>';
+    return;
+  }
+  box.dataset.loaded = '1';
   if (!r.data.length){
-    box.innerHTML = '<div class="dw-empty"><i class="fa fa-prescription-bottle-medical"></i>' + _esc(_t('dw_no_requests','Aucune demande pour l\'instant.')) + '</div>';
+    box.innerHTML = '<div class="dw-empty2"><div class="ic"><i class="fa fa-prescription-bottle-medical"></i></div><b>' + _esc(_t('dw_no_requests','Aucune demande pour l\'instant.')) + '</b><p>' + _esc(_t('dw_no_requests_hint','Votre première recherche apparaîtra ici, avec les réponses des pharmacies.')) + '</p></div>';
     return;
   }
   box.innerHTML = r.data.map(function(req){
@@ -438,8 +470,14 @@ async function closeReq(id){
 // toast minimal si le shim global n'existe pas (pattern [FIX 2026-07-03])
 function toastM(msg, kind){
   if (typeof window.toast === 'function') return window.toast(msg, kind);
-  console[(kind === 'error') ? 'warn' : 'log']('[dawini]', msg);
-  alert(msg);
+  // [DW-UX 2026-07-09] toast premium — fini alert()
+  var c = document.getElementById('dw-toasts');
+  if (!c){ c = document.createElement('div'); c.id = 'dw-toasts'; c.setAttribute('aria-live','polite'); document.body.appendChild(c); }
+  var t = document.createElement('div'); t.className = 'dw-toast ' + (kind || 'info');
+  t.innerHTML = '<i class="fa ' + (kind === 'success' ? 'fa-circle-check' : kind === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info') + '"></i> ' + _esc(msg);
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('in'); }, 10);  // setTimeout (rAF gelé si onglet en arrière-plan)
+  setTimeout(function(){ t.classList.remove('in'); setTimeout(function(){ t.remove(); }, 250); }, 2800);
 }
 
 // ── Init : garde session + flag + i18n dynamique ─────────────────────────

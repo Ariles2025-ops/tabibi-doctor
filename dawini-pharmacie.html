@@ -16,6 +16,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <!-- [DAWINI 2026-07-08] Typo du design v4 (Plus Jakarta Sans + Cairo AR) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -90,6 +92,27 @@
     .dwp-kpi span{ font-size:12px; }
     .dwp-req{ padding:22px; }
   }
+
+  /* ═══ [DW-UX 2026-07-09] Toasts premium + micro-interactions + états ═══ */
+  #dw-toasts{ position:fixed; bottom:max(20px, env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); z-index:900; display:flex; flex-direction:column; gap:8px; align-items:center; pointer-events:none; }
+  .dw-toast{ display:flex; align-items:center; gap:8px; background:#0F2A24; color:#fff; border-radius:999px; padding:11px 18px; font-size:13px; font-weight:600; box-shadow:0 18px 40px rgba(2,30,22,.35); opacity:0; transform:translateY(8px); transition:opacity .22s, transform .22s; max-width:min(92vw, 480px); }
+  .dw-toast.in{ opacity:1; transform:none; }
+  .dw-toast.success i{ color:#7FE0BC; }
+  .dw-toast.error{ background:#7C2D22; } .dw-toast.error i{ color:#FFC9BC; }
+  .dw-toast.info i{ color:#F0CE74; }
+  .dw-loading{ display:flex; align-items:center; justify-content:center; gap:9px; padding:26px; color:#5C6B63; font-size:13px; font-weight:600; }
+  .dw-loading i{ color:#0F7560; }
+  .dw-empty2{ text-align:center; padding:26px 16px 30px; }
+  .dw-empty2 .ic{ width:52px; height:52px; border-radius:50%; background:#F4EEE2; color:#B49B62; display:flex; align-items:center; justify-content:center; font-size:20px; margin:0 auto 10px; }
+  .dw-empty2 b{ display:block; font-size:14px; font-weight:800; color:#0F2A24; margin-bottom:3px; }
+  .dw-empty2 p{ font-size:12.5px; color:#5C6B63; margin:0; max-width:44ch; margin-inline:auto; }
+  .dw-empty2 a{ display:inline-block; margin-top:9px; font-size:12.5px; font-weight:700; color:#0E5F46; border-bottom:1px dashed #0F7560; cursor:pointer; text-decoration:none; }
+
+  .dwp-req{ transition:transform .18s, box-shadow .18s; }
+  @media (hover:hover){ .dwp-req:hover{ transform:translateY(-2px); box-shadow:0 20px 44px rgba(5,39,29,.10); } }
+  .dwp-kpi{ transition:transform .15s, box-shadow .15s; }
+  @media (hover:hover){ .dwp-kpi:hover{ transform:translateY(-2px); box-shadow:0 12px 26px rgba(16,40,34,.08); } }
+  @media (prefers-reduced-motion:reduce){ .dwp-req,.dwp-kpi{ transition:none; } }
 </style>
 </head>
 <body>
@@ -165,8 +188,14 @@ function _esc(s){ var d = document.createElement('div'); d.textContent = (s == n
 function goBackSafe(){ if (history.length > 1) history.back(); else window.location = 'index.html'; }
 function toastM(msg, kind){
   if (typeof window.toast === 'function') return window.toast(msg, kind);
-  console[(kind === 'error') ? 'warn' : 'log']('[dawini-ph]', msg);
-  alert(msg);
+  // [DW-UX 2026-07-09] toast premium — fini alert()
+  var c = document.getElementById('dw-toasts');
+  if (!c){ c = document.createElement('div'); c.id = 'dw-toasts'; c.setAttribute('aria-live','polite'); document.body.appendChild(c); }
+  var t = document.createElement('div'); t.className = 'dw-toast ' + (kind || 'info');
+  t.innerHTML = '<i class="fa ' + (kind === 'success' ? 'fa-circle-check' : kind === 'error' ? 'fa-circle-exclamation' : 'fa-circle-info') + '"></i> ' + _esc(msg);
+  c.appendChild(t);
+  setTimeout(function(){ t.classList.add('in'); }, 10);  // setTimeout (rAF gelé si onglet en arrière-plan)
+  setTimeout(function(){ t.classList.remove('in'); setTimeout(function(){ t.remove(); }, 250); }, 2800);
 }
 
 var state = { pharmacy: null, poller: null, lastCount: 0, imgUrls: {} };
@@ -226,14 +255,23 @@ async function showImage(reqId, path){
 
 async function showContact(reqId){
   var box = document.getElementById('contact-' + reqId);
+  var _prev = box.innerHTML;
+  box.innerHTML = '<i class="fa fa-spinner fa-spin"></i> ' + _esc(_t('dw_loading','Chargement…'));
   var r = await window.tabibiDawini.getPatientContact(reqId);
-  if (!r.ok){ toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
+  if (!r.ok){ box.innerHTML = _prev; toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
   box.innerHTML = '<i class="fa fa-user"></i> <b>' + _esc(r.data.nom) + '</b>' +
     (r.data.tel ? ' · <a href="tel:' + _esc(r.data.tel) + '" style="font-weight:700;color:var(--blue)"><i class="fa fa-phone"></i> ' + _esc(r.data.tel) + '</a>' : '');
 }
 
 async function answer(reqId, accepted){
   var meds = (document.getElementById('meds-' + reqId).value || '').split(',').map(function(x){ return x.trim(); }).filter(Boolean);
+  // [DW-UX 2026-07-09] état de chargement sur le bouton cliqué
+  var _card = document.getElementById('meds-' + reqId); _card = _card && _card.closest('.dwp-req');
+  var _btns = _card ? _card.querySelectorAll('.dwp-actions button') : [];
+  var _active = _card ? _card.querySelector('.dwp-actions button:' + (accepted ? 'first-child' : 'last-child')) : null;
+  var _prev = _active ? _active.innerHTML : '';
+  Array.prototype.forEach.call(_btns, function(b){ b.disabled = true; });
+  if (_active) _active.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
   var r = await window.tabibiDawini.respond({
     requestId:   reqId,
     accepted:    accepted,
@@ -242,29 +280,50 @@ async function answer(reqId, accepted){
     medsDispo:   meds,
     commentaire: document.getElementById('com-' + reqId).value
   });
-  if (!r.ok){ toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return; }
+  if (!r.ok){
+    Array.prototype.forEach.call(_btns, function(b){ b.disabled = false; });
+    if (_active) _active.innerHTML = _prev;
+    toastM(window.tabibiDawini.errorMessage(r.error), 'error'); return;
+  }
   toastM(accepted ? _t('dw_ph_acc_ok','Réponse envoyée — le patient est prévenu.') : _t('dw_ph_ref_ok','Demande refusée.'), 'success');
+  state.lastHash = null;  // force le re-render (l'état de la carte a changé)
   loadZone(true);
   loadStats();
 }
 
 // ── Chargements ──────────────────────────────────────────────────────────
 async function loadZone(silent){
-  var r = await window.tabibiDawini.listZoneRequests();
   var box = document.getElementById('dwp-list');
+  if (!box.dataset.loaded && !silent){ box.innerHTML = '<div class="dw-loading"><i class="fa fa-spinner fa-spin"></i> ' + _esc(_t('dw_loading','Chargement…')) + '</div>'; }
+  var r = await window.tabibiDawini.listZoneRequests();
   if (!r.ok){
-    if (!silent) box.innerHTML = '<div class="dwp-empty">' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</div>';
+    if (!silent) box.innerHTML = '<div class="dw-empty2"><div class="ic"><i class="fa fa-triangle-exclamation"></i></div><b>' + _esc(_t('dw_err_load','Impossible de charger les demandes')) + '</b><p>' + _esc(window.tabibiDawini.errorMessage(r.error)) + '</p><a onclick="loadZone()">' + _esc(_t('dw_retry','Réessayer')) + '</a></div>';
     return;
   }
+  box.dataset.loaded = '1';
   var pending = r.data.filter(function(q){ return !q.my_response; });
   document.getElementById('dwp-dot').hidden = !pending.length;
   if (pending.length > state.lastCount && state.lastCount > 0){
     toastM(_t('dw_ph_new','Nouvelle demande Dawini !'), 'info');
   }
   state.lastCount = pending.length;
+  // [FIX AUDIT 2026-07-09] le polling ne réécrit JAMAIS une saisie en cours :
+  // (a) focus dans la liste, ou (b) un champ contient du texte → on diffère.
+  if (silent){
+    var act = document.activeElement;
+    var typing = (act && box.contains(act) && /^(INPUT|TEXTAREA)$/.test(act.tagName));
+    var hasText = Array.prototype.some.call(box.querySelectorAll('input[type="text"], textarea'), function(i){ return (i.value || '').trim(); });
+    if (typing || hasText) return;
+    // (c) données inchangées → pas de re-render (préserve aussi les cases cochées)
+    var h = JSON.stringify(r.data.map(function(q){ return [q.id, q.status, (q.my_response || {}).id || null]; }));
+    if (h === state.lastHash) return;
+    state.lastHash = h;
+  } else {
+    state.lastHash = JSON.stringify(r.data.map(function(q){ return [q.id, q.status, (q.my_response || {}).id || null]; }));
+  }
   box.innerHTML = r.data.length
     ? r.data.map(_reqCard).join('')
-    : '<div class="dwp-empty"><i class="fa fa-inbox"></i>' + _esc(_t('dw_ph_empty','Aucune demande dans votre wilaya pour l\'instant.')) + '</div>';
+    : '<div class="dw-empty2"><div class="ic"><i class="fa fa-inbox"></i></div><b>' + _esc(_t('dw_ph_empty','Aucune demande dans votre wilaya pour l\'instant.')) + '</b><p>' + _esc(_t('dw_ph_empty_hint','Les nouvelles demandes des patients apparaissent ici en continu.')) + '</p></div>';
 }
 
 async function loadStats(){
