@@ -195,6 +195,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- [UI 2026-07-09] Design system partagé (les styles inline v4 de la page gardent la main) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
 /* Liens désactivés (fonctionnalités à venir) */
 .link-disabled { opacity:.4; pointer-events:none; cursor:not-allowed; filter:grayscale(.5); }
@@ -450,7 +452,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 }
 @media(min-width:768px){
   .app-bar{background:rgba(255,255,255,.72);border-bottom:1px solid rgba(15,42,36,.10)}
-  .tab-bar{display:none}
+  nav.tab-bar{display:none}  /* [UI v2] specificite alignee sur nav.tab-bar du design system */
   .page{padding-bottom:24px}
 }
 @media (prefers-reduced-motion:reduce){.doc-card:hover,.spec-chip:hover,.hero-stat:hover{transform:none}}
@@ -869,6 +871,46 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   .v4-paynote{ justify-content:flex-start; }
   .v4-herostores{ justify-content:flex-start; padding-inline:var(--gutter); }
 }
+
+/* ═══ [CARTE 2026-07-09] Carte des médecins — Leaflet réel, pins + compteurs ═══ */
+.tb-map-filters{ display:flex; gap:8px; align-items:center; flex:1; min-width:0; flex-wrap:wrap; pointer-events:auto; }
+.tb-map-filters .form-control{ font-size:12.5px; padding:8px 12px; max-width:210px; flex:1 1 140px; min-width:0; background:#fff; box-shadow:0 6px 16px rgba(5,39,29,.10); }
+.tb-map-count{ font-size:11.5px; font-weight:800; color:#0E5F46; white-space:nowrap; background:rgba(251,249,244,.95); border:1px solid #E7E0D2; border-radius:999px; padding:6px 12px; box-shadow:0 6px 16px rgba(5,39,29,.10); }
+.tb-pin{ width:34px; height:34px; border-radius:12px; background:#0F7560; color:#fff; display:flex; align-items:center; justify-content:center; font-size:14px; border:2px solid #fff; box-shadow:0 6px 14px rgba(5,39,29,.35); transition:transform .15s; }
+.tb-pin:hover{ transform:scale(1.1); }
+.tb-bubble{ min-width:42px; height:30px; padding:0 10px; border-radius:999px; background:#fff; border:2px solid #0F7560; color:#0E5F46; font-weight:800; font-size:12.5px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(5,39,29,.20); transition:transform .15s; cursor:pointer; }
+.tb-bubble:hover{ transform:scale(1.08); }
+.leaflet-popup-content-wrapper{ border-radius:16px; box-shadow:0 20px 46px rgba(5,39,29,.25); }
+.leaflet-popup-content{ font-family:inherit; margin:14px 16px; }
+.tb-pop{ font-size:12.5px; color:#43584F; line-height:1.55; min-width:180px; }
+.tb-pop b{ font-size:14.5px; color:#0F2A24; }
+.tb-pop .tb-rate{ color:#D4A437; font-weight:700; }
+.tb-pop .tb-pop-btn{ margin-top:9px; width:100%; justify-content:center; font-size:12.5px; padding:8px 12px; display:inline-flex; align-items:center; gap:6px; border-radius:999px; background:#0F7560; color:#fff; border:none; cursor:pointer; font-weight:700; }
+.tb-pop .tb-pop-btn:hover{ background:#0E5F46; }
+.tb-map-err{ display:grid; place-items:center; height:100%; color:#5C6B63; font-weight:600; }
+
+/* ═══ [MODAL 2026-07-09] Bottom-sheet « Mon espace » premium (tokens landing) ═══ */
+.modal-sheet .modal-close{ width:32px; height:32px; border-radius:50%; background:transparent; border:none; color:#8C9B93; font-size:20px; font-weight:400; line-height:1; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:background .15s, color .15s; }
+.modal-sheet .modal-close:hover{ background:#F4EEE2; color:#0F2A24; }
+.tbm-user{ display:flex; align-items:center; gap:12px; padding:14px; background:#FBF9F4; border:1px solid #E7E0D2; border-radius:16px; box-shadow:0 6px 18px rgba(16,40,34,.05); margin-bottom:16px; }
+.tbm-ava{ width:46px; height:46px; border-radius:50%; background:linear-gradient(145deg,#189C7F,#0E5F46); color:#fff; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; flex-shrink:0; box-shadow:0 0 0 2px #fff, 0 0 0 3.5px #D4A437; }
+.tbm-user b{ font-size:15px; font-weight:800; color:#0F2A24; display:block; line-height:1.25; }
+.tbm-user small{ font-size:12px; color:#5C6B63; }
+.tbm-stats{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:16px; align-items:stretch; }
+.tbm-stat{ background:#fff; border:1px solid #E7E0D2; border-radius:14px; padding:12px 8px; text-align:center; display:flex; flex-direction:column; justify-content:center; gap:3px; transition:transform .15s, box-shadow .15s; }
+@media (hover:hover){ .tbm-stat:hover{ transform:translateY(-2px); box-shadow:0 10px 24px rgba(16,40,34,.08); } }
+.tbm-stat i{ font-size:14px; color:#0F7560; }
+.tbm-stat .n{ font-size:20px; font-weight:800; color:#0F7560; line-height:1.1; }
+.tbm-stat .l{ font-size:10.5px; color:#5C6B63; font-weight:500; }
+.tbm-row-t{ font-size:13px; font-weight:800; color:#0F2A24; margin-bottom:10px; }
+.tbm-empty{ text-align:center; padding:16px 12px 20px; color:#5C6B63; }
+.tbm-empty i{ font-size:26px; color:#D8CDB4; margin-bottom:8px; display:block; }
+.tbm-empty b{ display:block; font-size:13.5px; color:#0F2A24; font-weight:800; margin-bottom:2px; }
+.tbm-empty p{ font-size:12px; margin:0 0 9px; }
+.tbm-empty a{ font-size:12.5px; font-weight:700; color:#0E5F46; text-decoration:none; border-bottom:1px dashed #0F7560; cursor:pointer; }
+.tbm-cta{ box-shadow:0 10px 24px rgba(15,117,96,.25); }
+.tbm-logout{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:11px; background:transparent; border:1px solid #E7E0D2; border-radius:999px; color:#8A5B52; font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:background .15s, border-color .15s; }
+.tbm-logout:hover{ background:#F4EEE2; border-color:#DCCFC0; }
 </style>
 </head>
 <body>
@@ -1026,7 +1068,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <h2><span class="dwh-name">Dawini</span> — <span data-i18n="dwh_h">trouvez votre médicament en pharmacie</span></h2>
         <p data-i18n="dwh_p">Décrivez le médicament que vous cherchez, ajoutez la photo de l'ordonnance si besoin : les pharmacies partenaires de votre wilaya sont prévenues et vous répondent en direct.</p>
         <div class="dwh-points">
-          <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Réponses des pharmacies en temps réel</span></span>
+          <span><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dwh_pt1">Disponibilité indiquée par la pharmacie</span></span>
           <span><i class="fa fa-location-dot" aria-hidden="true"></i> <span data-i18n="dwh_pt2">Pharmacies de votre wilaya, triées par distance</span></span>
           <span><i class="fa fa-lock" aria-hidden="true"></i> <span data-i18n="dwh_pt3">Vos coordonnées ne sont partagées qu'avec la pharmacie qui accepte</span></span>
           <!-- [REEL 2026-07-08] Chiffre réel : 195 = comptage colonne specialite~pharmac
@@ -1243,6 +1285,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <button class="map-ov-close" onclick="closeMapOverlay()" aria-label="Fermer la carte"><i class="fa fa-arrow-left"></i></button>
   </div>
   <div id="map-canvas"></div>
+<script src="assets/dz-wilaya-centroids.js"></script><!-- [CARTE] 58 chefs-lieux pour les compteurs -->
 </div>
 <div id="uarea-mob" class="hidden"></div>
 
@@ -1868,10 +1911,10 @@ function initTabBar(active){
   const bar=document.getElementById("tab-bar");if(!bar)return;
   const items=[
     {id:"home",  icon:"fa-home",          i18n:"nav_home",  href:"index.html"},
-    {id:"search",icon:"fa-search",         i18n:"nav_docs",  href:"index.html#search"},
+    {id:"search",icon:"fa-search",         i18n:"nav_docs",  href:"index.html#sec-search"},
     {id:"carte", icon:"fa-map-location-dot",i18n:"nav_map",  href:"#carte"},
     {id:"rdv",   icon:"fa-calendar-check", i18n:"nav_rdv",   href:"#"},
-    {id:"spec",  icon:"fa-stethoscope",    i18n:"nav_spec",  href:"index.html#spec"},
+    {id:"spec",  icon:"fa-stethoscope",    i18n:"nav_spec",  href:"index.html#sec-spec"},
     {id:"profile",icon:"fa-user",          i18n:"nav_profile",href:"#"},
   ];
   bar.innerHTML=items.map(it=>`
@@ -1884,20 +1927,135 @@ function tabClick(id,href){
   if(id==="carte"){openMapOverlay();return;}
   if(id==="profile"){if(!isLogged()){openModal("login");return;}goDash();return;}
   if(id==="rdv"){if(!isLogged()){openModal("login");return;}goDash();return;}
+  // [UI v2 2026-07-09] même page : scroll doux vers l'ancre (location.href était inerte)
+  if(href&&href.indexOf("#")>-1){
+    var anchor=href.split("#")[1];
+    var el=document.getElementById(anchor);
+    if(el){ el.scrollIntoView({behavior:"smooth",block:"start"}); return; }
+  }
   if(href&&href!=="#") window.location.href=href;
 }
-// [Carte] Overlay plein écran — lazy-init Leaflet au 1er tap (logique carte : B5).
+// ══ [CARTE 2026-07-09] Leaflet RÉEL (fin du placeholder B5) ══════════
+// Pins = médecins RÉCLAMÉS avec coordonnées (consentement — jamais d'adresse
+// pour les non-réclamés). Compteurs par wilaya sur les chefs-lieux (estimated,
+// cache session). Filtres wilaya/spécialité clonés des selects de la page
+// (donc déjà traduits). Vendorisé : assets/vendor/leaflet (CSP _headers OK).
+let _tbMap=null,_tbPins=null,_tbBubbles=null,_tbDocs=[],_tbCounts=null;
+function _tbEsc(x){return String(x==null?'':x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function _tbLeaflet(cb){
+  if(window.L) return cb();
+  const l=document.createElement('link'); l.rel='stylesheet'; l.href='assets/vendor/leaflet/leaflet.css'; document.head.appendChild(l);
+  const s=document.createElement('script'); s.src='assets/vendor/leaflet/leaflet.js'; s.onload=cb;
+  s.onerror=function(){ const c=document.getElementById('map-canvas'); if(c) c.innerHTML='<div class="tb-map-err">Carte indisponible pour le moment.</div>'; };
+  document.body.appendChild(s);
+}
 function openMapOverlay(){
-  const ov=document.getElementById("map-overlay");
-  if(!ov) return;
-  ov.hidden=false;
-  document.body.style.overflow="hidden";
-  // B5 : if(!window._mapInited){ injecter Leaflet puis initMap(); }
+  const ov=document.getElementById("map-overlay"); if(!ov) return;
+  ov.hidden=false; document.body.style.overflow="hidden";
+  if(!window._mapInited){ window._mapInited=true; _tbLeaflet(_tbInitMap); }
+  else if(_tbMap){ setTimeout(function(){ _tbMap.invalidateSize(); },60); }
 }
 function closeMapOverlay(){
   const ov=document.getElementById("map-overlay");
   if(ov) ov.hidden=true;
   document.body.style.overflow="";
+}
+function _tbInitMap(){
+  _tbMap=L.map('map-canvas',{zoomControl:true}).setView([28.4,2.8],5);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(_tbMap);
+  _tbBubbles=L.layerGroup().addTo(_tbMap);
+  _tbPins=L.layerGroup().addTo(_tbMap);
+  _tbBuildMapBar();
+  _tbLoadPins(); _tbLoadCounts();
+  setTimeout(function(){ _tbMap.invalidateSize(); },80);
+}
+function _tbBuildMapBar(){
+  const bar=document.querySelector('.map-ov-bar'); if(!bar||document.getElementById('map-f-w')) return;
+  const selW=document.getElementById('f-ville'), selS=document.getElementById('f-spec');
+  const wrap=document.createElement('div'); wrap.className='tb-map-filters';
+  wrap.innerHTML='<select id="map-f-w" class="form-control">'+(selW?selW.innerHTML:'<option value="">Toutes les wilayas</option>')
+    +'</select><select id="map-f-s" class="form-control">'+(selS?selS.innerHTML:'<option value="">Toutes les spécialités</option>')
+    +'</select><span class="tb-map-count" id="map-count"></span>';
+  bar.appendChild(wrap);
+  document.getElementById('map-f-w').onchange=_tbMapFilter;
+  document.getElementById('map-f-s').onchange=_tbMapFilter;
+}
+function _tbHdrs(extra){ return Object.assign({apikey:_SB_KEY,Authorization:'Bearer '+_SB_KEY},extra||{}); }
+function _tbLoadPins(){
+  fetch(_SB_URL+'/rest/v1/public_doctors?is_claimed=eq.true&latitude=not.is.null&longitude=not.is.null&select=id,full_name,specialty_fr,rating,review_count,latitude,longitude,wilaya_fr,city&limit=500',{headers:_tbHdrs()})
+    .then(function(r){return r.ok?r.json():[];})
+    .then(function(d){ _tbDocs=d||[]; _tbRenderPins(); })
+    .catch(function(){ _tbDocs=[]; _tbRenderPins(); });
+}
+function _tbRenderPins(){
+  if(!_tbPins) return; _tbPins.clearLayers();
+  const w=(document.getElementById('map-f-w')||{}).value||'';
+  const s=(document.getElementById('map-f-s')||{}).value||'';
+  _tbDocs.filter(function(d){return (!w||(d.wilaya_fr||'')===w)&&(!s||(d.specialty_fr||'')===s);}).forEach(function(d){
+    const ic=L.divIcon({className:'',html:'<div class="tb-pin"><i class="fa fa-user-doctor"></i></div>',iconSize:[34,34],iconAnchor:[17,32],popupAnchor:[0,-30]});
+    const m=L.marker([d.latitude,d.longitude],{icon:ic});
+    const note=d.rating?('<span class="tb-rate">★ '+Number(d.rating).toFixed(1)+'</span>'+(d.review_count?' · '+d.review_count+' avis':'')):'';
+    m.bindPopup('<div class="tb-pop"><b>'+_tbEsc(d.full_name)+'</b><br>'+_tbEsc(d.specialty_fr||'')+(d.city?' · '+_tbEsc(d.city):'')+'<br>'+note
+      +'<button class="tb-pop-btn" onclick="closeMapOverlay();_tbOpenDoc(\''+_tbEsc(d.id)+'\')"><i class="fa fa-user-doctor"></i> Voir la fiche</button></div>');
+    _tbPins.addLayer(m);
+  });
+  _tbUpdateCount();
+}
+function _tbOpenDoc(id){
+  try{ if(typeof goDoc==='function'&&typeof DOCTORS!=='undefined'&&DOCTORS.find(function(x){return x.id===id;})){ goDoc(id); return; } }catch(e){}
+  window.location.href='doctor-profile.html?id='+encodeURIComponent(id);
+}
+function _tbLoadCounts(){
+  try{ const c=sessionStorage.getItem('tb_map_wcounts_v1'); if(c){ _tbCounts=JSON.parse(c); _tbRenderBubbles(); return; } }catch(e){}
+  const codes=Object.keys(window.DZ_WILAYAS||{});
+  Promise.all(codes.map(function(code){
+    return fetch(_SB_URL+'/rest/v1/public_doctors?wilaya_code=eq.'+code+'&select=id&limit=1',{headers:_tbHdrs({Prefer:'count=estimated',Range:'0-0'})})
+      .then(function(r){ const cr=r.headers.get('content-range')||'/0'; return [code,parseInt(cr.split('/')[1],10)||0]; })
+      .catch(function(){ return [code,0]; });
+  })).then(function(pairs){
+    _tbCounts={}; pairs.forEach(function(p){ _tbCounts[p[0]]=p[1]; });
+    try{ sessionStorage.setItem('tb_map_wcounts_v1',JSON.stringify(_tbCounts)); }catch(e){}
+    _tbRenderBubbles();
+  });
+}
+function _tbRenderBubbles(){
+  if(!_tbBubbles||!window.DZ_WILAYAS||!_tbCounts) return; _tbBubbles.clearLayers();
+  const w=(document.getElementById('map-f-w')||{}).value||'';
+  Object.keys(DZ_WILAYAS).forEach(function(code){
+    const info=DZ_WILAYAS[code], n=_tbCounts[code]||0; if(!n) return;
+    if(w && info.name!==w) return;
+    const label=n>=1000?(Math.round(n/100)/10)+'k':String(n);
+    const ic=L.divIcon({className:'',html:'<div class="tb-bubble">'+label+'</div>',iconSize:[46,30],iconAnchor:[23,15]});
+    const m=L.marker([info.lat,info.lng],{icon:ic});
+    m.bindTooltip(info.name+' · ≈ '+n.toLocaleString('fr-DZ')+' médecins',{direction:'top'});
+    m.on('click',function(){
+      const sw=document.getElementById('map-f-w');
+      if(sw){ const opt=Array.prototype.find.call(sw.options,function(o){return o.value===info.name||o.textContent.trim()===info.name;}); if(opt) sw.value=opt.value; }
+      _tbMapFilter(code);
+    });
+    _tbBubbles.addLayer(m);
+  });
+  _tbUpdateCount();
+}
+function _tbMapFilter(zoomCode){
+  _tbRenderPins(); _tbRenderBubbles();
+  const w=(document.getElementById('map-f-w')||{}).value||'';
+  if(zoomCode && window.DZ_WILAYAS && DZ_WILAYAS[zoomCode]){ _tbMap.setView([DZ_WILAYAS[zoomCode].lat,DZ_WILAYAS[zoomCode].lng],9,{animate:false}); return; }
+  if(w && window.DZ_WILAYAS){
+    const e=Object.keys(DZ_WILAYAS).map(function(k){return DZ_WILAYAS[k];}).find(function(i){return i.name===w;});
+    if(e){ _tbMap.setView([e.lat,e.lng],9,{animate:false}); return; }
+  }
+  _tbMap.setView([28.4,2.8],5,{animate:false});
+}
+function _tbUpdateCount(){
+  // [FIX 2026-07-09] count=estimated sous-évalue (37 517 vs 75 033 réels — cf.
+  // note PERF 57014 plus bas) : le TOTAL affiche le libellé vitrine canonique,
+  // les bulles restent une répartition indicative (≈).
+  const el=document.getElementById('map-count'); if(!el) return;
+  const pins=_tbDocs.length;
+  const lbl=(typeof TABIBI_DOCTOR_COUNT_LABEL!=='undefined'?TABIBI_DOCTOR_COUNT_LABEL:'75 000+');
+  el.textContent = pins ? (pins+' géolocalisés · '+lbl+' référencés')
+                        : lbl+' médecins référencés';
 }
 
 /* ══ INSTALL PWA ══════════════════════════════════════════════ */
@@ -2538,21 +2696,21 @@ function showPatientDashboardModal(){
       </div>
       <div class="modal-body" style="padding-bottom:24px">
         <!-- User info -->
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:var(--r12);margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:50%;background:${user?.avatar?.bg||"#e7f3ef"};color:${user?.avatar?.tc||"#0a4d3e"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
-          <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${user?.email||""}</div></div>
+        <div class="tbm-user">
+          <div class="tbm-ava">${user?.initials||"?"}</div>
+          <div style="min-width:0"><b>${user?.name||""}</b><small>${user?.email||""}</small></div>
         </div>
         <!-- Stats -->
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
-          ${[["<i class='fa fa-calendar-days'></i>",upcoming.length,"RDV à venir"],["<i class='fa fa-circle-check' style='color:var(--green)'></i>",all.filter(r=>r.status==="Completed").length,"Terminés"],["<i class='fa fa-heart' style='color:var(--red)'></i>",getFavs().length,"Favoris"]].map(([ic,n,l])=>`
-            <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r12);padding:12px;text-align:center">
-              <div style="font-size:18px">${ic}</div>
-              <div style="font-size:20px;font-weight:800;color:var(--blue)">${n}</div>
-              <div style="font-size:10px;color:var(--text3);font-weight:600">${l}</div>
+        <div class="tbm-stats">
+          ${[["<i class='fa fa-calendar-days'></i>",upcoming.length,"RDV à venir"],["<i class='fa fa-circle-check'></i>",all.filter(r=>r.status==="Completed").length,"Terminés"],["<i class='fa fa-heart'></i>",getFavs().length,"Favoris"]].map(([ic,n,l])=>`
+            <div class="tbm-stat">
+              <div>${ic}</div>
+              <div class="n">${n}</div>
+              <div class="l">${l}</div>
             </div>`).join("")}
         </div>
         <!-- RDV List -->
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Mes rendez-vous</div>
+        <div class="tbm-row-t">Mes rendez-vous</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
           ${all.slice(0,5).map(r=>`
             <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border:1px solid var(--border);border-radius:var(--r12)">
@@ -2563,10 +2721,10 @@ function showPatientDashboardModal(){
               </div>
               <span class="badge ${STC[r.status]||"badge-gray"}" style="flex-shrink:0">${STL[r.status]||r.status}</span>
             </div>`).join("")}
-          ${!all.length?`<div class="empty-state"><div class="empty-icon"><i class='fa fa-calendar-days'></i></div><div class="empty-title">Aucun RDV</div></div>`:""}
+          ${!all.length?`<div class="tbm-empty"><i class='fa fa-calendar-days'></i><b>Aucun RDV</b><p>Prenez votre premier rendez-vous.</p><a onclick="this.closest('.modal-bg').remove();document.body.style.overflow='';var s=document.getElementById('sec-search');if(s)s.scrollIntoView({behavior:'smooth'})">Trouver un médecin</a></div>`:""}
         </div>
-        <a href="patient-dashboard.html" class="btn btn-primary btn-full btn-lg" style="margin-bottom:8px"><i class='fa fa-chart-line'></i> Tableau de bord complet</a>
-        <button class="btn btn-danger btn-full" onclick="handleLogout();this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-right-from-bracket'></i> Déconnexion</button>
+        <a href="patient-dashboard.html" class="btn btn-primary btn-full btn-lg tbm-cta" style="margin-bottom:10px"><i class='fa fa-chart-line'></i> Tableau de bord complet</a>
+        <button class="tbm-logout" onclick="handleLogout();this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-right-from-bracket'></i> Déconnexion</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -2585,22 +2743,22 @@ function showDoctorDashboardModal(){
         <button class="modal-close" onclick="this.closest('.modal-bg').remove();document.body.style.overflow=''">×</button>
       </div>
       <div class="modal-body" style="padding-bottom:24px">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--green-l);border-radius:var(--r12);margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:var(--r16);background:${user?.avatar?.bg||"#d1fae5"};color:${user?.avatar?.tc||"#065f46"};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${user?.initials||"?"}</div>
-          <div><div style="font-size:15px;font-weight:700">${user?.name||""}</div><div style="font-size:12px;color:var(--text3)">${[user?.specialty,user?.ville].filter(Boolean).join(" · ")}</div>${user?._validation_status==='approved'?`<span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span>`:""}</div>
+        <div class="tbm-user">
+          <div class="tbm-ava">${user?.initials||"?"}</div>
+          <div style="min-width:0"><b>${user?.name||""}</b><small>${[user?.specialty,user?.ville].filter(Boolean).join(" · ")}</small>${user?._validation_status==='approved'?`<div><span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span></div>`:""}</div>
         </div>
         <!-- [TODO 2026-05-18] Remplacer ces stats hardcodees par appel API Supabase
              (rdv count, sum revenus, avg rating, pending count) avant lancement public.
              Modal teaser uniquement: source de verite = doctor-dashboard.html -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
-          ${[["<i class='fa fa-calendar-days'></i>","--","RDV ce mois"],["<i class='fa fa-coins' style='color:#f59e0b'></i>","--","Revenus"],["<i class='fa fa-star' style='color:#f59e0b'></i>","--","Note moy."],["⏳","--","En attente"]].map(([ic,n,l])=>`
-            <div style="background:#fff;border:1px solid var(--border);border-radius:var(--r12);padding:12px;text-align:center">
-              <div style="font-size:18px">${ic}</div>
-              <div style="font-size:18px;font-weight:800;color:var(--blue)">${n}</div>
-              <div style="font-size:10px;color:var(--text3);font-weight:600">${l}</div>
+        <div class="tbm-stats" style="grid-template-columns:1fr 1fr">
+          ${[["<i class='fa fa-calendar-days'></i>","--","RDV ce mois"],["<i class='fa fa-coins'></i>","--","Revenus"],["<i class='fa fa-star'></i>","--","Note moy."],["<i class='fa fa-hourglass-half'></i>","--","En attente"]].map(([ic,n,l])=>`
+            <div class="tbm-stat">
+              <div>${ic}</div>
+              <div class="n">${n}</div>
+              <div class="l">${l}</div>
             </div>`).join("")}
         </div>
-        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Consultations du jour</div>
+        <div class="tbm-row-t">Consultations du jour</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
           ${DEMO_DOC_RDV.filter(r=>r.date.includes("07 Mai")).map(r=>`
             <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border:1px solid var(--border);border-radius:var(--r12)">
@@ -2608,9 +2766,10 @@ function showDoctorDashboardModal(){
               <div style="flex:1"><div style="font-size:13px;font-weight:700">${r.patient}</div><div style="font-size:11px;color:var(--text3)">${r.time} · ${r.motif}</div></div>
               <span class="badge ${{Confirmed:"badge-blue",Completed:"badge-green",Pending:"badge-amber"}[r.status]||"badge-gray"}">${{Confirmed:"Confirmé",Completed:"Terminé",Pending:"En attente"}[r.status]||r.status}</span>
             </div>`).join("")}
+          ${!DEMO_DOC_RDV.filter(r=>r.date.includes("07 Mai")).length?`<div class="tbm-empty"><i class='fa fa-calendar-days'></i><b>Aucune consultation aujourd'hui</b><p>Votre agenda complet vous attend.</p></div>`:""}
         </div>
-        <a href="doctor-dashboard.html" class="btn btn-success btn-full btn-lg" style="margin-bottom:8px"><i class='fa fa-chart-line'></i> Tableau de bord complet</a>
-        <button class="btn btn-danger btn-full" onclick="handleLogout();this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-right-from-bracket'></i> Déconnexion</button>
+        <a href="doctor-dashboard.html" class="btn btn-primary btn-full btn-lg tbm-cta" style="margin-bottom:10px"><i class='fa fa-chart-line'></i> Tableau de bord complet</a>
+        <button class="tbm-logout" onclick="handleLogout();this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-right-from-bracket'></i> Déconnexion</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
