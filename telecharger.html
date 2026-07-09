@@ -6,6 +6,8 @@
 <title>Télécharger l'application Tabibi DZ</title>
 <meta name="description" content="Téléchargez l'application Tabibi DZ pour Android et prenez rendez-vous avec un médecin en Algérie.">
 <link rel="icon" href="/favicon.ico">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
   :root{--green:#0F7560;--green-d:#0B5A4A;--gold:#D4A437;--ink:#0F2E27;--muted:#5B7A73;--bg:#F4FBF9;}
   *{box-sizing:border-box;margin:0;padding:0}
@@ -33,18 +35,14 @@
 <body>
   <div class="card">
     <div class="head">
-      <div class="logo">
-        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
-          <rect x="0" y="0" width="120" height="120" fill="#0F7560" rx="20"/>
-          <rect x="56" y="28" width="8" height="70" fill="#fff" rx="2"/>
-          <path d="M 42 35 Q 28 31 22 41 Q 30 38 42 41 Z" fill="#fff"/>
-          <path d="M 78 35 Q 92 31 98 41 Q 90 38 78 41 Z" fill="#fff"/>
-          <path d="M 60 38 Q 48 48 60 58 Q 72 68 60 78 Q 48 88 60 95" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>
-          <g transform="translate(98,22)"><polygon points="0,-9 2.5,-2.5 9,-2.5 3.5,2 5.5,9 0,4.5 -5.5,9 -3.5,2 -9,-2.5 -2.5,-2.5" fill="#D4A437"/></g>
-        </svg>
+      <!-- [UI 2026-07-09] Lockup marque officiel (identité landing) -->
+      <div class="tbi-lockup" style="justify-content:center">
+        <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="flex-shrink:0;background:#fff;border-radius:12px"><defs><mask id="tbCross_telechargerhtml"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="#0F7560" mask="url(#tbCross_telechargerhtml)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="#D4A437" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <div class="lk-col" style="display:flex">
+          <h1 class="lk-title" style="font-size:22px;color:#fff">Tabibi <span style="font-weight:800"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></h1>
+          <div class="lk-sub" style="font-size:13px;color:rgba(255,255,255,.92);white-space:normal">Prenez rendez-vous avec un médecin en Algérie · طبيبي</div>
+        </div>
       </div>
-      <h1>Tabibi DZ</h1>
-      <div class="sub">Prenez rendez-vous avec un médecin en Algérie</div>
       <div class="ver">Android · Version 1.0.0</div>
     </div>
     <div class="body">

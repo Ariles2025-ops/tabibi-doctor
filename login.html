@@ -38,6 +38,8 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
 <link rel="stylesheet" href="styles/auth.css">
 <link rel="stylesheet" href="styles/auth-page.css">
 </head>
@@ -69,9 +71,14 @@
   </aside>
   <div class="auth-hero-form">
   <div class="auth-formhead" style="text-align:center;margin-bottom:24px">
-    <svg class="logo-svg" width="52" height="52" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="display:block;margin:0 auto 12px"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    <h2 style="font-size:22px;font-weight:800">Tabibi <span style="font-weight:800"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span></h2>
-    <p style="color:var(--text3);font-size:13px;margin-top:3px">La santé à portée de clic</p>
+    <!-- [UI 2026-07-09] Lockup marque officiel (identité landing) -->
+    <div class="tbi-lockup" style="justify-content:center">
+      <svg width="44" height="44" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="flex-shrink:0"><defs><mask id="tbCross_loginhtml"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="#0F7560" mask="url(#tbCross_loginhtml)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="#D4A437" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div class="lk-col" style="display:flex;text-align:start">
+        <div class="lk-title" style="font-size:22px">Tabibi <span style="font-weight:800"><span style="color:#2E8B57">D</span><span style="color:#D21010">Z</span></span><svg width="11" height="11" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
+        <div class="lk-sub">La santé à portée de clic · طبيبي</div>
+      </div>
+    </div>
   </div>
   <div class="card" style="max-width:480px;margin:0 auto">
 

@@ -1,0 +1,150 @@
+/* ═══════════════════════════════════════════════════════════════════
+   TABIBI UI — Design system premium partagé · [UI 2026-07-09]
+   ---------------------------------------------------------------------
+   Extrait de la landing validée (tabibi-landing-final.html) :
+   émeraude #0F7560 · ivoire #FBF9F4 · sable #F4EEE2 · or #D4A437 ·
+   lignes #E7E0D2 · encre #0F2A24 · Plus Jakarta Sans (+ Cairo AR/RTL).
+
+   USAGE : charger APRÈS styles/app.css + styles/components.css :
+     <link rel="stylesheet" href="css/tabibi-ui.css">
+   PEAU UNIQUEMENT — aucune logique. Le remap :root fait hériter tout
+   le CSS existant (var(--blue), var(--border), …) de l'identité landing.
+   Les pages à layout dédié (index, dawini…) gardent leurs surcharges
+   inline, chargées après ce fichier — elles gagnent.
+   ═══════════════════════════════════════════════════════════════════ */
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root{
+  /* ── Tokens canon (source : landing) ─────────────────────────────── */
+  --tbi-emerald:#0F7560;  --tbi-emerald-d:#0E5F46;  --tbi-deep:#05271D;
+  --tbi-ink:#0F2A24;      --tbi-ivory:#FBF9F4;      --tbi-sand:#F4EEE2;
+  --tbi-sand-2:#EFE7D6;   --tbi-line:#E7E0D2;       --tbi-gold:#D4A437;
+  --tbi-slate:#5C6B63;    --tbi-mint:#E7F1EC;
+  --tbi-r-sm:13px;  --tbi-r:18px;  --tbi-r-lg:24px;
+  --tbi-shadow-sm:0 1px 2px rgba(16,40,34,.04), 0 6px 18px rgba(16,40,34,.06);
+  --tbi-shadow-lg:0 16px 40px rgba(5,39,29,.09);
+
+  /* ── Remap tokens app → identité landing (tout l'existant suit) ──── */
+  --blue:var(--tbi-emerald);   --blue-d:var(--tbi-emerald-d);
+  --blue-l:var(--tbi-mint);    --blue-xl:var(--tbi-ivory);
+  --green-d:var(--tbi-emerald-d);
+  --bg:var(--tbi-ivory);       --bg2:var(--tbi-sand);
+  --border:var(--tbi-line);
+  --text2:#43584F;             --text3:var(--tbi-slate);
+  --pastille:var(--tbi-mint);  --pastille-bd:#D5E7DF;
+}
+
+/* ── Typographie ─────────────────────────────────────────────────── */
+body{
+  font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--tbi-ivory); color:var(--tbi-ink);
+  -webkit-font-smoothing:antialiased;
+}
+[lang="ar"] body, [dir="rtl"] body{ font-family:'Cairo','Plus Jakarta Sans',sans-serif; }
+h1,h2,h3,.app-bar-title,.sec-title{ font-weight:800; letter-spacing:-.5px; color:var(--tbi-ink); }
+[dir="rtl"] h1,[dir="rtl"] h2,[dir="rtl"] h3,[dir="rtl"] .app-bar-title{ letter-spacing:0; }
+
+/* ── Coquille commune ────────────────────────────────────────────── */
+.page{ background:var(--tbi-ivory); }
+.app-bar{
+  background:rgba(251,249,244,.88); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--tbi-line); box-shadow:none;
+}
+.tab-bar{
+  background:rgba(251,249,244,.94); backdrop-filter:blur(12px);
+  border-top:1px solid var(--tbi-line); box-shadow:none;
+}
+.dash-tabs{
+  background:rgba(251,249,244,.94) !important; backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--tbi-line) !important;
+}
+.dash-tab{ font-weight:700; color:var(--tbi-slate); }
+.dash-tab.active{ color:var(--tbi-emerald-d); }
+
+/* ── Lockup marque (header) — même identité que la landing ───────── */
+.tbi-lockup{ display:flex; align-items:center; gap:10px; flex:1; min-width:0; }
+.tbi-lockup .lk-col{ display:flex; flex-direction:column; justify-content:center; line-height:1.05; min-width:0; overflow:hidden; }
+.tbi-lockup .lk-title{
+  font-size:16px; font-weight:800; letter-spacing:-.4px; color:var(--tbi-ink);
+  line-height:1.1; white-space:nowrap; display:flex; align-items:center; gap:4px;
+  min-width:0; overflow:hidden;
+}
+.tbi-lockup .lk-sub{
+  font-family:'Cairo',sans-serif; font-size:11px; color:var(--tbi-slate);
+  font-weight:600; line-height:1.25; margin-top:2px;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+[dir="rtl"] .tbi-lockup .lk-title{ letter-spacing:0; }
+/* Très petits écrans : la pastille seule (le wordmark se ferait rogner) */
+@media (max-width:419px){ .tbi-lockup .lk-col{ display:none; } }
+
+/* ── Boutons ─────────────────────────────────────────────────────── */
+.btn{ border-radius:999px; font-weight:700; }
+.btn-primary{ background:var(--tbi-emerald); }
+.btn-primary:hover,.btn-primary:active{ background:var(--tbi-emerald-d); }
+.btn-icon,.btn-icon-sm{ border-radius:12px; }
+.btn-white{ border-radius:999px; }
+
+/* ── Cartes / formulaires / listes ───────────────────────────────── */
+.card{
+  background:#fff; border:1px solid var(--tbi-line);
+  border-radius:var(--tbi-r); box-shadow:var(--tbi-shadow-sm);
+}
+.card-tap,.doc-card{ transition:transform .18s, box-shadow .18s; }
+@media (hover:hover){
+  .card-tap:hover,.doc-card:hover{ transform:translateY(-2px); box-shadow:var(--tbi-shadow-lg); }
+}
+.form-control{ border-radius:var(--tbi-r-sm); border:1.5px solid var(--tbi-line); background:#fff; }
+.form-control:focus{ border-color:var(--tbi-emerald); box-shadow:0 0 0 3px rgba(15,117,96,.12); }
+.chip{ border-radius:999px; border:1px solid var(--tbi-line); background:#fff; font-weight:600; }
+.chip.active{ background:var(--tbi-emerald); border-color:var(--tbi-emerald); color:#fff; }
+.badge-green{ background:var(--tbi-mint); color:var(--tbi-emerald-d); }
+.dropdown-menu{ border:1px solid var(--tbi-line); border-radius:16px; box-shadow:var(--tbi-shadow-lg); overflow:hidden; }
+
+/* ── Accents / états vides ───────────────────────────────────────── */
+.empty-state i{ color:var(--tbi-sand-2); opacity:1; }
+.notif-badge{ border-color:var(--tbi-ivory) !important; }
+
+/* ── NAV BASSE premium · [UI 2026-07-09 v2] ──────────────────────────
+   Fix défaut fondateur : « Spécialités » et « Carte » coupés/invisibles.
+   Cause : nombre d'onglets variable (5 ou 6 selon la page) vs grid figé
+   (app.css repeat(5) / index repeat(6)). FLEX = tout nombre d'items,
+   tous visibles, labels ellipsés proprement, RTL natif (flux logique). */
+nav.tab-bar{
+  display:flex; align-items:stretch;
+  background:rgba(251,249,244,.96); backdrop-filter:blur(14px);
+  border-top:1px solid var(--tbi-line); box-shadow:0 -8px 24px rgba(16,40,34,.06);
+}
+.tab-bar .tab-item{
+  flex:1 1 0; min-width:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  padding:6px 2px 4px; position:relative; border:0; background:none; cursor:pointer;
+  font-family:inherit; font-size:10px; font-weight:700; letter-spacing:.1px;
+  color:var(--tbi-slate); transition:color .15s, transform .15s;
+}
+.tab-bar .tab-item i{ font-size:17px; line-height:1; transition:transform .18s; }
+.tab-bar .tab-item span{
+  max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.2;
+}
+.tab-bar .tab-item.active{ color:var(--tbi-emerald-d); }
+.tab-bar .tab-item.active::before{
+  content:''; position:absolute; top:0; inset-inline:auto;
+  width:24px; height:3px; border-radius:0 0 4px 4px; background:var(--tbi-emerald);
+}
+.tab-bar .tab-item.active i{ transform:translateY(-1px); }
+@media (hover:hover){ .tab-bar .tab-item:hover{ color:var(--tbi-emerald-d); } }
+@media (min-width:390px){ .tab-bar .tab-item{ font-size:10.5px; } }
+
+/* ── Bande héro (dashboards) ─────────────────────────────────────── */
+.tbi-hero-band, .dash-hero{
+  background:linear-gradient(160deg,var(--tbi-emerald),var(--tbi-emerald-d)) !important;
+}
+
+/* ── Micro-vie générale (respecte prefers-reduced-motion) ────────── */
+@media (prefers-reduced-motion:no-preference){
+  .btn-primary{ transition:background .18s, transform .15s, box-shadow .18s; }
+  .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 10px 24px rgba(15,117,96,.28); }
+  .btn-primary:active{ transform:translateY(0); }
+  .chip{ transition:background .15s, color .15s, border-color .15s, transform .15s; }
+  .chip:active{ transform:scale(.96); }
+}
