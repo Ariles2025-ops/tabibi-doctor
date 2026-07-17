@@ -2670,13 +2670,9 @@ async function finalBooking(docId,slot,docName,prix){
   }, 800);
 }
 
-/* Auth dashboard redirect (inline since single file) */
-function goDash(){
-  const r=user?.role;
-  if(r==="medecin"){showDoctorDashboardModal();}
-  else if(r==="admin"){toast("<i class='fa fa-shield-halved'></i> Espace admin — déployez le ZIP pour accéder","info");}
-  else{showPatientDashboardModal();}
-}
+/* [FIX 2026-07-17] goDash était défini 2× : cette 2e version legacy (modals
+   de démo + toast « déployez le ZIP ») écrasait la vraie navigation définie
+   plus haut → « Tableau de bord » n'ouvrait plus les dashboards. Supprimée. */
 
 function showPatientDashboardModal(){
   const rdv=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
