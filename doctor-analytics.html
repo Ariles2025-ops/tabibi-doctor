@@ -223,7 +223,7 @@ function renderMotifs(motifs) {
 
 function renderInsights(d) {
   const insights = [];
-  if (d.noshow > 10) insights.push(_t('dan_insight_noshow',"⚠️ <b>Taux no-show élevé ({n}%)</b>. Activez les rappels SMS automatiques (plan Pro) pour réduire jusqu'à 60% les absences.").replace('{n}', d.noshow));
+  if (d.noshow > 10) insights.push(_t('dan_insight_noshow',"⚠️ <b>Taux no-show élevé ({n}%)</b>. Confirmez les RDV par téléphone la veille pour réduire les absences.").replace('{n}', d.noshow));
   if (d.note >= 4.5) insights.push(_t('dan_insight_note',"⭐ <b>Excellente note ({n}/5)</b>. Vos patients vous recommandent — pensez à les remercier !").replace('{n}', d.note));
   const maxHourIdx = d.hours.indexOf(Math.max(...d.hours));
   insights.push(_t('dan_insight_hours',"🕐 Vos créneaux les plus demandés : <b>{h}</b>. Ouvrez plus de créneaux à cette heure pour maximiser vos RDV.").replace('{h}', HOURS_LBL[maxHourIdx]));
