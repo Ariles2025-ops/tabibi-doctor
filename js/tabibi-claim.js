@@ -101,11 +101,42 @@
       // La fonction retourne un JSON { ok: bool, ... } directement dans r.data
       var payload = r.data;
       if (payload && payload.ok === true) {
+        // [ORDRE 2026-07-17] Claim OK → pousse le n° d'ordre en attente (best-effort,
+        // ne bloque jamais le claim ; dcSubmit refait un appel VÉRIFIÉ pour le feedback).
+        try { await pushOrdre(); } catch (e) {}
         return { ok: true, data: payload };
       }
       return { ok: false, error: (payload && payload.error) || 'unknown_error' };
     } catch (e) {
       console.warn('[claim] RPC exception', e);
+      return { ok: false, error: 'network_error' };
+    }
+  }
+
+  // ---------- N° d'ordre : push serveur (source de vérité = DB) -------
+  // [ORDRE 2026-07-17] doctor-claim.html dépose le n° dans localStorage
+  // (tabibi_claim_ordre) AVANT le claim ; dès qu'une session médecin avec
+  // fiche réclamée existe, ce push l'écrit en base via RPC SECURITY DEFINER
+  // et ne retire la clé locale QUE si l'écriture a réellement réussi.
+  var ORDRE_KEY = 'tabibi_claim_ordre';
+  async function pushOrdre() {
+    var ordre = null;
+    try { ordre = localStorage.getItem(ORDRE_KEY); } catch (e) {}
+    if (!ordre || !ordre.trim()) return { ok: false, error: 'no_pending_ordre' };
+    var sb = _sb();
+    if (!sb) return { ok: false, error: 'no_client' };
+    try {
+      var r = await sb.rpc('doctor_set_ordre_number', { p_ordre: ordre.trim() });
+      if (r.error) {
+        console.warn('[claim] pushOrdre RPC error', r.error.code, r.error.message);
+        return { ok: false, error: r.error.message || 'rpc_error' };
+      }
+      if (r.data === 'ok') {
+        try { localStorage.removeItem(ORDRE_KEY); } catch (e) {}
+        return { ok: true };
+      }
+      return { ok: false, error: r.data };  // invalid_format | no_claimed_profile | locked_approved
+    } catch (e) {
       return { ok: false, error: 'network_error' };
     }
   }
@@ -208,6 +239,7 @@
     handle: handleClaimBanner,
     autoClaim: autoClaim,
     consumePending: consumePending,
+    pushOrdre: pushOrdre,
     performClaim: performClaim,
     getCurrentUserInfo: getCurrentUserInfo,
     STORAGE_KEY: STORAGE_KEY

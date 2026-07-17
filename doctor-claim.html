@@ -424,7 +424,9 @@ async function dcSubmit(){
   btn.disabled = true;
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Vérification…';
 
-  // N° Ordre stocké en localStorage (TODO Phase 16.6 : push en DB via RPC).
+  // [ORDRE 2026-07-17] Déposé en localStorage comme RELAIS uniquement : la
+  // source de vérité devient la base (RPC doctor_set_ordre_number, poussée par
+  // tabibi-claim.js dès que le claim aboutit — y compris via le détour signup).
   try { localStorage.setItem('tabibi_claim_ordre', document.getElementById('dc-ordre').value.trim()); } catch(e){}
 
   // 1. Auth + role check
@@ -459,6 +461,18 @@ async function dcSubmit(){
     _reset(); return;
   }
 
+  // 3bis. [ORDRE 2026-07-17] Push VÉRIFIÉ du n° d'ordre (performClaim l'a
+  // normalement déjà poussé — 'no_pending_ordre' = déjà en base = succès).
+  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Enregistrement du n° d\'ordre…';
+  var ordreOk = false;
+  var ordreRes = await window.tabibiClaim.pushOrdre();
+  if (ordreRes.ok || ordreRes.error === 'no_pending_ordre') {
+    ordreOk = true;
+  } else {
+    console.warn('[claim] pushOrdre:', ordreRes.error);
+    _dcToast("Fiche réclamée, mais le n° d'ordre n'a pas pu être enregistré (" + ordreRes.error + "). Il sera renvoyé automatiquement à votre prochaine connexion.", 'error');
+  }
+
   // 4. Upload séquentiel des 2 docs + UPDATE paths
   btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi des documents…';
   var upRes = await _dcUpload.submit(profileId);
@@ -481,7 +495,7 @@ async function dcSubmit(){
     }
   } catch(e){}
   var emailLabel = email || 'votre adresse email';
-  _dcToast("✅ Fiche réclamée. Vos documents ont été envoyés pour vérification. Notre équipe les examinera sous 48h ouvrées et vous recevrez un email à " + emailLabel + " dès qu'ils seront validés. En attendant, vous pouvez compléter votre profil (bio, tarifs, horaires) — votre fiche ne sera publique qu'après validation.", 'success');
+  _dcToast("✅ Fiche réclamée" + (ordreOk ? " — n° d'ordre enregistré" : "") + ". Vos documents ont été envoyés pour vérification. Notre équipe les examinera sous 48h ouvrées et vous recevrez un email à " + emailLabel + " dès qu'ils seront validés. En attendant, vous pouvez compléter votre profil (bio, tarifs, horaires) — votre fiche ne sera publique qu'après validation.", 'success');
   try { localStorage.removeItem('tabibi_pending_claim_legacy_id'); } catch(e){}
   setTimeout(function(){ location.href = 'medecin-profile.html?onboarding=1'; }, 3500);
 }

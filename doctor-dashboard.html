@@ -868,6 +868,9 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   if (window.tabibiClaim && typeof window.tabibiClaim.consumePending === 'function') {
     try {
       var _cpRes = await window.tabibiClaim.consumePending();
+      // [ORDRE 2026-07-17] Filet : si un n° d'ordre est resté en local (échec
+      // réseau au claim), on retente le push — best-effort, silencieux.
+      try { if (window.tabibiClaim.pushOrdre) await window.tabibiClaim.pushOrdre(); } catch(e){}
       if (_cpRes && _cpRes.ok) {
         toastM('Fiche médecin réclamée avec succès !', 'success');
       }
