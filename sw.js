@@ -28,7 +28,9 @@
 // tabibi-booking.js (signature RPC pré-fix du 03/07) pour tout visiteur
 // d'avant le 03/07 → faux 404 get_available_slots, 0 créneau. Le bump
 // purge les caches v30 à l'activation (cf. handler activate).
-const CACHE_VERSION = 'tabibi-v31-2026-07-04';
+// [FIX 2026-07-17] Bump v32 : styles/app.css modifié le 08/07 (refonte) alors
+// que le précache v31 datait du 04/07 → revisiteurs avec HTML neuf + CSS gelé.
+const CACHE_VERSION = 'tabibi-v32-2026-07-17';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
@@ -91,6 +93,9 @@ self.addEventListener('fetch', event => {
   // gratuite depuis la règle _headers /js/* no-cache + Cache Rule zone.
   const NETWORK_FIRST_JS = ['tabibi-i18n.js', 'tabibi-features.js', 'tabibi-booking.js'];
   if (NETWORK_FIRST_JS.some(f => url.pathname.endsWith(f))) { event.respondWith(networkFirst(req)); return; }
+  // [FIX 2026-07-17] CSS : networkFirst comme les JS pilotés à chaud — le
+  // cacheFirst gelait styles/* jusqu'au bump suivant (HTML neuf sur CSS mort).
+  if (url.pathname.startsWith('/styles/')) { event.respondWith(networkFirst(req)); return; }
   if (/\.(css|js|png|jpg|jpeg|gif|webp|svg|woff2?|ttf|ico)$/i.test(url.pathname)) {
     event.respondWith(cacheFirst(req));
     return;

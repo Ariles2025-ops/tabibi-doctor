@@ -23,3 +23,5 @@
 # défaut Cloudflare Pages max-age=14400).
 /js/*
   Cache-Control: no-cache, must-revalidate
+/styles/*
+  Cache-Control: no-cache, must-revalidate
