@@ -165,7 +165,18 @@ function goBackSafe(){
   else location.href = 'patient-dashboard.html';
 }
 
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', async function(){
+  // [FIX 2026-07-17] Garde auth alignée sur les autres pages protégées (cf.
+  // dawini.html) : anonyme → login, pas de fetch notifications voué au 401.
+  var _session = null;
+  try {
+    var _s = window.tabibi && window.tabibi.supabase;
+    _session = _s ? (await _s.auth.getSession()).data.session : null;
+  } catch(e){}
+  if (!_session) {
+    window.location = 'login.html?next=' + encodeURIComponent('/notifications.html');
+    return;
+  }
   // [MSG] Icone Messages gated : absente du DOM si features.messaging != true.
   var _ml = document.getElementById('notif-msg-link');
   if(_ml){ if(window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging){ _ml.hidden = false; } else { _ml.remove(); } }
