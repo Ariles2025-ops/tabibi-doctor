@@ -13,7 +13,7 @@ window.TABIBI_CONFIG = {
   // Site key PUBLIQUE (OK dans le code client). La Secret Key reste cote
   // serveur uniquement, dans Edge Function secret TURNSTILE_SECRET_KEY.
   // Setup: https://dash.cloudflare.com -> Turnstile
-  TURNSTILE_SITE_KEY: '0x4AAAAAADR6IhCWO9RLIipE',
+  TURNSTILE_SITE_KEY: '0x4AAAAAAD-ME0-lvt6sDHQo',
 
   // ---- URL publique du site ------------------------------------------
   // Utilisee pour les liens email Supabase Auth (verification, reset password).
