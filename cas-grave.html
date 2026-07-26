@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="tabibi-page-key" content="cg_title_long">
+<title>Cas grave — orientation vérifiée | Tabibi</title>
+<meta name="description" content="Tabibi vous aide à trouver un spécialiste compétent pour un cas grave ou complexe, en Algérie ou à l'étranger si nécessaire. Cas vérifié, orientation sans commission.">
+<link rel="canonical" href="https://tabibi.doctor/cas-grave.html">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Cas grave — orientation vérifiée | Tabibi">
+<meta property="og:description" content="Trouver un spécialiste compétent pour un cas grave/complexe. Cas vérifié, orientation sans commission.">
+<meta property="og:image" content="https://tabibi.doctor/assets/og-image.jpg">
+<meta property="og:locale" content="fr_DZ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/components.css">
+<!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
+<link rel="stylesheet" href="css/tabibi-ui.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc;color:#0f172a;line-height:1.6;-webkit-font-smoothing:antialiased}
+.hdr{background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;padding:48px 16px 56px;text-align:center;position:relative}
+.hdr h1{font-size:28px;font-weight:800;margin-bottom:8px}
+.hdr .sub{font-size:16px;opacity:.92;max-width:560px;margin:0 auto}
+.back-bar{position:absolute;top:16px;left:16px}
+.back-bar a{color:#fff;background:rgba(255,255,255,.18);padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none}
+[dir="rtl"] .back-bar{left:auto;right:16px}
+.container{max-width:480px;margin:-30px auto 40px;padding:0 16px;position:relative;z-index:2}
+.card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.06);margin-bottom:16px}
+h2{font-size:22px;font-weight:800;margin-bottom:14px;color:#0a4d3e;display:flex;align-items:center;gap:10px}
+p{margin:8px 0;color:#556070}
+/* Bandeau d'alerte urgence — visible en haut, hors du header */
+.emergency{background:#fff4f4;border:1px solid #f3c2c2;border-left:5px solid #d92d20;color:#7a271a;border-radius:12px;padding:14px 16px;margin:0 auto 16px;max-width:480px;font-size:13.5px;font-weight:600;display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+.emergency i{color:#d92d20;font-size:18px;margin-top:1px;flex:none}
+.emergency b{color:#7a271a}
+/* Points de réassurance */
+.trust{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.trust .row{display:flex;gap:11px;align-items:flex-start;font-size:13.5px;color:#556070}
+.trust .row i{color:#d4a437;font-size:16px;margin-top:2px;flex:none}
+.trust .row b{color:#0f172a;font-weight:700}
+/* Formulaire */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:13px;font-weight:700;color:#0f172a;margin-bottom:6px}
+.field input,.field textarea{width:100%;font-family:inherit;font-size:14px;color:#0f172a;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;transition:border-color .15s,box-shadow .15s}
+.field input:focus,.field textarea:focus{outline:none;border-color:#d4a437;box-shadow:0 0 0 3px rgba(212,164,55,.15)}
+.field textarea{resize:vertical;min-height:120px}
+.req{color:#d92d20}
+.btn-send{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#d4a437;color:#fff;font-family:inherit;font-size:15px;font-weight:800;border:none;border-radius:12px;padding:15px;cursor:pointer;transition:filter .15s,transform .15s}
+.btn-send:hover{filter:brightness(.95);transform:translateY(-1px)}
+.btn-send i{font-size:18px}
+.after-note{text-align:center;font-size:12.5px;color:#556070;margin-top:12px;display:flex;gap:7px;align-items:center;justify-content:center}
+.after-note i{color:#25D366;font-size:15px}
+.form-err{display:none;background:#fff4f4;border:1px solid #f3c2c2;color:#7a271a;border-radius:10px;padding:10px 12px;font-size:12.5px;font-weight:600;margin-bottom:14px}
+/* Pied de page */
+.footer-nav{max-width:480px;margin:0 auto;padding:0 16px 30px;display:flex;flex-wrap:wrap;gap:16px;justify-content:center;font-size:12.5px}
+.footer-nav a{color:#556070;text-decoration:none;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+.footer-nav a:hover{color:#0F7560}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="back-bar"><a href="index.html"><i class="fa fa-arrow-left"></i> <span data-i18n="cg_back_home">Accueil</span></a></div>
+  <h1 data-i18n="cg_h1">Un cas grave ou complexe ?</h1>
+  <p class="sub" data-i18n="cg_subtitle">Tabibi vous aide à trouver le bon spécialiste. Cas vérifié, orientation sans commission.</p>
+</header>
+
+<main class="container">
+
+  <!-- Bandeau d'alerte urgence vitale -->
+  <div class="emergency" role="alert">
+    <i class="fa fa-triangle-exclamation" aria-hidden="true"></i>
+    <span data-i18n-html="cg_emergency"><b>Urgence vitale ?</b> Appelez le <b>14 (SAMU)</b> ou rendez-vous aux urgences. Ce service n'est pas une réponse d'urgence.</span>
+  </div>
+
+  <div class="card">
+    <h2><i class="fa fa-shield-heart"></i> <span data-i18n="cg_intro_title">Une orientation de confiance</span></h2>
+    <p data-i18n="cg_intro_p1">Pour un cas grave ou complexe, trouver le bon spécialiste est décisif. Tabibi vous aide à identifier un praticien compétent en Algérie, et vous oriente vers l'étranger uniquement si c'est réellement nécessaire.</p>
+    <div class="trust">
+      <div class="row"><i class="fa fa-circle-check"></i> <span><b data-i18n="cg_trust1_t">Cas vérifié.</b> <span data-i18n="cg_trust1_d">Un humain de l'équipe étudie votre situation — pas un algorithme.</span></span></div>
+      <div class="row"><i class="fa fa-circle-check"></i> <span><b data-i18n="cg_trust2_t">Sans commission.</b> <span data-i18n="cg_trust2_d">Nous n'encaissons rien et ne touchons aucune commission de clinique. L'orientation reste neutre.</span></span></div>
+      <div class="row"><i class="fa fa-circle-check"></i> <span><b data-i18n="cg_trust3_t">Local d'abord.</b> <span data-i18n="cg_trust3_d">Priorité aux spécialistes en Algérie ; l'étranger seulement si le cas l'exige.</span></span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2><i class="fa fa-notes-medical"></i> <span data-i18n="cg_form_title">Décrivez votre cas</span></h2>
+    <p data-i18n="cg_form_sub">Renseignez ces informations. À l'envoi, WhatsApp s'ouvre avec votre message pré-rempli vers notre équipe.</p>
+
+    <div class="form-err" id="cg-err" data-i18n="cg_form_err">Merci de renseigner au moins votre nom, votre téléphone et une description.</div>
+
+    <form id="cg-form" novalidate>
+      <div class="field">
+        <label for="cg-nom"><span data-i18n="cg_lbl_nom">Nom complet</span> <span class="req">*</span></label>
+        <input type="text" id="cg-nom" name="nom" autocomplete="name" data-i18n-placeholder="cg_ph_nom" placeholder="Ex. Amina B.">
+      </div>
+      <div class="field">
+        <label for="cg-tel"><span data-i18n="cg_lbl_tel">Téléphone</span> <span class="req">*</span></label>
+        <input type="tel" id="cg-tel" name="tel" autocomplete="tel" inputmode="tel" data-i18n-placeholder="cg_ph_tel" placeholder="Ex. +213 6 00 00 00 00">
+      </div>
+      <div class="field">
+        <label for="cg-spec"><span data-i18n="cg_lbl_spec">Spécialité ou type de problème</span></label>
+        <input type="text" id="cg-spec" name="spec" data-i18n-placeholder="cg_ph_spec" placeholder="Ex. oncologie, chirurgie cardiaque, avis complexe...">
+      </div>
+      <div class="field">
+        <label for="cg-desc"><span data-i18n="cg_lbl_desc">Description du cas</span> <span class="req">*</span></label>
+        <textarea id="cg-desc" name="desc" data-i18n-placeholder="cg_ph_desc" placeholder="Décrivez la situation : diagnostic connu, examens déjà faits, ce dont vous avez besoin..."></textarea>
+      </div>
+
+      <button type="submit" class="btn-send"><i class="fa-brands fa-whatsapp"></i> <span data-i18n="cg_btn_send">Envoyer mon cas</span></button>
+      <div class="after-note"><i class="fa-brands fa-whatsapp"></i> <span data-i18n="cg_after_note">Joignez vos examens directement sur WhatsApp après l'envoi.</span></div>
+    </form>
+  </div>
+
+  <div class="footer-nav">
+    <a href="index.html"><i class="fa fa-house"></i> <span data-i18n="cg_foot_home">Accueil</span></a>
+    <a href="about.html" data-i18n="cg_foot_about">À propos</a>
+    <a href="legal/confidentialite.html" data-i18n="cg_foot_privacy">Confidentialité</a>
+    <a href="mailto:contact@tabibi.doctor" data-i18n="cg_foot_contact">Contact</a>
+  </div>
+
+</main>
+
+<script>
+/* Cas grave — MVP concierge, ZÉRO backend.
+   À l'envoi : construit un lien wa.me vers l'équipe avec le message pré-rempli. */
+(function () {
+  'use strict';
+  var WA_NUMBER = '213777169074';
+  var form = document.getElementById('cg-form');
+  var err = document.getElementById('cg-err');
+  if (!form) return;
+
+  function val(id) {
+    var el = document.getElementById(id);
+    return el ? el.value.trim() : '';
+  }
+  function label(key, fallback) {
+    // Réutilise le libellé traduit si l'i18n l'a rendu, sinon fallback FR.
+    return fallback;
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var nom = val('cg-nom');
+    var tel = val('cg-tel');
+    var spec = val('cg-spec');
+    var desc = val('cg-desc');
+
+    // Champs minimum requis : nom, téléphone, description.
+    if (!nom || !tel || !desc) {
+      if (err) err.style.display = 'block';
+      return;
+    }
+    if (err) err.style.display = 'none';
+
+    var lines = [
+      'Tabibi — Cas grave',
+      '',
+      'Nom : ' + nom,
+      'Téléphone : ' + tel,
+      'Spécialité / problème : ' + (spec || '—'),
+      '',
+      'Description du cas :',
+      desc
+    ];
+    var msg = lines.join('\n');
+    var url = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+    window.open(url, '_blank', 'noopener');
+  });
+})();
+</script>
+<script src="js/tabibi-cookies.js"></script>
+<script src="js/tabibi-beta.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+<!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
+<script src="js/tabibi-langbar.js"></script>
+</body>
+</html>
