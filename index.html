@@ -991,17 +991,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
      login.html (tél OTP patients/médecins + onglet admin email/mdp) · signup.html (tél OTP).
      index.html ne contient plus AUCUN formulaire email/mot de passe. -->
 
-<!-- APP BAR -->
-<header class="app-bar" role="banner">
-  <svg class="logo-svg" width="32" height="32" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-  <div class="app-bar-body">
-    <div class="app-bar-title">Tabibi <span style='color:var(--green)'><span style='font-weight:800;letter-spacing:-.5px'><span style='color:#2E8B57'>D</span><span style='color:#D21010'>Z</span></span></span><svg width="13" height="13" viewBox="0 0 24 24" aria-hidden="true" style="vertical-align:-1px;margin-left:5px"><path d="M14.8 3.5a8.5 8.5 0 1 0 0 17 6.8 6.8 0 1 1 0-17z" fill="#D21010"/><path d="M18.4 8.2l1.05 2.13 2.35.34-1.7 1.66.4 2.34-2.1-1.1-2.1 1.1.4-2.34-1.7-1.66 2.35-.34z" fill="#D21010"/></svg></div>
-    <div class="app-bar-sub" style="font-family:'Cairo',sans-serif">طبيبي · Médecins Algérie</div>
-  </div>
-  <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
-  <div data-langbar></div>
-  <div id="uarea-desk" style="display:flex;align-items:center;gap:6px"></div>
-</header>
+<!-- APP BAR — [Phase 0] Header factorisé → js/tabibi-header.js (variante landing :
+     logo + lockup + langbar + #uarea-desk rempli par renderUserUI()) -->
+<div data-tabibi-header data-variant="landing"></div>
+<script src="js/tabibi-header.js"></script>
 
 <!-- MAIN PAGE -->
 <main class="page" id="main" role="main">
@@ -1282,7 +1275,9 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 </main>
 
 <!-- BOTTOM TAB BAR -->
+<!-- [Phase 0] Tab-bar factorisée → js/tabibi-nav.js (initTabBar/tabClick extraits de cette page) -->
 <nav class="tab-bar" id="tab-bar"></nav>
+<script src="js/tabibi-nav.js"></script>
 
 <!-- CARTE — overlay plein écran (Leaflet lazy-init B5) -->
 <div id="map-overlay" class="map-overlay" hidden role="dialog" aria-label="Carte des médecins en Algérie">
@@ -1911,35 +1906,10 @@ function selectPay(id,el){
   el.classList.add("sel");el.querySelector("input[type=radio]").checked=true;
 }
 
-/* ══ BOTTOM NAV ═══════════════════════════════════════════════ */
-function initTabBar(active){
-  const bar=document.getElementById("tab-bar");if(!bar)return;
-  const items=[
-    {id:"home",  icon:"fa-home",          i18n:"nav_home",  href:"index.html"},
-    {id:"search",icon:"fa-search",         i18n:"nav_docs",  href:"index.html#sec-search"},
-    {id:"carte", icon:"fa-map-location-dot",i18n:"nav_map",  href:"#carte"},
-    {id:"rdv",   icon:"fa-calendar-check", i18n:"nav_rdv",   href:"#"},
-    {id:"spec",  icon:"fa-stethoscope",    i18n:"nav_spec",  href:"index.html#sec-spec"},
-    {id:"profile",icon:"fa-user",          i18n:"nav_profile",href:"#"},
-  ];
-  bar.innerHTML=items.map(it=>`
-    <button class="tab-item${active===it.id?" active":""}" onclick="tabClick('${it.id}','${it.href}')" aria-label="${T(it.i18n)}">
-      <i class='fa ${it.icon}'></i>
-      <span>${T(it.i18n)}</span>
-    </button>`).join("");
-}
-function tabClick(id,href){
-  if(id==="carte"){openMapOverlay();return;}
-  if(id==="profile"){if(!isLogged()){openModal("login");return;}goDash();return;}
-  if(id==="rdv"){if(!isLogged()){openModal("login");return;}goDash();return;}
-  // [UI v2 2026-07-09] même page : scroll doux vers l'ancre (location.href était inerte)
-  if(href&&href.indexOf("#")>-1){
-    var anchor=href.split("#")[1];
-    var el=document.getElementById(anchor);
-    if(el){ el.scrollIntoView({behavior:"smooth",block:"start"}); return; }
-  }
-  if(href&&href!=="#") window.location.href=href;
-}
+/* ══ BOTTOM NAV ═══════════════════════════════════════════════
+   [Phase 0] initTabBar()/tabClick() extraits → js/tabibi-nav.js
+   (chargé juste après <nav id="tab-bar">, expose window.initTabBar
+   + window.tabClick — mêmes hooks openMapOverlay/isLogged/goDash). */
 // ══ [CARTE 2026-07-09] Leaflet RÉEL (fin du placeholder B5) ══════════
 // Pins = médecins RÉCLAMÉS avec coordonnées (consentement — jamais d'adresse
 // pour les non-réclamés). Compteurs par wilaya sur les chefs-lieux (estimated,
@@ -2179,8 +2149,10 @@ Object.assign(window,{
   stars,dname,dspec,dcity,sname,searchByName,getParam,scrollTo$,daysUntil,
   getFavs,isFav,toggleFav,
   renderPayMethods,selectPay,PAY_METHODS,
-  initTabBar,tabClick,triggerInstall,dismissInstall
+  triggerInstall,dismissInstall
 });
+/* [Phase 0] initTabBar/tabClick ne sont plus exportés ici : posés sur
+   window par js/tabibi-nav.js (chargé plus haut, avant ce script). */
 
 
 /* ═══ PAGE LOGIC ═══════════════════════════════════════════ */
