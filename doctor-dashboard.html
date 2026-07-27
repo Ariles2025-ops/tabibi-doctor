@@ -77,6 +77,63 @@
     display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
   }
 }
+
+/* ═══ [PRO-AGENDA 2026] Vue semaine "planning cabinet" ═══
+   Base : masquée partout (le mobile garde l'agenda actuel). */
+.wp-desktop{ display:none; }
+@media (min-width:1024px){
+  /* Desktop : on masque l'agenda mobile de l'onglet et on montre le planning */
+  #tab-agenda #cal-week,
+  #tab-agenda #day-lbl,
+  #tab-agenda #day-rdv-list{ display:none !important; }
+  #wp-root.wp-desktop{
+    display:grid; grid-template-columns:1fr 320px; gap:20px; align-items:start;
+    margin-top:6px;
+  }
+  .wp-weekbar{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+  .wp-week-label{ font-size:15px; font-weight:800; color:#0f172a; min-width:230px; }
+  .wp-nav{ width:34px; height:34px; border-radius:9px; border:1px solid var(--border);
+    background:#fff; cursor:pointer; color:var(--text2); font-size:13px; }
+  .wp-nav:hover{ background:var(--bg2); }
+  .wp-today{ margin-inline-start:auto; background:var(--blue-l); color:var(--blue);
+    border:none; border-radius:9px; padding:8px 14px; font-weight:700; font-size:13px;
+    cursor:pointer; font-family:inherit; display:flex; align-items:center; gap:7px; }
+  /* Grille : colonne heures + 7 jours */
+  .wp-grid{ display:grid; grid-template-columns:56px repeat(7,1fr); border:1px solid var(--border);
+    border-radius:14px; overflow:hidden; background:#fff; }
+  .wp-corner{ background:#fff; border-bottom:1px solid var(--border); border-right:1px solid var(--border); }
+  .wp-dayhead{ text-align:center; padding:8px 4px; font-size:12px; font-weight:700; color:var(--text2);
+    border-bottom:1px solid var(--border); border-right:1px solid var(--border); background:var(--blue-xl,#f8fafc); }
+  .wp-dayhead .num{ font-size:16px; font-weight:800; color:#0f172a; display:block; }
+  .wp-dayhead.today{ background:var(--blue-l); color:var(--blue); }
+  .wp-dayhead.today .num{ color:var(--blue); }
+  .wp-timecol{ position:relative; border-right:1px solid var(--border); }
+  .wp-hourlabel{ height:56px; font-size:11px; color:var(--text3); text-align:end; padding:2px 6px 0 0;
+    border-bottom:1px solid var(--border); }
+  .wp-daycol{ position:relative; border-right:1px solid var(--border); }
+  .wp-daycol.off{ background:repeating-linear-gradient(45deg,#fafafa,#fafafa 8px,#f3f4f6 8px,#f3f4f6 16px); }
+  .wp-hourline{ height:56px; border-bottom:1px solid var(--border); }
+  /* Bloc RDV positionné en absolu dans la colonne du jour */
+  .wp-ev{ position:absolute; left:3px; right:3px; border-radius:7px; padding:4px 6px; overflow:hidden;
+    cursor:pointer; font-size:11px; line-height:1.25; border-left:3px solid var(--blue);
+    background:var(--blue-l); color:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,.08); transition:.12s; }
+  .wp-ev:hover{ filter:brightness(.97); transform:translateY(-1px); }
+  .wp-ev.pending{ border-left-color:#f59e0b; background:#fffbeb; }
+  .wp-ev.completed{ border-left-color:var(--text4); background:var(--bg2); opacity:.75; }
+  .wp-ev.cancelled{ border-left-color:var(--red); background:#fef2f2; opacity:.6; text-decoration:line-through; }
+  .wp-ev.sel{ outline:2px solid var(--gold,#d4a437); outline-offset:0; }
+  .wp-ev .t{ font-weight:800; }
+  .wp-ev .n{ font-weight:600; }
+  /* Panneau détail droite */
+  .wp-detail{ position:sticky; top:calc(var(--nav-h) + 16px); background:#fff; border:1px solid var(--border);
+    border-radius:14px; padding:18px; min-height:220px; }
+  .wp-detail-empty{ color:var(--text3); font-size:13px; text-align:center; padding:30px 6px; }
+  .wp-detail h4{ font-size:16px; font-weight:800; color:#0f172a; margin-bottom:4px; }
+  .wp-detail .wp-d-row{ display:flex; gap:8px; align-items:center; font-size:13px; color:#556070; margin:8px 0; }
+  .wp-detail .wp-d-row i{ width:18px; color:var(--gold,#d4a437); }
+  .wp-detail .wp-d-badge{ display:inline-block; margin-top:4px; padding:3px 10px; border-radius:999px;
+    font-size:11px; font-weight:700; }
+}
 </style>
 </head>
 <body>
@@ -165,6 +222,24 @@
     <!-- [CONFORMITE 2026 B2] pas de data-i18n : renderAgenda écrit le libellé localisé (piège clobber) -->
     <div style="font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:10px" id="day-lbl">RDV du jour</div>
     <div id="day-rdv-list"></div>
+
+    <!-- [PRO-AGENDA 2026] Vue semaine "planning cabinet" — desktop uniquement (≥1024px).
+         100% additive : lit getDocRdvs() + getDoctorSchedule() existants, ne modifie
+         aucune fonction ni le backend. Masqué en mobile (.wp-desktop{display:none}). -->
+    <div id="wp-root" class="wp-desktop">
+      <section class="wp-cal">
+        <div class="wp-weekbar">
+          <button class="wp-nav" onclick="wpNav(-1)" aria-label="Semaine précédente"><i class="fa fa-chevron-left"></i></button>
+          <div id="wp-week-label" class="wp-week-label">—</div>
+          <button class="wp-nav" onclick="wpNav(1)" aria-label="Semaine suivante"><i class="fa fa-chevron-right"></i></button>
+          <button class="wp-today" onclick="wpToday()"><i class="fa fa-calendar-day"></i> <span data-i18n="dd_this_week">Cette semaine</span></button>
+        </div>
+        <div id="wp-grid" class="wp-grid"></div>
+      </section>
+      <aside id="wp-detail" class="wp-detail">
+        <div class="wp-detail-empty" data-i18n="dd_wp_pick">Cliquez sur un rendez-vous pour voir le détail.</div>
+      </aside>
+    </div>
 
     <!-- Modal configuration horaires -->
     <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
@@ -1310,6 +1385,109 @@ async function deleteUnavail(id) {
       console.warn('[Tabibi/Dashboard] push init skipped:', e);
     }
   });
+})();
+</script>
+
+<!-- [PRO-AGENDA 2026] Vue semaine "planning cabinet" — desktop uniquement.
+     Additif : lit getDocRdvs() + getDoctorSchedule() existants. Ne modifie
+     aucune fonction ni le backend/RLS. Aucun effet en mobile (<1024px). -->
+<script>
+(function(){
+  var HOUR_H = 56; // doit matcher .wp-hourline/.wp-hourlabel dans le CSS
+  var DAYKEYS = ['mon','tue','wed','thu','fri','sat','sun'];
+  var wpWeekStart = wpMonday(new Date());
+  window._wpEvents = [];
+
+  function wpMonday(d){ var x=new Date(d); var g=x.getDay(); var diff=(g===0?6:g-1); x.setDate(x.getDate()-diff); x.setHours(0,0,0,0); return x; }
+  function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function hm2min(s){ if(!s || String(s).indexOf(':')<0) return null; var p=String(s).split(':'); return (+p[0])*60+(+p[1]); }
+  function pad(n){ return (n<10?'0':'')+n; }
+  function safeEsc(s){ return (typeof esc==='function') ? esc(s||'') : String(s||''); }
+  function T(k,f){ return (typeof tabibiT==='function') ? tabibiT(k,f) : f; }
+
+  function bounds(sched){
+    var min=24*60, max=0, any=false;
+    DAYKEYS.forEach(function(k){ var s=sched&&sched[k]; if(!s||!s.on) return;
+      [['start1','end1'],['start2','end2']].forEach(function(pair){
+        var A=hm2min(s[pair[0]]), B=hm2min(s[pair[1]]);
+        if(A!=null && B!=null && B>A){ any=true; if(A<min)min=A; if(B>max)max=B; }
+      });
+    });
+    if(!any) return [8*60, 19*60];
+    return [Math.floor(min/60)*60, Math.ceil(max/60)*60];
+  }
+
+  window.renderWeekPlanner = function(){
+    var grid=document.getElementById('wp-grid'); if(!grid) return;
+    var sched={}, rdvs=[];
+    try{ if(typeof getDoctorSchedule==='function') sched=getDoctorSchedule()||{}; }catch(e){}
+    try{ if(typeof getDocRdvs==='function') rdvs=getDocRdvs()||[]; }catch(e){}
+    var b=bounds(sched), minM=b[0], maxM=b[1];
+    var hours=[]; for(var h=minM/60; h<maxM/60; h++) hours.push(h);
+    var today=iso(new Date());
+
+    var wend=new Date(wpWeekStart); wend.setDate(wend.getDate()+6);
+    function fmt(d){ return window.tabibiFormatDate ? window.tabibiFormatDate(d,{day:'numeric',month:'short'}) : (d.getDate()+'/'+(d.getMonth()+1)); }
+    var lbl=document.getElementById('wp-week-label'); if(lbl) lbl.textContent=fmt(wpWeekStart)+' → '+fmt(wend);
+
+    var cols=[]; for(var i=0;i<7;i++){ var d=new Date(wpWeekStart); d.setDate(d.getDate()+i);
+      cols.push({ iso:iso(d), date:d, on: !!(sched[DAYKEYS[i]] && sched[DAYKEYS[i]].on) }); }
+
+    var fb=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+    var html='<div class="wp-corner"></div>';
+    cols.forEach(function(c,i){
+      var nm=window.tabibiFormatDate ? window.tabibiFormatDate(c.date,{weekday:'short'}) : fb[i];
+      html+='<div class="wp-dayhead '+(c.iso===today?'today':'')+'">'+nm+'<span class="num">'+c.date.getDate()+'</span></div>';
+    });
+    html+='<div class="wp-timecol">'+hours.map(function(hh){ return '<div class="wp-hourlabel">'+pad(hh)+':00</div>'; }).join('')+'</div>';
+
+    window._wpEvents=[];
+    cols.forEach(function(c){
+      var lines=hours.map(function(){ return '<div class="wp-hourline"></div>'; }).join('');
+      var evs=rdvs.filter(function(r){ return r.date===c.iso && r.time; });
+      var evHtml=evs.map(function(r){
+        var st=hm2min(r.time); if(st==null) return '';
+        var dur=parseInt(r.duree||sched.durationMin||30,10);
+        var top=(st-minM)/60*HOUR_H, hgt=Math.max(18, dur/60*HOUR_H-2);
+        var cls=String(r.status||'').toLowerCase();
+        var idx=window._wpEvents.length; window._wpEvents.push(r);
+        return '<div class="wp-ev '+cls+'" data-wp="'+idx+'" style="top:'+top+'px;height:'+hgt+'px" onclick="wpSelect('+idx+')">'
+             + '<div class="t">'+r.time+'</div><div class="n">'+safeEsc(r.patientName)+'</div></div>';
+      }).join('');
+      html+='<div class="wp-daycol '+(c.on?'':'off')+'">'+lines+evHtml+'</div>';
+    });
+    grid.innerHTML=html;
+  };
+
+  window.wpSelect=function(idx){
+    var r=window._wpEvents[idx], box=document.getElementById('wp-detail'); if(!r||!box) return;
+    document.querySelectorAll('.wp-ev.sel').forEach(function(e){ e.classList.remove('sel'); });
+    var el=document.querySelector('.wp-ev[data-wp="'+idx+'"]'); if(el) el.classList.add('sel');
+    var stt=String(r.status||'');
+    var col = stt==='Confirmed'?'background:var(--blue-l);color:var(--blue)'
+            : stt==='Pending'?'background:#fef3c7;color:#92400e'
+            : stt==='Cancelled'?'background:#fee2e2;color:#991b1b'
+            : 'background:var(--bg2);color:var(--text2)';
+    box.innerHTML='<h4>'+safeEsc(r.patientName||'—')+'</h4>'
+      +'<div class="wp-d-badge" style="'+col+'">'+T('dd_status_'+stt.toLowerCase(),stt||'—')+'</div>'
+      +'<div class="wp-d-row"><i class="fa fa-calendar"></i> '+(r.date||'—')+'</div>'
+      +'<div class="wp-d-row"><i class="fa fa-clock"></i> '+(r.time||'—')+(r.duree?(' · '+r.duree+' min'):'')+'</div>'
+      +'<div class="wp-d-row"><i class="fa fa-notes-medical"></i> '+safeEsc(r.motif||'—')+'</div>';
+  };
+
+  window.wpNav=function(delta){ wpWeekStart.setDate(wpWeekStart.getDate()+delta*7); window.renderWeekPlanner(); };
+  window.wpToday=function(){ wpWeekStart=wpMonday(new Date()); window.renderWeekPlanner(); };
+
+  function maybeRender(){
+    if(window.innerWidth<1024) return;
+    var ag=document.getElementById('tab-agenda');
+    if(ag && ag.classList.contains('active')) window.renderWeekPlanner();
+  }
+  var ag=document.getElementById('tab-agenda');
+  if(ag && window.MutationObserver){ new MutationObserver(maybeRender).observe(ag,{attributes:true,attributeFilter:['class']}); }
+  var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt=setTimeout(maybeRender,150); });
+  document.addEventListener('DOMContentLoaded', maybeRender);
+  setTimeout(maybeRender, 900);
 })();
 </script>
 </body></html>
