@@ -20,6 +20,12 @@
   send('BOOT origin=' + location.origin + ' hostname=' + location.hostname +
        ' protocol=' + location.protocol + ' href=' + location.href);
 
+  // Événements du captcha visible (js/tabibi-captcha-visible.js) → stderr
+  document.addEventListener('tabibi:captcha', function (e) {
+    var d = (e && e.detail) || {};
+    send('CAPTCHA ' + d.ev + (d.info ? ' — ' + d.info : ''));
+  });
+
   var _err = console.error, _warn = console.warn;
   console.error = function () { send('console.error: ' + [].slice.call(arguments).join(' ')); _err.apply(console, arguments); };
   console.warn  = function () { send('console.warn: '  + [].slice.call(arguments).join(' ')); _warn.apply(console, arguments); };
