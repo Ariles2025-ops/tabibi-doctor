@@ -19,6 +19,18 @@
                  notifs (#notif-count) + pill user (#user-pill/#user-init)
                  + logout + langbar (dashboards)
 
+   Slots (variante app) — pour les dashboards dont le sous-titre ou les
+   actions diffèrent du défaut patient, SANS perdre leurs hooks :
+     <div data-tabibi-header data-variant="app">
+       <span data-slot="sub">…contenu exact du .lk-sub…</span>
+       <div data-slot="actions">…boutons/langbar exacts, déplacés tels quels…</div>
+     </div>
+   data-slot="sub" remplace le contenu du .lk-sub (défaut : #hdr-title
+   data-i18n={data-title-key} + " · طبيبي"). data-slot="actions" remplace
+   TOUT le côté droit (défaut : cloche + pill + logout + langbar) — une
+   page qui fournit ce slot garde exactement ses ids/onclick, y compris
+   l'absence volontaire d'un élément (ex. admin sans langbar).
+
    Garanties :
    - Injection SYNCHRONE si le placeholder précède le <script> (le header
      existe avant DOMContentLoaded → renderUserUI(), i18n, langbar OK).
@@ -75,17 +87,24 @@
       '<div data-langbar></div>';
   }
 
-  function buildApp(home, titleKey) {
+  function buildApp(home, titleKey, subHtml, actionsHtml) {
     return '<a href="' + home + '" title="Retour à l\'accueil" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:10px;background:rgba(0,0,0,.04);color:var(--text2);text-decoration:none;flex-shrink:0;transition:.15s" onmouseover="this.style.background=\'var(--blue-l)\';this.style.color=\'var(--blue)\'" onmouseout="this.style.background=\'rgba(0,0,0,.04)\';this.style.color=\'var(--text2)\'"><i class="fa fa-house"></i></a>' +
       '<div class="tbi-lockup">' +
         logo(34) +
         '<div class="lk-col">' +
           '<div class="lk-title">' + TITLE_LK + '</div>' +
-          '<div class="lk-sub"><span id="hdr-title" data-i18n="' + titleKey + '">Mon espace</span> · طبيبي</div>' +
+          '<div class="lk-sub">' + (subHtml != null ? subHtml
+            : '<span id="hdr-title" data-i18n="' + titleKey + '">Mon espace</span> · طبيبي') + '</div>' +
         '</div>' +
       '</div>' +
-      /* Cloche notifications — hooks page : toggleNotif(), #notif-count */
-      '<button class="btn btn-icon btn-icon-sm notif-bell" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">' +
+      (actionsHtml != null ? actionsHtml : defaultAppActions());
+  }
+
+  /* Côté droit par défaut (= patient-dashboard). Remplacé intégralement
+     par le slot data-slot="actions" quand la page en fournit un. */
+  function defaultAppActions() {
+    /* Cloche notifications — hooks page : toggleNotif(), #notif-count */
+    return '<button class="btn btn-icon btn-icon-sm notif-bell" onclick="toggleNotif()" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">' +
         '<i class="fa fa-bell" style="font-size:14px"></i>' +
         '<span class="notif-badge" id="notif-count" style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">0</span>' +
       '</button>' +
@@ -104,8 +123,13 @@
     if (variant === 'auth') {
       header.innerHTML = buildAuth(ph.getAttribute('data-back') || 'index.html');
     } else if (variant === 'app') {
+      // Slots optionnels : contenus page-spécifiques déjà parsés dans le placeholder
+      var subSlot = ph.querySelector('[data-slot="sub"]');
+      var actionsSlot = ph.querySelector('[data-slot="actions"]');
       header.innerHTML = buildApp(ph.getAttribute('data-home') || 'index.html',
-                                  ph.getAttribute('data-title-key') || 'my_space');
+                                  ph.getAttribute('data-title-key') || 'my_space',
+                                  subSlot ? subSlot.innerHTML : null,
+                                  actionsSlot ? actionsSlot.innerHTML : null);
     } else {
       header.innerHTML = buildLanding();
     }
