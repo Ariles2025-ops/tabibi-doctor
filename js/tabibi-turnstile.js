@@ -152,12 +152,18 @@
         size: TURNSTILE_CONFIG.size,
         appearance: TURNSTILE_CONFIG.appearance,
         callback: (token) => {
+          window.__ttErr = null;
           if (options.callback) options.callback(token);
         },
-        'error-callback': () => {
-          if (options.errorCallback) options.errorCallback();
+        // [DEBUG captcha] Turnstile passe le code d'erreur (110xxx sitekey/
+        // domaine, 300xxx/600xxx challenge…) en 1er argument — on le garde.
+        'error-callback': (code) => {
+          window.__ttErr = 'widget:' + (code || 'inconnu');
+          console.warn('[Turnstile] error-callback code=', code);
+          if (options.errorCallback) options.errorCallback(code);
         },
         'expired-callback': () => {
+          window.__ttErr = 'expired';
           if (options.expiredCallback) options.expiredCallback();
         }
       });
@@ -237,9 +243,10 @@
     if (_execResolve) { const r = _execResolve; _execResolve = null; r(token || undefined); }
   }
   async function getCaptchaToken() {
-    if (!TURNSTILE_CONFIG.enabled) return null;
+    if (!TURNSTILE_CONFIG.enabled) { window.__ttErr = 'desactive'; return null; }
     if (!TURNSTILE_CONFIG.siteKey) readSiteKey();
-    if (!TURNSTILE_CONFIG.siteKey) return null;
+    if (!TURNSTILE_CONFIG.siteKey) { window.__ttErr = 'sitekey-absente'; return null; }
+    window.__ttErr = null; // reset avant chaque tentative
     // [FIX native] Acquisition réelle du token. Peut hang indéfiniment si le widget
     // Turnstile ne répond pas (WebView native, origine localhost non autorisée…).
     // .catch() : une erreur tardive (après le timeout gagnant) n'est jamais "unhandled".
@@ -255,9 +262,14 @@
           _execWidgetId = window.turnstile.render(_execContainer, {
             sitekey: TURNSTILE_CONFIG.siteKey,
             appearance: 'interaction-only',
-            callback: _execResolveOnce,
-            'error-callback': () => _execResolveOnce(undefined),
-            'expired-callback': () => _execResolveOnce(undefined)
+            callback: function (tok) { window.__ttErr = null; _execResolveOnce(tok); },
+            // [DEBUG captcha] mémorise le code d'erreur exact du widget
+            'error-callback': function (code) {
+              window.__ttErr = 'widget:' + (code || 'inconnu');
+              console.warn('[Turnstile] exec error-callback code=', code);
+              _execResolveOnce(undefined);
+            },
+            'expired-callback': function () { window.__ttErr = 'expired'; _execResolveOnce(undefined); }
           });
         } else {
           window.turnstile.reset(_execWidgetId);
@@ -269,7 +281,11 @@
       return null;
     });
     // [FIX native] Course token VS timeout 5s → null. getCaptchaToken ne hang JAMAIS > 5s.
-    var _timeout = new Promise(function (resolve) { setTimeout(function () { resolve(null); }, 5000); });
+    var _timeout = new Promise(function (resolve) { setTimeout(function () {
+      // [DEBUG captcha] timeout SANS error-callback préalable = challenge muet
+      if (!window.__ttErr) window.__ttErr = 'timeout-5s';
+      resolve(null);
+    }, 5000); });
     var tok = await Promise.race([_acquire, _timeout]);
     return tok || null;
   }

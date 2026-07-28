@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script><script src="js/tabibi-desktop-diag.js"></script>
 <script src="js/tabibi-2fa.js"></script>
 <!-- [FIX 2026-05-18] Turnstile site key lue depuis js/config.js (TURNSTILE_SITE_KEY).
      Meta tag conservee comme override eventuel par page. Decommenter et editer si besoin: -->
@@ -216,6 +216,17 @@ function showAdmin(e){ if(e) e.preventDefault(); showScreen("admin"); }
 function showPhone(e){ if(e) e.preventDefault(); showScreen("phone"); }
 function showReset(e){ if(e) e.preventDefault(); var p=document.getElementById("rs-phone"), l=document.getElementById("lp-phone"); if(p&&l) p.value=l.value||""; showScreen("reset"); }
 
+// [DEBUG captcha ?debug=1] Suffixe de diagnostic : code Turnstile capturé
+// (js/tabibi-turnstile.js pose window.__ttErr), présence du token (tronqué,
+// jamais complet), et erreur GoTrue brute (status + code + message).
+// Aucun secret. Inactif sans ?debug=1 dans l'URL.
+function _dbgSuffix(captchaToken, error){
+  if (!/[?&]debug=1/.test(location.search)) return "";
+  var tok = captchaToken ? (String(captchaToken).slice(0,12) + "…(" + String(captchaToken).length + " chars)") : "NULL";
+  var g = error ? (((error.status != null ? error.status : "?")) + " " + (error.code || "") + " " + (error.message || error.error_description || "")) : "aucune";
+  return " ⚙ [tt=" + (window.__ttErr || "aucun") + " · token=" + tok + " · gotrue=" + g + "]";
+}
+
 // Erreur de connexion mdp → message FR (ne révèle pas si numéro ou mdp est faux).
 function mapLoginError(error){
   var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
@@ -250,14 +261,14 @@ async function doPhoneLogin(e){
   try {
     var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
     var res = await window.tabibi.supabase.auth.signInWithPassword({ phone: phone, password: pass, options: { captchaToken: captchaToken } });
-    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapLoginError(res.error), "error"); return; }
+    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapLoginError(res.error) + _dbgSuffix(captchaToken, res.error), "error"); return; }
     var user = await window.tabibi.auth.getUser();
     if (!user) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error"); return; }
     var ok = await _afterAuth(user);
     if (!ok && btn) { btn.disabled = false; btn.innerHTML = origText; }
   } catch (err) {
     if (btn) { btn.disabled = false; btn.innerHTML = origText; }
-    toastM(mapLoginError(err), "error");
+    toastM(mapLoginError(err) + _dbgSuffix(captchaToken, err), "error");
   }
 }
 
