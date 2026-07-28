@@ -76,6 +76,18 @@
   #tab-patients #patients-list{
     display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
   }
+  /* [Polish] Onglet Profil : carte centrée + VRAIS boutons (les .btn-full
+     étirés sur 1400px rendaient des bandelettes fines illisibles) */
+  #tab-profile .card{ max-width:520px; margin:0 auto; padding:32px 28px; }
+  #tab-profile .card > div:last-child{ gap:10px; }
+  #tab-profile .btn{
+    min-height:50px; font-size:14.5px; padding:0 20px;
+    display:flex; align-items:center; justify-content:flex-start; gap:14px;
+    border-radius:12px; transition:transform .12s, box-shadow .12s, filter .12s;
+  }
+  #tab-profile .btn i{ width:22px; text-align:center; font-size:16px; }
+  #tab-profile .btn:hover{ transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.08); filter:brightness(.98); }
+  #tab-profile .btn-success, #tab-profile .btn-danger{ justify-content:center; }
 }
 </style>
 </head>
