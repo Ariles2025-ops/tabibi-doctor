@@ -43,6 +43,12 @@
   var CSS =
     '.tbi-pro-sidebar{display:none}' +
     '@media (min-width:1024px){' +
+    'html.tbi-has-sidebar #tabibi-beta-banner{display:none !important}' +
+    'html.tbi-has-sidebar header.app-bar{padding:0 20px !important;gap:10px !important}' +
+    'html.tbi-has-sidebar header.app-bar > a:first-child,html.tbi-has-sidebar header.app-bar > button:first-child,html.tbi-has-sidebar header.app-bar .notif-bell,'+
+    'html.tbi-has-sidebar header.app-bar #user-pill,html.tbi-has-sidebar header.app-bar button[aria-label="Se déconnecter"]'+
+    '{width:40px !important;height:40px !important;border-radius:10px !important;margin:0 !important}' +
+    'html.tbi-has-sidebar header.app-bar [data-langbar]{display:flex;align-items:center;height:40px;margin:0 !important}' +
       'html.tbi-has-sidebar .tbi-pro-sidebar{display:flex;flex-direction:column;gap:4px;position:fixed;' +
         'top:0;inset-inline-start:0;bottom:0;width:224px;z-index:150;background:#fff;' +
         'border-inline-end:1px solid var(--border,#e2e8f0);padding:16px 12px;overflow-y:auto}' +

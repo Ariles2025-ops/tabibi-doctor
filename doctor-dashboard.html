@@ -41,9 +41,13 @@
    autre page. Aucune modif de JS / logique / Supabase.
    ═══════════════════════════════════════════════════════════════════ */
 @media (min-width:1024px){
-  /* Barre d'onglets (haut) → menu latéral gauche fixe */
+  /* Barre d'onglets (haut) → menu latéral gauche fixe.
+     [FIX vide mort] position:fixed !important : l'élément porte
+     style="position:sticky" INLINE qui battait cette règle → la colonne
+     (≈360px) restait dans le flux et poussait tout le contenu de ~470px
+     vers le bas (écran « Aujourd'hui » quasi vide, PR #12). */
   .dash-tabs{
-    position:fixed; top:var(--nav-h); left:0; bottom:0; width:230px;
+    position:fixed !important; top:var(--nav-h); left:0; bottom:0; width:230px;
     flex-direction:column; align-items:stretch;
     overflow-y:auto; overflow-x:hidden;
     border-right:1px solid var(--border); border-bottom:none;
@@ -88,6 +92,60 @@
   #tab-profile .btn i{ width:22px; text-align:center; font-size:16px; }
   #tab-profile .btn:hover{ transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.08); filter:brightness(.98); }
   #tab-profile .btn-success, #tab-profile .btn-danger{ justify-content:center; }
+
+  /* [Design] « Aujourd'hui » : tableau de bord dense, zéro vide mort.
+     Hero pleine largeur (infos à gauche, actions à droite), 4 KPIs en
+     ligne, consultations en 2 colonnes. Overrides !important = les
+     styles mobiles sont inline dans le markup. */
+  /* Poste de travail : le bandeau bêta (sticky 55px) décalait la sidebar
+     fixe derrière le header — masqué ≥1024px (conservé sur mobile/web patient) */
+  #tabibi-beta-banner{ display:none !important; }
+  /* [Finitions] Le shell mobile-first plafonne .app-root (contenu bloqué
+     ~810px après la sidebar) → pleine largeur, panneau fluide ≤1280px */
+  .app-root{ max-width:none !important; width:100% !important; box-shadow:none !important; }
+  /* .page est aussi plafonné à 760px (colonne de lecture du shell) */
+  main.page{ max-width:none !important; margin-right:0 !important; width:auto !important; }
+  .tab-panel{ max-width:1280px; margin-inline:auto; }
+  /* [Finitions] Header : accueil aligné sur la sidebar, contrôles uniformes
+     40px / rayon 10px / espacements réguliers */
+  header.app-bar{ padding:0 20px !important; gap:10px !important; }
+  header.app-bar > a:first-child,
+  header.app-bar .notif-bell,
+  header.app-bar #med-msg-link,
+  header.app-bar #user-pill,
+  header.app-bar button[aria-label="Se déconnecter"]{
+    width:40px !important; height:40px !important; border-radius:10px !important;
+    margin:0 !important;
+  }
+  header.app-bar [data-langbar], header.app-bar > div[data-langbar]{
+    display:flex; align-items:center; height:40px; margin:0 !important;
+  }
+  #tab-today{ display:flex; flex-direction:column; gap:20px; }
+  .today-hero{
+    margin-bottom:0 !important; border-radius:16px !important;
+    padding:28px 32px !important; box-shadow:0 10px 28px rgba(4,120,87,.16);
+  }
+  .today-hero > div:nth-child(1){ font-size:14px !important; }
+  .today-hero > div:nth-child(2){ font-size:28px !important; margin-top:6px !important; }
+  .today-hero > div:nth-child(3){ font-size:13px !important; }
+  .today-hero > div:nth-child(4){ margin-top:18px !important; gap:10px !important; }
+  .today-hero > div:nth-child(4) .btn{ white-space:nowrap; }
+  .today-kpis{
+    padding:0 !important; margin-bottom:0 !important;
+    grid-template-columns:repeat(4,1fr) !important; gap:16px !important;
+  }
+  .today-kpis .card{
+    padding:20px !important; border-radius:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05); transition:transform .15s, box-shadow .15s;
+  }
+  .today-kpis .card:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.08); }
+  .today-kpis .card > div:first-child{ font-size:30px !important; }
+  .today-kpis .card > div:last-child{ font-size:12px !important; margin-top:4px; }
+  .today-consults{ padding:0 !important; }
+  .today-consults > div:first-child > div:first-child{ font-size:16px !important; }
+  #today-list{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; align-items:start; }
+  #today-list > *:only-child{ grid-column:1 / -1; }
+  @media (prefers-reduced-motion:reduce){ .today-kpis .card{ transition:none; } }
 }
 </style>
 </head>
@@ -140,7 +198,7 @@
 
   <!-- ═════ AUJOURD'HUI ═════ -->
   <div id="tab-today" class="tab-panel active">
-    <div style="background:linear-gradient(135deg,#047857,#2E8B57);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
+    <div class="today-hero" style="background:linear-gradient(135deg,#047857,#2E8B57);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
       <div style="font-size:13px;opacity:.85" id="med-greet">Bonjour, Dr. <i class="fa fa-user-doctor"></i></div>
       <div style="font-size:22px;font-weight:800;margin-top:4px" id="med-name">--</div>
       <div style="font-size:12px;opacity:.85" id="med-spec-info">--</div>
@@ -152,13 +210,13 @@
         <a href="medecin-profile.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-eye" aria-hidden="true"></i> <span data-i18n="dd_menu_profile">Mon profil</span></a>
       </div>
     </div>
-    <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    <div class="today-kpis" style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="card" style="padding:12px;border-left:3px solid var(--blue)"><div id="kpi-today" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_today">RDV aujourd'hui</div></div>
       <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_month">Ce mois</div></div>
       <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">—</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_revenue">Revenus mois</div></div>
       <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">—</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_rating">Note moyenne</div></div>
     </div>
-    <div style="padding:0 16px">
+    <div class="today-consults" style="padding:0 16px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-size:14px;font-weight:700"><i class="fa fa-clock" style="color:var(--blue)"></i> <span data-i18n="dd_today_consults">Consultations du jour</span></div>
         <span class="badge badge-blue" id="today-count">0 RDV</span>
@@ -949,7 +1007,12 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     document.getElementById("menu-name").textContent=u.name||"";
     document.getElementById("menu-spec").textContent=(u.specialty||"")+" · "+(u.ville||"");
     document.getElementById("med-name").textContent=u.name||"Dr. --";
-    document.getElementById("med-spec-info").textContent=(u.specialty||"")+" · "+(u.ville||"");
+    (function(){ // [Finitions] pas de « · » orphelin quand spécialité/ville vides
+      var parts=[u.specialty,u.ville].filter(Boolean);
+      var el=document.getElementById("med-spec-info");
+      el.textContent=parts.join(" · ");
+      el.style.display=parts.length?"":"none";
+    })();
     // Salutations multilingues - fonction réutilisable au changement de langue
     window._refreshDoctorGreet = function() {
       const _t = (window.tabibiI18n && window.tabibiI18n.T) || (k=>({hello:'Bonjour',good_morning:'Bonjour, Dr.',good_afternoon:'Bon après-midi, Dr.',good_evening:'Bonsoir, Dr.'})[k]);
