@@ -22,9 +22,10 @@ PAGES="login.html forgot-password.html reset-password.html
 agenda-cabinet.html
 doctor-dashboard.html secretaire-dashboard.html
 medecin-ordonnance.html medecin-profile.html doctor-profile.html
-doctor-analytics.html medecin-waitinglist.html
+doctor-analytics.html medecin-waitinglist.html doctor-reservation.html
 messages.html conversation.html notifications.html
 offline.html 404.html"
+# ⚠ SYNC : refléter toute modif de cette liste dans js/tabibi-desktop-nav.js (PAGES)
 
 for f in $PAGES; do
   if [ -f "$ROOT/$f" ]; then

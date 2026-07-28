@@ -73,20 +73,31 @@
     }).join('');
   }
 
+  /* Navigation sûre : en desktop (Tauri), tabibi-desktop-nav remappe les
+     cibles hors bundle (index → agenda) ou neutralise. Web/mobile : direct. */
+  function go(href) {
+    if (window.tabibiDesktopNav) {
+      var s = window.tabibiDesktopNav.safeHref(href);
+      if (s === null) return;
+      href = s;
+    }
+    window.location.href = href;
+  }
+
   function tabClick(id, href) {
     if (id === 'carte') {
       if (typeof window.openMapOverlay === 'function') { window.openMapOverlay(); return; }
-      window.location.href = 'index.html#carte'; return;
+      go('index.html#carte'); return;
     }
     if (id === 'rdv' || id === 'profile') {
       if (typeof window.isLogged === 'function') {           // index : hooks inline présents
         if (!window.isLogged()) {
           if (typeof window.openModal === 'function') { window.openModal('login'); return; }
-          window.location.href = 'login.html'; return;
+          go('login.html'); return;
         }
         if (typeof window.goDash === 'function') { window.goDash(); return; }
       }
-      window.location.href = (id === 'rdv') ? 'mes-rdv.html' : 'login.html';
+      go((id === 'rdv') ? 'mes-rdv.html' : 'login.html');
       return;
     }
     if (href && href.indexOf('#') > -1) {
@@ -94,10 +105,10 @@
       var el = document.getElementById(anchor);
       if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       // Ancre absente de la page courante (sous-page) : naviguer vers la cible
-      if (href.charAt(0) !== '#') { window.location.href = href; return; }
+      if (href.charAt(0) !== '#') { go(href); return; }
       return;
     }
-    if (href && href !== '#') window.location.href = href;
+    if (href && href !== '#') go(href);
   }
 
   window.tabibiNav = { init: initTabBar };
