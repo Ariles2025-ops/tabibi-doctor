@@ -58,6 +58,27 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 .kpi-evo.down{color:#dc2626}
 .kpi-evo.same{color:#64748b} /* [FIX-DESIGN-2026-05-19] WCAG AA contrast */
 
+/* ═══ [Desktop] Le logiciel EST Tabibi Pro : pas d'upsell ═══ */
+html[data-platform="desktop"] .upsell{display:none !important}
+
+/* ═══ [Desktop ≥1024px] Poste de travail pleine largeur (sidebar via
+   js/tabibi-pro-sidebar.js). Mobile strictement inchangé. ═══ */
+@media (min-width:1024px){
+  .app-shell{max-width:none;margin:0;box-shadow:none;background:#f8fafc}
+  .hdr-inner{max-width:1180px;margin:0 auto;padding:18px 28px}
+  .container{max-width:1180px;margin:0 auto;padding:24px 28px 60px}
+  .kpis{grid-template-columns:repeat(4,1fr);gap:14px}
+  .kpi{padding:18px;border-radius:14px}
+  .kpi-num{font-size:30px}
+  .kpi-lbl{font-size:11px}
+  .tabs{max-width:420px}
+  .tab{font-size:12.5px}
+  /* Graphiques côte à côte */
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch}
+  .charts-row .card{margin-bottom:14px}
+  .card{border-radius:14px}
+}
+
 /* CARDS */
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0;overflow:hidden}
 .card h2{font-size:14px;font-weight:800;margin-bottom:14px;color:#0f172a;display:flex;align-items:center;gap:8px}
@@ -136,6 +157,8 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
     </div>
   </div>
 
+  <!-- [Desktop] .charts-row : côte à côte ≥1024px, empilés en mobile -->
+  <div class="charts-row">
   <div class="card">
     <h2><i class="fa fa-chart-column"></i> <span data-i18n="dan_chart_monthly">Évolution mensuelle des RDV</span></h2>
     <div class="chart-wrap">
@@ -150,6 +173,7 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
       <div class="chart" id="chart-hours" style="height:120px"></div>
       <div class="chart-labels" id="chart-hours-labels"></div>
     </div>
+  </div>
   </div>
 
   <div class="card">
@@ -241,16 +265,45 @@ function switchPeriod(period, btn) {
 }
 
 let _curPeriod = "30j";
+
+// [FIX honnêteté] Évolution CALCULÉE depuis la série affichée (2e moitié
+// vs 1re moitié), au lieu des '+12%'/'+8%' codés en dur qui s'affichaient
+// même avec 0 RDV. null = pas assez de données → badge masqué.
+function evoFromSeries(series) {
+  if (!Array.isArray(series) || series.length < 4) return null;
+  const mid = series.length >> 1;
+  const a = series.slice(0, mid).reduce((x, y) => x + y, 0);
+  const b = series.slice(mid).reduce((x, y) => x + y, 0);
+  if (a <= 0) return null;
+  return Math.round(((b - a) / a) * 100);
+}
+function setEvo(id, pct) {
+  const el = document.getElementById(id);
+  if (pct === null) { el.style.display = 'none'; el.textContent = ''; return; }
+  el.style.display = '';
+  el.textContent = (pct >= 0 ? '+' : '') + pct + '% ' + _t('dan_on_period', 'sur la période');
+  el.classList.remove('up', 'down', 'same');
+  el.classList.add(pct > 0 ? 'up' : (pct < 0 ? 'down' : 'same'));
+}
+
 function loadPeriod(period) {
   _curPeriod = period;
   const d = DEMO[period];
   document.getElementById('kpi-rdv').textContent = d.rdv;
-  document.getElementById('kpi-rdv-evo').textContent = '+12% ' + _t('dan_vs_prev','vs période préc.');
+  setEvo('kpi-rdv-evo', d.rdv > 0 ? evoFromSeries(d.monthly) : null);
   document.getElementById('kpi-patients').textContent = d.patients;
-  document.getElementById('kpi-patients-evo').textContent = '+8% ' + _t('dan_vs_prev','vs période préc.');
+  // Pas de série patients par sous-période → pas de delta inventé.
+  setEvo('kpi-patients-evo', null);
   document.getElementById('kpi-note').textContent = d.note;
   document.getElementById('kpi-noshow').textContent = d.noshow + '%';
-  document.getElementById('kpi-noshow-evo').textContent = d.noshow > 10 ? '+2 '+_t('dan_pts_watch','pts (à surveiller)') : '-3 '+_t('dan_pts_ok','pts ✓');
+  // Qualitatif uniquement (les '+2/-3 pts' étaient inventés)
+  const nsEl = document.getElementById('kpi-noshow-evo');
+  if (d.rdv > 0) {
+    nsEl.style.display = '';
+    nsEl.textContent = d.noshow > 10 ? _t('dan_watch', 'à surveiller') : _t('dan_ok', 'maîtrisé ✓');
+    nsEl.classList.remove('up', 'down', 'same');
+    nsEl.classList.add(d.noshow > 10 ? 'down' : 'up');
+  } else { nsEl.style.display = 'none'; }
 
   // Chart mensuel
   let labels;
@@ -296,5 +349,6 @@ document.addEventListener('DOMContentLoaded', function(){ try { loadPeriod(_curP
 <script src="js/tabibi-i18n.js"></script>
 <!-- [i18n] sélecteur de langue factorisé -->
 <script src="js/tabibi-langbar.js"></script>
+<script src="js/tabibi-pro-sidebar.js"></script>
 </body>
 </html>
