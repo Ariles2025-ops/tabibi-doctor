@@ -17,7 +17,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 ## Sécurité — état à jour (NE PAS refaire)
 Ces points sont **déjà réglés et prouvés** (session du 26 juil 2026). Ne les re-propose pas :
 - **CRIT-4** : `doctor_profiles` verrouillé — `REVOKE SELECT FROM anon` appliqué. Les listings publics passent par la vue `public_doctors`. La table `doctor_profiles_backup_*` a été supprimée (DROP).
-- **CRIT-5** : captcha Turnstile enforced côté serveur + confirmation email active. Nouvelle site key dans `js/config.js` : `0x4AAAAAAD-ME0-lvt6sDHQo`.
+- **CRIT-5** : captcha Turnstile enforced côté serveur + confirmation email active. Nouvelle site key dans `js/config.js` : `0x4AAAAAADR6IhCWO9RLIipE`.
 - **CRIT-1** : isolation RLS cross-user prouvée (aucune fuite). Les 94 policies scopent par `auth.uid()`.
 - **Hardening** : leaked passwords (HIBP) ON, longueur mini 8, comptes anonymes OFF, branche `main` protégée.
 - Intégration GitHub App "Cloudflare Workers and Pages" désinstallée (les ❌ Workers passés étaient parasites).
