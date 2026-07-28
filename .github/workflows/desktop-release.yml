@@ -1,0 +1,60 @@
+# =====================================================================
+# Tabibi Pro Desktop — build des installateurs à chaque tag desktop-v*
+# ---------------------------------------------------------------------
+# Produit une Release GitHub (brouillon) avec :
+#   • macOS  : .dmg + .app  (runner macos-latest, Apple Silicon)
+#   • Windows: .exe (NSIS) + .msi  (runner windows-latest)
+# Usage :  git tag desktop-v0.1.0 && git push origin desktop-v0.1.0
+# Le brouillon de release est à publier manuellement (validation humaine,
+# règle projet : rien ne part en prod sans approbation).
+#
+# NOTE signature : builds NON signés pour l'instant (macOS affichera
+# l'avertissement Gatekeeper, Windows le SmartScreen). Certificats à
+# ajouter plus tard via les secrets TAURI_SIGNING_*.
+# =====================================================================
+name: desktop-release
+
+on:
+  push:
+    tags:
+      - 'desktop-v*'
+
+jobs:
+  build:
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest      # .app + .dmg (aarch64)
+            args: ''
+          - platform: windows-latest    # .exe NSIS + .msi
+            args: ''
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Toolchain Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/src-tauri
+
+      # Le beforeBuildCommand (sh desktop/build-dist.sh) construit la
+      # LISTE BLANCHE pro et échoue si seo//apk/page patient s'y glisse.
+      # `sh` est disponible sur les runners Windows via Git Bash.
+      - name: Build + bundle Tauri
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: desktop/src-tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Tabibi Pro ${{ github.ref_name }}'
+          releaseBody: 'Installateurs Tabibi Pro (agenda cabinet). Build non signé — voir NOTE signature dans le workflow.'
+          releaseDraft: true
+          prerelease: false
+          args: ${{ matrix.args }}

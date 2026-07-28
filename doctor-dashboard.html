@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
 <script src="js/tabibi-avatar.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <!-- SEO -->
@@ -76,6 +76,18 @@
   #tab-patients #patients-list{
     display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px;
   }
+  /* [Polish] Onglet Profil : carte centrée + VRAIS boutons (les .btn-full
+     étirés sur 1400px rendaient des bandelettes fines illisibles) */
+  #tab-profile .card{ max-width:520px; margin:0 auto; padding:32px 28px; }
+  #tab-profile .card > div:last-child{ gap:10px; }
+  #tab-profile .btn{
+    min-height:50px; font-size:14.5px; padding:0 20px;
+    display:flex; align-items:center; justify-content:flex-start; gap:14px;
+    border-radius:12px; transition:transform .12s, box-shadow .12s, filter .12s;
+  }
+  #tab-profile .btn i{ width:22px; text-align:center; font-size:16px; }
+  #tab-profile .btn:hover{ transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.08); filter:brightness(.98); }
+  #tab-profile .btn-success, #tab-profile .btn-danger{ justify-content:center; }
 }
 </style>
 </head>
@@ -116,6 +128,8 @@
 <div class="dash-tabs" style="position:sticky;top:var(--nav-h);z-index:150;background:#fff;border-bottom:1px solid var(--border)">
   <button class="dash-tab active" onclick="sw('today',this)"><i class="fa fa-clock"></i> <span data-i18n="tab_today">Aujourd'hui</span></button>
   <button class="dash-tab" onclick="sw('agenda',this)"><i class="fa fa-calendar-week"></i> <span data-i18n="tab_agenda">Agenda</span></button>
+  <!-- [Phase 3] Vue semaine complète (poste de travail) -->
+  <button class="dash-tab" onclick="location.href='agenda-cabinet.html'"><i class="fa fa-table-columns"></i> <span data-i18n="tab_agenda_cabinet">Agenda cabinet</span></button>
   <button class="dash-tab" onclick="sw('rdv',this)"><i class="fa fa-list"></i> <span data-i18n="tab_rdv">RDV</span></button>
   <button class="dash-tab" onclick="sw('patients',this)"><i class="fa fa-users"></i> <span data-i18n="tab_patients">Patients</span></button>
   <button class="dash-tab" onclick="location.href='doctor-analytics.html'"><i class="fa fa-chart-line"></i> <span data-i18n="tab_stats">Stats</span></button>
