@@ -100,6 +100,26 @@
   /* Poste de travail : le bandeau bêta (sticky 55px) décalait la sidebar
      fixe derrière le header — masqué ≥1024px (conservé sur mobile/web patient) */
   #tabibi-beta-banner{ display:none !important; }
+  /* [Finitions] Le shell mobile-first plafonne .app-root (contenu bloqué
+     ~810px après la sidebar) → pleine largeur, panneau fluide ≤1280px */
+  .app-root{ max-width:none !important; width:100% !important; box-shadow:none !important; }
+  /* .page est aussi plafonné à 760px (colonne de lecture du shell) */
+  main.page{ max-width:none !important; margin-right:0 !important; width:auto !important; }
+  .tab-panel{ max-width:1280px; margin-inline:auto; }
+  /* [Finitions] Header : accueil aligné sur la sidebar, contrôles uniformes
+     40px / rayon 10px / espacements réguliers */
+  header.app-bar{ padding:0 20px !important; gap:10px !important; }
+  header.app-bar > a:first-child,
+  header.app-bar .notif-bell,
+  header.app-bar #med-msg-link,
+  header.app-bar #user-pill,
+  header.app-bar button[aria-label="Se déconnecter"]{
+    width:40px !important; height:40px !important; border-radius:10px !important;
+    margin:0 !important;
+  }
+  header.app-bar [data-langbar], header.app-bar > div[data-langbar]{
+    display:flex; align-items:center; height:40px; margin:0 !important;
+  }
   #tab-today{ display:flex; flex-direction:column; gap:20px; }
   .today-hero{
     margin-bottom:0 !important; border-radius:16px !important;
@@ -987,7 +1007,12 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     document.getElementById("menu-name").textContent=u.name||"";
     document.getElementById("menu-spec").textContent=(u.specialty||"")+" · "+(u.ville||"");
     document.getElementById("med-name").textContent=u.name||"Dr. --";
-    document.getElementById("med-spec-info").textContent=(u.specialty||"")+" · "+(u.ville||"");
+    (function(){ // [Finitions] pas de « · » orphelin quand spécialité/ville vides
+      var parts=[u.specialty,u.ville].filter(Boolean);
+      var el=document.getElementById("med-spec-info");
+      el.textContent=parts.join(" · ");
+      el.style.display=parts.length?"":"none";
+    })();
     // Salutations multilingues - fonction réutilisable au changement de langue
     window._refreshDoctorGreet = function() {
       const _t = (window.tabibiI18n && window.tabibiI18n.T) || (k=>({hello:'Bonjour',good_morning:'Bonjour, Dr.',good_afternoon:'Bon après-midi, Dr.',good_evening:'Bonsoir, Dr.'})[k]);

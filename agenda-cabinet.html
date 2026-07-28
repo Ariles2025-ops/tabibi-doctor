@@ -114,6 +114,15 @@
 /* ── ≥1024px : sidebar fixe gauche + agenda large + panneau fixe droit ── */
 @media (min-width:1024px){
   #tabibi-beta-banner{ display:none !important; } /* poste de travail sans bandeau bêta */
+  /* Header harmonisé (mêmes règles que doctor-dashboard) */
+  header.app-bar{ padding:0 20px !important; gap:10px !important; }
+  header.app-bar > a:first-child,
+  header.app-bar button[aria-label="Se déconnecter"]{
+    width:40px !important; height:40px !important; border-radius:10px !important; margin:0 !important;
+  }
+  header.app-bar [data-langbar], header.app-bar > div[data-langbar]{
+    display:flex; align-items:center; height:40px; margin:0 !important;
+  }
   /* Le shell partagé plafonne .app-root à 1100px (mobile-first) :
      un poste de travail occupe tout l'écran — override scoppé à cette page. */
   .app-root{ max-width:none !important; width:100% !important; }
