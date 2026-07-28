@@ -99,7 +99,11 @@
 
   /* ── Chargement par mode ────────────────────────────────────────── */
   function resolveMode() {
-    if (/[?&]demo=1/.test(location.search)) { S.mode = 'demo'; return Promise.resolve(); }
+    // ?demo=1 : démos pré-launch WEB uniquement. Jamais dans l'app Tauri —
+    // le poste de travail ne doit servir que des données réelles.
+    if (/[?&]demo=1/.test(location.search) && window.TABIBI_PLATFORM !== 'desktop') {
+      S.mode = 'demo'; return Promise.resolve();
+    }
     var c = sb();
     if (!c) return Promise.reject(new Error('supabase indisponible'));
     return c.auth.getSession().then(function (r) {
