@@ -5,8 +5,8 @@
   "identifier": "doctor.tabibi.pro",
   "build": {
     "frontendDist": "../dist",
-    "beforeDevCommand": "sh ../build-dist.sh",
-    "beforeBuildCommand": "sh ../build-dist.sh"
+    "beforeDevCommand": "sh build-dist.sh",
+    "beforeBuildCommand": "sh build-dist.sh"
   },
   "app": {
     "withGlobalTauri": true,
