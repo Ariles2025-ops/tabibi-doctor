@@ -43,6 +43,7 @@
   var CSS =
     '.tbi-pro-sidebar{display:none}' +
     '@media (min-width:1024px){' +
+    'html.tbi-has-sidebar #tabibi-beta-banner{display:none !important}' +
       'html.tbi-has-sidebar .tbi-pro-sidebar{display:flex;flex-direction:column;gap:4px;position:fixed;' +
         'top:0;inset-inline-start:0;bottom:0;width:224px;z-index:150;background:#fff;' +
         'border-inline-end:1px solid var(--border,#e2e8f0);padding:16px 12px;overflow-y:auto}' +
