@@ -7,7 +7,8 @@
 
    SOURCES (lecture) :
    • cabinet_calendar_view       (mode cabinet — RLS secrétariat/cabinet)
-   • appointments (doctor_id=uid)(mode médecin solo — pattern doctor-dashboard)
+   • appointments — doctor_id = doctor_profiles.id (FK réelle ; requête
+     .in() couvrant aussi auth.uid pour d'éventuelles lignes legacy)
    • rpc get_my_doctor_profile   (working_hours JSONB + id doctor_profiles)
    • doctor_unavailable_slots    (mode médecin ; FK doctor_profiles.id —
      espace d'ids ≠ auth.uid(), d'où le passage par le profil)
@@ -70,6 +71,16 @@
   function startOfWeek(d) { var x = new Date(d); var day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); x.setHours(0, 0, 0, 0); return x; }
   function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
   function fmtDateISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+
+  /* ── Heure du CABINET : l'agenda affiche l'heure d'Alger (UTC+1 fixe,
+     pas de DST) quel que soit le fuseau de la machine. Un Mac en
+     Europe/Paris (été = UTC+2) décalait tout d'une heure. ───────────── */
+  var TZ = 'Africa/Algiers';
+  var _tzFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hourCycle: 'h23',
+    year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+  function tzParts(d) { var p = {}; _tzFmt.formatToParts(d).forEach(function (x) { p[x.type] = x.value; }); return p; }
+  function tzDayIso(d) { var p = tzParts(d); return p.year + '-' + p.month + '-' + p.day; }
+  function tzMin(d) { var p = tzParts(d); return (+p.hour) * 60 + (+p.minute); }
   function fmtHM(mins) { return String(Math.floor(mins / 60)).padStart(2, '0') + ':' + String(mins % 60).padStart(2, '0'); }
   function hmToMin(hm) { var p = String(hm || '').split(':'); return (parseInt(p[0], 10) || 0) * 60 + (parseInt(p[1], 10) || 0); }
   var DAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']; // ordre colonnes lun→dim
@@ -159,8 +170,13 @@
         }));
       S.unavail = []; // FK doctor_profiles.id non exposée par la vue cabinet → couche omise en mode cabinet (MVP)
     } else {
+      // [FIX données] La FK réelle est appointments.doctor_id → doctor_profiles.id
+      // (prouvé par le seed : l'insert n'est passé qu'avec l'id de fiche).
+      // On interroge les DEUX espaces d'ids (fiche + auth.uid) pour couvrir
+      // d'éventuelles lignes legacy créées avec l'ancien pattern.
+      var docIds = [S.profile && S.profile.id, S.userId].filter(Boolean);
       jobs.push(c.from('appointments').select('*')
-        .eq('doctor_id', S.userId)
+        .in('doctor_id', docIds)
         .gte('starts_at', d0.toISOString()).lt('starts_at', d7.toISOString())
         .order('starts_at', { ascending: true })
         .then(function (r) {
@@ -199,8 +215,9 @@
                fri: [], sat: [] }; // semaine DZ : dim→jeu, week-end ven/sam
     S.profile = { working_hours: wh };
     var mk = function (dayIdx, hm, dur, status, patient, reason) {
-      var d = addDays(S.weekStart, dayIdx); var m = hmToMin(hm);
-      d.setHours(Math.floor(m / 60), m % 60, 0, 0);
+      var base = addDays(S.weekStart, dayIdx); var m = hmToMin(hm);
+      // Instant exact heure d'Alger (UTC+1 fixe, sans DST)
+      var d = new Date(Date.UTC(base.getFullYear(), base.getMonth(), base.getDate(), Math.floor(m / 60) - 1, m % 60, 0));
       return { id: 'demo-' + dayIdx + '-' + hm, start: d, durMin: dur, status: status,
                patient: patient, doctor: 'Dr Benali', phone: '0555 12 34 56', reason: reason };
     };
@@ -221,10 +238,9 @@
       mk(4, '09:00', 30, 'confirmed', 'W. Bouaziz', 'Suivi grossesse'),
       mk(4, '15:30', 30, 'pending', 'I. Khelifi', 'Consultation')
     ];
-    var u1s = addDays(S.weekStart, 2); u1s.setHours(14, 0, 0, 0);
-    var u1e = addDays(S.weekStart, 2); u1e.setHours(18, 0, 0, 0);
-    var u2s = addDays(S.weekStart, 4); u2s.setHours(11, 0, 0, 0);
-    var u2e = addDays(S.weekStart, 4); u2e.setHours(12, 0, 0, 0);
+    var alg = function (dayIdx, h) { var b = addDays(S.weekStart, dayIdx);
+      return new Date(Date.UTC(b.getFullYear(), b.getMonth(), b.getDate(), h - 1, 0, 0)); };
+    var u1s = alg(2, 14), u1e = alg(2, 18), u2s = alg(4, 11), u2e = alg(4, 12);
     S.unavail = [{ start: u1s, end: u1e, reason: 'Congrès' }, { start: u2s, end: u2e, reason: 'Visite domicile' }];
     return Promise.resolve();
   }
@@ -243,7 +259,7 @@
       if (!any) { min = 8 * 60; max = 18 * 60; }
     }
     S.appts.forEach(function (a) {
-      var s = a.start.getHours() * 60 + a.start.getMinutes();
+      var s = tzMin(a.start);
       min = Math.min(min, Math.floor(s / 60) * 60);
       max = Math.max(max, Math.ceil((s + a.durMin) / 60) * 60);
     });
@@ -278,7 +294,7 @@
     html += '</div>';
 
     var wh = S.profile && S.profile.working_hours;
-    var now = new Date(); var nowMin = now.getHours() * 60 + now.getMinutes();
+    var now = new Date(); var nowMin = tzMin(now); var nowIso = tzDayIso(now);
 
     for (i = 0; i < 7; i++) {
       d = addDays(S.weekStart, i);
@@ -297,18 +313,18 @@
       }
       // Indisponibilités hachurées
       S.unavail.forEach(function (u) {
-        if (fmtDateISO(u.start) > dayIso || fmtDateISO(u.end) < dayIso) return;
-        var a = (fmtDateISO(u.start) === dayIso) ? (u.start.getHours() * 60 + u.start.getMinutes()) : m0;
-        var b = (fmtDateISO(u.end) === dayIso) ? (u.end.getHours() * 60 + u.end.getMinutes()) : m1;
+        if (tzDayIso(u.start) > dayIso || tzDayIso(u.end) < dayIso) return;
+        var a = (tzDayIso(u.start) === dayIso) ? tzMin(u.start) : m0;
+        var b = (tzDayIso(u.end) === dayIso) ? tzMin(u.end) : m1;
         a = Math.max(a, m0); b = Math.min(b, m1);
         if (b > a) html += '<div class="ag-block" style="top:' + ((a - m0) * px) + 'px;height:' + ((b - a) * px) + 'px" title="' + esc(t('ag_unavailable') + (u.reason ? ' — ' + u.reason : '')) + '"><span>' + esc(u.reason || t('ag_unavailable')) + '</span></div>';
       });
       // RDV du jour (clusters de chevauchement → colonnes côte à côte)
-      var dayAppts = S.appts.filter(function (a) { return fmtDateISO(a.start) === dayIso; });
+      var dayAppts = S.appts.filter(function (a) { return tzDayIso(a.start) === dayIso; });
       var placed = layoutDay(dayAppts);
       placed.forEach(function (pl) {
         var a = pl.appt;
-        var sMin = a.start.getHours() * 60 + a.start.getMinutes();
+        var sMin = tzMin(a.start);
         var top = (Math.max(sMin, m0) - m0) * px;
         var h = Math.max(a.durMin * px, 20);
         var wPct = 100 / pl.cols, xPct = pl.col * wPct;
@@ -319,7 +335,7 @@
           '</button>';
       });
       // Ligne "maintenant"
-      if (dayIso === todayIso && nowMin >= m0 && nowMin <= m1) {
+      if (dayIso === nowIso && nowMin >= m0 && nowMin <= m1) {
         html += '<div class="ag-now" style="top:' + ((nowMin - m0) * px) + 'px"></div>';
       }
       html += '</div>';
@@ -375,9 +391,9 @@
     var a = S.appts.filter(function (x) { return String(x.id) === String(id); })[0];
     var box = document.getElementById('ag-detail'); if (!box) return;
     if (!a) { box.hidden = true; render(); return; }
-    var sMin = a.start.getHours() * 60 + a.start.getMinutes();
+    var sMin = tzMin(a.start);
     var L = lang();
-    var fmtD = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { weekday: 'long', day: 'numeric', month: 'long' });
+    var fmtD = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { timeZone: TZ, weekday: 'long', day: 'numeric', month: 'long' });
     box.hidden = false;
     box.innerHTML =
       '<div class="ag-card">' +

@@ -135,16 +135,17 @@ BEGIN
           'TEST — Congrès');
   RAISE NOTICE '✓ 1 indisponibilité (mer 14:00–18:00)';
 
-  -- ── 6. 7 RDV cette semaine (heure d''Alger, sans chevauchement) ──────
+  -- ── 6. 7 RDV cette semaine (heure d''Alger, sans chevauchement).
+  --    doctor_id = v_profile : FK réelle appointments.doctor_id → doctor_profiles.id ──
   INSERT INTO public.appointments (patient_id, doctor_id, scheduled_at, duration_minutes, reason, status)
   VALUES
-    (v_pat_uid, v_doc_uid, ((v_mon + 0)::timestamp + time '09:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Consultation',      'confirmed'),
-    (v_pat_uid, v_doc_uid, ((v_mon + 0)::timestamp + time '10:00') AT TIME ZONE 'Africa/Algiers', 45, 'TEST Première visite',   'pending'),
-    (v_pat_uid, v_doc_uid, ((v_mon + 1)::timestamp + time '08:30') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Suivi tension',     'confirmed'),
-    (v_pat_uid, v_doc_uid, ((v_mon + 1)::timestamp + time '11:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Annulé',            'cancelled'),
-    (v_pat_uid, v_doc_uid, ((v_mon + 2)::timestamp + time '09:30') AT TIME ZONE 'Africa/Algiers', 60, 'TEST ECG',               'confirmed'),
-    (v_pat_uid, v_doc_uid, ((v_mon + 3)::timestamp + time '14:30') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Certificat',        'pending'),
-    (v_pat_uid, v_doc_uid, ((v_mon + 6)::timestamp + time '10:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Dimanche matin',    'confirmed');
+    (v_pat_uid, v_profile, ((v_mon + 0)::timestamp + time '09:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Consultation',      'confirmed'),
+    (v_pat_uid, v_profile, ((v_mon + 0)::timestamp + time '10:00') AT TIME ZONE 'Africa/Algiers', 45, 'TEST Première visite',   'pending'),
+    (v_pat_uid, v_profile, ((v_mon + 1)::timestamp + time '08:30') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Suivi tension',     'confirmed'),
+    (v_pat_uid, v_profile, ((v_mon + 1)::timestamp + time '11:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Annulé',            'cancelled'),
+    (v_pat_uid, v_profile, ((v_mon + 2)::timestamp + time '09:30') AT TIME ZONE 'Africa/Algiers', 60, 'TEST ECG',               'confirmed'),
+    (v_pat_uid, v_profile, ((v_mon + 3)::timestamp + time '14:30') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Certificat',        'pending'),
+    (v_pat_uid, v_profile, ((v_mon + 6)::timestamp + time '10:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Dimanche matin',    'confirmed');
   RAISE NOTICE '✓ 7 appointments TEST posés (lun, mar, mer, jeu, dim)';
 
   RAISE NOTICE '════ SEED OK — connexion : +213555000000 / TabibiTest#2026 ════';
@@ -154,7 +155,7 @@ END $$;
 -- ── VÉRIFICATION (lecture seule) ──────────────────────────────────────
 SELECT u.phone, pu.role, pu.status, dp.full_name, dp.validation_status,
        dp.is_active, (dp.working_hours IS NOT NULL) AS wh_ok,
-       (SELECT count(*) FROM appointments a WHERE a.doctor_id = u.id) AS nb_rdv
+       (SELECT count(*) FROM appointments a WHERE a.doctor_id = dp.id) AS nb_rdv
   FROM auth.users u
   JOIN public.users pu ON pu.id = u.id
   LEFT JOIN doctor_profiles dp ON dp.user_id = u.id
