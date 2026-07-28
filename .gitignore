@@ -95,3 +95,8 @@ www/
 scripts/otp-spike.sh
 migrations/TEST_booking_e2e.sql
 android/**/*.disabled
+
+# [Phase 3] Artefacts de build desktop Tauri
+desktop/dist/
+desktop/src-tauri/target/
+desktop/src-tauri/gen/
