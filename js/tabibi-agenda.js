@@ -31,21 +31,30 @@
           ag_patient:'Patient', ag_doctor:'Médecin', ag_reason:'Motif', ag_phone:'Téléphone',
           ag_status_pending:'En attente', ag_status_confirmed:'Confirmé', ag_status_cancelled:'Annulé', ag_status_completed:'Terminé',
           ag_unavailable:'Indisponible', ag_work:'Horaires d’ouverture', ag_empty:'Aucun RDV cette semaine.',
-          ag_cancel_ask:'Annuler ce rendez-vous ?', ag_err:'Erreur de chargement : ', ag_updated:'Statut mis à jour.' },
+          ag_cancel_ask:'Annuler ce rendez-vous ?', ag_err:'Erreur de chargement : ', ag_updated:'Statut mis à jour.',
+          ag_detail_title:'Détail RDV', ag_select:'Sélectionnez un rendez-vous dans l’agenda',
+          ag_nav_agenda:'Agenda', ag_nav_dash:'Tableau de bord', ag_nav_rx:'Ordonnances',
+          ag_nav_msg:'Messages', ag_nav_notif:'Notifications', ag_nav_profile:'Mon profil', ag_nav_logout:'Déconnexion' },
     ar: { ag_title:'أجندة العيادة', ag_today:'اليوم', ag_all_doctors:'كل الأطباء',
           ag_loading:'جارٍ التحميل…', ag_no_session:'تسجيل الدخول مطلوب', ag_demo:'بيانات تجريبية — دون اتصال بقاعدة البيانات',
           ag_confirm:'تأكيد', ag_cancel:'إلغاء الموعد', ag_close:'إغلاق', ag_min:'د',
           ag_patient:'المريض', ag_doctor:'الطبيب', ag_reason:'السبب', ag_phone:'الهاتف',
           ag_status_pending:'قيد الانتظار', ag_status_confirmed:'مؤكد', ag_status_cancelled:'ملغى', ag_status_completed:'منتهي',
           ag_unavailable:'غير متاح', ag_work:'أوقات العمل', ag_empty:'لا مواعيد هذا الأسبوع.',
-          ag_cancel_ask:'إلغاء هذا الموعد؟', ag_err:'خطأ في التحميل: ', ag_updated:'تم تحديث الحالة.' },
+          ag_cancel_ask:'إلغاء هذا الموعد؟', ag_err:'خطأ في التحميل: ', ag_updated:'تم تحديث الحالة.',
+          ag_detail_title:'تفاصيل الموعد', ag_select:'اختر موعدًا من الأجندة',
+          ag_nav_agenda:'الأجندة', ag_nav_dash:'لوحة القيادة', ag_nav_rx:'الوصفات',
+          ag_nav_msg:'الرسائل', ag_nav_notif:'الإشعارات', ag_nav_profile:'ملفي', ag_nav_logout:'تسجيل الخروج' },
     en: { ag_title:'Practice agenda', ag_today:'Today', ag_all_doctors:'All doctors',
           ag_loading:'Loading…', ag_no_session:'Sign-in required', ag_demo:'DEMO DATA — no database connection',
           ag_confirm:'Confirm', ag_cancel:'Cancel appointment', ag_close:'Close', ag_min:'min',
           ag_patient:'Patient', ag_doctor:'Doctor', ag_reason:'Reason', ag_phone:'Phone',
           ag_status_pending:'Pending', ag_status_confirmed:'Confirmed', ag_status_cancelled:'Cancelled', ag_status_completed:'Completed',
           ag_unavailable:'Unavailable', ag_work:'Opening hours', ag_empty:'No appointments this week.',
-          ag_cancel_ask:'Cancel this appointment?', ag_err:'Loading error: ', ag_updated:'Status updated.' }
+          ag_cancel_ask:'Cancel this appointment?', ag_err:'Loading error: ', ag_updated:'Status updated.',
+          ag_detail_title:'Appointment', ag_select:'Select an appointment in the agenda',
+          ag_nav_agenda:'Agenda', ag_nav_dash:'Dashboard', ag_nav_rx:'Prescriptions',
+          ag_nav_msg:'Messages', ag_nav_notif:'Notifications', ag_nav_profile:'My profile', ag_nav_logout:'Sign out' }
   };
   function lang() {
     try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) {}
@@ -367,19 +376,27 @@
     var box = document.getElementById('ag-detail'); if (!box) return;
     if (!a) { box.hidden = true; render(); return; }
     var sMin = a.start.getHours() * 60 + a.start.getMinutes();
+    var L = lang();
+    var fmtD = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { weekday: 'long', day: 'numeric', month: 'long' });
     box.hidden = false;
     box.innerHTML =
-      '<div class="ag-d-main">' +
-        '<span class="status-pill ' + esc(a.status) + '">' + esc(statusLabel(a.status)) + '</span>' +
-        '<strong>' + esc(a.patient) + '</strong>' +
-        '<span>' + fmtHM(sMin) + ' · ' + a.durMin + ' ' + t('ag_min') + (a.doctor ? ' · ' + esc(a.doctor) : '') + '</span>' +
-        (a.reason ? '<span class="ag-d-reason"><i class="fa fa-tag"></i> ' + esc(a.reason) + '</span>' : '') +
-        (a.phone ? '<span><i class="fa fa-phone"></i> ' + esc(a.phone) + '</span>' : '') +
-      '</div>' +
-      '<div class="ag-d-actions">' +
-        (a.status === 'pending' ? '<button class="btn" style="background:#0F7560;color:#fff" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'confirmed\')"><i class="fa fa-check"></i> ' + t('ag_confirm') + '</button>' : '') +
-        (a.status !== 'cancelled' && a.status !== 'completed' ? '<button class="btn" style="background:#fff0f0;color:#D21010" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'cancelled\')"><i class="fa fa-times"></i> ' + t('ag_cancel') + '</button>' : '') +
-        '<button class="btn btn-ghost" onclick="tabibiAgenda.closeDetail()">' + t('ag_close') + '</button>' +
+      '<div class="ag-card">' +
+        '<div class="ag-card-top">' +
+          '<span class="status-pill ' + esc(a.status) + '">' + esc(statusLabel(a.status)) + '</span>' +
+          '<span class="ag-card-when"><bdi>' + fmtHM(sMin) + '</bdi> · ' + a.durMin + ' ' + t('ag_min') + '</span>' +
+        '</div>' +
+        '<div class="ag-card-name">' + esc(a.patient) + '</div>' +
+        '<div style="font-size:12px;color:var(--text3)">' + esc(fmtD.format(a.start)) + '</div>' +
+        '<div class="ag-card-rows">' +
+          (a.doctor ? '<div class="r"><i class="fa fa-user-doctor"></i> ' + esc(a.doctor) + '</div>' : '') +
+          (a.reason ? '<div class="r"><i class="fa fa-tag"></i> ' + esc(a.reason) + '</div>' : '') +
+          (a.phone ? '<div class="r"><i class="fa fa-phone"></i> <bdi>' + esc(a.phone) + '</bdi></div>' : '') +
+        '</div>' +
+        '<div class="ag-card-actions">' +
+          (a.status === 'pending' ? '<button class="btn" style="background:#0F7560;color:#fff" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'confirmed\')"><i class="fa fa-check"></i> ' + t('ag_confirm') + '</button>' : '') +
+          (a.status !== 'cancelled' && a.status !== 'completed' ? '<button class="btn" style="background:#fff0f0;color:#D21010" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'cancelled\')"><i class="fa fa-times"></i> ' + t('ag_cancel') + '</button>' : '') +
+          '<button class="btn btn-ghost" onclick="tabibiAgenda.closeDetail()">' + t('ag_close') + '</button>' +
+        '</div>' +
       '</div>';
     render();
   }
