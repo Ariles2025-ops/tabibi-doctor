@@ -9,21 +9,13 @@
 // Turnstile). Trade-off assumé : les pages statiques pro sont visibles
 // par les processus locaux sur ce port (aucun secret ; les jetons de
 // session restent dans le localStorage de la WebView).
-// `diag_log` : canal de diagnostic WebView → stderr (binaire lancé au
-// terminal ; no-op sinon).
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 const PORT: u16 = 17423;
 
-#[tauri::command]
-fn diag_log(msg: String) {
-    eprintln!("[TABIBI-DIAG] {msg}");
-}
-
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_localhost::Builder::new(PORT).build())
-        .invoke_handler(tauri::generate_handler![diag_log])
         .setup(|app| {
             let url: tauri::Url = format!("http://localhost:{PORT}/login.html").parse()?;
             tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::External(url))

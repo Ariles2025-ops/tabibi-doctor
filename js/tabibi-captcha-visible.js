@@ -15,8 +15,8 @@
      token du widget visible (attend jusqu'à 8 s la résolution auto ou
      le clic), puis reset le widget (token à usage unique). AUCUNE
      modification des 4 flux appelants (login, reset OTP ×2, forgot).
-   • Émet des événements 'tabibi:captcha' {detail:{ev,info}} — relayés
-     vers stderr par tabibi-desktop-diag.js pour preuve en fenêtre réelle.
+   • Émet des événements 'tabibi:captcha' {detail:{ev,info}} pour
+     l'observabilité (écoutables par la page si besoin).
    ============================================================ */
 (function () {
   'use strict';
