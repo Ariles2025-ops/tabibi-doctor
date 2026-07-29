@@ -6,7 +6,8 @@
 -- Cible   : Supabase EU pudugodhiofqrctcdwfl — SQL Editor (rôle postgres)
 --
 -- CE QUE ÇA CRÉE (100 % isolé, AUCUNE vraie donnée touchée) :
---   • auth.users  Dr TEST   téléphone +213555000000 · mdp TabibiTest#2026
+--   • auth.users  Dr TEST   téléphone +213555000000 · mdp <MDP_TEST>
+--     (valeur réelle hors repo — voir gestionnaire de mots de passe)
 --   • auth.users  patient TEST +213555000001 (cible des RDV, non connectable
 --     depuis l'app : mdp aléatoire non communiqué)
 --   • public.users (rôles medecin/patient — le trigger signup les crée,
@@ -37,7 +38,8 @@ DECLARE
   v_pat_uid   uuid := gen_random_uuid();
   v_doc_phone text := '213555000000';          -- GoTrue stocke SANS le « + »
   v_pat_phone text := '213555000001';
-  v_doc_pass  text := 'TabibiTest#2026';
+  -- valeur réelle hors repo : remplacer <MDP_TEST> avant exécution (jamais commiter le mdp)
+  v_doc_pass  text := '<MDP_TEST>';
   v_profile   uuid;
   -- Lundi de la semaine courante, heure d'Alger
   v_mon       date := (date_trunc('week', (now() AT TIME ZONE 'Africa/Algiers')))::date;
@@ -148,7 +150,7 @@ BEGIN
     (v_pat_uid, v_profile, ((v_mon + 6)::timestamp + time '10:00') AT TIME ZONE 'Africa/Algiers', 30, 'TEST Dimanche matin',    'confirmed');
   RAISE NOTICE '✓ 7 appointments TEST posés (lun, mar, mer, jeu, dim)';
 
-  RAISE NOTICE '════ SEED OK — connexion : +213555000000 / TabibiTest#2026 ════';
+  RAISE NOTICE '════ SEED OK — connexion : +213555000000 / <MDP_TEST> (valeur réelle hors repo) ════';
 END $$;
 
 
