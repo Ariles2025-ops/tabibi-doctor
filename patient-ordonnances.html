@@ -229,6 +229,20 @@
     return '<span class="status draft">' + escapeHtml(T('po_status_draft', 'Brouillon')) + '</span>';
   }
 
+  // [FLAG prescriptions] Traçage de délivrance : la RPC
+  // mark_prescription_delivered est absente de la prod (docs/RPC_INVENTORY.md).
+  // On l'ignore quand la feature est OFF — le téléchargement et le partage,
+  // eux, fonctionnent (storage + URL signée) et ne doivent pas être bloqués.
+  // Appel best-effort : une erreur de traçage ne doit jamais faire échouer
+  // l'action réelle de l'utilisateur.
+  async function trackDelivery(prescriptionId, channel) {
+    if (window.TABIBI_FEATURES && !window.TABIBI_FEATURES.prescriptions) return;
+    try {
+      await window.tabibi.supabase.rpc('mark_prescription_delivered',
+        { p_prescription_id: prescriptionId, p_channel: channel });
+    } catch (e) { /* traçage non bloquant */ }
+  }
+
   async function downloadPdf(prescriptionId) {
     const supa = window.tabibi.supabase;
     try {
@@ -238,7 +252,7 @@
       if (error) throw error;
 
       window.open(data.signedUrl, '_blank', 'noopener');
-      await supa.rpc('mark_prescription_delivered', { p_prescription_id: prescriptionId, p_channel: 'download' });
+      await trackDelivery(prescriptionId, 'download');
     } catch (e) {
       console.error(e);
       showToast(T('po_download_error', 'Erreur telechargement'), 'err');
@@ -253,7 +267,7 @@
       const { data } = await supa.storage.from('prescriptions').createSignedUrl(presc.pdf_storage_path, 60 * 60 * 24);
       const text = encodeURIComponent(`Ordonnance ${presc.prescription_number} de ${doctorName} via Tabibi : ${data.signedUrl}`);
       window.open(`https://wa.me/?text=${text}`, '_blank', 'noopener');
-      await supa.rpc('mark_prescription_delivered', { p_prescription_id: prescriptionId, p_channel: 'whatsapp' });
+      await trackDelivery(prescriptionId, 'whatsapp');
     } catch (e) {
       console.error(e);
       showToast(T('po_share_error', 'Erreur partage'), 'err');
@@ -416,6 +430,7 @@
 </script>
 
 <!-- [i18n] moteur (absent de cette page à l'origine) + sélecteur factorisé -->
+<script src="js/tabibi-features.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
 <script src="js/tabibi-langbar.js"></script>
