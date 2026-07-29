@@ -10,21 +10,28 @@
 // CHAÎNE : sélection des RDV dus → réservation d'une ligne outbox
 //   (appointment_notifications) → envoi BudgetSMS → mise à jour du statut.
 //
-// ANTI-DOUBLON : la ligne outbox est insérée AVANT l'envoi. L'index
-//   UNIQUE (appointment_id, kind) fait échouer toute seconde tentative
-//   (code Postgres 23505) → on saute le RDV. Deux exécutions concurrentes
-//   du cron ne peuvent donc pas envoyer deux fois le même rappel.
+// FENÊTRE — [now+1h, now+24h], PAS une tranche étroite autour de J-1 :
+//   tout RDV confirmé des 24 prochaines heures qui n'a pas encore de
+//   ligne `j1` est éligible. Conséquence voulue : un RDV non traité
+//   (heures calmes, run raté, déploiement) est RATTRAPÉ au run suivant.
+//   La borne basse de 1h évite d'écrire à quelqu'un qui part déjà.
+//
+// ANTI-DOUBLON : sur un envoi RÉEL, la ligne outbox est insérée AVANT
+//   l'appel BudgetSMS. L'index UNIQUE (appointment_id, kind) fait échouer
+//   toute seconde tentative (code Postgres 23505) → le RDV est sauté.
+//   Deux exécutions concurrentes du cron ne peuvent pas envoyer deux fois.
+//
+// ÉCRITURES — la fonction n'écrit QUE lorsqu'elle envoie vraiment :
+//   • dry_run=true      → AUCUN INSERT, retourne candidates + échantillon
+//   • heures calmes     → AUCUN INSERT, sortie immédiate
+//   • numéro invalide   → AUCUN INSERT (le RDV reste éligible si le
+//                         patient corrige son numéro)
+//   Le slot unique (appointment_id,'j1') n'est donc jamais consommé par
+//   autre chose qu'un envoi réel : un dry-run ne « brûle » aucun rappel.
 //
 // SÉCURITÉ : header `x-reminders-secret` obligatoire (comparé à
 //   REMINDERS_CRON_SECRET), sinon 401. Aucun secret en dur : tout vient
 //   de Deno.env. Le service_role ne quitte jamais la fonction.
-//
-// ⚠️ LIMITE CONNUE (à trancher avant d'activer le cron) : la fenêtre est
-//   fixée à [now+23h, now+25h] et les envois sont suspendus de 21h à 08h
-//   (heure d'Alger). Un RDV de demain 20h-22h tombe donc dans une fenêtre
-//   qui n'est balayée que pendant les heures calmes → son rappel J-1 peut
-//   être manqué. Correctif possible au moment de l'activation : ajouter
-//   une passe de rattrapage (RDV < 25h sans ligne j1) au 1er run de 08h.
 // =====================================================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -32,6 +39,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 const BATCH_MAX = 200;          // plafond d'envois par exécution (garde-fou coût)
+const WINDOW_MIN_H = 1;         // borne basse : ne pas écrire à qui part déjà
+const WINDOW_MAX_H = 24;        // borne haute : tout RDV des 24 prochaines heures
+const SAMPLE_MAX = 20;          // taille de l'échantillon renvoyé en dry_run
 const TZ = "Africa/Algiers";    // heure du cabinet (UTC+1 fixe, sans DST)
 const QUIET_FROM = 21;          // 21h00 → plus d'envoi
 const QUIET_TO = 8;             // 08h00 → reprise
@@ -129,7 +139,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ ok: true, skipped: "kill_switch", sent: 0 }), { status: 200, headers: JSON_HEADERS });
   }
 
-  // Heures calmes 21h-08h (Alger) : on ne réveille personne.
+  // Heures calmes 21h-08h (Alger) : on ne réveille personne. Sortie SANS
+  // aucune écriture → les RDV concernés restent éligibles et sont
+  // rattrapés par le premier run de 08h (fenêtre large, cf. en-tête).
   const nowHour = hourAlgiers(new Date());
   if (nowHour >= QUIET_FROM || nowHour < QUIET_TO) {
     return new Response(
@@ -147,9 +159,11 @@ Deno.serve(async (req) => {
   }
   const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-  // ── 4. RDV dus : confirmés, dans [now+23h, now+25h] ─────────────────
-  const from = new Date(Date.now() + 23 * 3600_000).toISOString();
-  const to = new Date(Date.now() + 25 * 3600_000).toISOString();
+  // ── 4. RDV dus : confirmés, dans [now+1h, now+24h] ──────────────────
+  // Fenêtre large (et non une tranche J-1 étroite) : c'est ce qui permet
+  // le rattrapage des RDV laissés de côté pendant les heures calmes.
+  const from = new Date(Date.now() + WINDOW_MIN_H * 3600_000).toISOString();
+  const to = new Date(Date.now() + WINDOW_MAX_H * 3600_000).toISOString();
 
   const { data: appts, error: apptErr } = await db
     .from("appointments")
@@ -200,28 +214,41 @@ Deno.serve(async (req) => {
   const BSMS_HANDLE = Deno.env.get("BSMS_HANDLE");
   const BSMS_FROM = Deno.env.get("BSMS_FROM") ?? "12345"; // sender NUMÉRIQUE (obligatoire en DZ)
 
-  if (!dryRun && (!BSMS_USER || !BSMS_USERID || !BSMS_HANDLE)) {
+  // ── 6a. DRY-RUN : lecture seule, AUCUNE écriture ────────────────────
+  // On ne touche pas à l'outbox : le slot unique (appointment_id,'j1')
+  // reste libre, donc le run réel qui suivra enverra bien ces rappels.
+  if (dryRun) {
+    const sample = todo.slice(0, SAMPLE_MAX).map((a) => {
+      const patient = pById.get(a.patient_id);
+      return {
+        appointment_id: a.id,
+        to_phone: normalizePhoneDZ(patient?.phone),
+        starts_at: a.starts_at,
+        lang: (patient?.locale ?? patient?.lang ?? patient?.preferred_language ?? "fr").toString().slice(0, 2),
+      };
+    });
+    return new Response(
+      JSON.stringify({ ok: true, dry_run: true, candidates: todo.length, sample }),
+      { status: 200, headers: JSON_HEADERS },
+    );
+  }
+
+  // ── 6b. ENVOI RÉEL ──────────────────────────────────────────────────
+  if (!BSMS_USER || !BSMS_USERID || !BSMS_HANDLE) {
     console.error("[reminders] identifiants BudgetSMS manquants");
     return new Response(JSON.stringify({ error: "sms provider not configured" }), { status: 500, headers: JSON_HEADERS });
   }
 
-  const summary = { candidates: todo.length, sent: 0, failed: 0, skipped: 0, no_phone: 0, duplicate: 0 };
+  const summary = { candidates: todo.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
 
   for (const a of todo) {
     const patient = pById.get(a.patient_id);
     const doctor = dById.get(a.doctor_id);
     const phone = normalizePhoneDZ(patient?.phone);
 
-    // Numéro inexploitable → on journalise en 'skipped' (trace explicite,
-    // et le slot unique est consommé : pas de retentative en boucle).
-    if (!phone) {
-      summary.no_phone++;
-      await db.from("appointment_notifications").insert({
-        appointment_id: a.id, kind: "j1", to_phone: null,
-        status: "skipped", error: "phone_invalid_or_missing",
-      });
-      continue;
-    }
+    // Numéro inexploitable : on ne consomme PAS le slot — si le patient
+    // corrige son numéro, le rappel partira au run suivant.
+    if (!phone) { summary.no_phone++; continue; }
 
     const lang = (patient?.locale ?? patient?.lang ?? patient?.preferred_language ?? "fr").toString().slice(0, 2);
     let message = tplReminderJ1({
@@ -232,14 +259,10 @@ Deno.serve(async (req) => {
     });
     if (message.length > SMS_MAX_LEN) message = message.substring(0, SMS_MAX_LEN);
 
-    // 6a. Réservation du slot AVANT l'envoi (verrou anti-doublon).
+    // (a) Réservation du slot AVANT l'envoi = verrou anti-doublon.
     const { data: row, error: insErr } = await db
       .from("appointment_notifications")
-      .insert({
-        appointment_id: a.id, kind: "j1", to_phone: phone,
-        status: dryRun ? "skipped" : "pending",
-        error: dryRun ? "dry_run" : null,
-      })
+      .insert({ appointment_id: a.id, kind: "j1", to_phone: phone, status: "pending" })
       .select("id")
       .single();
 
@@ -251,10 +274,7 @@ Deno.serve(async (req) => {
       continue;
     }
 
-    // 6b. Dry-run : on s'arrête là, rien n'est envoyé ni facturé.
-    if (dryRun) { summary.skipped++; continue; }
-
-    // 6c. Envoi réel BudgetSMS (GET, `to` sans "+").
+    // (b) Envoi BudgetSMS (GET, `to` sans "+") · (c) mise à jour du statut.
     try {
       const url = "https://api.budgetsms.net/sendsms/"
         + `?username=${encodeURIComponent(BSMS_USER!)}`
