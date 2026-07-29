@@ -7,12 +7,13 @@
 -- ┌───────────────────────────────────────────────────────────────────┐
 -- │ NE PAS EXÉCUTER EN L'ÉTAT.                                        │
 -- │ À ACTIVER APRÈS VALIDATION DU DRY_RUN :                           │
--- │   1. appeler la fonction avec {"dry_run": true} (cf. README/PR)   │
--- │   2. relire les lignes produites dans appointment_notifications   │
--- │      (status = 'skipped', error = 'dry_run') → vérifier que les   │
--- │      bons RDV sont ciblés, les bons numéros, les bons messages    │
--- │   3. UN envoi réel de contrôle sur SON PROPRE numéro              │
--- │   4. seulement ensuite : renommer ce fichier en .sql et l'exécuter │
+-- │   1. appeler la fonction avec {"dry_run": true} (cf. PR)          │
+-- │      → réponse {candidates, sample:[...]} : vérifier que les bons  │
+-- │        RDV sont ciblés et les numéros correctement normalisés.    │
+-- │        Le dry-run N'ÉCRIT RIEN : aucun rappel n'est « consommé »,  │
+-- │        il est rejouable autant de fois que voulu.                 │
+-- │   2. UN envoi réel de contrôle sur SON PROPRE numéro              │
+-- │   3. seulement ensuite : renommer ce fichier en .sql et l'exécuter │
 -- └───────────────────────────────────────────────────────────────────┘
 --
 -- L'extension `.DISABLED` empêche toute exécution accidentelle par un
