@@ -28,7 +28,12 @@ android {
     signingConfigs {
         if (hasReleaseKeystore) {
             release {
-                storeFile file(keystoreProperties['storeFile'])
+                // rootProject.file() → résout depuis android/, c'est-à-dire le
+                // MÊME dossier que keystore.properties (lu ligne 5). Avec file(),
+                // Gradle cherchait dans android/app/ : chemin incohérent avec
+                // l'emplacement du fichier de propriétés, d'où un échec
+                // « Keystore file not found » à la signature.
+                storeFile rootProject.file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
