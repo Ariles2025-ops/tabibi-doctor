@@ -163,11 +163,29 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 - [x] 5.2.4 `mes-rdv.html` (NEW) — liste RDV patient + annulation. 3 sections tabbées (À venir / Passés / Annulés) avec compteurs. Cards avec nom médecin (via `tabibiDoctorName.format()`), spécialité, date/heure FR Algiers, badge lieu (cabinet/téléconsultation) + badge status. Bouton "Annuler" visible sur "À venir" uniquement, désactivé si <24h avant le RDV (re-check serveur via RLS). Empty state CTA "Trouver un médecin" → index.html. Skeleton loading. Auth-wall si anon (redirect `login.html?next=/mes-rdv.html`). XSS-safe via `_escapeHtml()` sur tous les champs textuels (nom, motif, address, raison annulation). Code spécifique `ERR_MESRDV_TOO_LATE_TO_CANCEL`, fallback sur `tabibiBooking.errorMessage()` pour les autres. `SQL_TODO.md` TODO-SQL-003 : vérifier schéma exact `my_upcoming_appointments` (la page tente plusieurs noms de colonnes en fallback).
 - [x] 5.2.5 Neutraliser booking legacy `patient-dashboard.html` + sw.js bump + ZIP. (a) `patient-dashboard.html` : marker `<!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 -->` sur les 2 panneaux legacy `#tab-book` et `#tab-rdv` + modal `#book-modal`, tabs "Réserver"/"Mes RDV" redirigent vers `index.html`/`mes-rdv.html`, `openBooking()` redirige vers `doctor-profile.html?id=...`, default tab passé de `#tab-book` → `#tab-overview`. Tous les `onclick="goTab(0)"` (CTA Réserver dans overview + dans empty state RDV) → `location.href='index.html'`. (b) `sw.js` : précache `/reservation.html` + `/mes-rdv.html` (v18 reste — déjà bumpé en 5.2.3-fix). (c) `tabibi-FINAL-v4-phase5.2.zip` créé via `git archive HEAD` à `~/Downloads/`. Tests E2E à exécuter par l'user sur staging.
 
-### Phase 5.3-5.6 (à venir)
+### Phase 5.3-5.6 — 5.6 livrée, le reste à venir
 - [ ] 5.3 Page `recherche.html` (filtres : spé, wilaya, chifa, dispo, paiement)
 - [ ] 5.4 Annulation médecin (UPDATE dashboard agenda Phase 4.B.3)
-- [ ] 5.5 Templates email (Brevo) confirmation/annulation/rappel
-- [ ] 5.6 Rappels J-1 (Edge Function ou pg_cron, feature flag OFF par défaut)
+- [x] **5.6 Rappels SMS — FAIT (Phase 4, prod le 2026-07-29)** : 3 messages livrés via
+  l'edge function `appointment-reminders` (Deno, service_role) + `pg_cron` toutes les 15 min
+  (jobid 2, active) → BudgetSMS. Envoi réel prouvé en prod.
+  - **J-1** (`kind='j1'`) : RDV confirmés dans [now+6h, now+24h] sans rappel. Fenêtre haute
+    large = rattrapage automatique (heures calmes, run raté, déploiement).
+  - **H-2** (`kind='h2'`) : RDV confirmés dans [now+90min, now+150min].
+  - **Confirmation** (`kind='confirmation'`) : trigger SQL `trg_appointment_confirmed_outbox`
+    au passage `status → 'confirmed'` (dépôt outbox, aucun envoi dans la transaction) ;
+    l'edge function draine au run suivant.
+  - Anti-doublon : table `appointment_notifications` + index UNIQUE `(appointment_id, kind)`
+    (j1/h2 : INSERT `pending` avant envoi ; confirmation : UPDATE conditionnel
+    `pending`→`sending`). Fenêtres j1/h2 **disjointes** (plancher j1 à 6 h) après correction
+    d'un bug constaté en test réel : un RDV à ~100 min recevait 2 SMS.
+  - Garde-fous : `dry_run=true` par défaut, kill-switch `REMINDERS_ENABLED=false` (sans
+    redéploiement), heures calmes 21h-08h Alger sur j1 uniquement, batch 200/passe,
+    `status='confirmed'` requis, sender numérique `BSMS_FROM` (l'alphanumérique est filtré
+    en DZ), templates ASCII GSM-7 fr/ar/en.
+  - Runbook complet : `DEPLOY_RAPPELS.md`. Rollback : `SELECT cron.unschedule('appointment-reminders');`
+- [ ] 5.5 → **canal email non retenu** pour les rappels (décision : SMS uniquement en DZ).
+  L'edge `send-email` appelée par `js/tabibi-brevo.js:619` n'existe toujours pas.
 
 ## Phase 6 — Dashboard patient + historique (4-6h)
 - [x] **6.1** `patient-dashboard.html` overview wire à la vraie data Supabase via `tabibiBooking.listMyAppointments()` : stats #ov-up/c/f/d hydratés + #next-rdv card chronologique (ou empty state CTA "Trouver un médecin"). Favoris depuis localStorage. Total dépensé = `—` tant que `appointments.prix` n'est pas systématiquement renseigné. Idempotent : `window.refreshDashboardOverview` exposé pour re-trigger après cancel.
@@ -187,7 +205,10 @@ Liste résumée des migrations/seeds qui doivent être exécutés **manuellement
 
 ## Phase 9 — Notifications & avis (4-6h)
 - [x] **9.1** Page `notifications.html` créée (frontend ready) — empty state + disclaimer M0 + early empty si `notifications=false`. Lit `sb.from('notifications').select(...)` quand backend prêt (cf TODO-SQL-010). markAllRead + format date relatif FR.
-- [ ] 9.2 Triggers PostgreSQL : **TODO-SQL-010** (RDV confirmé/annulé, rappel J-1 via pg_cron, ordonnance, claim fiche).
+- [ ] 9.2 Triggers PostgreSQL : **TODO-SQL-010** (RDV confirmé/annulé, ordonnance, claim fiche).
+  ✅ Le volet **rappel J-1 via pg_cron est FAIT** (cf. 5.6) — ainsi qu'un trigger
+  `AFTER UPDATE OF status ON appointments` qui alimente l'outbox SMS à la confirmation.
+  Restent les notifications **in-app** (table `notifications`) pour les autres événements.
 - [ ] 9.3 Table `reviews` : **TODO-SQL-011** (schéma + RLS strict appointment.status='completed').
 - [ ] 9.4 RLS post-completed : **TODO-SQL-011** (CHECK policy patient_create).
 - [ ] 9.5 Affichage moyenne + 5 derniers avis : `js/tabibi-reviews.js` existe déjà côté front. Activable une fois TODO-SQL-011 exécuté + `window.TABIBI_FEATURES.reviews = true`.
