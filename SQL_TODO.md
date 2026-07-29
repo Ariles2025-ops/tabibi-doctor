@@ -154,8 +154,45 @@ Pas besoin de SQL pour faire fonctionner M0 — juste attendre la campagne claim
 
 - DB hygiène : nettoyer doublon `claim_my_doctor_profile()` sans args
 - DB sécurité : aligner `public_doctors`, `public_doctor_full` sur `security_invoker=true`
+  - ⚠️ **EXCEPTION — NE PAS inclure `doctor_patients_directory`** dans cet alignement.
+    Cette vue doit rester **sans** `security_invoker` : elle lit `public.users`, dont la
+    RLS scope par `auth.uid()`. En `security_invoker`, la RLS s'appliquerait à l'appelant
+    (le médecin) et la vue renverrait **0 ligne** — l'agenda réafficherait « Patient »
+    partout, silencieusement. Sa sécurité vient du prédicat `WHERE EXISTS (… AND
+    dp.user_id = auth.uid())` **dans la définition de la vue**, pas de la RLS sous-jacente.
+    Voir la section « Vues sensibles » ci-dessous.
 - Storage : durcir `doctor_photos_select_public` anti-énumération
 - Audit log : tracer changements `phone`/`address` via `update_my_doctor_profile`
+
+---
+
+## 🔒 Vues sensibles — règles à ne pas « corriger » par inadvertance
+
+### `doctor_patients_directory` (créée le 2026-07-29)
+
+**Rôle** : résoudre le nom + téléphone des patients dans l'agenda médecin solo
+(`js/tabibi-agenda.js`). Avant elle, la lecture de `public.users` échouait
+silencieusement (RLS par `auth.uid()`) et tous les RDV affichaient « Patient ».
+
+**Règle absolue** : ❌ **jamais de `security_invoker = true`** sur cette vue.
+Elle deviendrait muette (0 ligne) et la régression serait invisible — le code
+front retombe sur `'Patient'` sans erreur.
+
+**Pourquoi c'est sûr malgré tout** :
+- le filtre `WHERE EXISTS (… JOIN doctor_profiles dp … AND dp.user_id = auth.uid())`
+  est **dans la vue** : il s'évalue avec le JWT de l'appelant (`auth.uid()` est une
+  variable de session, pas un privilège) ;
+- un médecin ne voit donc que les patients ayant **au moins un RDV avec lui** ;
+- aucune donnée médicale : `matricule`, `chifa`, antécédents, allergies vivent dans
+  `patient_medical_data`, derrière ses propres RPC ;
+- `email` volontairement exclu (vecteur d'énumération/phishing) ;
+- `GRANT SELECT` à `authenticated` uniquement, `REVOKE` explicite pour `anon` ;
+- divulgation marginale nulle : le médecin lit déjà `appointments`, il détient donc
+  déjà les `patient_id` — la vue ne fait que traduire des UUID qu'il possède.
+
+**Vérification de non-régression** (à relancer après toute modification de la RLS
+de `public.users` ou de cette vue) : cf. le script de test cross-compte fourni dans
+la PR `feat/agenda-patient-names`.
 
 ---
 
