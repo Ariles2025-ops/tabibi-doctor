@@ -100,3 +100,7 @@ android/**/*.disabled
 desktop/dist/
 desktop/src-tauri/target/
 desktop/src-tauri/gen/
+
+# Binaires mobiles — distribués via GitHub Releases, jamais versionnés
+*.apk
+*.aab
