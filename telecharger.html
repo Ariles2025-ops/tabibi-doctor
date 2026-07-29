@@ -47,13 +47,16 @@
     </div>
     <div class="body">
       <!-- [APK 2026-07-29] URL de téléchargement — POINT UNIQUE À MODIFIER.
-           L'APK n'est plus servi depuis la racine du site (il n'est plus
-           versionné : cf. .gitignore *.apk). Remplacer l'href ci-dessous par
-           l'URL d'hébergement retenue :
-             • GitHub Release  : https://github.com/Ariles2025-ops/tabibi-doctor/releases/download/android-v1.0.1/tabibi-1.0.1.apk
-             • Supabase Storage: https://pudugodhiofqrctcdwfl.supabase.co/storage/v1/object/public/downloads/tabibi-1.0.1.apk
-           Penser à mettre à jour le numéro de version affiché juste au-dessus. -->
-      <a class="btn" id="apk-download" href="/tabibi.apk" download>
+           Hébergement retenu : GitHub Release (bande passante illimitée,
+           versionné, compteur de téléchargements). L'APK n'est plus servi
+           depuis la racine du site et n'est plus versionné (.gitignore *.apk).
+           À chaque nouvelle version : publier la Release, mettre à jour cet
+           href ET le numéro de version affiché juste au-dessus.
+           NB : l'attribut `download` est inopérant en cross-origin ; c'est
+           le Content-Disposition de GitHub qui déclenche le téléchargement. -->
+      <a class="btn" id="apk-download"
+         href="https://github.com/Ariles2025-ops/tabibi-doctor/releases/download/android-v1.0.1/app-release.apk"
+         download>
         <svg viewBox="0 0 24 24" fill="none" stroke="#3D2E00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
         Télécharger l'application
       </a>
