@@ -57,6 +57,9 @@ img,video,iframe,svg,canvas{max-width:100%;height:auto}
 .kpi-evo.up{color:#0E5F46}
 .kpi-evo.down{color:#dc2626}
 .kpi-evo.same{color:#64748b} /* [FIX-DESIGN-2026-05-19] WCAG AA contrast */
+/* [LOT C] KPI sans source en base : grisé + pastille « bientôt ». */
+.kpi-soon .kpi-num{color:#94a3b8}
+.kpi-evo.soon{color:#64748b;font-weight:600;background:#f1f5f9;border-radius:999px;padding:2px 8px;display:inline-block}
 
 /* ═══ [Desktop] Le logiciel EST Tabibi Pro : pas d'upsell ═══ */
 html[data-platform="desktop"] .upsell{display:none !important}
@@ -137,7 +140,7 @@ html[data-platform="desktop"] .upsell{display:none !important}
   <div class="kpis">
     <div class="kpi">
       <div class="kpi-num" id="kpi-rdv">—</div>
-      <div class="kpi-lbl" data-i18n="dan_kpi_rdv">RDV ce mois</div>
+      <div class="kpi-lbl" data-i18n="dan_kpi_rdv">RDV sur la période</div>
       <div class="kpi-evo up" id="kpi-rdv-evo">—</div>
     </div>
     <div class="kpi" style="border-left-color:#0E5F46">
@@ -145,22 +148,36 @@ html[data-platform="desktop"] .upsell{display:none !important}
       <div class="kpi-lbl" data-i18n="dan_kpi_patients">Patients uniques</div>
       <div class="kpi-evo up" id="kpi-patients-evo">—</div>
     </div>
-    <div class="kpi" style="border-left-color:#f59e0b">
+    <!-- [LOT C 2026-07-29] Ces 2 KPI n'ont AUCUNE source en base :
+         • « Note moyenne »  : la table reviews n'existe pas (feature flag
+           reviews:false dans js/tabibi-features.js).
+         • « Taux de no-show » : le statut no_show n'existe pas non plus ;
+           appointments ne connaît que pending / confirmed / cancelled /
+           completed. Un patient absent est aujourd'hui indiscernable.
+         Ils affichaient donc un chiffre figé issu de l'objet DEMO. Cartes
+         conservées (la place est prévue) mais explicitement étiquetées
+         « bientôt » — jamais un chiffre inventé.
+         Retirer ce marquage le jour où la source existe :
+         reviews pour la note, statut no_show pour le second (SQL_TODO). -->
+    <div class="kpi kpi-soon" style="border-left-color:#f59e0b">
       <div class="kpi-num" id="kpi-note">—</div>
       <div class="kpi-lbl" data-i18n="dan_kpi_note">Note moyenne</div>
-      <div class="kpi-evo same" id="kpi-note-evo" data-i18n="dan_stable">Stable</div>
+      <div class="kpi-evo soon" data-i18n="dan_soon">Bientôt disponible</div>
     </div>
-    <div class="kpi" style="border-left-color:#dc2626">
+    <div class="kpi kpi-soon" style="border-left-color:#dc2626">
       <div class="kpi-num" id="kpi-noshow">—</div>
       <div class="kpi-lbl" data-i18n="dan_kpi_noshow">Taux no-show</div>
-      <div class="kpi-evo down" id="kpi-noshow-evo">—</div>
+      <div class="kpi-evo soon" data-i18n="dan_soon">Bientôt disponible</div>
     </div>
   </div>
+
+  <!-- Erreur de chargement : masqué tant que tout va bien. Voir loadPeriod(). -->
+  <div id="an-error" role="alert" style="display:none;margin:0 0 18px;padding:12px 14px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;color:#991b1b;font-size:13.5px"></div>
 
   <!-- [Desktop] .charts-row : côte à côte ≥1024px, empilés en mobile -->
   <div class="charts-row">
   <div class="card">
-    <h2><i class="fa fa-chart-column"></i> <span data-i18n="dan_chart_monthly">Évolution mensuelle des RDV</span></h2>
+    <h2><i class="fa fa-chart-column"></i> <span data-i18n="dan_chart_monthly">Évolution des RDV</span></h2>
     <div class="chart-wrap">
       <div class="chart" id="chart-monthly"></div>
       <div class="chart-labels" id="chart-monthly-labels"></div>
@@ -190,18 +207,146 @@ html[data-platform="desktop"] .upsell{display:none !important}
 
 </div><!-- /app-shell -->
 
+<!-- [ANALYTICS 2026-07-29] La page n'embarquait AUCUN client Supabase : les
+     KPI venaient d'un objet DEMO à zéros. Même ordre que agenda-cabinet.html
+     (supabase-js → config → client → auth), et placé AVANT le script inline
+     ci-dessous, qui interroge la base dès son exécution. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+
 <script>
-// ─── Données démo (en prod : remplacer par appel Supabase) ───
-// [Phase 2 launch] Données démo neutralisées (aucune source Supabase câblée ; analytics PRO à venir).
+// ═══ Données réelles — table public.appointments, RLS appliquée ═══════
+// Aucune RPC ni vue nouvelle : une seule requête par période, tous les
+// agrégats (KPI, séries, heures, motifs) sont calculés côté client.
+//
+// Ce qui EXISTE réellement en base et se calcule donc honnêtement :
+//   • RDV de la période        → COUNT sur starts_at, hors 'cancelled'
+//   • Patients uniques         → DISTINCT patient_id
+//   • Évolution                → même mesure sur la fenêtre précédente
+//                                de MÊME durée (2 fenêtres sur starts_at)
+//   • Heures de pointe         → starts_at, heure d'Alger
+//   • Motifs                   → reason_short / reason
+// Ce qui N'EXISTE PAS (cf. Lot C plus bas) : note moyenne (pas de table
+// reviews) et taux de no-show (pas de statut no_show). Ces deux cartes
+// sont étiquetées « bientôt » — jamais un chiffre inventé.
+//
 // [FIX] _t gardé : l'init tourne AVANT le chargement de tabibi-i18n.js (script en bas)
 // → tabibiT indéfini au 1er loadPeriod. Fallback FR au load, re-localisé au DOMContentLoaded + lang-change.
 function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
-const DEMO = {
-  '7j':  { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
-  '30j': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
-  '90j': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] },
-  '1an': { rdv:0, patients:0, note:0, noshow:0, monthly:[], hours:[], motifs:[] }
-};
+
+const PERIOD_DAYS = { '7j': 7, '30j': 30, '90j': 90, '1an': 365 };
+const EMPTY = { rdv:0, patients:0, rdvPrev:0, patientsPrev:0, monthly:[], labels:[], hours:[], motifs:[], loaded:false };
+
+function sb() { return (window.tabibi && window.tabibi.supabase) || null; }
+
+// ── Heure du cabinet : Alger (UTC+1 fixe, pas de DST). Sans ça, un poste
+//    réglé sur Europe/Paris décale les « heures de pointe » d'une heure
+//    tout l'été. Même approche que js/tabibi-agenda.js.
+const TZ = 'Africa/Algiers';
+const _tzFmt = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hourCycle: 'h23',
+  year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit' });
+function tzParts(d) { const p = {}; _tzFmt.formatToParts(d).forEach(x => { p[x.type] = x.value; }); return p; }
+
+// doctor_profiles.id ET auth.uid() : la FK réelle de appointments.doctor_id
+// est doctor_profiles.id, mais d'anciennes lignes ont pu être créées avec
+// l'user id. Les deux sont interrogés (même raisonnement que l'agenda).
+let _ids = null;
+function doctorIds() {
+  if (_ids) return Promise.resolve(_ids);
+  const c = sb();
+  if (!c) return Promise.reject(new Error('supabase indisponible'));
+  return c.auth.getSession().then(r => {
+    const session = r.data && r.data.session;
+    if (!session) { location.href = 'login.html'; throw new Error('no session'); }
+    const uid = session.user.id;
+    return c.rpc('get_my_doctor_profile').then(rp => {
+      let prof = rp && rp.data; if (Array.isArray(prof)) prof = prof[0];
+      _ids = [prof && prof.id, uid].filter(Boolean);
+      return _ids;
+    }, () => { _ids = [uid]; return _ids; });
+  });
+}
+
+// Une seule requête couvrant la période ET la précédente (2× la durée) :
+// l'évolution se calcule sur le même jeu de lignes, sans 2e aller-retour.
+function fetchPeriod(period) {
+  const days = PERIOD_DAYS[period] || 30;
+  const now = new Date();
+  const from = new Date(now.getTime() - days * 2 * 86400000);
+  return doctorIds().then(ids => sb()
+    .from('appointments')
+    .select('starts_at,patient_id,status,reason,reason_short')
+    .in('doctor_id', ids)
+    .gte('starts_at', from.toISOString())
+    .lt('starts_at', now.toISOString())
+    .order('starts_at', { ascending: true })
+    .then(r => {
+      if (r.error) throw r.error;
+      return aggregate(r.data || [], now, days);
+    }));
+}
+
+// Les RDV annulés sont exclus de TOUS les compteurs : compter une annulation
+// comme une consultation gonflerait l'activité affichée.
+function aggregate(rows, now, days) {
+  const cut = now.getTime() - days * 86400000;
+  const cur = [], prev = [];
+  rows.forEach(a => {
+    if ((a.status || '').toLowerCase() === 'cancelled') return;
+    (new Date(a.starts_at).getTime() >= cut ? cur : prev).push(a);
+  });
+  const uniq = list => new Set(list.map(a => a.patient_id).filter(Boolean)).size;
+
+  // Heures de pointe : 8 tranches de 2 h à partir de 8 h (HOURS_LBL).
+  // Hors 8h–24h → tranche extrême la plus proche plutôt que d'être perdu.
+  const hours = new Array(8).fill(0);
+  cur.forEach(a => {
+    const h = +tzParts(new Date(a.starts_at)).hour;
+    hours[Math.max(0, Math.min(7, Math.floor((h - 8) / 2)))]++;
+  });
+
+  // Motifs : top 5, en % des RDV qui portent un motif renseigné.
+  const tally = {};
+  let withReason = 0;
+  cur.forEach(a => {
+    const m = (a.reason_short || a.reason || '').trim();
+    if (!m) return;
+    withReason++;
+    tally[m] = (tally[m] || 0) + 1;
+  });
+  const motifs = Object.keys(tally)
+    .sort((x, y) => tally[y] - tally[x]).slice(0, 5)
+    .map(m => [m, Math.round(tally[m] / withReason * 100)]);
+
+  const s = series(cur, now, days);
+  return { rdv: cur.length, patients: uniq(cur),
+           rdvPrev: prev.length, patientsPrev: uniq(prev),
+           monthly: s.data, labels: s.labels, hours, motifs, loaded: true };
+}
+
+// Découpage de la période en tranches + libellés RÉELS (le jour ou le mois
+// effectivement couvert), au lieu des libellés fixes Lun→Dim / Jan→Déc qui
+// ne correspondaient à rien quand la période ne commençait pas un lundi.
+function series(list, now, days) {
+  const buckets = days <= 7 ? days : (days <= 30 ? 5 : (days <= 90 ? 3 : 12));
+  const span = days / buckets;
+  const data = new Array(buckets).fill(0);
+  const start = now.getTime() - days * 86400000;
+  list.forEach(a => {
+    const i = Math.floor((new Date(a.starts_at).getTime() - start) / (span * 86400000));
+    data[Math.max(0, Math.min(buckets - 1, i))]++;
+  });
+  const labels = [];
+  for (let i = 0; i < buckets; i++) {
+    const mid = new Date(start + (i + 0.5) * span * 86400000);
+    if (days <= 7) labels.push(WEEKDAYS[(mid.getDay() + 6) % 7]);
+    else if (days <= 30) labels.push(_t('dan_week_letter', 'S') + (i + 1));
+    else labels.push(MONTHS[mid.getMonth()]);
+  }
+  return { data, labels };
+}
 
 // [I18N-UNIFY-2026] Labels mois/jours désormais générés dynamiquement selon langue active
 function getMonths() {
@@ -234,26 +379,40 @@ function renderChart(elBars, elLabels, data, labels) {
   elLabels.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
 }
 
+function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
+
 function renderMotifs(motifs) {
-  const max = Math.max(...motifs.map(m => m[1]));
-  document.getElementById('motifs-list').innerHTML = motifs.map(([name, val]) => `
+  const el = document.getElementById('motifs-list');
+  // Les motifs viennent d'une saisie libre du patient → échappés.
+  if (!motifs.length) {
+    el.innerHTML = `<div style="color:#94a3b8;font-size:13px;padding:6px 0">${_t('dan_no_motifs','Aucun motif renseigné sur cette période.')}</div>`;
+    return;
+  }
+  const max = Math.max(...motifs.map(m => m[1]), 1);
+  el.innerHTML = motifs.map(([name, val]) => `
     <div class="spec-row">
-      <div class="lbl">${name}</div>
+      <div class="lbl">${esc(name)}</div>
       <div class="bar-c"><div class="fill" style="width:${(val/max)*100}%"></div></div>
       <div class="val">${val}%</div>
     </div>
   `).join('');
 }
 
+// Insights : uniquement ce qui se déduit des RDV réels. Les deux conseils
+// « note moyenne » et « taux de no-show » ont été retirés — ils se basaient
+// sur des chiffres que la base ne produit pas (ni table reviews, ni statut
+// no_show), donc ils se déclenchaient toujours sur les mêmes valeurs figées.
 function renderInsights(d) {
   const insights = [];
-  if (d.noshow > 10) insights.push(_t('dan_insight_noshow',"⚠️ <b>Taux no-show élevé ({n}%)</b>. Confirmez les RDV par téléphone la veille pour réduire les absences.").replace('{n}', d.noshow));
-  if (d.note >= 4.5) insights.push(_t('dan_insight_note',"⭐ <b>Excellente note ({n}/5)</b>. Vos patients vous recommandent — pensez à les remercier !").replace('{n}', d.note));
-  const maxHourIdx = d.hours.indexOf(Math.max(...d.hours));
-  insights.push(_t('dan_insight_hours',"🕐 Vos créneaux les plus demandés : <b>{h}</b>. Ouvrez plus de créneaux à cette heure pour maximiser vos RDV.").replace('{h}', HOURS_LBL[maxHourIdx]));
-  if (d.patients < d.rdv) {
-    const fid = ((d.rdv - d.patients) / d.rdv * 100).toFixed(0);
-    insights.push(_t('dan_insight_fidelity',"🔄 <b>Fidélité {n}%</b> — vos patients reviennent. C'est un excellent indicateur de qualité.").replace('{n}', fid));
+  if (!d.rdv) {
+    insights.push(_t('dan_insight_empty', "Aucun RDV sur cette période — les statistiques apparaîtront dès vos premières consultations."));
+  } else {
+    const maxHour = Math.max(...d.hours);
+    if (maxHour > 0) insights.push(_t('dan_insight_hours',"🕐 Vos créneaux les plus demandés : <b>{h}</b>. Ouvrez plus de créneaux à cette heure pour maximiser vos RDV.").replace('{h}', HOURS_LBL[d.hours.indexOf(maxHour)]));
+    if (d.patients && d.patients < d.rdv) {
+      const fid = ((d.rdv - d.patients) / d.rdv * 100).toFixed(0);
+      insights.push(_t('dan_insight_fidelity',"🔄 <b>Fidélité {n}%</b> — vos patients reviennent. C'est un excellent indicateur de qualité.").replace('{n}', fid));
+    }
   }
   document.getElementById('insights').innerHTML = insights.map(i => `<div style="padding:8px 0;border-bottom:1px solid #f1f5f9">${i}</div>`).join('');
 }
@@ -266,16 +425,14 @@ function switchPeriod(period, btn) {
 
 let _curPeriod = "30j";
 
-// [FIX honnêteté] Évolution CALCULÉE depuis la série affichée (2e moitié
-// vs 1re moitié), au lieu des '+12%'/'+8%' codés en dur qui s'affichaient
-// même avec 0 RDV. null = pas assez de données → badge masqué.
-function evoFromSeries(series) {
-  if (!Array.isArray(series) || series.length < 4) return null;
-  const mid = series.length >> 1;
-  const a = series.slice(0, mid).reduce((x, y) => x + y, 0);
-  const b = series.slice(mid).reduce((x, y) => x + y, 0);
-  if (a <= 0) return null;
-  return Math.round(((b - a) / a) * 100);
+// [FIX honnêteté] Évolution = période courante vs période PRÉCÉDENTE de
+// même durée (2 fenêtres sur starts_at), au lieu des '+12%'/'+8%' codés en
+// dur qui s'affichaient même avec 0 RDV.
+// Fenêtre précédente vide → null (badge masqué) : « +100 % » à partir de
+// zéro RDV ne veut rien dire et flatte à tort un cabinet qui démarre.
+function evo(cur, prev) {
+  if (!prev) return null;
+  return Math.round(((cur - prev) / prev) * 100);
 }
 function setEvo(id, pct) {
   const el = document.getElementById(id);
@@ -286,41 +443,44 @@ function setEvo(id, pct) {
   el.classList.add(pct > 0 ? 'up' : (pct < 0 ? 'down' : 'same'));
 }
 
+// Rendu pur : ne fait AUCUN appel réseau, pour que le re-rendu au
+// changement de langue réutilise les données déjà chargées (_data).
+let _data = EMPTY;
+function render() {
+  const d = _data;
+  document.getElementById('kpi-rdv').textContent = d.loaded ? d.rdv : '—';
+  setEvo('kpi-rdv-evo', d.loaded ? evo(d.rdv, d.rdvPrev) : null);
+  document.getElementById('kpi-patients').textContent = d.loaded ? d.patients : '—';
+  setEvo('kpi-patients-evo', d.loaded ? evo(d.patients, d.patientsPrev) : null);
+
+  renderChart(document.getElementById('chart-monthly'), document.getElementById('chart-monthly-labels'), d.monthly, d.labels);
+  renderChart(document.getElementById('chart-hours'), document.getElementById('chart-hours-labels'), d.hours, HOURS_LBL);
+  renderMotifs(d.motifs);
+  renderInsights(d);
+}
+
+// Anti-course : un clic rapide 7j → 90j pouvait laisser la réponse la plus
+// lente écraser l'affichage de la période finalement sélectionnée.
+let _seq = 0;
 function loadPeriod(period) {
   _curPeriod = period;
-  const d = DEMO[period];
-  document.getElementById('kpi-rdv').textContent = d.rdv;
-  setEvo('kpi-rdv-evo', d.rdv > 0 ? evoFromSeries(d.monthly) : null);
-  document.getElementById('kpi-patients').textContent = d.patients;
-  // Pas de série patients par sous-période → pas de delta inventé.
-  setEvo('kpi-patients-evo', null);
-  document.getElementById('kpi-note').textContent = d.note;
-  document.getElementById('kpi-noshow').textContent = d.noshow + '%';
-  // Qualitatif uniquement (les '+2/-3 pts' étaient inventés)
-  const nsEl = document.getElementById('kpi-noshow-evo');
-  if (d.rdv > 0) {
-    nsEl.style.display = '';
-    nsEl.textContent = d.noshow > 10 ? _t('dan_watch', 'à surveiller') : _t('dan_ok', 'maîtrisé ✓');
-    nsEl.classList.remove('up', 'down', 'same');
-    nsEl.classList.add(d.noshow > 10 ? 'down' : 'up');
-  } else { nsEl.style.display = 'none'; }
-
-  // Chart mensuel
-  let labels;
-  if (period === '7j') labels = WEEKDAYS;
-  else if (period === '30j') labels = [1,2,3,4,5].map(n=>_t('dan_week_letter','S')+n);
-  else if (period === '90j') labels = ['-2','-1','0'].map(n=>_t('dan_month_letter','M')+n);
-  else labels = MONTHS;
-  renderChart(document.getElementById('chart-monthly'), document.getElementById('chart-monthly-labels'), d.monthly, labels);
-
-  // Chart heures
-  renderChart(document.getElementById('chart-hours'), document.getElementById('chart-hours-labels'), d.hours, HOURS_LBL);
-
-  // Motifs
-  renderMotifs(d.motifs);
-
-  // Insights
-  renderInsights(d);
+  const my = ++_seq;
+  const err = document.getElementById('an-error');
+  err.style.display = 'none';
+  fetchPeriod(period).then(d => {
+    if (my !== _seq) return;
+    _data = d;
+    render();
+  }, e => {
+    if (my !== _seq) return;
+    // Échec réseau/RLS : on n'affiche PAS de zéros (un médecin les lirait
+    // comme « aucune activité »). Tirets + message explicite.
+    _data = EMPTY;
+    render();
+    err.textContent = _t('dan_load_error', "Statistiques indisponibles pour le moment. Vérifiez votre connexion et réessayez.");
+    err.style.display = '';
+    if (window.console && console.warn) console.warn('[analytics]', e && e.message ? e.message : e);
+  });
 }
 
 // Auth check + upsell
@@ -340,8 +500,9 @@ function loadPeriod(period) {
   loadPeriod('30j');
 })();
 // [CONFORMITE 2026] re-render (KPIs, charts, labels mois/jours, insights) au changement de langue.
-document.addEventListener('tabibi:lang-change', function(){ try { loadPeriod(_curPeriod); } catch(e){} });
-document.addEventListener('DOMContentLoaded', function(){ try { loadPeriod(_curPeriod); } catch(e){} });
+// render() et non loadPeriod() : les données sont déjà en mémoire, changer
+// de langue ne doit pas relancer une requête ni faire clignoter les chiffres.
+document.addEventListener('tabibi:lang-change', function(){ try { render(); } catch(e){} });
 </script>
 <script src="js/tabibi-cookies.js"></script>
 <script src="js/tabibi-beta.js"></script>

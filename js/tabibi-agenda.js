@@ -12,6 +12,10 @@
    • rpc get_my_doctor_profile   (working_hours JSONB + id doctor_profiles)
    • doctor_unavailable_slots    (mode médecin ; FK doctor_profiles.id —
      espace d'ids ≠ auth.uid(), d'où le passage par le profil)
+   • doctor_patients_directory   (vue : nom + téléphone des patients ayant
+     un RDV avec le médecin connecté ; filtrage par auth.uid() DANS la vue.
+     ⚠️ NE JAMAIS passer cette vue en security_invoker : la RLS de
+     public.users la rendrait muette et l'agenda réafficherait « Patient »)
    ACTIONS (existantes uniquement) :
    • UPDATE appointments.status confirmed|cancelled — même appel que
      setStatus() de secretaire-dashboard / confRdv() de doctor-dashboard.
@@ -185,8 +189,13 @@
           var ids = rows.map(function (a) { return a.patient_id; }).filter(Boolean);
           ids = ids.filter(function (v, i) { return ids.indexOf(v) === i; });
           if (!ids.length) { S.appts = rows.map(function (a) { return normDoctorRow(a, {}); }); return; }
-          // Best effort (RLS peut bloquer → on continue sans les noms)
-          return c.from('users').select('id,first_name,last_name,phone').in('id', ids)
+          // Vue doctor_patients_directory : identité minimale des patients
+          // ayant au moins un RDV avec le médecin connecté (filtrage par
+          // auth.uid() DANS la vue). public.users restait muet ici — sa RLS
+          // scope par auth.uid(), d'où les « Patient » anonymes historiques.
+          // Best effort conservé : en cas d'échec, repli silencieux sur
+          // 'Patient' plutôt qu'un agenda vide.
+          return c.from('doctor_patients_directory').select('id,first_name,last_name,phone').in('id', ids)
             .then(function (ru) {
               var map = {};
               (ru.data || []).forEach(function (u) { map[u.id] = { name: ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Patient', phone: u.phone || '' }; });
