@@ -8,10 +8,20 @@
 // modifier casserait le login de tout le monde).
 //
 // LES 3 PASSES
-//   • j1           — rappel la veille. Fenêtre [now+1h, now+24h] : tout
+//   • j1           — rappel la veille. Fenêtre [now+6h, now+24h] : tout
 //                    RDV confirmé des 24 h à venir sans ligne `j1`.
-//                    Fenêtre volontairement LARGE → rattrape ce qui a été
-//                    laissé de côté (heures calmes, run raté, déploiement).
+//                    Fenêtre LARGE en haut → rattrape ce qui a été laissé
+//                    de côté (heures calmes, run raté, déploiement).
+//                    Plancher à 6 h → NE RECOUVRE PAS la fenêtre h2 : un
+//                    RDV à moins de 6 h ne reçoit que le rappel h2, jamais
+//                    les deux (bug constaté en test réel : 2 SMS pour 1 RDV).
+//
+//                    CONSÉQUENCE ASSUMÉE : un RDV pris tard le soir pour le
+//                    lendemain matin (donc à moins de 6 h, ou traité pendant
+//                    la fenêtre calme) peut ne recevoir QUE le rappel h2.
+//                    C'est acceptable : le patient est rappelé 2 h avant, et
+//                    il vient tout juste de prendre le RDV — un « rappel la
+//                    veille » n'aurait de toute façon aucune valeur ajoutée.
 //   • h2           — rappel ~2 h avant. Fenêtre [now+90min, now+150min].
 //   • confirmation — draine l'outbox : les lignes `kind='confirmation'`
 //                    status='pending' déposées par le TRIGGER SQL au
@@ -62,9 +72,13 @@ const QUIET_TO = 8;             // 08h00 → reprise
 const SMS_MAX_LEN = 160;        // GSM-7 : au-delà, le SMS est facturé double
 
 // Fenêtres de balayage, en minutes depuis maintenant.
+// ⚠️ Les deux fenêtres NE DOIVENT PAS SE RECOUVRIR : avec un plancher j1
+// à 60 min, un RDV à ~100 min tombait dans les deux passes et le patient
+// recevait 2 SMS (constaté en test réel). Le plancher j1 est donc à 6 h,
+// bien au-dessus du plafond h2 (150 min) — marge volontaire.
 const WINDOWS = {
-  j1: { fromMin: 60, toMin: 24 * 60 },   // [now+1h, now+24h]
-  h2: { fromMin: 90, toMin: 150 },       // [now+90min, now+150min]
+  j1: { fromMin: 6 * 60, toMin: 24 * 60 },  // [now+6h,  now+24h]
+  h2: { fromMin: 90, toMin: 150 },          // [now+90min, now+150min]
 } as const;
 
 // ─────────────────────────────────────────────────────────────────────
