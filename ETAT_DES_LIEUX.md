@@ -50,23 +50,37 @@ Un seul repo accessible ici : `/home/user/tabibi-doctor` avec `index.html` + `js
 | **CRIT-2** | Gating auth pages applicatives | 🟢 **FERMÉ** | 5 pages testées, aucune PII rendue sans session (grep + validation live) |
 | **CRIT-3** | Mass assignment `update_my_doctor_profile` | 🟢 **MITIGÉ (anon)** | INSERT users avec `is_admin` → 400 col inexistante ; RPC sans auth → 401. Test post-auth médecin toujours à faire |
 | **CRIT-4** | `doctor_profiles` expose email/phone/*_path à anon | 🟢 **FERMÉ EN PROD** | Testé en live : `GET /rest/v1/doctor_profiles` → **HTTP 401** "permission denied for table doctor_profiles". `public_doctors` (vue) toujours accessible normalement. Docs fix dans `docs/security/CRIT-4_*.md` |
-| **CRIT-5** | Signup contourne Turnstile côté REST | 🔴 **OUVERT — ET PIRE** | Test live aujourd'hui : signup direct retourne un **access_token immédiat** avec `email_confirmed_at` déjà rempli. La confirmation email a été désactivée. Un bot peut créer + logger + faire des requêtes auth. |
+| **CRIT-5** | Signup contourne Turnstile côté REST | 🟢 **FERMÉ le 2026-07-29** | Captcha serveur actif : signup REST rejeté sans `captcha_token` (**HTTP 400 `captcha_failed`**). Vérifié sur les deux identifiants (email et téléphone) — aucun `access_token` retourné, aucun compte créé. |
 
-### 🚨 Alerte CRIT-5 — dégradation
+### ✅ CRIT-5 — résolu (historique conservé)
 
-Nouveau test aujourd'hui (25/07/2026, 18h24 UTC) :
+**État actuel — 29/07/2026.** Le captcha serveur (Supabase Auth → Attack Protection)
+est actif : la création de compte par REST est rejetée **avant** toute écriture.
 
 ```
-POST /auth/v1/signup avec juste email + password
-→ HTTP 200
-→ access_token retourné directement
-→ email_confirmed_at = timestamp immédiat
-→ email_verified = true
+POST /auth/v1/signup   (sans captcha_token)
+  variante email    {"email":"…","password":"…"}   → HTTP 400
+  variante téléphone {"phone":"+213…","password":"…"} → HTTP 400
+→ {"code":400,"error_code":"captcha_failed",
+   "msg":"captcha protection: request disallowed (no captcha_token found)"}
+→ aucun access_token, aucun compte créé
 ```
 
-Avant l'audit (mai) : la confirmation email bloquait le login. **Aujourd'hui elle est off.** Un bot peut créer 10 000 comptes/heure, tous immédiatement authentifiés, tous capables d'appeler les RPC Supabase authentifiées. **C'est bien plus dangereux que la version précédente.**
+**Reste à vérifier (2ᵉ ordre, sur staging)** : avec un `captcha_token` *valide*, le compte
+est-il auto-confirmé (`phone_confirmed_at` / `email_confirmed_at` pré-remplis) et une session
+est-elle rendue sans OTP ? Réglage à lire dans Authentication → Providers.
 
-Compte créé involontairement pendant le test (à nettoyer) : `9d419394-0a16-452f-9517-aa01406fae66` (`probe_1785003856@tabibi.test`)
+<details>
+<summary>Historique — alerte du 25/07/2026 (périmée, conservée pour traçabilité)</summary>
+
+Test du 25/07/2026 18h24 UTC, **avant** activation du captcha serveur :
+`POST /auth/v1/signup` (email + password) → HTTP 200, `access_token` retourné directement,
+`email_confirmed_at` rempli immédiatement. Le vecteur décrit ici n'est plus reproductible
+(voir test du 29/07 ci-dessus).
+
+</details>
+
+Compte créé involontairement pendant le test du 25/07 (**toujours à nettoyer**) : `9d419394-0a16-452f-9517-aa01406fae66` (`probe_1785003856@tabibi.test`)
 
 Ancien compte test aussi encore en base (audit mai) : `9df8df4f-a5b3-4d68-85cf-32ee08a32190`
 
