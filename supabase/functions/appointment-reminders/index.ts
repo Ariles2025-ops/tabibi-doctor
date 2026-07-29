@@ -1,53 +1,74 @@
 // supabase/functions/appointment-reminders/index.ts
 // =====================================================================
-// LOT A — Rappel J-1 des rendez-vous (SMS BudgetSMS).
+// Notifications RDV par SMS (BudgetSMS) — 3 passes en une exécution.
 // ---------------------------------------------------------------------
 // Fonction AUTONOME, appelée par pg_cron (toutes les 15 min, une fois le
 // dry_run validé). Elle N'EST PAS un hook Supabase Auth : elle ne touche
-// PAS à `send-sms`, qui reste strictement réservé à l'OTP de connexion
-// (webhook signé — le modifier casserait le login de tout le monde).
+// PAS à `send-sms`, réservé à l'OTP de connexion (webhook signé — le
+// modifier casserait le login de tout le monde).
 //
-// CHAÎNE : sélection des RDV dus → réservation d'une ligne outbox
-//   (appointment_notifications) → envoi BudgetSMS → mise à jour du statut.
+// LES 3 PASSES
+//   • j1           — rappel la veille. Fenêtre [now+1h, now+24h] : tout
+//                    RDV confirmé des 24 h à venir sans ligne `j1`.
+//                    Fenêtre volontairement LARGE → rattrape ce qui a été
+//                    laissé de côté (heures calmes, run raté, déploiement).
+//   • h2           — rappel ~2 h avant. Fenêtre [now+90min, now+150min].
+//   • confirmation — draine l'outbox : les lignes `kind='confirmation'`
+//                    status='pending' déposées par le TRIGGER SQL au
+//                    passage status → 'confirmed'. La fonction n'invente
+//                    aucune confirmation, elle ne fait qu'envoyer.
 //
-// FENÊTRE — [now+1h, now+24h], PAS une tranche étroite autour de J-1 :
-//   tout RDV confirmé des 24 prochaines heures qui n'a pas encore de
-//   ligne `j1` est éligible. Conséquence voulue : un RDV non traité
-//   (heures calmes, run raté, déploiement) est RATTRAPÉ au run suivant.
-//   La borne basse de 1h évite d'écrire à quelqu'un qui part déjà.
+// HEURES CALMES (21h-08h Alger) — appliquées à `j1` UNIQUEMENT :
+//   • j1           : suspendu (un rappel de la veille peut attendre 08h,
+//                    la fenêtre large garantit le rattrapage)
+//   • h2           : JAMAIS suspendu — si le RDV est à 7h du matin, le
+//                    rappel H-2 doit partir à 5h, sinon il ne sert à rien
+//   • confirmation : JAMAIS suspendue — message transactionnel, le
+//                    patient vient d'agir et l'attend tout de suite
 //
-// ANTI-DOUBLON : sur un envoi RÉEL, la ligne outbox est insérée AVANT
-//   l'appel BudgetSMS. L'index UNIQUE (appointment_id, kind) fait échouer
-//   toute seconde tentative (code Postgres 23505) → le RDV est sauté.
-//   Deux exécutions concurrentes du cron ne peuvent pas envoyer deux fois.
+// ANTI-DOUBLON — deux mécanismes, selon la passe :
+//   • j1/h2        : INSERT de la ligne outbox AVANT l'appel BudgetSMS.
+//                    L'index UNIQUE (appointment_id, kind) fait échouer
+//                    toute seconde tentative (Postgres 23505) → RDV sauté.
+//   • confirmation : la ligne existe déjà (posée par le trigger). Le
+//                    verrou est un UPDATE conditionnel 'pending'→'sending'
+//                    qui ne réussit qu'une fois (le perdant lit 0 ligne).
+//   Dans les deux cas, deux exécutions concurrentes du cron ne peuvent
+//   pas envoyer deux fois le même message.
 //
 // ÉCRITURES — la fonction n'écrit QUE lorsqu'elle envoie vraiment :
-//   • dry_run=true      → AUCUN INSERT, retourne candidates + échantillon
-//   • heures calmes     → AUCUN INSERT, sortie immédiate
-//   • numéro invalide   → AUCUN INSERT (le RDV reste éligible si le
-//                         patient corrige son numéro)
-//   Le slot unique (appointment_id,'j1') n'est donc jamais consommé par
-//   autre chose qu'un envoi réel : un dry-run ne « brûle » aucun rappel.
+//   • dry_run=true      → AUCUNE écriture, retourne les candidats des
+//                         3 passes + un échantillon par passe
+//   • heures calmes     → AUCUNE écriture pour j1
+//   • numéro invalide   → AUCUNE écriture (j1/h2) : le RDV reste éligible
+//                         si le patient corrige son numéro
+//   Un dry-run ne « brûle » donc aucun message et reste rejouable.
 //
 // SÉCURITÉ : header `x-reminders-secret` obligatoire (comparé à
 //   REMINDERS_CRON_SECRET), sinon 401. Aucun secret en dur : tout vient
 //   de Deno.env. Le service_role ne quitte jamais la fonction.
 // =====================================================================
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-const BATCH_MAX = 200;          // plafond d'envois par exécution (garde-fou coût)
-const WINDOW_MIN_H = 1;         // borne basse : ne pas écrire à qui part déjà
-const WINDOW_MAX_H = 24;        // borne haute : tout RDV des 24 prochaines heures
+const BATCH_MAX = 200;          // plafond d'envois par passe (garde-fou coût)
 const SAMPLE_MAX = 20;          // taille de l'échantillon renvoyé en dry_run
 const TZ = "Africa/Algiers";    // heure du cabinet (UTC+1 fixe, sans DST)
-const QUIET_FROM = 21;          // 21h00 → plus d'envoi
+const QUIET_FROM = 21;          // 21h00 → plus de rappel j1
 const QUIET_TO = 8;             // 08h00 → reprise
 const SMS_MAX_LEN = 160;        // GSM-7 : au-delà, le SMS est facturé double
 
-// ── Portage fidèle de js/tabibi-sms.js (GSM-7 = 160 car. au lieu de 70) ──
+// Fenêtres de balayage, en minutes depuis maintenant.
+const WINDOWS = {
+  j1: { fromMin: 60, toMin: 24 * 60 },   // [now+1h, now+24h]
+  h2: { fromMin: 90, toMin: 150 },       // [now+90min, now+150min]
+} as const;
+
+// ─────────────────────────────────────────────────────────────────────
+// Portage fidèle de js/tabibi-sms.js (GSM-7 = 160 car. au lieu de 70)
+// ─────────────────────────────────────────────────────────────────────
 function toGSM7(str: unknown): string {
   if (!str) return "";
   return String(str)
@@ -59,7 +80,7 @@ function toGSM7(str: unknown): string {
     .replace(/[“”]/g, '"')
     .replace(/[–—]/g, "-")
     .replace(/…/g, "...")
-    .replace(/ /g, " ");
+    .replace(/ /g, " ");
 }
 
 function sanitizeSMS(str: unknown): string {
@@ -86,24 +107,53 @@ function normalizePhoneDZ(phone: unknown): string | null {
   return p;
 }
 
-// Template rdv_reminder_j1 — porté à l'identique de js/tabibi-sms.js:94.
-// Le mot « Tabibi » est DANS LE CORPS : sur le réseau DZ, un sender
+// ─────────────────────────────────────────────────────────────────────
+// TEMPLATES (fr/ar/en, ASCII GSM-7)
+// Le mot « Tabibi » est DANS LE CORPS : sur le réseau DZ un sender
 // alphanumérique est filtré par les opérateurs (jamais livré), l'envoi
 // part donc d'un sender numérique (BSMS_FROM).
-function tplReminderJ1(data: { lang?: string; doctorName?: string; date?: string; time?: string }): string {
-  const lang = data.lang || "fr";
-  const doc = sanitizeSMS(data.doctorName) || "medecin";
-  const date = sanitizeSMS(data.date) || "demain";
-  const time = sanitizeSMS(data.time);
+// j1 et h2 sont portés à l'identique de js/tabibi-sms.js ; confirmation
+// est nouveau et vit ici (pas dans le module front, qui est désactivé).
+// ─────────────────────────────────────────────────────────────────────
+interface TplData { lang?: string; doctorName?: string; date?: string; time?: string; shortAddress?: string }
+
+function tplJ1(d: TplData): string {
+  const doc = sanitizeSMS(d.doctorName) || "medecin";
+  const date = sanitizeSMS(d.date) || "demain";
+  const time = sanitizeSMS(d.time);
   const T: Record<string, string> = {
     fr: "Tabibi: rappel RDV " + date + (time ? " a " + time : "") + " avec " + doc + ". tabibi.doctor",
     ar: "Tabibi: tadhkir maw3id " + date + (time ? " fi " + time : "") + " ma3a " + doc + ". tabibi.doctor",
     en: "Tabibi: reminder appt " + date + (time ? " at " + time : "") + " with " + doc + ". tabibi.doctor",
   };
-  return T[lang] || T.fr;
+  return T[d.lang || "fr"] || T.fr;
 }
 
-// Date/heure telles que le patient les vit : heure d'Alger, pas celle du serveur.
+function tplH2(d: TplData): string {
+  const doc = sanitizeSMS(d.doctorName) || "medecin";
+  const time = sanitizeSMS(d.time);
+  const addr = sanitizeSMS(d.shortAddress);
+  const T: Record<string, string> = {
+    fr: "Tabibi: RDV dans 2h avec " + doc + (time ? " a " + time : "") + "." + (addr ? " " + addr : "") + " Bon RDV!",
+    ar: "Tabibi: maw3id fi sa3atayn ma3a " + doc + (time ? " fi " + time : "") + "." + (addr ? " " + addr : "") + " Bon RDV!",
+    en: "Tabibi: appt in 2h with " + doc + (time ? " at " + time : "") + "." + (addr ? " " + addr : "") + " Good visit!",
+  };
+  return T[d.lang || "fr"] || T.fr;
+}
+
+function tplConfirmation(d: TplData): string {
+  const doc = sanitizeSMS(d.doctorName) || "medecin";
+  const date = sanitizeSMS(d.date);
+  const time = sanitizeSMS(d.time);
+  const T: Record<string, string> = {
+    fr: "Tabibi: votre RDV du " + date + " a " + time + " avec Dr " + doc + " est confirme. tabibi.doctor",
+    ar: "Tabibi: maw3idik yawm " + date + " fi " + time + " ma3a Dr " + doc + " mo2akkad. tabibi.doctor",
+    en: "Tabibi: your appt on " + date + " at " + time + " with Dr " + doc + " is confirmed. tabibi.doctor",
+  };
+  return T[d.lang || "fr"] || T.fr;
+}
+
+// ── Date/heure telles que le patient les vit : heure d'Alger ──────────
 function fmtDateAlgiers(iso: string): string {
   return new Intl.DateTimeFormat("fr-FR", { timeZone: TZ, day: "2-digit", month: "2-digit" }).format(new Date(iso));
 }
@@ -114,6 +164,278 @@ function hourAlgiers(d: Date): number {
   return Number(new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", hourCycle: "h23" }).format(d));
 }
 
+function langOf(patient: Row | undefined): string {
+  // Aucune colonne de langue n'existe aujourd'hui dans public.users (la
+  // langue vit dans localStorage) → on lit ce qui est là, repli sur "fr",
+  // sans casser si une colonne locale/lang est ajoutée plus tard.
+  const raw = patient?.locale ?? patient?.lang ?? patient?.preferred_language ?? "fr";
+  return String(raw).slice(0, 2);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Envoi BudgetSMS (GET, `to` sans "+") — retourne le résultat brut parsé.
+// ─────────────────────────────────────────────────────────────────────
+interface SmsCreds { user: string; userid: string; handle: string; from: string }
+
+async function sendSms(creds: SmsCreds, to: string, message: string):
+  Promise<{ ok: true; id: string | null; cost: string | null } | { ok: false; error: string }> {
+  try {
+    const url = "https://api.budgetsms.net/sendsms/"
+      + `?username=${encodeURIComponent(creds.user)}`
+      + `&userid=${encodeURIComponent(creds.userid)}`
+      + `&handle=${encodeURIComponent(creds.handle)}`
+      + `&from=${encodeURIComponent(creds.from)}`
+      + `&to=${encodeURIComponent(to)}`
+      + `&msg=${encodeURIComponent(message)}`;
+    const res = await fetch(url);
+    const raw = (await res.text()).trim();
+    if (raw.startsWith("OK")) {
+      // "OK <smsid> <cost> <parts>"
+      const [, id, cost] = raw.split(/\s+/);
+      return { ok: true, id: id ?? null, cost: cost ?? null };
+    }
+    return { ok: false, error: raw.substring(0, 200) };   // "ERR <code>"
+  } catch (err) {
+    return { ok: false, error: `network: ${(err as Error).message}`.substring(0, 200) };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Contexte partagé : patients (téléphone + langue) et médecins (nom).
+// La RLS bloque ces lectures côté navigateur ; service_role les autorise.
+// `select("*")` volontaire : évite un 400 si une colonne attendue
+// (locale, address…) n'existe pas dans ce projet.
+// ─────────────────────────────────────────────────────────────────────
+type Row = Record<string, string | null>;
+
+async function loadContext(db: SupabaseClient, patientIds: string[], doctorIds: string[]) {
+  const pById = new Map<string, Row>();
+  const dById = new Map<string, Row>();
+
+  if (patientIds.length) {
+    const { data } = await db.from("users").select("*").in("id", patientIds);
+    for (const u of (data ?? []) as Row[]) if (u.id) pById.set(String(u.id), u);
+  }
+  if (doctorIds.length) {
+    const { data } = await db.from("doctor_profiles").select("*").in("id", doctorIds);
+    for (const d of (data ?? []) as Row[]) if (d.id) dById.set(String(d.id), d);
+  }
+  return { pById, dById };
+}
+
+// Accès tolérant aux clés potentiellement absentes/nulles.
+function pick(map: Map<string, Row>, id: string | null | undefined): Row | undefined {
+  return id ? map.get(String(id)) : undefined;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// PASSE j1 / h2 — balayage des RDV dus dans une fenêtre.
+// ─────────────────────────────────────────────────────────────────────
+async function scanPass(
+  db: SupabaseClient,
+  kind: "j1" | "h2",
+  dryRun: boolean,
+  creds: SmsCreds | null,
+) {
+  const w = WINDOWS[kind];
+  const from = new Date(Date.now() + w.fromMin * 60_000).toISOString();
+  const to = new Date(Date.now() + w.toMin * 60_000).toISOString();
+
+  const { data: appts, error } = await db
+    .from("appointments")
+    .select("id, patient_id, doctor_id, starts_at, status")
+    .eq("status", "confirmed")            // exclut pending/cancelled/completed
+    .gte("starts_at", from)
+    .lt("starts_at", to)
+    .order("starts_at", { ascending: true })
+    .limit(BATCH_MAX);
+
+  if (error) {
+    console.error(`[reminders/${kind}] lecture appointments:`, error.message);
+    return { error: "db_read_failed" };
+  }
+  if (!appts || appts.length === 0) return { candidates: 0, sent: 0, failed: 0, no_phone: 0, duplicate: 0, sample: [] };
+
+  // Pré-filtre (l'index UNIQUE reste le garde-fou dur ; ceci évite des
+  // tentatives inutiles).
+  const ids = appts.map((a) => a.id);
+  const { data: already } = await db
+    .from("appointment_notifications")
+    .select("appointment_id")
+    .eq("kind", kind)
+    .in("appointment_id", ids);
+  const done = new Set((already ?? []).map((r) => r.appointment_id));
+  const todo = appts.filter((a) => !done.has(a.id));
+
+  const { pById, dById } = await loadContext(
+    db,
+    [...new Set(todo.map((a) => a.patient_id).filter(Boolean))],
+    [...new Set(todo.map((a) => a.doctor_id).filter(Boolean))],
+  );
+
+  // ── Dry-run : lecture seule, on ne consomme aucun slot ──────────────
+  if (dryRun) {
+    return {
+      candidates: todo.length,
+      sample: todo.slice(0, SAMPLE_MAX).map((a) => ({
+        appointment_id: a.id,
+        to_phone: normalizePhoneDZ(pick(pById, a.patient_id)?.phone),
+        starts_at: a.starts_at,
+        lang: langOf(pick(pById, a.patient_id)),
+      })),
+    };
+  }
+
+  // ── Envoi réel ──────────────────────────────────────────────────────
+  const summary = { candidates: todo.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
+
+  for (const a of todo) {
+    const patient = pick(pById, a.patient_id);
+    const doctor = pick(dById, a.doctor_id);
+    const phone = normalizePhoneDZ(patient?.phone);
+
+    // Numéro inexploitable : on ne consomme PAS le slot — si le patient
+    // corrige son numéro, le message partira au run suivant.
+    if (!phone) { summary.no_phone++; continue; }
+
+    const data: TplData = {
+      lang: langOf(patient),
+      doctorName: doctor?.full_name,
+      date: fmtDateAlgiers(a.starts_at),
+      time: fmtTimeAlgiers(a.starts_at),
+      shortAddress: doctor?.address,
+    };
+    let message = kind === "j1" ? tplJ1(data) : tplH2(data);
+    if (message.length > SMS_MAX_LEN) message = message.substring(0, SMS_MAX_LEN);
+
+    // (a) Réservation du slot AVANT l'envoi = verrou anti-doublon.
+    const { data: row, error: insErr } = await db
+      .from("appointment_notifications")
+      .insert({ appointment_id: a.id, kind, to_phone: phone, status: "pending" })
+      .select("id")
+      .single();
+
+    if (insErr) {
+      if ((insErr as { code?: string }).code === "23505") { summary.duplicate++; continue; }
+      console.error(`[reminders/${kind}] insert outbox:`, insErr.message);
+      summary.failed++;
+      continue;
+    }
+
+    // (b) Envoi · (c) mise à jour du statut.
+    const res = await sendSms(creds!, phone, message);
+    if (res.ok) {
+      await db.from("appointment_notifications")
+        .update({ status: "sent", provider_msg_id: res.id, cost: res.cost, sent_at: new Date().toISOString() })
+        .eq("id", row.id);
+      summary.sent++;
+    } else {
+      await db.from("appointment_notifications")
+        .update({ status: "failed", error: res.error })
+        .eq("id", row.id);
+      summary.failed++;
+    }
+  }
+  return summary;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// PASSE confirmation — draine l'outbox alimentée par le trigger SQL.
+// Le trigger pose la ligne (status='pending') au passage → 'confirmed' ;
+// il n'envoie rien. Ici on résout le téléphone si le trigger ne l'a pas
+// fait (to_phone NULL) puis on envoie.
+// ─────────────────────────────────────────────────────────────────────
+async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsCreds | null) {
+  const { data: rows, error } = await db
+    .from("appointment_notifications")
+    .select("id, appointment_id, to_phone")
+    .eq("kind", "confirmation")
+    .eq("status", "pending")
+    .order("created_at", { ascending: true })
+    .limit(BATCH_MAX);
+
+  if (error) {
+    console.error("[reminders/confirmation] lecture outbox:", error.message);
+    return { error: "db_read_failed" };
+  }
+  if (!rows || rows.length === 0) return { candidates: 0, sent: 0, failed: 0, no_phone: 0, duplicate: 0, sample: [] };
+
+  // RDV liés (date/heure/médecin + patient pour la langue et le repli tél.)
+  const apptIds = rows.map((r) => r.appointment_id);
+  const { data: appts } = await db
+    .from("appointments")
+    .select("id, patient_id, doctor_id, starts_at, status")
+    .in("id", apptIds);
+  const aById = new Map<string, Row>();
+  for (const a of (appts ?? []) as Row[]) if (a.id) aById.set(String(a.id), a);
+
+  const { pById, dById } = await loadContext(
+    db,
+    [...new Set((appts ?? []).map((a) => a.patient_id).filter(Boolean))],
+    [...new Set((appts ?? []).map((a) => a.doctor_id).filter(Boolean))],
+  );
+
+  if (dryRun) {
+    return {
+      candidates: rows.length,
+      sample: rows.slice(0, SAMPLE_MAX).map((r) => {
+        const a = pick(aById, r.appointment_id);
+        return {
+          appointment_id: r.appointment_id,
+          to_phone: r.to_phone ?? normalizePhoneDZ(pick(pById, a?.patient_id)?.phone),
+          starts_at: a?.starts_at ?? null,
+          lang: langOf(pick(pById, a?.patient_id)),
+        };
+      }),
+    };
+  }
+
+  const summary = { candidates: rows.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
+
+  for (const r of rows) {
+    const a = pick(aById, r.appointment_id);
+    const patient = pick(pById, a?.patient_id);
+    const doctor = pick(dById, a?.doctor_id);
+
+    // Le trigger a pu poser to_phone=NULL : on résout ici en service_role.
+    const phone = normalizePhoneDZ(r.to_phone ?? patient?.phone);
+    if (!phone || !a) { summary.no_phone++; continue; }
+
+    // Verrou : 'pending' → 'sending'. Un seul run peut gagner ; le perdant
+    // reçoit 0 ligne et passe au suivant.
+    const { data: claimed } = await db
+      .from("appointment_notifications")
+      .update({ status: "sending", to_phone: phone })
+      .eq("id", r.id)
+      .eq("status", "pending")
+      .select("id");
+    if (!claimed || claimed.length === 0) { summary.duplicate++; continue; }
+
+    let message = tplConfirmation({
+      lang: langOf(patient),
+      doctorName: doctor?.full_name,
+      date: fmtDateAlgiers(String(a.starts_at)),
+      time: fmtTimeAlgiers(String(a.starts_at)),
+    });
+    if (message.length > SMS_MAX_LEN) message = message.substring(0, SMS_MAX_LEN);
+
+    const res = await sendSms(creds!, phone, message);
+    if (res.ok) {
+      await db.from("appointment_notifications")
+        .update({ status: "sent", provider_msg_id: res.id, cost: res.cost, sent_at: new Date().toISOString() })
+        .eq("id", r.id);
+      summary.sent++;
+    } else {
+      await db.from("appointment_notifications")
+        .update({ status: "failed", error: res.error })
+        .eq("id", r.id);
+      summary.failed++;
+    }
+  }
+  return summary;
+}
+
+// ─────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   // ── 1. Authentification du déclencheur (cron) ───────────────────────
   const cronSecret = Deno.env.get("REMINDERS_CRON_SECRET");
@@ -126,28 +448,15 @@ Deno.serve(async (req) => {
   }
 
   // ── 2. Paramètres d'exécution ───────────────────────────────────────
-  // dry_run est VRAI par défaut : tant qu'on ne demande pas explicitement
-  // false, aucun SMS n'est envoyé (les lignes outbox sont journalisées
-  // en 'skipped'). Sécurité volontaire — un cron mal configuré ne peut
-  // pas déclencher une facture surprise.
+  // dry_run est VRAI par défaut : il faut passer explicitement false pour
+  // envoyer. Un cron mal configuré ne peut pas générer de facture surprise.
   let body: { dry_run?: boolean } = {};
   try { body = await req.json(); } catch (_) { /* corps vide accepté */ }
   const dryRun = body.dry_run !== false;
 
-  // Kill-switch (secret REMINDERS_ENABLED, défaut "true")
+  // Kill-switch global (secret REMINDERS_ENABLED, défaut "true")
   if ((Deno.env.get("REMINDERS_ENABLED") ?? "true").toLowerCase() === "false") {
-    return new Response(JSON.stringify({ ok: true, skipped: "kill_switch", sent: 0 }), { status: 200, headers: JSON_HEADERS });
-  }
-
-  // Heures calmes 21h-08h (Alger) : on ne réveille personne. Sortie SANS
-  // aucune écriture → les RDV concernés restent éligibles et sont
-  // rattrapés par le premier run de 08h (fenêtre large, cf. en-tête).
-  const nowHour = hourAlgiers(new Date());
-  if (nowHour >= QUIET_FROM || nowHour < QUIET_TO) {
-    return new Response(
-      JSON.stringify({ ok: true, skipped: "quiet_hours", hour_algiers: nowHour, sent: 0 }),
-      { status: 200, headers: JSON_HEADERS },
-    );
+    return new Response(JSON.stringify({ ok: true, skipped: "kill_switch" }), { status: 200, headers: JSON_HEADERS });
   }
 
   // ── 3. Client service_role (contourne la RLS — jamais exposé au client) ──
@@ -159,155 +468,33 @@ Deno.serve(async (req) => {
   }
   const db = createClient(SUPABASE_URL, SERVICE_KEY, { auth: { persistSession: false } });
 
-  // ── 4. RDV dus : confirmés, dans [now+1h, now+24h] ──────────────────
-  // Fenêtre large (et non une tranche J-1 étroite) : c'est ce qui permet
-  // le rattrapage des RDV laissés de côté pendant les heures calmes.
-  const from = new Date(Date.now() + WINDOW_MIN_H * 3600_000).toISOString();
-  const to = new Date(Date.now() + WINDOW_MAX_H * 3600_000).toISOString();
-
-  const { data: appts, error: apptErr } = await db
-    .from("appointments")
-    .select("id, patient_id, doctor_id, starts_at, status")
-    .eq("status", "confirmed")          // exclut de fait pending/cancelled/completed
-    .gte("starts_at", from)
-    .lt("starts_at", to)
-    .order("starts_at", { ascending: true })
-    .limit(BATCH_MAX);
-
-  if (apptErr) {
-    console.error("[reminders] lecture appointments:", apptErr.message);
-    return new Response(JSON.stringify({ error: "db_read_failed" }), { status: 500, headers: JSON_HEADERS });
-  }
-  if (!appts || appts.length === 0) {
-    return new Response(JSON.stringify({ ok: true, dry_run: dryRun, candidates: 0, sent: 0 }), { status: 200, headers: JSON_HEADERS });
-  }
-
-  // Pré-filtre : rappels J-1 déjà journalisés (l'index UNIQUE reste le
-  // garde-fou dur ; ceci évite juste des tentatives inutiles).
-  const ids = appts.map((a) => a.id);
-  const { data: already } = await db
-    .from("appointment_notifications")
-    .select("appointment_id")
-    .eq("kind", "j1")
-    .in("appointment_id", ids);
-  const done = new Set((already ?? []).map((r) => r.appointment_id));
-  const todo = appts.filter((a) => !done.has(a.id));
-
-  // ── 5. Résolution patients (téléphone + langue) et médecins (nom) ───
-  // La RLS bloque ces lectures côté navigateur ; service_role les autorise.
-  // `select("*")` volontaire : aucune colonne de langue n'existe
-  // aujourd'hui dans public.users (la langue vit dans localStorage), donc
-  // on lit ce qui est là et on retombe sur "fr" — sans casser si une
-  // colonne locale/lang est ajoutée plus tard.
-  const patientIds = [...new Set(todo.map((a) => a.patient_id).filter(Boolean))];
-  const doctorIds = [...new Set(todo.map((a) => a.doctor_id).filter(Boolean))];
-
-  const { data: patients } = await db.from("users").select("*").in("id", patientIds);
-  const { data: doctors } = await db.from("doctor_profiles").select("id, full_name").in("id", doctorIds);
-
-  const pById = new Map((patients ?? []).map((u) => [u.id, u]));
-  const dById = new Map((doctors ?? []).map((d) => [d.id, d]));
-
-  // ── 6. Envoi ────────────────────────────────────────────────────────
+  // ── 4. Identifiants SMS (inutiles en dry_run : rien n'est envoyé) ────
   const BSMS_USER = Deno.env.get("BSMS_USER");
   const BSMS_USERID = Deno.env.get("BSMS_USERID");
   const BSMS_HANDLE = Deno.env.get("BSMS_HANDLE");
   const BSMS_FROM = Deno.env.get("BSMS_FROM") ?? "12345"; // sender NUMÉRIQUE (obligatoire en DZ)
 
-  // ── 6a. DRY-RUN : lecture seule, AUCUNE écriture ────────────────────
-  // On ne touche pas à l'outbox : le slot unique (appointment_id,'j1')
-  // reste libre, donc le run réel qui suivra enverra bien ces rappels.
-  if (dryRun) {
-    const sample = todo.slice(0, SAMPLE_MAX).map((a) => {
-      const patient = pById.get(a.patient_id);
-      return {
-        appointment_id: a.id,
-        to_phone: normalizePhoneDZ(patient?.phone),
-        starts_at: a.starts_at,
-        lang: (patient?.locale ?? patient?.lang ?? patient?.preferred_language ?? "fr").toString().slice(0, 2),
-      };
-    });
-    return new Response(
-      JSON.stringify({ ok: true, dry_run: true, candidates: todo.length, sample }),
-      { status: 200, headers: JSON_HEADERS },
-    );
-  }
-
-  // ── 6b. ENVOI RÉEL ──────────────────────────────────────────────────
-  if (!BSMS_USER || !BSMS_USERID || !BSMS_HANDLE) {
+  if (!dryRun && (!BSMS_USER || !BSMS_USERID || !BSMS_HANDLE)) {
     console.error("[reminders] identifiants BudgetSMS manquants");
     return new Response(JSON.stringify({ error: "sms provider not configured" }), { status: 500, headers: JSON_HEADERS });
   }
+  const creds: SmsCreds | null = dryRun ? null
+    : { user: BSMS_USER!, userid: BSMS_USERID!, handle: BSMS_HANDLE!, from: BSMS_FROM };
 
-  const summary = { candidates: todo.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
+  // ── 5. Heures calmes : bloque j1 SEULEMENT (h2 et confirmation passent) ──
+  const nowHour = hourAlgiers(new Date());
+  const quiet = nowHour >= QUIET_FROM || nowHour < QUIET_TO;
 
-  for (const a of todo) {
-    const patient = pById.get(a.patient_id);
-    const doctor = dById.get(a.doctor_id);
-    const phone = normalizePhoneDZ(patient?.phone);
+  // ── 6. Exécution des 3 passes ───────────────────────────────────────
+  // En dry_run on calcule j1 même pendant les heures calmes (rien n'est
+  // envoyé) : c'est plus informatif ; `quiet_hours` signale que ce lot
+  // serait suspendu lors d'un run réel.
+  const j1 = (quiet && !dryRun) ? { skipped: "quiet_hours" } : await scanPass(db, "j1", dryRun, creds);
+  const h2 = await scanPass(db, "h2", dryRun, creds);
+  const confirmation = await confirmationPass(db, dryRun, creds);
 
-    // Numéro inexploitable : on ne consomme PAS le slot — si le patient
-    // corrige son numéro, le rappel partira au run suivant.
-    if (!phone) { summary.no_phone++; continue; }
-
-    const lang = (patient?.locale ?? patient?.lang ?? patient?.preferred_language ?? "fr").toString().slice(0, 2);
-    let message = tplReminderJ1({
-      lang,
-      doctorName: doctor?.full_name,
-      date: fmtDateAlgiers(a.starts_at),
-      time: fmtTimeAlgiers(a.starts_at),
-    });
-    if (message.length > SMS_MAX_LEN) message = message.substring(0, SMS_MAX_LEN);
-
-    // (a) Réservation du slot AVANT l'envoi = verrou anti-doublon.
-    const { data: row, error: insErr } = await db
-      .from("appointment_notifications")
-      .insert({ appointment_id: a.id, kind: "j1", to_phone: phone, status: "pending" })
-      .select("id")
-      .single();
-
-    if (insErr) {
-      // 23505 = violation de l'index UNIQUE → un autre run a déjà pris ce RDV.
-      if ((insErr as { code?: string }).code === "23505") { summary.duplicate++; continue; }
-      console.error("[reminders] insert outbox:", insErr.message);
-      summary.failed++;
-      continue;
-    }
-
-    // (b) Envoi BudgetSMS (GET, `to` sans "+") · (c) mise à jour du statut.
-    try {
-      const url = "https://api.budgetsms.net/sendsms/"
-        + `?username=${encodeURIComponent(BSMS_USER!)}`
-        + `&userid=${encodeURIComponent(BSMS_USERID!)}`
-        + `&handle=${encodeURIComponent(BSMS_HANDLE!)}`
-        + `&from=${encodeURIComponent(BSMS_FROM)}`
-        + `&to=${encodeURIComponent(phone)}`
-        + `&msg=${encodeURIComponent(message)}`;
-
-      const res = await fetch(url);
-      const raw = (await res.text()).trim();
-
-      if (raw.startsWith("OK")) {
-        // "OK <smsid> <cost> <parts>"
-        const [, smsId, cost] = raw.split(/\s+/);
-        await db.from("appointment_notifications")
-          .update({ status: "sent", provider_msg_id: smsId ?? null, cost: cost ?? null, sent_at: new Date().toISOString() })
-          .eq("id", row.id);
-        summary.sent++;
-      } else {
-        // "ERR <code>"
-        await db.from("appointment_notifications")
-          .update({ status: "failed", error: raw.substring(0, 200) })
-          .eq("id", row.id);
-        summary.failed++;
-      }
-    } catch (err) {
-      await db.from("appointment_notifications")
-        .update({ status: "failed", error: `network: ${(err as Error).message}`.substring(0, 200) })
-        .eq("id", row.id);
-      summary.failed++;
-    }
-  }
-
-  return new Response(JSON.stringify({ ok: true, dry_run: dryRun, ...summary }), { status: 200, headers: JSON_HEADERS });
+  return new Response(
+    JSON.stringify({ ok: true, dry_run: dryRun, quiet_hours: quiet, hour_algiers: nowHour, j1, h2, confirmation }),
+    { status: 200, headers: JSON_HEADERS },
+  );
 });
