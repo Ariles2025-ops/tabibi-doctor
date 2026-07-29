@@ -99,12 +99,15 @@ for forbidden in seo scripts api templates sitemaps migrations supabase docs tes
   [ -d "$WWW/$forbidden" ] && fail "$forbidden/ présent dans le bundle"
 done
 
-# Pages pro / admin : aucune ne doit apparaître, où que ce soit.
+# Pages pro / admin — contrôle limité à la RACINE du bundle (-maxdepth 1).
+# Les pages pro sont toutes des pages racine ; une recherche récursive
+# produisait un faux positif sur un article de blog légitime
+# (blog/articles/medecin-liberal-algerie-digitaliser-cabinet-2026.html).
 for pattern in 'admin-*.html' 'secretaire-*.html' 'medecin-*.html' \
                'doctor-dashboard.html' 'doctor-analytics.html' \
                'doctor-reservation.html' 'agenda-cabinet.html' \
                'onboarding-medecin.html' 'api-docs.html'; do
-  found=$(find "$WWW" -name "$pattern" 2>/dev/null | head -1)
+  found=$(find "$WWW" -maxdepth 1 -name "$pattern" 2>/dev/null | head -1)
   [ -n "$found" ] && fail "page pro/admin dans le bundle : $found"
 done
 
