@@ -1,0 +1,83 @@
+-- =====================================================================
+-- LOT A — Planification du rappel J-1  ⚠️ FICHIER DÉSACTIVÉ ⚠️
+-- =====================================================================
+-- Fichier : supabase/migrations/20260729120100_reminders_cron.sql.DISABLED
+-- Date    : 2026-07-29 · Phase 4 (rappels RDV)
+--
+-- ┌───────────────────────────────────────────────────────────────────┐
+-- │ NE PAS EXÉCUTER EN L'ÉTAT.                                        │
+-- │ À ACTIVER APRÈS VALIDATION DU DRY_RUN :                           │
+-- │   1. appeler la fonction avec {"dry_run": true} (cf. PR)          │
+-- │      → réponse {candidates, sample:[...]} : vérifier que les bons  │
+-- │        RDV sont ciblés et les numéros correctement normalisés.    │
+-- │        Le dry-run N'ÉCRIT RIEN : aucun rappel n'est « consommé »,  │
+-- │        il est rejouable autant de fois que voulu.                 │
+-- │   2. UN envoi réel de contrôle sur SON PROPRE numéro              │
+-- │   3. seulement ensuite : renommer ce fichier en .sql et l'exécuter │
+-- └───────────────────────────────────────────────────────────────────┘
+--
+-- L'extension `.DISABLED` empêche toute exécution accidentelle par un
+-- outil qui balaierait supabase/migrations/*.sql.
+-- =====================================================================
+
+
+-- ---------------------------------------------------------------------
+-- PRÉ-REQUIS — extensions (à activer AU DASHBOARD, pas ici)
+-- Dashboard → Database → Extensions → activer `pg_cron` et `pg_net`.
+-- Équivalent SQL si tu préfères la ligne de commande :
+--   CREATE EXTENSION IF NOT EXISTS pg_cron;
+--   CREATE EXTENSION IF NOT EXISTS pg_net;
+-- Vérification :
+--   SELECT extname FROM pg_extension WHERE extname IN ('pg_cron','pg_net');
+-- ---------------------------------------------------------------------
+
+
+-- ---------------------------------------------------------------------
+-- PLANIFICATION — toutes les 15 minutes
+-- ---------------------------------------------------------------------
+-- La fonction refuse d'elle-même d'envoyer entre 21h et 08h (heure
+-- d'Alger) : le cron peut donc tourner en continu sans réveiller
+-- personne. dry_run est passé à FALSE ici — c'est CE réglage qui
+-- déclenche les envois facturés.
+--
+-- ⚠️ Remplacer <REMINDERS_CRON_SECRET> par la valeur réelle du secret
+--    AVANT exécution (et ne jamais committer le fichier rempli).
+-- ---------------------------------------------------------------------
+SELECT cron.schedule(
+  'tabibi-rappels-j1',
+  '*/15 * * * *',
+  $$
+  SELECT net.http_post(
+    url     := 'https://pudugodhiofqrctcdwfl.supabase.co/functions/v1/appointment-reminders',
+    headers := jsonb_build_object(
+                 'Content-Type',       'application/json',
+                 'x-reminders-secret', '<REMINDERS_CRON_SECRET>'
+               ),
+    body    := jsonb_build_object('dry_run', false)
+  );
+  $$
+);
+
+
+-- ---------------------------------------------------------------------
+-- SUIVI
+-- ---------------------------------------------------------------------
+-- Jobs planifiés :
+--   SELECT jobid, jobname, schedule, active FROM cron.job;
+-- Dernières exécutions (succès/échec du POST) :
+--   SELECT jobid, status, return_message, start_time
+--     FROM cron.job_run_details ORDER BY start_time DESC LIMIT 20;
+-- Envois produits :
+--   SELECT status, count(*) FROM public.appointment_notifications
+--    WHERE kind = 'j1' GROUP BY status;
+
+
+-- ---------------------------------------------------------------------
+-- ARRÊT D'URGENCE (kill-switch)
+-- ---------------------------------------------------------------------
+-- Option 1 — couper les envois SANS toucher au cron :
+--   secret REMINDERS_ENABLED = "false"  (la fonction sort immédiatement)
+-- Option 2 — désactiver le job :
+--   UPDATE cron.job SET active = false WHERE jobname = 'tabibi-rappels-j1';
+-- Option 3 — supprimer le job :
+--   SELECT cron.unschedule('tabibi-rappels-j1');
