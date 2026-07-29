@@ -70,6 +70,18 @@
     //   - RLS post-completed : non créée (TODO-SQL-012)
     reviews: false,
 
+    // Ordonnances numériques :
+    //   - Front : medecin-ordonnance.html (rédaction/signature) +
+    //     patient-ordonnances.html (consultation/téléchargement)
+    //   - DB prod : les 4 RPC sont ABSENTES (vérifié le 2026-07-29 contre
+    //     pg_proc) → create_prescription_draft, update_prescription_draft,
+    //     request_prescription_signature, mark_prescription_delivered.
+    //     Détail : docs/RPC_INVENTORY.md
+    //   → OFF : sans ce flag, chaque action renvoyait un PGRST202 en
+    //     erreur générique (échec silencieux côté produit).
+    //   ⚠️ Repasser à true UNIQUEMENT après création des 4 RPC en prod.
+    prescriptions: false,
+
     // Analytics Plausible (Phase 10) :
     //   - Compte Plausible non créé
     //   - Script injection désactivé pour éviter erreur 404 + bruit

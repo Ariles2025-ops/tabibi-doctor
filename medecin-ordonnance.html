@@ -102,6 +102,15 @@
 
   html[dir="rtl"] .preview-paper .ph-head { flex-direction: row-reverse; }
   html[dir="rtl"] .topbar { flex-direction: row-reverse; }
+
+/* [FLAG prescriptions] Bandeau « bientôt disponible » — visible seulement
+   quand la feature est OFF (masqué par data-feature-not sinon). */
+.ord-soon { display:flex; align-items:flex-start; gap:12px; padding:16px 18px;
+  margin-bottom:16px; border-radius:12px; background:#fffbeb;
+  border:1px solid #f59e0b; color:#78350f; }
+.ord-soon i { font-size:20px; color:#92400e; flex-shrink:0; margin-top:2px; }
+.ord-soon strong { display:block; font-size:14px; font-weight:800; margin-bottom:4px; }
+.ord-soon p { font-size:12.5px; line-height:1.55; margin:0; }
 </style>
 </head>
 <body>
@@ -173,11 +182,25 @@
       </div>
     </div>
 
+    <!-- [FLAG prescriptions] Bandeau affiché UNIQUEMENT quand la feature est OFF.
+         Les 4 RPC prescription sont absentes de la prod (cf. docs/RPC_INVENTORY.md) :
+         sans ce garde-fou, « Sauvegarder » et « Signer » renvoyaient un PGRST202
+         présenté comme une erreur générique. -->
+    <div class="ord-soon" data-feature-not="prescriptions" role="status">
+      <i class="fa fa-clock" aria-hidden="true"></i>
+      <div>
+        <strong data-i18n="mo_soon_title">Fonctionnalité bientôt disponible</strong>
+        <p data-i18n="mo_soon_desc">La rédaction d'ordonnances numériques est en cours de finalisation.
+           Vous pouvez préparer le contenu ci-dessus, mais l'enregistrement et la signature
+           électronique ne sont pas encore actifs.</p>
+      </div>
+    </div>
+
     <div class="actions">
-      <button type="button" class="btn btn-secondary" id="btn-save-draft">
+      <button type="button" class="btn btn-secondary" id="btn-save-draft" data-feature="prescriptions">
         <i class="fa fa-floppy-disk"></i> <span id="t-save" data-i18n="mo_save">Sauvegarder brouillon</span>
       </button>
-      <button type="button" class="btn btn-primary" id="btn-sign">
+      <button type="button" class="btn btn-primary" id="btn-sign" data-feature="prescriptions">
         <i class="fa fa-pen-nib"></i> <span id="t-sign" data-i18n="mo_sign">Signer et generer le PDF</span>
       </button>
       <button type="button" class="btn btn-ghost" id="btn-cancel" onclick="history.back()">
@@ -238,6 +261,7 @@
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
+<script src="js/tabibi-features.js"></script>
 
 <script>
 (function() {
@@ -476,6 +500,13 @@
     if (!pid)        { showToast(T('mo_patient_required', 'Patient requis'), 'err'); return; }
     if (!meds.length) { showToast(T('mo_med_required', 'Au moins un medicament requis'), 'err'); return; }
 
+    // [FLAG prescriptions] Garde dure : aucun appel RPC si la feature est OFF.
+    // Le masquage des boutons ne protège pas d'un appel programmatique.
+    if (window.TABIBI_FEATURES && !window.TABIBI_FEATURES.prescriptions) {
+      showToast(T('mo_soon_title', 'Fonctionnalite bientot disponible'), 'err');
+      return;
+    }
+
     $('#btn-save-draft').disabled = true;
     try {
       if (currentPrescriptionId) {
@@ -517,6 +548,12 @@
     if (!currentPrescriptionId) {
       await saveDraft();
       if (!currentPrescriptionId) return;
+    }
+
+    // [FLAG prescriptions] Garde dure — cf. saveDraft().
+    if (window.TABIBI_FEATURES && !window.TABIBI_FEATURES.prescriptions) {
+      showToast(T('mo_soon_title', 'Fonctionnalite bientot disponible'), 'err');
+      return;
     }
 
     if (!confirm(T('mo_confirm_sign', 'Apres signature, cette ordonnance sera IMMUABLE.\n\nConfirmer la signature electronique ?'))) return;
