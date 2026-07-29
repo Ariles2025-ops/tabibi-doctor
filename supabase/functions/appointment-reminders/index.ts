@@ -49,7 +49,8 @@
 //   de Deno.env. Le service_role ne quitte jamais la fonction.
 // =====================================================================
 
-import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -115,7 +116,12 @@ function normalizePhoneDZ(phone: unknown): string | null {
 // j1 et h2 sont portés à l'identique de js/tabibi-sms.js ; confirmation
 // est nouveau et vit ici (pas dans le module front, qui est désactivé).
 // ─────────────────────────────────────────────────────────────────────
-interface TplData { lang?: string; doctorName?: string; date?: string; time?: string; shortAddress?: string }
+// Les valeurs viennent de la DB : elles peuvent être null (et pas
+// seulement undefined) — sinon erreur de type sous strictNullChecks.
+interface TplData {
+  lang?: string | null; doctorName?: string | null; date?: string | null;
+  time?: string | null; shortAddress?: string | null;
+}
 
 function tplJ1(d: TplData): string {
   const doc = sanitizeSMS(d.doctorName) || "medecin";
@@ -126,7 +132,7 @@ function tplJ1(d: TplData): string {
     ar: "Tabibi: tadhkir maw3id " + date + (time ? " fi " + time : "") + " ma3a " + doc + ". tabibi.doctor",
     en: "Tabibi: reminder appt " + date + (time ? " at " + time : "") + " with " + doc + ". tabibi.doctor",
   };
-  return T[d.lang || "fr"] || T.fr;
+  return T[d.lang ?? "fr"] ?? T.fr;
 }
 
 function tplH2(d: TplData): string {
@@ -138,7 +144,7 @@ function tplH2(d: TplData): string {
     ar: "Tabibi: maw3id fi sa3atayn ma3a " + doc + (time ? " fi " + time : "") + "." + (addr ? " " + addr : "") + " Bon RDV!",
     en: "Tabibi: appt in 2h with " + doc + (time ? " at " + time : "") + "." + (addr ? " " + addr : "") + " Good visit!",
   };
-  return T[d.lang || "fr"] || T.fr;
+  return T[d.lang ?? "fr"] ?? T.fr;
 }
 
 function tplConfirmation(d: TplData): string {
@@ -150,7 +156,7 @@ function tplConfirmation(d: TplData): string {
     ar: "Tabibi: maw3idik yawm " + date + " fi " + time + " ma3a Dr " + doc + " mo2akkad. tabibi.doctor",
     en: "Tabibi: your appt on " + date + " at " + time + " with Dr " + doc + " is confirmed. tabibi.doctor",
   };
-  return T[d.lang || "fr"] || T.fr;
+  return T[d.lang ?? "fr"] ?? T.fr;
 }
 
 // ── Date/heure telles que le patient les vit : heure d'Alger ──────────
@@ -287,6 +293,10 @@ async function scanPass(
   }
 
   // ── Envoi réel ──────────────────────────────────────────────────────
+  // Garde explicite plutôt qu'une assertion `creds!` : si les
+  // identifiants manquent, on n'écrit rien et on le dit.
+  if (!creds) return { error: "sms_credentials_missing" };
+
   const summary = { candidates: todo.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
 
   for (const a of todo) {
@@ -301,8 +311,8 @@ async function scanPass(
     const data: TplData = {
       lang: langOf(patient),
       doctorName: doctor?.full_name,
-      date: fmtDateAlgiers(a.starts_at),
-      time: fmtTimeAlgiers(a.starts_at),
+      date: fmtDateAlgiers(String(a.starts_at)),
+      time: fmtTimeAlgiers(String(a.starts_at)),
       shortAddress: doctor?.address,
     };
     let message = kind === "j1" ? tplJ1(data) : tplH2(data);
@@ -323,7 +333,7 @@ async function scanPass(
     }
 
     // (b) Envoi · (c) mise à jour du statut.
-    const res = await sendSms(creds!, phone, message);
+    const res = await sendSms(creds, phone, message);
     if (res.ok) {
       await db.from("appointment_notifications")
         .update({ status: "sent", provider_msg_id: res.id, cost: res.cost, sent_at: new Date().toISOString() })
@@ -390,6 +400,8 @@ async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsC
     };
   }
 
+  if (!creds) return { error: "sms_credentials_missing" };
+
   const summary = { candidates: rows.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
 
   for (const r of rows) {
@@ -419,7 +431,7 @@ async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsC
     });
     if (message.length > SMS_MAX_LEN) message = message.substring(0, SMS_MAX_LEN);
 
-    const res = await sendSms(creds!, phone, message);
+    const res = await sendSms(creds, phone, message);
     if (res.ok) {
       await db.from("appointment_notifications")
         .update({ status: "sent", provider_msg_id: res.id, cost: res.cost, sent_at: new Date().toISOString() })
