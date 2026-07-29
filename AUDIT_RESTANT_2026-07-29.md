@@ -15,6 +15,7 @@ Base : `main` après merge des PR **#16** et **#17** (Phase 3 desktop intégrée
 | Point | Ancienne conclusion | Constat vérifié le 29/07 |
 |---|---|---|
 | Desktop non poussé | « 18 commits bloqués en local » | **FAIT** — PR #16 (`7f7d22e`) et #17 (`5a03f35`) mergées ; `js/tabibi-header.js`, `js/tabibi-nav.js`, `js/tabibi-agenda.js`, `js/tabibi-platform.js`, `js/tabibi-pro-sidebar.js`, `agenda-cabinet.html`, `desktop/src-tauri/`, `.github/workflows/desktop-release.yml` présents dans `main` |
+| Rappels RDV | « 0 % — aucun mécanisme d'envoi ni de planification » | **FAIT le 29/07** — J-1, H-2 et confirmation en production (cron `appointment-reminders`, jobid 2, envoi BudgetSMS prouvé). Voir la ligne P1 du tableau |
 | CRIT-5 | « rouvert et aggravé » (`ETAT_DES_LIEUX.md:53`) | **FERMÉ** — test REST prod du 29/07 : signup sans `captcha_token` → `400 captcha_failed`. La note d'ETAT_DES_LIEUX est **périmée** (antérieure à l'activation du captcha serveur). Voir §Preuve CRIT-5 |
 
 ### Preuve CRIT-5 (test réel, 29/07/2026)
@@ -51,7 +52,7 @@ Légende état : ✅ FAIT · 🔧 en cours sur `hygiene/p0` · ⬜ à faire · �
 | **P0** | ⬜ | Mobile | **Scripts internes packagés dans l'APK public** : `scripts/build-mobile.sh:29` copie `scripts/` (dont `deploy-web.sh`, `otp-spike.sh`), les 490 pages `seo/` et les pages `admin-*` dans `www/` → 653 fichiers embarqués | S |
 | **P1** | ✅ | Desktop | Push + PR Phase 3 — **FAIT** (PR #16 + #17 mergées dans `main`) | — |
 | **P1** | ⬜ | Backend | ⚠️ **Schéma prod non versionné** : 25 RPC appelées par le front sans définition dans le repo (`admin_*`, `*_prescription_*`, `*_cabinet_*`, `*_api_key*`, `get/upsert_patient_medical_data`) ; aucun `CREATE TABLE patient_medical_data` alors que `patient-profile.html:314-393` lit/écrit dessus | M |
-| **P1** | ⬜ | Backend | **Rappels RDV J-1 : 0 %** — templates jamais appelés (`js/tabibi-sms.js:80,94` ; `js/tabibi-brevo.js:446,481`), `send-sms` est un hook OTP au contrat incompatible (`supabase/functions/send-sms/index.ts:46` vs `js/tabibi-sms.js:157`), edge `send-email` **inexistante** (`js/tabibi-brevo.js:619`), aucun `pg_cron` (`PROGRESS.md:170`) | L |
+| **P1** | ✅ | Backend | **Rappels SMS — FAIT, en production le 2026-07-29** (branche `phase4/rappels-rdv`). Edge function `appointment-reminders` (3 passes : `j1` [now+6h,now+24h], `h2` [now+90min,now+150min], `confirmation` drainée depuis un trigger SQL) + `pg_cron` 15 min (jobid 2, active) + BudgetSMS. Envoi réel prouvé. Anti-doublon par index UNIQUE `(appointment_id, kind)` ; fenêtres j1/h2 rendues disjointes après un bug réel (2 SMS pour 1 RDV). Kill-switch `REMINDERS_ENABLED=false`. Runbook : `DEPLOY_RAPPELS.md`. **Non retenu** : canal email (SMS-only en DZ) — l'edge `send-email` appelée par `js/tabibi-brevo.js:619` reste inexistante | L |
 | **P1** | ⬜ | Mobile | **Keystore Android hors repo, sans sauvegarde documentée** + chemin contradictoire : `android/app/build.gradle:5` lit `android/keystore.properties`, la doc dit `android/app/` (`docs/mobile/DEPLOYMENT_CHECKLIST.md:141`) → signature silencieusement ignorée. Perte de clé = perte du canal de MAJ Play | S |
 | **P1** | ⬜ | Mobile | **Bundle id iOS incohérent** : `com.tabibi.doctor` (`ios/App/App.xcodeproj/project.pbxproj:308`) ≠ `dz.tabibi.app` (`capacitor.config.ts:5`) ≠ Android ; `Info.plist` a 2 clés dupliquées (l.7/109, l.35/113) ; aucun `DEVELOPMENT_TEAM` | S |
 | **P1** | ⬜ | Site | `telecharger.html` : aucune détection OS (lien APK unique servi à tous, `:49`), **version affichée 1.0.0 vs APK 1.0.1/vc3** (`:46`), bouton « Disponible sur Google Play » **mensonger** (`index.html:1049`), aucun lien `.dmg`/`.exe` | M |
@@ -119,4 +120,4 @@ Section ROLLBACK commentée en fin de `migrations/TEST_seed_medecin_desktop.sql`
 2. Dump du schéma + policies prod → `migrations/PROD_SCHEMA_DUMP.sql` : le repo redevient source de vérité et on saura si ordonnances / cabinets / admin tiennent debout en prod.
 3. Rebuild APK propre (sans `scripts/`, `seo/`, `admin-*`) + sauvegarde du keystore hors machine.
 4. `telecharger.html` : détection OS, versions exactes, liens vers les installateurs desktop.
-5. Lancer le chantier **rappels J-1** — le plus gros levier produit d'ici le congrès (3-5 déc).
+5. ~~Lancer le chantier **rappels J-1**~~ → ✅ **FAIT le 2026-07-29** (J-1 + H-2 + confirmation en production, cron actif).
