@@ -30,7 +30,7 @@
 // purge les caches v30 à l'activation (cf. handler activate).
 // [FIX 2026-07-17] Bump v32 : styles/app.css modifié le 08/07 (refonte) alors
 // que le précache v31 datait du 04/07 → revisiteurs avec HTML neuf + CSS gelé.
-const CACHE_VERSION = 'tabibi-v34-2026-07-31';
+const CACHE_VERSION = 'tabibi-v35-2026-08-03';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const RUNTIME_CACHE = CACHE_VERSION + '-runtime';
 
