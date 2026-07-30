@@ -38,7 +38,23 @@
     # Note : 'unsafe-inline' nécessaire car beaucoup de styles/scripts inline dans le code actuel
     # À durcir progressivement en passant aux nonces
     # [Phase 12.5 — 2026-05-23] Ajout plausible.io (script + connect) pour Phase 10.5 quand analytics=true activé.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.googletagmanager.com https://plausible.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+    #
+    # ⚠️ [CSP 2026-07-30] CETTE LIGNE DOIT RESTER IDENTIQUE À CELLE DE `_headers`.
+    # Les deux fichiers déclarent une CSP sur /* ; sur un déploiement Git,
+    # Netlify fait gagner netlify.toml. Cette ligne était en retard sur
+    # `_headers` et il lui manquait de quoi faire tourner Turnstile :
+    #   • frame-src        absent  → repli sur default-src 'self' → l'iframe
+    #                                du captcha était BLOQUÉE, donc login KO
+    #   • worker-src       absent  → repli sur default-src 'self' → le worker
+    #                                blob: de Turnstile était bloqué
+    #   • script-src       manquait blob: et challenges.cloudflare.com
+    #   • connect-src      manquait challenges.cloudflare.com (validation token)
+    #   • img-src          manquait le CDN de tuiles OpenStreetMap
+    # Symptôme observable : login cassé UNIQUEMENT sur les déploiements Git.
+    # Un déploiement manuel via `git archive` n'était pas touché — netlify.toml
+    # est en export-ignore, donc `_headers` (complet) reprenait la main.
+    # Toute évolution de CSP se fait DANS LES DEUX FICHIERS, en même temps.
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.googletagmanager.com https://plausible.io https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https://*.tile.openstreetmap.org https: blob:; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
 
 # ────────────────────────────────────────────────────────────────────────
 # HTML — pas de cache (mises à jour immédiates)
