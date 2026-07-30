@@ -91,8 +91,9 @@
             <a href="#" onclick="showReset(event)" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
           </div>
         </div>
-        <!-- [Desktop] Captcha VISIBLE (WKWebView : le widget caché échoue en silence).
-             Rempli par js/tabibi-captcha-visible.js UNIQUEMENT quand TABIBI_PLATFORM==='desktop'. -->
+        <!-- Captcha VISIBLE (managed). Desktop : rempli par js/tabibi-captcha-visible.js.
+             [FIX Safari 2026-07-30] Web + mobile : rempli par _ensureCaptcha() ci-dessous —
+             WebKit ne complète jamais le widget invisible (PAT 401 + ITP bloquent l'iframe). -->
         <div class="tbi-captcha-slot" style="display:none;margin-bottom:12px"></div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> <span data-i18n="sign_in">Se connecter</span></button>
       </form>
@@ -106,7 +107,7 @@
           <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i>
             <input class="form-control" id="rs-phone" type="tel" inputmode="tel" required style="padding-inline-start:42px" placeholder="0555 12 34 56" autocomplete="tel"></div>
         </div>
-        <!-- [Desktop] Captcha visible (cf. slot du formulaire de connexion) -->
+        <!-- Captcha visible desktop + web/mobile (cf. slot du formulaire de connexion) -->
         <div class="tbi-captcha-slot" style="display:none;margin-bottom:12px"></div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
         <div style="text-align:center;margin-top:14px;font-size:12px"><a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion</a></div>
@@ -121,6 +122,8 @@
             <input class="form-control" id="rs-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-inline-start:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
           <div id="rs-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
         </div>
+        <!-- Captcha visible desktop + web/mobile — sert au renvoi de code (signInWithOtp) -->
+        <div class="tbi-captcha-slot" style="display:none;margin-bottom:12px"></div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-check"></i> Vérifier</button>
         <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px">
           <a href="#" onclick="resetResendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
@@ -216,10 +219,76 @@ function showScreen(which){
   });
   var adminLink = document.getElementById("admin-link");
   if (adminLink) adminLink.classList.toggle("hidden", which !== "phone");
+  // [FIX Safari 2026-07-30] Widget rendu à l'affichage de l'écran (dans un
+  // conteneur display:none, Turnstile calcule une taille nulle).
+  if (which === "reset") _ensureCaptcha("reset");
+  if (which === "reset-otp") _ensureCaptcha("otp");
 }
 function showAdmin(e){ if(e) e.preventDefault(); showScreen("admin"); }
 function showPhone(e){ if(e) e.preventDefault(); showScreen("phone"); }
 function showReset(e){ if(e) e.preventDefault(); var p=document.getElementById("rs-phone"), l=document.getElementById("lp-phone"); if(p&&l) p.value=l.value||""; showScreen("reset"); }
+
+// ── [FIX Safari 2026-07-30] Captcha VISIBLE (managed) sur web + mobile ──────
+// WebKit (Safari Mac/iOS) ne complète JAMAIS le widget invisible
+// interaction-only : Private Access Token → 401 et ITP bloque l'iframe du
+// challenge → token null → Supabase (captcha requis) rejette la connexion.
+// Un widget managed VISIBLE se résout seul (auto-check, aucune action pour un
+// humain normal) et n'affiche une interaction que si Cloudflare l'exige.
+// Desktop (Tauri) : js/tabibi-captcha-visible.js fait déjà ce travail via les
+// mêmes slots + surcharge de getCaptchaToken — ici on ne rend rien.
+var _cw = {
+  login: { id: null, token: null, rendered: false, sel: "#pwLoginForm .tbi-captcha-slot" },
+  reset: { id: null, token: null, rendered: false, sel: "#resetPhoneForm .tbi-captcha-slot" },
+  otp:   { id: null, token: null, rendered: false, sel: "#resetOtpForm .tbi-captcha-slot" }
+};
+function _ensureCaptcha(key){
+  var w = _cw[key];
+  if (!w || w.rendered) return;
+  if (window.TABIBI_PLATFORM === "desktop") return; // tabibi-captcha-visible.js s'en charge
+  if (!window.tabibiTurnstile || !window.tabibiTurnstile.isEnabled()) return;
+  var slot = document.querySelector(w.sel);
+  if (!slot) return;
+  w.rendered = true;
+  slot.style.display = "";
+  window.tabibiTurnstile.renderWidget(slot, {
+    callback: function(tok){ w.token = tok; },
+    errorCallback: function(){ w.token = null; },
+    expiredCallback: function(){ w.token = null; }
+  }).then(function(id){
+    if (id === null || id === undefined) { w.rendered = false; slot.style.display = "none"; }
+    else w.id = id;
+  });
+}
+// Token à soumettre : widget visible rendu → poll jusqu'à 8 s (auto-check en
+// cours, ou interaction demandée à l'utilisateur). Sinon (desktop, captcha
+// désactivé, rendu échoué) → chemin historique getCaptchaToken().
+function _captchaTokenFor(key){
+  var w = _cw[key];
+  if (!w || !w.rendered) {
+    return window.tabibiTurnstile ? window.tabibiTurnstile.getCaptchaToken() : Promise.resolve(null);
+  }
+  return new Promise(function(resolve){
+    var t0 = Date.now();
+    (function poll(){
+      var tok = w.token || (w.id != null ? window.tabibiTurnstile.getResponse(w.id) : null);
+      if (tok) { w.token = null; return resolve(tok); } // usage unique
+      if (Date.now() - t0 >= 8000) {
+        if (!window.__ttErr) window.__ttErr = "visible-timeout-8s(cochez la case)";
+        return resolve(null);
+      }
+      setTimeout(poll, 250);
+    })();
+  });
+}
+// Un token Turnstile est à usage unique : après un rejet Supabase il est
+// consommé → reset du widget pour re-minter avant la prochaine tentative.
+function _resetCaptcha(key){
+  var w = _cw[key];
+  if (!w) return;
+  w.token = null;
+  if (w.id != null && window.tabibiTurnstile) window.tabibiTurnstile.resetWidget(w.id);
+}
+document.addEventListener("DOMContentLoaded", function(){ _ensureCaptcha("login"); });
 
 // [DEBUG captcha ?debug=1] Suffixe de diagnostic : code Turnstile capturé
 // (js/tabibi-turnstile.js pose window.__ttErr), présence du token (tronqué,
@@ -264,14 +333,15 @@ async function doPhoneLogin(e){
   var origText = btn ? btn.innerHTML : "";
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Connexion…'; }
   try {
-    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var captchaToken = (await _captchaTokenFor("login")) || undefined;
     var res = await window.tabibi.supabase.auth.signInWithPassword({ phone: phone, password: pass, options: { captchaToken: captchaToken } });
-    if (res && res.error) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapLoginError(res.error) + _dbgSuffix(captchaToken, res.error), "error"); return; }
+    if (res && res.error) { _resetCaptcha("login"); if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapLoginError(res.error) + _dbgSuffix(captchaToken, res.error), "error"); return; }
     var user = await window.tabibi.auth.getUser();
     if (!user) { if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('toast_profile_not_found',"Profil introuvable, contactez le support"), "error"); return; }
     var ok = await _afterAuth(user);
     if (!ok && btn) { btn.disabled = false; btn.innerHTML = origText; }
   } catch (err) {
+    _resetCaptcha("login");
     if (btn) { btn.disabled = false; btn.innerHTML = origText; }
     toastM(mapLoginError(err) + _dbgSuffix(captchaToken, err), "error");
   }
@@ -294,15 +364,16 @@ async function resetSendOtp(e){
   var origText = btn ? btn.innerHTML : "";
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Envoi du code…'; }
   try {
-    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var captchaToken = (await _captchaTokenFor("reset")) || undefined;
     // shouldCreateUser:false → ne réinitialise QUE des comptes existants.
     var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: phone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
-    if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
+    if (res && res.error) { _resetCaptcha("reset"); toastM(mapOtpError(res.error), "error"); return; }
     _resetPhone = phone;
     var tgt = document.getElementById("rs-otp-target"); if (tgt) tgt.textContent = "Code envoyé au " + phone;
     showScreen("reset-otp");
     var c = document.getElementById("rs-code"); if (c) { c.value=""; c.focus(); }
   } catch (err) {
+    _resetCaptcha("reset");
     toastM(mapOtpError(err), "error");
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = origText; }
@@ -317,11 +388,11 @@ async function resetResendOtp(e){
     if (!lim.allowed) { toastM(lim.reason, "error"); return; }
   }
   try {
-    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var captchaToken = (await _captchaTokenFor("otp")) || undefined;
     var res = await window.tabibi.supabase.auth.signInWithOtp({ phone: _resetPhone, options: { shouldCreateUser: false, captchaToken: captchaToken } });
-    if (res && res.error) { toastM(mapOtpError(res.error), "error"); return; }
+    if (res && res.error) { _resetCaptcha("otp"); toastM(mapOtpError(res.error), "error"); return; }
     toastM("Nouveau code envoyé.", "success");
-  } catch (err) { toastM(mapOtpError(err), "error"); }
+  } catch (err) { _resetCaptcha("otp"); toastM(mapOtpError(err), "error"); }
 }
 async function resetVerifyOtp(e){
   if (e) e.preventDefault();

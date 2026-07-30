@@ -170,6 +170,10 @@
           <span data-i18n="consent_marketing">(Optionnel) J'accepte de recevoir des conseils santé et offres Tabibi par email. Désabonnement en 1 clic.</span>
         </label>
       </div>
+      <!-- Captcha VISIBLE (managed). Desktop : js/tabibi-captcha-visible.js.
+           [FIX Safari 2026-07-30] Web + mobile : _ensureCaptcha() plus bas —
+           WebKit ne complète jamais le widget invisible (PAT 401 + ITP). -->
+      <div class="tbi-captcha-slot" style="display:none;margin-bottom:12px"></div>
       <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-comment-sms"></i> Recevoir le code</button>
     </form>
 
@@ -181,6 +185,8 @@
             <input class="form-control" id="su-code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]*" required style="padding-inline-start:42px;letter-spacing:6px;font-weight:700" placeholder="••••••"></div>
           <div id="su-otp-target" style="font-size:11px;color:var(--text3);margin-top:6px"></div>
         </div>
+        <!-- Captcha visible desktop + web/mobile — sert au renvoi de code (auth.resend) -->
+        <div class="tbi-captcha-slot" style="display:none;margin-bottom:12px"></div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-plus"></i> Créer mon compte</button>
         <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:12px">
           <a href="#" onclick="suResendOtp(event)" style="color:var(--blue);font-weight:600">Renvoyer le code</a>
@@ -274,6 +280,66 @@ function mapSignupError(error){
 }
 
 // ── PHASE 1 : valider le formulaire + envoyer l'OTP (AUCUNE écriture base) ──
+// ── [FIX Safari 2026-07-30] Captcha VISIBLE (managed) sur web + mobile ──────
+// Même correctif que login.html. WebKit (Safari Mac/iOS) ne complète JAMAIS le
+// widget invisible interaction-only : Private Access Token → 401 et ITP bloque
+// l'iframe du challenge → token null → Supabase (captcha requis) rejette. Sans
+// ça, la CRÉATION DE COMPTE était impossible sur Safari.
+// Desktop (Tauri) : js/tabibi-captcha-visible.js fait déjà ce travail via les
+// mêmes slots + surcharge de getCaptchaToken — ici on ne rend rien.
+var _cw = {
+  form: { id: null, token: null, rendered: false, sel: "#su-form .tbi-captcha-slot" },
+  otp:  { id: null, token: null, rendered: false, sel: "#su-otp-form .tbi-captcha-slot" }
+};
+function _ensureCaptcha(key){
+  var w = _cw[key];
+  if (!w || w.rendered) return;
+  if (window.TABIBI_PLATFORM === "desktop") return; // tabibi-captcha-visible.js s'en charge
+  if (!window.tabibiTurnstile || !window.tabibiTurnstile.isEnabled()) return;
+  var slot = document.querySelector(w.sel);
+  if (!slot) return;
+  w.rendered = true;
+  slot.style.display = "";
+  window.tabibiTurnstile.renderWidget(slot, {
+    callback: function(tok){ w.token = tok; },
+    errorCallback: function(){ w.token = null; },
+    expiredCallback: function(){ w.token = null; }
+  }).then(function(id){
+    if (id === null || id === undefined) { w.rendered = false; slot.style.display = "none"; }
+    else w.id = id;
+  });
+}
+// Token à soumettre : widget visible rendu → poll jusqu'à 8 s (auto-check en
+// cours, ou interaction demandée). Sinon (desktop, captcha désactivé, rendu
+// échoué) → chemin historique getCaptchaToken().
+function _captchaTokenFor(key){
+  var w = _cw[key];
+  if (!w || !w.rendered) {
+    return window.tabibiTurnstile ? window.tabibiTurnstile.getCaptchaToken() : Promise.resolve(null);
+  }
+  return new Promise(function(resolve){
+    var t0 = Date.now();
+    (function poll(){
+      var tok = w.token || (w.id != null ? window.tabibiTurnstile.getResponse(w.id) : null);
+      if (tok) { w.token = null; return resolve(tok); } // usage unique
+      if (Date.now() - t0 >= 8000) {
+        if (!window.__ttErr) window.__ttErr = "visible-timeout-8s(cochez la case)";
+        return resolve(null);
+      }
+      setTimeout(poll, 250);
+    })();
+  });
+}
+// Un token Turnstile est à usage unique : après un rejet Supabase il est
+// consommé → reset du widget avant la prochaine tentative.
+function _resetCaptcha(key){
+  var w = _cw[key];
+  if (!w) return;
+  w.token = null;
+  if (w.id != null && window.tabibiTurnstile) window.tabibiTurnstile.resetWidget(w.id);
+}
+document.addEventListener("DOMContentLoaded", function(){ _ensureCaptcha("form"); });
+
 async function doSignup(e){
   e.preventDefault();
   const fn = sf.value.trim(), ln = sl.value.trim(), ph = sp.value.trim(), wi = sw.value;
@@ -320,7 +386,7 @@ async function doSignup(e){
 
   try{
     // Captcha Turnstile obligatoire (protège le crédit SMS contre les bots).
-    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var captchaToken = (await _captchaTokenFor("form")) || undefined;
     // signUp({phone,password}) : pose le MOT DE PASSE à la création ET envoie
     // l'OTP SMS de vérification du numéro (1 seul SMS). channel:"sms" = canal SMS.
     // role + nom en metadata → trigger handle_new_auth_user (raw_user_meta_data->>'role').
@@ -330,14 +396,17 @@ async function doSignup(e){
       password: pw,
       options: { channel: "sms", captchaToken: captchaToken, data: { role: cur, first_name: fn, last_name: ln } }
     });
-    if(res && res.error){ toastM(mapSignupError(res.error),"error"); return; }
+    if(res && res.error){ _resetCaptcha("form"); toastM(mapSignupError(res.error),"error"); return; }
 
     // → écran OTP (phase 2). Aucune donnée n'a touché la base.
     var fEl = document.getElementById("su-form"); if(fEl) fEl.classList.add("hidden");
     var oEl = document.getElementById("su-screen-otp"); if(oEl) oEl.classList.remove("hidden");
+    // Rendu ICI : dans un conteneur .hidden, Turnstile calcule une taille nulle.
+    _ensureCaptcha("otp");
     var tgt = document.getElementById("su-otp-target"); if(tgt) tgt.textContent = "Code envoyé au " + phone;
     var codeEl = document.getElementById("su-code"); if(codeEl){ codeEl.value=""; codeEl.focus(); }
   } catch(err){
+    _resetCaptcha("form");
     toastM(mapOtpError(err),"error");
   } finally {
     if(btn){ btn.disabled = false; btn.innerHTML = origText; }
@@ -355,13 +424,13 @@ async function suResendOtp(e){
     if (!lim.allowed) { toastM(lim.reason, "error"); return; }
   }
   try{
-    var captchaToken = (window.tabibiTurnstile ? await window.tabibiTurnstile.getCaptchaToken() : null) || undefined;
+    var captchaToken = (await _captchaTokenFor("otp")) || undefined;
     // resend({type:"sms"}) = renvoyer l'OTP de confirmation du signUp.
     // Doc: supabase.com/docs/reference/javascript/auth-resend
     var res = await window.tabibi.supabase.auth.resend({ type: "sms", phone: _pendingSignup.phone, options: { captchaToken: captchaToken } });
-    if(res && res.error){ toastM(mapOtpError(res.error),"error"); return; }
+    if(res && res.error){ _resetCaptcha("otp"); toastM(mapOtpError(res.error),"error"); return; }
     toastM("Nouveau code envoyé.","success");
-  } catch(err){ toastM(mapOtpError(err),"error"); }
+  } catch(err){ _resetCaptcha("otp"); toastM(mapOtpError(err),"error"); }
 }
 
 // ── PHASE 2 : vérifier l'OTP → session active → écrire profil + consentements ──
@@ -625,6 +694,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 <script src="js/tabibi-doc-upload.js"></script><!-- [C3] uploader des 2 pièces, réutilisé dans la modale pending médecin -->
 <script src="js/tabibi-brevo.js"></script>
 <script src="js/tabibi-turnstile.js"></script>
+<script src="js/tabibi-captcha-visible.js"></script><!-- desktop : widget visible + surcharge getCaptchaToken -->
 <script src="js/tabibi-sms.js"></script>
 <script src="js/tabibi-cookies.js"></script>
 <script src="js/tabibi-beta.js"></script>
