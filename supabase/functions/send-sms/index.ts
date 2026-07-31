@@ -6,10 +6,12 @@
 // SIGNÉ (standardwebhooks). Le payload vérifié contient :
 //   { user: { phone }, sms: { otp } }
 //
-// Contrainte réseau DZ (prouvée) : le sender ALPHANUMÉRIQUE est filtré
-// par les opérateurs algériens (jamais livré). On envoie donc depuis un
-// sender NUMÉRIQUE (BSMS_FROM, ex. "12345") et le mot « Tabibi » est mis
-// dans le CORPS du message.
+// Contrainte réseau DZ (mesurée le 2026-07-31, MCCMNC 60302) :
+// sender NUMÉRIQUE partagé "12345" → 11/19 livrés (~42 % perdus).
+// sender ALPHANUMÉRIQUE "Tabibi"  → 4/4 livrés, même numéro, même opérateur.
+// BSMS_FROM vaut donc "Tabibi" (secret Supabase, mis à jour le 2026-07-31).
+// Réserve : Google Messages classe le 1er SMS en Spam tant que "Tabibi"
+// n'est pas enregistré auprès des opérateurs DZ chez BudgetSMS.
 //
 // Aucun secret/identifiant en dur : tout provient de Deno.env
 // (secrets de la fonction côté Supabase).
@@ -60,8 +62,8 @@ Deno.serve(async (req) => {
   const BSMS_USER = Deno.env.get("BSMS_USER");
   const BSMS_USERID = Deno.env.get("BSMS_USERID");
   const BSMS_HANDLE = Deno.env.get("BSMS_HANDLE");
-  // Sender NUMÉRIQUE (l'alphanumérique est filtré sur le réseau DZ).
-  const BSMS_FROM = Deno.env.get("BSMS_FROM") ?? "12345";
+  // Sender alphanumérique : mesures du 2026-07-31, cf. en-tête du fichier.
+  const BSMS_FROM = Deno.env.get("BSMS_FROM") ?? "Tabibi";
 
   if (!BSMS_USER || !BSMS_USERID || !BSMS_HANDLE) {
     console.error("[send-sms] identifiants BudgetSMS manquants (BSMS_USER/USERID/HANDLE)");
@@ -83,6 +85,7 @@ Deno.serve(async (req) => {
 
     const res = await fetch(url);
     const body = (await res.text()).trim();
+    console.log("[send-sms] BudgetSMS reponse:", body, "sender:", BSMS_FROM);
 
     // BudgetSMS : "OK <smsid> <cost> <parts>" si accepté ; "ERR <code>" sinon.
     if (body.startsWith("OK")) {
