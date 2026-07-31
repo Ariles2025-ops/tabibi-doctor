@@ -124,9 +124,13 @@ function normalizePhoneDZ(phone: unknown): string | null {
 
 // ─────────────────────────────────────────────────────────────────────
 // TEMPLATES (fr/ar/en, ASCII GSM-7)
-// Le mot « Tabibi » est DANS LE CORPS : sur le réseau DZ un sender
-// alphanumérique est filtré par les opérateurs (jamais livré), l'envoi
-// part donc d'un sender numérique (BSMS_FROM).
+// Sender : mesuré le 2026-07-31 sur MCCMNC 60302 (même numéro, même
+// opérateur) — sender alphanumérique "Tabibi" → 5/5 livrés (4 tests + 1 OTP
+// d'inscription réelle, 2026-07-31 22:05) ; sender numérique partagé "12345"
+// → 11/19 livrés (~42 % perdus). BSMS_FROM vaut donc "Tabibi".
+// Le mot « Tabibi » reste dans le CORPS du message.
+// Réserve : Google Messages classe le 1er SMS en Spam tant que "Tabibi"
+// n'est pas enregistré auprès des opérateurs DZ chez BudgetSMS.
 // j1 et h2 sont portés à l'identique de js/tabibi-sms.js ; confirmation
 // est nouveau et vit ici (pas dans le module front, qui est désactivé).
 // ─────────────────────────────────────────────────────────────────────
@@ -498,7 +502,7 @@ Deno.serve(async (req) => {
   const BSMS_USER = Deno.env.get("BSMS_USER");
   const BSMS_USERID = Deno.env.get("BSMS_USERID");
   const BSMS_HANDLE = Deno.env.get("BSMS_HANDLE");
-  const BSMS_FROM = Deno.env.get("BSMS_FROM") ?? "12345"; // sender NUMÉRIQUE (obligatoire en DZ)
+  const BSMS_FROM = Deno.env.get("BSMS_FROM") ?? "Tabibi"; // sender ALPHANUMÉRIQUE (mesuré 2026-07-31)
 
   if (!dryRun && (!BSMS_USER || !BSMS_USERID || !BSMS_HANDLE)) {
     console.error("[reminders] identifiants BudgetSMS manquants");
