@@ -110,15 +110,29 @@
   function normCabinetRow(a) {
     return { id: a.appointment_id, start: new Date(a.scheduled_at),
       durMin: a.duration_minutes || 30, status: (a.status || 'pending').toLowerCase(),
-      patient: ((a.patient_first_name || '') + ' ' + (a.patient_last_name || '')).trim() || 'Patient',
+      // Même chaîne de repli qu'en mode médecin seul : la vue cabinet lit la
+      // même public.users clairsemée, un patient sans nom y est tout aussi
+      // fréquent.
+      patient: patientLabel({ first_name: a.patient_first_name, last_name: a.patient_last_name, phone: a.patient_phone }),
       doctor: ('Dr ' + (a.doctor_first_name || '') + ' ' + (a.doctor_last_name || '')).trim(),
       phone: a.patient_phone || '', reason: a.reason_short || '' };
+  }
+  /* Libellé patient — chaîne de repli explicite.
+     public.users est très clairsemée (45 comptes, 10 prénoms, 9 téléphones
+     au 31/07/2026) : le trigger handle_new_auth_user ne copie que
+     id/phone/email/role, et le nom n'est écrit qu'à l'étape 2 du signup,
+     après vérification de l'OTP. Un compte abandonné en cours de route
+     n'a donc AUCUN nom. Afficher le téléphone plutôt que « Patient »
+     rend la ligne exploitable : le médecin peut rappeler. */
+  function patientLabel(p) {
+    var nom = ((p.first_name || '') + ' ' + (p.last_name || '')).trim();
+    return nom || p.phone || t('ag_patient');
   }
   function normDoctorRow(a, patientsMap) {
     var p = patientsMap[a.patient_id] || {};
     return { id: a.id, start: new Date(a.scheduled_at),
       durMin: a.duration_minutes || 30, status: (a.status || 'pending').toLowerCase(),
-      patient: p.name || 'Patient', doctor: '', phone: p.phone || '', reason: a.reason_short || a.reason || '' };
+      patient: patientLabel(p), doctor: '', phone: p.phone || '', reason: a.reason_short || a.reason || '' };
   }
 
   /* ── Chargement par mode ────────────────────────────────────────── */
@@ -197,10 +211,27 @@
           // 'Patient' plutôt qu'un agenda vide.
           return c.from('doctor_patients_directory').select('id,first_name,last_name,phone').in('id', ids)
             .then(function (ru) {
+              // ru.error DOIT être testé : PostgREST répond 200 avec une
+              // erreur dans le corps sur certains refus, et `ru.data || []`
+              // avalait aussi bien ce cas qu'un 401. L'agenda affichait
+              // alors « Patient » partout sans la moindre trace — un vrai
+              // problème de droits était indiscernable d'un patient anonyme.
+              if (ru.error) throw ru.error;
               var map = {};
-              (ru.data || []).forEach(function (u) { map[u.id] = { name: ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Patient', phone: u.phone || '' }; });
+              (ru.data || []).forEach(function (u) {
+                map[u.id] = { first_name: u.first_name || '', last_name: u.last_name || '', phone: u.phone || '' };
+              });
               S.appts = rows.map(function (a) { return normDoctorRow(a, map); });
-            }, function () { S.appts = rows.map(function (a) { return normDoctorRow(a, {}); }); });
+            })
+            .catch(function (e) {
+              // Repli conservé (agenda lisible plutôt que vide) mais PLUS JAMAIS
+              // silencieux : l'objet d'erreur Supabase complet est journalisé.
+              if (window.console && console.error) {
+                console.error('[agenda] lecture doctor_patients_directory ÉCHOUÉE — '
+                  + 'les RDV s\'afficheront sans nom de patient.', e);
+              }
+              S.appts = rows.map(function (a) { return normDoctorRow(a, {}); });
+            });
         }));
       if (S.profile && S.profile.id) {
         jobs.push(c.from('doctor_unavailable_slots').select('*')
