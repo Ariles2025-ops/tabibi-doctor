@@ -22,7 +22,7 @@ window.TABIBI_CONFIG = {
   // ---- Sentry (monitoring erreurs production) ------------------------
   // Creer le projet sur https://sentry.io (plan Developer gratuit, 5k events/mois)
   // Puis copier le DSN ici. Tant que la valeur contient "REPLACE_", Sentry est DESACTIVE.
-  SENTRY_DSN: 'REPLACE_WITH_SENTRY_DSN',
+  SENTRY_DSN: 'https://11c38796ddebc291cae7945f09e4aa58@o4511831260987392.ingest.de.sentry.io/4511831267475536',
 
   // ---- Dawini (localisation de medicaments en temps reel) -------------
   // [DAWINI 2026-07-08] Nom de la fonctionnalite — modifiable en UN SEUL
