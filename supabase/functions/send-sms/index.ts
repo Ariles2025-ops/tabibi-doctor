@@ -8,7 +8,8 @@
 //
 // Contrainte réseau DZ (mesurée le 2026-07-31, MCCMNC 60302) :
 // sender NUMÉRIQUE partagé "12345" → 11/19 livrés (~42 % perdus).
-// sender ALPHANUMÉRIQUE "Tabibi"  → 4/4 livrés, même numéro, même opérateur.
+// sender ALPHANUMÉRIQUE "Tabibi" → 5/5 livrés (4 tests + 1 OTP d'inscription
+// réelle, 2026-07-31 22:05), même numéro, même opérateur.
 // BSMS_FROM vaut donc "Tabibi" (secret Supabase, mis à jour le 2026-07-31).
 // Réserve : Google Messages classe le 1er SMS en Spam tant que "Tabibi"
 // n'est pas enregistré auprès des opérateurs DZ chez BudgetSMS.

@@ -125,9 +125,10 @@ function normalizePhoneDZ(phone: unknown): string | null {
 // ─────────────────────────────────────────────────────────────────────
 // TEMPLATES (fr/ar/en, ASCII GSM-7)
 // Sender : mesuré le 2026-07-31 sur MCCMNC 60302 (même numéro, même
-// opérateur) — sender alphanumérique "Tabibi" 4/4 livrés, sender
-// numérique partagé "12345" 11/19 livrés (~42 % perdus). BSMS_FROM
-// vaut donc "Tabibi". Le mot « Tabibi » reste dans le CORPS du message.
+// opérateur) — sender alphanumérique "Tabibi" → 5/5 livrés (4 tests + 1 OTP
+// d'inscription réelle, 2026-07-31 22:05) ; sender numérique partagé "12345"
+// → 11/19 livrés (~42 % perdus). BSMS_FROM vaut donc "Tabibi".
+// Le mot « Tabibi » reste dans le CORPS du message.
 // Réserve : Google Messages classe le 1er SMS en Spam tant que "Tabibi"
 // n'est pas enregistré auprès des opérateurs DZ chez BudgetSMS.
 // j1 et h2 sont portés à l'identique de js/tabibi-sms.js ; confirmation
