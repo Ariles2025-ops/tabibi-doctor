@@ -35,8 +35,14 @@
     if (c.analytics) {
       // window.gtag && gtag('consent', 'update', { analytics_storage: 'granted' });
     }
-    if (c.marketing) {
-      // window.fbq && fbq('consent', 'grant');
+    // [PIXEL 2026-07-30] Meta Pixel — js/tabibi-pixel.js n'injecte RIEN tant
+    // que cette branche n'est pas atteinte : pas de script tiers, pas de
+    // cookie, pas de connexion à Meta avant acceptation de « marketing ».
+    // Le refus appelle disable() → fbq('consent','revoke').
+    // tabibi-pixel.js n'est pas inclus partout : l'appel reste optionnel.
+    if (window.tabibiPixel) {
+      if (c.marketing) window.tabibiPixel.enable();
+      else window.tabibiPixel.disable();
     }
     document.dispatchEvent(new CustomEvent('tabibi:cookie-consent', { detail: c }));
   }
