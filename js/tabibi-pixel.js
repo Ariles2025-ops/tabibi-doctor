@@ -56,7 +56,7 @@
   'use strict';
   if (typeof window === 'undefined' || typeof document === 'undefined') return;
 
-  const META_PIXEL_ID = "1697262591542844";
+  const META_PIXEL_ID = "1054246673971695";
 
   var loaded = false;   // snippet Meta injecté ?
   var revoked = false;  // consentement retiré après coup ?
