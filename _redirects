@@ -1,1 +1,12 @@
+# [SECURITE 2026-08-04] 404 explicite sur les chemins de code source.
+# La purge au build (cf. DEPLOY_FRONTEND.md) les retire deja du bundle, mais
+# l'apex tabibi.doctor a continue de servir /supabase/functions/send-sms/index.ts
+# en 200 apres un deploiement ou le fichier etait absent (age: 9225, purge de
+# zone sans effet). Ces regles ne dependent d'aucune propagation : Pages les
+# applique au routage, que le fichier existe ou non.
+# Aucune page du site ne charge ces chemins (verifie : 0 reference relative).
+/supabase/*   /404.html   404
+/migrations/* /404.html   404
+/desktop/*    /404.html   404
+/.git/*       /404.html   404
 /   /index.html   200
