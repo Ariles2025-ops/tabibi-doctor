@@ -419,6 +419,15 @@ enabled = true
 [functions.send-sms]
 verify_jwt = false
 
+# Push DLR BudgetSMS → réception des accusés de livraison.
+# verify_jwt = false : le callback vient des serveurs BudgetSMS, qui
+# n'envoient aucun JWT et n'offrent ni secret partagé ni signature.
+# L'endpoint est donc PUBLIC par nécessité. Acceptable tant que la
+# fonction se contente de journaliser (cf. en-tête de sms-dlr/index.ts) ;
+# à sécuriser avant toute écriture en base déclenchée par un DLR.
+[functions.sms-dlr]
+verify_jwt = false
+
 [auth.hook.send_sms]
 enabled = true
 uri = "https://pudugodhiofqrctcdwfl.supabase.co/functions/v1/send-sms"
