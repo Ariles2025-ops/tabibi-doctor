@@ -3,7 +3,7 @@
 # (= le build web déployé sur l'hébergement statique public Cloudflare Pages).
 # Ces chemins ne doivent JAMAIS être servis publiquement.
 # ─────────────────────────────────────────────────────────────────────────
-migrations/        export-ignore
+/migrations/       export-ignore
 fixtures/          export-ignore
 scripts/           export-ignore
 docs/              export-ignore
