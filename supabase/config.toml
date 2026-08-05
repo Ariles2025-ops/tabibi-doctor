@@ -428,6 +428,25 @@ verify_jwt = false
 [functions.sms-dlr]
 verify_jwt = false
 
+# ⚠️ CHANTIER PRÉPARATOIRE — canal WhatsApp, non déployé.
+# Procédure d'activation : docs/WHATSAPP_ACTIVATION.md
+#
+# send-whatsapp : appelée par notre propre backend, jamais par un client
+# porteur de JWT. verify_jwt reste à true (défaut) — l'appelant devra présenter
+# la clé service_role. Aucune entrée nécessaire ici, c'est le comportement par
+# défaut ; on le note pour que l'absence ne passe pas pour un oubli.
+#
+# whatsapp-webhook : le callback vient des serveurs Meta, qui n'envoient aucun
+# JWT Supabase. L'endpoint est donc PUBLIC par nécessité, comme sms-dlr.
+# DIFFÉRENCE IMPORTANTE avec sms-dlr : Meta, lui, signe ses requêtes
+# (X-Hub-Signature-256, HMAC-SHA256 du corps avec l'app secret). La
+# vérification est écrite dans la fonction mais reste inactive tant que
+# WA_APP_SECRET n'est pas posé. À poser LE JOUR J — sans elle, n'importe qui
+# peut envoyer de faux statuts de livraison. Sans gravité tant qu'on journalise
+# seulement, inacceptable dès qu'un statut déclenchera une action.
+[functions.whatsapp-webhook]
+verify_jwt = false
+
 [auth.hook.send_sms]
 enabled = true
 uri = "https://pudugodhiofqrctcdwfl.supabase.co/functions/v1/send-sms"
