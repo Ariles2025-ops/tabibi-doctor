@@ -1,4 +1,56 @@
 -- ═══════════════════════════════════════════════════════════════════════════
+-- ⛔ SUPERSEDED — NE PAS EXÉCUTER. Conservé comme archive de raisonnement.
+-- ═══════════════════════════════════════════════════════════════════════════
+-- Archivé le 2026-08-06, après vérification de l'état réel de la production
+-- (requête en rôle postgres, résultats communiqués par Aghiles).
+--
+-- CE FICHIER PROPOSAIT de créer public.reviews. La table EXISTE DÉJÀ en prod
+-- — c'est TODO-SQL-011, jamais versionnée — et son modèle est plus complet
+-- que celui proposé ici. Le rejouer serait au mieux inutile
+-- (CREATE TABLE IF NOT EXISTS), au pire nuisible : les policies ci-dessous
+-- s'ajouteraient à un schéma différent de celui qu'elles supposent.
+--
+-- CE QUE LA PROD A EN PLUS :
+--   • notation multi-critères — rating_overall, punctuality, listening,
+--     expertise — là où ce fichier ne prévoyait qu'un `rating` unique ;
+--   • workflow de modération complet : status, rejection_reason,
+--     moderated_by, moderated_at, et une policy admin dédiée
+--     (reviews_admin_moderates) ; ici il n'y avait qu'un booléen
+--     is_published sans traçabilité de qui publie ni pourquoi ;
+--   • signalement communautaire : report_count, last_reported_at — absent
+--     de cette proposition ;
+--   • fenêtre d'édition patient de 7 jours (reviews_patient_edits_within_7d)
+--     au lieu des 48 h proposées ici.
+--
+-- SÉCURITÉ — vérifiée, aucune fuite :
+--   RLS ACTIVE, 7 policies. La lecture anon est bornée par
+--   reviews_anyone_reads_published (qual: status='published'), donc rien
+--   n'est lisible avant modération. Les grants Supabase par défaut
+--   (anon/authenticated/service_role) sont présents mais la RLS filtre —
+--   c'est le modèle Supabase standard, pas un défaut.
+--   Le REVOKE ALL ... FROM anon proposé plus bas est donc SANS OBJET, et
+--   l'appliquer casserait la lecture publique des avis modérés.
+--
+-- CE QU'IL RESTE RÉELLEMENT À FAIRE, le jour de l'activation :
+--   → créer la seule vue public.public_doctor_ratings (elle n'existe pas :
+--     /rest/v1/public_doctor_ratings renvoie 404). Seuil de 3 avis conservé —
+--     en dessous, une moyenne est statistiquement vide ET ré-identifiante :
+--     un praticien ayant reçu un seul avis sait qui l'a laissé s'il n'a vu
+--     qu'un patient ce jour-là.
+--     Adapter la définition au schéma réel : agréger rating_overall et
+--     filtrer sur status = 'published' (et non is_published).
+--   → passer le flag `reviews` de js/tabibi-features.js à true.
+--
+-- ⚠️ AUCUN DES DEUX avant l'avis de l'avocat sur le décret 92-276 — point 4.4
+--    de docs/NOTE_CADRAGE_AVOCAT.md : la publication d'avis sur un praticien
+--    nommément désigné est-elle seulement admissible en droit algérien ?
+--
+-- Le contenu original est conservé ci-dessous sans modification, pour la
+-- traçabilité du raisonnement de sécurité (seuil, isolation, modération).
+-- ═══════════════════════════════════════════════════════════════════════════
+
+
+-- ═══════════════════════════════════════════════════════════════════════════
 -- PHASE 17 — table public.reviews (avis patients)
 -- Project : pudugodhiofqrctcdwfl (eu-central-1)
 -- Date    : 2026-08-05
