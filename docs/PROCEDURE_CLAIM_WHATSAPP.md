@@ -138,13 +138,36 @@ Cordialement,
 
 ## Rotation équipe
 
-| Plage horaire | Personne de garde |
-|---|---|
-| 8h–13h | À définir |
-| 13h–18h | À définir |
-| 18h–20h | À définir |
+| Plage horaire | Personne de garde | Depuis |
+|---|---|---|
+| 8h–13h | **Aghiles Haddadene** | 06/08/2026 |
+| 13h–18h | **Aghiles Haddadene** | 06/08/2026 |
+| 18h–20h | **Aghiles Haddadene** | 06/08/2026 |
 
 Hors 8h–20h : message auto WhatsApp Business + traitement lendemain.
+
+> **Garde mono-titulaire — ce que cela implique concrètement.**
+> Une seule personne couvre les 12 heures. Le SLA « accusé de réception < 1 h »
+> n'est donc PAS tenable pendant une consultation, un trajet, une visite de
+> cabinet ou une réunion — c'est-à-dire pendant l'essentiel d'une journée de
+> tournée terrain. Deux garde-fous, à mettre en place avant le congrès :
+>
+> 1. **Réponse automatique WhatsApp Business active en permanence**, pas
+>    seulement hors 8h-20h. Texte : accusé de réception immédiat + annonce d'un
+>    retour sous 4 h ouvrées. Un accusé automatique honnête vaut mieux qu'une
+>    promesse d'1 h non tenue.
+> 2. **SLA affiché révisé à 4 h ouvrées** tant que la garde est mono-titulaire.
+>    Repasser à 1 h le jour où une deuxième personne prend une plage.
+>
+> Le SLA de 1 h reste l'objectif interne ; ce qui change, c'est ce qu'on promet
+> au médecin. Ne jamais annoncer un délai qu'une seule personne ne peut pas
+> tenir : au congrès, un médecin qui attend 6 h après avoir lu « < 1 h » est
+> une signature perdue et un bouche-à-oreille négatif entre confrères.
+
+**Jour de congrès (3-5 décembre 2026)** : le volume de demandes sera concentré
+sur 3 jours et Aghiles sera en stand, donc indisponible pour répondre. Prévoir
+une seconde personne de garde sur ces 3 journées, ou basculer explicitement la
+réponse automatique sur « retour sous 48 h — congrès en cours ».
 
 ## Escalades vers Aghiles
 - Conflit entre deux revendiquants

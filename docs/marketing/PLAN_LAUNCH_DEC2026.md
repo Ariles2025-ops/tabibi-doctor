@@ -106,7 +106,21 @@ Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **décemb
 
 ### Actions principales
 
-- **Tournée terrain** : Aghiles + 2 collaborateurs visitent des cabinets dans Alger, Oran, Constantine. Objectif : 10 visites / semaine / personne, **soit 90 visites / semaine** = 60+ signatures attendues (taux 67 % en physique).
+- **Tournée terrain** : Aghiles + 2 collaborateurs visitent des cabinets dans Alger, Oran, Constantine. Objectif : 10 visites / semaine / personne, **soit 30 visites / semaine** à trois = **9 signatures attendues / semaine** (taux retenu : **30 %**, unique valeur de référence du plan).
+
+> **Trajectoire qui en découle — à lire avant de s'engager sur les objectifs ci-dessus.**
+> 30 visites/semaine × 30 % = 9 signatures/semaine.
+> À J+30 (≈ 4,3 semaines) : **~39 médecins signés**, contre 50 visés.
+> À J+90 (≈ 13 semaines) : **~117 signés**. En appliquant la cible de rétention
+> (> 70 % encore actifs à J+90, cf. `SCRIPT_PITCH_MEDECIN.md`), cela donne
+> **~82 médecins actifs**, contre 100 visés.
+> La tournée terrain seule ne porte donc PAS les objectifs. L'écart doit être
+> comblé par les 20 ambassadeurs pré-launch, le congrès des 3-5 décembre et le
+> bouche-à-oreille confrère — ou les objectifs doivent être révisés.
+> Correction du 06/08/2026 : la version 1.0 annonçait 90 visites/semaine (erreur
+> de calcul : 3 personnes × 10 = 30, pas 90) et un taux de 67 % qui ne reposait
+> sur aucune visite réelle. Les deux chiffres surestimaient la trajectoire d'un
+> facteur ~6,7.
 - **Outreach LinkedIn** : 30 médecins/jour contactés en messages personnalisés.
 - **Groupes Facebook médecins** : post hebdomadaire utile (étude, conseil), pas d'auto-promo lourde.
 - **Cibles prioritaires** : généralistes, dentistes, ophtalmologues (forte demande).
@@ -170,7 +184,7 @@ Estimations en **DZD**, à ajuster selon trésorerie réelle.
 
 ### Côté médecin
 
-1. **Face-à-face cabinet** — meilleur taux de conversion (30-70 %), le plus coûteux en temps.
+1. **Face-à-face cabinet** — meilleur taux de conversion, le plus coûteux en temps. **Taux de référence unique du plan : 30 %.** C'est à la fois l'hypothèse de projection, la cible commerciale (`SCRIPT_PITCH_MEDECIN.md`) et le seuil de déclenchement d'une révision du pitch. Tant qu'aucune visite réelle n'a eu lieu, ce chiffre reste une hypothèse non étayée : le mesurer est la priorité nº 1 des 4 premières semaines de terrain.
 2. **LinkedIn** — bon ROI pour médecins libéraux avec présence en ligne.
 3. **Bouche-à-oreille** entre confrères — démarre lent, accélère après J+60.
 4. **Groupes Facebook médecins** — sensibles à la pertinence, éviter le pitch agressif.
