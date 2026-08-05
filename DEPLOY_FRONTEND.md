@@ -58,6 +58,37 @@ Attendre `Compiled Worker successfully` + `Uploading Functions bundle` +
 > compile tout `functions/` en un seul Worker : la sortie est identique avec
 > 2 ou 3 Functions. Seul le `ls` de l'étape 3 fait foi.
 
+> ⚠️ **Ne JAMAIS vérifier la version du service worker avec `head`.**
+> `sw.js` a longtemps porté DEUX numéros : un commentaire d'en-tête figé à
+> « v18 » depuis la phase 5.2.3, et la constante `CACHE_VERSION`, seule à faire
+> foi. Le 2026-08-06, `curl … /sw.js | head -3` a renvoyé « v18 » sur un
+> déploiement parfaitement à jour en v37 et a fait conclure à un échec de mise
+> en ligne — diagnostic complet, liste des déploiements, vérification du
+> domaine custom, tout ça pour un commentaire périmé. L'en-tête ne contient
+> plus aucun numéro depuis (PR #48).
+> ```bash
+> curl -s https://tabibi.doctor/sw.js | grep CACHE_VERSION   # ✅
+> curl -s https://tabibi.doctor/sw.js | head -3              # ❌ ment
+> ```
+>
+> **Contrôle croisé imparable** si un doute persiste sur ce que sert vraiment
+> le domaine : comparer l'`etag` de l'apex à celui du déploiement fraîchement
+> créé. Identiques = c'est bien ce déploiement qui est servi. Cela tranche sans
+> dépendre du contenu du fichier.
+> ```bash
+> curl -sI https://tabibi.doctor/sw.js                  | grep -i etag
+> curl -sI https://<hash>.tabibi-doctor.pages.dev/sw.js | grep -i etag
+> ```
+
+> ℹ️ **`--branch=main` envoie bien en Production.** La branche de production du
+> projet est `main` ; un `--branch` différent créerait un déploiement *Preview*,
+> que le domaine custom ne sert pas. Vérifié le 2026-08-06 — les quatre
+> derniers déploiements affichent `Environment: Production`. Pour lever un
+> doute sur l'environnement :
+> ```bash
+> npx wrangler pages deployment list --project-name=tabibi-doctor | head -8
+> ```
+
 ---
 
 ## Les trois barrières

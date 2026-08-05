@@ -1,5 +1,15 @@
 /**
- * Tabibi Service Worker v18 — Production
+ * Tabibi Service Worker — Production
+ *
+ * ⚠️ LA VERSION FAIT AUTORITÉ DANS `const CACHE_VERSION` (plus bas), PAS ICI.
+ * Cet en-tête a annoncé « v18 » jusqu'au 2026-08-06 alors que CACHE_VERSION
+ * était passé à v37 en dix-neuf bumps. Un `curl .../sw.js | head -3` renvoyait
+ * donc « v18 » sur un déploiement parfaitement à jour — et a fait conclure à
+ * tort que la mise en ligne avait échoué.
+ * Pour vérifier la version réellement servie :
+ *     curl -s https://tabibi.doctor/sw.js | grep CACHE_VERSION
+ * Aucun numéro de version n'est réinscrit ici : deux sources pour un même fait
+ * finissent toujours par diverger.
  * Stratégies : HTML network-first, assets cache-first, Supabase bypass.
  * Bump v18 : Phase 5.2.3-fix (helper js/tabibi-doctor-name.js partagé pour
  *            formatage nom médecin — full_name + fallback full_name_ar +
