@@ -165,12 +165,20 @@
 </div>
 <script src="js/tabibi-header.js"></script>
 
-<!-- [Lot 3] Sidebar poste de travail (visible ≥1024px, pattern PR #12) -->
+<!-- [Lot 3] Sidebar poste de travail (visible ≥1024px, pattern PR #12)
+     ⚠️ SIDEBAR STATIQUE — À SYNCHRONISER avec le tableau LINKS de
+     js/tabibi-pro-sidebar.js (~l.28). Cette page a sa propre nav en dur et
+     neutralise le composant JS (garde `.ag-sidebar` dans son init()), donc
+     AUCUN filtrage par feature flag ne s'applique ici : ce qui est écrit est
+     rendu. Les deux listes ont déjà divergé — celle-ci n'a jamais eu
+     « Statistiques » (doctor-analytics.html), toujours absente ci-dessous.
+     [FIX 2026-08-05] « Messages » retiré : flag messaging=false, et
+     messages.html redirige vers doctor-dashboard.html au DOMContentLoaded.
+     Le lien menait donc à un aller-retour visible. Idem « Ordonnances »,
+     flag prescriptions=false. Les remettre quand les flags repassent à true. -->
 <nav class="ag-sidebar" aria-label="Navigation espace pro">
   <a class="ag-nav active" href="agenda-cabinet.html" aria-current="page"><i class="fa fa-calendar-week"></i> <span data-i18n="ag_nav_agenda">Agenda</span></a>
   <a class="ag-nav" href="doctor-dashboard.html"><i class="fa fa-gauge-high"></i> <span data-i18n="ag_nav_dash">Tableau de bord</span></a>
-  <a class="ag-nav" href="medecin-ordonnance.html"><i class="fa fa-file-prescription"></i> <span data-i18n="ag_nav_rx">Ordonnances</span></a>
-  <a class="ag-nav" href="messages.html"><i class="fa fa-comments"></i> <span data-i18n="ag_nav_msg">Messages</span></a>
   <a class="ag-nav" href="notifications.html"><i class="fa fa-bell"></i> <span data-i18n="ag_nav_notif">Notifications</span></a>
   <a class="ag-nav" href="medecin-profile.html"><i class="fa fa-user-doctor"></i> <span data-i18n="ag_nav_profile">Mon profil</span></a>
   <div class="ag-sb-spacer"></div>
