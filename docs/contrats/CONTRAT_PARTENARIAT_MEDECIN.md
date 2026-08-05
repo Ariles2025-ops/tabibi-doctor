@@ -79,7 +79,7 @@ Tabibi met à disposition du Médecin :
 
 5.1. **Gratuité au lancement** : le service est fourni au Médecin à **titre gratuit** pendant la phase de lancement.
 
-5.2. **Évolution tarifaire** : Tabibi se réserve le droit d'introduire une tarification (abonnement mensuel, commission, etc.). Toute évolution tarifaire sera notifiée au Médecin par email avec un **préavis minimum de 60 jours**. Le Médecin pourra refuser la nouvelle tarification et résilier sans frais avant son entrée en vigueur.
+5.2. **Évolution tarifaire** : Tabibi se réserve le droit d'introduire une tarification sous la forme d'un **abonnement forfaitaire** souscrit par le Médecin. Toute évolution tarifaire sera notifiée au Médecin par email avec un **préavis minimum de 60 jours**. Le Médecin pourra refuser la nouvelle tarification et résilier sans frais avant son entrée en vigueur.
 
 5.3. **Honoraires médicaux** : Tabibi ne perçoit **aucune commission** sur les honoraires de consultation, qui demeurent intégralement la propriété du Médecin et sont réglés directement par le Patient.
 

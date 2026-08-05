@@ -112,4 +112,14 @@ Conformément à la **loi n° 18-07** du 10 juin 2018 et au RGPD, j'ai été inf
 
 *Formulaire généré le 27 mai 2026 — version 1.0 — DRAFT.*
 
-> **Note interne** : ce formulaire doit être numérisé et archivé dans Google Drive (dossier `Onboarding-Médecins/[wilaya]/[nom_médecin]/`) sous 24 heures après signature. L'original papier est conservé dans le classeur physique « Claims signés ».
+<!--
+NOTE INTERNE — NE PAS IMPRIMER, NE PAS COMMUNIQUER AU MÉDECIN
+Déplacée du corps du document le 2026-08-05 : elle apparaissait à
+l'impression, sous la signature, et exposait au signataire nos procédures
+d'archivage.
+
+Procédure après signature :
+  1. Numériser le formulaire sous 24 h.
+  2. Archiver dans Google Drive — dossier Onboarding-Médecins/[wilaya]/[nom_médecin]/
+  3. Conserver l'original papier dans le classeur physique « Claims signés ».
+-->
