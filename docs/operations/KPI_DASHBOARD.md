@@ -208,7 +208,7 @@ WHERE action LIKE 'suspend%' AND ends_at > NOW();
 
 - KR1 : 3 articles presse / blog par mois.
 - KR2 : 500 abonnés LinkedIn page Tabibi.
-- KR3 : 30 témoignages médecins recueillis.
+- KR3 : **10** témoignages médecins recueillis (aligné sur `docs/marketing/STRATEGIE_CONTENU.md` §5, qui fixe l'objectif à 10 et le budget à 10-15 000 DZD/vidéo — le budget vidéo de 120 000 DZD du plan de lancement finance 8 à 12 vidéos, pas 30).
 
 ---
 
