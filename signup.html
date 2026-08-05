@@ -526,6 +526,22 @@ async function verifyOtpAndCreateProfile(e){
       } else if(claimLegacyId){
         try{ localStorage.setItem('tabibi_pending_claim_legacy_id', String(claimLegacyId)); }catch(__){}
       }
+      // [FIX 2026-08-05] Repli : _profileId n'était alimenté QUE si l'auto-claim
+      // réussissait. Un échec de claim (réseau, fiche déjà revendiquée, RPC en
+      // erreur) privait le médecin de l'uploader in-app alors que sa session est
+      // ouverte et que sa fiche existe peut-être déjà. On redemande donc le profil
+      // à la source. get_my_doctor_profile ne renvoie que LE profil de l'appelant
+      // (scopé auth.uid()) : aucune élévation de privilège.
+      if(!_profileId){
+        try{
+          var _rp = await window.tabibi.supabase.rpc('get_my_doctor_profile');
+          if(_rp && _rp.error) throw _rp.error;
+          var _pf = _rp && _rp.data; if(Array.isArray(_pf)) _pf = _pf[0];
+          if(_pf && _pf.id) _profileId = _pf.id;
+        }catch(_e){
+          if(window.console && console.warn) console.warn('[signup] profil médecin non résolu — uploader in-app indisponible', _e);
+        }
+      }
       // Session active : la modale s'affiche ; signOut + redirect au clic de fermeture.
       showMedecinPendingModal(P.phone, P.firstName, _profileId);   // [C3] _profileId → uploader in-app si fiche claimée
       if(btn){ btn.disabled=false; btn.innerHTML=origText; }
@@ -569,7 +585,7 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
         <strong>📋 Pièces justificatives</strong>
         <br>Ajoutez dès maintenant votre <strong>carte de l'Ordre</strong> + votre <strong>pièce d'identité</strong> pour accélérer la validation.
         <div id="med-pending-upload" style="margin-top:12px"></div>
-        <button id="med-pending-send" disabled style="width:100%;margin-top:12px;padding:12px;background:#0E5F46;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:14px;cursor:pointer;opacity:.5"><i class="fa fa-paper-plane"></i> Envoyer mes documents</button>
+        <button id="med-pending-send" disabled style="width:100%;margin-top:12px;padding:15px;background:linear-gradient(135deg,#0a4d3e,#0E5F46);color:#fff;border:none;border-radius:10px;font-weight:800;font-size:16px;cursor:pointer;opacity:.5;box-shadow:0 6px 18px rgba(14,95,70,.28)"><i class="fa fa-paper-plane"></i> Envoyer mes documents</button>
         <div id="med-pending-upload-msg" style="margin-top:8px;font-size:12px"></div>
         <div style="margin-top:8px;font-size:11px;color:#64748b">Vous pouvez aussi les envoyer à <strong>contact@tabibi.doctor</strong>.</div>
       </div>`
@@ -577,6 +593,24 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
         <strong>📋 ${tabibiT('next_step','Prochaine étape :')}</strong>
         <br>${tabibiT('med_pending_docs','Préparez vos documents (diplôme + attestation Ordre) pour les envoyer à <strong>contact@tabibi.doctor</strong>')}
       </div>`;   // [C3] cas (b) sans claim : pas de fiche cible → message neutre (dépend de C2)
+
+  // [FIX 2026-08-05] « Retour à l'accueil » n'est plus le bouton principal.
+  // Il l'était même quand des documents restaient à envoyer : le chemin le plus
+  // visible menait donc à la sortie, pas à l'action utile.
+  //  • profil résolu  → l'action principale est « Envoyer mes documents »
+  //    (dans docsBlock, désormais en style primaire) ; ici, lien secondaire.
+  //  • profil absent  → l'action principale devient l'envoi par email, seule
+  //    voie restante ; « Retour à l'accueil » passe en secondaire dans les
+  //    deux cas.
+  var _secondary = `<button id="med-pending-back" onclick="medecinPendingClose()" style="width:100%;margin-top:10px;padding:12px;background:transparent;color:#475569;border:1px solid #cbd5e1;border-radius:10px;font-weight:600;font-size:14px;cursor:pointer">
+        ${tabibiT('back_home',"Retour à l'accueil")}
+      </button>`;
+  var footerCta = profileId
+    ? _secondary
+    : `<a href="mailto:contact@tabibi.doctor?subject=${encodeURIComponent('Pièces justificatives — ' + (prenom || ''))}" style="display:block;width:100%;padding:15px;background:linear-gradient(135deg,#0a4d3e,#0E5F46);color:#fff;border-radius:10px;font-weight:800;font-size:16px;text-decoration:none;box-shadow:0 6px 18px rgba(14,95,70,.28)">
+        <i class="fa fa-envelope"></i> Envoyer mes documents par email
+      </a>` + _secondary;
+
   modal.innerHTML = `
     <div style="background:#fff;border-radius:16px;max-width:480px;width:100%;padding:32px 24px;text-align:center;box-shadow:0 24px 48px rgba(0,0,0,0.2)">
       <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#0a4d3e,#0E5F46);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
@@ -591,16 +625,15 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
         Nous vous notifierons au <strong>${phone}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
       </p>
       ${docsBlock}
-      <button onclick="medecinPendingClose()" style="width:100%;padding:14px;background:linear-gradient(135deg,#0a4d3e,#0E5F46);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer">
-        ${tabibiT('back_home',"Retour à l'accueil")}
-      </button>
+      ${footerCta}
     </div>
   `;
   document.body.appendChild(modal);
 
   // [C3] Monte l'uploader des 2 pièces (réutilise tabibiDocUpload, comme medecin-profile.html)
   // et câble « Envoyer mes documents » → submit(profileId). Session encore active (avant signOut).
-  if (profileId && window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function') {   // [C3]
+  _medHasUploader = !!(profileId && window.tabibiDocUpload && typeof window.tabibiDocUpload.setup === 'function'); // [FIX 2026-08-05]
+  if (_medHasUploader) {   // [C3]
     var _up = window.tabibiDocUpload.setup({                                                          // [C3]
       container: 'med-pending-upload',                                                                // [C3]
       onValidChange: function (v) {                                                                   // [C3]
@@ -619,7 +652,10 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
         if (r && r.ok) {                                                                              // [C3]
           var _ul = document.getElementById('med-pending-upload'); if (_ul) _ul.style.display = 'none'; // [C3]
           _sendBtn.style.display = 'none';                                                            // [C3]
+          _medDocsSent = true;                                                                        // [FIX 2026-08-05] fermeture sans confirmation désormais autorisée
           if (_msg) { _msg.style.color = '#2E8B57'; _msg.innerHTML = '<i class="fa fa-check"></i> Documents envoyés ✓ — validation sous 48h.'; } // [C3]
+          var _bh = document.querySelector('#med-pending-back');                                       // [FIX] le retour redevient l'action naturelle
+          if (_bh) { _bh.style.background = 'linear-gradient(135deg,#0a4d3e,#0E5F46)'; _bh.style.color = '#fff'; _bh.style.border = 'none'; _bh.style.fontWeight = '800'; }
         } else {                                                                                      // [C3]
           _sendBtn.disabled = false; _sendBtn.innerHTML = _orig;                                      // [C3]
           if (_msg) { _msg.style.color = '#D21010'; _msg.textContent = "Échec de l'envoi. Réessayez, ou envoyez vos pièces à contact@tabibi.doctor."; } // [C3]
@@ -636,7 +672,25 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
 // auth.signOut() (auth.js) purge la session ET navigue vers REDIRECTS.afterLogout
 // (=index.html). Fallback dur si le signOut rejette (réseau KO) → on va quand même
 // à index.html pour ne pas laisser l'utilisateur bloqué derrière la modale fermée.
-function medecinPendingClose(){
+//
+// [FIX 2026-08-05] Le signOut est SUSPENDU tant que les pièces ne sont pas
+// parties. La session est la seule fenêtre pendant laquelle l'upload in-app est
+// possible : une fois déconnecté, le médecin n'a plus que l'email, et son compte
+// reste bloqué en attente de validation. Fermer par mégarde lui coûtait donc
+// l'unique chemin court. On ne bloque pas la sortie — on la rend délibérée.
+var _medDocsSent = false;      // passe à true après un envoi réussi
+var _medHasUploader = false;   // true si l'uploader a pu être monté
+
+function medecinPendingClose(force){
+  if (_medHasUploader && !_medDocsSent && force !== true) {
+    var _ok = window.confirm(
+      "Vos pièces justificatives ne sont pas encore envoyées.\n\n" +
+      "En quittant maintenant, vous serez déconnecté et devrez les transmettre " +
+      "par email à contact@tabibi.doctor — la validation de votre compte prendra " +
+      "plus de temps.\n\nQuitter quand même ?"
+    );
+    if (!_ok) return;
+  }
   try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch(e){}
   if (window.tabibi && window.tabibi.auth && typeof window.tabibi.auth.signOut === 'function') {
     window.tabibi.auth.signOut().catch(function(){ location.href='index.html'; });
