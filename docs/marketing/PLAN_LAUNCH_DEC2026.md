@@ -25,7 +25,7 @@ Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **décemb
 
 ### Hypothèses
 
-- 79 000 fiches médecins disponibles → si on convertit 0,13 % à J+90, on atteint l'objectif.
+- plus de 75 000 fiches médecins publiées → si on convertit 0,13 % à J+90, on atteint l'objectif.
 - Adoption patient assez naturelle dès que ≥ 5 médecins actifs par grande wilaya.
 
 ---
@@ -209,7 +209,7 @@ Estimations en **DZD**, à ajuster selon trésorerie réelle.
 
 1. Le médecin qui dit : « J'ai diminué mes no-show de 30 % depuis Tabibi. »
 2. Le patient qui dit : « J'ai trouvé un dermato en 2 min, RDV à 2 jours. »
-3. L'équipe : « 3 personnes, 79 000 fiches, une mission. »
+3. L'équipe : « 3 personnes, plus de 75 000 fiches, une mission. »
 4. La conformité : « Hébergé en Europe, conforme à la loi 18-07. »
 
 ---

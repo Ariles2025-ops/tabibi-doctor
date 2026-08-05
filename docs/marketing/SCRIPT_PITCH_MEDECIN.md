@@ -38,7 +38,7 @@ Document interne destiné à l'équipe commerciale (et au Gérant) pour les rend
 >
 > Nous sommes en phase de lancement — décembre 2026. Notre mission est simple : permettre à tout Algérien de trouver un médecin et de prendre rendez-vous en ligne, gratuitement.
 >
-> Vous figurez déjà dans notre annuaire — on a 79 000 médecins répertoriés à partir de sources publiques. Je suis là pour vous proposer de **prendre la main sur votre fiche**. »
+> Vous figurez déjà dans notre annuaire — on a plus de 75 000 médecins répertoriés à partir de sources publiques. Je suis là pour vous proposer de **prendre la main sur votre fiche**. »
 
 ### Minute 1-2 — La proposition (60 s)
 

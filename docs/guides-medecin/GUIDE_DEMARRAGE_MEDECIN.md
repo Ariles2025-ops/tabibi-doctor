@@ -28,7 +28,7 @@ Ce guide vous accompagne en 5 étapes pour activer votre compte et commencer à 
 
 ## Étape 1 — Revendiquer votre fiche (claim)
 
-Tabibi dispose déjà d'un annuaire de **~79 000 médecins** issu de sources publiques. Il y a de fortes chances que votre nom y figure déjà.
+Tabibi dispose déjà d'un annuaire de **plus de 75 000 médecins** issu de sources publiques. Il y a de fortes chances que votre nom y figure déjà.
 
 ### Comment faire ?
 

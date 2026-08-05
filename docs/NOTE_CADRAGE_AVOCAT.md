@@ -26,7 +26,7 @@ La consultation demandée a deux objets distincts, dont le second est prioritair
 |---|---|
 | Société | Tabibi SARL, constituée. Gérant : Aghiles Haddadene. Le modèle de contrat porte encore la mention « en cours de constitution » et un n° de registre du commerce à compléter. |
 | Activité | Annuaire de médecins et prise de rendez-vous en ligne. Gratuit pour les patients. Gratuit pour les médecins au lancement, avec une évolution tarifaire par abonnement prévue. |
-| Base de données | Environ 79 700 fiches de médecins constituées à partir de sources publiques (annuaire de l'Ordre, sites institutionnels), sans consentement préalable des intéressés. |
+| Base de données | Fiches de médecins constituées à partir de sources publiques (annuaire de l'Ordre, sites institutionnels), sans consentement préalable des intéressés. **75 034 sont effectivement publiées** — chiffre vérifié le 05/08/2026 par comptage direct sur l'API de la plateforme. Le total détenu en base est supérieur : les audits internes l'établissent à 79 746, dont environ 4 700 non publiées (fiches inactives ou sans identifiant source). Ce total n'a pas été revérifié à la date de la note, la table sous-jacente n'étant pas lisible publiquement. |
 | Visibilité publique | Seules les fiches revendiquées et validées sont affichées publiquement. Les autres restent en base, invisibles, et servent au pré-remplissage lors de la revendication. |
 | Hébergement | Supabase, infrastructure située dans l'Union européenne (Allemagne). Aucune donnée n'est hébergée en Algérie. |
 | Données traitées | Identité du patient, numéro de téléphone, motif de consultation le cas échéant, historique des rendez-vous, identité du praticien consulté. |
@@ -74,9 +74,9 @@ Ces deux documents sont **en ligne** mais n'ont pas d'équivalent rédigé dans
 
 Classés par gravité. Les trois premiers ne sont pas des questions de rédaction : une réponse négative impose de modifier le produit avant le lancement.
 
-### 4.1 — Licéité de la base de 79 700 fiches non consenties
+### 4.1 — Licéité de la base de fiches non consenties
 
-La base a été constituée par extraction de sources publiques. Les médecins concernés n'ont ni consenti, ni été informés. La loi n° 18-07 du 10 juin 2018 exige un fondement licite pour tout traitement de données à caractère personnel.
+La base compte 75 034 fiches publiées et environ 79 700 détenues au total (cf. section 2). Elle a été constituée par extraction de sources publiques. Les médecins concernés n'ont ni consenti, ni été informés. La loi n° 18-07 du 10 juin 2018 exige un fondement licite pour tout traitement de données à caractère personnel.
 
 **Questions** : le caractère public de la source constitue-t-il un fondement suffisant en droit algérien ? La conservation de fiches non revendiquées et non affichées est-elle licite ? Une information préalable des personnes concernées est-elle obligatoire, et sous quelle forme ? Le fait de ne rendre publiques que les fiches revendiquées suffit-il à écarter le risque ?
 
