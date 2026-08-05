@@ -9,15 +9,15 @@
 
 # Note de cadrage — validation juridique
 
-11 documents contractuels et légaux · Plateforme de prise de rendez-vous médicaux · Droit algérien
+13 documents contractuels et légaux · Plateforme de prise de rendez-vous médicaux · Droit algérien
 
 ## 1. Objet de la consultation
 
-Tabibi SARL exploitera à partir de décembre 2026 une plateforme en ligne de prise de rendez-vous médicaux en Algérie. Onze documents contractuels et légaux ont été rédigés en interne. Ils portent tous la mention « DRAFT — en attente de validation par avocat » et n'ont jamais été soumis à un juriste.
+Tabibi SARL exploitera à partir de décembre 2026 une plateforme en ligne de prise de rendez-vous médicaux en Algérie. Treize documents contractuels et légaux ont été rédigés en interne. Ils portent tous la mention « DRAFT — en attente de validation par avocat » et n'ont jamais été soumis à un juriste.
 
 La consultation demandée a deux objets distincts, dont le second est prioritaire :
 
-- valider ou corriger les onze documents listés en section 3, pour qu'ils puissent être signés et publiés ;
+- valider ou corriger les treize documents listés en section 3, pour qu'ils puissent être signés et publiés ;
 - se prononcer sur les huit points de droit listés en section 4, dont certains conditionnent la viabilité même du modèle et ne relèvent pas d'une simple relecture.
 
 ## 2. Contexte factuel
@@ -32,6 +32,7 @@ La consultation demandée a deux objets distincts, dont le second est prioritair
 | Données traitées | Identité du patient, numéro de téléphone, motif de consultation le cas échéant, historique des rendez-vous, identité du praticien consulté. |
 | Authentification | Code à usage unique par SMS pour les patients et les médecins. |
 | Revendication de fiche | Deux parcours : à distance par WhatsApp avec validation manuelle, ou physiquement au cabinet avec signature du formulaire de consentement. |
+| Mentions légales | **Publiées incomplètes** — 7 champs non renseignés en production à la date de la note : n° RC, NIF, NAI, capital social, n° de dépôt INAPI, n° de déclaration ANPDP. |
 | Échéance | Congrès médical du 3 au 5 décembre 2026, stand déjà payé. Les contrats doivent pouvoir être signés sur place. |
 
 ## 3. Documents soumis
@@ -49,6 +50,16 @@ Tous sont rédigés en français, versionnés dans le dépôt, convertibles en t
 | `POLITIQUE_COOKIES.md` | 105 lignes | Recueil du consentement ; pixel publicitaire Meta |
 | `MENTIONS_LEGALES.md` | 94 lignes | Mentions obligatoires de l'éditeur ; n° RC à compléter |
 | `POLITIQUE_REMBOURSEMENT.md` | 71 lignes | Service gratuit au lancement — utilité à confirmer |
+
+### Documents publiés sans source markdown — `legal/`
+
+Ces deux documents sont **en ligne** mais n'ont pas d'équivalent rédigé dans
+`docs/legal/`. Ils ont été omis du décompte initial de onze.
+
+| Fichier | Volume | Point d'attention signalé |
+|---|---|---|
+| `legal/dpa.html` | 270 lignes | **Rattaché au point 4.2** — c'est le document qui traite du transfert de données hors du territoire national |
+| `legal/rgpd-droits.html` | 340 lignes | Exercice des droits des personnes concernées ; articulation entre le RGPD européen et la loi 18-07 |
 
 ### Contrats à faire signer — `docs/contrats/`
 
@@ -77,7 +88,7 @@ L'intégralité des données, y compris les données de rendez-vous rattachant u
 
 **Questions** : un transfert de données à caractère personnel hors du territoire national requiert-il l'autorisation préalable de l'Autorité nationale de protection des données personnelles ? Cette autorité est-elle opérationnelle et cette autorisation obtenable dans le délai disponible ? À défaut, un hébergement en Algérie est-il juridiquement obligatoire, et sous quel délai ? Quelle est l'exposition en cas d'exploitation sans autorisation ?
 
-*Rattachement documentaire* : `docs/legal/POLITIQUE_CONFIDENTIALITE.md`, `legal/dpa.html`.
+*Rattachement documentaire* : `docs/legal/POLITIQUE_CONFIDENTIALITE.md`, `legal/dpa.html` (270 lignes, joint — document central sur ce point).
 
 ### 4.3 — Qualification des données de rendez-vous
 
@@ -88,6 +99,8 @@ Un rendez-vous associe un patient identifié à un médecin dont la spécialité
 ### 4.4 — Modèle économique et code de déontologie
 
 Le décret exécutif n° 92-276 encadre la publicité médicale et prohibe le compérage. Tabibi ne perçoit aucune commission sur les honoraires, mais prévoit un abonnement forfaitaire payé par le praticien, ainsi qu'un classement des fiches dans les résultats de recherche.
+
+Le modèle économique est **exclusivement un abonnement forfaitaire, jamais une commission** — ni sur les honoraires de consultation, ni sur le volume de rendez-vous, sous aucune forme. L'article 5.2 du contrat de partenariat mentionnait encore la commission parmi les évolutions tarifaires envisageables, en contradiction avec l'article 5.3 qui l'exclut ; cette mention a été retirée le 5 août 2026 et les deux articles concordent désormais.
 
 **Questions** : l'abonnement forfaitaire est-il licite au regard du décret 92-276 ? Un référencement mis en avant contre rémunération serait-il assimilable à de la publicité prohibée ou à du compérage ? La publication d'avis de patients sur un praticien nommément désigné est-elle admissible, et quel régime de responsabilité pèse sur la plateforme ?
 
@@ -125,7 +138,7 @@ Le parcours à distance transite par WhatsApp, service opéré par Meta. Des pi�
 ## 5. Livrables attendus
 
 - Un avis écrit sur les huit points de la section 4, indiquant pour chacun si le modèle actuel est licite en l'état, licite sous réserve de modification, ou non licite.
-- Les onze documents relus et corrigés, prêts à signature et à publication.
+- Les treize documents relus et corrigés, prêts à signature et à publication.
 - La liste des formalités administratives à accomplir avant le lancement — déclaration ou autorisation ANPDP, transfert hors territoire, toute autre autorisation sectorielle — avec les délais correspondants.
 - Une estimation d'honoraires et un délai de remise.
 
