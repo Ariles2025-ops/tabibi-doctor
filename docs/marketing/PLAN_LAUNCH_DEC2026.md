@@ -4,9 +4,9 @@
 
 ---
 
-# Plan de lancement — Juin 2026
+# Plan de lancement — Décembre 2026
 
-Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **juin 2026**. Document vivant, mis à jour au fil de l'avancement.
+Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **décembre 2026** (ouverture du congrès médical, 3 décembre). Document vivant, mis à jour au fil de l'avancement.
 
 ---
 
@@ -30,7 +30,7 @@ Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **juin 20
 
 ---
 
-## J-30 à J-1 — Préparation (mai → début juin 2026)
+## J-30 à J-1 — Préparation (novembre → début décembre 2026)
 
 ### Tech & Produit
 
@@ -100,7 +100,7 @@ Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **juin 20
 
 ---
 
-## J+1 à J+30 — Phase de signature (juin 2026)
+## J+1 à J+30 — Phase de signature (décembre 2026)
 
 ### Objectif : 50 médecins actifs
 
@@ -123,7 +123,7 @@ Plan opérationnel du **lancement public** de Tabibi.doctor, prévu en **juin 20
 
 ---
 
-## J+30 à J+90 — Consolidation (juillet-août 2026)
+## J+30 à J+90 — Consolidation (janvier-février 2027)
 
 ### Objectif : atteindre 100 médecins actifs + 2000 patients inscrits
 

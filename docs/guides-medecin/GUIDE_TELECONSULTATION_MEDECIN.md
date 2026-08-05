@@ -1,12 +1,12 @@
 **Version** : 1.0
 **Date** : 27 mai 2026
-**Statut** : DRAFT — fonctionnalité non garantie au lancement (juin 2026)
+**Statut** : DRAFT — fonctionnalité non garantie au lancement (décembre 2026)
 
 ---
 
 # Guide — Téléconsultation (Médecin)
 
-> ⚠️ **Note importante** : la téléconsultation est une fonctionnalité **planifiée** sur Tabibi.doctor mais **n'est pas garantie disponible dès le lancement** (juin 2026). Ce guide est publié à titre préparatoire et sera mis à jour lorsque la fonctionnalité sera activée.
+> ⚠️ **Note importante** : la téléconsultation est une fonctionnalité **planifiée** sur Tabibi.doctor mais **n'est pas garantie disponible dès le lancement** (décembre 2026). Ce guide est publié à titre préparatoire et sera mis à jour lorsque la fonctionnalité sera activée.
 
 ---
 

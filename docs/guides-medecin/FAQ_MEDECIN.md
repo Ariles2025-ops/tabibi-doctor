@@ -31,7 +31,7 @@ Non. Vous pouvez être référencé sur d'autres plateformes ou continuer à pre
 ## B. Tarifs et modèle économique
 
 ### 6. Combien ça coûte ?
-**Gratuit** pour les médecins au lancement (juin 2026).
+**Gratuit** pour les médecins au lancement (décembre 2026).
 
 ### 7. Allez-vous devenir payant un jour ?
 Possiblement. Nous explorerons des modèles d'abonnement ou de services premium. Tout changement sera notifié **60 jours à l'avance** avec possibilité de résilier sans frais.

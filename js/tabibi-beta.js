@@ -30,7 +30,7 @@
   const I18N = {
     fr: {
       title: 'Tabibi en bêta privée',
-      sub: 'Vous êtes parmi nos premiers testeurs. Lancement officiel : septembre 2026.',
+      sub: 'Vous êtes parmi nos premiers testeurs. Lancement officiel : décembre 2026.',
       learn: 'En savoir plus',
       close: 'Fermer',
       modal_title: '🚧 Tabibi est en bêta privée',
@@ -53,7 +53,7 @@
     },
     ar: {
       title: 'طبيبي في النسخة التجريبية الخاصة',
-      sub: 'أنت من أوائل المختبرين. الإطلاق الرسمي: يوليو 2026.',
+      sub: 'أنت من أوائل المختبرين. الإطلاق الرسمي: ديسمبر 2026.',
       learn: 'المزيد من المعلومات',
       close: 'إغلاق',
       modal_title: '🚧 طبيبي في النسخة التجريبية الخاصة',
@@ -76,7 +76,7 @@
     },
     en: {
       title: 'Tabibi in private beta',
-      sub: 'You are among our first testers. Official launch: July 2026.',
+      sub: 'You are among our first testers. Official launch: December 2026.',
       learn: 'Learn more',
       close: 'Close',
       modal_title: '🚧 Tabibi is in private beta',

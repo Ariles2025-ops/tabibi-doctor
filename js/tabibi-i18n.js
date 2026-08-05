@@ -494,7 +494,7 @@
       conv_not_found_body: 'Cette conversation n\'existe pas ou ne vous est pas accessible.',
       conv_send_failed: 'Envoi impossible : ',
       // [CONFORMITE 2026] patient-waitinglist
-      pwl_countdown: 'Lancement le 7 septembre 2026',
+      pwl_countdown: 'Lancement le 3 décembre 2026',
       pwl_h_title: 'Vos RDV médicaux, en ligne, en Algérie',
       pwl_h_sub: 'Tabibi vous permettra de prendre rendez-vous avec votre médecin en quelques clics. Inscrivez-vous : nous vous prévenons dès l\'ouverture dans votre wilaya.',
       pwl_form_title: 'Recevoir une invitation au lancement',
@@ -523,7 +523,7 @@
       pwl_err_consent: 'Merci d\'accepter le consentement.',
       pwl_err_dup: 'Merci, votre inscription a deja ete prise en compte.',
       pwl_err_server: 'Erreur reseau. Reessayez.',
-      pwl_share_text: 'Tabibi ouvre en septembre — prenez vos RDV médicaux en ligne en Algérie',
+      pwl_share_text: 'Tabibi ouvre en décembre — prenez vos RDV médicaux en ligne en Algérie',
       // [CONFORMITE 2026] payment
       pmt_pagetitle: 'Paiement',
       pmt_summary: 'Récapitulatif',
@@ -965,7 +965,7 @@
       dan_insight_fidelity: '🔄 <b>Fidélité {n}%</b> — vos patients reviennent. C\'est un excellent indicateur de qualité.',
       // [CONFORMITE 2026] medecin-waitinglist
       mwl_h_title: 'Réservez votre profil Tabibi avant le grand public',
-      mwl_h_sub: 'Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 7 septembre 2026. Inscrivez-vous maintenant et bénéficiez d\'avantages réservés aux pionniers.',
+      mwl_h_sub: 'Tabibi, plateforme algérienne de prise de RDV en ligne, ouvre ses portes aux médecins le 3 décembre 2026. Inscrivez-vous maintenant et bénéficiez d\'avantages réservés aux pionniers.',
       mwl_b1: '3 mois Pro gratuits',
       mwl_b2: 'Démo offerte en cabinet',
       mwl_b3: 'Hébergement Algérie',
@@ -1813,7 +1813,7 @@
       conv_not_found_body: 'هذه المحادثة غير موجودة أو غير متاحة لك.',
       conv_send_failed: 'تعذّر الإرسال: ',
       // [CONFORMITE 2026] patient-waitinglist
-      pwl_countdown: 'الافتتاح في 7 سبتمبر 2026',
+      pwl_countdown: 'الافتتاح في 3 ديسمبر 2026',
       pwl_h_title: 'مواعيدكم الطبية، عبر الإنترنت، في الجزائر',
       pwl_h_sub: 'طبيبي يتيح لكم حجز موعد مع طبيبكم في بضع نقرات. سجلوا الآن لنخبركم عند الافتتاح في ولايتكم.',
       pwl_form_title: 'احصلوا على دعوة للافتتاح',
@@ -1842,7 +1842,7 @@
       pwl_err_consent: 'يرجى الموافقة على الشروط.',
       pwl_err_dup: 'شكراً، تسجيلكم تم استلامه مسبقاً.',
       pwl_err_server: 'خطأ في الشبكة. أعد المحاولة.',
-      pwl_share_text: 'طبيبي يفتتح في سبتمبر — مواعيد طبية عبر الإنترنت في الجزائر',
+      pwl_share_text: 'طبيبي يفتتح في ديسمبر — مواعيد طبية عبر الإنترنت في الجزائر',
       // [CONFORMITE 2026] payment
       pmt_pagetitle: 'الدفع',
       pmt_summary: 'الملخّص',
@@ -2282,7 +2282,7 @@
       dan_insight_fidelity: '🔄 <b>الولاء {n}%</b> — مرضاك يعودون. هذا مؤشر ممتاز على الجودة.',
       // [CONFORMITE 2026] medecin-waitinglist
       mwl_h_title: 'احجز ملفك على طبيبي قبل الافتتاح العام',
-      mwl_h_sub: 'طبيبي، منصة جزائرية لحجز المواعيد الطبية عبر الإنترنت، تفتح أبوابها للأطباء في 7 سبتمبر 2026. سجل الآن واستفد من امتيازات حصرية للرواد.',
+      mwl_h_sub: 'طبيبي، منصة جزائرية لحجز المواعيد الطبية عبر الإنترنت، تفتح أبوابها للأطباء في 3 ديسمبر 2026. سجل الآن واستفد من امتيازات حصرية للرواد.',
       mwl_b1: '3 أشهر Pro مجاناً',
       mwl_b2: 'عرض توضيحي مجاني في العيادة',
       mwl_b3: 'استضافة في الجزائر',
@@ -3128,7 +3128,7 @@
       conv_not_found_body: 'This conversation does not exist or is not accessible to you.',
       conv_send_failed: 'Could not send: ',
       // [CONFORMITE 2026] patient-waitinglist
-      pwl_countdown: 'Launching September 7, 2026',
+      pwl_countdown: 'Launching December 3, 2026',
       pwl_h_title: 'Your medical appointments, online, in Algeria',
       pwl_h_sub: 'Tabibi will let you book an appointment with your doctor in a few clicks. Sign up: we\'ll notify you as soon as we open in your wilaya.',
       pwl_form_title: 'Get a launch invitation',
@@ -3157,7 +3157,7 @@
       pwl_err_consent: 'Please accept the consent.',
       pwl_err_dup: 'Thank you, your registration has already been recorded.',
       pwl_err_server: 'Network error. Please try again.',
-      pwl_share_text: 'Tabibi opens in September — book your medical appointments online in Algeria',
+      pwl_share_text: 'Tabibi opens in December — book your medical appointments online in Algeria',
       // [CONFORMITE 2026] payment
       pmt_pagetitle: 'Payment',
       pmt_summary: 'Summary',
@@ -3575,7 +3575,7 @@
       dan_insight_fidelity: '🔄 <b>Loyalty {n}%</b> — your patients return. That\'s an excellent quality indicator.',
       // [CONFORMITE 2026] medecin-waitinglist
       mwl_h_title: 'Reserve your Tabibi profile before the public launch',
-      mwl_h_sub: 'Tabibi, the Algerian online medical booking platform, opens to doctors on September 7, 2026. Sign up now and enjoy benefits reserved for pioneers.',
+      mwl_h_sub: 'Tabibi, the Algerian online medical booking platform, opens to doctors on December 3, 2026. Sign up now and enjoy benefits reserved for pioneers.',
       mwl_b1: '3 months Pro free',
       mwl_b2: 'Free in-practice demo',
       mwl_b3: 'Hosting in Algeria',
