@@ -67,14 +67,27 @@
         });
       }
     } catch (e) { /* champ/RLS -> fallback */ }
+    // [FIX 2026-08-05] doctor_patients_directory au lieu de public.users : la
+    // RLS de public.users scope par auth.uid(), un médecin n'y voit que sa
+    // propre ligne. La vue filtre par auth.uid() dans sa définition et ne
+    // renvoie que les patients ayant un RDV avec lui. Même périmètre.
     try {
       if (patientIds.length) {
-        var rp = await sb.from('users').select('id,first_name,last_name').in('id', patientIds);
+        var rp = await sb.from('doctor_patients_directory').select('id,first_name,last_name').in('id', patientIds);
+        // rp.error DOIT être testé : PostgREST peut répondre 200 avec une erreur
+        // dans le corps, et `rp.data || []` avalait ce cas comme un 401.
+        if (rp.error) throw rp.error;
         (rp.data || []).forEach(function (u) {
           patients[u.id] = { name: ((u.first_name||'') + ' ' + (u.last_name||'')).trim() || 'Patient', sub: 'Patient' };
         });
       }
-    } catch (e) { /* RLS users peut bloquer -> fallback "Patient" */ }
+    } catch (e) {
+      // Repli « Patient » conservé, mais plus jamais silencieux.
+      if (window.console && console.error) {
+        console.error('[messaging] lecture doctor_patients_directory ÉCHOUÉE — '
+          + 'les conversations s\'afficheront sans nom de patient.', e);
+      }
+    }
     return { doctors: doctors, patients: patients };
   }
 

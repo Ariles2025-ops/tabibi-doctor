@@ -584,21 +584,35 @@ async function fetchDoctorRdvsFromSupabase(){
     const patientIds = [...new Set(rows.map(r => r.patient_id).filter(Boolean))];
     let patientsMap = {};
     if (patientIds.length > 0) {
+      // [FIX 2026-08-05] Lecture via doctor_patients_directory au lieu de
+      // public.users. La RLS de public.users scope par auth.uid() : un médecin
+      // n'y voit que SA propre ligne, jamais celles de ses patients — d'où les
+      // « Patient » anonymes. La vue filtre par auth.uid() DANS sa définition et
+      // ne renvoie que les patients ayant un RDV avec le médecin connecté.
+      // Même périmètre de données, aucune élévation de privilège.
       try {
         const idsParam = patientIds.map(encodeURIComponent).join(',');
-        const ures = await fetch(SB_URL + '/rest/v1/users?select=id,first_name,last_name,phone&id=in.(' + idsParam + ')', {
+        const ures = await fetch(SB_URL + '/rest/v1/doctor_patients_directory?select=id,first_name,last_name,phone&id=in.(' + idsParam + ')', {
           headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token }
         });
-        if (ures.ok) {
-          const users = await ures.json();
-          (users || []).forEach(u => {
-            patientsMap[u.id] = {
-              name: ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Patient',
-              phone: u.phone || ''
-            };
-          });
+        // Le `if (ures.ok)` seul avalait tout refus : un 401/403 laissait
+        // patientsMap vide et affichait « Patient » partout, sans trace. Un vrai
+        // problème de droits était indiscernable d'un patient sans nom.
+        if (!ures.ok) throw new Error('HTTP ' + ures.status + ' ' + (await ures.text()).slice(0, 200));
+        const users = await ures.json();
+        (users || []).forEach(u => {
+          patientsMap[u.id] = {
+            name: ((u.first_name || '') + ' ' + (u.last_name || '')).trim() || 'Patient',
+            phone: u.phone || ''
+          };
+        });
+      } catch(e) {
+        // Repli conservé (liste lisible plutôt que vide) mais plus silencieux.
+        if (window.console && console.error) {
+          console.error('[dashboard] lecture doctor_patients_directory ÉCHOUÉE — '
+            + 'les RDV s\'afficheront sans nom de patient.', e);
         }
-      } catch(e) { /* RLS peut bloquer, on continue sans */ }
+      }
     }
 
     const STATUS_MAP = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled' };
