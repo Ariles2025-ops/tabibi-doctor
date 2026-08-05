@@ -49,7 +49,7 @@ Document interne destiné au Gérant (Aghiles) et à toute personne en charge d'
 Présenter (en environ 1h) :
 
 1. **La mission** : faciliter l'accès aux soins en Algérie via une plateforme tech sobre et fiable.
-2. **Le contexte** : 79 000 fiches scrapées, lancement juin 2026, modèle gratuit B2B2C.
+2. **Le contexte** : 79 000 fiches scrapées, lancement décembre 2026, modèle gratuit B2B2C.
 3. **L'équipe** : Aghiles + 2 collaborateurs.
 4. **L'organisation** : OKR trimestriels, point hebdo dimanche soir, canal WhatsApp Business.
 5. **Les valeurs** : confidentialité absolue, respect du secret médical, qualité avant croissance.
@@ -111,7 +111,7 @@ Présenter (en environ 1h) :
 ### Pour rôle « Sales / Acquisition »
 
 - [ ] **Script de pitch médecin** : `docs/marketing/SCRIPT_PITCH_MEDECIN.md`
-- [ ] **Plan de launch** : `docs/marketing/PLAN_LAUNCH_JUIN2026.md`
+- [ ] **Plan de launch** : `docs/marketing/PLAN_LAUNCH_DEC2026.md`
 - [ ] Tour du CRM / fichier prospects.
 - [ ] Procédure de **signature de contrat** sur place.
 

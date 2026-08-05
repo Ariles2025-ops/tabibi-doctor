@@ -31,6 +31,27 @@ Ces points sont **déjà réglés et prouvés** (session du 26 juil 2026). Ne le
 - Ne jamais modifier une policy RLS ni une permission sans expliquer l'impact et demander validation. La RLS actuelle est saine.
 - Note fonctionnelle à surveiller (pas urgent) : `prescriptions` et `doctor_schedule` comparent `doctor_id = auth.uid()` (user id), alors que les autres tables utilisent `doctor_profiles.id`. À vérifier au 1er onboarding médecin réel.
 
+## Exclusions grep de dates
+Lors d'un changement de date de lancement, un `grep` sur un nom de mois remonte
+ces lignes. Elles sont **légitimes et ne doivent JAMAIS être modifiées** — ce
+sont des noms de mois, pas des dates de lancement :
+
+| Emplacement | Quoi | Pourquoi y toucher casserait quelque chose |
+|---|---|---|
+| `reservation.html:276` | `_AR_MONTHS` — table des 12 mois en arabe | Utilisée l.305 et l.353 pour les libellés du calendrier. Remplacer `سبتمبر` afficherait un mauvais mois sur tout RDV de septembre. |
+| `reservation.html:351` | commentaire sur un bug de grille de calendrier | Le mois cité est un exemple illustrant le bug, pas une date produit. |
+| `js/tabibi-i18n.js` | clés `month_*` (`month_september`, `month_sep`…) fr/ar/en | Dictionnaires de noms de mois du sélecteur de dates. |
+
+Tout autre résultat est une vraie date de lancement à aligner.
+Grep de contrôle (sans année, sinon les mentions sans millésime passent
+inaperçues — cas rencontré le 04/08/2026, 6 occurrences ratées) :
+```bash
+git grep -niE "(septembre|september|سبتمبر|juin|june)" -- . \
+  ':!desktop' ':!android' ':!www' ':!dist' ':!tests' ':!node_modules'
+```
+`www/` et `dist/` sont des sorties de build **non versionnées** : inutile de les
+éditer, elles sont régénérées par `scripts/build-mobile.sh` et `git archive`.
+
 ## Comment rapporter
 - Style : concis, factuel, en actions/tableaux. Pas de flatterie, pas de pavé.
 - Après chaque tâche : donne les **preuves** (diff, scores avant/après, SHA de commit, réponse API), l'**URL de PR**, et ce qui reste à décider.

@@ -36,7 +36,7 @@ Document interne destiné à l'équipe commerciale (et au Gérant) pour les rend
 
 > « Docteur, merci de m'accorder ces quelques minutes. Je m'appelle [Nom], je travaille avec l'équipe **Tabibi.doctor**, une plateforme algérienne de prise de rendez-vous médicaux.
 >
-> Nous sommes en phase de lancement — juin 2026. Notre mission est simple : permettre à tout Algérien de trouver un médecin et de prendre rendez-vous en ligne, gratuitement.
+> Nous sommes en phase de lancement — décembre 2026. Notre mission est simple : permettre à tout Algérien de trouver un médecin et de prendre rendez-vous en ligne, gratuitement.
 >
 > Vous figurez déjà dans notre annuaire — on a 79 000 médecins répertoriés à partir de sources publiques. Je suis là pour vous proposer de **prendre la main sur votre fiche**. »
 

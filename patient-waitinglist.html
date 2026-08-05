@@ -4,11 +4,11 @@
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<meta name="description" content="Tabibi arrive en septembre 2026 : prenez vos RDV medicaux en ligne avec votre medecin algerien. Inscrivez-vous a la liste d'attente.">
+<meta name="description" content="Tabibi arrive en décembre 2026 : prenez vos RDV medicaux en ligne avec votre medecin algerien. Inscrivez-vous a la liste d'attente.">
 <link rel="canonical" href="https://tabibi.doctor/patient-waitinglist.html">
 <meta name="robots" content="index,follow">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Tabibi arrive en septembre | Prenez vos RDV medicaux en ligne">
+<meta property="og:title" content="Tabibi arrive en décembre | Prenez vos RDV medicaux en ligne">
 <meta property="og:description" content="Inscrivez-vous a la liste d'attente Tabibi. Recevez une invitation des l'ouverture dans votre wilaya.">
 <meta property="og:image" content="https://tabibi.doctor/assets/og-patient.jpg">
 <meta property="og:locale" content="fr_DZ">
@@ -16,7 +16,7 @@
 <meta name="theme-color" content="#0F7560">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="images/icon-192.png">
-<title>Tabibi arrive en septembre | Liste d'attente patients</title>
+<title>Tabibi arrive en décembre | Liste d'attente patients</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
@@ -62,7 +62,7 @@
   <div style="display:flex;justify-content:flex-end;margin-bottom:18px"><div data-langbar></div></div>
 
   <section class="hero">
-    <div class="countdown" id="cd" data-i18n="pwl_countdown">Lancement le 7 septembre 2026</div>
+    <div class="countdown" id="cd" data-i18n="pwl_countdown">Lancement le 3 décembre 2026</div>
     <h1 id="h-title" data-i18n="pwl_h_title">Vos RDV médicaux, en ligne, en Algérie</h1>
     <p id="h-sub" data-i18n="pwl_h_sub">Tabibi vous permettra de prendre rendez-vous avec votre médecin en quelques clics. Inscrivez-vous : nous vous prévenons dès l'ouverture dans votre wilaya.</p>
   </section>
@@ -220,7 +220,7 @@ document.getElementById('wl-form').addEventListener('submit', async function(e){
     document.getElementById('wl-form').style.display = 'none';
     document.getElementById('thank-you').style.display = 'block';
     var shareUrl = encodeURIComponent('https://tabibi.doctor/patient-waitinglist.html');
-    var shareText = encodeURIComponent(_t('pwl_share_text','Tabibi ouvre en septembre — prenez vos RDV médicaux en ligne en Algérie'));
+    var shareText = encodeURIComponent(_t('pwl_share_text','Tabibi ouvre en décembre — prenez vos RDV médicaux en ligne en Algérie'));
     document.getElementById('sh-wa').href = 'https://wa.me/?text=' + shareText + '%20' + shareUrl;
     document.getElementById('sh-fb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + shareUrl;
     document.getElementById('sh-tw').href = 'https://twitter.com/intent/tweet?text=' + shareText + '&url=' + shareUrl;

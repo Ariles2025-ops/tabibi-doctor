@@ -10,7 +10,7 @@
 
 ## 1. Service gratuit au lancement
 
-Au lancement de la plateforme **Tabibi.doctor** (juin 2026), l'ensemble des services proposés est **entièrement gratuit** :
+Au lancement de la plateforme **Tabibi.doctor** (décembre 2026), l'ensemble des services proposés est **entièrement gratuit** :
 
 - **Patients** : inscription, recherche, prise de rendez-vous, gestion des rendez-vous — totalement gratuit, sans frais cachés.
 - **Médecins** : référencement, gestion d'agenda, dashboard, statistiques — totalement gratuit pendant la phase de lancement.

@@ -118,7 +118,7 @@ Le cœur de la valeur Tabibi : **votre agenda en ligne**.
 
 ## Étape 5 — Téléconsultation (optionnel — selon disponibilité)
 
-> ℹ️ La téléconsultation n'est pas garantie d'être disponible dès le lancement (juin 2026). Si activée, voici les conditions :
+> ℹ️ La téléconsultation n'est pas garantie d'être disponible dès le lancement (décembre 2026). Si activée, voici les conditions :
 
 - Vous pratiquez déjà la téléconsultation et avez les outils requis.
 - Vous respectez les exigences déontologiques (téléconsultation adaptée à la situation).

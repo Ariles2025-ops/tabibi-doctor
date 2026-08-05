@@ -81,7 +81,7 @@ Cet index recense l'ensemble des documents de l'écosystème documentaire Tabibi
 | # | Document | Description | Statut |
 |---|---|---|---|
 | 25 | [SCRIPT_PITCH_MEDECIN.md](marketing/SCRIPT_PITCH_MEDECIN.md) | Pitch 3 min + 10 objections + closing en cabinet | 🟢 EN VIGUEUR |
-| 26 | [PLAN_LAUNCH_JUIN2026.md](marketing/PLAN_LAUNCH_JUIN2026.md) | Plan J-30 → J+90, budget, KPI, canaux | 🟢 EN VIGUEUR |
+| 26 | [PLAN_LAUNCH_DEC2026.md](marketing/PLAN_LAUNCH_DEC2026.md) | Plan J-30 → J+90, budget, KPI, canaux | 🟢 EN VIGUEUR |
 | 27 | [STRATEGIE_CONTENU.md](marketing/STRATEGIE_CONTENU.md) | Blog, LinkedIn, SEO, témoignages vidéo | 🟢 EN VIGUEUR |
 
 ---

@@ -198,4 +198,4 @@ Remplir honnêtement le questionnaire :
 - [ ] Tester l'app téléchargée depuis le store (pas seulement le build debug)
 - [ ] Vérifier que les notifications push fonctionnent en production
 - [ ] Monitorer Sentry pour les erreurs post-launch
-- [ ] Communiquer le launch (PLAN_LAUNCH_JUIN2026.md)
+- [ ] Communiquer le launch (PLAN_LAUNCH_DEC2026.md)

@@ -44,7 +44,7 @@ La Plateforme propose :
 - **Pour les Médecins** : référencement, gestion d'agenda, gestion des demandes de rendez-vous, statistiques d'activité.
 - **Pour tous** : accès à des contenus informatifs de santé à titre purement éducatif.
 
-Le Service est **gratuit pour les Patients**. Les Médecins sont onboardés manuellement après vérification de leur titre d'exercice. Le service Médecin est gratuit au lancement (juin 2026). Toute évolution tarifaire fera l'objet d'un préavis de 60 jours.
+Le Service est **gratuit pour les Patients**. Les Médecins sont onboardés manuellement après vérification de leur titre d'exercice. Le service Médecin est gratuit au lancement (décembre 2026). Toute évolution tarifaire fera l'objet d'un préavis de 60 jours.
 
 ## Article 5 — Inscription
 
