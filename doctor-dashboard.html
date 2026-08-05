@@ -615,7 +615,7 @@ async function fetchDoctorRdvsFromSupabase(){
       }
     }
 
-    const STATUS_MAP = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled' };
+    const STATUS_MAP = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled', no_show: 'NoShow' };
     const list = rows.map(r => {
       const dt = new Date(r.scheduled_at);
       const date = dt.toISOString().split('T')[0];
@@ -687,7 +687,8 @@ function renderToday(){
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         ${r.status==="Pending"?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> ${tabibiT('dd_confirm','Confirmer')}</button>
           <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${r.id}')"><i class="fa fa-xmark"></i> ${tabibiT('dd_refuse','Refuser')}</button>`:""}
-        ${r.status==="Confirmed"?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>`:""}
+        ${r.status==="Confirmed"?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--text2)" onclick="markNoShow('${r.id}')"><i class="fa fa-user-slash"></i> ${tabibiT('dd_mark_noshow','Absent')}</button>`:""}
         ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${esc(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> ${tabibiT('dd_call','Appeler')}</a>`:""}
         <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${r.id}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>
         <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${esc(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${esc(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${r.duree||30} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> ${tabibiT('dd_details','Détails')}</button>
@@ -813,6 +814,28 @@ async function cancRdv(id){
   if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
   r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_refused',"RDV refusé"),"info");renderToday();
+}
+// [NO_SHOW 2026-08-05] Le statut no_show EXISTE DÉJÀ dans l'enum
+// public.appointment_status (pending|confirmed|cancelled|completed|no_show),
+// documenté dans PHASE5_1bis_get_available_slots_rpc.sql:14 et
+// js/tabibi-booking.js:17 — AUCUNE migration nécessaire.
+// Il était géré partout SAUF ici : mes-rdv, patient-dashboard et les 3
+// dictionnaires i18n l'affichent, mais le médecin — seul à savoir qu'un
+// patient ne s'est pas présenté — n'avait aucun moyen de l'enregistrer. La
+// colonne n'était donc jamais alimentée, et le « taux de no-show » de
+// doctor-analytics n'aurait rien eu à montrer même une fois branché.
+// STATUS_MAP ne mappait pas no_show non plus : un RDV déjà marqué absent en
+// base revenait sans libellé côté médecin.
+// Confirmation demandée : l'information est reportée sur le patient, un clic
+// accidentel ne doit pas passer en silence.
+async function markNoShow(id){
+  if(!confirm(tabibiT('dd_confirm_noshow',"Marquer ce patient comme absent ? Cette information sera enregistrée dans son historique.")))return;
+  const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
+  if(i<0) return;
+  const ok = await updateRdvStatusInSupabase(r[i].sbId,'no_show');
+  if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
+  r[i].status="NoShow";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
+  toastM(tabibiT('toast_rdv_noshow',"Patient marqué absent"),"info");renderToday();
 }
 async function markDone(id){
   const r=getDocRdvs();const i=r.findIndex(x=>x.id===id);
