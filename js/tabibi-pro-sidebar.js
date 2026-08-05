@@ -25,15 +25,37 @@
     en: { agenda: 'Agenda', dash: 'Dashboard', stats: 'Statistics', rx: 'Prescriptions',
           msg: 'Messages', notif: 'Notifications', profile: 'My profile', logout: 'Sign out' }
   };
+  // `feature` : nom d'un flag de js/tabibi-features.js. Si le flag existe et
+  // vaut false, l'entrée n'est PAS rendue (cf. visibleLinks()).
+  // ⚠️ Toute modification de cette liste doit être répercutée dans la sidebar
+  // STATIQUE de agenda-cabinet.html (~l.169) : cette page a sa propre nav en dur
+  // et neutralise ce composant (cf. init(), garde `.ag-sidebar`). Les deux listes
+  // ont déjà divergé une fois — la statique n'a jamais eu « Statistiques ».
   var LINKS = [
     { key: 'agenda',  href: 'agenda-cabinet.html',   icon: 'fa-calendar-week' },
     { key: 'dash',    href: 'doctor-dashboard.html', icon: 'fa-gauge-high' },
     { key: 'stats',   href: 'doctor-analytics.html', icon: 'fa-chart-line' },
-    { key: 'rx',      href: 'medecin-ordonnance.html', icon: 'fa-file-prescription' },
-    { key: 'msg',     href: 'messages.html',         icon: 'fa-comments' },
-    { key: 'notif',   href: 'notifications.html',    icon: 'fa-bell' },
+    { key: 'rx',      href: 'medecin-ordonnance.html', icon: 'fa-file-prescription', feature: 'prescriptions' },
+    { key: 'msg',     href: 'messages.html',         icon: 'fa-comments', feature: 'messaging' },
+    { key: 'notif',   href: 'notifications.html',    icon: 'fa-bell', feature: 'notifications' },
     { key: 'profile', href: 'medecin-profile.html',  icon: 'fa-user-doctor' }
   ];
+
+  /* Filtrage À LA SOURCE, avant le rendu.
+     On ne peut PAS utiliser data-feature ici : render() écrit en innerHTML,
+     donc APRÈS le passage de _applyFeatureVisibility() (js/tabibi-features.js),
+     qui ne balaie le DOM qu'une fois au chargement. L'attribut serait ignoré.
+     Filtrer la liste couvre aussi le re-rendu déclenché par tabibi:lang-change.
+     Règle générale : une entrée portant un nom de flag CONNU et faux n'est pas
+     rendue. Un flag inconnu de TABIBI_FEATURES laisse l'entrée visible — on ne
+     masque jamais sur une faute de frappe. */
+  function visibleLinks() {
+    var F = window.TABIBI_FEATURES;
+    if (!F) return LINKS;   // flags pas encore chargés → on ne masque rien
+    return LINKS.filter(function (l) {
+      return !l.feature || !(l.feature in F) || F[l.feature] !== false;
+    });
+  }
 
   function lang() {
     try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) {}
@@ -83,7 +105,7 @@
 
   function render(nav) {
     var L = I18N[lang()] || I18N.fr, cur = currentPage();
-    nav.innerHTML = LINKS.map(function (l) {
+    nav.innerHTML = visibleLinks().map(function (l) {
       var on = cur === l.href.toLowerCase();
       return '<a class="nav' + (on ? ' active' : '') + '" href="' + l.href + '"' + (on ? ' aria-current="page"' : '') + '>' +
         '<i class="fa ' + l.icon + '"></i> <span>' + L[l.key] + '</span></a>';
