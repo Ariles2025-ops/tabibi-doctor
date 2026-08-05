@@ -106,7 +106,7 @@ Chaque fiche médecin = une page SEO en soi. Veiller à :
 ### Articles LinkedIn Aghiles (12 premières semaines)
 
 1. Pourquoi je lance Tabibi (mon histoire personnelle).
-2. 79 000 fiches : la base, mais pas la mission.
+2. Plus de 75 000 fiches : la base, mais pas la mission.
 3. Conformité RGPD/loi 18-07 : ce qu'on fait concrètement.
 4. La première rencontre avec un médecin signataire.
 5. Notre stack technique (HTML/JS/Supabase) — pourquoi cette simplicité.

@@ -77,7 +77,7 @@ Un **« no-show »** = vous n'êtes pas venu au RDV et n'avez pas prévenu (ou p
 
 Si vous avez été empêché par un **cas de force majeure** (hospitalisation, accident, décès dans la famille), contactez nous sous **7 jours** avec un justificatif à contact@tabibi.doctor. Nous reviendrons sur le no-show si le justificatif est recevable.
 
-> ❤️ La règle des 3 strikes n'est **pas une punition**. C'est ce qui permet à 79 000 médecins de garder des créneaux disponibles pour tout le monde.
+> ❤️ La règle des 3 strikes n'est **pas une punition**. C'est ce qui permet à plus de 75 000 médecins de garder des créneaux disponibles pour tout le monde.
 
 ---
 
