@@ -2,11 +2,28 @@
 # Tabibi.doctor - robots.txt
 # =====================================================================
 # Phase 2 (PROGRESS.md) - 2026-05-21
+# Phase 10.1 - 2026-08-06 : garde-fou /seo/ LEVE (voir ci-dessous)
 #
-# RGPD garde-fou : on bloque l'indexation des pages SEO locales tant
-# que les 14 509 noms de medecins n'ont pas ete anonymises server-side
-# (cf. RGPD_STRATEGIE_TABIBI.md - plan 3-stages).
-# A retirer manuellement apres regeneration des pages SEO en Phase 10.
+# HISTORIQUE DU GARDE-FOU RGPD
+# De mai a aout 2026, `Disallow: /seo/` bloquait l'indexation des pages SEO
+# locales : elles affichaient le nom reel de chaque praticien (891 patronymes
+# distincts sur 490 pages) alors qu'aucun n'avait consenti - le fonds provient
+# de sources publiques et la base comptait 0 fiche revendiquee sur 75 034.
+#
+# Le 06/08/2026, les 490 pages ont ete SUPPRIMEES et remplacees par 576 pages
+# regenerees par `scripts/generate-seo-pages.mjs`, qui n'ecrit aucun nom : elles
+# ne contiennent que des agregats (comptages par wilaya/specialite, repartition
+# par commune), qui ne sont pas des donnees a caractere personnel.
+#
+# ATTENTION - ne pas conclure de la levee de ce garde-fou que le sujet est clos :
+# le jour ou l'on voudra afficher des noms, seules les fiches
+# `is_claimed = true AND validation_status = 'approved'` le permettent (licence
+# d'affichage concedee par l'article 8.2 du Contrat de Partenariat Medecin).
+# Toute autre fiche doit rester anonyme. Le script isole deja ce filtre.
+#
+# Preuve de la levee (executee avant le retrait du Disallow) :
+#   grep -rlE '\bDr[.[:space:]]|\bPr[.[:space:]]' seo/  -> 0 page
+#   grep -rli 'certifi' seo/                            -> 0 page
 # =====================================================================
 
 User-agent: *
@@ -28,9 +45,6 @@ Disallow: /teleconsultation.html
 Disallow: /reset-password.html
 Disallow: /forgot-password.html
 
-# Pages SEO non-anonymisees (RGPD garde-fou, sera leve en Phase 10)
-Disallow: /seo/
-
 # Fichiers SQL exposes accidentellement (devraient etre 404 via netlify.toml)
 Disallow: /*.sql$
 
@@ -42,6 +56,7 @@ Disallow: /migrations/
 # Autorise explicitement le contenu public marketing + blog + sitemaps + legal
 Allow: /
 Allow: /blog/
+Allow: /seo/
 Allow: /sitemaps/
 Allow: /legal/
 Allow: /index.html
@@ -59,3 +74,4 @@ Allow: /login.html
 Sitemap: https://tabibi.doctor/sitemap.xml
 Sitemap: https://tabibi.doctor/sitemaps/sitemap-static.xml
 Sitemap: https://tabibi.doctor/sitemaps/sitemap-blog.xml
+Sitemap: https://tabibi.doctor/sitemaps/sitemap-seo-local.xml
