@@ -58,6 +58,30 @@
 const BODYLESS = new Set([101, 204, 205, 304]);
 
 export async function onRequest(context) {
+  const { request } = context;
+
+  // ── HEAD : résoudre via un GET interne ────────────────────────────
+  // Mesuré le 06/08/2026, après le premier déploiement de cette barrière :
+  // sur /seo/alger-cardiologie (supprimée), le GET renvoyait 404 douze fois
+  // sur douze, mais le HEAD renvoyait 200 — `context.next()` remonte le
+  // statut de la copie périmée pour cette méthode. Aucune fuite de données
+  // (un HEAD n'a pas de corps), mais un 200 annonce à un outil d'audit que
+  // l'URL existe, et le contrôle usuel `curl -sI` conclut à tort.
+  // On résout donc le chemin par un GET, puis on renvoie la réponse
+  // dépouillée de son corps — ce qu'un HEAD doit être.
+  if (request.method === 'HEAD') {
+    const probe = await context.next(new Request(request.url, {
+      method: 'GET',
+      headers: request.headers,
+    }));
+    const h = new Headers(probe.headers);
+    h.delete('age');
+    h.set('cache-control', probe.status === 200
+      ? 'public, max-age=0, must-revalidate'
+      : 'no-store');
+    return new Response(null, { status: probe.status, statusText: probe.statusText, headers: h });
+  }
+
   // Laisse Pages résoudre le chemin : asset réel, redirection 308 de
   // dépouillement du .html, ou page 404. On ne réimplémente pas ce routage.
   const res = await context.next();
