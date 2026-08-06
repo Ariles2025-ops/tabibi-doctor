@@ -138,13 +138,17 @@ Notes pour l'équipe de review :
 ### Build AAB signé
 
 ```bash
-# Configurer la signature dans android/app/keystore.properties
-# (créer ce fichier, NE PAS le versionner)
-cat > android/app/keystore.properties << EOF
+# Configurer la signature dans android/keystore.properties
+# ⚠️ android/ et NON android/app/ — corrigé le 06/08/2026.
+# `android/app/build.gradle:5` fait rootProject.file("keystore.properties"),
+# et rootProject vaut android/ (cf. android/settings.gradle). Le chemin
+# android/app/ indiqué ici jusqu'au 06/08 pointait vers le vide.
+# (créer ce fichier, NE PAS le versionner — .gitignore:76 le couvre)
+cat > android/keystore.properties << EOF
 storePassword=VOTRE_MOT_DE_PASSE
 keyPassword=VOTRE_MOT_DE_PASSE_CLE
 keyAlias=tabibi
-storeFile=../../tabibi-release.keystore
+storeFile=tabibi-release.jks
 EOF
 
 # Builder l'AAB signé
@@ -152,8 +156,21 @@ cd android && ./gradlew bundleRelease
 # Résultat : android/app/build/outputs/bundle/release/app-release.aab
 ```
 
+> **`storeFile` est relatif à `android/`**, pas à `android/app/`. La valeur
+> réelle en production est `tabibi-release.jks` — le fichier vit donc en
+> `android/tabibi-release.jks`. L'ancienne valeur `../../tabibi-release.keystore`
+> était fausse deux fois : mauvais point de départ ET mauvaise extension.
+
 - [ ] AAB généré sans erreur
 - [ ] AAB signé avec le keystore de production
+- [ ] **Signature vérifiée** — l'empreinte doit être celle de l'APK déjà
+      distribué, sinon la mise à jour sera refusée par Play :
+      ```bash
+      $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs \
+        android/app/build/outputs/apk/release/app-release.apk
+      # SHA-1 attendu : 07e034833153aede6f3e01ff58e45d7e149bc330
+      ```
+      Une signature différente = build en clé debug ou keystore absent.
 - [ ] Upload dans Google Play Console → Production (ou Internal Testing d'abord)
 
 ### Google Play Console — Métadonnées
