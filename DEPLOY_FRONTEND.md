@@ -29,14 +29,18 @@ cd /tmp/tabibi-deploy
 rm -rf ./desktop ./supabase     # le ./ protège functions/supabase et functions/desktop
 
 # 3. Contrôle avant envoi
-ls functions/supabase functions/migrations functions/desktop   # les 3 doivent exister
+ls functions/seo functions/supabase functions/migrations functions/desktop  # les 4
 ls api/openapi.yaml api/tabibi_api.postman_collection.json     # doivent exister
 ls -d supabase desktop 2>/dev/null                             # doit ne rien renvoyer
-du -sh . && ls   # attendu : ~11 Mo, ~650 fichiers, _headers _redirects 404.html
+du -sh . && ls   # attendu : ~12 Mo, ~740 fichiers, _headers _redirects 404.html
                  # index.html js css assets blog seo legal functions
 
-# 4. Déploiement
+# 3 bis. SUPPRESSIONS PUBLIQUES — bloquant tant que non justifié
 cd ~/Desktop/tabibi-doctor
+./scripts/check-deleted-public-files.sh main
+# sortie 0 = rien à signaler · sortie 2 = suppressions à justifier (voir plus bas)
+
+# 4. Déploiement
 npx wrangler pages deploy /tmp/tabibi-deploy \
   --project-name=tabibi-doctor --branch=main --commit-dirty=true
 ```
@@ -88,6 +92,66 @@ Attendre `Compiled Worker successfully` + `Uploading Functions bundle` +
 > ```bash
 > npx wrangler pages deployment list --project-name=tabibi-doctor | head -8
 > ```
+
+---
+
+## Étape 3 bis — suppressions publiques : remplacer, jamais supprimer
+
+> ⛔ **Supprimer une page publique ne la retire pas du web.**
+> La couche d'assets de Cloudflare Pages continue de la servir sur son URL
+> exacte, sans query string, pendant **`s-maxage` = 7 jours**, immunisée
+> contre `Purge Everything`. Mécanisme établi le 06/08/2026 — section
+> « Résolu » plus bas.
+
+**La règle :**
+
+| | |
+|---|---|
+| ✅ **Remplacer** le fichier par un contenu vide ou neutre, **même nom** | l'asset existe, il est écrasé, la nouvelle version est servie immédiatement |
+| ❌ **Supprimer** le fichier | l'ancien contenu survit jusqu'à 7 jours, sans recours |
+
+Quand la page contient des **données personnelles**, l'écart n'est pas
+théorique : la Phase 10.1 a supprimé 454 pages publiques, dont **266
+portaient des patronymes réels**, et a levé dans le même déploiement le
+`Disallow: /seo/` qui les masquait. Résultat : des pages nominatives
+servies *et* indexables. Il a fallu poser `functions/seo/[[path]].js` en
+filtre de sortie pour fermer la brèche.
+
+**Le contrôle :**
+
+```bash
+./scripts/check-deleted-public-files.sh main
+```
+
+Il lit le SHA du dernier déploiement *Production* via
+`wrangler pages deployment list`, fait un `git diff --diff-filter=D` entre
+ce SHA et la référence à déployer sur `blog/ legal/ seo/ api/ assets/ js/
+styles/ *.html`, puis inspecte le **contenu d'origine** de chaque fichier
+supprimé — c'est le contenu qui restera servi, pas le nom.
+
+Sortie `0` : rien à signaler. Sortie `2` : suppressions à justifier, une par
+une, avant d'envoyer :
+
+1. **L'URL doit-elle disparaître, ou est-ce un renommage ?**
+   Renommage → garder l'ancien nom avec une redirection, ou écraser
+   l'ancien fichier par un contenu neutre.
+2. **Le contenu supprimé porte-t-il des données personnelles ?**
+   Oui → ne pas se contenter de supprimer. Écraser par un contenu vide de
+   même nom, déployer, **puis** supprimer au déploiement suivant. Ou poser
+   un filtre de sortie en Pages Function, comme `functions/seo/[[path]].js`.
+3. **Après déploiement, vérifier en GET *et* en HEAD.**
+   ```bash
+   curl -s -o /dev/null -w '%{http_code}\n' https://tabibi.doctor/<chemin>
+   curl -sI https://tabibi.doctor/<chemin> | head -1
+   ```
+   Les deux doivent renvoyer 404. Un HEAD à 200 avec un GET à 404 est le
+   symptôme exact rencontré le 06/08 : un filtre qui inspecte le corps est
+   aveugle sur un HEAD, qui n'en a pas.
+
+> ℹ️ Le script n'interrompt rien de lui-même : il refuse de décider à la
+> place de l'opérateur. C'est délibéré — un renommage de page marketing et
+> la suppression de 266 fiches nominatives sortent tous deux en « suppression
+> publique », et seul un humain sait les distinguer.
 
 ---
 
