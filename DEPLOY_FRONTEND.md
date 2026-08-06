@@ -214,7 +214,76 @@ template **Edit Cloudflare Workers**, puis `CLOUDFLARE_API_TOKEN=... npx wrangle
 
 ---
 
-## À investiguer — non résolu
+## Résolu le 06/08/2026 — la couche d'assets sert les fichiers supprimés
+
+> **Le mécanisme derrière l'anomalie `DYNAMIC` + `age` est identifié.**
+> Ce qui suit décrit d'abord les observations de début août, restées
+> inexpliquées deux mois, puis l'explication trouvée en régénérant les pages
+> SEO. Garder les deux : c'est la trace d'observations qui semblaient
+> contradictoires et ne l'étaient pas.
+
+### L'explication
+
+> **La couche d'assets de Cloudflare Pages continue de servir un fichier
+> SUPPRIMÉ du déploiement, pour l'URL exacte SANS query string — et cette
+> copie reste atteignable DEPUIS L'INTÉRIEUR d'une Pages Function, via
+> `context.next()`.**
+
+Ce n'est donc ni le cache de zone, ni un Worker, ni le service worker — les
+trois pistes éliminées à l'époque, à juste titre.
+
+**Preuve décisive**, mesurée sur l'apex après la suppression des 490 anciennes
+pages SEO :
+
+| URL | Taille du 404 | Ce que ça signifie |
+|---|---|---|
+| `/seo/ceci-nexiste-pas` | **7 352 o** | page 404 de Tabibi → 404 authentique de Pages |
+| `/seo/alger-cardiologie` | **9 o** | `Not Found` → réponse de **notre propre filtre** |
+
+Le second chemin n'a jamais atteint le 404 de Pages : `context.next()` a
+remis à la Function l'**ancienne page nominative**, que le filtre de
+`functions/seo/[[path]].js` a interceptée. Sans ce filtre, elle aurait été
+servie telle quelle, avec ses 891 patronymes.
+
+### Ce que ça explique, point par point
+
+| Observation d'août | Explication |
+|---|---|
+| Purge Everything et purge ciblée sans effet | l'objet ne réside pas dans le cache que le dashboard purge |
+| 200 sans query string, 404 avec — six fois | la query string fait manquer l'entrée périmée de la couche d'assets |
+| `www` et `pages.dev` en 404, apex en 200 | les entrées sont par hostname ; seules celles de l'apex étaient périmées |
+| `cf-cache-status: DYNAMIC` avec un `age` croissant | l'`age` vient de l'amont, pas du cache Cloudflare — d'où la contradiction apparente |
+| `cache-control: public, s-maxage=604800` alors qu'aucune config ne l'émet | en-tête gravé dans l'objet périmé, hérité d'un hébergeur antérieur — 7 jours |
+| la barrière Function a « réglé » `/supabase/` | `functions/supabase/[[path]].js` est un **404 sec qui n'appelle jamais `context.next()`**. Elle n'a pas contourné le mécanisme : elle a évité de le solliciter. |
+
+### ⚠️ La règle opérationnelle qui en découle
+
+> **Ne jamais supprimer un fichier public contenant des données personnelles
+> en comptant sur le déploiement pour le faire disparaître.**
+> Le **remplacer** par un contenu vide de même nom est sûr — l'asset existe,
+> il est écrasé. Le **supprimer** ne l'est pas : l'ancien contenu reste servi
+> jusqu'à 7 jours, immunisé contre la purge.
+
+Seul `/seo/` est protégé par un filtre. **`/blog/`, `/legal/` et la racine ne
+le sont pas.** Une suppression de fichier sensible à ces emplacements exige
+soit un écrasement par un contenu vide, soit une Function de filtrage
+équivalente.
+
+### Comment vérifier que la couche d'assets a fini par lâcher
+
+Le jour où les deux formes ci-dessous renvoient toutes deux le 404 de
+**7 352 octets** (et non le `Not Found` de 9 octets émis par notre filtre),
+la copie périmée aura disparu et `functions/seo/[[path]].js` pourra être
+retirée :
+
+```bash
+curl -s https://tabibi.doctor/seo/alger-cardiologie      | wc -c
+curl -s "https://tabibi.doctor/seo/alger-cardiologie?x=1" | wc -c
+```
+
+---
+
+## Les observations d'origine — août 2026
 
 Entre le 03 et le 04/08, l'apex `tabibi.doctor` a servi
 `/supabase/functions/send-sms/index.ts` en **200** alors que le fichier était
@@ -241,9 +310,11 @@ Comportement annexe observé : la même URL **sans** query string renvoyait 200,
 Depuis le déploiement des Pages Functions (04/08), ce comportement n'est plus
 observable — les deux formes renvoient 404. L'anomalie est masquée, pas résolue.
 
-Le mécanisme n'a pas été identifié. Il est aujourd'hui **masqué par la
-barrière 1, pas compris**. Si un chemin sensible échappe un jour aux trois
-barrières, c'est cette piste qu'il faut reprendre.
+~~Le mécanisme n'a pas été identifié.~~ **Il l'est depuis le 06/08/2026 — voir
+la section précédente.** Les quatre pistes éliminées ci-dessus l'étaient à
+juste titre : la copie ne venait d'aucune d'elles, mais de la couche d'assets
+de Pages elle-même. Le comportement au query string, noté ici comme
+« annexe », en était le symptôme le plus révélateur.
 
 ---
 
@@ -264,10 +335,21 @@ done
 
 # Non-régression — utiliser les clean URLs, sinon Pages renvoie 308
 for p in / /blog/ /js/tabibi-pixel.js /signup /api-docs /dawini \
-         /legal/cookies /seo/alger-cardiologie; do
+         /legal/cookies /seo/alger-cardiologue; do
   printf "%s=%s\n" "$p" "$(curl -s -o /dev/null -w '%{http_code}' https://tabibi.doctor$p)"
 done
 # Attendu : 200 partout
+# ⚠️ /seo/alger-cardiologIE (ancien slug) n'existe plus depuis la Phase 10.1 :
+# la base dit « cardiologue », pas « cardiologie ». Attendu 404, en GET ET en
+# HEAD. S'il repasse à 200, la barrière functions/seo/ est tombée.
+
+# Non-régression des pages SEO — GET et HEAD doivent concorder
+for p in /seo/alger-cardiologue /seo/oran-medecin-generaliste; do
+  printf "%s GET=%s HEAD=%s\n" "$p" \
+    "$(curl -s -o /dev/null -w '%{http_code}' https://tabibi.doctor$p)" \
+    "$(curl -sI https://tabibi.doctor$p | head -1 | tr -d '\r' | awk '{print $2}')"
+done
+# Attendu : GET=200 HEAD=200
 
 curl -sI https://tabibi.doctor/ | grep -i content-security-policy   # Sentry + Facebook
 ```
