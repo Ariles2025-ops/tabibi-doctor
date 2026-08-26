@@ -19,3 +19,6 @@ netlify.toml       export-ignore
 capacitor.config.ts export-ignore
 .gitignore         export-ignore
 .gitattributes     export-ignore
+# Sauvegardes de pages (ex: index.html.bak lors du camouflage "Coming Soon") :
+# conservees dans git pour reactivation, JAMAIS servies publiquement.
+*.bak              export-ignore
