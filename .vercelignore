@@ -1,25 +1,55 @@
 # =====================================================================
-# .vercelignore — fichiers exclus du deploiement Vercel
+# .vercelignore — exclusion de tools/ du deploiement Vercel
 # ---------------------------------------------------------------------
-# Troisieme garde-fou, pour le troisieme hebergeur. Chacun a le sien :
+# Troisieme garde-fou, pour le troisieme hebergeur. Chacun a le sien, et
+# aucun ne couvre les deux autres :
 #
 #   .gitattributes  tools/ export-ignore   -> build `git archive` (Pages)
-#   _redirects      /tools/* ... 404!      -> Netlify (le « ! » est requis :
+#                                             PROUVE : `git archive HEAD |
+#                                             tar -t | grep -c '^tools/'` = 0
+#   _redirects      /tools/* ... 404!      -> Netlify. Le « ! » est requis :
 #                                             un fichier existant masque une
-#                                             regle non forcee)
+#                                             regle non forcee.
+#                                             PROUVE sur le deploy preview :
+#                                             /tools/outreach.html -> 404,
+#                                             /index.html -> 200
 #   .vercelignore   tools/                 -> Vercel, qui ne lit NI _redirects
-#                                             NI .gitattributes
+#                                             NI .gitattributes.
+#                                             NON PROUVE, voir ci-dessous.
 #
-# Mesure du 30/08/2026 sur https://tabibi-doctor.vercel.app :
+# Pourquoi ce fichier existe — mesure du 30/08/2026 sur la prod Vercel
+# https://tabibi-doctor.vercel.app :
 #   /scripts/build-mobile.sh -> 200
 #   /CLAUDE.md               -> 200
-# Vercel sert donc la racine du depot telle quelle. Sans cette exclusion,
-# tools/outreach.html serait publiquement accessible des le merge.
+# Vercel sert donc la racine du depot telle quelle.
+#
+# ⚠️ EFFICACITE NON VERIFIEE. La doc Vercel (/docs/builds/build-features,
+# section « Ignored files and folders ») precise que l'exclusion de fichiers
+# au deploiement « is only relevant when using Vercel CLI ». Ce projet
+# deploie via l'integration Git, pas via le CLI : rien ne garantit que
+# .vercelignore soit pris en compte ici. Impossible de trancher avant le
+# merge, les preview deployments etant derriere une redirection SSO qui
+# renvoie 302 sur tout, /index.html compris.
+#
+# A CONFIRMER APRES MERGE :
+#   curl -o /dev/null -w '%{http_code}\n' \
+#     https://tabibi-doctor.vercel.app/tools/outreach.html
+#   404 attendu. Si 200, ce fichier est inoperant : passer par un
+#   vercel.json avec une regle `routes` renvoyant 404 sur /tools/(.*)
+#   (les `routes` sont evaluees AVANT le systeme de fichiers, contrairement
+#   aux `rewrites`). Non fait ici : ajouter une config de routage a un site
+#   en production sans pouvoir la tester releve d'une decision humaine.
+#
+# En attendant, tools/outreach.html porte <meta name="robots"
+# noindex,nofollow> : quel que soit l'hebergeur, la page n'est pas indexee.
+# Le fichier ne contient par ailleurs aucune donnee ni aucun secret — les
+# fichiers de prospection restent chez l'operateur, l'outil les lit
+# localement dans le navigateur.
 #
 # Ce fichier EXCLUT uniquement, il ne bascule pas en liste blanche : les
 # chemins non listes continuent d'etre deployes normalement. `tools/`
 # n'existant sur aucun deploiement actuel, l'ajout ne retire rien de ce qui
-# est en ligne aujourd'hui.
+# est en ligne aujourd'hui — son pire cas est d'etre sans effet.
 #
 # L'exposition de /scripts/, /migrations/ et /CLAUDE.md est PREEXISTANTE et
 # volontairement non traitee ici : elle modifierait le comportement de
