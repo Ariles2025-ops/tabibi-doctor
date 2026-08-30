@@ -2,6 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
+<base href="/">
 <script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
 <!-- [FIX 2026-05-18] Turnstile site key lue depuis js/config.js (TURNSTILE_SITE_KEY).
      Meta tag conservee comme override eventuel par page. Decommenter et editer si besoin: -->
@@ -10,6 +11,7 @@
 <!-- SEO -->
 <meta name="description" content="Inscrivez-vous gratuitement sur Tabibi pour prendre RDV avec un médecin en Algérie. Compte patient ou médecin, 100% gratuit, sans engagement.">
 <link rel="canonical" href="https://tabibi.doctor/signup.html">
+<meta name="robots" content="noindex,follow">
 <meta name="robots" content="index,follow,max-image-preview:large">
 <!-- Open Graph -->
 <meta property="og:type" content="website">
@@ -33,7 +35,7 @@
 <meta name="theme-color" content="#0E5F46">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_signup_long">
-<title>Inscription Tabibi | Créer un compte patient ou médecin</title>
+<title>Inscription médecin Tabibi</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
@@ -59,7 +61,7 @@
 </style>
 </head>
 <body>
-<a class="skip-link" href="#main">Aller au contenu</a>
+<a class="skip-link" href="#main" onclick="event.preventDefault();var m=document.getElementById('main');if(m)m.scrollIntoView();">Aller au contenu</a>
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <header class="app-bar" role="banner">
@@ -85,6 +87,7 @@
     </ul>
   </aside>
   <div class="auth-hero-form">
+  <div id="ref-banner" hidden style="max-width:480px;margin:0 auto 14px;background:linear-gradient(135deg,#e7f3ef,#f7efd8);border:1px solid #d4a437;border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;font-size:14px;color:#0a4d3e;font-weight:600"><i class="fa fa-user-doctor" style="color:#0F7560" aria-hidden="true"></i><span>Recommandé par <strong data-ref-name>—</strong></span></div>
   <div class="auth-formhead" style="text-align:center;margin-bottom:20px">
     <svg class="logo-svg" width="52" height="52" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi" style="display:block;margin:0 auto 12px"><defs><mask id="tbCrossHdr"><rect width="48" height="48" fill="#fff"/><path d="M21 10h6v11h11v6h-11v11h-6v-11h-11v-6h11z" fill="#000"/></mask></defs><rect x="2" y="2" width="44" height="44" rx="12" fill="var(--logo-bg,#0F7560)" mask="url(#tbCrossHdr)"/><path d="M5 24h8l3-8 4 16 4-12 3 4h13" fill="none" stroke="var(--logo-accent,#D4A437)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     <h2 style="font-size:22px;font-weight:800" data-i18n="join_tabibi">Rejoindre Tabibi</h2>
