@@ -9,4 +9,16 @@
 /migrations/* /404.html   404
 /desktop/*    /404.html   404
 /.git/*       /404.html   404
+
+# [OUTILLAGE 2026-08-30] /tools/ = outils internes (demarchage medecins), jamais
+# destines au public. Le suffixe « ! » est OBLIGATOIRE ici : sur Netlify comme sur
+# Cloudflare Pages, un asset statique existant a priorite sur _redirects, et les
+# regles ci-dessus sont donc SANS EFFET sur un fichier reellement present. Mesure
+# le 30/08/2026 sur le staging Netlify :
+#   /migrations/CRIT-4_step1_diagnostic.sql -> 200 (regle /migrations/* ignoree)
+#   /desktop/src-tauri/Cargo.toml           -> 200 (regle /desktop/* ignoree)
+# Le « ! » force la redirection meme quand le fichier existe (shadowing Netlify).
+# Complete /tools/ export-ignore dans .gitattributes, qui couvre le build Pages.
+/tools/*      /404.html   404!
+
 /   /index.html   200
