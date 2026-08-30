@@ -1,0 +1,29 @@
+# =====================================================================
+# .vercelignore — fichiers exclus du deploiement Vercel
+# ---------------------------------------------------------------------
+# Troisieme garde-fou, pour le troisieme hebergeur. Chacun a le sien :
+#
+#   .gitattributes  tools/ export-ignore   -> build `git archive` (Pages)
+#   _redirects      /tools/* ... 404!      -> Netlify (le « ! » est requis :
+#                                             un fichier existant masque une
+#                                             regle non forcee)
+#   .vercelignore   tools/                 -> Vercel, qui ne lit NI _redirects
+#                                             NI .gitattributes
+#
+# Mesure du 30/08/2026 sur https://tabibi-doctor.vercel.app :
+#   /scripts/build-mobile.sh -> 200
+#   /CLAUDE.md               -> 200
+# Vercel sert donc la racine du depot telle quelle. Sans cette exclusion,
+# tools/outreach.html serait publiquement accessible des le merge.
+#
+# Ce fichier EXCLUT uniquement, il ne bascule pas en liste blanche : les
+# chemins non listes continuent d'etre deployes normalement. `tools/`
+# n'existant sur aucun deploiement actuel, l'ajout ne retire rien de ce qui
+# est en ligne aujourd'hui.
+#
+# L'exposition de /scripts/, /migrations/ et /CLAUDE.md est PREEXISTANTE et
+# volontairement non traitee ici : elle modifierait le comportement de
+# chemins existants, ce qui releve d'une decision humaine distincte.
+# =====================================================================
+
+tools/
