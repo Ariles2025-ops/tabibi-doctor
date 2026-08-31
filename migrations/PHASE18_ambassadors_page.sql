@@ -99,8 +99,33 @@ CREATE POLICY referral_clicks_insert_anon ON public.referral_clicks
 ALTER TABLE public.users           ADD COLUMN IF NOT EXISTS referred_by_code text;
 ALTER TABLE public.doctor_profiles ADD COLUMN IF NOT EXISTS referred_by_code text;
 
--- trigger handle_new_auth_user : cf. PHASE17 §13 (ajout referred_by_code).
--- (non répété ici pour éviter deux sources de vérité ; appliquer PHASE17 §13.)
+-- trigger handle_new_auth_user : version PHASE16_7 (prod) + une seule ligne
+-- (referred_by_code). Tout le reste est INCHANGÉ ; ON CONFLICT (id) DO NOTHING
+-- conservé → aucune inscription existante affectée.
+CREATE OR REPLACE FUNCTION public.handle_new_auth_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
+AS $function$
+DECLARE
+  _raw_role text; _safe_role text; _fn text; _ln text; _ref text;
+BEGIN
+  _raw_role := LOWER(TRIM(COALESCE(NEW.raw_user_meta_data->>'role', '')));
+  _safe_role := CASE
+    WHEN _raw_role = 'medecin' THEN 'medecin'
+    WHEN _raw_role = 'doctor'  THEN 'medecin'
+    WHEN _raw_role = 'patient' THEN 'patient'
+    ELSE                            'patient'
+  END;
+  _fn := NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'first_name', '')), '');
+  _ln := NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'last_name',  '')), '');
+  _ref := UPPER(NULLIF(TRIM(COALESCE(NEW.raw_user_meta_data->>'referred_by_code', '')), ''));
+  IF _ref IS NOT NULL AND _ref !~ '^[A-Z0-9]{3,20}$' THEN _ref := NULL; END IF;
+
+  INSERT INTO public.users (id, phone, email, role, first_name, last_name, referred_by_code)
+  VALUES (NEW.id, NEW.phone, NEW.email, _safe_role::user_role, _fn, _ln, _ref)
+  ON CONFLICT (id) DO NOTHING;
+  RETURN NEW;
+END;
+$function$;
 
 COMMIT;
 
