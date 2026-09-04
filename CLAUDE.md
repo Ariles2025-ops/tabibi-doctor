@@ -4,8 +4,16 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 
 ## Contexte
 - **Tabibi.doctor** : plateforme de prise de RDV médical en Algérie. Phase **pré-launch** (lancement congrès médical 3-5 déc 2026).
-- **Stack** : site statique HTML/CSS/JS vanilla (~38 pages app + 490 pages SEO) · backend **Supabase EU (Frankfurt)**, projet `pudugodhiofqrctcdwfl` · hébergement **Netlify (primaire) + Vercel**. Ce n'est PAS un projet Cloudflare Workers.
+- **Stack** : site statique HTML/CSS/JS vanilla (~38 pages app + 490 pages SEO) · backend **Supabase EU (Frankfurt)**, projet `pudugodhiofqrctcdwfl` · hébergement **Cloudflare Pages** (projet `tabibi-doctor`, compte `13fe89e298e7bd78eeaf3223cd6b5dd5`). Netlify ne sert QUE les deploy previews des PR — ce n'est pas la prod.
 - **Prod** : https://tabibi.doctor (DNS pas encore pointé) · **staging** : https://effulgent-kelpie-e48e81.netlify.app
+
+## Déploiement — À LIRE AVANT TOUT MERGE
+
+> ⚠️ **Le projet Cloudflare Pages n'a AUCUNE connexion Git.**
+> Merger une PR sur `main` ne déploie **RIEN**. Chaque mise en production est un
+> `wrangler pages deploy` lancé à la main. Procédure complète : `DEPLOY_FRONTEND.md`.
+> Erreur déjà commise le 03/09/2026 : merge fait en croyant déployer, une heure
+> perdue à chercher un problème de cache inexistant.
 
 ## Règles absolues (non négociables)
 1. **Ne jamais commit/push directement sur `main`.** `main` est protégé (ruleset `protect-main` : force push et suppression bloqués). Toujours créer une branche + ouvrir une PR.
