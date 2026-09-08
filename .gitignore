@@ -104,3 +104,6 @@ desktop/src-tauri/gen/
 # Binaires mobiles — distribués via GitHub Releases, jamais versionnés
 *.apk
 *.aab
+
+# [Vite 2026-09-09] sortie du build web
+dist-web/

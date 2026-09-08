@@ -13,11 +13,8 @@
 </script>
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script>
-<script src="js/tabibi-security.js"></script>
-<script src="js/tabibi-avatar.js"></script>
 <!-- [PIXEL 2026-07-30] Meta Pixel : inerte tant que la categorie
      marketing du bandeau cookies n'est pas acceptee. -->
-<script src="js/tabibi-pixel.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <!-- SEO -->
 <meta name="description" content="Prenez RDV avec un médecin en Algérie en quelques clics. Tous les médecins référencés, toutes spécialités, 58 wilayas. Cardiologue, pédiatre, dentiste — gratuit pour les patients.">
@@ -1001,7 +998,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 <!-- APP BAR — [Phase 0] Header factorisé → js/tabibi-header.js (variante landing :
      logo + lockup + langbar + #uarea-desk rempli par renderUserUI()) -->
 <div data-tabibi-header data-variant="landing"></div>
-<script src="js/tabibi-header.js"></script>
 
 <!-- MAIN PAGE -->
 <main class="page" id="main" role="main">
@@ -1284,7 +1280,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 <!-- BOTTOM TAB BAR -->
 <!-- [Phase 0] Tab-bar factorisée → js/tabibi-nav.js (initTabBar/tabClick extraits de cette page) -->
 <nav class="tab-bar" id="tab-bar"></nav>
-<script src="js/tabibi-nav.js"></script>
 
 <!-- CARTE — overlay plein écran (Leaflet lazy-init B5) -->
 <div id="map-overlay" class="map-overlay" hidden role="dialog" aria-label="Carte des médecins en Algérie">
@@ -1292,11 +1287,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     <button class="map-ov-close" onclick="closeMapOverlay()" aria-label="Fermer la carte"><i class="fa fa-arrow-left"></i></button>
   </div>
   <div id="map-canvas"></div>
-<script src="assets/dz-wilaya-centroids.js"></script><!-- [CARTE] 58 chefs-lieux pour les compteurs -->
+<!-- [CARTE] 58 chefs-lieux pour les compteurs -->
 </div>
 <div id="uarea-mob" class="hidden"></div>
 
-<script src="js/home-app.js"></script>
 </div>
 <script>
 (function(){
@@ -1389,29 +1383,11 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   </div>
 </footer>
 
-<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
-<script src="js/config.js"></script>
-<script src="js/supabase-client.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/capacitor-bridge.js" defer></script>
-<script src="js/api.js"></script>
-<script src="js/tabibi-bridge.js"></script>
 <!-- [Phase 5.2.3-fix] Helper formatage nom médecin (full_name + entity_type) -->
-<script src="js/tabibi-doctor-name.js"></script>
-<script src="js/tabibi-brevo.js"></script>
-<script src="js/tabibi-turnstile.js"></script>
-<script src="js/tabibi-sms.js"></script>
-<script src="js/tabibi-network.js"></script>
-<script src="js/tabibi-cookies.js"></script>
-<script src="js/tabibi-beta.js"></script>
-<script src="js/tabibi-i18n.js"></script>
-<script src="js/tabibi-langbar.js"></script>
-<script src="js/tabibi-sentry.js"></script>
 <!-- [Phase 7.4] Feature flags (video/payments/notifications/reviews/analytics/sentry) -->
-<script src="js/tabibi-features.js"></script>
 <!-- [Phase 10.5] Plausible analytics — chargé conditionnellement si analytics=true -->
-<script src="js/tabibi-analytics.js"></script>
 <!-- [Phase 11.3] Service Worker registration — fix bug majeur audit P5.4 #5 -->
-<script src="js/tabibi-sw-register.js"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script type="module" src="./src/entries/index.js"></script>
 </body>
 </html>
