@@ -1,0 +1,59 @@
+# =====================================================================
+# verification.yml — ce qui doit passer avant qu'une PR soit mergeable
+# =====================================================================
+# Le depot n'avait AUCUNE verification automatique : un seul workflow, et il
+# ne concernait que les installateurs desktop. Rien n'empechait une regression
+# d'atteindre la production sur les parcours qui portent le produit.
+#
+# Ce workflow ne bloque pas sur le style. Il bloque sur trois choses :
+#   1. le code doit se parser (no-undef, erreurs de syntaxe) ;
+#   2. la dette mesuree ne doit pas AUGMENTER (scripts/compter-dette.mjs) ;
+#   3. le site doit se construire.
+#
+# Il ne DEPLOIE rien. Le deploiement reste manuel et valide par un humain,
+# conformement a CLAUDE.md. Un workflow de deploiement automatique est le
+# chantier suivant : c'est lui qui retirera le risque « aucun correctif ne
+# peut partir si personne n'est devant le Mac ».
+# =====================================================================
+name: verification
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Installer les dependances
+        run: npm ci
+
+      - name: Erreurs bloquantes uniquement
+        # --quiet masque les warnings : seules les erreurs (no-undef, parsing)
+        # font echouer cette etape. La dette est traitee a l'etape suivante.
+        run: npx eslint js src scripts --quiet
+
+      - name: La dette ne doit pas augmenter
+        run: npm run lint:dette
+
+      - name: Le site doit se construire
+        run: npm run build
+
+      - name: Taille des bundles produits
+        # Trace le poids a chaque PR : c'est la seule facon de voir une
+        # regression de performance avant qu'elle n'atteigne les utilisateurs.
+        run: |
+          echo "### Bundles" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          du -sh dist-web >> $GITHUB_STEP_SUMMARY
+          ls -lh dist-web/assets/build/*.js | awk '{print $5, $9}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

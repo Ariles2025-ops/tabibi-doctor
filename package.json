@@ -8,7 +8,12 @@
     "open:ios": "npx cap open ios",
     "open:android": "npx cap open android",
     "build:ios": "npx cap build ios",
-    "build:android": "npx cap build android"
+    "build:android": "npx cap build android",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint js src scripts",
+    "lint:dette": "eslint js src scripts -f json | node scripts/compter-dette.mjs"
   },
   "keywords": [
     "tabibi",
