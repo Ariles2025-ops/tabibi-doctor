@@ -98,9 +98,28 @@
     dawini: true,
 
     // Sentry frontend errors (Phase 12) :
-    //   - Compte Sentry non créé / DSN non configuré
-    //   - Script déjà inclus mais bridge inerte si pas de DSN
-    sentry: false
+    //   - Projet Sentry CRÉÉ. DSN réel présent dans js/config.js
+    //     (o4511831260987392.ingest.de.sentry.io), déjà autorisé par la CSP de
+    //     _headers ET de netlify.toml (script-src browser.sentry-cdn.com,
+    //     connect-src sur l'ingest) — vérifié le 2026-09-08.
+    //   ⚠️ CE FLAG N'EST LU PAR PERSONNE : js/tabibi-sentry.js s'active sur la
+    //     seule présence d'un DSN ne contenant pas "REPLACE_". Sentry est donc
+    //     DÉJÀ actif sur les 28 pages qui incluent le script. Le flag valait
+    //     false et mentait sur l'état réel (AUDIT_RESTANT le listait comme
+    //     « Sentry inactif »). Remis à true pour que la lecture des flags
+    //     cesse d'induire en erreur. Aucun élément DOM n'est piloté par ce
+    //     flag (0 occurrence de data-feature="sentry") : changement sans effet
+    //     visuel.
+    sentry: true,
+
+    // Statistiques médecin (doctor-analytics.html) :
+    //   - Page 100 % factice : aucun appel Supabase, chiffres écrits en dur
+    //     (doctor-analytics.html:199,291). L'entrée « Statistiques » de la
+    //     sidebar pro y menait sans aucune bannière d'avertissement — un
+    //     médecin y lisait des chiffres inventés comme s'ils étaient les siens.
+    //   → OFF : l'entrée n'est plus rendue (js/tabibi-pro-sidebar.js).
+    //     Repasser à true le jour où la page interroge vraiment la base.
+    doctorStats: false
   };
 
   // ─── Override runtime (QA / debug) ──────────────────────────────────

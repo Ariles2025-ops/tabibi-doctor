@@ -34,7 +34,7 @@
   var LINKS = [
     { key: 'agenda',  href: 'agenda-cabinet.html',   icon: 'fa-calendar-week' },
     { key: 'dash',    href: 'doctor-dashboard.html', icon: 'fa-gauge-high' },
-    { key: 'stats',   href: 'doctor-analytics.html', icon: 'fa-chart-line' },
+    { key: 'stats',   href: 'doctor-analytics.html', icon: 'fa-chart-line', feature: 'doctorStats' },
     { key: 'rx',      href: 'medecin-ordonnance.html', icon: 'fa-file-prescription', feature: 'prescriptions' },
     { key: 'msg',     href: 'messages.html',         icon: 'fa-comments', feature: 'messaging' },
     { key: 'notif',   href: 'notifications.html',    icon: 'fa-bell', feature: 'notifications' },
