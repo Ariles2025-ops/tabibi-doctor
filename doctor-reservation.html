@@ -180,7 +180,7 @@ window.openAdd=openAdd;window.closeAdd=closeAdd;window.saveSlots=saveSlots;windo
 document.addEventListener("tabibi:lang-change",function(){ try{renderWeek();}catch(e){} });
 </script>
 </div><script>document.addEventListener("DOMContentLoaded",()=>{var u=JSON.parse(localStorage.getItem("tabibi_user")||"null");if(u)document.getElementById("user-init").textContent=u.initials||"?";document.addEventListener("click",e=>{if(!e.target.closest("[id^='mini-']") && !e.target.closest("button[title='Notifications']") && !e.target.closest("#user-pill")){document.getElementById("mini-noti")?.classList.add("hidden");document.getElementById("mini-menu")?.classList.add("hidden");}});});</script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

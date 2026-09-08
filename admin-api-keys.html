@@ -312,13 +312,19 @@
 
 
 <!-- Supabase JS -->
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-
-  // These should come from your existing env-config script
-  const SUPABASE_URL  = window.__SUPABASE_URL__  || "REPLACE_AT_BUILD_TIME";
-  const SUPABASE_ANON = window.__SUPABASE_ANON__ || "REPLACE_AT_BUILD_TIME";
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+  // [FIX 2026-09-09] Cette page n'a jamais fonctionne en production :
+  //   1. elle importait le SDK depuis esm.sh, hote ABSENT de la liste
+  //      script-src de _headers -> le module etait bloque par la CSP ;
+  //   2. elle lisait window.__SUPABASE_URL__ / __SUPABASE_ANON__, deux
+  //      variables qu'aucun fichier du depot ne definit et qu'aucune etape
+  //      de build ne remplace -> createClient() aurait recu la chaine
+  //      "REPLACE_AT_BUILD_TIME" meme si le module s'etait charge.
+  // Elle utilise desormais le client partage, comme les 37 autres pages.
+  const supabase = window.tabibi.supabase;
 
   // Expose to inline handlers
   window.__supabase = supabase;
