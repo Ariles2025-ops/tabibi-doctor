@@ -47,7 +47,7 @@
            pas le dernier build local. Le 09/09/2026 la page annoncait 1.0.2 (build 4)
            alors que le fichier en ligne etait 1.0.1 (build 3) — verifie a l'aapt2.
            Procedure : uploader l'APK, PUIS mettre a jour cette ligne. Jamais l'inverse. -->
-      <div class="ver" id="apk-version">Android · Version 1.0.1 (build 3)</div>
+      <div class="ver" id="apk-version">Android · Version 1.0.2 (build 4)</div>
     </div>
     <div class="body">
       <!-- [APK 2026-07-29] URL de téléchargement — POINT UNIQUE À MODIFIER.
@@ -55,8 +55,10 @@
            code repo privé, donc les liens GitHub Release ne sont plus
            accessibles publiquement. L'APK n'est pas versionné dans le repo
            (.gitignore *.apk).
-           À chaque nouvelle version : uploader l'APK dans le bucket, mettre
-           à jour cet href ET le numéro de version affiché juste au-dessus.
+           À chaque nouvelle version : uploader l'APK dans le bucket SOUS UN NOM
+           VERSIONNÉ (app-release-<version>.apk — `storage cp` refuse d'écraser, et un
+           nom fixe rendrait le cache imprévisible), puis mettre à jour cet href ET
+           le numéro de version affiché juste au-dessus. Fait le 09/09/2026 pour 1.0.2.
            NB 1 : l'attribut HTML "download" est inopérant en cross-origin ;
                   c'est le Content-Type application/vnd.android.package-archive
                   renvoyé par Supabase qui déclenche le téléchargement.
@@ -70,7 +72,7 @@
         <a href="/" style="font-weight:700">ouvrir Tabibi sur le web</a>.
       </div>
       <a class="btn" id="apk-download"
-         href="https://pudugodhiofqrctcdwfl.supabase.co/storage/v1/object/public/Downloads/app-release.apk"
+         href="https://pudugodhiofqrctcdwfl.supabase.co/storage/v1/object/public/Downloads/app-release-1.0.2.apk"
          download>
         <svg viewBox="0 0 24 24" fill="none" stroke="#3D2E00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4M5 21h14"/></svg>
         Télécharger l'application
