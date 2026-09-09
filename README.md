@@ -3,7 +3,7 @@
 Plateforme de prise de rendez-vous médical en Algérie. Site web, applications Android et iOS,
 logiciel de cabinet — tous générés depuis le même code.
 
-> **Audit du 9 septembre 2026.** Chaque chiffre de ce document vient d'une commande exécutée
+> **Audit du 9 septembre 2026, mis à jour le soir après huit commits de corrections.** Chaque chiffre de ce document vient d'une commande exécutée
 > ou d'un fichier lu, pas d'une estimation. Le schéma de base est extrait des types générés
 > depuis la production (`supabase gen types typescript --linked`). Les rares points invérifiables
 > sont signalés comme tels.
@@ -86,6 +86,7 @@ npm run build          # sortie dans dist-web/
 ```bash
 npm run lint           # ESLint 9
 npm run lint:dette     # le cliquet : la dette ne doit pas remonter
+npm run i18n:verifier  # les 3 dictionnaires ont les mêmes clés
 npm run test:e2e       # 30 tests Playwright (le serveur démarre tout seul)
 npm run test:e2e:build # les mêmes, contre la sortie de build
 npm test               # lint + e2e
@@ -267,14 +268,14 @@ tabibi-doctor/
 |---|---|
 | **Socle** | `config.js` · `supabase-client.js` · `auth.js` · `api.js` · `tabibi-network.js` · `tabibi-features.js` |
 | **Chrome de page** | `tabibi-header.js` · `tabibi-nav.js` · `tabibi-footer.js` · `tabibi-pro-sidebar.js` · `tabibi-desktop-nav.js` · `tabibi-platform.js` |
-| **i18n** | `tabibi-i18n.js` (**356 Ko**, ~3 700 clés fr/ar/en) · `tabibi-lang.js` · `tabibi-langbar.js` · `tabibi-prelang.js` |
+| **i18n** | `tabibi-i18n.js` (runtime, 15 Ko) + `i18n/{fr,ar,en}.js` (**une seule langue chargée** : fr 72 Ko, ar 133, en 104 — 1 503 clés chacune) · `tabibi-lang.js` · `tabibi-langbar.js` · `tabibi-prelang.js` |
 | **Rendez-vous** | `tabibi-booking.js` · `tabibi-agenda.js` · `doctors-display.js` · `tabibi-doctor-name.js` |
 | **Médecin** | `tabibi-doctor-dashboard.js` · `tabibi-claim.js` · `tabibi-doc-upload.js` · `tabibi-avatar.js` |
 | **Dawini** | `tabibi-dawini.js` · `tabibi-dawini-demo.js` |
 | **Sécurité** | `tabibi-security.js` (escapeHtml) · `tabibi-turnstile.js` · `tabibi-captcha-visible.js` · `tabibi-2fa.js` · `tabibi-pii-migration.js` |
 | **Communication** | `tabibi-sms.js` *(désactivé)* · `tabibi-brevo.js` *(appelle une edge inexistante)* · `tabibi-messaging.js` · `tabibi-reviews.js` |
 | **Mesure** | `tabibi-sentry.js` · `tabibi-analytics.js` · `tabibi-pixel.js` · `tabibi-cookies.js` |
-| **Natif / PWA** | `capacitor-bridge.js` (23 Ko) · `tabibi-bridge.js` · `tabibi-sw-register.js` |
+| **Natif / PWA** | `capacitor-bridge.js` (23 Ko) · `tabibi-push-init.js` (enregistrement du jeton, pages du bundle mobile) · `tabibi-bridge.js` · `tabibi-sw-register.js` |
 | **Divers** | `home-app.js` (124 Ko) · `tabibi-beta.js` · `tabibi-legal-version.js` · `tabibi-seo-anonymize.js` · `payments.js` *(stub)* |
 
 Ces modules communiquent par des **globales** (`window.TABIBI_CONFIG`, `window.tabibi`,
@@ -296,9 +297,13 @@ sans label. Lighthouse : Performance 67, A11y 85, Best Practices 92-100, SEO 100
 
 ### 5.4 Internationalisation
 
-Trois langues : **fr** (référence juridique), **ar** (RTL complet), **en**. Dictionnaire central
-`js/tabibi-i18n.js`, chargé **sur 47 pages, avec les trois langues d'un bloc**. Huit dictionnaires
-locaux subsistent hors de ce fichier (agenda, sidebar, nav, footer, cookies, beta, reviews, brevo).
+Trois langues : **fr** (référence juridique), **ar** (RTL complet), **en**. Depuis le 09/09/2026 les
+dictionnaires sont **découpés par langue** dans `js/i18n/{fr,ar,en}.js` (source de vérité, 1 503 clés
+chacun, parité vérifiée en CI par `scripts/i18n-verifier.mjs`). `js/tabibi-prelang.js` pré-charge la
+langue courante ; `js/tabibi-i18n.js` (runtime) l'insère à sa propre position et charge à la demande
+une autre langue lors d'un changement en place. Avant : 356 Ko avec les trois langues sur 47 pages.
+Huit dictionnaires locaux subsistent (agenda, sidebar, nav, footer, cookies, beta, reviews, brevo) et
+`home-app.js` porte le sien.
 
 > ⚠️ Les clés `month_*` et la table `_AR_MONTHS` de `reservation.html` sont des **noms de mois**,
 > pas des dates de lancement. Un `grep` sur « septembre » les remonte : les modifier afficherait
@@ -307,7 +312,7 @@ locaux subsistent hors de ce fichier (agenda, sidebar, nav, footer, cookies, bet
 ### 5.5 PWA et service worker
 
 `manifest.json` + `sw.js` : HTML en *network-first*, assets en *cache-first*, Supabase en bypass.
-Version **v37**, portée par `const CACHE_VERSION` — **l'en-tête du fichier ne fait pas autorité**
+Version **v38** (09/09/2026), portée par `const CACHE_VERSION` — **l'en-tête du fichier ne fait pas autorité**
 (il a annoncé « v18 » pendant dix-neuf incréments).
 
 Deux limites : le service worker n'est enregistré que depuis `index.html` alors qu'une trentaine
@@ -331,7 +336,12 @@ traversent le build sans dommage (`vite-plugin-static-copy`).
 
 | Page convertie | Avant | Après |
 |---|---|---|
-| `index.html` | 1001 Ko en 29 requêtes | **794 Ko en 8 requêtes** |
+| `index.html` | 1001 Ko en 29 requêtes · Lighthouse mobile perf **47** (build) | **184 kB de bundle (58 gzip)** · perf **73**, FCP 2,3 s, LCP 4,7 s (titre), a11y 96 |
+
+Ce qui a fait bouger le score, dans l'ordre mesuré : le SDK Supabase en `defer` premier dans `<head>`
+(FCP 5,1 → 1,9 s), le bandeau cookies rendu dès l'exécution au lieu de `DOMContentLoaded` et sans son
+délai de 800 ms (il était l'élément LCP à 6–7 s), Font Awesome local non bloquant, i18n d'une seule
+langue. Mesures locales, serveur compressant, locale fr — la production sert encore « Bientôt disponible ».
 
 **Restent en scripts classiques, volontairement** :
 
@@ -347,9 +357,10 @@ traversent le build sans dommage (`vite-plugin-static-copy`).
 
 | Règle | Ce qu'elle ferme | Plafond |
 |---|---|---|
-| `no-empty` (catch) | 74 blocs `catch {}` dans `js/` (173 en comptant le JS inline) | 74 |
-| `no-restricted-properties` | 58 usages d'`innerHTML` dans `js/` | 58 |
+| `no-empty` (catch) | 74 blocs `catch {}` dans `js/` le matin → **0** le soir (chacun signale via `window.tabibiErreur`) | 0 |
+| `no-restricted-properties` | 58 usages d'`innerHTML` dans `js/` — les interpolations de données base/utilisateur sont échappées (`hEsc`, `window.esc`) | 58 |
 | `no-console` | 28 `console.log` résiduels | 28 |
+| `no-unused-vars` | 117 → **43** | 43 |
 | `no-undef` | erreurs réelles — **bloquantes** | 0 |
 
 `scripts/compter-dette.mjs` pose un **plafond par règle** : la CI échoue si un compteur **monte**.
@@ -378,8 +389,9 @@ Trois cibles : les sources (défaut), `TABIBI_CIBLE=dist-web` (la sortie de buil
 
 `.github/workflows/verification.yml` — sur chaque PR et sur `main` :
 
+0. **gitleaks** sur tout l'historique — dépôt public, aucun secret ne doit entrer
 1. `eslint --quiet` — seules les erreurs réelles bloquent
-2. `npm run lint:dette` — la dette ne doit pas augmenter
+2. `npm run lint:dette` — la dette ne doit pas augmenter · `npm run i18n:verifier` — parité des dictionnaires
 3. `npm run test:e2e` — 30 parcours sur les sources
 4. `npm run build`
 5. `npm run test:e2e:build` — **les mêmes tests sur la sortie de build**
@@ -393,7 +405,11 @@ Job séparé `verifier-v2` : typage strict, tests, build de l'application React.
 `.github/workflows/desktop-release.yml` — sur un tag `desktop-v*`, produit `.dmg`, `.app`, `.exe`
 et `.msi` en release **brouillon**, à publier à la main.
 
-**Aucun workflow ne déploie.** Le déploiement reste manuel et validé par un humain.
+`.github/workflows/deploiement.yml` — **préparé, inactif** : il build (`dist-web`), rejoue les 30 tests sur
+la sortie et déploie sur Cloudflare Pages à chaque merge sur `main`, **uniquement** si la variable
+`DEPLOIEMENT_AUTO=oui` et les secrets `CLOUDFLARE_API_TOKEN` / `CLOUDFLARE_ACCOUNT_ID` sont posés.
+Les poser est la décision humaine qui active le déploiement continu. `.github/dependabot.yml` groupe
+les mises à jour hebdomadaires (Capacitor, outillage, React).
 
 ---
 
@@ -487,7 +503,7 @@ en erreur générique.
 | `send-sms` | ✅ | `false` | **Hook Auth signé** — OTP via BudgetSMS. ⚠️ Le modifier casse le login de tout le monde |
 | `appointment-reminders` | ✅ | défaut | Rappels SMS en 3 passes : `j1` [now+6 h, now+24 h], `h2` [now+90 min, now+150 min], `confirmation` (draine l'outbox). Anti-doublon par index unique `(appointment_id, kind)`. Kill-switch `REMINDERS_ENABLED=false` |
 | `verify-turnstile` | ✅ | défaut | Captcha serveur du formulaire de liste d'attente. CORS en allowlist. *Fail-closed* |
-| `sms-dlr` | ✅ | `false` | Accusés de livraison BudgetSMS. **Journalise seulement.** Aucune authentification possible : BudgetSMS n'en offre pas |
+| `sms-dlr` | ✅ | `false` | Accusés de livraison BudgetSMS. Depuis le 09/09 (code, **non déployé**) : met à jour `sms_log` par `provider_msg_id`, ne crée jamais de ligne depuis un DLR. Aucune authentification possible : BudgetSMS n'en offre pas |
 | `send-whatsapp` | ❌ dort | défaut | Meta Cloud API, templates pré-approuvés. Attend la vérification du compte Business |
 | `whatsapp-webhook` | ❌ dort | `false` | Statuts WhatsApp. Vérification `X-Hub-Signature-256` écrite mais désactivée tant que `WA_APP_SECRET` n'est pas posé |
 | `send-email` | 🔴 **n'existe pas** | — | Appelée par `js/tabibi-brevo.js:619` → tout envoi e-mail échoue. Canal abandonné (décision SMS-only) |
@@ -556,10 +572,12 @@ Deep links : schéma `com.tabibi.doctor://` + App Links HTTPS sur `reset-passwor
    disque. SHA-256 de la vraie clé : `1957fe12…` ; le fichier « BACKUP » de `COPIE-2-SECURITE`
    (`952590eb…`) **n'est pas** cette clé. Script prêt : `scripts/sauvegarder-keystore.sh`.
 2. 🔴 **iOS** : pas de Xcode, aucun `DEVELOPMENT_TEAM`, pas de D-U-N-S (2 à 4 semaines), pas d'APNs.
-3. 🟠 **Le push n'enregistre aucun token en mobile** : le déclencheur est sur
-   `doctor-dashboard.html`, page **absente du bundle**. `onPushNotification()` n'est appelé nulle part.
-4. 🟠 **Captcha non validé en WebView iOS** : Android sert en `https://localhost` (autorisé) ;
-   iOS sert en `capacitor://localhost`, schéma non-http — ce qui avait déjà cassé Tauri.
+3. ✅ *(corrigé le 09/09)* Le push n'enregistrait aucun jeton : le déclencheur était sur
+   `doctor-dashboard.html`, page absente du bundle. `js/tabibi-push-init.js` est chargé par
+   `patient-dashboard.html` et l'accueil, et câble `onPushNotification()`.
+4. 🟠 **Captcha en WebView iOS** : `capacitor.config.ts` passe iOS en `scheme: 'https'` (origine
+   `https://localhost`, comme Android). **À valider sur un vrai iPhone** — aucun build iOS n'existe.
+5. ✅ *(corrigé le 09/09)* `allowBackup="false"` + règles d'extraction Android 12+ et < 12.
 
 ### 9.2 Tabibi Pro — logiciel de cabinet (Tauri)
 
@@ -635,6 +653,7 @@ continué de servir des pages supprimées, y compris depuis l'intérieur d'une P
 | **BudgetSMS** | OTP + rappels de RDV | ✅ production, expéditeur `Tabibi` |
 | **Sentry** | Erreurs front, région EU | ✅ actif sur 28 pages |
 | **Meta Pixel** | Acquisition — **chargé après consentement seulement** | ✅ câblé |
+| **Font Awesome 6.4.0** | Icônes — **auto-hébergé**, chargé en `preload` non bloquant (48 pages) | ✅ plus aucune dépendance cdnjs |
 | **Leaflet + OpenStreetMap** | Cartographie, auto-hébergé | ✅ |
 | **OpenRouteService** | Itinéraires | ✅ autorisé en CSP |
 | **Meta WhatsApp Cloud API** | Canal WhatsApp | ⏸ code prêt, attend la vérification Business |
@@ -746,6 +765,9 @@ doit être faite **dans les deux**.
 capteurs coupés) · **CSP** avec `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`,
 `form-action 'self'`, `upgrade-insecure-requests`.
 
+`img-src` est restreint aux 5 hôtes réellement référencés (Supabase Storage, tuiles OSM, QR, Unsplash,
+Facebook) au lieu de `https:` ; `cdn.jsdelivr.net` et `cdnjs.cloudflare.com` ne figurent plus nulle part.
+
 > ⚠️ La CSP contient encore **`script-src 'unsafe-inline'`**, et ne peut pas s'en passer : les
 > pages contiennent 62 Ko (`patient-dashboard`), 58 Ko (`doctor-dashboard`) et 35 Ko
 > (`medecin-profile`) de JavaScript **inline**. La faiblesse de la CSP est donc la conséquence
@@ -776,7 +798,9 @@ capteurs coupés) · **CSP** avec `frame-ancestors 'none'`, `object-src 'none'`,
 | 🟠 P1 | `TURNSTILE_SECRET_KEY` pas à jour → liste d'attente en fail-closed | Procédure dans `A_FAIRE_AGHILES.md` |
 | 🟠 P1 | Schéma de production non versionné | `migrations/P1_dump_schema_prod.sql` |
 | 🟠 P1 | Notes médicales non chiffrées alors que le mécanisme existe | §12.6 |
-| 🟡 P2 | `?demo=1` ouvert en production web sans authentification | — |
+| 🟠 P1 | `sms_log` jamais alimentée → code écrit dans `send-sms` et `sms-dlr` (09/09), **déploiement à valider** | `supabase functions deploy` |
+| 🟠 P1 | API partenaires sans surface HTTP (404), partitions de log arrêtées le 02/06 | décision : servir ou retirer |
+| ✅ | `?demo=1` — restreint aux hôtes de développement/preview le 09/09 | — |
 | 🟡 P2 | `security_invoker` non vérifié sur `public_doctors` | — |
 | 🟡 P2 | `sms-dlr` accepte de faux accusés de livraison | Sans gravité tant qu'il ne fait que journaliser |
 
@@ -842,22 +866,23 @@ Compteurs relevés le 09/09/2026, reproductibles par `npm run lint:dette`.
 
 | Compteur | Valeur | Effet |
 |---|---:|---|
-| Blocs `catch {}` dans `js/` | **74** | Sentry tourne sur 27 pages et ne reçoit presque rien : les erreurs sont jetées avant d'être signalées |
-| idem, JS inline des pages compris | **173 / 189** | 91 % du traitement d'erreur du produit |
-| `innerHTML` dans `js/` | **58** | Combinés à `unsafe-inline`, aucun filet en cas d'injection |
+| Blocs `catch {}` dans `js/` | ~~74~~ **0** | Chaque `catch` signale via `window.tabibiErreur` (Sentry quand présent) |
+| idem, JS inline des pages | **~99** | Restent dans les `<script>` inline des pages — chantier suivant |
+| `innerHTML` dans `js/` | **58** usages, **0** interpolation de donnée non échappée | Les données base/utilisateur passent par `hEsc` / `window.esc` |
 | `console.log` résiduels | **28** | |
-| Boutons icône sans `aria-label` | **179** | Cible AA non atteinte |
-| Champs sans label | **41** | |
-| Pages non converties à Vite | **44 / 45** | |
-| `js/tabibi-i18n.js` | **356 Ko** sur 47 pages | Les 3 langues d'un bloc — plus de la moitié du poids JS de l'accueil |
+| Boutons icône seuls sans `aria-label` | ~~179~~ **0** | 12 étiquetés ; les 167 autres avaient déjà un texte visible |
+| Champs sans label ni `aria-label` | ~~41~~ **0** | 44 depuis le placeholder, 17 à la main |
+| Pages non converties à Vite | **44 / 45** | Méthode validée sur l'accueil ; `defer` du SDK impossible sur les pages à JS inline |
+| i18n chargé par page | ~~356 Ko~~ **72 Ko** (fr) | Une seule langue, préchargée |
+| `onclick=` inline | **389** | Ce qui impose `'unsafe-inline'` |
 | Migration CSS v2 | **13 %** | 31 pages en v1, 3 pages chargent les deux |
 | Pages orphelines | **2** | `payment.html`, `verify-prescription.html` — 0 lien entrant |
 | `TODO` / `FIXME` | **39** | |
 
-**Chantiers, par valeur décroissante** : découpage i18n (−340 Ko par page) · conversion des
-44 pages restantes · les 58 `innerHTML` puis CSP sans `unsafe-inline` · les 74 `catch` vides
-vers Sentry · déploiement automatique Cloudflare · `aria-label` · auto-update Tauri ·
-chiffrement des notes médicales (§12.6).
+**Chantiers restants, par valeur décroissante** : conversion des 44 pages restantes à Vite (méthode
+validée) · migration des 389 `onclick` puis CSP sans `unsafe-inline` · les ~99 `catch` vides du JS inline ·
+activer `deploiement.yml` (secrets) · déployer `send-sms`/`sms-dlr` · auto-update Tauri · chiffrement des
+notes médicales (§12.6) · sprite SVG à la place de Font Awesome · décision API partenaires.
 
 ---
 
@@ -868,6 +893,7 @@ chiffrement des notes médicales (§12.6).
 | `CLAUDE.md` | **Règles de travail** — à lire avant toute intervention |
 | `A_FAIRE_AGHILES.md` | Les 4 actions qui exigent une intervention humaine, préparées |
 | `AUDIT_ET_MIGRATION_2026-09-09.md` | 26 problèmes chiffrés + plan de migration technologique |
+| `AUDIT_PROFOND_2026-09-09.md` | Second passage : 12 découvertes (API fantôme, APK 1.0.1 servi, config CLI bloquante…), corrections, technologies révisées |
 | `DOSSIER_TABIBI_2026-09-08.md` | État complet : disque, produit, mobile, plan ordonné |
 | `DEPLOY_FRONTEND.md` | Runbook Cloudflare + post-mortem de la couche d'assets |
 | `DEPLOY_RAPPELS.md` | Runbook des rappels SMS |

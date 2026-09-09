@@ -288,3 +288,34 @@ Ensuite       Stockage sécurisé natif du jeton                         (A4)
 *Second passage établi le 09/09/2026 : historique git, `npm audit`, `apksigner`, `aapt2`,
 Lighthouse 12 (mobile), production réelle, simulation `git archive`, lecture des edge functions
 et des migrations. Les scripts et fichiers cités sont dans le dépôt.*
+
+---
+
+## F — État le soir même (8 commits, branche `fix/p0-securite-chaine-approvisionnement`)
+
+| Découverte | État | Commit |
+|---|---|---|
+| A1 API partenaires sans surface | 🟡 **décision à prendre** (servir ou retirer) — rien de touché | — |
+| A2 Page de téléchargement | ✅ annonce l'APK réellement servi (1.0.1, build 3) + détection iOS | `d450492` |
+| A3 Moyens de paiement fictifs | ✅ filtrés par le flag : seul « Espèces au cabinet » reste | `d450492` |
+| A4 `allowBackup`, session extractible | ✅ `allowBackup=false` + règles Android 12+/<12 · jeton natif : **reste en WebView** (stockage sécurisé = chantier suivant) | `d450492` |
+| A5 Performance | ✅ mesurée : build perf 47 → **73**, FCP 5,1 → 2,3 s, LCP 12 → 4,7 s (titre), i18n 356 → 72 Ko, FA local non bloquant, SDK `defer`, bandeau immédiat | `1409c27`, `c640e4c` |
+| A6 `config.toml` bloque le CLI | ✅ `supabase/.env.example` + procédure ; le dump exige en plus **Docker ou `pg_dump`** et le mot de passe — absents de cette machine | ce commit |
+| A7 Sources d'outillage déployées | ✅ `v2/**`, `src/**`, configs en `export-ignore`, vérifié | `04ec775` |
+| A8 Cache des assets hachés | ✅ `immutable` 1 an sur `/assets/build/*` et `/assets/vendor/*` | `d450492` |
+| A9 `sms_log` jamais alimentée | 🟡 **code écrit** (`send-sms` insère, `sms-dlr` rattache par `provider_msg_id`), **déploiement à valider** — Deno absent ici, non exécuté | ce commit |
+| A10 Dépendances, Node | ✅ 11 → 3 vulnérabilités modérées (chaîne CLI), `engines` + `.nvmrc`, `@capacitor/assets` retiré, Dependabot | `d450492`, ce commit |
+| A11 i18n : 21 clés, 4 dictionnaires | ✅ 1 503 clés dans les 3 langues, parité en CI ; le dictionnaire de `home-app.js` subsiste | `1409c27` |
+| A12 `onclick`, Sentry, CSP, demo, sauvegarde | ✅ Sentry lit `APP_VERSION` · `img-src` restreint · `?demo=1` fermé en prod · rapports retirés · gitleaks en CI · **389 `onclick` et sauvegarde DB : restent** | `d450492`, ce commit |
+| README : `catch` vides, `innerHTML`, `aria-label` | ✅ 74 → 0 dans `js/` · données base/utilisateur échappées · 0 bouton-icône / 0 champ sans nom accessible | `1409c27`, `c640e4c` |
+| Push mobile sans jeton | ✅ `tabibi-push-init.js` sur les pages du bundle | `d450492` |
+| Icône / splash de marque | ✅ **déjà en place depuis le 29/05/2026** (`b68d585`) — `docs/mobile/KNOWN_ISSUES.md` était périmé. Régénération depuis `resources/` (versionné) : identique au bit près | — |
+| Captcha iOS | 🟡 `ios.scheme = 'https'` posé — **à valider sur device** | ce commit |
+| Déploiement automatique | 🟡 workflow **préparé, inactif** tant que `DEPLOIEMENT_AUTO` et les secrets ne sont pas posés | ce commit |
+
+Ce qui n'est **pas** fait, et pourquoi : les 44 pages restantes à convertir à Vite (la méthode est
+validée sur l'accueil, mais chaque page à JS inline demande une lecture — le `defer` du SDK y
+casserait `supabase-client.js`) ; la migration des 389 `onclick` (préalable à une CSP sans
+`unsafe-inline`) ; le stockage natif sécurisé du jeton ; le sprite SVG ; l'auto-update Tauri ; le
+chiffrement des notes médicales et le journal de consentement (décisions produit) ; tout ce qui
+touche à la production (déploiements, purge des comptes, secrets) — validation humaine.

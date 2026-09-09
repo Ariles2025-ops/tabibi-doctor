@@ -605,9 +605,9 @@ function renderSchedule(){
     <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2)">
       <label style="display:flex;align-items:center;gap:6px;width:120px;font-size:13px;font-weight:600">
         <input type="checkbox" data-day="${d}" data-fld="enabled" ${sched[d][2]?"checked":""}> ${tabibiT(DAY_KEYS[d]||"", d)}</label>
-      <input type="time" class="form-control" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="start" value="${sched[d][0]}">
+      <input type="time" class="form-control" aria-label="Heure de début" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="start" value="${sched[d][0]}">
       <span style="font-size:12px;color:var(--text3)">→</span>
-      <input type="time" class="form-control" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="end" value="${sched[d][1]}">
+      <input type="time" class="form-control" aria-label="Heure de fin" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="end" value="${sched[d][1]}">
     </div>`).join("");
 }
 

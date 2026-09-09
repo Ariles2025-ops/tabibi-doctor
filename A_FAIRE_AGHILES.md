@@ -121,3 +121,17 @@ Rien n'est poussé sur GitHub : le dépôt est public et `CLAUDE.md` demande une
 ---
 
 *Quand ces quatre points sont faits, plus rien de ce qui reste n'est irréversible.*
+
+---
+
+## 5. Nouveaux points qui n'attendent que toi (ajoutés le soir du 9 septembre)
+
+| # | Action | Pourquoi c'est à toi |
+|---|---|---|
+| a | **Uploader l'APK 1.0.2 (build 4)** dans le bucket `Downloads`, puis remettre `telecharger.html` à 1.0.2 | Le bucket sert encore 1.0.1 (build 3). La page dit maintenant la vérité ; il faut que la vérité devienne 1.0.2 |
+| b | **Déployer `send-sms` et `sms-dlr`** : `supabase functions deploy send-sms` puis `sms-dlr` | Code écrit, non exécuté (Deno absent ici). Production → validation humaine |
+| c | **Activer le déploiement continu** : poser `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` (secrets) et `DEPLOIEMENT_AUTO=oui` (variable) dans GitHub | Le workflow est prêt ; merger sur `main` déploiera alors `dist-web` après les 30 tests |
+| d | **Décider le sort de l'API partenaires** : la servir (edge `api-v1` + routage) ou retirer `api-docs.html`, l'OpenAPI et la console de clés | Un partenaire qui lit la doc obtient un 404 |
+| e | **Ouvrir la PR** de la branche `fix/p0-securite-chaine-approvisionnement` (13 commits) | Dépôt public : je ne pousse pas sans ton accord |
+| f | **Dump du schéma** : installer Docker Desktop (ou `brew install libpq`), copier `supabase/.env.example` en `supabase/.env`, puis `supabase db dump --linked -s public -f migrations/PROD_SCHEMA_DUMP.sql` | Le CLI est débloqué ; il manque l'outil et le mot de passe de la base |
+| g | **Valider le captcha sur un iPhone** dès qu'un build iOS existe (`ios.scheme = 'https'`) | Aucun device iOS ici |

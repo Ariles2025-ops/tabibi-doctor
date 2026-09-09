@@ -116,7 +116,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="field">
       <label class="lbl required" data-i18n="om_diploma_label">Diplôme de Doctorat en Médecine</label>
       <label class="upload-zone" id="up-diploma">
-        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-diploma', this)">
+        <input type="file" accept="image/*,.pdf" aria-label="Diplôme" onchange="markUploaded('up-diploma', this)">
         <i class="fa fa-cloud-arrow-up"></i>
         <div class="uz-title" data-i18n="om_upload_diploma">Téléverser le diplôme</div>
         <div class="uz-sub" data-i18n="om_upload_formats">JPG, PNG ou PDF</div>
@@ -126,7 +126,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="field">
       <label class="lbl required" data-i18n="om_ordre_label">Attestation d'inscription au Conseil de l'Ordre</label>
       <label class="upload-zone" id="up-ordre">
-        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-ordre', this)">
+        <input type="file" accept="image/*,.pdf" aria-label="Carte de l’Ordre" onchange="markUploaded('up-ordre', this)">
         <i class="fa fa-cloud-arrow-up"></i>
         <div class="uz-title" data-i18n="om_upload_ordre">Téléverser l'attestation</div>
         <div class="uz-sub" data-i18n="om_upload_valid">En cours de validité</div>
@@ -141,7 +141,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="field">
       <label class="lbl" data-i18n="om_id_label">Carte d'identité ou passeport (recommandé)</label>
       <label class="upload-zone" id="up-id">
-        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-id', this)">
+        <input type="file" accept="image/*,.pdf" aria-label="Pièce d’identité" onchange="markUploaded('up-id', this)">
         <i class="fa fa-id-badge"></i>
         <div class="uz-title" data-i18n="om_upload_id">Téléverser la pièce d'identité</div>
         <div class="uz-sub" data-i18n="om_upload_speeds">Accélère la vérification</div>

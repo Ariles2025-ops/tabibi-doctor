@@ -80,6 +80,26 @@ async function readBody(req: Request): Promise<Record<string, string>> {
   }
 }
 
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+// [A9 2026-09-09] Le DLR n'etait que journalise en console : impossible, apres
+// coup, de savoir si un OTP precis a ete livre. On met a jour la ligne de
+// sms_log portant ce smsid (provider_msg_id). Sans ligne correspondante (SMS
+// envoye avant cette version, ou faux DLR), rien n'est ecrit : la garde
+// « on ne cree jamais depuis un DLR » evite qu'un tiers remplisse la table.
+async function rattacherDlr(smsid: string, statut: string, ts: string | null) {
+  try {
+    const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if (!url || !key) return;
+    const db = createClient(url, key, { auth: { persistSession: false } });
+    const { error, count } = await db.from("sms_log")
+      .update({ status: statut, error_message: ts ? `dlr:${ts}` : null }, { count: "exact" })
+      .eq("provider", "budgetsms").eq("provider_msg_id", smsid);
+    if (error) console.error("[sms-dlr] sms_log:", error.message);
+    else if (!count) console.warn("[sms-dlr] aucun envoi connu pour smsid", smsid);
+  } catch (e) { console.error("[sms-dlr] sms_log exception:", e); }
+}
+
 Deno.serve(async (req) => {
   const url = new URL(req.url);
   const body = await readBody(req);
@@ -110,6 +130,7 @@ Deno.serve(async (req) => {
   const line = ["[sms-dlr] smsid:", rawId, "status:", status, "->", label, "date:", ts];
   if (FAILURE_CODES.has(status)) console.error(...line, "[ECHEC]");
   else console.log(...line);
+  await rattacherDlr(rawId, FAILURE_CODES.has(status) ? `failed:${label}` : `dlr:${label}`, ts === "(absent)" ? null : ts);
 
   // BudgetSMS attend un 200. La doc ne spécifie pas de corps : "OK".
   return new Response("OK", { status: 200, headers: TEXT_HEADERS });

@@ -496,15 +496,15 @@ function openScheduleConfig(){
         <div id="sched-${d.key}-times" style="${s.on?'':'display:none'}">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px">
             <span style="min-width:60px;color:var(--text3)">${tabibiT('dd_morning','Matin :')}</span>
-            <input type="time" value="${s.start1||''}" onchange="updateScheduleTime('${d.key}','start1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Début du matin" value="${s.start1||''}" onchange="updateScheduleTime('${d.key}','start1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span>—</span>
-            <input type="time" value="${s.end1||''}" onchange="updateScheduleTime('${d.key}','end1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Fin du matin" value="${s.end1||''}" onchange="updateScheduleTime('${d.key}','end1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
           </div>
           <div style="display:flex;align-items:center;gap:6px;font-size:12px">
             <span style="min-width:60px;color:var(--text3)">${tabibiT('dd_afternoon','A-midi :')}</span>
-            <input type="time" value="${s.start2||''}" onchange="updateScheduleTime('${d.key}','start2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Début de l’après-midi" value="${s.start2||''}" onchange="updateScheduleTime('${d.key}','start2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span>—</span>
-            <input type="time" value="${s.end2||''}" onchange="updateScheduleTime('${d.key}','end2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Fin de l’après-midi" value="${s.end2||''}" onchange="updateScheduleTime('${d.key}','end2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span style="font-size:10px;color:var(--text3);margin-left:auto">${tabibiT('dd_optional','(optionnel)')}</span>
           </div>
         </div>
