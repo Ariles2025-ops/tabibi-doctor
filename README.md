@@ -1,117 +1,173 @@
 # Tabibi.doctor
 
-Plateforme de prise de rendez-vous médical pour l'Algérie. Site statique, backend Supabase, applications Android / iOS / desktop générées depuis le même code.
+Plateforme de prise de rendez-vous médical en Algérie. Site web, applications Android et iOS,
+logiciel de cabinet — tous générés depuis le même code.
 
-**État au 8 septembre 2026 : phase pré-lancement.** Lancement visé au congrès médical des 3–5 décembre 2026. La production est en ligne mais l'accueil public est masqué derrière une page « Bientôt disponible ».
-
-| | |
-|---|---|
-| **Production** | https://tabibi.doctor — DNS pointé, HTTPS actif |
-| **Staging** | https://effulgent-kelpie-e48e81.netlify.app (previews de PR uniquement) |
-| **Dépôt** | `Ariles2025-ops/tabibi-doctor` (privé) |
-| **Backend** | Supabase EU Francfort, projet `pudugodhiofqrctcdwfl` |
-| **Hébergement** | Cloudflare Pages, projet `tabibi-doctor` — **sans connexion Git** |
-| **Contact** | contact@tabibi.doctor (Zimbra OVH) |
-
-> ⚠️ **Avant tout déploiement, lire [`DEPLOY_FRONTEND.md`](DEPLOY_FRONTEND.md) et [`CLAUDE.md`](CLAUDE.md).**
-> Merger une PR sur `main` ne déploie **rien**. La mise en production est un `wrangler pages deploy` lancé à la main.
+> **Audit du 9 septembre 2026.** Chaque chiffre de ce document vient d'une commande exécutée
+> ou d'un fichier lu, pas d'une estimation. Le schéma de base est extrait des types générés
+> depuis la production (`supabase gen types typescript --linked`). Les rares points invérifiables
+> sont signalés comme tels.
+>
+> Les **règles de travail** sont dans `CLAUDE.md` et priment sur ce fichier, qui décrit le système.
 
 ---
 
 ## Sommaire
 
-1. [Ce que fait le produit](#1--ce-que-fait-le-produit)
-2. [Stack technique](#2--stack-technique)
-3. [Architecture](#3--architecture)
-4. [Arborescence du dépôt](#4--arborescence-du-dépôt)
-5. [Frontend — pages](#5--frontend--pages)
-6. [Frontend — modules JavaScript](#6--frontend--modules-javascript)
-7. [Styles, design system, i18n](#7--styles-design-system-i18n)
-8. [Backend Supabase](#8--backend-supabase)
-9. [Fonctionnalités et feature flags](#9--fonctionnalités-et-feature-flags)
-10. [SEO](#10--seo)
-11. [Applications mobiles et desktop](#11--applications-mobiles-et-desktop)
-12. [Sécurité](#12--sécurité)
-13. [Conformité et documents](#13--conformité-et-documents)
-14. [Déploiement](#14--déploiement)
-15. [Développement local](#15--développement-local)
-16. [Dette technique connue](#16--dette-technique-connue)
-17. [Conventions de contribution](#17--conventions-de-contribution)
+| | |
+|---|---|
+| [1. Le produit](#1--le-produit) | Ce que fait Tabibi, pour qui, et ce qui le différencie |
+| [2. Démarrage rapide](#2--démarrage-rapide) | Servir, builder, tester |
+| [3. Architecture](#3--architecture) | Le schéma d'ensemble et ses conséquences |
+| [4. Arborescence](#4--arborescence-du-dépôt) | Où vit quoi |
+| [5. Le front web](#5--le-front-web) | 45 pages, 47 modules, CSS, i18n, PWA |
+| [6. Build, qualité, tests](#6--build-qualité-tests) | Vite 8, ESLint, cliquet de dette, Playwright, CI |
+| [7. Le backend Supabase](#7--le-backend-supabase) | 55 tables, 14 vues, 70 fonctions, 6 edge functions |
+| [8. Fonctionnalités](#8--fonctionnalités--état-réel) | État réel, flag par flag |
+| [9. Les trois clients](#9--les-trois-clients) | Mobile Capacitor, desktop Tauri, v2 React |
+| [10. SEO](#10--seo) | 576 pages locales et leur anonymisation |
+| [11. Intégrations](#11--intégrations-tierces) | 13 services tiers et leur état |
+| [12. Sécurité](#12--sécurité) | Auth, RLS, CRIT, CSP, secrets, mécanismes dormants |
+| [13. Déploiement](#13--déploiement) | Cloudflare Pages et ses trois barrières |
+| [14. Conventions](#14--conventions-de-travail) | Règles non négociables et nommage |
+| [15. Dette technique](#15--dette-technique-mesurée) | Compteurs réels, triés |
+| [16. Documentation](#16--documentation-du-projet) | Les 57 documents et à quoi ils servent |
 
 ---
 
-## 1 — Ce que fait le produit
+## 1 — Le produit
 
-Un patient cherche un praticien en Algérie par spécialité et par wilaya, consulte sa fiche, et réserve un créneau. Le praticien gère son agenda, ses patients, ses documents, et reçoit ses rendez-vous. Autour de ce noyau :
+**Tabibi.doctor** met en relation les patients algériens et les praticiens : recherche par
+spécialité et par wilaya, fiche praticien, prise de rendez-vous, rappels SMS, espace patient,
+espace médecin, espace secrétariat, espace pharmacie, console d'administration.
 
-- **Dawini** — localisation de médicaments en rupture : un patient signale une recherche, les pharmacies inscrites répondent. Feature différenciante sur le marché algérien.
-- **Cas grave** — parcours de conciergerie pour les situations lourdes.
-- **Liste d'attente** — capture d'intérêt patient et médecin avant le lancement.
-- **Téléconsultation** (Daily.co) — front câblé, backend absent.
-- **Ordonnances numériques** — front câblé, RPC absentes de la production.
-- **Messagerie** patient ↔ médecin — code présent, désactivée.
+| | |
+|---|---|
+| **Phase** | Pré-lancement. Lancement au **congrès médical des 3-5 décembre 2026** (stand payé) |
+| **Éditeur** | SARL de droit algérien. Gérant et DPO : Aghiles Haddadene |
+| **Marché** | Algérie — 58 wilayas, fonds de **75 034 fiches praticiens** (chiffre vérifié en production le 09/09/2026) |
+| **Langues** | Français (référence juridique), arabe (RTL complet), anglais |
+| **Production** | https://tabibi.doctor · **Staging** : https://effulgent-kelpie-e48e81.netlify.app |
+| **Dépôt** | `github.com/Ariles2025-ops/tabibi-doctor` — **public** |
 
-Le fonds de données compte **79 746 fiches praticiens** importées (Google Places puis OpenStreetMap), dont **14 508 réclamables** par leur titulaire (celles qui portent un `legacy_id`). Au 6 août 2026, `is_claimed` et `is_verified` valaient 0 sur 75 034 fiches : **aucune fiche n'est encore revendiquée ni vérifiée.** Ces chiffres sont à re-vérifier en base avant tout usage commercial.
+### Ce qui différencie le produit
+
+- **Dawini** — localisation de médicaments en pénurie. Le patient déclare ce qu'il cherche,
+  les pharmacies de sa zone répondent. Pensé pour un marché où la rupture de stock est
+  quotidienne. Activation wilaya par wilaya via `dawini_zones`.
+- **Le claim de fiche** — un praticien découvre sa fiche pré-existante et la revendique, au lieu
+  de créer un compte dans le vide. **0 fiche revendiquée sur 75 034** : c'est tout l'enjeu du congrès.
+- **SMS-only** — en Algérie l'e-mail n'est pas un canal fiable. Expéditeur alphanumérique
+  « Tabibi » (mesuré le 31/07/2026 : 5/5 délivrés, contre 11/19 avec un numéro partagé).
+- **Cas grave** — parcours d'orientation vérifiée pour les situations urgentes.
 
 ---
 
-## 2 — Stack technique
+## 2 — Démarrage rapide
 
-| Couche | Technologie | Notes |
+### Servir le site
+
+Le site fonctionne **sans étape de build** — c'est ce qui est déployé aujourd'hui.
+
+```bash
+python3 -m http.server 8080     # origine déjà autorisée côté Turnstile
+```
+
+Avec la chaîne Vite (bundles minifiés) :
+
+```bash
+npm install
+npm run dev            # serveur de développement
+npm run build          # sortie dans dist-web/
+```
+
+### Vérifier
+
+```bash
+npm run lint           # ESLint 9
+npm run lint:dette     # le cliquet : la dette ne doit pas remonter
+npm run test:e2e       # 30 tests Playwright (le serveur démarre tout seul)
+npm run test:e2e:build # les mêmes, contre la sortie de build
+npm test               # lint + e2e
+```
+
+### Applications
+
+```bash
+export JAVA_HOME="$(/usr/libexec/java_home -v 21)"
+bash scripts/build-mobile.sh          # génère www/ + npx cap sync
+npx cap open android                  # ou : cd android && ./gradlew bundleRelease
+
+cd desktop && sh build-dist.sh && cargo tauri build     # logiciel de cabinet
+
+cd v2 && npm install && npm run dev   # application React
+cd v2 && npm run typecheck && npm test && npm run build
+```
+
+### Prérequis
+
+| Outil | Version | État sur la machine de développement (09/09/2026) |
 |---|---|---|
-| Frontend | HTML / CSS / **JavaScript vanilla** | Aucun framework, aucun bundler, aucune étape de build pour le web |
-| Backend | **Supabase** (PostgreSQL 15 + PostgREST + GoTrue + Storage + Edge Functions) | Région EU Francfort |
-| Edge Functions | **Deno** (TypeScript) | 6 fonctions, cf. §8 |
-| Hébergement web | **Cloudflare Pages** + Pages Functions | Déploiement manuel `wrangler` |
-| Previews de PR | Netlify | `netlify.toml` — **pas la prod** |
-| DNS / domaine / mail | **OVH** (domaine + zone DNS + Zimbra) | Passe ensuite par Cloudflare |
-| Captcha | **Cloudflare Turnstile** | Site key publique dans `js/config.js` |
-| Monitoring | **Sentry** (SDK 8.45.0, chargé par CDN avec SRI) | DSN dans `js/config.js` |
-| Analytics | Plausible | Câblé, compte non créé — flag `analytics: false` |
-| SMS | **BudgetSMS** via Edge Function | Rappels J-1 / H-2 en production |
-| WhatsApp | Cloud API Meta | Edge Functions `send-whatsapp` + `whatsapp-webhook` |
-| Mobile | **Capacitor 8** (`dz.tabibi.app`) | Android livré en APK, iOS non soumis |
-| Desktop | **Tauri** (Rust) | `desktop/src-tauri`, release par GitHub Actions |
-| Tests | **Playwright** | 4 parcours critiques, ajoutés en septembre 2026 |
-| Cartographie | OpenStreetMap tiles + OpenRouteService | Autorisés dans la CSP |
+| Node | 22 LTS | ✅ 22.20.0 · npm 10.9.3 |
+| JDK | 17+ | ✅ Temurin 21.0.12 — `JAVA_HOME` à exporter, absent du shell |
+| Android SDK | build-tools 36 | ✅ `~/Library/Android/sdk` |
+| Xcode | 15+ | ❌ **absent** — seules les Command Line Tools sont installées |
+| Supabase CLI | — | ✅ projet lié à `pudugodhiofqrctcdwfl` |
+| Rust + Tauri CLI | — | non vérifié |
 
 ---
 
 ## 3 — Architecture
 
+Il n'y a **aucun serveur applicatif**. Le navigateur parle directement à Supabase, et toute la
+logique métier sensible vit dans des fonctions PostgreSQL et des policies RLS.
+
 ```
-                    ┌───────────────────────────────────────────┐
-   Navigateur       │  Cloudflare (DNS → Pages)                 │
-   Android (WebView)│  ├── assets statiques : *.html, js/, css/ │
-   iOS (WKWebView)  │  ├── Pages Functions : barrières 404      │
-   Desktop (Tauri)  │  │     /supabase/* /migrations/*          │
-        │           │  │     /desktop/*  /seo/*                 │
-        │           │  └── _headers : CSP, HSTS, X-Frame…       │
-        ▼           └───────────────────────────────────────────┘
-   js/config.js  ─────────────────┐
-   js/supabase-client.js          │  HTTPS + JWT anon puis JWT utilisateur
-        │                         ▼
-        │        ┌──────────────────────────────────────────────┐
-        └───────▶│  Supabase — projet pudugodhiofqrctcdwfl      │
-                 │  ├── PostgREST : tables + vues, filtrées RLS │
-                 │  ├── RPC SECURITY DEFINER (32 appelées)      │
-                 │  ├── GoTrue : auth email / téléphone         │
-                 │  │     + Turnstile serveur + HIBP            │
-                 │  ├── Storage : documents médecin, APK        │
-                 │  ├── Edge Functions (Deno) × 6               │
-                 │  └── pg_cron : rappels toutes les 15 min     │
-                 └──────────────────────────────────────────────┘
-                                  │
-                                  ▼
-                    BudgetSMS · WhatsApp Cloud API · Sentry
+                    ┌──────────────────────────────────────────┐
+                    │  Cloudflare Pages — projet tabibi-doctor │
+                    │  site statique + 4 Pages Functions       │
+                    │  ⚠ aucune connexion Git : deploy manuel  │
+                    └────────────────┬─────────────────────────┘
+                                     │
+        ┌────────────────────────────┼────────────────────────────┐
+        │                            │                            │
+┌───────▼────────┐         ┌─────────▼─────────┐        ┌─────────▼─────────┐
+│  Navigateur    │         │  App mobile       │        │  Tabibi Pro       │
+│  45 pages      │         │  Capacitor 8      │        │  Tauri 2          │
+│  + 576 SEO     │         │  Android + iOS    │        │  macOS / Windows  │
+│  HTML/JS       │         │  bundle www/      │        │  bundle desktop/  │
+│  vanilla       │         │  27 pages public  │        │  17 pages pro     │
+│                │         │                   │        │                   │
+│  + v2/ React19 │         │                   │        │                   │
+└───────┬────────┘         └─────────┬─────────┘        └─────────┬─────────┘
+        │                            │                            │
+        └────────────────────────────┼────────────────────────────┘
+                                     │ supabase-js 2.116.0 · JWT · RLS
+                    ┌────────────────▼─────────────────────────┐
+                    │  Supabase — EU Frankfurt                 │
+                    │  projet pudugodhiofqrctcdwfl             │
+                    │                                          │
+                    │  PostgreSQL  · 55 tables · 14 vues       │
+                    │              · 70 fonctions · 9 enums    │
+                    │              · 94 policies RLS           │
+                    │              · triggers de notification  │
+                    │              · pg_cron (jobid 2, 15 min) │
+                    │  Auth        · e-mail + téléphone (OTP)  │
+                    │              · captcha Turnstile serveur │
+                    │  Storage     · documents médecins, APK   │
+                    │  Edge (Deno) · 6 fonctions               │
+                    └────────────────┬─────────────────────────┘
+                                     │
+              ┌──────────────────────┼──────────────────────┐
+        ┌─────▼─────┐         ┌──────▼──────┐        ┌──────▼──────┐
+        │ BudgetSMS │         │  Turnstile  │        │ Meta Cloud  │
+        │ OTP+rappel│         │  anti-bot   │        │ API (dort)  │
+        └───────────┘         └─────────────┘        └─────────────┘
 ```
 
-**Principes structurants**
-
-- **Aucune étape de build pour le web.** Ce qui est dans le dépôt est ce qui est servi. `dist/` et `www/` sont des sorties de build mobile, non versionnées.
-- **Le client ne parle qu'à Supabase.** Aucun serveur applicatif intermédiaire. Toute la logique de sécurité est dans la base : RLS, `SECURITY DEFINER`, `GRANT`/`REVOKE`.
-- **Aucun secret côté client.** Seule la clé `anon` (JWT public par conception) est exposée. Vérifié : 0 occurrence de `service_role`, `sk_live`, `sk_test`, `sb_secret`, `private_key` dans le dépôt.
-- **Le même HTML sert les 4 plateformes.** Capacitor et Tauri embarquent une copie filtrée des pages publiques.
+**La conséquence à retenir** : il n'existe aucun endroit où cacher de la logique. Tout ce que
+le front peut appeler, un attaquant peut l'appeler. La sécurité repose **entièrement** sur les
+policies RLS et sur les gardes internes des fonctions — voir [§12](#12--sécurité).
 
 ---
 
@@ -119,392 +175,724 @@ Le fonds de données compte **79 746 fiches praticiens** importées (Google Plac
 
 ```
 tabibi-doctor/
-├── *.html                    ~45 pages applicatives (cf. §5)
-├── js/                       47 modules, chargés par <script src> (cf. §6)
-├── css/tabibi-ui.css         feuille historique (v1)
-├── styles/                   design system v2 + feuilles d'auth
-├── assets/                   logo, og-image, centroïdes wilayas, vendor
-├── brand/                    DESIGN_TOKENS_v2.json (+ archive v1)
-├── images/                   illustrations, icônes PWA
-├── legal/                    6 pages légales publiques (CGU, RGPD…)
-├── blog/                     index + articles
-├── seo/                      576 pages générées — NE PAS ÉDITER À LA MAIN
-├── sitemaps/                 sitemap-static / -blog / -seo-local
-├── functions/                Pages Functions Cloudflare (barrières 404)
-├── api/                      openapi.yaml + collection Postman + environnements
-├── migrations/               38 scripts SQL manuels — cf. §8, caveat important
+├── *.html                    45 pages applicatives (§5.1)
+├── js/                       47 modules, communiquant par des globales (§5.2)
+├── css/ · styles/            7 feuilles — design system v1 → v2
+├── src/entries/              points d'entrée Vite, un par page convertie (§6)
+├── assets/
+│   ├── vendor/supabase/      SDK auto-hébergé, version dans le nom du fichier
+│   ├── vendor/leaflet/       cartographie
+│   └── dz-wilaya-centroids.js
+├── images/ · brand/          logos, icônes PWA, tokens de marque JSON
+├── legal/                    6 pages légales publiques
+├── blog/                     6 articles + index
+├── seo/                      576 pages locales générées (§10)
+├── sitemaps/                 3 sitemaps thématiques
+├── templates/emails/         10 gabarits transactionnels
+├── api/                      openapi.yaml + collection Postman (API partenaires)
+│
+├── migrations/               41 fichiers SQL joués à la main — PAS le miroir de la prod
 ├── supabase/
-│   ├── functions/            6 Edge Functions Deno
-│   ├── migrations/           3 migrations versionnées (dont 1 .DISABLED)
-│   └── config.toml
-├── android/                  projet Capacitor Android (versionCode 4 / 1.0.2)
-├── ios/                      projet Capacitor iOS (dz.tabibi.app)
-├── desktop/src-tauri/        application desktop Rust/Tauri
-├── scripts/                  build mobile, build zip, deploy web, génération SEO
-├── tests/
-│   ├── e2e/                  4 parcours Playwright
-│   ├── manual/               4 procédures de test écrites
-│   └── reports/              rapports Lighthouse
-├── docs/                     écosystème documentaire (cf. §13)
-├── templates/emails/         gabarits transactionnels
-├── fixtures/                 jeux de données de test
-├── v2/                       ⚠️ scaffold React/Vite — chantier gelé, hors prod
-├── _headers / _redirects     en-têtes et routage Cloudflare Pages
-├── netlify.toml              previews de PR uniquement
-├── capacitor.config.ts       appId dz.tabibi.app, webDir www
-├── manifest.json / sw.js     PWA (CACHE_VERSION fait autorité dans sw.js)
-├── CLAUDE.md                 règles projet — à lire avant toute contribution
-├── DEPLOY_FRONTEND.md        runbook de déploiement
-├── DEPLOY_RAPPELS.md         runbook des rappels SMS
-├── PROGRESS.md               journal de bord, 13 phases
-├── SQL_TODO.md               dette SQL numérotée
-├── AUDIT_*.md                audits successifs
-└── KNOWN_ISSUES.md           anomalies actives
+│   ├── config.toml           dont verify_jwt par fonction
+│   ├── migrations/           3 migrations versionnées
+│   └── functions/            6 edge functions Deno (§7.5)
+│
+├── android/ · ios/           projets natifs générés par Capacitor
+├── www/                      bundle mobile — GÉNÉRÉ, non versionné
+├── capacitor.config.ts
+│
+├── desktop/                  Tabibi Pro (Tauri) : build-dist.sh + src-tauri/
+├── v2/                       application React 19 (§9.3)
+│   ├── src/domaine/          règles métier pures + 21 tests
+│   ├── src/donnees/          TanStack Query
+│   └── src/lib/database.types.ts   4 513 lignes générées depuis la prod
+│
+├── functions/                4 Pages Functions Cloudflare — barrières 404 (§13)
+├── scripts/                  build-mobile · build-zip · deploy-web ·
+│                             check-deleted-public-files · generate-seo-pages ·
+│                             compter-dette · sauvegarder-keystore
+├── tests/e2e/                30 tests Playwright
+├── docs/                     57 documents (légal, contrats, guides, ops, mobile, sécurité)
+│
+├── vite.config.mjs           build multi-pages
+├── eslint.config.mjs         3 règles, chacune adossée à un défaut compté
+├── playwright.config.js      serveur autonome, 3 cibles
+├── .github/workflows/        verification.yml · desktop-release.yml
+├── sw.js                     service worker — CACHE_VERSION fait autorité
+├── _headers · _redirects     en-têtes de sécurité, 404 explicites (Cloudflare)
+├── netlify.toml              mêmes règles pour les previews de PR
+├── .gitattributes            export-ignore : ce que git archive retire du bundle
+└── CLAUDE.md                 règles de travail — priment sur tout
 ```
 
+**Généré, jamais édité à la main** : `www/`, `dist-web/`, `dist/`, `desktop/dist/`, `v2/dist/`,
+`seo/`, `v2/src/lib/database.types.ts`, `android/app/build/`, `node_modules/`.
+
 ---
 
-## 5 — Frontend — pages
+## 5 — Le front web
 
-**Public**
+### 5.1 Pages par parcours
 
-| Page | Rôle |
+**Public et acquisition** — `index.html` (accueil, JS extrait dans `js/home-app.js`) ·
+`doctor-profile.html` (fiche **publique**) · `about.html` · `telecharger.html` ·
+`cas-grave.html` · `waiting-list.html` · `patient-waitinglist.html` ·
+`medecin-waitinglist.html` · `404.html` · `offline.html` · `success.html`
+
+**Authentification** — `login.html` · `signup.html` · `forgot-password.html` ·
+`reset-password.html` · `verify-email.html` · `email-verified.html`
+
+> Le parcours principal est le **téléphone + code SMS**. Le champ e-mail de `login.html` vit dans
+> `<div id="screen-admin" class="hidden">` : c'est l'écran de connexion administrateur, masqué
+> par défaut. Deux tests Playwright affirmaient le contraire et ont été corrigés le 09/09/2026.
+
+**Patient** — `patient-dashboard.html` · `patient-profile.html` · `mes-rdv.html` ·
+`reservation.html` · `patient-ordonnances.html` · `notifications.html` · `messages.html` ·
+`conversation.html` · `verify-prescription.html` · `payment.html` *(orpheline : 0 lien entrant)*
+
+**Médecin et cabinet** — `doctor-dashboard.html` (92 Ko, la plus grosse page) ·
+`medecin-profile.html` (édition **privée**) · `agenda-cabinet.html` · `doctor-reservation.html` ·
+`medecin-ordonnance.html` · `doctor-analytics.html` *(factice, entrée masquée)* ·
+`doctor-claim.html` · `onboarding-medecin.html` · `secretaire-dashboard.html` ·
+`teleconsultation.html`
+
+**Dawini** — `dawini.html` (patient) · `dawini-pharmacie.html` (pharmacie)
+
+**Administration** — `admin-dashboard.html` · `admin-doctor-validation.html` ·
+`admin-cabinet.html` · `admin-reviews.html` · `admin-api-keys.html` · `api-docs.html`
+
+### 5.2 Modules JavaScript (47)
+
+| Domaine | Modules |
 |---|---|
-| `index.html` | Accueil : recherche, cartes praticiens, CTA claim. 116 Ko depuis l'extraction du JS |
-| `about.html` | Présentation |
-| `doctor-profile.html` | Fiche publique d'un praticien (lecture seule) |
-| `reservation.html` · `doctor-reservation.html` | Tunnel de réservation, calendrier FR/AR |
-| `waiting-list.html` | Liste d'attente pré-lancement (protégée par Turnstile) |
-| `cas-grave.html` | Parcours conciergerie |
-| `telecharger.html` | Téléchargement de l'APK |
-| `blog/`, `legal/`, `api-docs.html`, `404.html`, `offline.html` | Contenus et pages système |
+| **Socle** | `config.js` · `supabase-client.js` · `auth.js` · `api.js` · `tabibi-network.js` · `tabibi-features.js` |
+| **Chrome de page** | `tabibi-header.js` · `tabibi-nav.js` · `tabibi-footer.js` · `tabibi-pro-sidebar.js` · `tabibi-desktop-nav.js` · `tabibi-platform.js` |
+| **i18n** | `tabibi-i18n.js` (**356 Ko**, ~3 700 clés fr/ar/en) · `tabibi-lang.js` · `tabibi-langbar.js` · `tabibi-prelang.js` |
+| **Rendez-vous** | `tabibi-booking.js` · `tabibi-agenda.js` · `doctors-display.js` · `tabibi-doctor-name.js` |
+| **Médecin** | `tabibi-doctor-dashboard.js` · `tabibi-claim.js` · `tabibi-doc-upload.js` · `tabibi-avatar.js` |
+| **Dawini** | `tabibi-dawini.js` · `tabibi-dawini-demo.js` |
+| **Sécurité** | `tabibi-security.js` (escapeHtml) · `tabibi-turnstile.js` · `tabibi-captcha-visible.js` · `tabibi-2fa.js` · `tabibi-pii-migration.js` |
+| **Communication** | `tabibi-sms.js` *(désactivé)* · `tabibi-brevo.js` *(appelle une edge inexistante)* · `tabibi-messaging.js` · `tabibi-reviews.js` |
+| **Mesure** | `tabibi-sentry.js` · `tabibi-analytics.js` · `tabibi-pixel.js` · `tabibi-cookies.js` |
+| **Natif / PWA** | `capacitor-bridge.js` (23 Ko) · `tabibi-bridge.js` · `tabibi-sw-register.js` |
+| **Divers** | `home-app.js` (124 Ko) · `tabibi-beta.js` · `tabibi-legal-version.js` · `tabibi-seo-anonymize.js` · `payments.js` *(stub)* |
 
-**Authentification** — `login.html`, `signup.html`, `forgot-password.html`, `reset-password.html`, `verify-email.html`, `email-verified.html`
+Ces modules communiquent par des **globales** (`window.TABIBI_CONFIG`, `window.tabibi`,
+`window.supabase`, `window.TABIBI_FEATURES`). L'ordre de chargement est donc significatif :
+c'est pourquoi les points d'entrée Vite (`src/entries/`) conservent l'ordre relevé sur la page.
 
-**Espace patient** — `patient-dashboard.html`, `patient-profile.html`, `mes-rdv.html`, `patient-ordonnances.html`, `patient-waitinglist.html`, `messages.html`, `conversation.html`, `notifications.html`, `payment.html` *(orpheline)*, `success.html`
+### 5.3 Styles
 
-**Espace médecin** — `doctor-dashboard.html` (94 Ko), `medecin-profile.html` (édition privée), `doctor-claim.html`, `onboarding-medecin.html`, `agenda-cabinet.html`, `medecin-ordonnance.html`, `medecin-waitinglist.html`, `doctor-analytics.html` *(factice, masquée)*, `teleconsultation.html`, `verify-prescription.html`
+`css/tabibi-ui.css` (historique) et `styles/` : `tokens-v2.css` + `components-v2.css`
+(design system v2), `components.css`, `app.css`, `auth.css`, `auth-page.css`.
 
-> ⚠️ `doctor-profile.html` = fiche **publique**. `medecin-profile.html` = édition **privée**. Ce n'est pas un doublon.
+**Migration v2 à ~13 %** : 31 pages en v1 seul, 3 pages chargent les deux.
 
-**Secrétariat / cabinet** — `secretaire-dashboard.html`, `admin-cabinet.html`
+**Couleurs de marque, figées** : or `#d4a437` (accent) · vert `#0F7560` (natif, splash,
+status bar) · gris `#556070` (texte). Tokens dans `brand/DESIGN_TOKENS_v2.json`.
 
-**Administration** — `admin-dashboard.html`, `admin-doctor-validation.html`, `admin-reviews.html`, `admin-api-keys.html`
+Cible d'accessibilité **AA**, non atteinte : 179 boutons icône sans `aria-label`, 41 champs
+sans label. Lighthouse : Performance 67, A11y 85, Best Practices 92-100, SEO 100.
 
-**Dawini** — `dawini.html` (patient), `dawini-pharmacie.html` (pharmacie)
+### 5.4 Internationalisation
 
----
+Trois langues : **fr** (référence juridique), **ar** (RTL complet), **en**. Dictionnaire central
+`js/tabibi-i18n.js`, chargé **sur 47 pages, avec les trois langues d'un bloc**. Huit dictionnaires
+locaux subsistent hors de ce fichier (agenda, sidebar, nav, footer, cookies, beta, reviews, brevo).
 
-## 6 — Frontend — modules JavaScript
+> ⚠️ Les clés `month_*` et la table `_AR_MONTHS` de `reservation.html` sont des **noms de mois**,
+> pas des dates de lancement. Un `grep` sur « septembre » les remonte : les modifier afficherait
+> un mauvais mois sur tous les rendez-vous.
 
-Aucun bundler : chaque page charge ses modules par `<script src>`. `js/config.js` doit toujours être chargé en premier.
+### 5.5 PWA et service worker
 
-**Noyau** — `config.js` (toutes les clés publiques) · `supabase-client.js` · `auth.js` · `api.js` · `tabibi-features.js` (feature flags) · `tabibi-security.js` · `tabibi-network.js`
+`manifest.json` + `sw.js` : HTML en *network-first*, assets en *cache-first*, Supabase en bypass.
+Version **v37**, portée par `const CACHE_VERSION` — **l'en-tête du fichier ne fait pas autorité**
+(il a annoncé « v18 » pendant dix-neuf incréments).
 
-**Métier** — `tabibi-booking.js` · `tabibi-agenda.js` · `doctors-display.js` · `tabibi-claim.js` (claim de fiche) · `tabibi-doctor-dashboard.js` · `tabibi-doctor-name.js` (normalisation des titres) · `tabibi-reviews.js` · `tabibi-messaging.js` · `tabibi-dawini.js` + `tabibi-dawini-demo.js` · `tabibi-doc-upload.js` · `tabibi-avatar.js` · `payments.js` *(stub)*
-
-**Interface** — `tabibi-header.js` · `tabibi-nav.js` · `tabibi-footer.js` · `tabibi-pro-sidebar.js` · `tabibi-desktop-nav.js` · `tabibi-beta.js` · `tabibi-langbar.js`
-
-**Internationalisation** — `tabibi-i18n.js` (dictionnaire principal, ~360 Ko) · `tabibi-lang.js` · `tabibi-prelang.js` (anti-FOUC)
-
-**Plateforme** — `tabibi-platform.js` · `capacitor-bridge.js` (push, caméra, géoloc) · `tabibi-bridge.js` · `tabibi-sw-register.js`
-
-**Sécurité / conformité** — `tabibi-turnstile.js` · `tabibi-captcha-visible.js` · `tabibi-2fa.js` · `tabibi-cookies.js` · `tabibi-legal-version.js` · `tabibi-pii-migration.js` · `tabibi-seo-anonymize.js`
-
-**Observabilité et marketing** — `tabibi-sentry.js` · `tabibi-analytics.js` (Plausible) · `tabibi-pixel.js` (Meta) · `tabibi-brevo.js` · `tabibi-sms.js`
-
-**Accueil** — `home-app.js` : 2 042 lignes extraites d'`index.html` en septembre 2026 pour rendre la page cacheable.
-
----
-
-## 7 — Styles, design system, i18n
-
-**Deux générations de CSS cohabitent.** `css/tabibi-ui.css` est la feuille historique ; `styles/tokens-v2.css` + `styles/components-v2.css` sont la v2. La migration est à ~13 % : 31 pages en v1 seul, 3 pages qui chargent les deux. `styles/auth.css` et `styles/auth-page.css` couvrent les mêmes 7 pages et sont fusionnables.
-
-**Couleurs de marque — ne pas modifier sans demande explicite** : or `#d4a437` (accent), gris neutre foncé `#556070` (texte). Le PWA `manifest.json` utilise `#0F7560` comme thème. Les tokens sont versionnés dans `brand/DESIGN_TOKENS_v2.json`.
-
-**Trois langues : français (défaut), arabe (RTL complet), anglais.** Le dictionnaire principal est `js/tabibi-i18n.js` ; huit modules embarquent en plus leur propre dictionnaire local (agenda, sidebar, nav, footer, cookies, beta, reviews, brevo). Les noms de mois arabes de `reservation.html` sont des données, jamais des dates de lancement — cf. le tableau d'exclusions de `CLAUDE.md`.
-
-**PWA** — `manifest.json` : 9 icônes, mode standalone, 2 raccourcis. `sw.js` : `CACHE_VERSION` fait autorité (actuellement `tabibi-v37-2026-08-06`), précache d'`offline.html`, enregistrement par `tabibi-sw-register.js`, désactivé sur `localhost`.
+Deux limites : le service worker n'est enregistré que depuis `index.html` alors qu'une trentaine
+de pages déclarent le manifeste ; et `tabibi-sw-register.js` se désactive sur `localhost`, qui est
+justement l'origine des WebViews Capacitor et Tauri — d'où **0 % d'offline** dans les applications.
 
 ---
 
-## 8 — Backend Supabase
+## 6 — Build, qualité, tests
 
-### Tables et vues appelées par le front
+Chaîne introduite le 09/09/2026. Le dépôt n'avait auparavant **ni bundler, ni linter, ni test exécuté**.
 
-`users` · `doctor_profiles` · `public_doctors` *(vue publique)* · `appointments` · `doctor_schedule` · `doctor_unavailable_slots` · `reviews` · `review_reports` · `doctor_reviews_public` · `doctor_ratings_summary` · `prescriptions` · `conversations` · `messages` · `notifications` · `waiting_list` · `waiting_list_count` · `wilayas` · `specialties` · `pharmacies` · `dawini_requests` · `dawini_responses` · `medication_alerts` · `device_tokens` · `user_preferences` · `claim_requests` · `admin_actions` · `patient_medical_data` · `cabinets` · `cabinet_members` · vues `my_upcoming_appointments`, `my_reviewable_appointments`, `my_prescriptions`, `doctor_patients_directory`, `cabinet_calendar_view`, `cabinet_members_directory_view`
+### 6.1 Vite 8 — build multi-pages
 
-> **`public_doctors` expose le nom réel, toujours.** Seuls `address`, `latitude` et `longitude` sont masqués pour les fiches non revendiquées. L'anonymisation des pages SEO est faite par le script de génération, **pas par la vue**. Une note contraire a failli provoquer une fuite le 6 août 2026.
+`vite.config.mjs`. Vite 8.2.2, bundler **Rolldown** (Rust). Chaque `.html` reste un point d'entrée
+autonome : aucune page ne devient une application monopage, aucun framework n'est introduit.
 
-### RPC appelées par le frontend (32)
+**Migration progressive.** Une page n'est bundlée que lorsque ses `<script src>` classiques ont été
+remplacés par **un** point d'entrée `type="module"` dans `src/entries/`. Les pages non converties
+traversent le build sans dommage (`vite-plugin-static-copy`).
 
-*Profil et claim* — `claim_my_doctor_profile`, `get_my_doctor_profile`, `update_my_doctor_profile`, `doctor_set_ordre_number`, `match_doctor_for_claim` *(exposée mais jamais appelée — cf. §12)*
-
-*Rendez-vous* — `get_available_slots`
-
-*Avis* — `can_review_doctor`
-
-*Ordonnances* — `create_prescription_draft`, `update_prescription_draft`, `request_prescription_signature`, `mark_prescription_delivered` — **les 4 sont absentes de la production** (vérifié contre `pg_proc` le 29/07/2026)
-
-*Téléconsultation* — `get_video_session`, `set_video_recording_consent`, `mark_video_session_started`, `mark_video_session_ended`
-
-*Messagerie* — `ensure_conversation`
-
-*Dossier patient* — `get_patient_medical_data`, `upsert_patient_medical_data`
-
-*Cabinets* — `get_my_cabinets`
-
-*Dawini* — `dawini_create_request`, `dawini_respond`, `dawini_create_alert`, `dawini_cancel_alert`, `dawini_expire_old`, `dawini_get_patient_contact`, `dawini_pharmacy_stats`, `dawini_shortage_by_wilaya`, `dawini_top_missing`
-
-*Administration* — `admin_validate_doctor`, `admin_validation_list`, `admin_validation_counts`, `admin_validation_total`, `admin_doctor_doc_paths`
-
-Inventaire détaillé : [`docs/RPC_INVENTORY.md`](docs/RPC_INVENTORY.md) et [`docs/SECURITY_RPC_AUDIT.md`](docs/SECURITY_RPC_AUDIT.md).
-
-### Edge Functions (Deno)
-
-| Fonction | Rôle |
-|---|---|
-| `appointment-reminders` | 3 passes — `j1` [now+6h, now+24h], `h2` [now+90min, now+150min], `confirmation` drainée depuis un trigger SQL. Kill-switch `REMINDERS_ENABLED=false` |
-| `send-sms` | Envoi BudgetSMS |
-| `sms-dlr` | Accusés de réception SMS |
-| `send-whatsapp` | Envoi WhatsApp Cloud API |
-| `whatsapp-webhook` | Réception WhatsApp |
-| `verify-turnstile` | Validation captcha serveur — utilisée **uniquement** par le formulaire de liste d'attente |
-
-**Automatisation** — `pg_cron` toutes les 15 minutes (jobid 2, actif) pilote `appointment-reminders`. Anti-doublon par index unique `(appointment_id, kind)` ; les fenêtres `j1` et `h2` ont été rendues disjointes après un bug réel (2 SMS pour 1 rendez-vous). Un trigger `AFTER UPDATE OF status ON appointments` alimente l'outbox SMS à la confirmation. Runbook : [`DEPLOY_RAPPELS.md`](DEPLOY_RAPPELS.md).
-
-**Canal email : non retenu.** Le marché algérien passe par SMS. L'edge `send-email` appelée par `js/tabibi-brevo.js:619` n'existe pas.
-
-### ⚠️ `migrations/` n'est pas le miroir de la production
-
-38 scripts SQL manuels, exécutés à la main dans le SQL Editor, jamais rejoués automatiquement. **25 RPC vivent en production sans définition dans le dépôt**, et il n'existe aucun dump du schéma. Trois scripts de diagnostic sont fournis pour y remédier :
-
-- `migrations/P1_dump_schema_prod.sql` — 6 Run d'introspection (tables, policies, fonctions avec corps, vues, contraintes, droits) à recoller dans `PROD_SCHEMA_DUMP.sql`
-- `migrations/P1_test_coherence_doctor_id.sql` — tranche l'incohérence `doctor_id` (voir §12)
-- `migrations/P0_revoke_match_doctor_for_claim.sql` — retrait d'un droit `anon` inutile
-
-**Piège du SQL Editor Supabase** : chaque clic sur *Run* ouvre une connexion neuve. Un script qui commence par `BEGIN;` sans `COMMIT;` dans le **même** Run est annulé par rollback implicite, avec un « Success » trompeur. **Ne jamais écrire `BEGIN`/`COMMIT`** — un Run est déjà atomique, et la vérification se fait dans un Run séparé.
-
----
-
-## 9 — Fonctionnalités et feature flags
-
-`js/tabibi-features.js` expose `window.TABIBI_FEATURES`. Une entrée de menu ou un élément `data-feature="x"` disparaît si le flag `x` vaut `false`. Un flag **inconnu** laisse l'élément visible — on ne masque jamais sur une faute de frappe.
-
-| Flag | Valeur | Ce que ça veut dire |
+| Page convertie | Avant | Après |
 |---|---|---|
-| `dawini` | `true` | Localisation de médicaments active |
-| `notifications` | `true` | Notifications in-app actives (table + triggers en prod) |
-| `sentry` | `true` | **Ce flag n'est lu par personne** : `tabibi-sentry.js` s'active sur la seule présence d'un DSN. Sentry tourne déjà sur les 28 pages qui incluent le script |
-| `prescriptions` | `false` | Les 4 RPC sont absentes de la prod. Sans ce flag, chaque action renvoyait un `PGRST202` en erreur générique |
-| `messaging` | `false` | Pages et tables prêtes, parcours non testé |
-| `reviews` | `false` | Table `reviews` non créée (TODO-SQL-011) |
-| `video` | `false` | RPC téléconsultation absentes (TODO-SQL-008) |
-| `payments` | `false` | Aucun backend Stripe ni SATIM |
-| `analytics` | `false` | Compte Plausible non créé |
-| `doctorStats` | `false` | `doctor-analytics.html` est 100 % factice — entrée retirée de la sidebar |
+| `index.html` | 1001 Ko en 29 requêtes | **794 Ko en 8 requêtes** |
 
-**Paiements — le point dur.** Le marché algérien impose SATIM (CIB / Edahabia), sans sandbox stable, et l'intégration exige une entité commerciale locale enregistrée. `payment.html` existe mais n'a aucun lien entrant ; `js/payments.js` est un stub. Rien ne sera encaissable avant l'immatriculation en Algérie.
+**Restent en scripts classiques, volontairement** :
 
-**Override de debug** : `localStorage.tabibi_features_override` accepte un JSON de flags, pour le QA uniquement.
+- `js/tabibi-prelang.js` — pose la langue et la direction RTL **avant** le rendu. Différé, la page
+  clignoterait en LTR.
+- le SDK Supabase — c'est un bundle **UMD**. Importé comme module ESM, il détecte un environnement
+  de modules, s'exporte en CommonJS et **n'attache plus `window.supabase`**. Constaté le 09/09/2026 :
+  le build passait, la page se chargeait, et le client Supabase était introuvable à l'exécution.
+
+### 6.2 ESLint 9 et le cliquet de dette
+
+`eslint.config.mjs`. Trois règles, chacune adossée à un défaut **compté**, pas à un style :
+
+| Règle | Ce qu'elle ferme | Plafond |
+|---|---|---|
+| `no-empty` (catch) | 74 blocs `catch {}` dans `js/` (173 en comptant le JS inline) | 74 |
+| `no-restricted-properties` | 58 usages d'`innerHTML` dans `js/` | 58 |
+| `no-console` | 28 `console.log` résiduels | 28 |
+| `no-undef` | erreurs réelles — **bloquantes** | 0 |
+
+`scripts/compter-dette.mjs` pose un **plafond par règle** : la CI échoue si un compteur **monte**.
+Passer ces règles en `error` rendrait la CI rouge en permanence sur ~277 points et on prendrait
+l'habitude de l'ignorer. Quand une dette baisse, on abaisse le plafond dans le même commit.
+
+> Une première version de la règle `innerHTML` était écrite `object: '*'` — syntaxe invalide :
+> **elle ne se déclenchait sur rien**. Vérifiée sur du vrai code (0 détection), corrigée, elle
+> remonte les 58 usages réels. Une règle qui ment sur son propre effet est pire que pas de règle.
+
+### 6.3 Tests
+
+| Suite | Outil | Nombre | Durée |
+|---|---|---|---|
+| Parcours critiques | Playwright 1.63 | **30** (7 tests × 2 profils + pages vitales) | 7,1 s |
+| Règles métier v2 | Vitest 3.2.7 | **21** | 0,2 s |
+
+Les tests Playwright ne créent **aucune donnée en base**. Profils : Pixel 5 et Desktop Chrome.
+La configuration démarre son propre serveur — auparavant elle exigeait deux terminaux, ce qui est
+la raison mécanique pour laquelle ces tests n'avaient **jamais** tourné.
+
+Trois cibles : les sources (défaut), `TABIBI_CIBLE=dist-web` (la sortie de build),
+`TABIBI_BASE=https://…` (une production réelle).
+
+### 6.4 Intégration continue
+
+`.github/workflows/verification.yml` — sur chaque PR et sur `main` :
+
+1. `eslint --quiet` — seules les erreurs réelles bloquent
+2. `npm run lint:dette` — la dette ne doit pas augmenter
+3. `npm run test:e2e` — 30 parcours sur les sources
+4. `npm run build`
+5. `npm run test:e2e:build` — **les mêmes tests sur la sortie de build**
+6. Taille des bundles publiée dans le résumé du run
+
+Job séparé `verifier-v2` : typage strict, tests, build de l'application React.
+
+> L'étape 5 existe parce qu'un build peut casser ce que les sources font marcher — c'est
+> exactement ce qui s'est produit le 09/09/2026 avec le SDK Supabase UMD.
+
+`.github/workflows/desktop-release.yml` — sur un tag `desktop-v*`, produit `.dmg`, `.app`, `.exe`
+et `.msi` en release **brouillon**, à publier à la main.
+
+**Aucun workflow ne déploie.** Le déploiement reste manuel et validé par un humain.
+
+---
+
+## 7 — Le backend Supabase
+
+Projet `pudugodhiofqrctcdwfl`, région **EU Frankfurt** (choix RGPD).
+
+> ⚠️ **`migrations/` n'est pas le miroir de la base.** Ce sont 41 fichiers SQL joués à la main dans
+> le SQL Editor. La source de vérité est `v2/src/lib/database.types.ts`, régénéré par
+> `supabase gen types typescript --linked`. `migrations/P1_dump_schema_prod.sql` existe pour
+> produire enfin un miroir versionné — **il n'a pas encore été exécuté**.
+
+### 7.1 Tables (55)
+
+| Domaine | Tables |
+|---|---|
+| **Identité** | `users` · `doctor_profiles` (52 colonnes) · `patient_medical_data` · `two_factor_secrets` |
+| **Rendez-vous** | `appointments` (26 colonnes) · `appointment_notifications` · `doctor_schedule` · `doctor_unavailable_slots` · `waiting_list` |
+| **Cabinet** | `cabinets` · `cabinet_members` · `claim_requests` |
+| **Soins** | `prescriptions` · `prescription_seq_year` · `medical_records` · `video_sessions` |
+| **Dawini** | `dawini_requests` · `dawini_responses` · `dawini_zones` · `pharmacies` · `medication_alerts` |
+| **Relation** | `conversations` · `messages` · `notifications` · `reviews` · `review_reports` · `favorites` |
+| **Référentiel** | `wilayas` · `specialties` |
+| **Paiement** | `payments` |
+| **API partenaires** | `api_keys` · `api_usage_log` **+ 19 partitions journalières** `api_usage_log_2026MMDD` |
+| **Traçabilité** | `audit_log` · `consents_log` · `admin_actions` · `sms_log` · `email_log` · `rate_limits` |
+| **Mobile** | `device_tokens` |
+
+### 7.2 Vues (14)
+
+`public_doctors` · `public_doctors_listed` · `doctor_patients_directory` ·
+`doctor_ratings_summary` · `doctor_reviews_public` · `cabinet_calendar_view` ·
+`cabinet_members_directory_view` · `cabinet_stats_view` · `my_upcoming_appointments` ·
+`my_reviewable_appointments` · `my_video_sessions` · `my_two_factor_status` ·
+`api_keys_analytics` · `waiting_list_stats`
+
+> **`public_doctors` est la vue publique de référence** : `doctor_profiles` est fermée à `anon`,
+> tout listing passe par elle. Elle **ne masque pas les noms** des fiches non revendiquées —
+> `COALESCE(NULLIF(TRIM(dp.full_name), ''), 'Praticien')`. Elle masque `address`, `latitude` et
+> `longitude`, rien d'autre. Une note contraire de `PROGRESS.md` était fausse : c'est ce qui a
+> imposé l'anonymisation au niveau du générateur SEO ([§10](#10--seo)).
+
+### 7.3 Fonctions (70 dans le schéma exposé)
+
+| Famille | Fonctions |
+|---|---|
+| **Rendez-vous** | `get_available_slots` · `is_doctor_bookable` |
+| **Profil médecin** | `get_my_doctor_profile` · `update_my_doctor_profile` · `current_doctor_profile_id` · `doctor_set_ordre_number` · `check_doctor_account_exists` |
+| **Cabinet** | `get_my_cabinets` *(critique : porte l'espace secrétariat)* · `create_cabinet` · `invite_cabinet_member` · `accept_cabinet_invitation` · `remove_cabinet_member` · `transfer_cabinet_ownership` · `is_cabinet_owner/admin/doctor/secretaire` · `is_member_of_cabinet` |
+| **Administration** | `admin_validate_doctor` · `admin_validation_list/counts/total` · `admin_doctor_doc_paths` · `is_admin` · `current_user_role` |
+| **Données médicales** | `get_patient_medical_data` · `upsert_patient_medical_data` |
+| **Dawini** | 13 fonctions (`dawini_create_request`, `dawini_respond`, `dawini_shortage_by_wilaya`, `dawini_top_missing`, `dawini_zone_active`, normalisation…) |
+| **Téléconsultation** | `create_video_session` · `get_video_session` · `mark_video_session_started/ended` · `set_video_recording_consent` |
+| **API partenaires** | `generate_api_key_pair` · `rotate_api_key` · `revoke_api_key` · `verify_api_key` · `log_api_call` · `check_api_rate_limit` · `api_usage_log_ensure_partition` |
+| **2FA** | `enroll_two_factor` · `disable_two_factor` |
+| **PII** | `tabibi_pii_encrypt` · `tabibi_pii_decrypt` · `tabibi_pii_key` |
+| **Ordonnances** | `next_prescription_number` |
+| **Conformité** | `record_consent` |
+| **Infra** | `fn_check_rate_limit` · `fn_cleanup_old_logs` · `unaccent` · `show_trgm` |
+
+**Enums (9)** : `user_role` · `user_sex` · `user_locale` · `phone_type` ·
+`doctor_validation_status` · `payment_method` · `payment_status` ·
+`dawini_request_status` · `dawini_response_status`
+
+### 7.4 RPC appelées par le front — 39, dont 6 à vérifier
+
+Six RPC appelées par le code **n'apparaissent pas** dans le schéma exposé :
+
+| RPC | Appelée par | État vérifié |
+|---|---|---|
+| `claim_my_doctor_profile` | `js/tabibi-claim.js` | ✅ **Existe** — testée en production le 09/09/2026 : renvoie `P0001 Non authentifié`, donc la fonction est bien là avec sa garde interne. Absente des types générés : tout code TypeScript qui l'appelle ne compilera pas |
+| `create_prescription_draft` | `medecin-ordonnance.html` | 🔴 Absente (vérifié contre `pg_proc` le 29/07/2026) |
+| `update_prescription_draft` | `medecin-ordonnance.html` | 🔴 Absente |
+| `request_prescription_signature` | `medecin-ordonnance.html` | 🔴 Absente |
+| `mark_prescription_delivered` | `patient-ordonnances.html` | 🔴 Absente |
+| `validate_cabinet_invitation` | `signup.html` | ⚠️ **Indéterminé** — absente des types générés, mais la sonde sans argument n'est pas concluante |
+
+> **Précaution de méthode.** Une sonde `POST /rest/v1/rpc/<fn>` avec un corps vide renvoie
+> `PGRST202` dès qu'aucune surcharge ne correspond aux arguments fournis : `get_available_slots`,
+> qui existe pourtant, répond exactement comme une fonction absente. **L'absence d'une fonction
+> des types générés ne prouve pas son absence en base** — seul un contrôle sur `pg_proc` tranche.
+
+Les 4 RPC d'ordonnances cassent deux pages. Elles sont neutralisées par le flag
+`prescriptions: false`, qui masque les boutons plutôt que de laisser échouer un `PGRST202`
+en erreur générique.
+
+### 7.5 Edge Functions (Deno)
+
+| Fonction | Déployée | `verify_jwt` | Rôle |
+|---|:---:|:---:|---|
+| `send-sms` | ✅ | `false` | **Hook Auth signé** — OTP via BudgetSMS. ⚠️ Le modifier casse le login de tout le monde |
+| `appointment-reminders` | ✅ | défaut | Rappels SMS en 3 passes : `j1` [now+6 h, now+24 h], `h2` [now+90 min, now+150 min], `confirmation` (draine l'outbox). Anti-doublon par index unique `(appointment_id, kind)`. Kill-switch `REMINDERS_ENABLED=false` |
+| `verify-turnstile` | ✅ | défaut | Captcha serveur du formulaire de liste d'attente. CORS en allowlist. *Fail-closed* |
+| `sms-dlr` | ✅ | `false` | Accusés de livraison BudgetSMS. **Journalise seulement.** Aucune authentification possible : BudgetSMS n'en offre pas |
+| `send-whatsapp` | ❌ dort | défaut | Meta Cloud API, templates pré-approuvés. Attend la vérification du compte Business |
+| `whatsapp-webhook` | ❌ dort | `false` | Statuts WhatsApp. Vérification `X-Hub-Signature-256` écrite mais désactivée tant que `WA_APP_SECRET` n'est pas posé |
+| `send-email` | 🔴 **n'existe pas** | — | Appelée par `js/tabibi-brevo.js:619` → tout envoi e-mail échoue. Canal abandonné (décision SMS-only) |
+
+### 7.6 Triggers et planification
+
+- `tg_notify_appointment` — `AFTER INSERT/UPDATE` sur `appointments` : produit `rdv_new` (médecin),
+  `rdv_confirmed` et `rdv_cancelled` (routées par `auth.uid()`).
+- Trigger de confirmation — dépose une ligne `kind='confirmation'` dans l'outbox au passage
+  `status → confirmed`.
+- **`pg_cron` jobid 2**, toutes les 15 minutes → `appointment-reminders`.
+- `api_usage_log_ensure_partition` — crée les partitions journalières de `api_usage_log`.
+
+---
+
+## 8 — Fonctionnalités — état réel
+
+Source unique : `js/tabibi-features.js`. Le flag pilote l'affichage via `data-feature="…"`.
+Override QA : `localStorage.setItem('tabibi_features_override', '{"video":true}')`.
+
+| Fonctionnalité | Flag | Front | Backend | Verdict |
+|---|:---:|:---:|:---:|---|
+| Recherche + fiche praticien | — | ✅ | ✅ | **En service** |
+| Prise de RDV bout-en-bout | — | ✅ | ✅ | **En service** — calendrier 90 j, TZ `Africa/Algiers`, anti-chevauchement en base |
+| Rappels SMS J-1 / H-2 | — | — | ✅ | **En production**, envoi réel prouvé le 29/07/2026 |
+| Notifications in-app | `notifications: true` | ✅ | ✅ | **En service** |
+| Dawini | `dawini: true` | ✅ | ✅ | **En service** — activation par wilaya |
+| Claim de fiche | — | ✅ | ✅ | **En service** — 0 fiche revendiquée à ce jour |
+| Espace secrétariat / cabinet | — | ✅ | ✅ | **En service** |
+| API partenaires | — | ✅ | ✅ | Clés, rotation, révocation, quotas, partitions de log |
+| Sentry | `sentry: true` | ✅ | — | **Actif sur 27 pages** (mesuré le 09/09/2026 ; un commentaire de `tabibi-features.js` annonce 28). ⚠️ Le flag n'est lu par personne : `tabibi-sentry.js` s'active sur la seule présence d'un DSN |
+| Ordonnances | `prescriptions: false` | ✅ | 🔴 4 RPC absentes | **Masquée** |
+| Messagerie | `messaging: false` | ✅ | ✅ | **Masquée** — pages non testées |
+| Avis | `reviews: false` | ✅ | partiel | **Masquée** |
+| Téléconsultation | `video: false` | ✅ | ✅ **RPC présentes** | **Masquée — décision produit, plus un blocage technique** |
+| Paiements | `payments: false` | stub | table `payments` seule | **Masquée** — `payment.html` orpheline, pas de sandbox SATIM stable |
+| Statistiques médecin | `doctorStats: false` | factice | ❌ | **Masquée** — la page affichait des chiffres écrits en dur |
+| Analytics Plausible | `analytics: false` | ✅ | ❌ | **Masquée** — compte non créé |
+
+---
+
+## 9 — Les trois clients
+
+### 9.1 Application mobile — Capacitor 8
+
+| | |
+|---|---|
+| `appId` / `appName` | `dz.tabibi.app` / **Tabibi** |
+| Android | `versionCode 4` · `versionName 1.0.2` · `minSdk 26` (Android 8) · `compile/targetSdk 36` |
+| iOS | `MARKETING_VERSION 1.0` · `CURRENT_PROJECT_VERSION 1` · **jamais compilé** |
+| Binaires | APK 9,1 Mo + AAB 8,1 Mo signés, produits le 31/08/2026 |
+| Distribution | **Téléchargement direct** d'un APK depuis Supabase Storage. Ni Play Store, ni App Store |
+| Plugins | 16 : camera, geolocation, push, local-notifications, preferences, share, splash, status-bar, keyboard, browser, app-launcher… |
+
+**Bundle en liste blanche stricte** (`scripts/build-mobile.sh`) : 27 pages grand public, 8 dossiers.
+Des garde-fous font **échouer le build** si `seo/`, `scripts/`, `api/` ou une page pro/admin
+réapparaît — l'APK de juillet embarquait la console d'administration.
+**L'espace médecin n'est pas dans l'app : c'est un choix, il vit dans le desktop Tauri.**
+
+Deep links : schéma `com.tabibi.doctor://` + App Links HTTPS sur `reset-password.html`,
+`verify-email.html`, `email-verified.html`.
+
+**Quatre points ouverts**
+
+1. 🔴 **La clé de signature n'a aucune sauvegarde hors machine** — les deux copies sont sur le même
+   disque. SHA-256 de la vraie clé : `1957fe12…` ; le fichier « BACKUP » de `COPIE-2-SECURITE`
+   (`952590eb…`) **n'est pas** cette clé. Script prêt : `scripts/sauvegarder-keystore.sh`.
+2. 🔴 **iOS** : pas de Xcode, aucun `DEVELOPMENT_TEAM`, pas de D-U-N-S (2 à 4 semaines), pas d'APNs.
+3. 🟠 **Le push n'enregistre aucun token en mobile** : le déclencheur est sur
+   `doctor-dashboard.html`, page **absente du bundle**. `onPushNotification()` n'est appelé nulle part.
+4. 🟠 **Captcha non validé en WebView iOS** : Android sert en `https://localhost` (autorisé) ;
+   iOS sert en `capacitor://localhost`, schéma non-http — ce qui avait déjà cassé Tauri.
+
+### 9.2 Tabibi Pro — logiciel de cabinet (Tauri)
+
+`desktop/` produit **Tabibi Pro** (`doctor.tabibi.pro`, v0.1.0), fenêtre 1440×900, catégorie
+Medical. `build-dist.sh` construit un bundle **pro** de 17 pages — l'inverse du bundle mobile.
+
+Ouvert : **aucun auto-update** (pas de `tauri-plugin-updater`, pas de `latest.json`), builds
+**non signés** (Gatekeeper et SmartScreen alertent), 6 pages en colonne mobile faute de media
+query ≥ 1024 px.
+
+### 9.3 v2 — application React
+
+Refonte progressive qui **cohabite** avec la production : même projet Supabase, même domaine, donc
+même `localStorage` et **même session**. Pas de page de login en v2 : en production elle renvoie
+vers `login.html` de la v1.
+
+| | |
+|---|---|
+| React | **19.2.8** |
+| Vite | **8.2.2** (Rolldown) |
+| Router | **react-router 7.18.3** |
+| Données | **TanStack Query 5.102.8** |
+| supabase-js | **2.116.0** — même version que le SDK auto-hébergé de la v1 |
+| TypeScript | **5.9.3**, mode strict |
+| Tests | **Vitest 3.2.7** — 21 tests |
+| Build | 492 kB / **142 kB gzip** |
+
+**Structure** — `src/domaine/` : règles métier **pures**, sans React ni réseau, entièrement
+testées · `src/donnees/` : TanStack Query, **aucune erreur avalée** · `src/pages/` : les écrans ·
+`src/lib/database.types.ts` : **4 513 lignes générées depuis la production**.
+
+**Les types écrits à la main étaient faux.** Confrontés au schéma réel, le compilateur l'a dit
+littéralement :
+
+```
+TS2352: SelectQueryError<"column 'nom' does not exist on 'doctor_profiles'.">
+```
+
+La v2 lisait `nom, prenom, specialite, wilaya` : **aucune de ces quatre colonnes n'existe**.
+Les vraies sont `full_name`, `full_name_ar`, `specialty_raw`, `wilaya_code`.
+
+**Ordre de migration** : agenda médecin *(fait)* → dashboard médecin → réservation patient.
+**Les pages publiques et les 576 pages SEO ne seront pas migrées** : elles sont rapides et
+ramènent du trafic gratuit.
 
 ---
 
 ## 10 — SEO
 
-**576 pages** dans `seo/`, générées par `scripts/generate-seo-pages.mjs` (Node, lecture de `public_doctors` par lots de 1 000). Couverture : 32 890 praticiens, 48 wilayas, 26 spécialités, et les couples wilaya × spécialité comptant au moins 10 praticiens.
+576 pages locales dans `seo/`, du type `alger-cardiologue.html`, générées par
+`scripts/generate-seo-pages.mjs`. Plus 6 articles de blog, 3 sitemaps, `robots.txt`,
+données structurées Schema.org.
 
-- **Les URL sont déclarées sans `.html`.** Cloudflare Pages sert `/seo/x.html` en 308 vers `/seo/x` : canonical, `og:url`, sitemaps et maillage interne pointent tous vers l'adresse réellement servie.
-- **L'anonymisation est faite par le script**, jamais par la vue. Ne jamais régénérer « depuis `public_doctors` » sans repasser par le script.
-- Deux affirmations commerciales fausses ont été retirées en août 2026 : « praticiens certifiés » (alors que `is_verified` = 0 partout) et un bouton « Prendre RDV » menant à une impasse.
-- 3 sitemaps (`sitemap-static`, `sitemap-blog`, `sitemap-seo-local`) déclarés dans `robots.txt`.
-- `index.html` porte 4 blocs JSON-LD (Organization, WebSite, FAQPage, LocalBusiness) et un jeu complet Open Graph / Twitter Cards avec alternates `fr_DZ` / `ar_DZ` / `en_US`.
+**Anonymisation totale, imposée au générateur.** Les pages d'avant août 2026 affichaient
+891 patronymes réels de praticiens qui n'avaient rien accepté. Le script n'écrit désormais
+**aucun nom** — uniquement des agrégats (comptages, répartition par commune), qui ne sont pas
+des données à caractère personnel. Deux affirmations fausses ont été retirées au passage
+(« N praticiens certifiés », « Tous certifiés Tabibi ») : au 06/08/2026, `is_verified` = 0 et
+`is_claimed` = 0 sur 75 034 fiches.
 
-**Ne jamais éditer `seo/` à la main** — tout est régénéré.
+`functions/seo/[[path]].js` est une **barrière** : la couche d'assets de Cloudflare Pages a
+continué de servir des pages supprimées, y compris depuis l'intérieur d'une Pages Function.
 
 ---
 
-## 11 — Applications mobiles et desktop
+## 11 — Intégrations tierces
 
-### Android / iOS — Capacitor 8
-
-`appId` **`dz.tabibi.app`**, `appName` Tabibi, `webDir` `www` (généré par `scripts/build-mobile.sh`). `androidScheme: 'https'` pour éviter les restrictions CORS. Le scheme de deep link reste `com.tabibi.doctor`, partagé entre `AndroidManifest.xml` et `js/capacitor-bridge.js`.
-
-Plugins : App, App Launcher, Browser, Camera, Geolocation, Keyboard, Local Notifications, Preferences, Push Notifications, Share, Splash Screen, Status Bar.
-
-**`build-mobile.sh` fonctionne en liste blanche** — 27 pages grand public, 8 dossiers — avec des garde-fous qui font **échouer** le build si `seo/`, `scripts/`, `api/` ou une page pro/admin réapparaît dans le bundle. C'est la correction d'un incident : des scripts internes étaient packagés dans un APK public.
-
-État : **versionCode 4 / versionName 1.0.2**. Distribution par téléchargement direct depuis Supabase Storage (`telecharger.html`), pas encore par le Play Store. Les `.apk` et `.aab` sont ignorés par git ; les binaires passent par les GitHub Releases.
-
-**Keystore** : `tabibi-release-CLE-OFFICIELLE.jks`, hors dépôt, sauvegardé dans `~/Desktop/TABIBI-KEYSTORE-SAUVEGARDE`. Sa perte signifie l'impossibilité définitive de mettre l'application à jour. Le mot de passe doit être stocké séparément des copies du fichier.
-
-**iOS** : bundle unifié sur `dz.tabibi.app`, mais aucun `DEVELOPMENT_TEAM` n'est renseigné — bloquant pour toute soumission App Store. Le captcha en WebView iOS (`capacitor://localhost`, schéma non-http) reste à valider sur appareil réel.
-
-### Desktop — Tauri
-
-`desktop/src-tauri`, fenêtre 1440×900, publication par le workflow `.github/workflows/desktop-release.yml` (`tauri-apps/tauri-action`, matrice multi-OS, cache Rust). Version `0.1.0`.
-
-Limites connues : pas de `tauri-plugin-updater` (chaque correctif impose une réinstallation manuelle), builds non signés, `sw.js` non copié dans le bundle, et 6 pages s'affichent en colonne mobile faute de media query ≥ 1024 px.
+| Service | Usage | État |
+|---|---|---|
+| **Supabase** | Base, auth, stockage, edge functions, cron | ✅ production |
+| **Cloudflare Pages** | Hébergement + Pages Functions | ✅ production |
+| **Cloudflare Turnstile** | Captcha, vérifié côté serveur | ✅ site key `0x4AAAAAADR6IhCWO9RLIipE` |
+| **BudgetSMS** | OTP + rappels de RDV | ✅ production, expéditeur `Tabibi` |
+| **Sentry** | Erreurs front, région EU | ✅ actif sur 28 pages |
+| **Meta Pixel** | Acquisition — **chargé après consentement seulement** | ✅ câblé |
+| **Leaflet + OpenStreetMap** | Cartographie, auto-hébergé | ✅ |
+| **OpenRouteService** | Itinéraires | ✅ autorisé en CSP |
+| **Meta WhatsApp Cloud API** | Canal WhatsApp | ⏸ code prêt, attend la vérification Business |
+| **Firebase / FCM** | Push Android | ⏸ `google-services.json` absent |
+| **Daily.co** | Téléconsultation | ⏸ front câblé, RPC présentes, flag `video: false` |
+| **Brevo** | E-mails transactionnels | 🔴 l'edge `send-email` n'existe pas — canal abandonné |
+| **Stripe / SATIM** | Paiement | ❌ table `payments` seule, aucun backend |
+| **Plausible** | Analytics | ❌ compte non créé |
 
 ---
 
 ## 12 — Sécurité
 
-### Les 5 CRIT — état
+### 12.1 Authentification et rôles
+
+Supabase Auth, par **e-mail** ou par **téléphone (OTP SMS)**. Rôles et atterrissages
+(`js/config.js`) : `patient` → `patient-dashboard.html` · `doctor`/`medecin` →
+`doctor-dashboard.html` · `admin` → `admin-dashboard.html` · `pharmacie` → `dawini-pharmacie.html`.
+
+Le secrétariat n'est pas un rôle d'authentification : c'est une appartenance à un cabinet,
+résolue par `get_my_cabinets`.
+
+Durcissement actif : mots de passe vérifiés contre **HIBP**, longueur minimale 8, **comptes
+anonymes désactivés**, confirmation d'e-mail active, branche `main` protégée.
+
+### 12.2 RLS
+
+**94 policies**, toutes scopées par `auth.uid()`. `doctor_profiles` est **fermée à `anon`**
+(`REVOKE SELECT`) : tout listing public passe par `public_doctors`.
+
+> ⚠️ **Le piège qui vide un agenda sans lever d'erreur.** `appointments.doctor_id` référence
+> `doctor_profiles.id`, **pas** `auth.uid()` — mais d'anciennes lignes utilisent quand même
+> `auth.uid()`, et `prescriptions` comme `doctor_schedule` comparent `doctor_id = auth.uid()`.
+> `js/tabibi-agenda.js` et `v2/src/domaine/agenda.ts` interrogent donc **les deux** espaces
+> d'identifiants. Ne pas « simplifier » sans vérifier en base avec un vrai compte médecin.
+> Contrôle prêt : `migrations/P1_test_coherence_doctor_id.sql`.
+
+### 12.3 Les cinq vulnérabilités critiques — toutes fermées
 
 | ID | Sujet | État | Preuve |
 |---|---|---|---|
-| **CRIT-1** | Isolation RLS entre utilisateurs | 🟢 Prouvée | Les 94 policies scopent par `auth.uid()` ; aucune fuite cross-user constatée |
-| **CRIT-2** | Gating des pages applicatives | 🟢 Fermé | 5 pages testées, aucune PII rendue sans session |
-| **CRIT-3** | Mass assignment sur `update_my_doctor_profile` | 🟢 Mitigé | INSERT avec `is_admin` → 400 ; RPC sans auth → 401. Test post-auth médecin restant |
-| **CRIT-4** | `doctor_profiles` exposait email / téléphone / chemins de documents à `anon` | 🟢 Fermé en prod | `REVOKE SELECT FROM anon` appliqué. `GET /rest/v1/doctor_profiles` → **401**. Les listings publics passent par la vue `public_doctors`. Table `doctor_profiles_backup_*` supprimée |
-| **CRIT-5** | Signup contournant le captcha par REST | 🟢 Fermé (29/07/2026) | `POST /auth/v1/signup` sans `captcha_token` → **400 `captcha_failed`**, aucun compte créé, aucun `access_token` |
+| **CRIT-1** | Isolation RLS entre utilisateurs | ✅ fermé | Aucune fuite. Test A↔B avec `service_role` **encore à faire** |
+| **CRIT-2** | Pages accessibles sans session | ✅ fermé | 5 pages testées, aucune PII rendue |
+| **CRIT-3** | Mass assignment `update_my_doctor_profile` | ✅ mitigé | RPC sans auth → 401 ; test post-auth médecin à faire |
+| **CRIT-4** | `doctor_profiles` exposait e-mail, téléphone, chemins de documents à `anon` | ✅ fermé | `GET /rest/v1/doctor_profiles` → **HTTP 401** |
+| **CRIT-5** | Inscription sans captcha par REST | ✅ fermé le 29/07/2026 | `POST /auth/v1/signup` sans `captcha_token` → **400 `captcha_failed`**, sur e-mail **et** téléphone |
 
-### Authentification
+### 12.4 Chaîne d'approvisionnement — fermée le 09/09/2026
 
-Supabase GoTrue, identifiants email **ou** téléphone. Captcha **Turnstile appliqué côté serveur** (Attack Protection), confirmation d'email active, vérification HIBP des mots de passe fuités activée, longueur minimale 8, comptes anonymes désactivés. Le widget Turnstile actif est `0x4AAAAAADR6IhCWO9RLIipE` ; la Secret Key ne vit que dans les secrets Supabase.
+38 pages chargeaient le SDK Supabase depuis un CDN via un tag **flottant** (`@supabase/supabase-js@2`).
+Trois défauts mesurés le jour même :
 
-Redirections post-login par rôle dans `js/config.js` : patient, médecin, admin, pharmacie.
+1. **La version changeait sans commit.** Le tag `@2` servait **2.116.0** en production, pendant que
+   `v2/package-lock.json` résolvait 2.115.0 et que `admin-api-keys.html` épinglait **2.39.0** —
+   trois clients Supabase dans un même produit, dont un à 77 versions de retard.
+2. **Aucune intégrité posable.** jsdelivr écrit en tête de ses fichiers auto-minifiés :
+   *« Do NOT use SRI with dynamically generated files »*.
+3. **Point de défaillance unique, hors d'Algérie.** Les bundles mobile et desktop copient `assets/`
+   mais allaient chercher ce script **sur le réseau à chaque démarrage** : CDN injoignable =
+   client Supabase impossible à créer = application morte, même sur un écran déjà en cache.
 
-### En-têtes HTTP (`_headers`, dupliqués dans `netlify.toml`)
+Le SDK est désormais auto-hébergé dans `assets/vendor/supabase/`, version dans le nom du fichier.
+`cdn.jsdelivr.net` retiré de `script-src` dans `_headers` **et** `netlify.toml`.
 
-CSP stricte — `default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`, `form-action 'self'`, `upgrade-insecure-requests` — avec une liste blanche explicite : Turnstile, Supabase (`https:` + `wss:`), Sentry (CDN + ingest), Plausible, tuiles OpenStreetMap, OpenRouteService, Meta. S'y ajoutent HSTS avec preload, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` et une `Permissions-Policy` restrictive.
+> Au passage : **`admin-api-keys.html` n'avait jamais fonctionné en production**. Elle importait le
+> SDK depuis `esm.sh`, hôte **absent** de la liste `script-src` → module bloqué par la CSP. Et même
+> sans CSP, elle lisait `window.__SUPABASE_URL__`, une variable qu'aucun fichier du dépôt ne définit.
 
-### Barrières de routage (`_redirects` + `functions/`)
+### 12.5 Fonctions `SECURITY DEFINER` exposées à `anon`
 
-`/supabase/*`, `/migrations/*`, `/desktop/*` et `/.git/*` renvoient un 404 explicite. Ce n'est pas une précaution théorique : l'apex a continué à servir `supabase/functions/send-sms/index.ts` en **200** après un déploiement où le fichier était absent, sans qu'aucune purge de cache n'y change quoi que ce soit. Les Pages Functions de `functions/` doublent ces règles pour `/seo/*` — et la leçon documentée est qu'une Function qui renvoie un 404 sec **sans jamais appeler `context.next()`** est la seule forme qui fonctionne.
+7 fonctions sensibles sont exécutables par `anon` — **toutes portent leur propre garde interne**
+(`is_admin()` pour les 5 fonctions d'administration, `auth.uid()` + filtre sur `patient_id` pour
+les 2 fonctions de données médicales). Verdict de l'audit : **safe**, aucun correctif urgent.
 
-### Règles de secrets
+Rappel du modèle : dans Supabase, `anon` est le rôle de **toute** requête venant du navigateur,
+y compris avant que le JWT d'une session valide ne soit appliqué. Un `GRANT` à `anon` n'est donc
+pas en soi une faille — ce qui compte est la garde interne.
 
-Aucun secret n'est écrit sur disque, loggué ou commité. Variables d'environnement et secrets Supabase uniquement. Seule la clé `anon` est publique — c'est sa raison d'être.
+Recommandation ouverte (SQL prêt dans `docs/SECURITY_RPC_AUDIT.md`) : retirer `EXECUTE` à `anon`
+pour ne plus dépendre d'une **seule** ligne de défense.
 
-### Points ouverts
+### 12.6 Mécanismes présents en base mais **inutilisés par le code**
 
-- **RPC `match_doctor_for_claim` exposée à `anon` et jamais appelée** — surface d'attaque gratuite. Script de fermeture fourni : `migrations/P0_revoke_match_doctor_for_claim.sql`.
-- **Mot de passe d'un compte de test** ayant circulé en clair dans le dépôt : le masquage ne suffit pas, l'historique git le conserve → **rotation en base obligatoire**. La purge des comptes de test, elle, a été faite et vérifiée le 5 août 2026.
-- **Secret Turnstile de l'edge `verify-turnstile`** non mis à jour depuis le changement de widget → toute soumission de la liste d'attente échoue en fail-closed. Cf. [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).
-- **Incohérence `doctor_id`** : `prescriptions` et `doctor_schedule` comparent `doctor_id = auth.uid()` là où les autres tables utilisent `doctor_profiles.id`. Si les deux identifiants diffèrent, un médecin ne verra ni ses créneaux ni ses ordonnances — **sans message d'erreur**. À trancher avec `migrations/P1_test_coherence_doctor_id.sql` avant le premier onboarding réel.
-- **`?demo=1`** reste ouvert en production web sans authentification (`js/tabibi-agenda.js`), bannière visible, verrouillé côté desktop.
-- **165 `innerHTML` non assainis** relevés lors d'un audit de code — risque XSS à traiter page par page.
-- **2FA GitHub** exigée sur le compte propriétaire du dépôt.
+Découverts le 09/09/2026 en croisant les types générés et le dépôt. Aucun de ces éléments n'est
+référencé nulle part dans `js/`, les pages ou les migrations :
 
-### Actions destructives
-
-Toute opération `DELETE`, `DROP`, `REVOKE` ou `UPDATE` massif sur la base **doit être proposée, jamais exécutée seule**, avec un `WHERE` ciblé et un `RETURNING`, et validée par un humain.
-
----
-
-## 13 — Conformité et documents
-
-Cadre applicable : **loi algérienne 18-07** (protection des données personnelles, autorité ANPDP) et **RGPD** pour l'hébergement européen.
-
-`docs/` regroupe 45+ documents indexés dans [`docs/INDEX.md`](docs/INDEX.md) :
-
-| Dossier | Contenu | Statut |
+| Mécanisme | Ce qui existe en base | Constat |
 |---|---|---|
-| `docs/legal/` | CGU, confidentialité, cookies, mentions légales, chartes patient et médecin, politique de remboursement | 🟡 **DRAFT — validation avocat DZ requise** |
-| `docs/contrats/` | Partenariat médecin, NDA équipe, prestataire, consentement de claim | 🟡 **DRAFT — validation avocat DZ requise** |
-| `docs/operations/` | KPI, onboarding équipe, playbook de crise, incident technique, modération, RGPD | 🟢 En vigueur |
-| `docs/marketing/` | Plan de lancement, pitch médecin, stratégie de contenu | 🟢 En vigueur |
-| `docs/guides-medecin/` · `docs/guides-patient/` | Guides de démarrage, gestion des RDV, téléconsultation, FAQ | 🟢 En vigueur |
-| `docs/templates-emails/` | 8 gabarits (bienvenue, confirmation, rappel, annulation, no-show, suspension) | 🟢 En vigueur |
-| `docs/mobile/` · `docs/security/` | Build Capacitor, déploiement, Firebase, push, tests ; documents CRIT-4 | 🟢 En vigueur |
+| **Chiffrement PII** | `tabibi_pii_encrypt` · `tabibi_pii_decrypt` · `tabibi_pii_key` + colonnes `appointments.diagnostic_enc` et `notes_medecin_enc` | **0 référence** dans le dépôt. Les notes médicales et diagnostics ne sont donc pas chiffrés par le produit, alors que le mécanisme est prêt |
+| **2FA serveur** | table `two_factor_secrets` · `enroll_two_factor` · `disable_two_factor` · vue `my_two_factor_status` | **0 référence.** `js/tabibi-2fa.js` implémente un TOTP RFC 6238 **maison**, sans utiliser ce dispositif : deux mécanismes concurrents, un seul utilisé |
+| **Journal de consentement** | table `consents_log` · `record_consent` | **0 référence** — alors que 4 cases de consentement RGPD existent sur `signup.html` |
+| **Limitation de débit** | table `rate_limits` · `check_api_rate_limit` · `fn_check_rate_limit` | **0 référence** hors API partenaires |
+| **Journal d'audit** | table `audit_log` | **0 référence** |
 
-Les pages légales publiques vivent dans `legal/` (`cgu`, `confidentialite`, `cookies`, `dpa`, `mentions-legales`, `rgpd-droits`), avec des redirections 301 depuis les anciennes URL racine. Le bandeau cookies (`js/tabibi-cookies.js`) place « Refuser » au même niveau visuel que « Accepter », n'active rien par défaut, et expire au bout de 6 mois.
+> Ce n'est pas une faille, mais un **écart entre ce que la base sait faire et ce que le produit
+> utilise**. Sur une plateforme de santé, le chiffrement des notes médicales et le journal de
+> consentement sont les deux plus coûteux à laisser dormants — le premier pour la confidentialité,
+> le second pour la preuve en cas de contrôle ANPDP.
 
-**Sans validation par un avocat algérien, aucun contrat médecin signé n'a de valeur.** Le délai de retour est de 2 à 3 semaines : à lancer bien avant décembre. Note de cadrage : [`docs/NOTE_CADRAGE_AVOCAT.md`](docs/NOTE_CADRAGE_AVOCAT.md).
+### 12.7 En-têtes HTTP
+
+Définis dans `_headers` (Cloudflare) **et** `netlify.toml` (previews) — toute évolution de CSP
+doit être faite **dans les deux**.
+
+`Strict-Transport-Security` (1 an, `preload`) · `X-Frame-Options: DENY` ·
+`X-Content-Type-Options: nosniff` · `Referrer-Policy: strict-origin-when-cross-origin` ·
+`Cross-Origin-Opener-Policy: same-origin` · `Cross-Origin-Resource-Policy: same-origin` ·
+`Permissions-Policy` (géoloc, caméra, micro, paiement limités à `self` ; USB, Bluetooth et
+capteurs coupés) · **CSP** avec `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`,
+`form-action 'self'`, `upgrade-insecure-requests`.
+
+> ⚠️ La CSP contient encore **`script-src 'unsafe-inline'`**, et ne peut pas s'en passer : les
+> pages contiennent 62 Ko (`patient-dashboard`), 58 Ko (`doctor-dashboard`) et 35 Ko
+> (`medecin-profile`) de JavaScript **inline**. La faiblesse de la CSP est donc la conséquence
+> directe d'un choix d'architecture, pas un oubli de configuration. La conversion Vite page par
+> page est ce qui permettra de la retirer.
+
+`_redirects` renvoie un **404 explicite** sur `/supabase/*`, `/migrations/*`, `/desktop/*` et
+`/.git/*` : la purge au build les retire déjà, mais l'apex a continué de servir
+`/supabase/functions/send-sms/index.ts` en 200 après un déploiement où le fichier était absent.
+
+### 12.8 Secrets
+
+- **Publiques, donc dans le dépôt sans risque** : URL Supabase, clé `anon` (protégée par la RLS),
+  site key Turnstile, DSN Sentry.
+- **Jamais dans le dépôt** : `service_role`, `TURNSTILE_SECRET_KEY`, identifiants BudgetSMS,
+  `WA_TOKEN`, `WA_APP_SECRET`, `google-services.json`, `*.jks`, `keystore.properties`.
+- Le `.gitignore` bloque aussi les **CSV de PII** (`medecins*.csv`, `prospects*.csv`,
+  `data/private/**`), les dumps de base et les binaires mobiles (`*.apk`, `*.aab`).
+
+### 12.9 Points ouverts
+
+| Priorité | Point | Préparé |
+|---|---|---|
+| 🔴 P0 | Clé de signature Android sans sauvegarde hors machine | `scripts/sauvegarder-keystore.sh` |
+| 🔴 P0 | Deux comptes-sonde toujours en production | `migrations/P0_purge_comptes_sonde.sql` |
+| 🔴 P0 | Mot de passe d'un compte de test en clair dans l'historique git **public** | Devient sans objet si `PURGE_comptes_test.sql` est lancé — il supprime ce compte |
+| 🔴 P0 | RPC `match_doctor_for_claim` exposée à `anon`, jamais appelée | `migrations/P0_revoke_match_doctor_for_claim.sql` |
+| 🟠 P1 | `TURNSTILE_SECRET_KEY` pas à jour → liste d'attente en fail-closed | Procédure dans `A_FAIRE_AGHILES.md` |
+| 🟠 P1 | Schéma de production non versionné | `migrations/P1_dump_schema_prod.sql` |
+| 🟠 P1 | Notes médicales non chiffrées alors que le mécanisme existe | §12.6 |
+| 🟡 P2 | `?demo=1` ouvert en production web sans authentification | — |
+| 🟡 P2 | `security_invoker` non vérifié sur `public_doctors` | — |
+| 🟡 P2 | `sms-dlr` accepte de faux accusés de livraison | Sans gravité tant qu'il ne fait que journaliser |
 
 ---
 
-## 14 — Déploiement
+## 13 — Déploiement
 
-### La règle à ne jamais oublier
+> ### ⚠️ Le projet Cloudflare Pages n'a AUCUNE connexion Git.
+> **Merger une PR sur `main` ne déploie rien.** Chaque mise en production est un
+> `wrangler pages deploy` lancé à la main. Erreur déjà commise le 03/09/2026 : une heure perdue
+> à chercher un problème de cache inexistant. Procédure : `DEPLOY_FRONTEND.md`.
 
-> **Le projet Cloudflare Pages n'a aucune connexion Git.**
-> Merger une PR sur `main` ne déploie **rien**. Chaque mise en production est un `wrangler pages deploy` lancé à la main.
-> Erreur déjà commise le 3 septembre 2026 : un merge fait en croyant déployer, une heure perdue à chercher un problème de cache inexistant.
-
-Procédure complète, avec ses pièges (dont un `rm -rf` sans `./` qui vide `functions/`) : [`DEPLOY_FRONTEND.md`](DEPLOY_FRONTEND.md). `scripts/deploy-web.sh` amorce la séquence ; `scripts/check-deleted-public-files.sh` est le garde-fou contre les suppressions accidentelles de fichiers publics.
-
-**Après chaque déploiement, vérifier par `curl` — jamais depuis le navigateur seul :** la couche d'assets de Cloudflare Pages a déjà servi des fichiers supprimés du déploiement, pour l'URL exacte sans query string, insensible à toute purge.
-
-**Netlify ne sert que les previews de PR.** `netlify.toml` duplique les en-têtes de sécurité pour que les previews soient représentatives.
-
-**Desktop** : `.github/workflows/desktop-release.yml` construit et publie les binaires Tauri.
-
-**Mobile** : `scripts/build-mobile.sh` (liste blanche) puis `npx cap sync` et build Android Studio / Xcode. Incrémenter `versionCode` à chaque distribution, sinon l'installation est refusée, et répercuter la version dans `telecharger.html`.
-
----
-
-## 15 — Développement local
+Netlify ne sert **que** les previews de PR. Ce n'est pas la production.
 
 ```bash
-git clone https://github.com/Ariles2025-ops/tabibi-doctor.git
-cd tabibi-doctor
-
-# Le web n'a aucune dépendance à installer : un serveur statique suffit.
-python3 -m http.server 8000     # puis http://localhost:8000
+git archive …                              # 1. export du CONTENU VERSIONNÉ, filtré par .gitattributes
+rm -rf <dossiers non-web>                  # 2. purge, chemins ANCRÉS obligatoires
+bash scripts/check-deleted-public-files.sh # 3. sortie 2 = suppressions publiques à justifier
+npx wrangler pages deploy …                # 4. déploiement
 ```
 
-`js/tabibi-sw-register.js` neutralise le service worker sur `localhost` : le cache ne pollue pas le développement.
+**Les trois barrières** : `.gitattributes export-ignore` · la purge au build ·
+`functions/*/[[path]].js` + `_redirects` (404 au routage, indépendants de toute propagation).
+
+**La règle qui en découle : remplacer, jamais supprimer.** La couche d'assets de Cloudflare Pages
+a servi des fichiers supprimés du déploiement, pour l'URL exacte sans query string, y compris
+depuis l'intérieur d'une Pages Function via `context.next()`. Ni le cache de zone, ni un Worker,
+ni le service worker : « Purge Everything » n'y peut rien.
+
+**Vérification après déploiement** — les 3 hôtes (apex, www, `*.pages.dev`) sur 5 colonnes.
+Attendu : `send-sms=404`, `openapi=200`, `migrations=404`, `desktop=404`, `sw=` la version de `main`.
 
 ```bash
-npm install                 # dépendances Capacitor uniquement
-npm run sync                # npx cap sync
-npm run open:android        # ouvre Android Studio
-npm run open:ios            # ouvre Xcode
-
-npx playwright test         # 4 parcours critiques
-node scripts/generate-seo-pages.mjs   # régénère seo/ (nécessite l'accès Supabase)
+curl -s https://tabibi.doctor/sw.js | grep CACHE_VERSION
 ```
 
-Le SQL se joue **à la main** dans le SQL Editor Supabase, script par script, en respectant la règle « pas de `BEGIN`/`COMMIT` » et la vérification en Run séparé.
-
 ---
 
-## 16 — Dette technique connue
+## 14 — Conventions de travail
 
-**Bloquant avant le lancement**
+Règles complètes dans `CLAUDE.md`. En résumé :
 
-- Schéma de production non versionné — `migrations/` n'est pas le miroir de la base.
-- 4 RPC ordonnances absentes de la production.
-- Secret Turnstile de la liste d'attente non mis à jour.
-- Rotation du mot de passe du compte de test.
-- Incohérence `doctor_id` non tranchée.
-- Déploiement manuel sans automatisation ni vérification systématique.
-
-**Confort et qualité**
-
-- Aucun bundler, aucune minification — `js/tabibi-i18n.js` fait 360 Ko bruts sur 43 pages.
-- Lighthouse : performance 67/100, accessibilité 85/100 (mesures de mai 2026, à refaire après l'allègement de l'accueil).
-- Service worker enregistré sur `index.html` seulement ; ~30 pages déclarent le manifest sans jamais l'enregistrer.
-- Migration CSS v2 à 13 % ; 15 pages avec un `<header class="app-bar">` en dur.
-- 8 dictionnaires i18n locaux hors du dictionnaire principal.
-- Console : 404 orphelin sur `/scripts/app.js`.
-- Push Firebase partiel : table et collecte en place, **zéro envoi serveur**, pas de `google-services.json`.
-- Versioning éclaté : `package.json` 1.0.0, Tauri 0.1.0, Android 1.0.2/vc4, `sw.js` v37 — et aucune version affichée dans l'application.
-- `v2/` : scaffold React/Vite créé en septembre 2026, **chantier gelé**. Il ne remplace pas la production et n'est pas déployé.
-
-**Dette SQL numérotée** — TODO-SQL-008 (RPC téléconsultation Daily.co), 009 (paiements), 010 (triggers de notification), 011 (table `reviews` + RLS). Détail : [`SQL_TODO.md`](SQL_TODO.md).
-
----
-
-## 17 — Conventions de contribution
-
-Les règles complètes sont dans [`CLAUDE.md`](CLAUDE.md), lu automatiquement par les agents. En résumé :
-
-1. **Jamais de commit ni de push direct sur `main`.** La branche est protégée (ruleset `protect-main`). Toujours une branche + une PR.
+1. **Jamais de commit ou de push direct sur `main`** — branche protégée. Branche + PR.
 2. **Jamais de merge en production sans validation humaine explicite.**
-3. **Toute action destructive sur la base s'arrête et demande confirmation**, avec garde-fou.
-4. **Jamais de secret loggué, écrit sur disque ou commité.**
-5. **Rien n'est validé sans preuve empirique** — sortie de base réelle, réponse HTTP, run navigateur, score mesuré. Jamais « ça devrait marcher ».
-6. **Ne pas toucher au layout, aux fonctionnalités ni à la logique Supabase** lors d'une tâche d'optimisation.
-7. **Ne pas modifier les couleurs de marque** sans demande explicite.
-8. Rapport attendu : concis, factuel, avec les preuves, l'URL de PR, et ce qui reste à décider.
+3. **Toute action destructive en base** (`DELETE`, `DROP`, `REVOKE`, `UPDATE` massif) → s'arrêter,
+   proposer le SQL avec garde-fou (`WHERE` ciblé + `RETURNING`), ne pas l'exécuter seul.
+4. **Aucun secret** loggé, écrit sur disque ou committé.
+5. **Rien n'est validé sans preuve empirique** : sortie de base réelle, réponse HTTP, run
+   navigateur, score mesuré. Jamais « ça devrait marcher ».
 
-**Nommage des branches** : `feat/`, `fix/`, `chore/`, `docs/`, `perf/`.
+Branches `feat/` `fix/` `chore/` `docs/` `perf/` `hotfix/` · commits en français, sans accent dans
+le titre · migrations préfixées par leur phase (`PHASE16_`, `CRIT-4_`, `P0_`, `P1_`, `DAWINI_`).
+
+**Trois paires de noms à ne pas confondre** : `doctor-profile.html` (fiche **publique**) vs
+`medecin-profile.html` (édition **privée**) · `send-sms` (hook OTP) vs `appointment-reminders`
+(rappels) · `scheduled_at` (NOT NULL, fait autorité) vs `starts_at` (nullable).
 
 ---
 
-*Ce README décrit l'état du 8 septembre 2026. Les chiffres de base de données sont ceux des derniers audits documentés et doivent être re-vérifiés en base avant tout usage commercial. Journal de bord : [`PROGRESS.md`](PROGRESS.md). Anomalies actives : [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md).*
+## 15 — Dette technique mesurée
+
+Compteurs relevés le 09/09/2026, reproductibles par `npm run lint:dette`.
+
+| Compteur | Valeur | Effet |
+|---|---:|---|
+| Blocs `catch {}` dans `js/` | **74** | Sentry tourne sur 27 pages et ne reçoit presque rien : les erreurs sont jetées avant d'être signalées |
+| idem, JS inline des pages compris | **173 / 189** | 91 % du traitement d'erreur du produit |
+| `innerHTML` dans `js/` | **58** | Combinés à `unsafe-inline`, aucun filet en cas d'injection |
+| `console.log` résiduels | **28** | |
+| Boutons icône sans `aria-label` | **179** | Cible AA non atteinte |
+| Champs sans label | **41** | |
+| Pages non converties à Vite | **44 / 45** | |
+| `js/tabibi-i18n.js` | **356 Ko** sur 47 pages | Les 3 langues d'un bloc — plus de la moitié du poids JS de l'accueil |
+| Migration CSS v2 | **13 %** | 31 pages en v1, 3 pages chargent les deux |
+| Pages orphelines | **2** | `payment.html`, `verify-prescription.html` — 0 lien entrant |
+| `TODO` / `FIXME` | **39** | |
+
+**Chantiers, par valeur décroissante** : découpage i18n (−340 Ko par page) · conversion des
+44 pages restantes · les 58 `innerHTML` puis CSP sans `unsafe-inline` · les 74 `catch` vides
+vers Sentry · déploiement automatique Cloudflare · `aria-label` · auto-update Tauri ·
+chiffrement des notes médicales (§12.6).
+
+---
+
+## 16 — Documentation du projet
+
+| Fichier | Contenu |
+|---|---|
+| `CLAUDE.md` | **Règles de travail** — à lire avant toute intervention |
+| `A_FAIRE_AGHILES.md` | Les 4 actions qui exigent une intervention humaine, préparées |
+| `AUDIT_ET_MIGRATION_2026-09-09.md` | 26 problèmes chiffrés + plan de migration technologique |
+| `DOSSIER_TABIBI_2026-09-08.md` | État complet : disque, produit, mobile, plan ordonné |
+| `DEPLOY_FRONTEND.md` | Runbook Cloudflare + post-mortem de la couche d'assets |
+| `DEPLOY_RAPPELS.md` | Runbook des rappels SMS |
+| `AUDIT_RESTANT_2026-07-29.md` | Registre de dette trié P0 → P3, avec preuves |
+| `ETAT_DES_LIEUX.md` | Audit du 25/07 — **partiellement périmé** (la note CRIT-5 notamment) |
+| `PROGRESS.md` | Journal des 13 phases depuis mai 2026 |
+| `SQL_TODO.md` · `KNOWN_ISSUES.md` | Dette SQL · anomalies connues |
+| `docs/INDEX.md` | Index des 35 documents recensés (légal, contrats, guides, ops, marketing) |
+| `docs/RPC_INVENTORY.md` | Les RPC du front confrontées à `pg_proc` en production |
+| `docs/SECURITY_RPC_AUDIT.md` | Audit des fonctions `SECURITY DEFINER` exposées à `anon` |
+| `docs/PROD_SEEDS_REGISTRY.md` | Registre des seeds appliqués en production |
+| `docs/mobile/` | 7 documents : setup, build, déploiement, Firebase, push, tests, anomalies |
+| `docs/WHATSAPP_ACTIVATION.md` | Procédure d'activation du canal WhatsApp |
+| `docs/NOTE_CADRAGE_AVOCAT.md` | Note de cadrage pour la validation juridique |
+| `assets/vendor/supabase/README.md` | Pourquoi le SDK est auto-hébergé, et comment le mettre à jour |
+| `v2/README.md` | Pourquoi la refonte React cohabite au lieu de remplacer |
+
+> Les 11 documents de `docs/legal/` et `docs/contrats/` sont en **DRAFT**, en attente de validation
+> par un avocat algérien. Aucun ne doit être utilisé contractuellement en l'état.
+
+---
+
+## Contacts
+
+- **Gérant / DPO** — Aghiles Haddadene · aghiles@tabibi.doctor
+- **Standard** — contact@tabibi.doctor
+- **WhatsApp** — +213 777 169 074
+- **Site** — https://tabibi.doctor
