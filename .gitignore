@@ -107,3 +107,6 @@ desktop/src-tauri/gen/
 
 # [Vite 2026-09-09] sortie du build web
 dist-web/
+
+# [v2 2026-09-09] sortie du build React
+v2/dist/

@@ -82,3 +82,40 @@ jobs:
           du -sh dist-web >> $GITHUB_STEP_SUMMARY
           ls -lh dist-web/assets/build/*.js | awk '{print $5, $9}' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ---------------------------------------------------------------------
+  # v2 — l'application React. Chaine d'outils separee (Vite 8, Vitest 3),
+  # donc job separe : un echec ici ne doit pas masquer l'etat du site v1,
+  # qui est ce qui tourne en production aujourd'hui.
+  # ---------------------------------------------------------------------
+  verifier-v2:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v2
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: v2/package-lock.json
+
+      - name: Installer les dependances
+        run: npm ci
+
+      - name: Typage strict
+        # C'est cette etape qui a prouve, le 09/09/2026, que la v2 interrogeait
+        # une colonne inexistante :
+        #   TS2352: SelectQueryError<"column 'nom' does not exist on 'doctor_profiles'.">
+        # Les types viennent du schema reel (supabase gen types), pas d'une
+        # hypothese ecrite a la main.
+        run: npm run typecheck
+
+      - name: Tests des regles metier
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
