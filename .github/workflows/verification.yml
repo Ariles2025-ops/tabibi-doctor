@@ -18,8 +18,9 @@
 name: verification
 
 on:
+  # [2026-09-09] toutes les PR, pas seulement celles vers main : une PR empilee
+  # (base = une autre branche, ex. #57 sur #56) doit etre verifiee aussi.
   pull_request:
-    branches: [main]
   push:
     branches: [main]
 
