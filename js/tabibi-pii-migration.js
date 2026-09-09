@@ -55,7 +55,7 @@
         // Un autre onglet est en train de migrer.
         return;
       }
-      try { localStorage.setItem(lockKey, String(nowMs)); } catch (e) {}
+      try { localStorage.setItem(lockKey, String(nowMs)); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:58'); }
 
       // [FIX 2026-05-19] Compteur de tentatives anti-boucle-infinie en cas d'echec permanent
       var attemptsKey = 'tabibi_pii_migration_attempts';
@@ -64,35 +64,35 @@
         console.warn('[Tabibi PII] 5 tentatives echouees, abandon. Contactez le support.');
         return;
       }
-      try { localStorage.setItem(attemptsKey, String(attempts + 1)); } catch (e) {}
+      try { localStorage.setItem(attemptsKey, String(attempts + 1)); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:67'); }
 
       // Deja migre (sentinel terminal) ?
       if (localStorage.getItem('tabibi_pii_migrated_at')) {
         // Cleanup du lock devenu inutile
-        try { localStorage.removeItem(lockKey); } catch (e) {}
-        try { localStorage.removeItem(attemptsKey); } catch (e) {}
+        try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:72'); }
+        try { localStorage.removeItem(attemptsKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:73'); }
         return;
       }
 
       var raw = localStorage.getItem('tabibi_user');
       if (!raw) {
-        try { localStorage.removeItem(lockKey); } catch (e) {}
+        try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:79'); }
         return;
       }
       var u;
       try { u = JSON.parse(raw); } catch (e) {
-        try { localStorage.removeItem(lockKey); } catch (e) {}
+        try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:84'); }
         return;
       }
       if (!hasPII(u)) {
-        try { localStorage.removeItem(lockKey); } catch (e) {}
+        try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:88'); }
         return;
       }
 
       // Doit etre authentifie
       var session = await sb.auth.getSession();
       if (!session || !session.data || !session.data.session || !session.data.session.user) {
-        try { localStorage.removeItem(lockKey); } catch (e) {}
+        try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:95'); }
         return;
       }
 
@@ -126,21 +126,21 @@
       if (rpc.error) {
         console.error('[Tabibi PII] migration upsert failed', rpc.error);
         // [FIX 2026-05-19] Cleanup du lock pour permettre nouvelle tentative
-        try { localStorage.removeItem(lockKey); } catch (e) {}
+        try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:129'); }
         return;
       }
 
       purgeFromLocalStorage(u);
       // [FIX 2026-05-19] Cleanup lock + attempts apres succes terminal
-      try { localStorage.removeItem(lockKey); } catch (e) {}
-      try { localStorage.removeItem(attemptsKey); } catch (e) {}
+      try { localStorage.removeItem(lockKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:135'); }
+      try { localStorage.removeItem(attemptsKey); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:136'); }
       /* [FIX-PROD-2026-05-19] log retiré */
     } catch (e) {
       console.error('[Tabibi PII] migration error', e);
       // [FIX 2026-05-19] Cleanup du lock en cas d'exception
       try {
         if (typeof lockKey !== 'undefined') localStorage.removeItem(lockKey);
-      } catch (e2) {}
+      } catch (e2) { (window.tabibiErreur || console.warn)(e2, 'tabibi-pii-migration.js:143'); }
     }
   }
 
@@ -197,7 +197,7 @@
         if (!raw) return;
         var u = JSON.parse(raw);
         purgeFromLocalStorage(u);
-      } catch (e) {}
+      } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pii-migration.js:200'); }
     }
   };
 

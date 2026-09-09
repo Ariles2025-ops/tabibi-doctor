@@ -38,9 +38,9 @@
     try {
       if (typeof global.toastM === 'function') return global.toastM(msg, kind || 'info');
       if (typeof global.toast === 'function') return global.toast(msg, kind || 'info');
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:41'); }
     // fallback
-    try { console[(kind === 'error' ? 'error' : 'log')]('[claim]', msg); } catch (e) {}
+    try { console[(kind === 'error' ? 'error' : 'log')]('[claim]', msg); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:43'); }
   }
 
   // Récupère { isAuth, role } pour décider du routage du bandeau
@@ -56,7 +56,7 @@
       try {
         var r = await sb.from('users').select('role').eq('id', user.id).maybeSingle();
         if (r && r.data && r.data.role) role = r.data.role;
-      } catch (e) {}
+      } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:59'); }
       // fallback : metadata du signup
       if (!role && user.user_metadata && user.user_metadata.role) role = user.user_metadata.role;
       return { isAuth: true, role: role, userId: user.id };
@@ -103,7 +103,7 @@
       if (payload && payload.ok === true) {
         // [ORDRE 2026-07-17] Claim OK → pousse le n° d'ordre en attente (best-effort,
         // ne bloque jamais le claim ; dcSubmit refait un appel VÉRIFIÉ pour le feedback).
-        try { await pushOrdre(); } catch (e) {}
+        try { await pushOrdre(); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:106'); }
         return { ok: true, data: payload };
       }
       return { ok: false, error: (payload && payload.error) || 'unknown_error' };
@@ -121,7 +121,7 @@
   var ORDRE_KEY = 'tabibi_claim_ordre';
   async function pushOrdre() {
     var ordre = null;
-    try { ordre = localStorage.getItem(ORDRE_KEY); } catch (e) {}
+    try { ordre = localStorage.getItem(ORDRE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:124'); }
     if (!ordre || !ordre.trim()) return { ok: false, error: 'no_pending_ordre' };
     var sb = _sb();
     if (!sb) return { ok: false, error: 'no_client' };
@@ -132,7 +132,7 @@
         return { ok: false, error: r.error.message || 'rpc_error' };
       }
       if (r.data === 'ok') {
-        try { localStorage.removeItem(ORDRE_KEY); } catch (e) {}
+        try { localStorage.removeItem(ORDRE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:135'); }
         return { ok: true };
       }
       return { ok: false, error: r.data };  // invalid_format | no_claimed_profile | locked_approved
@@ -186,7 +186,7 @@
       // Si déjà fait (ex: re-claim cas absurde), medecin-profile détectera et
       // n'affichera pas la banner onboarding.
       _toast("Fiche réclamée ! Complétez maintenant votre profil en 3 minutes.", 'success');
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:189'); }
       setTimeout(function () {
         global.location.href = 'medecin-profile.html?onboarding=1';
       }, 1500);
@@ -204,11 +204,11 @@
     if (!n || isNaN(n)) return { ok: false, error: 'invalid_legacy_id' };
     var res = await performClaim(n);
     if (res.ok) {
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:207'); }
       return res;
     }
     // Fallback : stocke pour retry au prochain login médecin
-    try { localStorage.setItem(STORAGE_KEY, String(n)); } catch (e) {}
+    try { localStorage.setItem(STORAGE_KEY, String(n)); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:211'); }
     return res;
   }
 
@@ -218,17 +218,17 @@
   // Si un legacy_id est en attente dans localStorage, tente la RPC.
   async function consumePending() {
     var raw = null;
-    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) {}
+    try { raw = localStorage.getItem(STORAGE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:221'); }
     if (!raw) return { ok: false, error: 'no_pending' };
     var n = parseInt(raw, 10);
     if (!n || isNaN(n)) {
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:225'); }
       return { ok: false, error: 'invalid_pending' };
     }
     var res = await performClaim(n);
     if (res.ok || res.error === 'profile_already_claimed' || res.error === 'already_claimed_another_profile') {
       // succès OU situation définitive -> on nettoie
-      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-claim.js:231'); }
     }
     return res;
   }

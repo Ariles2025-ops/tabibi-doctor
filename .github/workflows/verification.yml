@@ -45,6 +45,9 @@ jobs:
       - name: La dette ne doit pas augmenter
         run: npm run lint:dette
 
+      - name: Les trois dictionnaires ont les memes cles
+        run: npm run i18n:verifier
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 

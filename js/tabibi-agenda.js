@@ -62,7 +62,7 @@
           ag_nav_msg:'Messages', ag_nav_notif:'Notifications', ag_nav_profile:'My profile', ag_nav_logout:'Sign out' }
   };
   function lang() {
-    try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) {}
+    try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-agenda.js:65'); }
     return (document.documentElement.lang || 'fr').slice(0, 2);
   }
   function t(k) {
@@ -139,7 +139,11 @@
   function resolveMode() {
     // ?demo=1 : démos pré-launch WEB uniquement. Jamais dans l'app Tauri —
     // le poste de travail ne doit servir que des données réelles.
-    if (/[?&]demo=1/.test(location.search) && window.TABIBI_PLATFORM !== 'desktop') {
+    // [A12 2026-09-09] ?demo=1 etait ouvert en PRODUCTION web : n'importe qui
+    // pouvait afficher un agenda de demonstration sur tabibi.doctor. Reserve aux
+    // hotes de developpement et de preview.
+    var hoteDemo = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) || /\.(netlify\.app|pages\.dev)$/.test(location.hostname);
+    if (/[?&]demo=1/.test(location.search) && window.TABIBI_PLATFORM !== 'desktop' && hoteDemo) {
       S.mode = 'demo'; return Promise.resolve();
     }
     var c = sb();

@@ -13,6 +13,11 @@
 </script>
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script>
+<!-- [PERF 2026-09-09] SDK Supabase en defer, PREMIER script de <head> : il ne bloque plus
+     le premier rendu (Lighthouse : FCP 5,1 s -> 1,9 s, mesure sur cette page) et, etant
+     avant tout module, il s'execute avant le point d'entree Vite (defer et module
+     s'executent dans l'ordre du document, apres le parse). UMD : doit rester classique. -->
+<script defer src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <!-- [PIXEL 2026-07-30] Meta Pixel : inerte tant que la categorie
      marketing du bandeau cookies n'est pas acceptee. -->
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
@@ -201,8 +206,8 @@
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
 <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"></noscript>
-<link rel="preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'">
-<noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"></noscript>
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <!-- [UI 2026-07-09] Design system partagé (les styles inline v4 de la page gardent la main) -->
 <link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
@@ -1059,6 +1064,12 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <i class="fa fa-arrow-right" style="opacity:.7"></i>
       </a>
     </section>
+<!-- [PERF 2026-09-09] Traduction et bandeau cookies IMMEDIATEMENT apres le hero :
+     le titre et le bandeau (element LCP mesure) se peignent au premier rendu utile,
+     sans attendre les ~200 Ko de scripts applicatifs du point d'entree Vite.
+     Ces deux modules n'ont besoin que du DOM et de localStorage. -->
+<script src="js/tabibi-i18n.js"></script>
+<script src="js/tabibi-cookies.js"></script>
 
   <!-- [DAWINI PREMIUM 2026-07-08] Fonctionnalité Dawini mise en avant (design v4).
        Masquée automatiquement si TABIBI_FEATURES.dawini = false (helper data-feature). -->
@@ -1387,7 +1398,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 <!-- [Phase 7.4] Feature flags (video/payments/notifications/reviews/analytics/sentry) -->
 <!-- [Phase 10.5] Plausible analytics — chargé conditionnellement si analytics=true -->
 <!-- [Phase 11.3] Service Worker registration — fix bug majeur audit P5.4 #5 -->
-<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script type="module" src="./src/entries/index.js"></script>
 </body>
 </html>

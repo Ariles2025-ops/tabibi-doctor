@@ -43,7 +43,11 @@
           <div class="lk-sub" style="font-size:13px;color:rgba(255,255,255,.92);white-space:normal">Prenez rendez-vous avec un médecin en Algérie · طبيبي</div>
         </div>
       </div>
-      <div class="ver">Android · Version 1.0.2 (build 4)</div>
+      <!-- [A2 2026-09-09] Cette ligne DOIT decrire l'APK reellement servi par le bucket,
+           pas le dernier build local. Le 09/09/2026 la page annoncait 1.0.2 (build 4)
+           alors que le fichier en ligne etait 1.0.1 (build 3) — verifie a l'aapt2.
+           Procedure : uploader l'APK, PUIS mettre a jour cette ligne. Jamais l'inverse. -->
+      <div class="ver" id="apk-version">Android · Version 1.0.1 (build 3)</div>
     </div>
     <div class="body">
       <!-- [APK 2026-07-29] URL de téléchargement — POINT UNIQUE À MODIFIER.
@@ -58,6 +62,13 @@
                   renvoyé par Supabase qui déclenche le téléchargement.
            NB 2 : Supabase répond en cache-control:no-cache → chaque
                   téléchargement (~9 Mo) consomme de l'egress Supabase. -->
+      <!-- [A2 2026-09-09] Detection d'OS : avant, le meme lien APK etait servi a tous,
+           y compris aux iPhone (ou il est inutilisable). -->
+      <div id="ios-notice" hidden style="background:#fff8e6;border:1px solid #efd79a;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:14px;line-height:1.5">
+        <strong>Vous êtes sur iPhone ou iPad.</strong> L'application iOS n'est pas encore
+        disponible. En attendant, Tabibi fonctionne entièrement depuis Safari :
+        <a href="/" style="font-weight:700">ouvrir Tabibi sur le web</a>.
+      </div>
       <a class="btn" id="apk-download"
          href="https://pudugodhiofqrctcdwfl.supabase.co/storage/v1/object/public/Downloads/app-release.apk"
          download>
@@ -78,5 +89,16 @@
       </div>
     </div>
   </div>
+<script>
+(function(){
+  try {
+    var ua = navigator.userAgent || '';
+    var iOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (!iOS) return;
+    var n = document.getElementById('ios-notice'); if (n) n.hidden = false;
+    var b = document.getElementById('apk-download'); if (b) { b.setAttribute('aria-disabled','true'); b.style.opacity='.45'; b.style.pointerEvents='none'; }
+  } catch (e) { (window.tabibiErreur || console.warn)(e, 'telecharger:os-detect'); }
+})();
+</script>
 </body>
 </html>

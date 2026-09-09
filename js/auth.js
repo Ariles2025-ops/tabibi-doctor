@@ -33,7 +33,7 @@
       try {
         localStorage.removeItem('tabibi_user');
         localStorage.removeItem('tabibi_role');
-      } catch(e) {}
+      } catch (e) { (window.tabibiErreur || console.warn)(e, 'auth.js:36'); }
       window.location.href = cfg.REDIRECTS.afterLogout;
     },
     async getSession() {
@@ -75,7 +75,7 @@
       };
       const cachedUser = () => { try { return JSON.parse(localStorage.getItem('tabibi_user')||'null'); } catch(e){ return null; } };
       const purgeAndLogin = () => {
-        try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch(e){}
+        try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch (e) { (window.tabibiErreur || console.warn)(e, 'auth.js:78'); }
         window.location.href = loginUrl; return null;
       };
       // (e) classification fine, pas de catch générique
@@ -129,7 +129,7 @@
           next = { id: user.id, email: user.email, role: normRole(user.role) };
         }
         localStorage.setItem('tabibi_user', JSON.stringify(next));
-      } catch(e){}
+      } catch (e) { (window.tabibiErreur || console.warn)(e, 'auth.js:132'); }
 
       // (3) rôle attendu
       return gateRole(user);

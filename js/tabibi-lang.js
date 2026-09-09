@@ -26,7 +26,7 @@
     try {
       const saved = localStorage.getItem(KEY);
       if (ALLOWED.includes(saved)) return saved;
-    } catch(e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-lang.js:29'); }
     const nav = (navigator.language || '').toLowerCase();
     if (nav.startsWith('ar')) return 'ar';
     if (nav.startsWith('en')) return 'en';
@@ -87,10 +87,10 @@
 
   function set(lang) {
     if (!ALLOWED.includes(lang)) return;
-    try { localStorage.setItem(KEY, lang); } catch(e) {}
+    try { localStorage.setItem(KEY, lang); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-lang.js:90'); }
     applyDir(lang);
     refreshDropdown(lang);
-    listeners.forEach(cb => { try { cb(lang); } catch(e) {} });
+    listeners.forEach(cb => { try { cb(lang); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-lang.js:93'); } });
     document.dispatchEvent(new CustomEvent('tabibi:lang-change', { detail: { lang } }));
   }
 

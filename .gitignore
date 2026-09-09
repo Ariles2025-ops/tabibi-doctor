@@ -110,3 +110,6 @@ dist-web/
 
 # [v2 2026-09-09] sortie du build React
 v2/dist/
+
+# [2026-09-09] rapports Lighthouse : sorties de mesure, pas du code (900 Ko)
+tests/reports/

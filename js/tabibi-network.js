@@ -95,7 +95,7 @@
   function addPendingWrite(entry) {
     const q = getPendingWrites();
     q.push({ ...entry, queuedAt: Date.now() });
-    try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(q)); } catch(e) {}
+    try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(q)); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-network.js:98'); }
   }
   async function flushPendingWrites() {
     const q = getPendingWrites();
@@ -111,7 +111,7 @@
         remaining.push(item); // Erreur réseau, on garde
       }
     }
-    try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(remaining)); } catch(e) {}
+    try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(remaining)); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-network.js:114'); }
     if (remaining.length === 0 && q.length > 0) {
       showOfflineToast('✓ ' + q.length + ' action(s) synchronisée(s)', 'success');
     }

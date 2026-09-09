@@ -13,8 +13,8 @@
 // =====================================================================
 
 const PLAFONDS = {
-  'no-empty': 74,          // blocs catch vides — cause des bugs invisibles
-  'no-unused-vars': 117,
+  'no-empty': 0,           // 74 -> 0 le 09/09/2026 : chaque catch signale via window.tabibiErreur
+  'no-unused-vars': 43,   // 117 -> 43 le 09/09/2026
   'no-console': 28,
   'no-restricted-properties': 58, // innerHTML dans js/ — chaque correction abaisse ce plafond
   'no-undef': 0,

@@ -11,6 +11,8 @@
 // navigateur. La migration ne casse pas le deploiement actuel.
 //
 // Reste hors de ce fichier, volontairement :
+//   js/tabibi-i18n.js et js/tabibi-cookies.js -> scripts classiques places juste
+//                            apres le hero dans index.html (LCP), voir la page.
 //   js/tabibi-prelang.js  -> script classique dans le <head>, il doit poser
 //                            la langue et la direction RTL avant le rendu.
 //   le SDK Supabase       -> script classique. C'est un bundle UMD : importe
@@ -32,6 +34,7 @@ import '../../js/config.js';
 import '../../js/supabase-client.js';
 import '../../js/auth.js';
 import '../../js/capacitor-bridge.js';
+import '../../js/tabibi-push-init.js';
 import '../../js/api.js';
 import '../../js/tabibi-bridge.js';
 import '../../js/tabibi-doctor-name.js';
@@ -39,9 +42,7 @@ import '../../js/tabibi-brevo.js';
 import '../../js/tabibi-turnstile.js';
 import '../../js/tabibi-sms.js';
 import '../../js/tabibi-network.js';
-import '../../js/tabibi-cookies.js';
 import '../../js/tabibi-beta.js';
-import '../../js/tabibi-i18n.js';
 import '../../js/tabibi-langbar.js';
 import '../../js/tabibi-sentry.js';
 import '../../js/tabibi-features.js';

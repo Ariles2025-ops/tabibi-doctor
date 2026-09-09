@@ -369,7 +369,7 @@ function setLang(l) {
           if (el.hasAttribute('data-rtl-keep')) return;
           el.removeAttribute('dir');
         });
-      } catch(e) {}
+      } catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:372'); }
     }
   }
   // update lang buttons
@@ -685,11 +685,11 @@ function _tbRenderPins(){
   _tbUpdateCount();
 }
 function _tbOpenDoc(id){
-  try{ if(typeof goDoc==='function'&&typeof DOCTORS!=='undefined'&&DOCTORS.find(function(x){return x.id===id;})){ goDoc(id); return; } }catch(e){}
+  try{ if(typeof goDoc==='function'&&typeof DOCTORS!=='undefined'&&DOCTORS.find(function(x){return x.id===id;})){ goDoc(id); return; } }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:688'); }
   window.location.href='doctor-profile.html?id='+encodeURIComponent(id);
 }
 function _tbLoadCounts(){
-  try{ const c=sessionStorage.getItem('tb_map_wcounts_v1'); if(c){ _tbCounts=JSON.parse(c); _tbRenderBubbles(); return; } }catch(e){}
+  try{ const c=sessionStorage.getItem('tb_map_wcounts_v1'); if(c){ _tbCounts=JSON.parse(c); _tbRenderBubbles(); return; } }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:692'); }
   const codes=Object.keys(window.DZ_WILAYAS||{});
   Promise.all(codes.map(function(code){
     return fetch(_SB_URL+'/rest/v1/public_doctors?wilaya_code=eq.'+code+'&select=id&limit=1',{headers:_tbHdrs({Prefer:'count=estimated',Range:'0-0'})})
@@ -697,7 +697,7 @@ function _tbLoadCounts(){
       .catch(function(){ return [code,0]; });
   })).then(function(pairs){
     _tbCounts={}; pairs.forEach(function(p){ _tbCounts[p[0]]=p[1]; });
-    try{ sessionStorage.setItem('tb_map_wcounts_v1',JSON.stringify(_tbCounts)); }catch(e){}
+    try{ sessionStorage.setItem('tb_map_wcounts_v1',JSON.stringify(_tbCounts)); }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:700'); }
     _tbRenderBubbles();
   });
 }
@@ -763,7 +763,7 @@ window.addEventListener("beforeinstallprompt",e=>{
   try {
     const dismissed = parseInt(localStorage.getItem("tabibi_install_dismissed")||"0",10);
     if (dismissed && (Date.now() - dismissed) < 7*24*60*60*1000) return;
-  } catch(err) {}
+  } catch (err) { (window.tabibiErreur || console.warn)(err, 'home-app.js:766'); }
   setTimeout(()=>{
     const b=document.getElementById("install-banner");
     if(b){
@@ -795,7 +795,7 @@ function dismissInstall(){
     b.classList.remove("show");
     document.body.style.paddingBottom="";
   }
-  try{localStorage.setItem("tabibi_install_dismissed",String(Date.now()));}catch(e){}
+  try{localStorage.setItem("tabibi_install_dismissed",String(Date.now()));}catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:798'); }
 }
 
 /* ══ SERVICE WORKER ═══════════════════════════════════════════ */
@@ -1259,7 +1259,7 @@ async function finalBooking(docId,slot,docName,prix){
       const { data: { session } } = await window.tabibi.supabase.auth.getSession();
       if (session && session.user) { _patientId = session.user.id; _sbAccessToken = session.access_token || null; }
     }
-  } catch(e) {}
+  } catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:1262'); }
   if (!_patientId) {
     toast("<i class='fa fa-triangle-exclamation'></i> Connectez-vous pour réserver un rendez-vous.", "error", 5000);
     return;
@@ -1321,7 +1321,7 @@ async function finalBooking(docId,slot,docName,prix){
         const arr = JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
         arr.unshift(appt);
         localStorage.setItem("tabibi_rdv", JSON.stringify(arr));
-      } catch(_) {}
+      } catch (_) { (window.tabibiErreur || console.warn)(_, 'home-app.js:1324'); }
       /* [FIX-PROD-2026-05-19] console.log retiré */
       // Invalider le cache des slots pour ce médecin/date
       if (window._takenSlotsCache) delete window._takenSlotsCache[docId + '|' + isoDate];
@@ -1761,7 +1761,7 @@ async function loadDoctorCards(opts, page){
   _lastFilterOpts = opts;
 
   // Annule un fetch en vol si l'user retape
-  if(_loadDocsAbort){ try{ _loadDocsAbort.abort(); }catch(e){} }
+  if(_loadDocsAbort){ try{ _loadDocsAbort.abort(); }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:1764'); } }
   _loadDocsAbort = (typeof AbortController!=='undefined') ? new AbortController() : null;
   const signal = _loadDocsAbort ? _loadDocsAbort.signal : undefined;
   const mySeq = ++_loadDocsSeq;

@@ -27,7 +27,7 @@
   var waiters = [];          // resolveurs en attente d'un token
 
   function emit(ev, info) {
-    try { document.dispatchEvent(new CustomEvent('tabibi:captcha', { detail: { ev: ev, info: info || '' } })); } catch (e) {}
+    try { document.dispatchEvent(new CustomEvent('tabibi:captcha', { detail: { ev: ev, info: info || '' } })); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-captcha-visible.js:30'); }
   }
 
   function onToken(tok) {
@@ -43,7 +43,7 @@
     if (!t) return null;
     token = null;
     widgets.forEach(function (id) {
-      try { window.turnstile && window.turnstile.reset(id); } catch (e) {}
+      try { window.turnstile && window.turnstile.reset(id); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-captcha-visible.js:46'); }
     });
     emit('consomme', 'widgets re-armés');
     return t;

@@ -3,6 +3,11 @@
 # qu'apres consentement marketing (js/tabibi-pixel.js) : ces sources
 # autorisees ne declenchent par elles-memes aucune requete.
 # ⚠️ Toute evolution de CSP se fait AUSSI dans netlify.toml.
+# [A12 2026-09-09] img-src : `https:` autorisait N'IMPORTE QUELLE image de n'importe
+# quel domaine. Remplace par les hotes reellement references dans le code
+# (grep du 09/09/2026) : Supabase Storage (avatars, documents), tuiles OSM,
+# QR codes, Unsplash (visuels de demonstration — a retirer avant lancement),
+# Facebook (pixel apres consentement). Toute evolution se fait AUSSI dans netlify.toml.
 /*
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
   X-Frame-Options: DENY
@@ -12,7 +17,7 @@
   Permissions-Policy: geolocation=(self), camera=(self), microphone=(self), payment=(self), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://cdnjs.cloudflare.com https://unpkg.com https://www.googletagmanager.com https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https://*.tile.openstreetmap.org https: blob: https://www.facebook.com https://facebook.com; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io https://o4511831260987392.ingest.de.sentry.io https://www.facebook.com https://facebook.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://unpkg.com https://www.googletagmanager.com https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://pudugodhiofqrctcdwfl.supabase.co https://api.qrserver.com https://images.unsplash.com https://www.facebook.com https://facebook.com; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io https://o4511831260987392.ingest.de.sentry.io https://www.facebook.com https://facebook.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests
 
 /sw.js
   Cache-Control: no-cache, no-store, must-revalidate
@@ -30,3 +35,12 @@
   Cache-Control: no-cache, must-revalidate
 /styles/*
   Cache-Control: no-cache, must-revalidate
+
+# [A8 2026-09-09] Sortie Vite : fichiers a EMPREINTE (index-BizkUnhP.js). Le nom
+# change a chaque contenu, donc un cache d'un an est sans risque et le hachage
+# ne sert a rien sans lui. Avant : defaut Cloudflare 4 h.
+/assets/build/*
+  Cache-Control: public, max-age=31536000, immutable
+# Dependances auto-hebergees, version dans le nom du fichier (supabase-js-2.116.0.min.js)
+/assets/vendor/*
+  Cache-Control: public, max-age=31536000, immutable

@@ -58,7 +58,7 @@
   }
 
   function lang() {
-    try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) {}
+    try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pro-sidebar.js:61'); }
     return (document.documentElement.lang || 'fr').slice(0, 2);
   }
 
