@@ -26,8 +26,14 @@ on:
 jobs:
   verifier:
     runs-on: ubuntu-latest
+    # [2026-09-09] gitleaks-action lit /pulls/<n>/commits sur un evenement
+    # pull_request : sans `pull-requests: read`, le GITHUB_TOKEN recoit 403
+    # « Resource not accessible by integration » (run #1). Permissions minimales.
+    permissions:
+      contents: read
+      pull-requests: read
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           fetch-depth: 0   # gitleaks lit tout l'historique
 
@@ -40,7 +46,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
@@ -79,7 +85,7 @@ jobs:
 
       - name: Rapport de test si echec
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: playwright-report
           path: |
@@ -108,9 +114,9 @@ jobs:
       run:
         working-directory: v2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: npm
