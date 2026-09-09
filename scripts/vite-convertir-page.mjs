@@ -18,7 +18,7 @@
 // APRES le parse, donc apres tout inline. Inventaire : voir AUDIT_PROFOND §F.
 // =====================================================================
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname, basename, relative, join } from 'node:path';
+import { dirname, relative } from 'node:path';
 
 const GARDE_CLASSIQUE = ['tabibi-prelang.js'];
 const SDK = /assets\/vendor\/supabase\/supabase-js-[\d.]+\.min\.js/;
