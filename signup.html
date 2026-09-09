@@ -616,7 +616,7 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
       <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#0a4d3e,#0E5F46);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
         <i class="fa fa-user-doctor" style="font-size:36px;color:#fff"></i>
       </div>
-      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">${tabibiT('welcome_doctor','Bienvenue Dr')} ${prenom} !</h2>
+      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">${tabibiT('welcome_doctor','Bienvenue Dr')} ${(window.esc||String)(prenom)} !</h2>
       <p style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:20px">
         ${tabibiT('signup_recorded','Votre inscription a bien été enregistrée.')}
         <br><br>

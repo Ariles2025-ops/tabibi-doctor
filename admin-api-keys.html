@@ -265,7 +265,7 @@
 
     <form id="create-form" onsubmit="submitCreate(event)">
       <label>Nom du partenaire</label>
-      <input type="text" name="partner_name" required placeholder="ex : Pharmacie Centrale Hydra" />
+      <input type="text" name="partner_name" required placeholder="ex : Pharmacie Centrale Hydra" / aria-label="ex : Pharmacie Centrale Hydra">
 
       <label>Email de contact</label>
       <input type="email" name="partner_email" required />
@@ -313,6 +313,7 @@
 
 <!-- Supabase JS -->
 <script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script src="js/tabibi-security.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script type="module">
@@ -350,7 +351,7 @@
       .order("partner_name", { ascending: true });
 
     const wrap = document.getElementById("keys-table-wrap");
-    if (error) { wrap.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
+    if (error) { wrap.innerHTML = `<div class="empty">Erreur : ${(window.esc||String)(error.message)}</div>`; return; }
     if (!data || data.length === 0) {
       wrap.innerHTML = `<div class="empty">Aucune clé. Cliquez sur "+ Nouvelle clé" pour en créer.</div>`;
       return;

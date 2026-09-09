@@ -8,6 +8,13 @@
    <i class='fa fa-circle-check' style='color:var(--green)'></i> PWA Install + Service Worker
    ================================================================ */
 
+/* [SECU 2026-09-09] Echappement HTML pour toute donnee venant de la base ou de
+   l'utilisateur (nom de medecin, specialite, ville, identite du compte). Un nom de
+   praticien contenant du HTML s'executait chez chaque visiteur qui le trouvait.
+   window.esc est fourni par js/tabibi-security.js ; repli local si absent. */
+const hEsc = (v) => (window.esc ? window.esc(v) : String(v == null ? '' : v)
+  .replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
+
 /* ══ TRANSLATIONS ═══════════════════════════════════════════ */
 const TR = {
   fr:{
@@ -455,15 +462,15 @@ function renderUserUI() {
   const bg=user.avatar?.bg||"#e7f3ef",tc=user.avatar?.tc||"#0a4d3e";
   const pill=`
     <div onclick="goDash()" role="button" tabindex="0" style="display:flex;align-items:center;gap:8px;padding:4px 10px 4px 5px;border-radius:var(--rfull);border:1.5px solid var(--border);cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='var(--blue)'" onmouseout="this.style.borderColor='var(--border)'">
-      <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${user.initials}</div>
-      <div><div style="font-size:13px;font-weight:700;color:var(--text)">${user.name}</div><div style="font-size:10px;color:var(--text3)">${lbl}</div></div>
+      <div style="width:28px;height:28px;border-radius:50%;background:${hEsc(bg)};color:${hEsc(tc)};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${hEsc(user.initials)}</div>
+      <div><div style="font-size:13px;font-weight:700;color:var(--text)">${hEsc(user.name)}</div><div style="font-size:10px;color:var(--text3)">${hEsc(lbl)}</div></div>
     </div>
     <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="handleLogout()" title="${T('logout')}" aria-label="${T('logout')}"><i class='fa fa-right-from-bracket'></i></button>`;
   if(d) d.innerHTML=pill;
   if(m) m.innerHTML=`
     <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);margin-bottom:8px">
-      <div style="width:38px;height:38px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:13px">${user.initials}</div>
-      <div><div style="font-size:14px;font-weight:700">${user.name}</div><div style="font-size:11px;color:var(--text3)">${lbl}</div></div>
+      <div style="width:38px;height:38px;border-radius:50%;background:${hEsc(bg)};color:${hEsc(tc)};display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;font-size:13px">${hEsc(user.initials)}</div>
+      <div><div style="font-size:14px;font-weight:700">${hEsc(user.name)}</div><div style="font-size:11px;color:var(--text3)">${hEsc(lbl)}</div></div>
     </div>
     <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:10px" onclick="goDash()"><i class='fa fa-chart-line'></i> Tableau de bord</button>
     <button class="btn btn-ghost btn-full" style="justify-content:flex-start;gap:10px;color:var(--red);margin-top:6px;border-color:var(--red-l)" onclick="handleLogout()"><i class='fa fa-right-from-bracket'></i> ${T("logout")}</button>`;
@@ -990,7 +997,7 @@ function buildPagination(cur, total){
   function btn(i, label, disabled){
     const isCur = i === cur && !disabled;
     const lbl = label != null ? label : i;
-    return `<button style="min-width:34px;height:34px;padding:0 8px;border-radius:var(--r8);border:1.5px solid ${isCur?"var(--blue)":"var(--border)"};background:${isCur?"var(--blue)":"#fff"};color:${isCur?"#fff":"var(--text3)"};font-size:13px;font-weight:600;cursor:${disabled?"not-allowed":"pointer"};transition:all .12s;opacity:${disabled?".4":"1"}" ${disabled?"disabled":`onclick="goPage(${i})"`} ${isCur?'aria-current="page"':''}>${lbl}</button>`;
+    return `<button style="min-width:34px;height:34px;padding:0 8px;border-radius:var(--r8);border:1.5px solid ${isCur?"var(--blue)":"var(--border)"};background:${isCur?"var(--blue)":"#fff"};color:${isCur?"#fff":"var(--text3)"};font-size:13px;font-weight:600;cursor:${disabled?"not-allowed":"pointer"};transition:all .12s;opacity:${disabled?".4":"1"}" ${disabled?"disabled":`onclick="goPage(${i})"`} ${isCur?'aria-current="page"':''}>${hEsc(lbl)}</button>`;
   }
   function gap(){
     return `<span style="min-width:24px;text-align:center;color:var(--text3);font-weight:700">…</span>`;
@@ -1021,7 +1028,7 @@ function docCard(d){
   // Nom 100% arabe → rtl (aligné à droite) ; nom mixte latin+arabe → ltr (la partie latine se lit en premier, plus de troncature).
   const rk  = ' dir="auto" data-rtl-keep="true"';
   // Avatar = MONOGRAMME (initiales) sur pastille verte pâle — données réelles only, pas de photo.
-  const avaHtml = `<div class="doc-ava">${(d.in||'').toString().trim()}</div>`;
+  const avaHtml = `<div class="doc-ava">${hEsc((d.in||'').toString().trim())}</div>`;
   // Statut réel : Réservable (claimed+approved) / En validation (claimed, pending) / Fiche non réclamée.
   const reservable = d.claimed && d.validationStatus === 'approved';
   const statusBadge = reservable
@@ -1036,9 +1043,9 @@ function docCard(d){
     <div class="doc-row">
       ${avaHtml}
       <div style="flex:1;min-width:0">
-        <div class="doc-name" dir="auto" data-rtl-keep="true">${n}</div>
-        <div class="doc-spec"${rk}><i class='fa fa-stethoscope fa-xs'></i>${s}</div>
-        <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${c}</div>
+        <div class="doc-name" dir="auto" data-rtl-keep="true">${hEsc(n)}</div>
+        <div class="doc-spec"${rk}><i class='fa fa-stethoscope fa-xs'></i>${hEsc(s)}</div>
+        <div class="doc-loc"${rk}><i class='fa fa-location-dot fa-xs'></i>${hEsc(c)}</div>
       </div>
     </div>
     <div class="doc-tags">
@@ -1084,9 +1091,9 @@ function showDoctorModal(d){
       <div style="position:relative">
         <div style="background:var(--grad-brand);padding:20px 20px 50px;margin-bottom:-36px;position:relative">
           <div style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#fff;border:none" onclick="this.closest('.modal-bg').remove();document.body.style.overflow=''">×</div>
-          <div style="width:64px;height:64px;border-radius:16px;background:${d.bg};color:${d.tc};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;border:3px solid rgba(255,255,255,.3);margin-bottom:10px">${d.in}</div>
-          <div style="font-size:18px;font-weight:800;color:#fff">${n}</div>
-          <div style="font-size:13px;color:rgba(255,255,255,.75)">${s} · ${c}</div>
+          <div style="width:64px;height:64px;border-radius:16px;background:${hEsc(d.bg)};color:${hEsc(d.tc)};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;border:3px solid rgba(255,255,255,.3);margin-bottom:10px">${d.in}</div>
+          <div style="font-size:18px;font-weight:800;color:#fff">${hEsc(n)}</div>
+          <div style="font-size:13px;color:rgba(255,255,255,.75)">${hEsc(s)} · ${hEsc(c)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
             ${d.note != null
               ? `<span style='color:#F59E0B;font-size:13px'>${stars(d.note)}</span><span style='font-size:13px;font-weight:700;color:#fff'>${d.note}</span><span style='font-size:12px;color:rgba(255,255,255,.65)'>(${d.avis||0} ${T("avis_word")})</span>`
@@ -1112,7 +1119,7 @@ function showDoctorModal(d){
             <p style="font-size:13px;color:var(--text2);line-height:1.7;margin-bottom:12px">${d.desc||""}</p>
             ${[["fa-location-dot",T("addr_label"),d.addr||"—"],["fa-language",T("langs_label"),(d.langs||[]).join(", ")],["fa-clock",T("availability_label"),T("hours_default")]].map(([ic,lbl,val])=>`
               <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bg2);font-size:12px">
-                <span style='color:var(--text3);display:flex;align-items:center;gap:4px'><i class='fa ${ic} fa-xs'></i>${lbl}</span>
+                <span style='color:var(--text3);display:flex;align-items:center;gap:4px'><i class='fa ${ic} fa-xs'></i>${hEsc(lbl)}</span>
                 <span style='font-weight:600;color:var(--text);text-align:end'>${val}</span>
               </div>`).join("")}
             <div style="margin-top:12px">
@@ -1194,10 +1201,10 @@ function showBookingModal(d,slot){
       </div>
       <div class="modal-body" style="padding-bottom:24px">
         <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:var(--r12);margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:var(--r12);background:${d.bg};color:${d.tc};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${d.in}</div>
+          <div style="width:46px;height:46px;border-radius:var(--r12);background:${hEsc(d.bg)};color:${hEsc(d.tc)};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${d.in}</div>
           <div style="flex:1">
-            <div style="font-size:14px;font-weight:700">${n}</div>
-            <div style="font-size:12px;color:var(--text3)">${dspec(d)} · ${dcity(d)}</div>
+            <div style="font-size:14px;font-weight:700">${hEsc(n)}</div>
+            <div style="font-size:12px;color:var(--text3)">${hEsc(dspec(d))} · ${hEsc(dcity(d))}</div>
             <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
               <span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:var(--rfull);font-weight:600"><i class='fa fa-calendar-days'></i> ${slot||"09:00"}</span>
               <span style='font-size:13px;font-weight:700;color:var(--blue)'>${d.prix != null ? `${d.prix.toLocaleString()} DA` : 'Tarif à confirmer'}</span>
@@ -1378,15 +1385,15 @@ function showPatientDashboardModal(){
       <div class="modal-body" style="padding-bottom:24px">
         <!-- User info -->
         <div class="tbm-user">
-          <div class="tbm-ava">${user?.initials||"?"}</div>
-          <div style="min-width:0"><b>${user?.name||""}</b><small>${user?.email||""}</small></div>
+          <div class="tbm-ava">${hEsc(user?.initials||"?")}</div>
+          <div style="min-width:0"><b>${hEsc(user?.name||"")}</b><small>${hEsc(user?.email||"")}</small></div>
         </div>
         <!-- Stats -->
         <div class="tbm-stats">
           ${[["<i class='fa fa-calendar-days'></i>",upcoming.length,"RDV à venir"],["<i class='fa fa-circle-check'></i>",all.filter(r=>r.status==="Completed").length,"Terminés"],["<i class='fa fa-heart'></i>",getFavs().length,"Favoris"]].map(([ic,n,l])=>`
             <div class="tbm-stat">
               <div>${ic}</div>
-              <div class="n">${n}</div>
+              <div class="n">${hEsc(n)}</div>
               <div class="l">${l}</div>
             </div>`).join("")}
         </div>
@@ -1397,7 +1404,7 @@ function showPatientDashboardModal(){
             <div style="display:flex;align-items:center;gap:10px;padding:12px;background:#fff;border:1px solid var(--border);border-radius:var(--r12)">
               <div style="width:36px;height:36px;border-radius:var(--r8);background:var(--blue-l);color:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class='fa fa-stethoscope fa-sm'></i></div>
               <div style="flex:1;min-width:0">
-                <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.doctorName||r.doctor||"Médecin"}</div>
+                <div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${hEsc(r.doctorName||r.doctor||"Médecin")}</div>
                 <div style="font-size:11px;color:var(--text3)">${r.date} — ${r.time}</div>
               </div>
               <span class="badge ${STC[r.status]||"badge-gray"}" style="flex-shrink:0">${STL[r.status]||r.status}</span>
@@ -1425,8 +1432,8 @@ function showDoctorDashboardModal(){
       </div>
       <div class="modal-body" style="padding-bottom:24px">
         <div class="tbm-user">
-          <div class="tbm-ava">${user?.initials||"?"}</div>
-          <div style="min-width:0"><b>${user?.name||""}</b><small>${[user?.specialty,user?.ville].filter(Boolean).join(" · ")}</small>${user?._validation_status==='approved'?`<div><span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span></div>`:""}</div>
+          <div class="tbm-ava">${hEsc(user?.initials||"?")}</div>
+          <div style="min-width:0"><b>${hEsc(user?.name||"")}</b><small>${hEsc([user?.specialty,user?.ville].filter(Boolean).join(" · "))}</small>${user?._validation_status==='approved'?`<div><span class="badge badge-green" style="margin-top:4px"><i class='fa fa-check fa-xs'></i> Certifié Tabibi</span></div>`:""}</div>
         </div>
         <!-- [TODO 2026-05-18] Remplacer ces stats hardcodees par appel API Supabase
              (rdv count, sum revenus, avg rating, pending count) avant lancement public.
@@ -1435,7 +1442,7 @@ function showDoctorDashboardModal(){
           ${[["<i class='fa fa-calendar-days'></i>","--","RDV ce mois"],["<i class='fa fa-coins'></i>","--","Revenus"],["<i class='fa fa-star'></i>","--","Note moy."],["<i class='fa fa-hourglass-half'></i>","--","En attente"]].map(([ic,n,l])=>`
             <div class="tbm-stat">
               <div>${ic}</div>
-              <div class="n">${n}</div>
+              <div class="n">${hEsc(n)}</div>
               <div class="l">${l}</div>
             </div>`).join("")}
         </div>

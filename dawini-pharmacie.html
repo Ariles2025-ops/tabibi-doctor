@@ -237,8 +237,8 @@ function _reqCard(req){
     html += '<div class="dwp-form">' +
       '<label class="dwp-check"><input type="checkbox" id="dispo-' + _esc(req.id) + '" checked> <span data-i18n="dw_ph_dispo">Médicament disponible</span></label>' +
       '<label class="dwp-check"><input type="checkbox" id="gen-' + _esc(req.id) + '"> <span data-i18n="dw_ph_generic_chk">J\'ai le générique</span></label>' +
-      '<input class="form-control" id="meds-' + _esc(req.id) + '" maxlength="200" style="margin-bottom:8px" placeholder="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '">' +
-      '<input class="form-control" id="com-' + _esc(req.id) + '" maxlength="300" placeholder="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '">' +
+      '<input class="form-control" id="meds-' + _esc(req.id) + '" maxlength="200" style="margin-bottom:8px" placeholder="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '" aria-label="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '">' +
+      '<input class="form-control" id="com-' + _esc(req.id) + '" maxlength="300" placeholder="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '" aria-label="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '">' +
       '<div class="dwp-actions">' +
         '<button class="btn btn-primary" onclick="answer(\'' + _esc(req.id) + '\', true)"><i class="fa fa-check"></i> ' + _esc(_t('dw_ph_accept','Accepter')) + '</button>' +
         '<button class="btn btn-ghost" style="border:1.5px solid var(--red);color:var(--red)" onclick="answer(\'' + _esc(req.id) + '\', false)"><i class="fa fa-xmark"></i> ' + _esc(_t('dw_ph_refuse','Refuser')) + '</button>' +

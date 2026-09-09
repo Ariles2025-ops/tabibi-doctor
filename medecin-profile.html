@@ -240,8 +240,8 @@
       <div class="form-group"><label class="form-label" data-i18n="mp_main_spec">Spécialité principale</label>
         <select class="form-control" id="f_spec"><option>Cardiologie</option><option>Dermatologie</option><option>Pédiatrie</option><option>Gynécologie</option><option>Médecine Générale</option><option>Dentisterie</option><option>Ophtalmologie</option><option>ORL</option><option>Neurologie</option><option>Psychiatrie</option><option>Orthopédie</option></select></div>
       <div class="form-group"><label class="form-label" data-i18n="mp_subspec">Sous-spécialités (séparées par des virgules)</label>
-        <input class="form-control" id="f_subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties"></div>
-      <div class="form-group"><label class="form-label" data-i18n="mp_ordre">N° Conseil National de l'Ordre</label><input class="form-control" id="f_ordre" placeholder="CO-2025-XXXX" data-i18n-placeholder="ph_ordre_number"></div>
+        <input class="form-control" id="f_subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties" aria-label="Ex : Rythmologie, Échocardiographie"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_ordre">N° Conseil National de l'Ordre</label><input class="form-control" id="f_ordre" placeholder="CO-2025-XXXX" data-i18n-placeholder="ph_ordre_number" aria-label="CO-2025-XXXX"></div>
       <div class="form-group"><label class="form-label" data-i18n="mp_rpps">Numéro RPPS / Identifiant médecin</label><input class="form-control" id="f_rpps"></div>
       <div class="form-group"><label class="form-label" data-i18n="mp_start_year">Année de début d'exercice</label><input class="form-control" id="f_start_year" type="number" min="1980" max="2026"></div>
       <div class="form-group"><label class="form-label" data-i18n="mp_bio">Bio professionnelle (visible aux patients)</label>
@@ -277,15 +277,15 @@
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-location-dot"></i></i>
         <div><div class="lbl" data-i18n="mp_cabinet_title">Cabinet / Lieu d'exercice</div><div class="desc" data-i18n="mp_cabinet_sub">Adresse visible aux patients</div></div></div>
-      <div class="form-group"><label class="form-label" data-i18n="mp_cabinet_name">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Nom de votre cabinet" data-i18n-placeholder="ph_cabinet_name"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_cabinet_name">Nom du cabinet (optionnel)</label><input class="form-control" id="f_cabinet" placeholder="Nom de votre cabinet" data-i18n-placeholder="ph_cabinet_name" aria-label="Nom de votre cabinet"></div>
       <div class="form-group"><label class="form-label" data-i18n="mp_full_address">Adresse complète</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, wilaya" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="form-group"><label class="form-label" data-i18n="wilaya">Wilaya</label>
           <select class="form-control" id="f_city"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option></select></div>
         <div class="form-group"><label class="form-label" data-i18n="mp_postal">Code postal</label><input class="form-control" id="f_postal"></div>
       </div>
-      <div class="form-group"><label class="form-label" data-i18n="mp_phone_cab">Téléphone cabinet</label><input class="form-control" id="f_phone_cab" type="tel" placeholder="0661 234 567" data-i18n-placeholder="ph_phone_dz"></div>
-      <div class="form-group"><label class="form-label" data-i18n="mp_website">Site web (optionnel)</label><input class="form-control" id="f_web" type="url" placeholder="https://..."></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_phone_cab">Téléphone cabinet</label><input class="form-control" id="f_phone_cab" type="tel" placeholder="0661 234 567" data-i18n-placeholder="ph_phone_dz" aria-label="0661 234 567"></div>
+      <div class="form-group"><label class="form-label" data-i18n="mp_website">Site web (optionnel)</label><input class="form-control" id="f_web" type="url" placeholder="https://..." aria-label="https://..."></div>
     </div>
 
     <!-- 6. TARIFS & TYPES DE CONSULTATION -->
@@ -293,12 +293,12 @@
       <div class="sec-title-bar"><i style="background:#fed7aa;color:#9a3412"><i class="fa fa-coins"></i></i>
         <div><div class="lbl" data-i18n="mp_pricing_title">Tarifs & types de consultation</div><div class="desc" data-i18n="mp_pricing_sub">Visible aux patients</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="mp_price_consult">Tarif consultation (DA)</label><input class="form-control" id="f_price" type="number" placeholder="2500"></div>
-        <div class="form-group"><label class="form-label" data-i18n="mp_price_followup">Tarif suivi (DA)</label><input class="form-control" id="f_price_followup" type="number" placeholder="1800"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_price_consult">Tarif consultation (DA)</label><input class="form-control" id="f_price" type="number" placeholder="2500" aria-label="2500"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_price_followup">Tarif suivi (DA)</label><input class="form-control" id="f_price_followup" type="number" placeholder="1800" aria-label="1800"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="mp_price_urgent">Tarif urgence (DA)</label><input class="form-control" id="f_price_urgent" type="number" placeholder="3500"></div>
-        <div class="form-group"><label class="form-label" data-i18n="mp_avg_duration">Durée moyenne (min)</label><input class="form-control" id="f_duration" type="number" placeholder="30"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_price_urgent">Tarif urgence (DA)</label><input class="form-control" id="f_price_urgent" type="number" placeholder="3500" aria-label="3500"></div>
+        <div class="form-group"><label class="form-label" data-i18n="mp_avg_duration">Durée moyenne (min)</label><input class="form-control" id="f_duration" type="number" placeholder="30" aria-label="30"></div>
       </div>
       <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_teleconsult_avail">Téléconsultation disponible</div><div class="desc" data-i18n="mp_teleconsult_avail_d">RDV en visioconférence</div></div><div class="toggle-switch" data-key="telemedicine" onclick="toggleSwitch(this)"></div></div>
       <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_home_visits">Visites à domicile</div><div class="desc" data-i18n="mp_home_visits_d">Pour patients non-mobiles</div></div><div class="toggle-switch" data-key="home_visits" onclick="toggleSwitch(this)"></div></div>
@@ -771,7 +771,7 @@ async function open2FASetup(){
       <div style="background:var(--bg);padding:10px 12px;border-radius:8px;margin-top:8px;font-family:monospace;word-break:break-all;font-size:11px">${esc(_2faSecret)}</div>
     </details>
     <div style="font-size:13px;font-weight:600;margin-bottom:6px"><strong>Étape 2/2 :</strong> Entrez le code à 6 chiffres généré</div>
-    <input type="text" id="twofa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="width:100%;padding:14px;border:2px solid var(--border);border-radius:10px;font-size:22px;text-align:center;letter-spacing:8px;font-family:monospace;margin-bottom:10px">
+    <input type="text" id="twofa-code-input" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456" style="width:100%;padding:14px;border:2px solid var(--border);border-radius:10px;font-size:22px;text-align:center;letter-spacing:8px;font-family:monospace;margin-bottom:10px" aria-label="123456">
     <div id="twofa-err" style="color:var(--red);font-size:12px;margin-bottom:8px;display:none"></div>
     <button class="btn btn-primary btn-full btn-lg" onclick="verify2FACode()"><i class="fa fa-circle-check"></i> Activer la 2FA</button>
   `;

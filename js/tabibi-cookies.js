@@ -107,7 +107,10 @@
       return;
     }
     // Délai pour ne pas casser le LCP / éviter clignotement
-    setTimeout(render, 800);
+    // [PERF 2026-09-09] Le delai de 800 ms retardait l'element LCP de l'accueil
+    // (le bandeau) apres tout le reste. Rendu immediat : il se peint avec le
+    // premier rendu utile.
+    render();
   }
 
   window.tabibiCookies = {

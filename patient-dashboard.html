@@ -121,7 +121,7 @@
       <div style="font-size:12px;opacity:.85;margin-bottom:12px"><span id="dash-doc-count">...</span> médecins certifiés disponibles en Algérie</div>
       <div style="position:relative">
         <i class="fa fa-search" style="position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--text4)"></i>
-        <input id="docSearch" oninput="docPage=1;clearTimeout(window._docSearchT);window._docSearchT=setTimeout(renderDocs,150);" type="search" placeholder="Spécialité, nom, ville..." data-i18n-placeholder="search_doctor_ph" style="width:100%;padding:12px 14px 12px 40px;border:none;border-radius:12px;font-size:14px;outline:none">
+        <input id="docSearch" oninput="docPage=1;clearTimeout(window._docSearchT);window._docSearchT=setTimeout(renderDocs,150);" type="search" placeholder="Spécialité, nom, ville..." data-i18n-placeholder="search_doctor_ph" style="width:100%;padding:12px 14px 12px 40px;border:none;border-radius:12px;font-size:14px;outline:none" aria-label="Spécialité, nom, ville...">
       </div>
     </div>
     <div style="padding:12px 16px;display:flex;gap:8px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border);scrollbar-width:none">
@@ -871,7 +871,7 @@ async function renderFavs(){
   if(!window.tabibiDoctors){ setTimeout(renderFavs, 300); return; }
   const { data, error } = await window.tabibiDoctors.getByIds(ids);
   if(error || !data || !data.length){ if(box) box.innerHTML=EMPTY; return; }
-  if(box) box.innerHTML=data.map(d=>`<div class="doc-search-card" onclick="openBooking('${d.id}')"><div class="row1"><div class="ava" style="background:${d.bg};color:${d.tc}">${d.in}</div><div class="info"><div class="nm">${esc(d.fr)}</div><div class="sp">${esc(d.spec)} · ${esc(d.ville)}</div></div><button class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="event.stopPropagation();toggFav('${d.id}')"><i class="fa fa-heart"></i></button></div><div class="row3"><div class="price">${d.prix.toLocaleString()} <small>DA</small></div><button class="btn btn-primary btn-md"><i class="fa fa-calendar-plus"></i> Réserver</button></div></div>`).join("");
+  if(box) box.innerHTML=data.map(d=>`<div class="doc-search-card" onclick="openBooking('${d.id}')"><div class="row1"><div class="ava" style="background:${d.bg};color:${d.tc}">${d.in}</div><div class="info"><div class="nm">${esc(d.fr)}</div><div class="sp">${esc(d.spec)} · ${esc(d.ville)}</div></div><button class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="event.stopPropagation();toggFav('${d.id}')" aria-label="Favori"><i class="fa fa-heart" aria-hidden="true"></i></button></div><div class="row3"><div class="price">${d.prix.toLocaleString()} <small>DA</small></div><button class="btn btn-primary btn-md"><i class="fa fa-calendar-plus"></i> Réserver</button></div></div>`).join("");
 }
 
 /* ─── VUE ─── */
@@ -899,7 +899,7 @@ function renderOverview(){
         const dt=new Date(next.date);
         const dl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long"}));
         const days=Math.ceil((dt-new Date())/(1000*60*60*24));
-        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${next.doctorName}</div><div style="font-size:12px;color:var(--text2)">${next.spec} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
+        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${(window.esc||String)(next.doctorName)}</div><div style="font-size:12px;color:var(--text2)">${(window.esc||String)(next.spec)} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
       } else {
         nextEl.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3)" data-i18n="no_rdv">Aucun RDV prévu</div>`;
       }

@@ -101,7 +101,7 @@
 </div>
 
 <div class="dv-filters">
-  <input class="dv-search" id="dv-search" type="search" placeholder="Nom ou email..." oninput="onSearch()">
+  <input class="dv-search" id="dv-search" type="search" placeholder="Nom ou email..." oninput="onSearch()" aria-label="Nom ou email...">
   <select class="dv-wsel" id="dv-wilaya" onchange="onWilaya()"><option value="">Toutes wilayas</option></select>
 </div>
 
@@ -152,7 +152,7 @@
 <div class="dv-modal" id="m-aud" role="dialog" aria-modal="true">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <div class="m-title" style="margin-bottom:0"><i class="fa fa-clock-rotate-left" style="color:#7c3aed"></i> Historique admin</div>
-    <button onclick="closeModals()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2)"><i class="fa fa-xmark"></i></button>
+    <button onclick="closeModals()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2)" aria-label="Fermer"><i class="fa fa-xmark" aria-hidden="true"></i></button>
   </div>
   <div class="m-doc" id="ma-name"></div>
   <div id="aud-body"></div>
@@ -271,7 +271,7 @@ function renderCard(d){
         <i class="fa fa-check"></i> Valider${hasDocs?'':' <i class="fa fa-lock fa-xs"></i>'}
       </button>
       <button class="btn-rej" onclick="openRej('${escA(id)}','${escA(name)}','${escA(d.email||'')}')"><i class="fa fa-xmark"></i> Rejeter</button>
-      <button class="btn-aud" onclick="openAud('${escA(id)}','${escA(name)}')"><i class="fa fa-clock-rotate-left"></i></button>
+      <button class="btn-aud" onclick="openAud('${escA(id)}','${escA(name)}')" aria-label="Historique"><i class="fa fa-clock-rotate-left" aria-hidden="true"></i></button>
     </div>`;
   }else if(_tab==='approved'){
     actsHtml=`<div class="dv-acts">
