@@ -66,6 +66,9 @@ jobs:
       - name: Les trois dictionnaires ont les memes cles
         run: npm run i18n:verifier
 
+      - name: Aucun acces direct a la vue public_doctors (C1)
+        run: npm run verifier:c1
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 

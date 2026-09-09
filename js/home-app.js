@@ -22,7 +22,7 @@ const TR = {
     fill_all:"Veuillez remplir tous les champs.",pass_short:"Mot de passe : 6 caractères minimum.",
     signup_ok:"Compte créé avec succès !",fav_add:"Ajouté aux favoris <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"Retiré des favoris",
     conn_req:"Connectez-vous pour réserver",reset_ok:"Filtres réinitialisés",
-    no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",docs_load_err:"Impossible de charger les médecins",docs_load_err_sub:"Vérifiez votre connexion.",retry:"Réessayer",
+    docs_choose_filter:"Choisissez une wilaya ou une spécialité",docs_choose_filter_sub:"La liste s'affiche dès qu'un de ces deux filtres est renseigné.",no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",docs_load_err:"Impossible de charger les médecins",docs_load_err_sub:"Vérifiez votre connexion.",retry:"Réessayer",
     cert:"Certifié",urgent:"Urgences",available:"Disponible",rdv:"Prendre RDV",
     found:"médecin(s) trouvé(s)",avis_word:"avis",consult_word:"consult.",
     nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",nav_map:"Carte",greeting:"Bonjour",
@@ -95,7 +95,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     fill_all:"يرجى ملء جميع الحقول.",pass_short:"كلمة المرور: 6 أحرف على الأقل.",
     signup_ok:"تم إنشاء الحساب بنجاح!",fav_add:"تمت الإضافة للمفضلة <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"تمت الإزالة من المفضلة",
     conn_req:"سجّل دخولك للحجز",reset_ok:"تمت إعادة التعيين",
-    no_docs:"لا يوجد طبيب مطابق",try_other:"حاول تغيير المعايير",
+    docs_choose_filter:"اختر ولاية أو تخصصًا",docs_choose_filter_sub:"تظهر القائمة بمجرد تحديد أحد هذين الفلترين.",no_docs:"لا يوجد طبيب مطابق",try_other:"حاول تغيير المعايير",
     cert:"معتمد",urgent:"طوارئ",available:"متاح",rdv:"حجز موعد",
     found:"طبيب(ة) وُجد(ت)",avis_word:"تقييم",consult_word:"استشارة",
     nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",nav_map:"الخريطة",greeting:"مرحبا",
@@ -168,7 +168,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     fill_all:"Please fill in all fields.",pass_short:"Password: min 6 characters.",
     signup_ok:"Account created successfully!",fav_add:"Added to favorites <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"Removed from favorites",
     conn_req:"Sign in to book",reset_ok:"Filters reset",
-    no_docs:"No doctors found",try_other:"Try different criteria",
+    docs_choose_filter:"Pick a wilaya or a specialty",docs_choose_filter_sub:"The list appears as soon as one of these two filters is set.",no_docs:"No doctors found",try_other:"Try different criteria",
     cert:"Certified",urgent:"Urgent",available:"Available",rdv:"Book",
     found:"doctor(s) found",avis_word:"reviews",consult_word:"consult.",
     nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",nav_map:"Map",greeting:"Hello",
@@ -671,8 +671,37 @@ function _tbBuildMapBar(){
   document.getElementById('map-f-s').onchange=_tbMapFilter;
 }
 function _tbHdrs(extra){ return Object.assign({apikey:_SB_KEY,Authorization:'Bearer '+_SB_KEY},extra||{}); }
+// [C1 2026-09-09] La vue public_doctors n'est plus lisible par le front.
+// Tout passe par des RPC PostgREST (POST /rest/v1/rpc/<nom>) :
+//   chercher_praticiens (≤50/page, wilaya OU spécialité obligatoire),
+//   praticiens_carte (épingles), stats_publiques (compteurs + listes de filtres).
+function _tbRpc(nom, args, signal){
+  return fetch(_SB_URL+'/rest/v1/rpc/'+nom, {
+    method:'POST',
+    headers:_tbHdrs({'Content-Type':'application/json'}),
+    body:JSON.stringify(args||{}),
+    signal:signal
+  });
+}
+let _tbStatsPromise = null;
+function _tbStats(){
+  if(_tbStatsPromise) return _tbStatsPromise;
+  try{
+    const c = JSON.parse(sessionStorage.getItem('tb_stats_v2')||'null');
+    if(c && c.t && (Date.now()-c.t) < 3600e3 && c.v){ _tbStatsPromise = Promise.resolve(c.v); return _tbStatsPromise; }
+  }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:_tbStats'); }
+  _tbStatsPromise = _tbRpc('stats_publiques', {})
+    .then(function(r){ if(!r.ok) throw new Error('stats_publiques HTTP '+r.status); return r.json(); })
+    .then(function(v){
+      v = v || {};
+      try{ sessionStorage.setItem('tb_stats_v2', JSON.stringify({t:Date.now(), v:v})); }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:_tbStats'); }
+      return v;
+    })
+    .catch(function(e){ _tbStatsPromise = null; console.warn('[Tabibi] stats_publiques KO', e && e.message); return {}; });
+  return _tbStatsPromise;
+}
 function _tbLoadPins(){
-  fetch(_SB_URL+'/rest/v1/public_doctors?is_claimed=eq.true&latitude=not.is.null&longitude=not.is.null&select=id,full_name,specialty_fr,rating,review_count,latitude,longitude,wilaya_fr,city&limit=500',{headers:_tbHdrs()})
+  _tbRpc('praticiens_carte', {})
     .then(function(r){return r.ok?r.json():[];})
     .then(function(d){ _tbDocs=d||[]; _tbRenderPins(); })
     .catch(function(){ _tbDocs=[]; _tbRenderPins(); });
@@ -698,12 +727,10 @@ function _tbOpenDoc(id){
 function _tbLoadCounts(){
   try{ const c=sessionStorage.getItem('tb_map_wcounts_v1'); if(c){ _tbCounts=JSON.parse(c); _tbRenderBubbles(); return; } }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:692'); }
   const codes=Object.keys(window.DZ_WILAYAS||{});
-  Promise.all(codes.map(function(code){
-    return fetch(_SB_URL+'/rest/v1/public_doctors?wilaya_code=eq.'+code+'&select=id&limit=1',{headers:_tbHdrs({Prefer:'count=estimated',Range:'0-0'})})
-      .then(function(r){ const cr=r.headers.get('content-range')||'/0'; return [code,parseInt(cr.split('/')[1],10)||0]; })
-      .catch(function(){ return [code,0]; });
-  })).then(function(pairs){
-    _tbCounts={}; pairs.forEach(function(p){ _tbCounts[p[0]]=p[1]; });
+  // [C1] 1 seul appel agrégé (stats_publiques.par_wilaya) au lieu de 58 COUNT.
+  _tbStats().then(function(st){
+    const par=(st&&st.par_wilaya)||{};
+    _tbCounts={}; codes.forEach(function(code){ _tbCounts[code]=parseInt(par[String(parseInt(code,10))],10)||0; });
     try{ sessionStorage.setItem('tb_map_wcounts_v1',JSON.stringify(_tbCounts)); }catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:700'); }
     _tbRenderBubbles();
   });
@@ -1674,19 +1701,10 @@ async function _fetchDistinctSpecsAndWilayas(){
     console.warn('[Tabibi] _W wilayas KO', e && e.message);
   }
 
-  // ── Spécialités : 500 lignes suffisent pour couvrir les ~50-100 valeurs ─
-  const headers = { 'apikey': _SB_KEY, 'Authorization': 'Bearer ' + _SB_KEY };
-  const baseUrl = _SB_URL + '/rest/v1/public_doctors';
+  // ── Spécialités : liste DISTINCT servie par la RPC stats_publiques [C1] ─
   try {
-    const r = await fetch(baseUrl + '?select=specialty_fr&limit=500', { headers });
-    if (!r.ok) return;
-    const rows = await r.json();
-    const set = new Set();
-    for (const row of rows) {
-      const v = row && row.specialty_fr;
-      if (v) set.add(v);
-    }
-    const specs = [...set].sort((a, b) => a.localeCompare(b, 'fr'));
+    const st = await _tbStats();
+    const specs = Array.isArray(st.specialites) ? st.specialites.slice().sort((a, b) => a.localeCompare(b, 'fr')) : [];
     if (specs.length) window._DB_SPECIALTIES = specs;
   } catch (e) {
     console.warn('[Tabibi] fetchDistinct specialty_fr KO', e && e.message);
@@ -1735,31 +1753,35 @@ function _inferEntityType(slug){
   return null;   // défaut médecin → préfixe "Dr."
 }
 
-function _buildDoctorCardsUrl(opts){
-  const q = new URLSearchParams();
-  q.set('select', '*');
-  // Filtres serveur — uniquement colonnes présentes
-  if(opts.ville)  q.set('wilaya_fr',     'eq.' + opts.ville);
-  if(opts.spec)   q.set('specialty_fr',  'eq.' + opts.spec);
-  // [#3] toggle "cert"/is_verified retiré : public_doctors_listed n'expose que des fiches déjà certifiées
-  if(opts.search){
-    // Échapper les virgules et parenthèses pour éviter de casser l'OR PostgREST
-    const safe = String(opts.search).replace(/[(),]/g,' ').trim();
-    if(safe){
-      // [Phase 16.5 FIX] NE PAS encodeURIComponent ici — q.set + q.toString()
-      // ré-encode les `%` en `%25`, ce qui faisait que PostgREST recevait
-      // `%25ouanza%25` (caractère % littéral) au lieu de `%ouanza%` (wildcard
-      // ilike) → 0 résultat sur toute recherche texte.
-      const v = '%' + safe + '%';
-      q.set('or', '(full_name.ilike.' + v + ',specialty_fr.ilike.' + v + ',wilaya_fr.ilike.' + v + ')');
-    }
+// [C1] Arguments de la RPC chercher_praticiens. Le texte libre est passé tel
+// quel : c'est la RPC qui neutralise les jokers ilike et borne à 60 caractères.
+function _buildDoctorCardsArgs(opts, page){
+  return {
+    p_wilaya:     opts.ville  || null,
+    p_specialite: opts.spec   || null,
+    p_q:          opts.search ? String(opts.search).trim() || null : null,
+    p_type:       null,
+    p_page:       Math.min(100, Math.max(1, page || 1)),
+    p_limite:     Math.min(50, PER)
+  };
+}
+// [C1] Sans wilaya ni spécialité, la RPC refuse (400 filtre_obligatoire) :
+// on affiche l'invite et on n'appelle pas le serveur.
+function _renderChooseFilter(){
+  const rc = document.getElementById('res-count'); if(rc) rc.textContent = '';
+  const box = document.getElementById('docs-list');
+  if(box){
+    // Construit l'état vide par l'API DOM (aucun innerHTML : texte i18n → textContent).
+    const wrap = document.createElement('div'); wrap.className = 'empty-state';
+    const ico = document.createElement('div'); ico.className = 'empty-icon';
+    const i = document.createElement('i'); i.className = 'fa fa-location-dot'; ico.appendChild(i);
+    const titre = document.createElement('div'); titre.className = 'empty-title'; titre.textContent = T('docs_choose_filter');
+    const sous = document.createElement('p'); sous.textContent = T('docs_choose_filter_sub');
+    wrap.append(ico, titre, sous);
+    box.replaceChildren(wrap);
   }
-  // Sort — la vue n'a ni rating ni price, on retombe sur full_name pour tous
-  // les sorts sauf si on bouge ces colonnes serveur (Phase 12).
-  q.set('order', 'name_sort_key.asc');
-  // [ÉTAPE B] Filtre 'not.match.[؀-ۿ]' RETIRÉ (test RTL OK 390/1280 : docCard pose déjà dir="rtl").
-  // Les 2 969 fiches au nom en écriture arabe sont désormais incluses → liste = 75 033 (= indexed).
-  return _SB_URL + '/rest/v1/public_doctors?' + q.toString();
+  const pag = document.getElementById('pag'); if(pag) pag.replaceChildren();
+  DOCTORS.length = 0; _lastDoctorTotal = 0;
 }
 
 async function loadDoctorCards(opts, page){
@@ -1777,18 +1799,10 @@ async function loadDoctorCards(opts, page){
   const rc = document.getElementById('res-count');
   if(rc) rc.textContent = '...';
 
+  if(!opts.ville && !opts.spec){ _renderChooseFilter(); return; }
+
   try {
-    const url = _buildDoctorCardsUrl(opts);
-    const res = await fetch(url, {
-      headers: {
-        'apikey':       _SB_KEY,
-        'Authorization':'Bearer ' + _SB_KEY,
-        'Prefer':       'count=estimated',
-        'Range-Unit':   'items',
-        'Range':        ((page-1)*PER) + '-' + (page*PER - 1)
-      },
-      signal: signal
-    });
+    const res = await _tbRpc('chercher_praticiens', _buildDoctorCardsArgs(opts, page), signal);
     if(mySeq !== _loadDocsSeq) return;  // une requête plus récente a démarré
     if(!res.ok){
       console.warn('[Tabibi] loadDoctorCards HTTP', res.status);
@@ -1802,13 +1816,12 @@ async function loadDoctorCards(opts, page){
         + '<a onclick="doFilter(true)" style="font-size:12.5px;font-weight:700;color:#0E5F46;border-bottom:1px dashed #0F7560;cursor:pointer">' + T('retry') + '</a></div>';
       return;
     }
-    // Total via header "Content-Range: 0-19/<TOTAL>"
-    const cr = res.headers.get('content-range') || '';
-    const total = parseInt((cr.split('/')[1] || '0'), 10) || 0;
-    _lastDoctorTotal = total;
-
-    const batch = await res.json();
+    // [C1] La RPC renvoie { total, page, limite, lignes }
+    const corps = await res.json();
     if(mySeq !== _loadDocsSeq) return;
+    const total = (corps && corps.total) || 0;
+    _lastDoctorTotal = total;
+    const batch = (corps && corps.lignes) || [];
 
     // Hydrate DOCTORS
     DOCTORS.length = 0;
@@ -1977,20 +1990,11 @@ var TABIBI_DOCTOR_COUNT_LABEL = '75 000+';
 window.TABIBI_STATS = { indexed: 0, listed: 0, certified: 0, claimed: 0 };
 
 async function _loadTabibiStats() {
-  var _url = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || _SB_URL;
-  var _h = { apikey: _SB_KEY, Authorization: 'Bearer ' + _SB_KEY, Prefer: 'count=estimated' };
-  var _cnt = function(path) {
-    return fetch(_url + '/rest/v1/' + path + (path.indexOf('?') < 0 ? '?' : '&') + 'select=id&limit=1', { headers: _h })
-      .then(function(r){ return r.ok ? (parseInt((r.headers.get('content-range') || '/0').split('/')[1], 10) || 0) : 0; })
-      .catch(function(){ return 0; });
-  };
   try {
-    // [PERF 57014] 1 seul COUNT (estimated) : certified. Le total "référencés"
-    // est EN DUR (TABIBI_DOCTOR_COUNT_LABEL) — estimated le sous-évaluait.
-    var r = await Promise.all([
-      _cnt('public_doctors?validation_status=eq.approved')  // certified (validées)
-    ]);
-    window.TABIBI_STATS = { indexed: 75000, certified: r[0], listed: 0, claimed: 0 };
+    // [C1] compteurs servis par la RPC stats_publiques (agrégat, aucun nom).
+    // Le total "référencés" reste EN DUR (TABIBI_DOCTOR_COUNT_LABEL).
+    var st = await _tbStats();
+    window.TABIBI_STATS = { indexed: 75000, certified: parseInt(st.certifies, 10) || 0, listed: 0, claimed: 0 };
   } catch (e) { /* garde les valeurs courantes */ }
   _updateDocCounterUI();
 }

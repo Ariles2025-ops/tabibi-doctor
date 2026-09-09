@@ -13,7 +13,7 @@
  *   - Table public.appointments (lecture directe, tous statuts — [FIX
  *     2026-07-04] remplace la vue my_upcoming_appointments qui ne
  *     renvoyait que les RDV futurs pending/confirmed)
- *   - Vue public.public_doctors (hydratation nom/spécialité médecin)
+ *   - RPC praticiens_par_ids (hydratation nom/spécialité médecin) [C1]
  *   - Enum public.appointment_status (pending|confirmed|cancelled|completed|no_show)
  *
  * Pattern anti-régression Phase 4.B.3-fix3 :
@@ -423,9 +423,8 @@
     });
     if (!ids.length) return rows;
     try {
-      var q = s.from('public_doctors')
-        .select('id, full_name, full_name_ar, entity_type, specialty_fr, address, city, wilaya_fr')
-        .in('id', ids);
+      // [C1 2026-09-09] RPC praticiens_par_ids (≤ 100 UUID connus) — la vue n'est plus lisible.
+      var q = s.rpc('praticiens_par_ids', { p_ids: ids.slice(0, 100) });
       var r = await _withTimeout(q, 8000, 'hydrate_doctor_info');
       if (r.error || !Array.isArray(r.data)) {
         console.warn('[tabibiBooking] _hydrateDoctorInfo error', r.error && r.error.message);

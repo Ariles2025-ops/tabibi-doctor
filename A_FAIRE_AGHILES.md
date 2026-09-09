@@ -2,9 +2,31 @@
 
 **Mis à jour le 9 septembre 2026 — J−85 du congrès.**
 
-Quatre points. Tout ce qui pouvait être préparé l'a été : il ne reste que les
+Cinq points. Tout ce qui pouvait être préparé l'a été : il ne reste que les
 gestes qui exigent tes identifiants, ta carte bancaire ou ta main.
 Temps total estimé : **une heure**, plus deux formulaires à lancer.
+
+---
+
+## 0. Exécuter le SQL du correctif C1 — 5 min · réversible
+
+La PR `fix/c1-enumeration` ferme la lecture directe de la vue `public_doctors`
+(75 034 fiches lisibles par n'importe qui, 1 000 par requête). Le front de la
+branche n'appelle plus que des RPC bornées. **Ordre impératif** : d'abord le
+SQL, ensuite le merge et le déploiement — sinon la recherche tombe en 404.
+
+1. Supabase → SQL Editor → coller le contenu de
+   `supabase/migrations/20260909_c1_fermeture_enumeration_public_doctors.sql` → Run.
+2. Vérifier depuis un terminal : `node scripts/verifier-c1.mjs --live`
+   (attendu : vue → 401, RPC sans filtre → 400, RPC Alger limite 500 → 50 lignes).
+3. Merger la PR, déployer (Cloudflare `wrangler pages deploy`, puis
+   `scripts/build-mobile.sh` pour resynchroniser android/ et ios/).
+
+Retour arrière : bloc « Retour arrière » en bas du fichier SQL (2 GRANT + 2 RESET).
+
+- [ ] SQL exécuté
+- [ ] `verifier-c1 --live` vert
+- [ ] PR mergée puis déployée
 
 ---
 
