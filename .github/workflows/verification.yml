@@ -45,8 +45,33 @@ jobs:
       - name: La dette ne doit pas augmenter
         run: npm run lint:dette
 
+      - name: Installer le navigateur de test
+        run: npx playwright install --with-deps chromium
+
+      - name: Parcours critiques (sources)
+        # 30 tests sur 2 profils (Pixel 5 + Desktop Chrome) : accueil, inscription,
+        # connexion, reservation, et disponibilite des pages vitales. Ils ne creent
+        # AUCUNE donnee en base. ~7 s.
+        run: npm run test:e2e
+
       - name: Le site doit se construire
         run: npm run build
+
+      - name: Les memes parcours, sur la sortie de build
+        # Le build peut casser ce que les sources font marcher : c'est arrive le
+        # 09/09/2026 (SDK Supabase UMD bundle en ESM -> window.supabase perdu).
+        # On rejoue donc la suite contre dist-web.
+        run: npm run test:e2e:build
+
+      - name: Rapport de test si echec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
 
       - name: Taille des bundles produits
         # Trace le poids a chaque PR : c'est la seule facon de voir une

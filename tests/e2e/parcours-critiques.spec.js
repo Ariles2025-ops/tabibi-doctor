@@ -59,13 +59,25 @@ test("l'accueil se charge et affiche le hero", async ({ page }) => {
 // ---------------------------------------------------------------------
 // 2. Inscription — le tunnel d'entrée des médecins et patients
 // ---------------------------------------------------------------------
-test("la page d'inscription affiche un formulaire utilisable", async ({ page }) => {
+// [CORRIGE 2026-09-09] Ce test attendait un champ email VISIBLE. Il n'y en a
+// pas : l'inscription se fait par TELEPHONE (#sp) puis code SMS — c'est la
+// decision produit « SMS-only en DZ », mesuree sur le reseau algerien. Le test
+// avait ete ecrit sans jamais etre execute, Playwright n'etant pas installe.
+// Il verifie desormais le parcours reel, consentements RGPD compris : sur une
+// plateforme de sante, une case de consentement qui disparait est un incident
+// juridique, pas un detail d'interface.
+test("la page d'inscription affiche le formulaire telephone et les consentements", async ({ page }) => {
   const erreurs = collecteErreurs(page);
   await page.goto(`${BASE}/signup.html`, { waitUntil: 'domcontentloaded' });
 
-  await expect(page.locator('input[type="email"]').first()).toBeVisible();
-  await expect(page.locator('input[type="password"]').first()).toBeVisible();
-  await expect(page.locator('button[type="submit"], form button').first()).toBeVisible();
+  await expect(page.locator('#sp')).toBeVisible();          // telephone
+  await expect(page.locator('#spw')).toBeVisible();         // mot de passe
+  await expect(page.locator('#sw')).toBeVisible();          // wilaya
+  await expect(page.locator('button[type="submit"]').first()).toBeVisible();
+
+  for (const consentement of ['#cgu', '#privacy', '#medical-consent']) {
+    await expect(page.locator(consentement)).toBeVisible();
+  }
 
   expect(erreurs, `Erreurs console:\n${erreurs.join('\n')}`).toHaveLength(0);
 });
@@ -73,12 +85,21 @@ test("la page d'inscription affiche un formulaire utilisable", async ({ page }) 
 // ---------------------------------------------------------------------
 // 3. Connexion — sans elle, aucun médecin n'accède à son agenda
 // ---------------------------------------------------------------------
-test('la page de connexion affiche un formulaire utilisable', async ({ page }) => {
+// [CORRIGE 2026-09-09] Meme correction : le seul champ email de login.html vit
+// dans <div id="screen-admin" class="hidden">, l'ecran de connexion admin. Le
+// parcours principal est le telephone (#lp-phone). Un test qui affirme le
+// mauvais parcours donne une fausse assurance : il serait reste vert alors que
+// la connexion des medecins etait cassee.
+test('la page de connexion affiche le formulaire telephone', async ({ page }) => {
   const erreurs = collecteErreurs(page);
   await page.goto(`${BASE}/login.html`, { waitUntil: 'domcontentloaded' });
 
-  await expect(page.locator('input[type="email"]').first()).toBeVisible();
-  await expect(page.locator('input[type="password"]').first()).toBeVisible();
+  await expect(page.locator('#lp-phone')).toBeVisible();
+  await expect(page.locator('#lp-pass')).toBeVisible();
+  await expect(page.locator('button[type="submit"]').first()).toBeVisible();
+
+  // L'ecran admin doit rester masque tant qu'on n'a pas clique le lien dedie.
+  await expect(page.locator('#screen-admin')).toBeHidden();
 
   expect(erreurs, `Erreurs console:\n${erreurs.join('\n')}`).toHaveLength(0);
 });
