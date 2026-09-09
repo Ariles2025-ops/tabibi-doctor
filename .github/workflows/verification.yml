@@ -34,6 +34,8 @@ jobs:
       - name: Aucun secret dans le depot (public)
         # Le mot de passe d'un compte de test est passe en clair dans l'historique
         # (AUDIT_RESTANT_2026-07-29). Ce pas bloque toute PR qui en ajouterait un.
+        # Le depot est PRIVE (verifie le 09/09/2026) : la regle vaut quand meme, un
+        # depot prive se partage, se clone, et peut redevenir public.
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

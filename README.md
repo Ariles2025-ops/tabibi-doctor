@@ -48,7 +48,7 @@ espace médecin, espace secrétariat, espace pharmacie, console d'administration
 | **Marché** | Algérie — 58 wilayas, fonds de **75 034 fiches praticiens** (chiffre vérifié en production le 09/09/2026) |
 | **Langues** | Français (référence juridique), arabe (RTL complet), anglais |
 | **Production** | https://tabibi.doctor · **Staging** : https://effulgent-kelpie-e48e81.netlify.app |
-| **Dépôt** | `github.com/Ariles2025-ops/tabibi-doctor` — **public** |
+| **Dépôt** | `github.com/Ariles2025-ops/tabibi-doctor` — **privé** (vérifié via l'API GitHub le 09/09/2026 ; plusieurs documents disaient encore « public ») |
 
 ### Ce qui différencie le produit
 
