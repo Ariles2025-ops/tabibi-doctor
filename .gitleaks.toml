@@ -1,0 +1,23 @@
+# =====================================================================
+# .gitleaks.toml — regles projet (etend la configuration par defaut)
+# =====================================================================
+# [2026-09-09] Run CI #2 : 10 detections « jwt », toutes la CLE ANON Supabase
+# du projet, recopiee dans index.html, index.html.comingsoon, js/home-app.js
+# et v2/src/lib/config.ts. Cette cle est PUBLIQUE par conception (role anon,
+# securite portee par la RLS — README §12.8). On n'autorise QUE ce JWT-la :
+# l'expression exige l'en-tete HS256 et la charge utile
+# {"iss":"supabase","ref":"pudugodhiofqrctcdwfl","role":"anon"...}.
+# Un JWT service_role, meme du meme projet, a une charge utile differente et
+# reste detecte. Aucune autre exception.
+# =====================================================================
+title = "tabibi-doctor"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Cle anon Supabase du projet pudugodhiofqrctcdwfl (publique, RLS)"
+regexTarget = "match"
+regexes = [
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24i[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]+''',
+]
