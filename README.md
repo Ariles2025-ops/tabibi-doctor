@@ -332,7 +332,10 @@ autonome : aucune page ne devient une application monopage, aucun framework n'es
 
 **Migration progressive.** Une page n'est bundlée que lorsque ses `<script src>` classiques ont été
 remplacés par **un** point d'entrée `type="module"` dans `src/entries/`. Les pages non converties
-traversent le build sans dommage (`vite-plugin-static-copy`).
+traversent le build sans dommage (`vite-plugin-static-copy`). `scripts/vite-convertir-page.mjs`
+automatise la conversion d'une page dont aucun script inline ne dépend des globales ; **10 pages
+converties** (accueil, 404, offline, about, cas-grave, blog/index, 4 pages légales), chunks partagés
+entre pages (`tabibi-i18n`, `tabibi-cookies`, `tabibi-beta`).
 
 | Page convertie | Avant | Après |
 |---|---|---|
@@ -872,7 +875,7 @@ Compteurs relevés le 09/09/2026, reproductibles par `npm run lint:dette`.
 | `console.log` résiduels | **28** | |
 | Boutons icône seuls sans `aria-label` | ~~179~~ **0** | 12 étiquetés ; les 167 autres avaient déjà un texte visible |
 | Champs sans label ni `aria-label` | ~~41~~ **0** | 44 depuis le placeholder, 17 à la main |
-| Pages non converties à Vite | **44 / 45** | Méthode validée sur l'accueil ; `defer` du SDK impossible sur les pages à JS inline |
+| Pages non converties à Vite | ~~44~~ **35 / 45** | 10 converties (`scripts/vite-convertir-page.mjs`) ; les 35 restantes ont du JS inline dépendant des globales — lecture page par page |
 | i18n chargé par page | ~~356 Ko~~ **72 Ko** (fr) | Une seule langue, préchargée |
 | `onclick=` inline | **389** | Ce qui impose `'unsafe-inline'` |
 | Migration CSS v2 | **13 %** | 31 pages en v1, 3 pages chargent les deux |

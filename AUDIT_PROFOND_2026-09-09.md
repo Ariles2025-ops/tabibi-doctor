@@ -313,8 +313,8 @@ et des migrations. Les scripts et fichiers cités sont dans le dépôt.*
 | Captcha iOS | 🟡 `ios.scheme = 'https'` posé — **à valider sur device** | ce commit |
 | Déploiement automatique | 🟡 workflow **préparé, inactif** tant que `DEPLOIEMENT_AUTO` et les secrets ne sont pas posés | ce commit |
 
-Ce qui n'est **pas** fait, et pourquoi : les 44 pages restantes à convertir à Vite (la méthode est
-validée sur l'accueil, mais chaque page à JS inline demande une lecture — le `defer` du SDK y
+Ce qui n'est **pas** fait, et pourquoi : les 35 pages restantes à convertir à Vite (10 sont faites
+via `scripts/vite-convertir-page.mjs` ; chaque page à JS inline dépendant des globales demande une lecture — le `defer` du SDK y
 casserait `supabase-client.js`) ; la migration des 389 `onclick` (préalable à une CSP sans
 `unsafe-inline`) ; le stockage natif sécurisé du jeton ; le sprite SVG ; l'auto-update Tauri ; le
 chiffrement des notes médicales et le journal de consentement (décisions produit) ; tout ce qui
