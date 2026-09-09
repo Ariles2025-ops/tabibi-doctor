@@ -1,50 +1,39 @@
 -- =====================================================================
--- C1 — Fermeture de l'énumération de public_doctors
+-- C1-A — Les six RPC publiques (PUREMENT ADDITIF)
 -- =====================================================================
--- État constaté le 09/09/2026 (VERIF_NAVIGATEUR.md, B3) :
---   * anon lit public_doctors / public_doctors_listed sans filtre :
---     1 000 lignes en 0,35 s, 75 034 fiches au total ;
---   * les deux vues sont SECURITY DEFINER (défaut) : elles lisent
---     doctor_profiles avec les droits de postgres, en ignorant la RLS.
+-- Fichier 1 sur 2. Ce script CRÉE les RPC que le front de la PR #57 appelle.
+-- Il ne retire aucun droit et ne modifie aucune vue : l'ancien front
+-- (production Cloudflare, déploiement wrangler manuel) continue de lire
+-- public_doctors exactement comme avant. Il peut être joué à tout moment,
+-- AVANT le merge et AVANT le déploiement.
 --
--- Ce que fait ce script :
---   1. les deux vues passent en security_invoker = true et perdent tout
---      droit pour anon / authenticated → une lecture directe de la vue par
---      le front renvoie 401/403 ;
---   2. l'accès public passe par des RPC SECURITY DEFINER, à périmètre
---      fermé : pagination ≤ 50, page ≤ 100, wilaya OU spécialité
---      obligatoire pour la recherche, lots d'identifiants ≤ 100,
---      agrégats sans nom pour les compteurs et le générateur SEO.
+-- Le second fichier, 20260909_c1b_fermeture_vue_public_doctors.sql, retire
+-- les droits sur les vues. Il ne doit être joué qu'APRÈS le déploiement en
+-- production d'un front qui n'appelle plus la vue (condition détaillée dans
+-- son en-tête et dans la PR #57).
 --
--- Pourquoi SECURITY DEFINER et non SECURITY INVOKER + policy publique :
---   une policy SELECT « publique » sur doctor_profiles (même limitée aux
---   colonnes) rouvrirait l'énumération sur la TABLE via PostgREST
---   (/rest/v1/doctor_profiles?select=full_name&limit=1000). Les RPC
---   DEFINER sont le seul point d'entrée : aucune requête libre n'est
---   possible sur les données.
+-- Pourquoi security_invoker n'est PAS ici : poser security_invoker = true
+-- sur public_doctors fait lire doctor_profiles avec les droits de l'appelant.
+-- anon n'a aucun droit sur doctor_profiles (CRIT-4, REVOKE de juillet) :
+-- la vue répondrait « permission denied » à l'ancien front dès le COMMIT.
+-- Ce n'est donc pas additif, c'est la coupure elle-même → fichier 1B.
 --
--- À EXÉCUTER PAR AGHILES dans le SQL Editor, dans une transaction.
--- Rien ici n'est exécuté par l'agent. Voir « Retour arrière » en bas.
--- Prérequis : PostgreSQL ≥ 15 (security_invoker). Supabase : OK.
+-- Garde-fous des RPC (toutes SECURITY DEFINER, propriétaire postgres,
+-- search_path figé) : pagination ≤ 50, page ≤ 100, wilaya OU spécialité
+-- obligatoire pour la recherche, lots d'identifiants ≤ 100, agrégats sans
+-- nom pour les compteurs et le générateur SEO.
+--
+-- Pourquoi SECURITY DEFINER et non INVOKER + policy publique : une policy
+-- SELECT « publique » sur doctor_profiles rouvrirait l'énumération sur la
+-- TABLE via PostgREST (/rest/v1/doctor_profiles?select=full_name&limit=1000).
+--
+-- À EXÉCUTER PAR AGHILES dans le SQL Editor. Rien n'est exécuté par l'agent.
 -- =====================================================================
 
 begin;
 
 -- ---------------------------------------------------------------------
--- 1. Les vues ne sont plus un point d'entrée public
--- ---------------------------------------------------------------------
-alter view public.public_doctors        set (security_invoker = true);
-alter view public.public_doctors_listed set (security_invoker = true);
-
-revoke all on public.public_doctors        from anon, authenticated;
-revoke all on public.public_doctors_listed from anon, authenticated;
--- postgres et service_role gardent leurs droits : les RPC ci-dessous
--- (DEFINER, propriétaire postgres) lisent la vue avec les droits de
--- postgres, propriétaire de doctor_profiles, donc hors RLS. Le trigger
--- fn_update_doctor_rating (DEFINER) n'est pas affecté.
-
--- ---------------------------------------------------------------------
--- 2. Recherche paginée — remplace tous les SELECT filtrés du front
+-- 1. Recherche paginée — remplace tous les SELECT filtrés du front
 -- ---------------------------------------------------------------------
 create or replace function public.chercher_praticiens(
   p_wilaya      text    default null,   -- name_fr ou code ('16')
@@ -116,7 +105,7 @@ comment on function public.chercher_praticiens(text, text, text, text, integer, 
   'C1 — recherche publique paginée (≤50/page, page ≤100), wilaya ou spécialité obligatoire. Retourne {total, page, limite, lignes}.';
 
 -- ---------------------------------------------------------------------
--- 3. Une fiche — par UUID ou par legacy_id (doctor-profile, doctors-display)
+-- 2. Une fiche — par UUID ou par legacy_id (doctor-profile, doctors-display)
 -- ---------------------------------------------------------------------
 create or replace function public.praticien(
   p_id        uuid    default null,
@@ -139,7 +128,7 @@ comment on function public.praticien(uuid, integer) is
   'C1 — une fiche publique par id ou legacy_id (0 ou 1 ligne).';
 
 -- ---------------------------------------------------------------------
--- 4. Un lot d'identifiants connus — hydratation RDV / messagerie (≤ 100)
+-- 3. Un lot d'identifiants connus — hydratation RDV / messagerie (≤ 100)
 -- ---------------------------------------------------------------------
 create or replace function public.praticiens_par_ids(p_ids uuid[])
 returns setof public.public_doctors
@@ -159,7 +148,7 @@ comment on function public.praticiens_par_ids(uuid[]) is
   'C1 — fiches publiques pour une liste d''UUID déjà connus de l''appelant (≤ 100).';
 
 -- ---------------------------------------------------------------------
--- 5. Carte — uniquement les fiches revendiquées + validées géolocalisées
+-- 4. Carte — uniquement les fiches revendiquées + validées géolocalisées
 --    (0 ligne aujourd'hui ; 500 au plus, jamais la base entière)
 -- ---------------------------------------------------------------------
 create or replace function public.praticiens_carte(
@@ -188,7 +177,7 @@ comment on function public.praticiens_carte(text, text) is
   'C1 — épingles de la carte : fiches revendiquées, validées et géolocalisées (≤ 500).';
 
 -- ---------------------------------------------------------------------
--- 6. Compteurs et listes de filtres — agrégats, aucun nom ne sort
+-- 5. Compteurs et listes de filtres — agrégats, aucun nom ne sort
 --    (remplace 58 COUNT + 1 fetch de 500 lignes + 1 COUNT sur l'accueil,
 --     et 2 fetch de 10 000 lignes sur doctor-claim)
 -- ---------------------------------------------------------------------
@@ -220,7 +209,7 @@ comment on function public.stats_publiques() is
   'C1 — compteurs publics : total, certifiés, par wilaya, listes wilayas/spécialités. Aucune donnée nominative.';
 
 -- ---------------------------------------------------------------------
--- 7. Générateur SEO — couples (wilaya, spécialité, commune) + effectif
+-- 6. Générateur SEO — couples (wilaya, spécialité, commune) + effectif
 --    (remplace la lecture des 75 034 lignes par la clé anon)
 -- ---------------------------------------------------------------------
 create or replace function public.seo_couples()
@@ -249,7 +238,7 @@ comment on function public.seo_couples() is
   'C1 — agrégat (wilaya, spécialité, commune, effectif) pour scripts/generate-seo-pages.mjs. Aucun nom.';
 
 -- ---------------------------------------------------------------------
--- 8. Droits d'exécution explicites (les privilèges par défaut du projet
+-- 7. Droits d'exécution explicites (les privilèges par défaut du projet
 --    donnent EXECUTE à public : on les remplace par une liste fermée)
 -- ---------------------------------------------------------------------
 revoke execute on function public.chercher_praticiens(text, text, text, text, integer, integer, boolean) from public;
@@ -269,36 +258,29 @@ grant execute on function public.seo_couples()                           to anon
 commit;
 
 -- =====================================================================
--- Vérification (SELECT, à lancer après le COMMIT)
+-- Vérification (SELECT, après le COMMIT)
 -- =====================================================================
--- a) les vues ne sont plus lisibles par anon / authenticated :
---    select table_name, grantee, privilege_type
---      from information_schema.role_table_grants
---     where table_name in ('public_doctors','public_doctors_listed')
---       and grantee in ('anon','authenticated');            -- attendu : 0 ligne
--- b) security_invoker posé :
---    select relname, reloptions from pg_class
---     where relname in ('public_doctors','public_doctors_listed');
---                                     -- attendu : {security_invoker=true}
--- c) la garde de la recherche :
 --    select public.chercher_praticiens();                   -- attendu : ERREUR filtre_obligatoire
 --    select (public.chercher_praticiens(p_wilaya => 'Alger', p_limite => 500)->>'limite')::int;
 --                                                           -- attendu : 50
 --    select jsonb_array_length(public.chercher_praticiens(p_wilaya => 'Alger')->'lignes');
 --                                                           -- attendu : 20
--- d) côté HTTP (clé anon, depuis un terminal) :
---    GET  /rest/v1/public_doctors?select=id&limit=1         -- attendu : 401/403 (plus 200)
---    POST /rest/v1/rpc/chercher_praticiens  {}              -- attendu : 400 filtre_obligatoire
---    POST /rest/v1/rpc/chercher_praticiens  {"p_wilaya":"Alger","p_limite":500}
---                                                           -- attendu : 200, lignes = 50
---    node scripts/verifier-c1.mjs --live                    -- fait ces 3 appels et compare
+--    select count(*) from public.praticien(p_legacy_id => 1);   -- attendu : 0 ou 1
+--    select public.stats_publiques()->>'total';             -- attendu : 75034 (ordre de grandeur)
+--    -- l'ancien front doit TOUJOURS lire la vue :
+--    GET /rest/v1/public_doctors?select=id&limit=1 (clé anon)  -- attendu : 200
+--    node scripts/verifier-c1.mjs --live                    -- 1er appel ✗ (vue ouverte, normal
+--                                                           --   avant 1B), 2e et 3e appels ✓
 
 -- =====================================================================
--- Retour arrière (si un écran casse après déploiement)
+-- Retour arrière de 1A (purement soustractif : rien d'autre ne dépend
+-- de ces fonctions tant que le nouveau front n'est pas déployé)
 -- =====================================================================
 -- begin;
--- grant select on public.public_doctors, public.public_doctors_listed to anon, authenticated;
--- alter view public.public_doctors        reset (security_invoker);
--- alter view public.public_doctors_listed reset (security_invoker);
--- -- les RPC peuvent rester : elles ne donnent rien de plus que la vue.
+-- drop function if exists public.chercher_praticiens(text, text, text, text, integer, integer, boolean);
+-- drop function if exists public.praticien(uuid, integer);
+-- drop function if exists public.praticiens_par_ids(uuid[]);
+-- drop function if exists public.praticiens_carte(text, text);
+-- drop function if exists public.stats_publiques();
+-- drop function if exists public.seo_couples();
 -- commit;

@@ -8,25 +8,29 @@ Temps total estimé : **une heure**, plus deux formulaires à lancer.
 
 ---
 
-## 0. Exécuter le SQL du correctif C1 — 5 min · réversible
+## 0. Le SQL du correctif C1, en deux temps — 10 min · réversible
 
-La PR `fix/c1-enumeration` ferme la lecture directe de la vue `public_doctors`
-(75 034 fiches lisibles par n'importe qui, 1 000 par requête). Le front de la
-branche n'appelle plus que des RPC bornées. **Ordre impératif** : d'abord le
-SQL, ensuite le merge et le déploiement — sinon la recherche tombe en 404.
+La PR `fix/c1-enumeration` (#57) ferme la lecture directe de la vue
+`public_doctors` (75 034 fiches lisibles par n'importe qui). Le SQL est
+**scindé en deux fichiers** parce que la production Cloudflare tourne sur un
+front plus ancien que la PR : couper la vue avant de déployer casserait la
+recherche sur tabibi.doctor.
 
-1. Supabase → SQL Editor → coller le contenu de
-   `supabase/migrations/20260909_c1_fermeture_enumeration_public_doctors.sql` → Run.
-2. Vérifier depuis un terminal : `node scripts/verifier-c1.mjs --live`
-   (attendu : vue → 401, RPC sans filtre → 400, RPC Alger limite 500 → 50 lignes).
-3. Merger la PR, déployer (Cloudflare `wrangler pages deploy`, puis
-   `scripts/build-mobile.sh` pour resynchroniser android/ et ios/).
+**1A — maintenant, sans risque** (`supabase/migrations/20260909_c1a_rpc_praticiens.sql`)
+Crée les 6 RPC. Purement additif : l'ancien front continue de lire la vue.
+- [ ] 1A joué dans le SQL Editor
+- [ ] `node scripts/verifier-c1.mjs --live` : 2e et 3e appels ✓ (le 1er reste ✗ : normal avant 1B)
+- [ ] PR #57 : *Re-run jobs* → vert, puis merge
 
-Retour arrière : bloc « Retour arrière » en bas du fichier SQL (2 GRANT + 2 RESET).
+**1B — seulement après le déploiement du front** (`…_c1b_fermeture_vue_public_doctors.sql`)
+Retire les droits de lecture et pose `security_invoker`. Condition de
+déclenchement : `curl -s https://tabibi.doctor/js/home-app.js | grep -c rpc/chercher_praticiens`
+renvoie ≥ 1. Le script refuse de s'exécuter si 1A n'a pas été joué.
+- [ ] `wrangler pages deploy` fait, condition vérifiée
+- [ ] Décision APK : republier un build avant 1B, ou accepter que l'app 1.0.2 perde la recherche jusqu'au prochain build
+- [ ] 1B joué · `verifier-c1 --live` : 3 ✓ · une recherche sur tabibi.doctor s'affiche
 
-- [ ] SQL exécuté
-- [ ] `verifier-c1 --live` vert
-- [ ] PR mergée puis déployée
+Retour arrière : bloc en bas de chaque fichier (1B : 2 GRANT + 2 RESET).
 
 ---
 
