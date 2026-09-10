@@ -784,7 +784,7 @@ Inventaire, sans ordre.
 **Incomplet**
 - Vite : 10 pages sur 54 ; design system v2 : 12 pages sur 54 ; service worker : 1 page sur 54.
 - 1 786 attributs `style=` inline ; 6 dictionnaires i18n locaux hors contrôle de parité.
-- Rôle `secretaire` absent des redirections ; trois pages pro/admin sans `requireAuth`.
+- Rôle `secretaire` : absent de l'enum `users.role` (`patient, doctor, admin, medecin`) alors que `signup.html:510` écrit `role: "secretaire"` dans le cache local et que `signup.html:498` appelle une RPC inexistante ; le rôle réel vient de `cabinet_members.role`. Trois pages pro/admin sans `requireAuth` (corrigé par la PR #61).
 - `admin_validate_doctor` sans `search_path` figé ; 7 fonctions DEFINER sans `pg_temp`.
 - `doctor_unavailable_slots` lisible par tout visiteur, motif compris.
 - Sentry absent des edge functions ; aucun heartbeat d'exploitation.
