@@ -632,8 +632,15 @@ function init(){
   if(typeof hideLoading === 'function') hideLoading();
   loadAppointments();
 }
+// [R1 2026-09-10] Garde centralisée : la page s'affichait sans session (onglets vides).
+// requireAuth('patient') valide la session AVANT le cache et redirige vers login sinon.
+async function initAvecGarde(){
+  var authed = window.tabibi && window.tabibi.auth ? await window.tabibi.auth.requireAuth('patient') : null;
+  if(!authed) return;
+  init();
+}
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", initAvecGarde);
 
 // [CONFORMITE 2026] re-render des listes (statuts, dates, vides) au changement
 // de langue — le statique est géré par l'engine. Pas pendant le chargement.
