@@ -19,6 +19,20 @@
 --   * ne touche ni à get_available_slots, ni aux policies INSERT / UPDATE /
 --     DELETE existantes (déjà limitées au propriétaire).
 --
+-- PREUVE MESURÉE LE 10/09/2026 (essai complet dans une transaction ANNULÉE :
+-- migration + données d'essai + mesures, puis ROLLBACK ; base vérifiée intacte
+-- ensuite : 4 policies d'origine, anon SELECT encore accordé, 3 lignes, fiche
+-- sans user_id ni horaires) :
+--   AVANT  : anon 3 lignes · patient authentifié 3 lignes
+--   APRÈS  : anon has_table_privilege(select) = false (HTTP 401 attendu)
+--            patient authentifié (ni propriétaire ni admin) = 0 ligne
+--            médecin propriétaire = 3 lignes, toutes à lui (l'absence
+--            d'essai posée sur un autre médecin est invisible)
+--   RPC    : fiche rendue réservable pour l'essai (is_claimed, approved,
+--            horaires 09-12) : get_available_slots J+14 = 6 créneaux AVANT
+--            et 6 APRÈS ; J+15 avec une absence all_day posée = 0 AVANT et
+--            0 APRÈS. Inchangée.
+--
 -- À EXÉCUTER PAR AGHILES dans le SQL Editor. Rien n'est exécuté par l'agent.
 -- =====================================================================
 
