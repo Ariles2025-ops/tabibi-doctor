@@ -420,6 +420,7 @@ les instantanés de VM comme unique mécanisme (non transactionnels, non testabl
 | `pg_dump` nocturne | **30 quotidiennes, 12 hebdomadaires, 12 mensuelles** | politique grand-père/père/fils : une année d'historique logique, taille négligeable (base de 102 Mo compressée en quelques Mo) |
 | Storage | miroir quotidien avec versioning : objets supprimés ou écrasés conservés **90 jours** ; miroir lui-même sans limite (il ne fait que grandir avec les fichiers vivants) | une ordonnance effacée par erreur doit rester récupérable un trimestre ; les durées légales de conservation des documents médicaux se traitent dans l'application (statut, non suppression), pas dans les sauvegardes |
 | Dépôt de sauvegarde | chiffré, clé `age` détenue hors des deux serveurs (gestionnaire de mots de passe + copie papier scellée) | une sauvegarde lisible par qui vole le disque n'en est pas une |
+| Postes de travail | disque chiffré (FileVault sur le Mac) **obligatoire** partout où une clé ou un fichier en clair transite, même quelques minutes | sur un SSD APFS, « effacer » un fichier (même en le réécrivant) ne garantit pas que les blocs sont détruits : la protection réelle est le chiffrement du volume, pas la réécriture. Constaté le 10/09/2026 : FileVault était désactivé sur le poste qui porte la clé de signature Android |
 
 Les données de santé imposent une contrainte supplémentaire : la suppression d'un compte (droit à
 l'effacement) ne peut pas atteindre les sauvegardes passées. La politique écrite doit donc dire que
