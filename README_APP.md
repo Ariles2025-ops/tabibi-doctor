@@ -433,6 +433,8 @@ tableau de bord patient).
 
 ### 6.2 RLS : ce qu'un anonyme voit réellement
 
+**Inventaire complet du 10/09/2026** (`docs/INVENTAIRE_PRIVILEGES_2026-09-10.md`) : **les 55 tables du schéma `public` ont la RLS activée**, 3 forcée ; aucune table ouverte par un simple privilège ; hors `public`, une seule table sans RLS lisible par `anon` (`realtime.subscription`, vide, schéma non exposé). Les privilèges par défaut restent trop larges (TRUNCATE, INSERT/UPDATE/DELETE de `anon` là où seule la RLS l'arrête) : c'est de l'hygiène, pas une ouverture.
+
 94 policies ; 28 s'appliquent au rôle `anon` (dont 17 en lecture). Mesure HTTP avec la clé `anon`
 seule, le 10/09 :
 
