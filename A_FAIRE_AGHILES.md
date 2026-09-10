@@ -1,5 +1,14 @@
 # Ce que je ne peux pas faire à ta place
 
+> ## ⛔ AVANT TOUT — FACTURES SUPABASE IMPAYÉES (constaté le 10/09/2026)
+> Le tableau de bord affiche « Outstanding invoices — please pay your invoices to avoid service
+> disruption ». Une suspension du projet `pudugodhiofqrctcdwfl` aujourd'hui serait **irrécupérable** :
+> aucune restauration n'a jamais été testée, le Storage n'est pas sauvegardé par la plateforme, et la
+> seule copie hors plateforme est celle du 10/09 (5 objets de test). Régler la facture (Organisation →
+> Billing → Invoices) **avant toute autre action de cette liste**, puis vérifier que le projet reste
+> `ACTIVE_HEALTHY`. Sauvegardes quotidiennes : 7 jours glissants ; au-delà, plus rien.
+
+
 **Mis à jour le 9 septembre 2026 — J−85 du congrès.**
 
 Quatre points. Tout ce qui pouvait être préparé l'a été : il ne reste que les
