@@ -354,6 +354,17 @@ visibilité, puis les deux fronts, jamais le local-first avant d'avoir des utili
 à la racine, un seul artefact de déploiement par cible, et la possibilité de faire tourner
 `api/`, `supabase/` et les deux fronts sur un serveur unique à Alger avec Cloudflare devant.
 
+**Un projet Supabase de staging, et la raison notée le jour où on le créera.** Le 10 septembre 2026,
+la première chaîne complète du produit (revendication → validation → rendez-vous → confirmation →
+SMS) n'a pu être testée qu'en transaction annulée, puis en production sur des comptes marqués, avec
+un script de nettoyage écrit avant le test. C'est acceptable une fois, pas comme méthode : chaque
+essai réel écrit dans une base de santé, laisse des traces dans `audit_log`, consomme des SMS payants
+et exige une purge qu'il faut prouver. Un second projet Supabase, même région, alimenté par la
+restauration mensuelle (§8.5), permet de rejouer cette chaîne à volonté, de tester les migrations
+(1A, 1B, claim) avant la production, et de brancher les previews Netlify/Vercel ailleurs que sur les
+données réelles. Son coût : un projet Pro supplémentaire et la discipline de le restaurer chaque mois.
+Il devient obligatoire dès qu'une deuxième personne touche à la base.
+
 **Ce que je recommande de ne pas faire** : commencer par le front pro (30 jours sans effet sur la
 sécurité ni sur la portabilité), adopter Trigger.dev ou le local-first maintenant, ou déployer PostHog
 en replay sur le parcours patient.
