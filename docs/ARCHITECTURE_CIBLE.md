@@ -360,7 +360,116 @@ en replay sur le parcours patient.
 
 ---
 
-## 8. Ce qui n'a pas été mesuré
+## 8. Stockage des fichiers et sauvegardes — décision
+
+C'est le maillon le plus faible de la cible : il porte les pièces d'identité des médecins, les
+ordonnances à venir et les photos, et il est aujourd'hui **sans aucune sauvegarde** (les sauvegardes
+quotidiennes Supabase excluent le Storage) avec une base sauvegardée une fois par jour, sans PITR,
+jamais restaurée. Cette section donne une recommandation unique, valable dans les deux scénarios de
+résidence, avec l'outillage, la rétention et la preuve de restauration.
+
+### 8.1 État mesuré
+
+| Élément | Constat | Preuve |
+|---|---|---|
+| Buckets | `avatars` (public, 1 objet), `doctor-photos` (public, 0), `Downloads` (public, 3 objets, 27 Mo : APK), `doctor-docs` (privé, 4 objets, 1,7 Mo : cartes d'identité et cartes de l'Ordre), `dawini-ordonnances` (privé, 0) ; le bucket `prescriptions` appelé par le front n'existe pas | SELECT `storage.buckets`, `storage.objects` |
+| Sauvegardes base | physiques, quotidiennes vers 03 h 35 UTC, 8 disponibles, `pitr_enabled = false`, `walg_enabled = true` (WAL archivé par la plateforme mais fenêtre de restauration non exposée sans l'option PITR) | API de gestion `database/backups` |
+| Sauvegardes Storage | **aucune** : hors périmètre des sauvegardes Supabase | documentation Supabase, confirmée par l'absence de tout mécanisme dans le dépôt |
+| Restauration | jamais testée | `README_APP.md` §5 |
+| Point de reprise (RPO) réel | jusqu'à 24 h pour la base, **infini** pour les fichiers | déduit des deux lignes précédentes |
+
+### 8.2 Où vivent les fichiers, selon le scénario
+
+| Bucket | Contenu | Donnée personnelle | Scénario A — résidence non exigée (aujourd'hui) | Scénario B — résidence exigée (serveur à Alger) |
+|---|---|---|---|---|
+| `doctor-docs` | pièces d'identité, cartes de l'Ordre | oui, sensible | Storage Supabase, Francfort, privé, URL signées 60 s | Storage Supabase auto-hébergé, backend S3 **MinIO** sur le serveur algérien, chiffrement au repos activé (SSE-S3) |
+| `prescriptions` (à créer) | PDF d'ordonnances | oui, santé | idem | idem |
+| `dawini-ordonnances` | photos d'ordonnances | oui, santé | idem | idem |
+| `avatars`, `doctor-photos` | photos de personnes | oui | Storage Supabase, publics (lecture), écriture par le propriétaire | Storage auto-hébergé ; publics via Cloudflare en cache |
+| `Downloads` | APK | non | **R2** (public, cache Cloudflare, gratuit en sortie) : sortir l'APK du Storage Supabase | R2, inchangé |
+| Images du site, OG, pages SEO | non | non | R2 ou dépôt statique | idem |
+
+Règle : **R2 ne reçoit jamais un objet contenant une donnée personnelle**, dans aucun scénario ; ainsi le
+passage de A à B ne déplace que le Storage Supabase, par `rclone sync` bucket à bucket, sans changer
+une ligne de code applicatif (les chemins d'objets et les URL signées sont produits par l'API Storage,
+identique en cloud et auto-hébergé).
+
+### 8.3 Comment on sauvegarde : une seule chaîne, deux branchements
+
+L'outil de sauvegarde de la base diffère forcément entre les deux scénarios (Supabase Cloud ne donne
+pas accès au système de fichiers de Postgres, donc pas de `pgBackRest`) ; tout le reste est commun.
+
+| Couche | Scénario A (Supabase Cloud) | Scénario B (auto-hébergé à Alger) |
+|---|---|---|
+| Base — continu | **Option PITR de Supabase** activée (fenêtre 7 jours). C'est la seule façon d'avoir un point de reprise inférieur à 24 h sans accès au serveur | **`pgBackRest`** : archivage WAL continu, sauvegarde complète hebdomadaire, différentielle quotidienne, chiffrement AES-256 du dépôt, vérification (`pgbackrest verify`) intégrée. Préféré à `wal-g` pour la vérification, la reprise incrémentale et la documentation |
+| Base — logique | **`pg_dump -Fc`** nocturne depuis un exécuteur externe (connexion `pooler` en session, rôle de lecture dédié), chiffré avec `age`, poussé hors plateforme. Indépendant de Supabase : c'est la copie que l'on garde même si le compte disparaît | même `pg_dump -Fc` nocturne, en plus de `pgBackRest` : le format logique est celui que l'on relit dans dix ans et que l'on restaure sur une autre version majeure |
+| Storage | **`rclone sync`** nocturne du point d'accès S3 du Storage Supabase vers un second stockage objet **hors Supabase** (fournisseur européen distinct : Scaleway, Hetzner ou Backblaze région UE), versioning activé côté cible, chiffrement `rclone crypt` | `rclone sync` de MinIO vers un **second serveur algérien** (autre fournisseur ou autre centre) ; réplication de site MinIO si les deux hôtes le permettent |
+| Exécuteur | un dépôt privé `ops/` avec un workflow GitHub Actions planifié **ou** une petite machine européenne à 5 €/mois ; secrets dans le coffre du CI, jamais dans le dépôt applicatif | le second serveur algérien lui-même (il tire les sauvegardes, il ne reçoit pas de pousser : un attaquant du primaire ne peut pas effacer les copies) |
+| Signal de vie | chaque tâche pointe un heartbeat Better Stack en fin de course et écrit une ligne `ops_runs` ; absence de pointage = alerte téléphone | idem |
+
+Ce qui est explicitement écarté : compter sur les sauvegardes Supabase seules (pas de Storage, pas de
+copie hors plateforme) ; sauvegarder vers R2 (dans le scénario B ce serait une sortie du territoire ;
+dans le scénario A c'est le même fournisseur que le CDN, une seule panne de compte emporterait tout) ;
+les instantanés de VM comme unique mécanisme (non transactionnels, non testables sans tout remonter).
+
+### 8.4 Rétention
+
+| Copie | Rétention | Justification |
+|---|---|---|
+| PITR (A) ou WAL `pgBackRest` (B) | fenêtre de **14 jours** (7 en A, limite de l'option ; 14 en B) | reprise fine après une erreur humaine ou un incident découvert tard |
+| `pg_dump` nocturne | **30 quotidiennes, 12 hebdomadaires, 12 mensuelles** | politique grand-père/père/fils : une année d'historique logique, taille négligeable (base de 102 Mo compressée en quelques Mo) |
+| Storage | miroir quotidien avec versioning : objets supprimés ou écrasés conservés **90 jours** ; miroir lui-même sans limite (il ne fait que grandir avec les fichiers vivants) | une ordonnance effacée par erreur doit rester récupérable un trimestre ; les durées légales de conservation des documents médicaux se traitent dans l'application (statut, non suppression), pas dans les sauvegardes |
+| Dépôt de sauvegarde | chiffré, clé `age` détenue hors des deux serveurs (gestionnaire de mots de passe + copie papier scellée) | une sauvegarde lisible par qui vole le disque n'en est pas une |
+
+Les données de santé imposent une contrainte supplémentaire : la suppression d'un compte (droit à
+l'effacement) ne peut pas atteindre les sauvegardes passées. La politique écrite doit donc dire que
+les copies expirent selon la rétention ci-dessus et que la donnée effacée n'est jamais réinjectée à la
+restauration sans rejouer les suppressions (journal `account_deletion_requests`, brique R4).
+
+### 8.5 Comment on prouve qu'une restauration fonctionne
+
+Une sauvegarde qui n'a jamais été restaurée est une hypothèse. La preuve est automatisée, mensuelle,
+et laisse une trace :
+
+1. **Restauration à blanc mensuelle**, sur une machine jetable : `pg_restore` du dernier dump dans un
+   Postgres 17 en conteneur (scénario A) ou `pgbackrest restore --type=time` vers un instant de la
+   veille (scénario B) ; `rclone` du miroir Storage vers un MinIO éphémère.
+2. **Contrôles automatiques** : nombre de lignes par table comparé à la production à l'instant
+   sauvegardé (écart toléré : 0 pour les tables de référence, journalisé pour les tables vivantes) ;
+   somme de contrôle SHA-256 de vingt objets Storage tirés au sort comparée à l'original ; ouverture
+   effective d'un PDF ; exécution des trois fonctions les plus critiques (`get_available_slots`,
+   `chercher_praticiens`, `is_admin`).
+3. **Test applicatif** : la pile Supabase auto-hébergée démarrée sur la restauration, le front pointé
+   dessus, la suite Playwright de 30 tests exécutée. C'est aussi, en scénario A, la répétition
+   générale du scénario B : chaque mois, on prouve que Tabibi tourne hors de Supabase Cloud.
+4. **Trace** : résultat écrit dans `ops_runs` et dans un fichier `docs/RESTAURATIONS.md` (date, dump,
+   durée, écarts, durée totale de reprise mesurée) ; heartbeat Better Stack « restauration mensuelle »
+   qui alerte si le mois passe sans exécution.
+5. **Objectifs mesurés, pas déclarés** : point de reprise (RPO) ≤ 15 min pour la base, ≤ 24 h pour les
+   fichiers ; délai de reprise (RTO) ≤ 4 h pour remonter la pile complète, chronométré à chaque
+   exercice.
+
+### 8.6 Recommandation, en une décision
+
+**Aujourd'hui (scénario A)** : activer l'option PITR Supabase ; créer le dépôt `ops/` avec trois tâches
+planifiées (`pg_dump` nocturne chiffré, `rclone sync` du Storage vers un stockage objet européen
+distinct de Supabase et de Cloudflare, restauration à blanc mensuelle avec Playwright) ; déplacer l'APK
+vers R2 ; pointer chaque tâche sur Better Stack. Coût : 2 jours de mise en place, puis un abonnement
+PITR et quelques euros de stockage par mois.
+
+**Le jour du scénario B** : `pgBackRest` remplace l'option PITR, MinIO remplace le Storage cloud,
+le second serveur algérien remplace le stockage objet européen ; les tâches `pg_dump`, `rclone` et la
+restauration mensuelle sont **les mêmes scripts** avec d'autres points de terminaison. Coût : 3 jours,
+plus l'exploitation. La restauration mensuelle du scénario A aura déjà prouvé, douze fois, que la pile
+tourne hors de Supabase Cloud.
+
+Ce qui doit être vrai avant de commencer : un rôle Postgres de lecture dédié aux sauvegardes ; le
+point d'accès S3 du Storage Supabase activé (clés d'accès de niveau projet, stockées dans le CI) ;
+un second fournisseur choisi ; la clé `age` générée et déposée hors ligne ; Better Stack ouvert.
+
+---
+
+## 9. Ce qui n'a pas été mesuré
 
 - Les tailles de bundle SvelteKit et le plancher React 19 : valeurs publiques, non compilées ici.
 - La maturité exacte de PowerSync, ElectricSQL et Zero à la date de décision : à revérifier le jour où
@@ -369,3 +478,4 @@ en replay sur le parcours patient.
   ensemble sur un serveur algérien, et l'offre d'hébergement disponible à Alger (fournisseurs, bande
   passante, sauvegardes hors site) : à instruire avec l'avocat et un devis.
 - Le comportement du Rate Limiting binding de Workers sous charge : à mesurer pendant le spike.
+- Le coût exact de l'option PITR Supabase et du stockage objet européen à la date de mise en place ; le débit réel entre Francfort et un second fournisseur pour le miroir quotidien ; l'offre de MinIO ou d'un stockage objet chez un hébergeur algérien.
