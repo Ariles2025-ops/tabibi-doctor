@@ -184,3 +184,22 @@ commit;
 -- -- claim_my_doctor_profile(integer) d'origine : voir docs/FICHE_REVENDICATION_MEDECIN.md §3
 -- -- (mêmes contrôles, sans FOR UPDATE, test « déjà revendiqué » sur is_claimed,
 -- --  UPDATE user_id/is_claimed/claimed_at/updated_at, pas de trace audit_log).
+
+-- =====================================================================
+-- HYGIÈNE — privilège TRUNCATE hérité des privilèges par défaut
+-- =====================================================================
+-- Constat (10/09) : anon et authenticated détiennent TRUNCATE sur les tables
+-- du schéma public (héritage `anon=arwdDxtm`). TRUNCATE ignore la RLS ; il
+-- est injoignable via PostgREST, mais aucun front n'en a besoin et aucune
+-- fonction du schéma ne l'utilise. On le retire partout, et on corrige les
+-- privilèges par défaut pour que les tables futures ne l'héritent plus.
+-- À exécuter dans la même session que le correctif, ou séparément.
+begin;
+revoke truncate on all tables in schema public from anon, authenticated;
+alter default privileges for role postgres in schema public revoke truncate on tables from anon, authenticated;
+commit;
+-- Vérification :
+-- select grantee, count(*) from information_schema.role_table_grants
+--  where table_schema='public' and privilege_type='TRUNCATE' and grantee in ('anon','authenticated') group by 1;  -- 0 ligne
+-- Retour arrière (sans intérêt fonctionnel) :
+-- grant truncate on all tables in schema public to anon, authenticated;
