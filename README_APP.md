@@ -405,8 +405,9 @@ job n° 2 (nom différent, `tabibi-rappels-j1`) : le job a été créé hors dé
 Secrets edge présents (noms seulement, 20) : `BSMS_FROM/HANDLE/USER/USERID`, `DAILY_API_KEY`,
 `DAILY_DOMAIN`, `REMINDERS_CRON_SECRET`, `REMINDERS_ENABLED`, `RESEND_API_KEY`,
 `SEND_SMS_HOOK_SECRETS`, `SENTRY_DSN`, `TABIBI_PII_KEY`, `TURNSTILE_SECRET_KEY` et les 7 variables
-`SUPABASE_*` gérées par la plateforme. `RESEND_API_KEY` et `DAILY_*` ne sont lus par aucune fonction
-déployée.
+`SUPABASE_*` gérées par la plateforme. `RESEND_API_KEY` (posé le 20/05) et `DAILY_API_KEY`/`DAILY_DOMAIN` (19–20/05) sont présents mais
+ne sont lus par aucune fonction déployée : il manque les edge functions `send-email` et
+`create-video-room` qui devaient les consommer.
 
 ### 5.6 Authentification (configuration GoTrue mesurée)
 
@@ -701,11 +702,12 @@ n'ont pas pu être listées (jeton local sans droit `actions`).
 | **Google Fonts** | 4 pages (`404`, `about`, `dawini`, `onboarding-medecin`) | `display=swap` | police système |
 | **Meta Pixel** | mesure d'acquisition | identifiant réel, chargé après consentement marketing | rien de visible |
 | **Meta WhatsApp Cloud API** | canal prévu pour confirmations et OTP | code préparatoire non déployé ; **aucun compte WhatsApp Business** dans le portefeuille Meta « tabibidzapp » ; vérification d'entreprise non commencée | — |
-| **Daily.co** | téléconsultation | SDK chargé depuis `unpkg.com` sans SRI sur une page masquée ; secrets `DAILY_*` présents mais lus par aucune fonction | — |
+| **Daily.co** | téléconsultation | SDK chargé depuis `unpkg.com` sans SRI sur une page masquée ; secrets `DAILY_API_KEY`/`DAILY_DOMAIN` présents depuis mai, **l'edge `create-video-room` qui doit les utiliser n'existe pas** | — |
 | **Plausible** | analytics | inactif (`analytics: false`) | — |
 | **Netlify**, **Vercel** | previews (Netlify) ; copie non voulue (Vercel) | applications GitHub installées | — |
 | **GitHub** | dépôt privé, CI, Dependabot, gitleaks | 2FA obligatoire avant le 13/09/2026 sur le compte propriétaire | — |
-| **Resend**, **Twilio**, **Google Analytics** | aucun usage dans le code ; secret `RESEND_API_KEY` orphelin ; bloc Twilio du `config.toml` par défaut ; GTM seulement autorisé par la CSP | — | — |
+| **Resend** | e-mails applicatifs prévus | secret `RESEND_API_KEY` présent depuis le 20/05 ; **l'edge `send-email` qui doit l'utiliser n'existe pas** ; les trois parcours qui l'appellent affichent « Email envoyé » à tort | — |
+| **Twilio**, **Google Analytics** | aucun usage dans le code ; bloc Twilio du `config.toml` par défaut ; GTM seulement autorisé par la CSP | — | — |
 
 ---
 
@@ -776,7 +778,7 @@ Inventaire, sans ordre.
 - `two_factor_secrets`, `enroll_two_factor`, `disable_two_factor`, colonnes `users.totp_*` : 0 usage.
 - `record_consent`, `tabibi_pii_encrypt/decrypt`, `next_prescription_number`,
   `create_video_session`, `check_doctor_account_exists` : présents, jamais appelés.
-- Secrets edge orphelins : `RESEND_API_KEY`, `DAILY_API_KEY`, `DAILY_DOMAIN`.
+- Secrets edge en attente de leur fonction : `RESEND_API_KEY` (attend `send-email`), `DAILY_API_KEY` et `DAILY_DOMAIN` (attendent `create-video-room`).
 - `icons/` (7 webp), `resources/` : non référencés par le manifest.
 - `supabase/functions/send-whatsapp`, `whatsapp-webhook` : non déployées.
 - 43 branches distantes non fusionnées ; 7 documents d'audit de mai 2026 jamais mis à jour ;
