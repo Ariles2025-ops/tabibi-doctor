@@ -449,7 +449,40 @@ et laisse une trace :
    fichiers ; délai de reprise (RTO) ≤ 4 h pour remonter la pile complète, chronométré à chaque
    exercice.
 
-### 8.6 Recommandation, en une décision
+### 8.6 Périmètre des copies : une règle, pas du cas par cas
+
+La règle : **est sauvegardé tout objet qui est une donnée personnelle ou qui n'est pas reproductible
+à partir d'une autre source maîtrisée ; n'est pas sauvegardé depuis le Storage ce qui se régénère.**
+Le caractère public ou privé du bucket ne décide de rien : `avatars` est public et contient des
+visages de personnes identifiées, il est sauvegardé ; `Downloads` est public et ne contient que des
+APK reconstructibles depuis le dépôt et la clé de signature, il ne l'est pas.
+
+Corollaires :
+
+1. **Registre obligatoire.** Aucun bucket n'est créé sans une ligne dans le tableau ci-dessous
+   (classe, sauvegardé ou non, justification). Un bucket absent du registre est traité comme
+   « sauvegardé » par défaut, jamais l'inverse : l'erreur coûte du stockage, pas une perte.
+2. **Même rétention pour tout ce qui est sauvegardé** (§8.4). Les durées de conservation propres aux
+   documents médicaux relèvent de l'application, pas des sauvegardes.
+3. **La copie de sauvegarde n'est pas un lieu de traitement** : chiffrée, jamais lue autrement que pour
+   restaurer ou vérifier, et purgée des objets qu'une demande d'effacement a supprimés en production
+   à l'expiration de la rétention (§8.4, dernier alinéa).
+4. **Périmètre = Storage.** La base est sauvegardée dans son intégralité, sans tri par table : le tri
+   n'y a aucun sens (une ligne d'`appointments` sans `users` ne se restaure pas).
+
+| Bucket | Classe | Sauvegardé | Justification |
+|---|---|---|---|
+| `doctor-docs` | données personnelles sensibles (pièces d'identité, cartes de l'Ordre) | **oui** | irremplaçable ; base de la validation des médecins |
+| `prescriptions` (à créer) | données de santé | **oui** | valeur probante des ordonnances ; obligation de conservation |
+| `dawini-ordonnances` | données de santé | **oui** | idem |
+| `avatars` | données personnelles (visages) | **oui** | fournis par les personnes, non reproductibles |
+| `doctor-photos` | données personnelles (visages) | **oui** | idem |
+| `Downloads` | public, non personnel (APK) | **non** | reproductible : dépôt + `android/tabibi-release.jks` (sauvegardée séparément, `scripts/sauvegarder-keystore.sh`) ; à déplacer vers R2 |
+| Images du site, OG, SEO | public, non personnel | **non** | dans le dépôt git |
+
+La copie du 10 septembre 2026 a inclus `avatars` sur cette règle ; elle n'a pas inclus `Downloads`.
+
+### 8.7 Recommandation, en une décision
 
 **Aujourd'hui (scénario A)** : activer l'option PITR Supabase ; créer le dépôt `ops/` avec trois tâches
 planifiées (`pg_dump` nocturne chiffré, `rclone sync` du Storage vers un stockage objet européen
