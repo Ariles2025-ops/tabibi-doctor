@@ -21,6 +21,7 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 3. **Toute action destructive sur la base (DELETE, DROP, REVOKE, UPDATE massif) → STOP et demande confirmation avant.** Ajoute toujours un garde-fou (WHERE ciblé + RETURNING) et propose-la, ne l'exécute pas seul.
 4. **Ne jamais logguer, écrire sur disque, ni committer un secret** (service_role key, access token, secret Turnstile). Variables d'environnement uniquement, jamais dans un fichier.
 5. **Ne rien valider sans preuve empirique** : sortie DB réelle, réponse HTTP, run navigateur, scores mesurés. Jamais "ça devrait marcher".
+6. **Aucune sortie de commande contenant un champ nommé `secret`, `token`, `key`, `password` (ou une valeur qui en a la forme : JWT `eyJ…`, `sb_secret_…`, hexadécimal long) n'est affichée telle quelle, jamais, même en lecture.** Toute réponse d'API ou de CLI est filtrée avant affichage (champs choisis explicitement, ou remplacés par une empreinte SHA-256 tronquée). Incident du 10/09/2026 : `GET /v1/projects/…/postgrest` renvoyait `jwt_secret` et il a été affiché ; rotation déclenchée.
 
 ## Sécurité — état à jour (NE PAS refaire)
 Ces points sont **déjà réglés et prouvés** (session du 26 juil 2026). Ne les re-propose pas :
