@@ -383,7 +383,7 @@ résidence, avec l'outillage, la rétention et la preuve de restauration.
 
 | Élément | Constat | Preuve |
 |---|---|---|
-| Buckets | `avatars` (public, 1 objet), `doctor-photos` (public, 0), `Downloads` (public, 3 objets, 27 Mo : APK), `doctor-docs` (privé, 4 objets, 1,7 Mo : cartes d'identité et cartes de l'Ordre), `dawini-ordonnances` (privé, 0) ; le bucket `prescriptions` appelé par le front n'existe pas | SELECT `storage.buckets`, `storage.objects` |
+| Buckets | `avatars` (public, 1 objet), `doctor-photos` (public, 0), `Downloads` (public, 3 objets, 27 Mo : APK), `doctor-docs` (privé, 4 objets, 1,7 Mo — **pièces déposées par un compte de test `te***@tabibi.doctor` en juin 2026, pas des documents réels** ; vérifié le 10/09 par le propriétaire des objets), `dawini-ordonnances` (privé, 0) ; le bucket `prescriptions` appelé par le front n'existe pas. Au 10/09, **aucune donnée personnelle réelle n'est stockée dans le Storage** : l'urgence de la première copie a été surestimée, la règle du §8.6 reste valable pour la suite | SELECT `storage.buckets`, `storage.objects`, `owner` |
 | Sauvegardes base | physiques, quotidiennes vers 03 h 35 UTC, 8 disponibles, `pitr_enabled = false`, `walg_enabled = true` (WAL archivé par la plateforme mais fenêtre de restauration non exposée sans l'option PITR) | API de gestion `database/backups` |
 | Sauvegardes Storage | **aucune** : hors périmètre des sauvegardes Supabase | documentation Supabase, confirmée par l'absence de tout mécanisme dans le dépôt |
 | Restauration | jamais testée | `README_APP.md` §5 |
