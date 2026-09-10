@@ -66,6 +66,10 @@ jobs:
       - name: Les trois dictionnaires ont les memes cles
         run: npm run i18n:verifier
 
+      - name: Aucun littéral de clé hors config.js
+
+        run: npm run verifier:cles
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 
