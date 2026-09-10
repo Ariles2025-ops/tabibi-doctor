@@ -111,3 +111,40 @@ les colonnes), s'applique aussi à la seule fonction légitime qui pose `is_clai
 - La validation admin après un `is_claimed` correct : `admin_validate_doctor` ne touche pas `is_claimed`
   et propage le statut sur `users.status` ; non rejoué.
 - Le comportement de `signup.html` en mode « inscription avec claim » (`[C3]`, `profile_id`).
+
+## 8. Le tableau de bord d'un médecin sans fiche liée — mesuré en production le 10/09/2026
+
+Compte réel connecté sur `tabibi.doctor/doctor-dashboard` (rôle `medecin`, inscrit par téléphone le
+31/07, 0 fiche liée, pas un compte de test). Nom et spécialité viennent de **`public.users`**
+(`first_name`, `last_name`, `specialty_fr` écrits par `signup.html`), puis du cache
+`localStorage.tabibi_user` ; jamais de `doctor_profiles`. Observation dans le navigateur (requêtes
+réseau, messages affichés, aucune soumission) recoupée avec le code.
+
+| Élément | Requête réelle | Résultat sans fiche | Verdict |
+|---|---|---|---|
+| En-tête | `users?id=eq.<compte>` | nom, spécialité | marche |
+| Onglet « Aujourd'hui » / KPI | `appointments?doctor_id=eq.<id du compte>` (`doctor-dashboard.html:573`) | 0 | **vide, et le restera après un claim** : la colonne référence `doctor_profiles.id`, le front filtre sur l'identifiant du compte (`js/tabibi-agenda.js:199` a le correctif, le tableau de bord ne l'a jamais reçu) |
+| Onglet « RDV », « Patients » | même requête, agrégat local | « Aucun rendez-vous », « Aucun patient » | idem |
+| Onglet « Agenda » | grille depuis `localStorage.tabibi_doc_rdv` | « Aucun RDV ce jour » | vide sans erreur |
+| Sous-section « Blocages » (onglet Agenda) | `get_my_doctor_profile` → vide, retry 1,5 s | « — (réclamez votre fiche pour activer cette section) », bouton « Bloquer un créneau » désactivé, mini-bandeau « Réclamer ma fiche » | dégradé proprement, mais enfoui |
+| Onglet « Stats » → `doctor-analytics` | `appointments?doctor_id=in.(<compte>)` | « Statistiques indisponibles pour le moment. Vérifiez votre connexion et réessayez. » | vide, **message faux** (accuse la connexion) ; le drapeau `doctorStats=false` ne protège que la sidebar, pas cet onglet |
+| Onglet « Profil » → « Mes horaires » | **`localStorage.tabibi_doctor_schedule`** | « Horaires enregistrés » | **faux succès** : rien en base, `update_my_doctor_profile(p_working_hours)` n'est jamais appelé ici |
+| **Ajouter créneaux** → `doctor-reservation` | **`localStorage.tabibi_doc_slots`**, aucun appel Supabase | « Créneaux ajoutés ! » | **faux succès** : aucun patient ne verra jamais ces créneaux, avec ou sans fiche |
+| Agenda cabinet | `get_my_cabinets` → 0, puis `appointments?doctor_id=in.(<compte>)` | grille vide, « Dr » sans nom | vide, silencieux |
+| Ordonnance / Téléconsult. | aucune | « bientôt disponible » | masqués par drapeau |
+| Mon cabinet → `admin-cabinet` | `get_my_cabinets` → 0 | toast « Vous n'êtes membre d'aucun cabinet. Créez-en un. » ; formulaires vides et actifs ; « Enregistrer » ne fait rien, sans message | **impasse** : la RPC `create_cabinet` existe en base, **aucun front ne l'appelle** |
+| Mon profil → `medecin-profile` | `get_my_doctor_profile` → vide | bandeau « Votre fiche médecin n'est pas encore liée à votre compte » + bouton « Réclamer ma fiche » ; à l'enregistrement : « Vous devez d'abord réclamer votre fiche… » (`update_my_doctor_profile` lève `profile_not_found_or_not_claimed`) | le seul écran qui dit la vérité |
+| Notifications (cloche) | `notifications?limit=20` → 0 | « Aucune notification » | **structurellement vides pour tout médecin** : `tg_notify_appointment` cherche le destinataire par `doctor_profiles.user_id` |
+| Chemins vers la revendication | — | 3 seulement : bandeau de « Mon profil », mini-bandeau enfoui dans l'onglet Agenda, pied de page public ; **rien** dans la sidebar pro, le menu, l'onglet « Aujourd'hui », ni `onboarding-medecin.html` | parcours manquant |
+
+Aucune erreur console, aucun chargement infini : tout échoue **poliment et à vide**, indiscernable
+d'un cabinet qui démarre. Deux défauts survivraient à un claim réussi : le filtre `doctor_id` sur
+l'identifiant du compte (tableau de bord, RDV, patients, stats) et l'absence d'appel à `create_cabinet`.
+Deux faux succès sont indépendants de la fiche : « Créneaux ajoutés ! » et « Horaires enregistrés ».
+
+Ordre de correction proposé, avant R3 : (1) le filtre `doctor_id` unifié sur l'identifiant de fiche
+retourné par `get_my_doctor_profile` (quatre écrans) ; (2) un bandeau « Réclamer ma fiche » en tête du
+tableau de bord tant que la fiche n'est pas liée, et une entrée dans la sidebar pro ; (3)
+`doctor-reservation` et « Mes horaires » branchés sur `update_my_doctor_profile(p_working_hours)` et
+`doctor_unavailable_slots`, ou retirés ; (4) `admin-cabinet` : soit brancher `create_cabinet`, soit
+retirer le toast qui invite à créer.
