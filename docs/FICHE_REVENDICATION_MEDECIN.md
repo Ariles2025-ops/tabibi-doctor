@@ -148,3 +148,34 @@ tableau de bord tant que la fiche n'est pas liée, et une entrée dans la sideba
 `doctor-reservation` et « Mes horaires » branchés sur `update_my_doctor_profile(p_working_hours)` et
 `doctor_unavailable_slots`, ou retirés ; (4) `admin-cabinet` : soit brancher `create_cabinet`, soit
 retirer le toast qui invite à créer.
+
+## 9. Récupération de mot de passe : qui peut encore entrer au congrès
+
+Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
+
+| Comptes | Total | Téléphone seul (e-mail nul) | E-mail seul | Les deux |
+|---|---|---|---|---|
+| médecins | 28 | **1** (le compte connecté au tableau de bord, créé le 31/07) | 26 | 1 |
+| patients | 11 | 2 | — | — |
+
+- **L'inscription actuelle crée des comptes téléphone seul** : `signup.html:397` appelle
+  `auth.signUp({ phone, password })` et écrit `email: NULL` (`:474`). Les 26 comptes médecin « e-mail
+  seul » viennent d'anciens parcours ou de comptes de test ; tout médecin inscrit au congrès sera dans
+  le cas « téléphone seul ».
+- **Deux parcours de récupération coexistent, et ils ne se valent pas :**
+  - « Mot de passe oublié ? » du formulaire principal de `login.html` (`showReset`, `:229`) : demande
+    le **téléphone**, appelle `signInWithOtp({ phone, shouldCreateUser: false })` puis `verifyOtp`
+    (`:369`, `:406`). C'est le bon parcours pour les comptes créés par téléphone : un code SMS, pas de
+    promesse d'e-mail. Pour les 26 comptes e-mail seul, il échoue avec le message de `mapOtpError`
+    (numéro inconnu). Ce parcours est aussi la seule porte d'entrée si le mot de passe est perdu.
+  - `forgot-password.html` : demande un **e-mail**, appelle `resetPasswordForEmail`, et affiche quoi
+    qu'il arrive « Si un compte existe avec cet email, vous recevrez un lien dans quelques minutes »
+    (`:69-71`). Pour un compte téléphone seul, **le lien ne peut jamais arriver** : la promesse est
+    tenue en apparence, fausse en fait. Cette page n'est atteignable que depuis le formulaire « Connexion
+    admin » (`login.html:163`) et depuis `reset-password.html` en cas de lien expiré.
+- **Conclusion** : un médecin inscrit par téléphone qui oublie son mot de passe au congrès a bien une
+  issue, l'OTP SMS depuis le formulaire principal ; elle dépend entièrement de BudgetSMS (crédit,
+  délivrabilité, hook `send-sms`). Le parcours e-mail doit soit disparaître pour les comptes sans
+  e-mail, soit le dire (« ce compte a été créé par téléphone : utilisez le code SMS »), ce qui suppose
+  de savoir côté client si l'identifiant existe, donc de passer par l'API (brique 1) plutôt que par
+  une réponse anti-énumération.
