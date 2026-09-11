@@ -179,3 +179,19 @@ Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
   e-mail, soit le dire (« ce compte a été créé par téléphone : utilisez le code SMS »), ce qui suppose
   de savoir côté client si l'identifiant existe, donc de passer par l'API (brique 1) plutôt que par
   une réponse anti-énumération.
+
+### 9.1 Deux correctifs ajoutés au lot « faux succès » (décision du 11/09)
+
+- **Correctif 1 bis — adresse de secours à l'inscription médecin.** Un champ e-mail **facultatif**,
+  présenté comme « adresse de secours pour récupérer votre compte », jamais comme identifiant de
+  connexion. Motif : chaque médecin du congrès n'aura sinon qu'une voie de récupération, l'OTP SMS ;
+  si BudgetSMS tombe ou si le crédit s'épuise, ils sont tous enfermés dehors. Condition technique :
+  GoTrue accepte un compte avec téléphone **et** e-mail (`auth.updateUser({ email })` après la
+  vérification du téléphone ; l'e-mail est actif après confirmation par lien) sans changer le mode de
+  connexion. Prérequis à vérifier avant : un SMTP réel côté GoTrue, sinon le lien de confirmation ne
+  part pas (voir la mesure ci-dessous).
+- **Correctif 1 ter — `forgot-password.html` ne promet plus un e-mail impossible.** Même famille que
+  « Créneaux ajoutés ! ». Soit la page détecte le type de compte et renvoie vers l'OTP SMS, soit elle
+  disparaît pour les comptes sans e-mail. La détection côté client n'est pas possible proprement
+  (réponse anti-énumération de GoTrue) : passer par l'API (brique 1) ou retirer la page du parcours
+  médecin.
