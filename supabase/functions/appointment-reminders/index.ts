@@ -64,7 +64,16 @@ import type { SupabaseClient } from "jsr:@supabase/supabase-js@2";
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
-const BATCH_MAX = 200;          // plafond d'envois par passe (garde-fou coût)
+const BATCH_MAX = 200;          // plafond de LECTURE par passe
+// [2026-09-09] Plafond d'ENVOIS par exécution, toutes passes confondues :
+// 60 SMS / 15 min = 240 / h au plus, quoi qu'il y ait dans l'outbox ou dans
+// appointments (accumulation pendant une panne, données importées, bug).
+// Ce qui n'est pas envoyé reste en attente et part aux runs suivants.
+const RUN_MAX = 60;
+// Une ligne d'outbox « confirmation » plus vieille que ça n'est plus une
+// confirmation : elle est marquée skipped, jamais envoyée.
+const OUTBOX_MAX_AGE_MS = 24 * 60 * 60_000;
+type Budget = { left: number; capped: boolean };
 const SAMPLE_MAX = 20;          // taille de l'échantillon renvoyé en dry_run
 const TZ = "Africa/Algiers";    // heure du cabinet (UTC+1 fixe, sans DST)
 const QUIET_FROM = 21;          // 21h00 → plus de rappel j1
@@ -260,6 +269,7 @@ async function scanPass(
   kind: "j1" | "h2",
   dryRun: boolean,
   creds: SmsCreds | null,
+  budget: Budget,
 ) {
   const w = WINDOWS[kind];
   const from = new Date(Date.now() + w.fromMin * 60_000).toISOString();
@@ -315,9 +325,15 @@ async function scanPass(
   // identifiants manquent, on n'écrit rien et on le dit.
   if (!creds) return { error: "sms_credentials_missing" };
 
-  const summary = { candidates: todo.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
+  const summary = { candidates: todo.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0, capped: false };
 
   for (const a of todo) {
+    // Plafond global d'envois par exécution : on s'arrête, le reste attend.
+    if (budget.left <= 0) { summary.capped = true; budget.capped = true; break; }
+    // Ceinture et bretelles : la fenêtre SQL exclut déjà le passé, mais un
+    // RDV déplacé entre la lecture et l'envoi ne doit pas partir.
+    if (new Date(String(a.starts_at)).getTime() < Date.now()) continue;
+
     const patient = pick(pById, a.patient_id);
     const doctor = pick(dById, a.doctor_id);
     const phone = normalizePhoneDZ(patient?.phone);
@@ -356,7 +372,7 @@ async function scanPass(
       await db.from("appointment_notifications")
         .update({ status: "sent", provider_msg_id: res.id, cost: res.cost, sent_at: new Date().toISOString() })
         .eq("id", row.id);
-      summary.sent++;
+      summary.sent++; budget.left--;
     } else {
       await db.from("appointment_notifications")
         .update({ status: "failed", error: res.error })
@@ -373,10 +389,10 @@ async function scanPass(
 // il n'envoie rien. Ici on résout le téléphone si le trigger ne l'a pas
 // fait (to_phone NULL) puis on envoie.
 // ─────────────────────────────────────────────────────────────────────
-async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsCreds | null) {
+async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsCreds | null, budget: Budget) {
   const { data: rows, error } = await db
     .from("appointment_notifications")
-    .select("id, appointment_id, to_phone")
+    .select("id, appointment_id, to_phone, created_at")
     .eq("kind", "confirmation")
     .eq("status", "pending")
     .order("created_at", { ascending: true })
@@ -420,10 +436,28 @@ async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsC
 
   if (!creds) return { error: "sms_credentials_missing" };
 
-  const summary = { candidates: rows.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0 };
+  const summary = { candidates: rows.length, sent: 0, failed: 0, no_phone: 0, duplicate: 0, stale: 0, capped: false };
 
   for (const r of rows) {
+    if (budget.left <= 0) { summary.capped = true; budget.capped = true; break; }
+
     const a = pick(aById, r.appointment_id);
+
+    // Garde-fou « outbox ancienne » : RDV passé, plus confirmé, ou ligne de
+    // plus de 24 h → skipped (jamais envoyé), et on libère la ligne pour de
+    // bon : une réactivation après panne ne doit pas arroser des RDV morts.
+    const starts = a?.starts_at ? new Date(String(a.starts_at)).getTime() : NaN;
+    const age = Date.now() - new Date(String(r.created_at)).getTime();
+    const stale = !a || a.status !== "confirmed" || !(starts > Date.now()) || age > OUTBOX_MAX_AGE_MS;
+    if (stale) {
+      await db.from("appointment_notifications")
+        .update({ status: "skipped", error: !a ? "appointment_missing" : a.status !== "confirmed" ? "not_confirmed" : !(starts > Date.now()) ? "appointment_past" : "outbox_too_old" })
+        .eq("id", r.id)
+        .eq("status", "pending");
+      summary.stale++;
+      continue;
+    }
+
     const patient = pick(pById, a?.patient_id);
     const doctor = pick(dById, a?.doctor_id);
 
@@ -454,7 +488,7 @@ async function confirmationPass(db: SupabaseClient, dryRun: boolean, creds: SmsC
       await db.from("appointment_notifications")
         .update({ status: "sent", provider_msg_id: res.id, cost: res.cost, sent_at: new Date().toISOString() })
         .eq("id", r.id);
-      summary.sent++;
+      summary.sent++; budget.left--;
     } else {
       await db.from("appointment_notifications")
         .update({ status: "failed", error: res.error })
@@ -519,12 +553,16 @@ Deno.serve(async (req) => {
   // En dry_run on calcule j1 même pendant les heures calmes (rien n'est
   // envoyé) : c'est plus informatif ; `quiet_hours` signale que ce lot
   // serait suspendu lors d'un run réel.
-  const j1 = (quiet && !dryRun) ? { skipped: "quiet_hours" } : await scanPass(db, "j1", dryRun, creds);
-  const h2 = await scanPass(db, "h2", dryRun, creds);
-  const confirmation = await confirmationPass(db, dryRun, creds);
+  // Budget d'envois partagé par les 3 passes (RUN_MAX). Ordre : h2 d'abord
+  // (le plus urgent), puis confirmation, puis j1 (qui a 18 h de fenêtre).
+  const budget: Budget = { left: RUN_MAX, capped: false };
+  const h2 = await scanPass(db, "h2", dryRun, creds, budget);
+  const confirmation = await confirmationPass(db, dryRun, creds, budget);
+  const j1 = (quiet && !dryRun) ? { skipped: "quiet_hours" } : await scanPass(db, "j1", dryRun, creds, budget);
 
   return new Response(
-    JSON.stringify({ ok: true, dry_run: dryRun, quiet_hours: quiet, hour_algiers: nowHour, j1, h2, confirmation }),
+    JSON.stringify({ ok: true, dry_run: dryRun, quiet_hours: quiet, hour_algiers: nowHour,
+      run_max: RUN_MAX, sent_total: RUN_MAX - budget.left, capped: budget.capped, j1, h2, confirmation }),
     { status: 200, headers: JSON_HEADERS },
   );
 });
