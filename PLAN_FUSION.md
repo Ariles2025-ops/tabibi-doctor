@@ -49,6 +49,31 @@ Les statuts « failure » affichés par GitHub sur les 14 PR récentes viennent 
 | #53 | liens de parrainage médecins `/a/<CODE>` | fonctionnalité | **fermer avec note « à reprendre après stabilisation »** : une fonctionnalité nouvelle n'a pas sa place tant que le parcours médecin de base casse |
 | #54 | outil local de personnalisation des messages de démarchage | fonctionnalité | **fermer avec la même note** |
 
+## 1 bis. Addendum du 12/09 — PR créées après le plan, et fusion de #73 hors séquence
+
+Trois PR sont nées après l'écriture de ce plan, et une a été fusionnée hors de la séquence de l'étape 7.
+
+| PR | Branche → base | Contenu | Statut |
+|---|---|---|---|
+| #72 | `fix/rgpd-suppression-compte` → `main` | suppression de compte par canal humain réel, retrait des faux succès (`legal/rgpd-droits.html`, `medecin-profile.html`, note avocat) | ouverte, indépendante, off `main` |
+| **#73** | `fix/garde-disponibilite-base` → `main` | **garde de disponibilité en base** (trigger `enforce_appointment_availability` **v2** : n'enforce que l'auto-réservation patient) + migration `20260912_garde_disponibilite_rdv.sql` | **FUSIONNÉE dans `main` le 12/09, HORS séquence** |
+| #74 | `fix/home-quickbook-vers-reservation` → #56 | l'accueil réserve via `reservation.html` (get_available_slots), plus de grille codée en dur ni de décalage horaire | ouverte, base #56 |
+
+**Pourquoi la fusion de #73 hors séquence ne perturbe pas la pile.** #73 partait de `main` (pas de #56), et ne touche que
+du SQL et de la doc : la migration `supabase/migrations/20260912_garde_disponibilite_rdv.sql` et rien d'autre. Aucun fichier
+partagé avec #56 ni avec les branches de la pile. `git merge-tree` : aucun conflit. La séquence de merges de l'étape 7 (les
+PR du chantier vers #56, puis #56 vers `main`) reste valable telle quelle.
+
+**Deux précisions qui doivent rester vraies dans le plan :**
+1. **Fusionner n'applique rien en base.** La migration de #73 est dans l'historique de `main`, mais le trigger n'existe pas
+   encore dans la base (vérifié le 12/09 : `pg_trigger` ne contient pas `trg_appointments_zz_enforce_availability`).
+   L'application est un `begin … commit` à coller par Aghiles dans l'éditeur Supabase, à part.
+2. **La version sur `main` est la v2** (`auth.uid() is distinct from new.patient_id → return new`), pas la v1 qui bloquait
+   aussi le médecin. À l'application, le contrôle est : trigger présent (1), fonctions `enforce_appointment_availability` et
+   `appointment_slot_is_available` présentes (2). Le cas « médecin cale une urgence » n'est pas testable en conditions réelles
+   tant que le parcours médecin n'existe pas en RLS (aucune policy d'INSERT n'autorise `patient_id <> auth.uid()` — trou
+   produit noté dans `VERIF_NAVIGATEUR.md`).
+
 ## 2. Topologie
 
 | Repère | Commit | Date |
