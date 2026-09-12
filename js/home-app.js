@@ -344,7 +344,10 @@ async function loadTakenSlots(doctorId, dateIso, onLoaded){
 }
 
 function generateSlots() {
-  return ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00","15:30","16:00","16:30"];
+  // [12/09/2026] Grille codée en dur supprimée : elle ne reflétait ni working_hours
+  // ni le jour d'ouverture. La disponibilité réelle passe par get_available_slots
+  // (parcours reservation.html). Conservée vide pour compat d'appel.
+  return [];
 }
 
 /* ══ LANGUAGE ════════════════════════════════════════════════ */
@@ -1152,11 +1155,15 @@ function showDoctorModal(d){
       el.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--text3);padding:6px 0">${d.claimed ? T("validation_pending_long") : T("booking_not_active")}</div>`;
       return;
     }
-    const taken = getTakenSlots(d.id);
-    el.innerHTML = generateSlots().map(s=>{
-      const isT = taken.includes(s);
-      return `<button class="slot-btn${isT?" taken":""}" onclick="${isT?"":("selectProfileSlot(this,'"+s+"')")}" ${isT?"disabled":""}>${isT?'<i class="fa fa-lock" style="font-size:10px"></i>':s}</button>`;
-    }).join("");
+    // [12/09/2026] Plus de grille codée en dur : on route vers le calendrier réel.
+    el.innerHTML = '';
+    var _cta = document.createElement('button');
+    _cta.className = 'btn btn-primary btn-full btn-lg';
+    _cta.style.gridColumn = '1/-1';
+    _cta.innerHTML = "<i class='fa fa-calendar-days'></i> " + T("available_slots");
+    _cta.onclick = function(){ showBookingModal(d); };
+    el.appendChild(_cta);
+    return;
   }
   renderProfileSlots();
 
@@ -1175,77 +1182,31 @@ function selectProfileSlot(el,slot){
 
 function confirmFromProfile(docId){
   if(!isLogged()){openModal("login");toast(T("conn_req"),"info");return;}
-  if(!window._profileSlot){toast(T("slot_req"),"error");return;}
   const d=DOCTORS.find(x=>x.id===docId);
-  // [P1.6b] même garde que bookDoc : réservable SSI claimed + approved (UX ; le serveur bloque déjà via RLS)
+  // [P1.6b] réservable SSI claimed + approved (UX ; le serveur bloque déjà via RLS)
   if(!d || !(d.claimed && d.validationStatus === 'approved')){
     toast(d && d.claimed ? "Ce médecin est en cours de validation." : "Ce médecin n'a pas encore activé les RDV en ligne.","info");
     return;
   }
-  document.querySelectorAll(".modal-bg").forEach(m=>{m.remove();document.body.style.overflow="";});
-  showBookingModal(d,window._profileSlot);
+  // [12/09/2026] Plus de créneau présélectionné ici : on ouvre le calendrier réel.
+  showBookingModal(d);
 }
 
 /* Inline booking modal */
-function showBookingModal(d,slot){
-  const n=dname(d);
-  const modal=document.createElement("div");
-  modal.className="modal-bg";
-  modal.style.zIndex="700";
-  modal.innerHTML=`
-    <div class="modal-sheet">
-      <div class="modal-handle"></div>
-      <div class="modal-hdr" style="position:relative">
-        <div class="modal-title"><i class='fa fa-calendar-check' style='color:var(--blue)'></i> Confirmer le RDV</div>
-        <button class="modal-close" onclick="this.closest('.modal-bg').remove();document.body.style.overflow=''">×</button>
-      </div>
-      <div class="modal-body" style="padding-bottom:24px">
-        <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg2);border-radius:var(--r12);margin-bottom:16px">
-          <div style="width:46px;height:46px;border-radius:var(--r12);background:${hEsc(d.bg)};color:${hEsc(d.tc)};display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;flex-shrink:0">${d.in}</div>
-          <div style="flex:1">
-            <div style="font-size:14px;font-weight:700">${hEsc(n)}</div>
-            <div style="font-size:12px;color:var(--text3)">${hEsc(dspec(d))} · ${hEsc(dcity(d))}</div>
-            <div style="margin-top:4px;display:flex;gap:8px;flex-wrap:wrap">
-              <span style="font-size:12px;background:var(--blue-l);color:var(--blue);padding:2px 8px;border-radius:var(--rfull);font-weight:600"><i class='fa fa-calendar-days'></i> ${slot||"09:00"}</span>
-              <span style='font-size:13px;font-weight:700;color:var(--blue)'>${d.prix != null ? `${d.prix.toLocaleString()} DA` : 'Tarif à confirmer'}</span>
-            </div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Motif de consultation <span style='color:var(--red)'>*</span></label>
-          <textarea class="form-control" id="bk-reason" placeholder="Décrivez vos symptômes..." data-i18n-placeholder="ph_symptoms_short" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <select class="form-control" id="bk-type">
-            <option>Première consultation</option>
-            <option>Consultation de suivi</option>
-            <option>Urgence</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mode de paiement</label>
-          <div id="bk-pay"></div>
-        </div>
-        <button class="btn btn-success btn-full btn-xl" id="bk-confirm-btn" data-bk-doctor-id="${d.id}" data-bk-slot="${slot||"09:00"}" data-bk-prix="${d.prix||''}"><i class='fa fa-check'></i> Confirmer le RDV</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-  document.body.style.overflow="hidden";
-  document.getElementById("bk-pay").innerHTML=renderPayMethods("cash");
-  window._bkPay="cash";
-  // [Phase 14.1.1 fix] Bind bouton Confirmer via addEventListener au lieu d'inline onclick.
-  // Évite tout risque de parsing cassé sur ${n}=nom médecin DB (UTF-8/quotes/slashes).
-  // Le nom est capturé en closure (var locale `n`), pas injecté dans l'attribut.
-  var confirmBtn = modal.querySelector('#bk-confirm-btn');
-  if (confirmBtn) {
-    confirmBtn.addEventListener('click', function(){
-      var docId = confirmBtn.getAttribute('data-bk-doctor-id') || '';
-      var slotV = confirmBtn.getAttribute('data-bk-slot') || '09:00';
-      var prixV = confirmBtn.getAttribute('data-bk-prix') || '';
-      finalBooking(docId, slotV, n, prixV);
-    });
-  }
+function showBookingModal(d, slot){
+  // [12/09/2026] La disponibilité est une règle métier UNIQUE : elle vit dans
+  // get_available_slots, exposée par le parcours reservation.html (calendrier réel,
+  // fuseau Africa/Algiers). On n'ouvre plus de modale à grille codée en dur —
+  // c'est elle qui, le 12/09, a créé un RDV le dimanche (jour fermé) avec une heure
+  // décalée d'une heure. On route vers le parcours unique, comme doctor-profile.html.
+  // Le slot éventuellement présélectionné est ignoré : reservation.html le fait
+  // rechoisir sur des créneaux réels.
+  if (!d) return;
+  var qs = '?doctor_id='   + encodeURIComponent(d.id)
+         + '&doctor_name=' + encodeURIComponent(dname(d) || '')
+         + '&prix='        + encodeURIComponent(d.prix != null ? d.prix : 0)
+         + '&spec='        + encodeURIComponent(dspec(d) || '');
+  location.href = 'reservation.html' + qs;
 }
 
 async function finalBooking(docId,slot,docName,prix){
