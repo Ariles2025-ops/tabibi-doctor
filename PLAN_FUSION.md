@@ -115,6 +115,39 @@ avec un filtre wilaya rend des lignes réelles.
 Un script de preuve enveloppé dans `begin … rollback` affiche un succès et ne laisse rien derrière lui.
 
 
+## 1 quater. Correction du 12/09 — GitHub lit le workflow depuis la branche SOURCE, pas depuis la base
+
+**Ce que je croyais, et qui est faux.** J'avais écrit qu'un événement `pull_request` exécute le workflow tel qu'il
+existe sur la **branche de base**. C'est l'inverse pour ce déclencheur : GitHub lit le fichier côté **source**
+(la référence de fusion de la PR, qui contient les modifications de la branche source). `pull_request_target`,
+lui, lit bien la base — mais ce n'est pas ce que nous utilisons.
+
+**La preuve.** `origin/main` ne contient aucun `.github/workflows/verification.yml` : il n'a que
+`desktop-release.yml`. Pourtant #56, dont la base est `main`, exécute bien le workflow `verification` et affiche
+`verifier` rouge et `verifier-v2` vert. Si la base faisait foi, rien ne tournerait.
+
+**Conséquence pour les PR ouvertes.** #58 et #72 n'ont aucune vérification, seulement Netlify et Vercel. Ce n'est
+pas un réglage ni une exemption : leurs branches sont **antérieures à la vague** et ne contiennent tout simplement
+pas le fichier.
+
+| Branche | `verification.yml` | Vérification à la PR |
+|---|---|---|
+| `main` | absent | — |
+| `fix/rappels-cron-garde-fous` (#58) | absent | non |
+| `fix/rgpd-suppression-compte` (#72) | absent | non |
+| `fix/p0-securite-chaine-approvisionnement` (#56) | présent | oui |
+| `fix/blocages-retour-onglet-agenda` (#76) | présent | oui |
+
+Elles seront contrôlées dès qu'on les rebasera sur une branche qui porte le fichier, ou automatiquement une fois
+#56 fusionnée dans `main`, puisque `main` héritera alors du workflow. **Ne pas fusionner #58 ni #72 avant l'un
+des deux**, sinon elles entrent sans avoir jamais été vérifiées — c'est exactement le trou que la vague est censée
+fermer.
+
+**Leçon de méthode.** C'est la deuxième fois dans la même session qu'une conclusion tirée d'un raisonnement
+plausible s'est révélée fausse à la mesure (la première : « la garde n'est pas en base »). Les deux fois, la
+mesure a tranché en trente secondes. On mesure, on ne déduit pas.
+
+
 ## 2. Topologie
 
 | Repère | Commit | Date |

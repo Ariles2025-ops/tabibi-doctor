@@ -13,6 +13,30 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### Portes locales — la liste complète, dans cet ordre
+
+Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », **les six** doivent passer. Aucune
+n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
+
+| # | Commande | Ce qu'elle attrape | Échoue si |
+|---|---|---|---|
+| 1 | `npx eslint js src scripts --quiet` | erreurs de parsing, `no-undef` | une seule erreur |
+| 2 | **`npm run lint:dette`** | **la dette mesurée dépasse le plafond versionné** | **un compteur passe au-dessus** |
+| 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
+| 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
+| 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
+| 6 | `npm run build` puis `npm run test:e2e` | 30 parcours critiques, sources et sortie de build | un test rouge |
+
+> **Pourquoi la ligne 2 est en gras.** Le 12/09/2026, une PR a été annoncée « portes vertes » puis a fait rougir
+> la CI. `npm run lint` avait été lancé, pas `npm run lint:dette`. Or `lint` compte 129 avertissements et ne
+> renvoie jamais d'erreur : il ne peut pas échouer. `lint:dette` compare à un plafond versionné dans
+> `scripts/compter-dette.mjs` et c'est lui, et lui seul, qui bloque. La cause réelle était une fonction morte
+> laissée par #74, `getTakenSlots`, qui poussait `no-unused-vars` de 43 à 44.
+> **Lancer `lint` et croire avoir tout couvert est précisément l'erreur que cette liste doit empêcher.**
+
+Ces six portes sont celles du job `verifier` de `.github/workflows/verification.yml`. Le second job,
+`verifier-v2`, couvre l'application React de `v2/` avec sa propre chaîne d'outils : typage strict, tests, build.
+
 ---
 
 ## Parcours 1 — Médecin AVEC fiche liée
