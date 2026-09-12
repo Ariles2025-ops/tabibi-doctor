@@ -1,0 +1,100 @@
+# Recette de la vague de fusion — go / no-go de déploiement
+
+Cette liste est la **porte de vérification** de la vague. On ne déploie pas tant que les **trois parcours** ci-dessous ne
+passent pas, chacun vérifié **à l'écran** ET **en base**. Ce sont les trois parcours prouvés le 12/09/2026 ; ils portent le
+produit. Un seul « l'écran ment » qui réapparaît = no-go.
+
+## Règles de recette
+
+- **Cache-bust obligatoire** : chaque page se charge avec un paramètre unique (`?cb=<horodatage>`), sinon un service worker
+  ou le cache HTTP peut servir une ancienne version et faire conclure l'inverse de la réalité (règle 8 de CLAUDE.md).
+- **Preuve d'interface** : un parcours médecin/patient n'est prouvé que par un passage réel dans l'interface, en session
+  connectée, pas par une requête SQL seule.
+- **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
+  purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
+
+---
+
+## Parcours 1 — Médecin AVEC fiche liée
+
+Précondition : un compte médecin dont `doctor_profiles.user_id = auth.uid()`, fiche `is_claimed=true`,
+`validation_status='approved'`, `working_hours` renseigné (lun/mar/jeu matin **et** après-midi, mer/sam matin, ven/dim fermés).
+
+| # | Action | À l'écran (attendu) | En base (attendu) |
+|---|---|---|---|
+| 1 | Se connecter, ouvrir le tableau de bord | Le bandeau affiche le **nom** du médecin (pas « Bienvenue » nu) | `public.users.first_name` non nul, ou `doctor_profiles.full_name` |
+| 2 | Onglet « Aujourd'hui », cliquer « Mes horaires » | La modale s'ouvre (elle ne doit **pas** être 0×0 : `#schedule-modal` est sous `<body>`) | — |
+| 3 | Lire les plages | Lundi/mardi/jeudi affichent **matin ET après-midi** ; la 2ᵉ plage n'est pas perdue | `working_hours` identique jour par jour |
+| 4 | Modifier une plage, « Enregistrer mes horaires » | Toast **« Horaires enregistrés »** ; RPC `update_my_doctor_profile` → **200** | `working_hours` reflète le changement, `updated_at` avance |
+| 5 | Rouvrir la modale | La valeur modifiée est relue depuis la base | idem base |
+
+**Verdict attendu : cohérent.** Faux succès à surveiller : un toast de succès sans écriture réelle en base (défaut historique
+« Créneaux ajoutés ! » en localStorage).
+
+---
+
+## Parcours 2 — Médecin SANS fiche liée
+
+Précondition : un compte médecin sans `doctor_profiles` (`get_my_doctor_profile()` → null).
+
+| # | Action | À l'écran (attendu **aujourd'hui**) | En base (attendu) |
+|---|---|---|---|
+| 1 | Se connecter, ouvrir le tableau de bord | Tableau de bord médecin complet, compteurs à 0 | `select doctor_profiles where user_id=auth.uid()` → **0 ligne** |
+| 2 | Cliquer « Mes horaires » | La modale s'ouvre, **pré-remplie d'horaires par défaut** (08:00–12:00 / 14:00–17:00) | — |
+| 3 | « Enregistrer mes horaires » | Message **honnête** : « Réclamez votre fiche dans l'annuaire… » ; RPC → **403** | aucune écriture |
+
+**Verdict attendu : l'écriture est honnête (403 + message), mais le tableau de bord ment par omission** — il n'existe pas de
+tunnel de revendication. C'est le **défaut produit connu** (chantier séparé ouvert). Tant qu'il n'est pas corrigé, la recette
+consigne cet état comme **attendu**, pas comme régression. Le jour où l'écran de revendication existe, ce parcours devra
+montrer, à l'étape 1, un écran de revendication à la place de l'agenda vide.
+
+---
+
+## Parcours 3 — Patient réserve puis annule
+
+Précondition : un compte patient, et la fiche de test du parcours 1 visible dans `public_doctors`.
+La garde de disponibilité (trigger `enforce_appointment_availability`) doit être **appliquée en base**.
+
+### 3a. Réservation (par la fiche → `reservation.html`, PAS le quick-book de l'accueil)
+
+| # | Action | À l'écran (attendu) | En base (attendu) |
+|---|---|---|---|
+| 1 | Rechercher le médecin, ouvrir sa fiche, « Réserver » | Arrivée sur `reservation.html` avec un **calendrier réel** | — |
+| 2 | Choisir un lundi, lire les créneaux | Exactement les créneaux de `working_hours` (RPC `get_available_slots` → 200) | `get_available_slots(fiche, lundi)` = ces créneaux |
+| 3 | Choisir 09:00, motif, confirmer | **« RDV confirmé ! »**, date et heure = ce qui a été choisi (pas de décalage d'1 h) | `appointments` : `patient_id`=patient, `doctor_id`=**fiche**, `starts_at`=09:00 Alger, `status='pending'` |
+
+Effets de bord à vérifier :
+
+| Effet | À l'écran | En base |
+|---|---|---|
+| Créneau consommé | 09:00 disparaît des créneaux | `get_available_slots(lundi)` passe de N à N−1, 09:00 absent |
+| Notification médecin | — | `notifications` : 1 ligne `rdv_new` pour le compte médecin |
+| Côté patient | « Mes RDV » liste le RDV, statut « En attente » | idem |
+
+### 3b. Garde de disponibilité (négatif)
+
+| Action | À l'écran (attendu) | En base (attendu) |
+|---|---|---|
+| Tenter de réserver un dimanche fermé ou une heure hors plage (auto-réservation patient) | Toast **« Ce créneau n'est plus disponible… »**, retour à l'étape 1, créneaux rafraîchis | insert **refusé** (`slot_unavailable`, 23514) ; aucune ligne créée |
+| Deux réservations qui se chevauchent | Toast **« Ce créneau vient d'être pris… »** | 2ᵉ insert **refusé** (`23P01`, contrainte EXCLUDE) |
+
+### 3c. Annulation depuis l'espace patient
+
+| # | Action | À l'écran (attendu) | En base (attendu) |
+|---|---|---|---|
+| 1 | « Mes RDV » → « Annuler ce RDV » (RDV à plus de 24 h) | Modale de confirmation, puis le RDV passe dans « Annulés » | — |
+| 2 | Confirmer | `PATCH appointments` → **200** | `status='cancelled'`, `cancelled_at` renseigné, `cancelled_by_user_id`=patient |
+| 3 | — | Le créneau redevient réservable | `get_available_slots(lundi)` repasse de N−1 à N, 09:00 de nouveau présent |
+
+**Verdict attendu : cohérent** sur toute la chaîne réserver → garde → annuler.
+
+---
+
+## Décision
+
+- **Go** si les parcours 1 et 3 sont « cohérent » de bout en bout, et si le parcours 2 se comporte comme l'état connu
+  (écriture honnête en 403), sans nouveau faux succès.
+- **No-go** si un toast de succès n'a pas d'écriture en base, si un RDV se crée hors disponibilité, si un décalage horaire
+  réapparaît, ou si la garde/EXCLUDE ne refuse plus les cas négatifs.
+
+Après la recette : purger les comptes marqués `RECETTE-<date>` par le marqueur, comme pour `TEST-CONGRES-20260910`.
