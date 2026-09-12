@@ -307,12 +307,6 @@ const DEMO_DOC_RDV = [];
 const TAKEN_SLOTS = [];
 window._takenSlotsCache = window._takenSlotsCache || {};
 
-function getTakenSlots(doctorId, dateIso){
-  if (!doctorId) return [];
-  if (!dateIso) { const t=new Date(); t.setDate(t.getDate()+1); dateIso = t.toISOString().split('T')[0]; }
-  return window._takenSlotsCache[doctorId + '|' + dateIso] || [];
-}
-
 async function loadTakenSlots(doctorId, dateIso, onLoaded){
   if (!doctorId) return;
   if (!dateIso) { const t=new Date(); t.setDate(t.getDate()+1); dateIso = t.toISOString().split('T')[0]; }
@@ -1172,7 +1166,7 @@ function showDoctorModal(d){
   const _tmrw = new Date(); _tmrw.setDate(_tmrw.getDate()+1);
   window._profileDate = _tmrw.toISOString().split("T")[0];
 
-  // Re-render des slots (utilise getTakenSlots qui consulte le cache)
+  // Re-render des slots (lit window._takenSlotsCache, alimente par loadTakenSlots)
   function renderProfileSlots(){
     const el = document.getElementById("prof-slots");
     if (!el) return;
