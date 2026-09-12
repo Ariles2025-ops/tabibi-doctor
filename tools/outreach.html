@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tabibi — Démarchage médecins</title>
+<style>
+  :root{
+    --or:#d4a437;
+    --texte:#556070;
+    --fond:#f7f7f5;
+    --carte:#ffffff;
+    --bord:#d9dce0;
+    --bord-fort:#b8bec6;
+    --rouge:#b02a2a;
+    --rouge-fond:#fdf3f3;
+    --vert:#2f6b45;
+    --gris:#8b939c;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--fond);
+    color:var(--texte);
+    font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  }
+  .wrap{max-width:1180px;margin:0 auto;padding:0 14px 60px}
+
+  header{
+    position:sticky;top:0;z-index:20;
+    background:var(--carte);
+    border-bottom:1px solid var(--bord);
+  }
+  .hd{
+    max-width:1180px;margin:0 auto;padding:8px 14px;
+    display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  }
+  .hd h1{
+    margin:0;font-size:14px;font-weight:600;letter-spacing:.01em;
+    border-left:3px solid var(--or);padding-left:8px;
+  }
+  .hd h1 small{font-weight:400;color:var(--gris);font-size:12px}
+  #compteur{
+    font-variant-numeric:tabular-nums;font-weight:600;
+    padding:3px 8px;border:1px solid var(--bord);border-radius:3px;background:var(--fond);
+  }
+  .hd .spacer{margin-left:auto}
+
+  section{
+    background:var(--carte);border:1px solid var(--bord);
+    margin-top:12px;padding:10px 12px;
+  }
+  section > h2{
+    margin:0 0 8px;font-size:12px;font-weight:600;text-transform:uppercase;
+    letter-spacing:.05em;color:var(--gris);
+  }
+
+  button,select,input[type=text],textarea,input[type=file]{
+    font:inherit;color:inherit;
+  }
+  button{
+    background:var(--carte);border:1px solid var(--bord-fort);border-radius:3px;
+    padding:3px 9px;cursor:pointer;
+  }
+  button:hover:not(:disabled){background:var(--fond);border-color:var(--texte)}
+  button:disabled{opacity:.45;cursor:default}
+  button.primaire{border-color:var(--or);box-shadow:inset 0 -2px 0 var(--or)}
+  button.primaire:disabled{border-color:var(--bord);box-shadow:none}
+  button.danger:hover:not(:disabled){border-color:var(--rouge);color:var(--rouge)}
+  select,input[type=text]{
+    border:1px solid var(--bord);border-radius:3px;padding:3px 5px;background:var(--carte);
+  }
+  textarea{
+    width:100%;border:1px solid var(--bord);border-radius:3px;padding:8px;
+    font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    resize:vertical;min-height:150px;background:var(--carte);
+  }
+  a{color:var(--texte)}
+
+  .rangee{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .aide{color:var(--gris);font-size:12px}
+  code.var{
+    background:var(--fond);border:1px solid var(--bord);border-radius:2px;
+    padding:0 3px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+
+  .avis{border-left:3px solid var(--or);background:#fdf9ef;padding:6px 9px;margin:8px 0}
+  .avis.err{border-left-color:var(--rouge);background:var(--rouge-fond);color:var(--rouge)}
+  .avis.ok{border-left-color:var(--vert);background:#f2f8f4;color:var(--vert)}
+
+  /* --- mapping --- */
+  #mapGrille{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+  #mapGrille label{display:block;font-size:12px}
+  #mapGrille label span{display:block;color:var(--gris);margin-bottom:2px}
+  #mapGrille select{width:100%}
+  #mapGrille label.manquant span{color:var(--rouge);font-weight:600}
+  #mapGrille label.manquant select{border-color:var(--rouge)}
+
+  /* --- liste --- */
+  .ligne{
+    display:flex;gap:10px;align-items:flex-start;
+    border:1px solid var(--bord);border-top:none;background:var(--carte);
+    padding:7px 9px;
+  }
+  .ligne:first-child{border-top:1px solid var(--bord)}
+  .ligne.tel-ko{background:var(--rouge-fond)}
+  .ligne.faite{background:#f2f2f0;color:var(--gris)}
+  .ligne.faite .fiche b{color:var(--gris);font-weight:600}
+  .ligne.faite pre{color:var(--gris)}
+
+  .ligne .coche{padding-top:1px}
+  .ligne .coche label{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;font-size:10px;color:var(--gris)}
+  .ligne .num{width:34px;color:var(--gris);font-variant-numeric:tabular-nums;text-align:right;padding-top:1px}
+  .fiche{width:250px;min-width:250px;line-height:1.5}
+  .fiche b{display:block;color:var(--texte);font-size:13px}
+  .fiche .meta{color:var(--gris);font-size:12px}
+  .fiche .tel{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:12px}
+  .fiche .tel.ko{color:var(--rouge);font-weight:600}
+  .fiche .motif{color:var(--rouge);font-size:11px}
+  .ligne pre{
+    flex:1;margin:0;padding:6px 8px;background:var(--fond);border:1px solid var(--bord);
+    border-radius:3px;white-space:pre-wrap;word-break:break-word;
+    font:12px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    max-height:132px;overflow:auto;
+  }
+  .actions{display:flex;flex-direction:column;gap:4px;width:132px;min-width:132px}
+  .actions button{width:100%;text-align:center}
+  .actions .etat{font-size:11px;color:var(--gris);min-height:14px;text-align:center}
+
+  .pagination{display:flex;gap:8px;align-items:center;justify-content:center;padding:10px 0}
+  .pagination .pos{font-variant-numeric:tabular-nums}
+
+  .cache{display:none}
+  @media (max-width:820px){
+    .fiche{width:auto;min-width:150px}
+    .ligne{flex-wrap:wrap}
+    .ligne pre{flex-basis:100%;order:5}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hd">
+    <h1>Tabibi — Démarchage <small>outil local, envoi manuel</small></h1>
+    <span id="compteur">0 / 0 traités</span>
+    <span class="spacer"></span>
+    <button id="btnExport" disabled>Exporter CSV</button>
+    <button id="btnReset" class="danger">Réinitialiser le suivi</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <h2>1 · Fichier de médecins</h2>
+    <div class="rangee">
+      <input type="file" id="fichier" accept=".csv,.CSV,.xlsx,.XLSX,.xls,.XLS,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      <span class="aide" id="etatFichier">Aucun fichier chargé. CSV ou XLSX, séparateur <code class="var">,</code> <code class="var">;</code> ou tabulation.</span>
+    </div>
+    <div id="avisFichier"></div>
+  </section>
+
+  <section id="secMapping" class="cache">
+    <h2>2 · Correspondance des colonnes</h2>
+    <div id="avisMapping"></div>
+    <div id="mapGrille"></div>
+    <p class="aide" style="margin:8px 0 0">
+      Détection automatique par nom d'en-tête. Corrigez ici si une colonne est mal reconnue —
+      la liste se régénère immédiatement.
+    </p>
+  </section>
+
+  <section id="secTpl" class="cache">
+    <h2>3 · Gabarit du message</h2>
+    <textarea id="gabarit" spellcheck="true"></textarea>
+    <div class="rangee" style="margin-top:6px;justify-content:space-between">
+      <span class="aide">
+        Variables :
+        <code class="var">{nom}</code>
+        <code class="var">{specialite}</code>
+        <code class="var">{wilaya}</code>
+        <code class="var">{code}</code>
+        · aussi <code class="var">{prenom}</code> <code class="var">{nom_famille}</code>
+      </span>
+      <span class="aide" id="compteurCar">0 caractère</span>
+    </div>
+    <div class="rangee" style="margin-top:6px">
+      <label class="aide">Préfixe du code&nbsp;:
+        <input type="text" id="prefixeCode" value="TBB-" size="8" maxlength="12">
+      </label>
+      <span class="aide">Le code est dérivé du numéro : stable d'une session à l'autre.</span>
+    </div>
+    <div id="avisTpl"></div>
+  </section>
+
+  <section id="secListe" class="cache">
+    <h2>4 · Messages <span id="resume" class="aide" style="text-transform:none;letter-spacing:0"></span></h2>
+    <div id="liste"></div>
+    <div class="pagination" id="pagination"></div>
+  </section>
+
+</div>
+
+<textarea id="reserveCopie" class="cache" aria-hidden="true" tabindex="-1"></textarea>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     NOYAU — fonctions pures, aucune référence au DOM.
+     Ce bloc est extrait tel quel par tests/outreach.core.test.mjs :
+     ne pas y introduire de document/window/localStorage.
+     ══════════════════════════════════════════════════════════════════════ -->
+<script id="outreach-core">
+(function (racine) {
+  'use strict';
+
+  /* ---------- texte ---------- */
+
+  function sansAccents(s) {
+    return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  // Clé de comparaison d'un en-tête : sans BOM, sans accent, sans ponctuation.
+  function cleEntete(s) {
+    return sansAccents(String(s == null ? '' : s).replace(/\uFEFF/g, ''))
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '');
+  }
+
+  /* ---------- détection des colonnes ---------- */
+
+  // Ordre significatif : le premier synonyme trouvé gagne.
+  var SYNONYMES = {
+    nom: ['nom', 'nomdefamille', 'nomfamille', 'lastname', 'nomprenom', 'nomcomplet',
+          'fullname', 'name', 'medecin', 'docteur', 'praticien', 'raisonsociale',
+          'nomdumedecin', 'nommedecin', 'libelle'],
+    prenom: ['prenom', 'prenoms', 'firstname', 'givenname', 'prenomdumedecin'],
+    specialite: ['specialite', 'specialites', 'specialty', 'speciality', 'specialities',
+                 'spec', 'discipline', 'activite', 'profession', 'metier', 'categorie'],
+    wilaya: ['wilaya', 'willaya', 'ville', 'city', 'commune', 'region', 'departement',
+             'localite', 'adresseville', 'daira'],
+    telephone: ['telephone', 'telephones', 'tel', 'phone', 'mobile', 'gsm', 'portable',
+                'numero', 'numerotelephone', 'num', 'numtel', 'whatsapp', 'contact',
+                'telmobile', 'phonenumber', 'cellulaire']
+  };
+
+  // Repli : un en-tête qui *contient* le synonyme (ex. « tel_cabinet », « nom du medecin »).
+  function detecterColonnes(entetes) {
+    var cles = (entetes || []).map(cleEntete);
+    var choix = { nom: -1, prenom: -1, specialite: -1, wilaya: -1, telephone: -1 };
+    var pris = {};
+
+    function chercher(champ, exact) {
+      var syn = SYNONYMES[champ];
+      for (var s = 0; s < syn.length; s++) {
+        for (var i = 0; i < cles.length; i++) {
+          if (pris[i] || !cles[i]) continue;
+          var ok = exact ? cles[i] === syn[s] : cles[i].indexOf(syn[s]) !== -1;
+          if (ok) return i;
+        }
+      }
+      return -1;
+    }
+
+    var champs = ['telephone', 'prenom', 'nom', 'specialite', 'wilaya'];
+    var p, c;
+    for (p = 0; p < 2; p++) {              // passe 1 = exact, passe 2 = « contient »
+      for (c = 0; c < champs.length; c++) {
+        if (choix[champs[c]] !== -1) continue;
+        var idx = chercher(champs[c], p === 0);
+        if (idx !== -1) { choix[champs[c]] = idx; pris[idx] = true; }
+      }
+    }
+    return choix;
+  }
+
+  /* ---------- noms ---------- */
+
+  var TITRES = ['docteur', 'doctoresse', 'doctor', 'docteure', 'dre', 'dr', 'professeur',
+                'prof', 'pr', 'الدكتور', 'الأستاذ', 'د'];
+  // Particules gardées en minuscule quand elles ne sont pas en tête.
+  var PARTICULES = ['de', 'du', 'des', 'da', 'das', 'dei', 'del', 'della', 'di', 'do',
+                    'dos', 'van', 'von', 'der', 'den', 'ter', 'vom', 'zu', 'y'];
+  // « la / le / les » : minuscules seulement après une particule (« de la Fontaine »).
+  var SOUS_PARTICULES = ['la', 'le', 'les'];
+  // Élisions minuscules devant apostrophe (« d'Amico ») — jamais en tête de nom.
+  var ELISIONS = ['d', 'l'];
+
+  function estTitre(mot) {
+    var m = sansAccents(mot).toLowerCase().replace(/[.]/g, '');
+    if (!m) return false;
+    if (TITRES.indexOf(m) !== -1) return true;
+    return TITRES.indexOf(mot.replace(/[.]/g, '')) !== -1;   // titres arabes, non translittérés
+  }
+
+  function retirerTitres(brut) {
+    var mots = String(brut == null ? '' : brut).trim().split(/\s+/);
+    while (mots.length > 1 && estTitre(mots[0])) mots.shift();
+    // Titre collé au nom : « Dr.Benali », « Pr-Amrani ». Un séparateur explicite est
+    // EXIGÉ : sans lui, « Drissi » deviendrait « Issi » et « Prosper » « Osper ».
+    if (mots.length) {
+      var m = mots[0].match(/^(?:docteur|doctoresse|professeur|prof|dre|dr|pr)[.:_·-]+\s*([\p{L}].*)$/iu);
+      if (m && m[1] && m[1].length > 1) mots[0] = m[1];
+    }
+    return mots.join(' ').replace(/^[\s.,;:·-]+/, '').trim();
+  }
+
+  function majPremiere(mot) {
+    if (!mot) return mot;
+    return mot.charAt(0).toLocaleUpperCase('fr') + mot.slice(1).toLocaleLowerCase('fr');
+  }
+
+  // Capitalise un fragment sans espace, en respectant traits d'union et apostrophes.
+  function capFragment(frag, premierDuNom) {
+    // apostrophes : droite, typographique, arabe
+    var partsApo = frag.split(/(['’‘])/);
+    if (partsApo.length > 1) {
+      var out = '';
+      var segIdx = 0;
+      for (var i = 0; i < partsApo.length; i++) {
+        if (/['’‘]/.test(partsApo[i])) { out += '’' === partsApo[i] ? '’' : partsApo[i]; continue; }
+        var seg = partsApo[i];
+        if (!seg) { segIdx++; continue; }
+        var estElision = segIdx === 0 &&
+          ELISIONS.indexOf(sansAccents(seg).toLowerCase()) !== -1 && !premierDuNom;
+        out += estElision ? seg.toLocaleLowerCase('fr') : capFragment2(seg);
+        segIdx++;
+      }
+      return out;
+    }
+    return capFragment2(frag);
+  }
+
+  // Traits d'union : chaque segment capitalisé (« Abd-El-Kader », « Jean-Pierre »).
+  function capFragment2(frag) {
+    return frag.split(/([-–—])/).map(function (p) {
+      return /[-–—]/.test(p) ? p : majPremiere(p);
+    }).join('');
+  }
+
+  function nettoyerNom(brut) {
+    var s = retirerTitres(brut);
+    s = s.replace(/\s+/g, ' ').trim();
+    if (!s) return '';
+    var mots = s.split(' ');
+    var res = [];
+    for (var i = 0; i < mots.length; i++) {
+      var mot = mots[i];
+      var nu = sansAccents(mot).toLowerCase().replace(/[.]/g, '');
+      var precedentParticule = i > 0 &&
+        PARTICULES.indexOf(sansAccents(mots[i - 1]).toLowerCase()) !== -1;
+
+      if (i > 0 && PARTICULES.indexOf(nu) !== -1) {
+        res.push(mot.toLocaleLowerCase('fr'));
+      } else if (i > 0 && precedentParticule && SOUS_PARTICULES.indexOf(nu) !== -1) {
+        res.push(mot.toLocaleLowerCase('fr'));
+      } else {
+        res.push(capFragment(mot, i === 0));
+      }
+    }
+    return res.join(' ');
+  }
+
+  /* ---------- téléphones ---------- */
+
+  // Algérie : mobile = 9 chiffres commençant par 5/6/7 · fixe = 8 chiffres commençant par 2/3/4.
+  function normaliserTel(brut) {
+    var origine = String(brut == null ? '' : brut).trim();
+    if (!origine) {
+      return { ok: false, type: 'vide', e164: '', nsn: '', brut: origine, motif: 'numéro absent' };
+    }
+    var d = origine.replace(/\D+/g, '');
+    if (!d) {
+      return { ok: false, type: 'invalide', e164: '', nsn: '', brut: origine, motif: 'aucun chiffre' };
+    }
+    if (d.slice(0, 2) === '00') d = d.slice(2);
+    if (d.slice(0, 4) === '0213') d = d.slice(1);
+    if (d.slice(0, 3) === '213' && (d.length === 12 || d.length === 11)) d = d.slice(3);
+    if (d.charAt(0) === '0' && (d.length === 10 || d.length === 9)) d = d.slice(1);
+
+    var nsn = d;
+    if (nsn.length === 9 && /^[567]/.test(nsn)) {
+      return { ok: true, type: 'mobile', e164: '213' + nsn, nsn: nsn, brut: origine, motif: '' };
+    }
+    if ((nsn.length === 8 || nsn.length === 9) && /^[2-4]/.test(nsn)) {
+      return { ok: false, type: 'fixe', e164: '213' + nsn, nsn: nsn, brut: origine,
+               motif: 'ligne fixe — pas de WhatsApp' };
+    }
+    return { ok: false, type: 'invalide', e164: '', nsn: nsn, brut: origine,
+             motif: 'format non reconnu (' + nsn.length + ' chiffre' + (nsn.length > 1 ? 's' : '') + ')' };
+  }
+
+  function telAffiche(tel) {
+    if (!tel.e164) return tel.brut || '—';
+    var n = tel.nsn;
+    if (tel.type === 'mobile') {
+      return '213 ' + n.slice(0, 3) + ' ' + n.slice(3, 5) + ' ' + n.slice(5, 7) + ' ' + n.slice(7);
+    }
+    return '213 ' + n.slice(0, 2) + ' ' + n.slice(2).replace(/(\d{2})(?=\d)/g, '$1 ');
+  }
+
+  /* ---------- code d'accès ---------- */
+
+  function hash32(s) {
+    var h = 0x811c9dc5;
+    s = String(s == null ? '' : s);
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = Math.imul(h, 0x01000193) >>> 0;
+    }
+    return h >>> 0;
+  }
+
+  function faireCode(prefixe, graine) {
+    return String(prefixe == null ? '' : prefixe) +
+      hash32(graine).toString(36).toUpperCase().padStart(7, '0').slice(-5);
+  }
+
+  /* ---------- gabarit ---------- */
+
+  function rendre(gabarit, vars) {
+    return String(gabarit == null ? '' : gabarit).replace(/\{(\w+)\}/g, function (tout, cle) {
+      return Object.prototype.hasOwnProperty.call(vars, cle) && vars[cle] != null
+        ? String(vars[cle])
+        : tout;
+    });
+  }
+
+  // encodeURIComponent, jamais encodeURI : encodeURI laisse passer # & + ? = ,
+  // qui coupent le paramètre text et livrent un message tronqué ou vide.
+  function urlWhatsApp(e164, message) {
+    return 'https://wa.me/' + e164 + '?text=' + encodeURIComponent(message);
+  }
+
+  // Repli pour les navigateurs qui tronquent au-delà de ~2000 caractères d'URL.
+  function urlWhatsAppLongue(e164, message) {
+    return 'https://api.whatsapp.com/send?phone=' + e164 + '&text=' + encodeURIComponent(message);
+  }
+
+  /* ---------- CSV ---------- */
+
+  function detecterSeparateur(texte) {
+    var ligne = String(texte || '').split(/\r?\n/)[0] || '';
+    var cands = [',', ';', '\t', '|'];
+    var meilleur = ',', score = -1;
+    for (var i = 0; i < cands.length; i++) {
+      var n = ligne.split(cands[i]).length - 1;
+      if (n > score) { score = n; meilleur = cands[i]; }
+    }
+    return score > 0 ? meilleur : ',';
+  }
+
+  // Repli RFC 4180 utilisé si PapaParse n'a pas pu être chargé (poste hors ligne).
+  function parserCsv(texte, separateur) {
+    var sep = separateur || detecterSeparateur(texte);
+    var t = String(texte || '').replace(/^\uFEFF/, '');
+    var lignes = [], champ = '', ligne = [], dansGuillemets = false;
+    for (var i = 0; i < t.length; i++) {
+      var c = t[i];
+      if (dansGuillemets) {
+        if (c === '"') {
+          if (t[i + 1] === '"') { champ += '"'; i++; }
+          else dansGuillemets = false;
+        } else champ += c;
+      } else if (c === '"') {
+        dansGuillemets = true;
+      } else if (c === sep) {
+        ligne.push(champ); champ = '';
+      } else if (c === '\n') {
+        ligne.push(champ); lignes.push(ligne); ligne = []; champ = '';
+      } else if (c === '\r') {
+        /* ignoré : traité au \n */
+      } else champ += c;
+    }
+    if (champ !== '' || ligne.length) { ligne.push(champ); lignes.push(ligne); }
+    lignes = lignes.filter(function (l) {
+      return l.length && !(l.length === 1 && String(l[0]).trim() === '');
+    });
+    if (!lignes.length) return { entetes: [], lignes: [] };
+    var entetes = lignes[0].map(function (h) { return String(h).replace(/\uFEFF/g, '').trim(); });
+    return { entetes: entetes, lignes: lignes.slice(1) };
+  }
+
+  function champCsv(v) {
+    var s = v == null ? '' : String(v);
+    return /["\n\r;,\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  }
+
+  // Séparateur « ; » + BOM : standard des exports Excel francophones.
+  function versCsv(entetes, lignes, sep) {
+    sep = sep || ';';
+    var out = [entetes.map(champCsv).join(sep)];
+    for (var i = 0; i < lignes.length; i++) out.push(lignes[i].map(champCsv).join(sep));
+    return '\uFEFF' + out.join('\r\n') + '\r\n';
+  }
+
+  function dateLisible(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    function p(n) { return String(n).padStart(2, '0'); }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
+           ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+
+  racine.OutreachCore = {
+    sansAccents: sansAccents,
+    cleEntete: cleEntete,
+    detecterColonnes: detecterColonnes,
+    retirerTitres: retirerTitres,
+    nettoyerNom: nettoyerNom,
+    normaliserTel: normaliserTel,
+    telAffiche: telAffiche,
+    hash32: hash32,
+    faireCode: faireCode,
+    rendre: rendre,
+    urlWhatsApp: urlWhatsApp,
+    urlWhatsAppLongue: urlWhatsAppLongue,
+    detecterSeparateur: detecterSeparateur,
+    parserCsv: parserCsv,
+    versCsv: versCsv,
+    dateLisible: dateLisible,
+    GABARIT_DEFAUT: [
+      'Bonjour Dr {nom},',
+      '',
+      'Je vous contacte au sujet de Tabibi.doctor, la plateforme algérienne de prise de rendez-vous médical en ligne.',
+      '',
+      'Nous ouvrons les inscriptions aux praticiens avant le lancement officiel, au congrès médical du 3 au 5 décembre 2026. Votre profil en {specialite} à {wilaya} correspond aux recherches les plus fréquentes de nos premiers patients.',
+      '',
+      'L’inscription est gratuite pour les cent premiers médecins : agenda en ligne, rappels de rendez-vous automatiques, fiche publique référencée.',
+      '',
+      'Votre code d’accès prioritaire : {code}',
+      '',
+      'Si le sujet vous intéresse, je vous transmets le lien d’inscription. Bien confraternellement.'
+    ].join('\n')
+  };
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
+
+<!-- ══════════════════════════════════════════════════════════════════════
+     INTERFACE — chargement fichier, rendu, suivi localStorage.
+     ══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+  var C = window.OutreachCore;
+
+  var CLE_SUIVI = 'tabibi_outreach_done';
+  var CLE_GABARIT = 'tabibi_outreach_tpl';
+  var CLE_PREFIXE = 'tabibi_outreach_prefix';
+  var PAR_PAGE = 25;
+  var LIMITE_URL = 2000;
+
+  var CDN_PAPA = 'https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js';
+  var CDN_XLSX = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  var etat = {
+    entetes: [],
+    lignes: [],
+    map: { nom: -1, prenom: -1, specialite: -1, wilaya: -1, telephone: -1 },
+    fiches: [],
+    page: 0,
+    suivi: lireSuivi()
+  };
+
+  /* ---------------- localStorage ---------------- */
+
+  function lireSuivi() {
+    try {
+      var v = JSON.parse(localStorage.getItem(CLE_SUIVI) || '{}');
+      return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+    } catch (e) { return {}; }
+  }
+  function ecrireSuivi() {
+    try { localStorage.setItem(CLE_SUIVI, JSON.stringify(etat.suivi)); }
+    catch (e) { avis('avisTpl', 'Suivi non enregistré (stockage local indisponible).', 'err'); }
+  }
+
+  /* ---------------- utilitaires UI ---------------- */
+
+  function avis(cible, texte, type) {
+    var hote = $(cible);
+    if (!hote) return;
+    if (!texte) { hote.innerHTML = ''; return; }
+    var d = document.createElement('div');
+    d.className = 'avis' + (type ? ' ' + type : '');
+    d.textContent = texte;
+    hote.innerHTML = '';
+    hote.appendChild(d);
+  }
+
+  function chargerScript(src) {
+    return new Promise(function (res, rej) {
+      var s = document.createElement('script');
+      s.src = src;
+      s.onload = function () { res(true); };
+      s.onerror = function () { rej(new Error('CDN injoignable : ' + src)); };
+      document.head.appendChild(s);
+    });
+  }
+
+  // BOM retiré ; repli windows-1252 si le décodage UTF-8 produit des caractères
+  // de remplacement (exports Excel FR non-UTF8).
+  function decoder(buffer) {
+    var octets = new Uint8Array(buffer);
+    var debut = (octets[0] === 0xEF && octets[1] === 0xBB && octets[2] === 0xBF) ? 3 : 0;
+    var utiles = octets.subarray(debut);
+    var texte;
+    try { texte = new TextDecoder('utf-8').decode(utiles); }
+    catch (e) { texte = ''; }
+    if (!texte || texte.indexOf('\uFFFD') !== -1) {
+      try { texte = new TextDecoder('windows-1252').decode(utiles); } catch (e2) { /* on garde l'UTF-8 */ }
+    }
+    return texte.replace(/^\uFEFF/, '');
+  }
+
+  /* ---------------- chargement du fichier ---------------- */
+
+  $('fichier').addEventListener('change', function (ev) {
+    var f = ev.target.files && ev.target.files[0];
+    if (!f) return;
+    avis('avisFichier', '');
+    $('etatFichier').textContent = 'Lecture de « ' + f.name +' »…';
+    var estExcel = /\.(xlsx|xls)$/i.test(f.name);
+    (estExcel ? lireExcel(f) : lireCsv(f))
+      .then(function (res) {
+        if (!res.entetes.length) throw new Error('Aucun en-tête de colonne détecté.');
+        if (!res.lignes.length) throw new Error('Fichier sans ligne de données.');
+        etat.entetes = res.entetes;
+        etat.lignes = res.lignes;
+        etat.map = C.detecterColonnes(res.entetes);
+        etat.page = 0;
+        $('etatFichier').textContent = f.name + ' — ' + res.lignes.length +
+          ' ligne' + (res.lignes.length > 1 ? 's' : '') + ', ' + res.entetes.length + ' colonnes.';
+        construireMapping();
+        $('secMapping').classList.remove('cache');
+        $('secTpl').classList.remove('cache');
+        $('secListe').classList.remove('cache');
+        recalculer();
+      })
+      .catch(function (err) {
+        $('etatFichier').textContent = 'Échec du chargement.';
+        avis('avisFichier', String(err && err.message ? err.message : err), 'err');
+      });
+  });
+
+  function lireCsv(f) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onerror = function () { rej(new Error('Lecture du fichier impossible.')); };
+      fr.onload = function () {
+        var texte = decoder(fr.result);
+        var sep = C.detecterSeparateur(texte);
+        chargerScript(CDN_PAPA).then(function () {
+          var out = window.Papa.parse(texte, {
+            delimiter: sep, skipEmptyLines: 'greedy', header: false
+          });
+          var l = out.data.filter(function (r) {
+            return r.length && !(r.length === 1 && String(r[0]).trim() === '');
+          });
+          if (!l.length) return res({ entetes: [], lignes: [] });
+          res({
+            entetes: l[0].map(function (h) { return String(h).replace(/\uFEFF/g, '').trim(); }),
+            lignes: l.slice(1)
+          });
+        }).catch(function () {
+          // CDN injoignable : parseur interne, le fichier reste utilisable hors ligne.
+          avis('avisFichier', 'PapaParse (CDN) injoignable — parseur CSV interne utilisé.', '');
+          res(C.parserCsv(texte, sep));
+        });
+      };
+      fr.readAsArrayBuffer(f);
+    });
+  }
+
+  function lireExcel(f) {
+    return new Promise(function (res, rej) {
+      chargerScript(CDN_XLSX).then(function () {
+        var fr = new FileReader();
+        fr.onerror = function () { rej(new Error('Lecture du fichier impossible.')); };
+        fr.onload = function () {
+          try {
+            var wb = window.XLSX.read(new Uint8Array(fr.result), { type: 'array' });
+            var feuille = wb.Sheets[wb.SheetNames[0]];
+            var tab = window.XLSX.utils.sheet_to_json(feuille, { header: 1, raw: false, defval: '' });
+            tab = tab.filter(function (r) {
+              return r.length && r.some(function (c) { return String(c).trim() !== ''; });
+            });
+            if (!tab.length) return res({ entetes: [], lignes: [] });
+            res({
+              entetes: tab[0].map(function (h) { return String(h).replace(/\uFEFF/g, '').trim(); }),
+              lignes: tab.slice(1)
+            });
+          } catch (e) { rej(new Error('Fichier Excel illisible : ' + e.message)); }
+        };
+        fr.readAsArrayBuffer(f);
+      }).catch(function () {
+        rej(new Error('SheetJS (CDN) injoignable : convertissez le fichier en CSV, ' +
+                      'le parseur CSV fonctionne hors ligne.'));
+      });
+    });
+  }
+
+  /* ---------------- mapping ---------------- */
+
+  var LIBELLES = {
+    nom: 'Nom', prenom: 'Prénom (option.)', specialite: 'Spécialité',
+    wilaya: 'Wilaya / ville', telephone: 'Téléphone'
+  };
+  var OBLIGATOIRES = { nom: true, telephone: true };
+
+  function construireMapping() {
+    var g = $('mapGrille');
+    g.innerHTML = '';
+    var manquants = [];
+    Object.keys(LIBELLES).forEach(function (champ) {
+      var lab = document.createElement('label');
+      var sp = document.createElement('span');
+      sp.textContent = LIBELLES[champ];
+      var sel = document.createElement('select');
+      sel.dataset.champ = champ;
+
+      var vide = document.createElement('option');
+      vide.value = '-1';
+      vide.textContent = '— aucune —';
+      sel.appendChild(vide);
+
+      etat.entetes.forEach(function (h, i) {
+        var o = document.createElement('option');
+        o.value = String(i);
+        o.textContent = h || '(colonne ' + (i + 1) + ')';
+        sel.appendChild(o);
+      });
+      sel.value = String(etat.map[champ]);
+      sel.addEventListener('change', function () {
+        etat.map[champ] = parseInt(sel.value, 10);
+        marquerManquants();
+        recalculer();
+      });
+
+      if (etat.map[champ] === -1 && OBLIGATOIRES[champ]) {
+        lab.className = 'manquant';
+        manquants.push(LIBELLES[champ]);
+      }
+      lab.appendChild(sp);
+      lab.appendChild(sel);
+      g.appendChild(lab);
+    });
+
+    if (manquants.length) {
+      avis('avisMapping', 'Détection incomplète — sélectionnez manuellement : ' +
+        manquants.join(', ') + '.', 'err');
+    } else {
+      var resume = Object.keys(LIBELLES).filter(function (c) { return etat.map[c] !== -1; })
+        .map(function (c) { return LIBELLES[c].replace(' (option.)', '') + ' → « ' + etat.entetes[etat.map[c]] + ' »'; });
+      avis('avisMapping', 'Colonnes détectées automatiquement : ' + resume.join(' · '), 'ok');
+    }
+  }
+
+  function marquerManquants() {
+    var manquants = [];
+    Array.prototype.forEach.call($('mapGrille').children, function (lab) {
+      var sel = lab.querySelector('select');
+      var champ = sel.dataset.champ;
+      var ko = etat.map[champ] === -1 && OBLIGATOIRES[champ];
+      lab.className = ko ? 'manquant' : '';
+      if (ko) manquants.push(LIBELLES[champ]);
+    });
+    if (manquants.length) {
+      avis('avisMapping', 'Colonnes obligatoires non renseignées : ' + manquants.join(', ') + '.', 'err');
+    } else {
+      avis('avisMapping', 'Correspondance complète.', 'ok');
+    }
+  }
+
+  /* ---------------- calcul des fiches ---------------- */
+
+  function cellule(ligne, idx) {
+    if (idx == null || idx < 0) return '';
+    var v = ligne[idx];
+    return v == null ? '' : String(v).trim();
+  }
+
+  function recalculer() {
+    var m = etat.map;
+    var prefixe = $('prefixeCode').value;
+    var gabarit = $('gabarit').value;
+
+    etat.fiches = etat.lignes.map(function (ligne, i) {
+      var nomBrut = cellule(ligne, m.nom);
+      var prenomBrut = cellule(ligne, m.prenom);
+      var nomFamille = C.nettoyerNom(nomBrut);
+      var prenom = C.nettoyerNom(prenomBrut);
+      var nomComplet = (prenom && nomFamille) ? (prenom + ' ' + nomFamille) : (nomFamille || prenom);
+      var tel = C.normaliserTel(cellule(ligne, m.telephone));
+      var specialite = cellule(ligne, m.specialite);
+      var wilaya = cellule(ligne, m.wilaya);
+      var cle = tel.e164 || ('sanstel:' + C.hash32(nomComplet + '|' + i));
+      var code = C.faireCode(prefixe, tel.e164 || nomComplet);
+
+      var message = C.rendre(gabarit, {
+        nom: nomComplet || 'Docteur',
+        nom_famille: nomFamille,
+        prenom: prenom,
+        specialite: specialite || 'votre spécialité',
+        wilaya: wilaya || 'votre wilaya',
+        code: code
+      });
+
+      return {
+        index: i, nom: nomComplet, nomFamille: nomFamille, prenom: prenom,
+        specialite: specialite, wilaya: wilaya, tel: tel, code: code,
+        cle: cle, message: message
+      };
+    });
+
+    rendreListe();
+  }
+
+  function estFaite(f) { return !!etat.suivi[f.cle]; }
+
+  function fichesTriees() {
+    var restantes = [], faites = [];
+    etat.fiches.forEach(function (f) { (estFaite(f) ? faites : restantes).push(f); });
+    return restantes.concat(faites);
+  }
+
+  /* ---------------- rendu de la liste ---------------- */
+
+  function rendreListe() {
+    var triees = fichesTriees();
+    var total = etat.fiches.length;
+    var faits = etat.fiches.filter(estFaite).length;
+    $('compteur').textContent = faits + ' / ' + total + ' traités';
+
+    var ko = etat.fiches.filter(function (f) { return !f.tel.ok; }).length;
+    $('resume').textContent = total
+      ? '· ' + (total - ko) + ' joignables sur WhatsApp' + (ko ? ', ' + ko + ' à vérifier (rouge)' : '')
+      : '';
+
+    var pages = Math.max(1, Math.ceil(triees.length / PAR_PAGE));
+    if (etat.page > pages - 1) etat.page = pages - 1;
+    if (etat.page < 0) etat.page = 0;
+    var debut = etat.page * PAR_PAGE;
+    var visibles = triees.slice(debut, debut + PAR_PAGE);
+
+    var hote = $('liste');
+    hote.innerHTML = '';
+    visibles.forEach(function (f, i) { hote.appendChild(construireLigne(f, debut + i + 1)); });
+
+    rendrePagination(pages, triees.length);
+    $('btnExport').disabled = total === 0;
+    majCompteurCar();
+  }
+
+  function construireLigne(f, rang) {
+    var faite = estFaite(f);
+    var div = document.createElement('div');
+    div.className = 'ligne' + (faite ? ' faite' : (f.tel.ok ? '' : ' tel-ko'));
+
+    // coche « Traité »
+    var coche = document.createElement('div');
+    coche.className = 'coche';
+    var lab = document.createElement('label');
+    var cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = faite;
+    cb.title = 'Marquer comme traité';
+    cb.addEventListener('change', function () {
+      if (cb.checked) etat.suivi[f.cle] = new Date().toISOString();
+      else delete etat.suivi[f.cle];
+      ecrireSuivi();
+      rendreListe();
+    });
+    var txt = document.createElement('span');
+    txt.textContent = 'Traité';
+    lab.appendChild(cb);
+    lab.appendChild(txt);
+    coche.appendChild(lab);
+    div.appendChild(coche);
+
+    var num = document.createElement('div');
+    num.className = 'num';
+    num.textContent = rang;
+    div.appendChild(num);
+
+    // fiche médecin
+    var fiche = document.createElement('div');
+    fiche.className = 'fiche';
+    var b = document.createElement('b');
+    b.textContent = f.nom || '(nom absent)';
+    fiche.appendChild(b);
+
+    var meta = document.createElement('div');
+    meta.className = 'meta';
+    meta.textContent = [f.specialite, f.wilaya].filter(Boolean).join(' · ') || '—';
+    fiche.appendChild(meta);
+
+    var tel = document.createElement('div');
+    tel.className = 'tel' + (f.tel.ok ? '' : ' ko');
+    tel.textContent = C.telAffiche(f.tel);
+    fiche.appendChild(tel);
+
+    if (!f.tel.ok) {
+      var motif = document.createElement('div');
+      motif.className = 'motif';
+      motif.textContent = f.tel.motif;
+      fiche.appendChild(motif);
+    }
+    var codeL = document.createElement('div');
+    codeL.className = 'meta';
+    codeL.textContent = 'code ' + f.code;
+    fiche.appendChild(codeL);
+    div.appendChild(fiche);
+
+    // message rendu
+    var pre = document.createElement('pre');
+    pre.textContent = f.message;
+    div.appendChild(pre);
+
+    // actions
+    var actions = document.createElement('div');
+    actions.className = 'actions';
+    var etatTxt = document.createElement('div');
+    etatTxt.className = 'etat';
+
+    var bCopie = document.createElement('button');
+    bCopie.textContent = 'Copier';
+    bCopie.addEventListener('click', function () {
+      copier(f.message).then(function (methode) {
+        bCopie.textContent = 'Copié';
+        etatTxt.textContent = methode === 'repli' ? 'copié (repli)' : '';
+        setTimeout(function () { bCopie.textContent = 'Copier'; etatTxt.textContent = ''; }, 1500);
+      }).catch(function () {
+        etatTxt.textContent = 'copie refusée';
+      });
+    });
+
+    var bWa = document.createElement('button');
+    bWa.className = 'primaire';
+    bWa.textContent = 'Ouvrir WhatsApp';
+    bWa.disabled = !f.tel.ok;
+    if (!f.tel.ok) bWa.title = f.tel.motif;
+    bWa.addEventListener('click', function () {
+      var url = C.urlWhatsApp(f.tel.e164, f.message);
+      if (url.length > LIMITE_URL) url = C.urlWhatsAppLongue(f.tel.e164, f.message);
+      var w = window.open(url, '_blank', 'noopener');
+      if (!w) etatTxt.textContent = 'popup bloquée';
+    });
+
+    actions.appendChild(bCopie);
+    actions.appendChild(bWa);
+    actions.appendChild(etatTxt);
+    div.appendChild(actions);
+    return div;
+  }
+
+  function rendrePagination(pages, total) {
+    var p = $('pagination');
+    p.innerHTML = '';
+    if (total === 0) return;
+    var prec = document.createElement('button');
+    prec.textContent = '← Précédent';
+    prec.disabled = etat.page === 0;
+    prec.addEventListener('click', function () { etat.page--; rendreListe(); window.scrollTo(0, 0); });
+
+    var pos = document.createElement('span');
+    pos.className = 'pos';
+    var de = etat.page * PAR_PAGE + 1;
+    var a = Math.min(total, (etat.page + 1) * PAR_PAGE);
+    pos.textContent = 'Page ' + (etat.page + 1) + ' / ' + pages + ' — lignes ' + de + '–' + a + ' sur ' + total;
+
+    var suiv = document.createElement('button');
+    suiv.textContent = 'Suivant →';
+    suiv.disabled = etat.page >= pages - 1;
+    suiv.addEventListener('click', function () { etat.page++; rendreListe(); window.scrollTo(0, 0); });
+
+    p.appendChild(prec);
+    p.appendChild(pos);
+    p.appendChild(suiv);
+  }
+
+  /* ---------------- copie presse-papier ---------------- */
+
+  // navigator.clipboard exige un contexte sécurisé (https ou localhost).
+  // Sous file:// certains navigateurs le refusent : repli execCommand.
+  function copier(texte) {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(texte)
+        .then(function () { return 'api'; })
+        .catch(function () { return copierRepli(texte); });
+    }
+    return copierRepli(texte);
+  }
+
+  function copierRepli(texte) {
+    return new Promise(function (res, rej) {
+      var ta = $('reserveCopie');
+      ta.classList.remove('cache');
+      ta.style.position = 'fixed';
+      ta.style.top = '-1000px';
+      ta.value = texte;
+      ta.focus();
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.classList.add('cache');
+      ok ? res('repli') : rej(new Error('copie refusée par le navigateur'));
+    });
+  }
+
+  /* ---------------- gabarit ---------------- */
+
+  function majCompteurCar() {
+    var n = $('gabarit').value.length;
+    var txt = n + ' caractère' + (n > 1 ? 's' : '');
+    var pire = 0;
+    etat.fiches.forEach(function (f) {
+      var l = C.urlWhatsApp(f.tel.e164 || '213000000000', f.message).length;
+      if (l > pire) pire = l;
+    });
+    if (etat.fiches.length) {
+      var plusLong = etat.fiches.reduce(function (m, f) {
+        return Math.max(m, f.message.length);
+      }, 0);
+      txt += ' · message le plus long : ' + plusLong + ' · URL WhatsApp : ' + pire;
+    }
+    $('compteurCar').textContent = txt;
+    if (pire > LIMITE_URL) {
+      avis('avisTpl', 'URL WhatsApp de ' + pire + ' caractères : au-delà de ' + LIMITE_URL +
+        ', certains navigateurs tronquent. Le bouton bascule automatiquement sur ' +
+        'api.whatsapp.com, mais raccourcir le gabarit reste plus sûr.', 'err');
+    } else {
+      avis('avisTpl', '');
+    }
+  }
+
+  $('gabarit').addEventListener('input', function () {
+    try { localStorage.setItem(CLE_GABARIT, $('gabarit').value); } catch (e) { /* stockage plein */ }
+    if (etat.lignes.length) recalculer(); else majCompteurCar();
+  });
+
+  $('prefixeCode').addEventListener('input', function () {
+    try { localStorage.setItem(CLE_PREFIXE, $('prefixeCode').value); } catch (e) { /* ignoré */ }
+    if (etat.lignes.length) recalculer();
+  });
+
+  /* ---------------- export ---------------- */
+
+  $('btnExport').addEventListener('click', function () {
+    var entetes = ['nom', 'telephone', 'message', 'traite', 'date_traitement'];
+    var lignes = fichesTriees().map(function (f) {
+      var iso = etat.suivi[f.cle] || '';
+      return [
+        f.nom,
+        f.tel.e164 || f.tel.brut,
+        f.message,
+        iso ? 'oui' : 'non',
+        C.dateLisible(iso)
+      ];
+    });
+    var csv = C.versCsv(entetes, lignes, ';');
+    var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    var d = new Date();
+    a.href = url;
+    a.download = 'tabibi-demarchage-' + d.getFullYear() +
+      String(d.getMonth() + 1).padStart(2, '0') + String(d.getDate()).padStart(2, '0') + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  });
+
+  /* ---------------- réinitialisation du suivi ---------------- */
+
+  $('btnReset').addEventListener('click', function () {
+    var n = Object.keys(etat.suivi).length;
+    if (!n) { alert('Aucun suivi enregistré.'); return; }
+    var ok = confirm('Effacer le suivi de ' + n + ' médecin' + (n > 1 ? 's' : '') +
+      ' déjà traité' + (n > 1 ? 's' : '') + ' ?\n\n' +
+      'Le fichier chargé et le gabarit ne sont pas touchés. Action irréversible.');
+    if (!ok) return;
+    etat.suivi = {};
+    try { localStorage.removeItem(CLE_SUIVI); } catch (e) { /* ignoré */ }
+    etat.page = 0;
+    rendreListe();
+  });
+
+  /* ---------------- démarrage ---------------- */
+
+  (function init() {
+    var g = null, p = null;
+    try { g = localStorage.getItem(CLE_GABARIT); p = localStorage.getItem(CLE_PREFIXE); }
+    catch (e) { /* stockage indisponible */ }
+    $('gabarit').value = (g == null || g === '') ? C.GABARIT_DEFAUT : g;
+    if (p) $('prefixeCode').value = p;
+    majCompteurCar();
+    $('secTpl').classList.remove('cache');
+  })();
+})();
+</script>
+</body>
+</html>
