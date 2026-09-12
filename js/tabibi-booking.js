@@ -75,7 +75,7 @@
     ERR_INVALID_INPUT:       "Données invalides. Vérifiez date et créneau.",
     ERR_REASON_REQUIRED:     "Indiquez un motif de consultation.",
     ERR_DOCTOR_NOT_CLAIMED:  "Ce médecin n'accepte pas encore les RDV en ligne.",
-    ERR_SLOT_TAKEN:          "Ce créneau n'est plus disponible. Choisissez-en un autre.",
+    ERR_SLOT_TAKEN:          "Ce créneau vient d'être pris. Choisissez-en un autre.",
     ERR_SLOT_OUTSIDE_HOURS:  "Ce créneau n'est plus disponible. Choisissez-en un autre.",
     ERR_NOT_FOUND:           "RDV introuvable. Il a peut-être déjà été annulé.",
     ERR_RLS_DENIED:          "Action non autorisée.",
@@ -173,9 +173,14 @@
     var code = String(err.code || '');
     // Codes PostgreSQL
     if (code === '42501') return CODES.ERR_RLS_DENIED;
-    if (code === '23P01' || code === '23505') return CODES.ERR_SLOT_TAKEN; // exclusion / unique
+    if (code === '23P01' || code === '23505') return CODES.ERR_SLOT_TAKEN; // exclusion / unique — créneau pris en concurrence
     if (code === '23503') return CODES.ERR_NOT_FOUND;                       // FK violation
-    if (code === '23514') return CODES.ERR_INVALID_INPUT;                   // CHECK violation
+    if (code === '23514') {
+      // La garde de disponibilité (enforce_appointment_availability) lève 23514
+      // avec un message préfixé « slot_unavailable » : créneau hors disponibilité.
+      if (msg.indexOf('slot_unavailable') !== -1) return CODES.ERR_SLOT_OUTSIDE_HOURS;
+      return CODES.ERR_INVALID_INPUT;                                       // autre CHECK (ex. appointment_time_missing)
+    }
     // HTTP
     if (err.status === 401) return CODES.ERR_SESSION_EXPIRED;
     if (err.status === 429) return CODES.ERR_RATE_LIMIT;

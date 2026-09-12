@@ -218,7 +218,8 @@
 // • URL params snake_case alignés sur doctor-profile.html commit 0673f25 :
 //   doctor_id, doctor_name, prix, spec.
 // • INSERT via window.tabibiBooking.createAppointment() (Phase 5.2.1).
-// • ERR_SLOT_TAKEN : refresh auto des slots du jour sélectionné + retour Step 1.
+// • ERR_SLOT_TAKEN / ERR_SLOT_OUTSIDE_HOURS : refresh auto des slots du jour + retour Step 1
+//   (créneau pris en concurrence = 23P01, ou refusé par la garde de disponibilité = slot_unavailable).
 // • ERR_AUTH_REQUIRED : affiche auth-wall + link login.html?next=...
 // ========================================================================
 
@@ -593,8 +594,10 @@ async function confirmRDV(){
   }
 
   // ERR_SLOT_TAKEN → refresh auto des slots du jour + retour Step 1
-  if(r.error === 'ERR_SLOT_TAKEN'){
-    toast(_t('err_slot_taken', "Ce créneau vient d'être pris. Voici les créneaux mis à jour."), "warning");
+  if(r.error === 'ERR_SLOT_TAKEN' || r.error === 'ERR_SLOT_OUTSIDE_HOURS'){
+    // msg reflète le code exact : ERR_SLOT_TAKEN (23P01, pris en concurrence) → « vient d'être pris »,
+    // ERR_SLOT_OUTSIDE_HOURS (slot_unavailable, garde de disponibilité) → « n'est plus disponible ».
+    toast(msg + " " + _t('slots_refreshed', "Voici les créneaux à jour."), "warning");
     slotsCache.delete(selectedDate);   // invalide cache pour fresh fetch
     var dateToRefresh = selectedDate;
     selectedSlot = null;
