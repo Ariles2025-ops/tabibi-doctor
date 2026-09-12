@@ -49,3 +49,8 @@ returning id, email, phone;
 -- delete from public.sms_log where phone_e164 = '+213XXXXXXXXX' returning id, status;
 
 -- Étape 10 — CONTRÔLE : verification.sql → 0 partout (hors audit_log conservé).
+
+-- [12/09] Ajouts : comptes A/B/C créés par l'API admin (téléphones de test 213555000101/102/103) et ligne de liste d'attente
+delete from public.waiting_list where source = 'TEST-CONGRES-20260910' returning id, email;                 -- attendu : 1 ligne (test HTTP anon du 12/09)
+delete from auth.users where phone in ('213555000101','213555000102','213555000103')
+   and email like 'test-congres-20260910%' returning id, email, phone;                                        -- attendu : 2 ou 3 lignes
