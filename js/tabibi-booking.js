@@ -13,7 +13,7 @@
  *   - Table public.appointments (lecture directe, tous statuts — [FIX
  *     2026-07-04] remplace la vue my_upcoming_appointments qui ne
  *     renvoyait que les RDV futurs pending/confirmed)
- *   - Vue public.public_doctors (hydratation nom/spécialité médecin)
+ *   - RPC praticiens_par_ids (hydratation nom/spécialité médecin) [C1]
  *   - Enum public.appointment_status (pending|confirmed|cancelled|completed|no_show)
  *
  * Pattern anti-régression Phase 4.B.3-fix3 :
@@ -75,7 +75,7 @@
     ERR_INVALID_INPUT:       "Données invalides. Vérifiez date et créneau.",
     ERR_REASON_REQUIRED:     "Indiquez un motif de consultation.",
     ERR_DOCTOR_NOT_CLAIMED:  "Ce médecin n'accepte pas encore les RDV en ligne.",
-    ERR_SLOT_TAKEN:          "Ce créneau n'est plus disponible. Choisissez-en un autre.",
+    ERR_SLOT_TAKEN:          "Ce créneau vient d'être pris. Choisissez-en un autre.",
     ERR_SLOT_OUTSIDE_HOURS:  "Ce créneau n'est plus disponible. Choisissez-en un autre.",
     ERR_NOT_FOUND:           "RDV introuvable. Il a peut-être déjà été annulé.",
     ERR_RLS_DENIED:          "Action non autorisée.",
@@ -173,9 +173,14 @@
     var code = String(err.code || '');
     // Codes PostgreSQL
     if (code === '42501') return CODES.ERR_RLS_DENIED;
-    if (code === '23P01' || code === '23505') return CODES.ERR_SLOT_TAKEN; // exclusion / unique
+    if (code === '23P01' || code === '23505') return CODES.ERR_SLOT_TAKEN; // exclusion / unique — créneau pris en concurrence
     if (code === '23503') return CODES.ERR_NOT_FOUND;                       // FK violation
-    if (code === '23514') return CODES.ERR_INVALID_INPUT;                   // CHECK violation
+    if (code === '23514') {
+      // La garde de disponibilité (enforce_appointment_availability) lève 23514
+      // avec un message préfixé « slot_unavailable » : créneau hors disponibilité.
+      if (msg.indexOf('slot_unavailable') !== -1) return CODES.ERR_SLOT_OUTSIDE_HOURS;
+      return CODES.ERR_INVALID_INPUT;                                       // autre CHECK (ex. appointment_time_missing)
+    }
     // HTTP
     if (err.status === 401) return CODES.ERR_SESSION_EXPIRED;
     if (err.status === 429) return CODES.ERR_RATE_LIMIT;
@@ -423,9 +428,8 @@
     });
     if (!ids.length) return rows;
     try {
-      var q = s.from('public_doctors')
-        .select('id, full_name, full_name_ar, entity_type, specialty_fr, address, city, wilaya_fr')
-        .in('id', ids);
+      // [C1 2026-09-09] RPC praticiens_par_ids (≤ 100 UUID connus) — la vue n'est plus lisible.
+      var q = s.rpc('praticiens_par_ids', { p_ids: ids.slice(0, 100) });
       var r = await _withTimeout(q, 8000, 'hydrate_doctor_info');
       if (r.error || !Array.isArray(r.data)) {
         console.warn('[tabibiBooking] _hydrateDoctorInfo error', r.error && r.error.message);

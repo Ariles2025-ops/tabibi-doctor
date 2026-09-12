@@ -39,11 +39,11 @@
       if (window.tabibiLang && typeof window.tabibiLang.get === 'function') {
         return window.tabibiLang.get() || 'fr';
       }
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-langbar.js:42'); }
     try {
       var s = localStorage.getItem('tabibi_lang');
       if (s) return s;
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-langbar.js:46'); }
     return document.documentElement.lang || 'fr';
   }
 
@@ -56,7 +56,7 @@
       window.setLang(l); return;                   // index
     }
     // Filet ultime (aucun engine) : persister + poser dir/lang au minimum.
-    try { localStorage.setItem('tabibi_lang', l); } catch (e) {}
+    try { localStorage.setItem('tabibi_lang', l); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-langbar.js:59'); }
     document.documentElement.lang = l;
     document.documentElement.dir  = (l === 'ar') ? 'rtl' : 'ltr';
   }

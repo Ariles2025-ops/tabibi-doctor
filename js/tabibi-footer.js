@@ -22,7 +22,7 @@
     try {
       var saved = localStorage.getItem('tabibi_lang');
       if (saved === 'fr' || saved === 'ar' || saved === 'en') return saved;
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-footer.js:25'); }
     return (navigator.language || '').startsWith('ar') ? 'ar' : 'fr';
   }
 

@@ -84,7 +84,7 @@
 
       // Lire l'existant pour fusionner sans perdre les champs locaux
       let existing = {};
-      try { existing = JSON.parse(localStorage.getItem('tabibi_user') || '{}') || {}; } catch (e) {}
+      try { existing = JSON.parse(localStorage.getItem('tabibi_user') || '{}') || {}; } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-bridge.js:87'); }
 
       const u = user || {};
       // [SECU] Changement de compte : ne pas hériter de l'identité de l'utilisateur précédent.

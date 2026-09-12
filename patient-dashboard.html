@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_patient_dashboard">
 <title>Mon espace patient | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -121,7 +121,7 @@
       <div style="font-size:12px;opacity:.85;margin-bottom:12px"><span id="dash-doc-count">...</span> médecins certifiés disponibles en Algérie</div>
       <div style="position:relative">
         <i class="fa fa-search" style="position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--text4)"></i>
-        <input id="docSearch" oninput="docPage=1;clearTimeout(window._docSearchT);window._docSearchT=setTimeout(renderDocs,150);" type="search" placeholder="Spécialité, nom, ville..." data-i18n-placeholder="search_doctor_ph" style="width:100%;padding:12px 14px 12px 40px;border:none;border-radius:12px;font-size:14px;outline:none">
+        <input id="docSearch" oninput="docPage=1;clearTimeout(window._docSearchT);window._docSearchT=setTimeout(renderDocs,150);" type="search" placeholder="Spécialité, nom, ville..." data-i18n-placeholder="search_doctor_ph" style="width:100%;padding:12px 14px 12px 40px;border:none;border-radius:12px;font-size:14px;outline:none" aria-label="Spécialité, nom, ville...">
       </div>
     </div>
     <div style="padding:12px 16px;display:flex;gap:8px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border);scrollbar-width:none">
@@ -474,7 +474,7 @@ async function fetchTakenSlots(doctorId, dateIso){
   _bookedSlotsCache[cacheKey] = [];
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
     const dayStart = dateIso + 'T00:00:00.000Z';
     const dayEnd   = dateIso + 'T23:59:59.999Z';
     const url = SB_URL + '/rest/v1/appointments?select=scheduled_at,status&doctor_id=eq.' + encodeURIComponent(doctorId) +
@@ -565,7 +565,7 @@ function showBookingStep(step){
           <div style="font-size:22px;font-weight:800;color:var(--blue)">${d.prix.toLocaleString()} DA</div>
         </div>
         <button class="btn btn-success btn-full btn-xl" onclick="confirmBooking()"><i class="fa fa-check"></i> Confirmer ma réservation</button>
-        <div style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px"><i class="fa fa-shield"></i> Paiement sécurisé · SSL/TLS</div>
+        <div data-feature="payments" style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px"><i class="fa fa-shield" aria-hidden="true"></i> Paiement sécurisé · SSL/TLS</div>
       </div>`;
   } else if(step===3){
     const dt=new Date(bookingDate);
@@ -605,14 +605,22 @@ const PAY_METHODS_LIST=[
   {id:"cnas",name:"CNAS / CASNOS",icon:"fa-shield",color:"#16a34a",sub:"Tiers payant"}
 ];
 const PAY_LABELS={cash:"Espèces au cabinet",edahabia:"Edahabia",cib:"Carte CIB",paymee:"Paymee",cnas:"CNAS / CASNOS"};
-function renderPayMethods(){document.getElementById("pay-wrap").innerHTML=PAY_METHODS_LIST.map(m=>`<label class="pay-method ${bookingPay===m.id?'selected':''}" data-method="${m.id}" style="display:flex;align-items:center;gap:10px;padding:12px;border:2px solid ${bookingPay===m.id?m.color:'var(--border)'};border-radius:12px;background:${bookingPay===m.id?m.color+'11':'#fff'};margin-bottom:6px;cursor:pointer"><input type="radio" name="pay" value="${m.id}" ${bookingPay===m.id?'checked':''} onchange="bookingPay='${m.id}';renderPayMethods()" style="margin:0"><div style="width:36px;height:36px;border-radius:8px;background:${m.color}22;color:${m.color};display:flex;align-items:center;justify-content:center"><i class="fa ${m.icon}"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">${m.name}</div><div style="font-size:11px;color:var(--text3)">${m.sub}</div></div></label>`).join("");}
+// [A3 2026-09-09] Tant que TABIBI_FEATURES.payments est false, seul le paiement
+// au cabinet existe reellement. Avant, cinq moyens (Edahabia, CIB, Paymee, CNAS)
+// etaient affiches avec la mention « Paiement securise » sans aucun backend :
+// une promesse d'interface non tenue, sur un produit de sante.
+function payMethodsDisponibles(){
+  var ok = !!(window.TABIBI_FEATURES && window.TABIBI_FEATURES.payments);
+  return ok ? PAY_METHODS_LIST : PAY_METHODS_LIST.filter(function(m){ return m.id === "cash"; });
+}
+function renderPayMethods(){document.getElementById("pay-wrap").innerHTML=payMethodsDisponibles().map(m=>`<label class="pay-method ${bookingPay===m.id?'selected':''}" data-method="${m.id}" style="display:flex;align-items:center;gap:10px;padding:12px;border:2px solid ${bookingPay===m.id?m.color:'var(--border)'};border-radius:12px;background:${bookingPay===m.id?m.color+'11':'#fff'};margin-bottom:6px;cursor:pointer"><input type="radio" name="pay" value="${m.id}" ${bookingPay===m.id?'checked':''} onchange="bookingPay='${m.id}';renderPayMethods()" style="margin:0"><div style="width:36px;height:36px;border-radius:8px;background:${m.color}22;color:${m.color};display:flex;align-items:center;justify-content:center"><i class="fa ${m.icon}"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">${m.name}</div><div style="font-size:11px;color:var(--text3)">${m.sub}</div></div></label>`).join("");}
 function selDate(iso){bookingDate=iso;bookingTime=null;showBookingStep(1);}
 function selTime(t){bookingTime=t;showBookingStep(1);}
 async function confirmBooking(){const reason=document.getElementById("bk-reason")?.value.trim();if(!reason){toastM(tabibiT('toast_reason_required',"Veuillez saisir le motif de consultation"),"error");return;}const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");const appt={id:"r"+Date.now(),doctorId:bookingDoc.id,doctorName:bookingDoc.fr,spec:bookingDoc.spec,addr:bookingDoc.addr||bookingDoc.ville,ville:bookingDoc.ville,date:bookingDate,time:bookingTime,slot:bookingTime,reason,consultType:document.getElementById("bk-type").value,forWhom:document.getElementById("bk-for").value,payMethod:bookingPay,prix:bookingDoc.prix,status:"Confirmed",patientName:u.name||"",patientPhone:u.phone||"",createdAt:new Date().toISOString()};const all=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");all.unshift(appt);localStorage.setItem("tabibi_rdv",JSON.stringify(all));
   // Sauvegarder dans Supabase
   try{
     const SB_URL=(window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY=(window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
     let token=SB_KEY;
     if(window.tabibi?.supabase){const{data:{session}}=await window.tabibi.supabase.auth.getSession();if(session?.access_token)token=session.access_token;}
     const dt=new Date(appt.date+'T'+appt.time);
@@ -633,7 +641,7 @@ function getAllRdvs(){return JSON.parse(localStorage.getItem("tabibi_rdv")||"[]"
 async function fetchMyAppointmentsFromSupabase(){
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
 
     let token = SB_KEY;
     let userId = null;
@@ -773,7 +781,7 @@ async function cancelRdv(id){
   if (sbId) {
     try {
       const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-      const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+      const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
       let token = SB_KEY;
       let userId = null;
       if (window.tabibi && window.tabibi.supabase) {
@@ -863,7 +871,7 @@ async function renderFavs(){
   if(!window.tabibiDoctors){ setTimeout(renderFavs, 300); return; }
   const { data, error } = await window.tabibiDoctors.getByIds(ids);
   if(error || !data || !data.length){ if(box) box.innerHTML=EMPTY; return; }
-  if(box) box.innerHTML=data.map(d=>`<div class="doc-search-card" onclick="openBooking('${d.id}')"><div class="row1"><div class="ava" style="background:${d.bg};color:${d.tc}">${d.in}</div><div class="info"><div class="nm">${esc(d.fr)}</div><div class="sp">${esc(d.spec)} · ${esc(d.ville)}</div></div><button class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="event.stopPropagation();toggFav('${d.id}')"><i class="fa fa-heart"></i></button></div><div class="row3"><div class="price">${d.prix.toLocaleString()} <small>DA</small></div><button class="btn btn-primary btn-md"><i class="fa fa-calendar-plus"></i> Réserver</button></div></div>`).join("");
+  if(box) box.innerHTML=data.map(d=>`<div class="doc-search-card" onclick="openBooking('${d.id}')"><div class="row1"><div class="ava" style="background:${d.bg};color:${d.tc}">${d.in}</div><div class="info"><div class="nm">${esc(d.fr)}</div><div class="sp">${esc(d.spec)} · ${esc(d.ville)}</div></div><button class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="event.stopPropagation();toggFav('${d.id}')" aria-label="Favori"><i class="fa fa-heart" aria-hidden="true"></i></button></div><div class="row3"><div class="price">${d.prix.toLocaleString()} <small>DA</small></div><button class="btn btn-primary btn-md"><i class="fa fa-calendar-plus"></i> Réserver</button></div></div>`).join("");
 }
 
 /* ─── VUE ─── */
@@ -891,7 +899,7 @@ function renderOverview(){
         const dt=new Date(next.date);
         const dl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long"}));
         const days=Math.ceil((dt-new Date())/(1000*60*60*24));
-        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${next.doctorName}</div><div style="font-size:12px;color:var(--text2)">${next.spec} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
+        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${(window.esc||String)(next.doctorName)}</div><div style="font-size:12px;color:var(--text2)">${(window.esc||String)(next.spec)} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
       } else {
         nextEl.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3)" data-i18n="no_rdv">Aucun RDV prévu</div>`;
       }
@@ -959,13 +967,16 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   // renderDocs() ci-dessus suffit — elle appelle tabibiDoctors.search() directement.
 });
 </script>
-</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div><script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
 <script src="js/tabibi-pii-migration.js"></script>
 <script src="js/tabibi-bridge.js"></script>
+<!-- [PUSH 2026-09-09] bridge natif + enregistrement du jeton : la page fait partie du bundle mobile -->
+<script src="js/capacitor-bridge.js"></script>
+<script src="js/tabibi-push-init.js"></script>
 <!-- [Phase 6.1] Helper formatage nom médecin -->
 <script src="js/tabibi-doctor-name.js"></script>
 <!-- [Phase 6.1] Helpers booking patient (listMyAppointments pour overview) -->

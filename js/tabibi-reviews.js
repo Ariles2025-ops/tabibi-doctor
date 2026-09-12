@@ -112,7 +112,7 @@
     }
   };
   function getLang() {
-    try { const l = localStorage.getItem('tabibi_lang'); if (['fr','ar','en'].includes(l)) return l; } catch(e) {}
+    try { const l = localStorage.getItem('tabibi_lang'); if (['fr','ar','en'].includes(l)) return l; } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-reviews.js:115'); }
     return (navigator.language || '').startsWith('ar') ? 'ar' : 'fr';
   }
   function t() { return T[getLang()] || T.fr; }
@@ -506,7 +506,7 @@
     openReviewModal,
     openReportModal,
     t: () => t(),
-    setLang: (l) => { try { localStorage.setItem('tabibi_lang', l); } catch(e) {} }
+    setLang: (l) => { try { localStorage.setItem('tabibi_lang', l); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-reviews.js:509'); } }
   };
 
   /* [FIX-PROD-2026-05-19] log d'init retiré */

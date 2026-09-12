@@ -12,7 +12,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_admin_cabinet">
 <title>Administration cabinet | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/tokens-v2.css">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
@@ -56,7 +56,7 @@
       <div class="app-bar-title" data-i18n="admin_cabinet_title">Administration cabinet</div>
       <div class="app-bar-sub" id="cabinet-name-sub">--</div>
     </div>
-    <button onclick="window.location='doctor-dashboard.html'" class="btn btn-icon btn-ghost" data-i18n-title="back_to_dashboard" title="Tableau de bord"><i class="fa fa-table-columns"></i></button>
+    <button onclick="window.location='doctor-dashboard.html'" class="btn btn-icon btn-ghost" data-i18n-title="back_to_dashboard" title="Tableau de bord" aria-label="back_to_dashboard"><i class="fa fa-table-columns" aria-hidden="true"></i></button>
   </header>
 
   <main class="page" role="main" style="padding:16px;max-width:960px;margin:0 auto">
@@ -207,6 +207,10 @@ async function getSupabase(){
 
 async function loadMyCabinets(){
   const sb = await getSupabase(); if (!sb) return;
+  // [R1 2026-09-10] Garde centralisée avec rôle : un patient connecté ne doit pas voir cette page.
+  // La RLS et les RPC restent l'autorité ; ceci aligne l'interface sur le RPC get_my_cabinets.
+  const authed = window.tabibi && window.tabibi.auth ? await window.tabibi.auth.requireAuth(['medecin','admin']) : null;
+  if (!authed) return;
   const { data: { session } } = await sb.auth.getSession();
   if (!session) { window.location = "login.html"; return; }
   CURRENT_USER_ID = session.user.id;
@@ -388,7 +392,7 @@ async function loadStats(){
 document.addEventListener("DOMContentLoaded", loadMyCabinets);
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

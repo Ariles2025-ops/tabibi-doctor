@@ -1,0 +1,20 @@
+# [2026-09-09] Mises a jour de dependances automatiques, groupees, hebdomadaires.
+# npm audit trouvait 11 vulnerabilites le 09/09/2026 sans que personne ne le sache.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule: { interval: weekly, day: monday }
+    groups:
+      capacitor: { patterns: ["@capacitor/*"] }
+      outillage: { patterns: ["vite*", "eslint*", "@playwright/*", "globals"] }
+    open-pull-requests-limit: 5
+  - package-ecosystem: npm
+    directory: /v2
+    schedule: { interval: weekly, day: monday }
+    groups:
+      react: { patterns: ["react", "react-dom", "@types/react*", "react-router"] }
+      outillage: { patterns: ["vite*", "vitest*", "@vitest/*", "typescript", "@vitejs/*"] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }

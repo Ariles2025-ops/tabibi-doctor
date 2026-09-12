@@ -10,7 +10,7 @@
 <meta name="theme-color" content="#7c3aed">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <title>Validation médecins | Admin Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -101,7 +101,7 @@
 </div>
 
 <div class="dv-filters">
-  <input class="dv-search" id="dv-search" type="search" placeholder="Nom ou email..." oninput="onSearch()">
+  <input class="dv-search" id="dv-search" type="search" placeholder="Nom ou email..." oninput="onSearch()" aria-label="Nom ou email...">
   <select class="dv-wsel" id="dv-wilaya" onchange="onWilaya()"><option value="">Toutes wilayas</option></select>
 </div>
 
@@ -152,7 +152,7 @@
 <div class="dv-modal" id="m-aud" role="dialog" aria-modal="true">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
     <div class="m-title" style="margin-bottom:0"><i class="fa fa-clock-rotate-left" style="color:#7c3aed"></i> Historique admin</div>
-    <button onclick="closeModals()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2)"><i class="fa fa-xmark"></i></button>
+    <button onclick="closeModals()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text2)" aria-label="Fermer"><i class="fa fa-xmark" aria-hidden="true"></i></button>
   </div>
   <div class="m-doc" id="ma-name"></div>
   <div id="aud-body"></div>
@@ -271,7 +271,7 @@ function renderCard(d){
         <i class="fa fa-check"></i> Valider${hasDocs?'':' <i class="fa fa-lock fa-xs"></i>'}
       </button>
       <button class="btn-rej" onclick="openRej('${escA(id)}','${escA(name)}','${escA(d.email||'')}')"><i class="fa fa-xmark"></i> Rejeter</button>
-      <button class="btn-aud" onclick="openAud('${escA(id)}','${escA(name)}')"><i class="fa fa-clock-rotate-left"></i></button>
+      <button class="btn-aud" onclick="openAud('${escA(id)}','${escA(name)}')" aria-label="Historique"><i class="fa fa-clock-rotate-left" aria-hidden="true"></i></button>
     </div>`;
   }else if(_tab==='approved'){
     actsHtml=`<div class="dv-acts">
@@ -518,7 +518,7 @@ document.addEventListener('DOMContentLoaded',async()=>{
 </script>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

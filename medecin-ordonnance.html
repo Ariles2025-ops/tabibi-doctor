@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="images/icon-192.png">
 <title>Nouvelle ordonnance | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/tokens-v2.css">
 <link rel="stylesheet" href="styles/components-v2.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -258,7 +258,7 @@
 <div class="toast" id="toast" role="region" aria-live="assertive" aria-atomic="true" aria-label="Notifications"></div>
 
 <!-- Supabase + config -->
-<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/tabibi-features.js"></script>
@@ -340,25 +340,25 @@
       </div>
       <div class="field">
         <label data-i18n="mo_med_name">${escapeHtml(T('mo_med_name', 'Nom du medicament *'))}</label>
-        <input class="m-name" data-i18n-placeholder="mo_med_name_ph" list="meds-datalist" type="text" placeholder="${escapeHtml(T('mo_med_name_ph', 'ex: Doliprane 1000mg'))}" value="${data.name || ''}" maxlength="200" required>
+        <input class="m-name" data-i18n-placeholder="mo_med_name_ph" list="meds-datalist" type="text" placeholder="${escapeHtml(T('mo_med_name_ph', 'ex: Doliprane 1000mg'))}" value="${data.name || ''}" maxlength="200" required aria-label="mo_med_name_ph">
       </div>
       <div class="field-row-3">
         <div class="field">
           <label data-i18n="mo_med_dosage">${escapeHtml(T('mo_med_dosage', 'Posologie'))}</label>
-          <input class="m-dosage" data-i18n-placeholder="mo_med_dosage_ph" type="text" placeholder="${escapeHtml(T('mo_med_dosage_ph', 'ex: 1 comprime'))}" value="${data.dosage || ''}" maxlength="80">
+          <input class="m-dosage" data-i18n-placeholder="mo_med_dosage_ph" type="text" placeholder="${escapeHtml(T('mo_med_dosage_ph', 'ex: 1 comprime'))}" value="${data.dosage || ''}" maxlength="80" aria-label="mo_med_dosage_ph">
         </div>
         <div class="field">
           <label data-i18n="mo_med_freq">${escapeHtml(T('mo_med_freq', 'Frequence'))}</label>
-          <input class="m-frequency" data-i18n-placeholder="mo_med_freq_ph" list="freq-datalist" type="text" placeholder="${escapeHtml(T('mo_med_freq_ph', 'ex: 3 fois par jour'))}" value="${data.frequency || ''}" maxlength="80">
+          <input class="m-frequency" data-i18n-placeholder="mo_med_freq_ph" list="freq-datalist" type="text" placeholder="${escapeHtml(T('mo_med_freq_ph', 'ex: 3 fois par jour'))}" value="${data.frequency || ''}" maxlength="80" aria-label="mo_med_freq_ph">
         </div>
         <div class="field">
           <label data-i18n="mo_med_duration">${escapeHtml(T('mo_med_duration', 'Duree'))}</label>
-          <input class="m-duration" data-i18n-placeholder="mo_med_duration_ph" type="text" placeholder="${escapeHtml(T('mo_med_duration_ph', 'ex: 7 jours'))}" value="${data.duration || ''}" maxlength="60">
+          <input class="m-duration" data-i18n-placeholder="mo_med_duration_ph" type="text" placeholder="${escapeHtml(T('mo_med_duration_ph', 'ex: 7 jours'))}" value="${data.duration || ''}" maxlength="60" aria-label="mo_med_duration_ph">
         </div>
       </div>
       <div class="field">
         <label data-i18n="mo_med_note">${escapeHtml(T('mo_med_note', 'Note (optionnel)'))}</label>
-        <input class="m-notes" data-i18n-placeholder="mo_med_note_ph" type="text" placeholder="${escapeHtml(T('mo_med_note_ph', 'ex: a prendre apres repas'))}" value="${data.notes || ''}" maxlength="200">
+        <input class="m-notes" data-i18n-placeholder="mo_med_note_ph" type="text" placeholder="${escapeHtml(T('mo_med_note_ph', 'ex: a prendre apres repas'))}" value="${data.notes || ''}" maxlength="200" aria-label="mo_med_note_ph">
       </div>
     `;
     row.querySelector('.med-del').addEventListener('click', () => {

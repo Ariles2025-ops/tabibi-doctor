@@ -35,7 +35,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_login_long">
 <title>Connexion à Tabibi | Espace patient et médecin</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -649,7 +649,7 @@ async function doLogin(e){
 function toastM(m,t){const c=document.getElementById("toast-container");if(!c)return;const col={success:"#2E8B57",error:"#D21010",info:"#0E5F46"};const d=document.createElement("div");d.style.cssText="background:"+(col[t]||col.info)+";color:#fff;padding:12px 18px;border-radius:12px;font-size:14px;font-weight:600;box-shadow:0 8px 28px rgba(0,0,0,.15);margin-bottom:8px";d.textContent=m;c.appendChild(d);setTimeout(()=>{if(d.remove)d.remove();else if(d.parentNode)d.parentNode.removeChild(d);},3000);}
 </script>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

@@ -17,7 +17,7 @@
     try {
       const m = document.querySelector('meta[name="tabibi-mode"]');
       if (m && m.getAttribute('content') === 'production') return 'production';
-    } catch(e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-beta.js:20'); }
     return 'beta';
   })();
 
@@ -103,7 +103,7 @@
     try {
       const l = localStorage.getItem('tabibi_lang');
       if (['fr','ar','en'].includes(l)) return l;
-    } catch(e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-beta.js:106'); }
     return (navigator.language || '').startsWith('ar') ? 'ar' :
            (navigator.language || '').startsWith('en') ? 'en' : 'fr';
   }
@@ -116,7 +116,7 @@
   }
 
   function dismiss() {
-    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch(e) {}
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-beta.js:119'); }
     const b = document.getElementById('tabibi-beta-banner');
     if (b) {
       b.style.transform = 'translateY(-100%)';
@@ -269,7 +269,7 @@
     isBeta: () => true,
     dismiss: dismiss,
     openModal: openModal,
-    reset: () => { try { localStorage.removeItem(DISMISS_KEY); } catch(e) {} window.location.reload(); },
+    reset: () => { try { localStorage.removeItem(DISMISS_KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-beta.js:272'); } window.location.reload(); },
     refreshLang: function() {
       // Re-render du bandeau si présent (changement de langue)
       const existing = document.getElementById('tabibi-beta-banner');

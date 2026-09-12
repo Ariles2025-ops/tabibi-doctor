@@ -40,7 +40,7 @@
             formatted = d.toLocaleDateString('fr-FR', { year: 'numeric', month: 'long', day: 'numeric' });
           }
         }
-      } catch (e) {}
+      } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-legal-version.js:43'); }
       el.textContent = formatted + ' — v' + entry.version;
     });
   }

@@ -47,7 +47,7 @@
 <meta http-equiv="Permissions-Policy" content="camera=(self), microphone=(self), display-capture=(self)">
 
 <!-- Styles -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/tokens-v2.css">
 <link rel="stylesheet" href="styles/components-v2.css">
 
@@ -292,7 +292,7 @@
 </div>
 
 <!-- SDK Supabase + config -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/tabibi-sentry.js"></script>

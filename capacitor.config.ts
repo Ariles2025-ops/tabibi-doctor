@@ -64,6 +64,11 @@ const config: CapacitorConfig = {
 
   // ── iOS spécifique ─────────────────────────────────────────────────────
   ios: {
+    // [CAPTCHA 2026-09-09] Origine https://localhost, comme Android. Le schema par
+    // defaut capacitor://localhost est non-http : c'est exactement ce qui a fait
+    // echouer Turnstile dans Tauri. Aucune installation iOS n'existe encore :
+    // changer l'origine maintenant ne perd aucune session. A VALIDER sur device.
+    scheme: 'https',
     contentInset: 'always',                 // respect des safe areas (notch/Dynamic Island)
     allowsLinkPreview: false,
     scrollEnabled: true,

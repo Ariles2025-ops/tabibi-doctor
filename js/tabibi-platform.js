@@ -29,11 +29,11 @@
     try {
       if (window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function'
           && window.Capacitor.isNativePlatform()) return 'mobile';
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-platform.js:32'); }
     return 'web';
   }
 
   var p = detect();
   window.TABIBI_PLATFORM = p;
-  try { document.documentElement.setAttribute('data-platform', p); } catch (e) {}
+  try { document.documentElement.setAttribute('data-platform', p); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-platform.js:38'); }
 })();

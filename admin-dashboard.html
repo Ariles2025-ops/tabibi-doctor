@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_admin_dashboard">
 <title>Administration | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -81,7 +81,7 @@
   <div id="tab-users" class="tab-panel" style="padding:14px 16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div style="font-size:15px;font-weight:700">Utilisateurs (<span id="ucount">0</span>)</div>
-      <input id="usearch" oninput="renderU()" placeholder="Nom, email..." data-i18n-placeholder="ph_name_email_search" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;width:140px">
+      <input id="usearch" oninput="renderU()" placeholder="Nom, email..." data-i18n-placeholder="ph_name_email_search" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;width:140px" aria-label="Nom, email...">
     </div>
     <div style="display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;scrollbar-width:none">
       <button class="chip active" data-r="all" onclick="filtU('all',this)">Tous</button>
@@ -126,9 +126,9 @@
   <div id="tab-settings" class="tab-panel" style="padding:14px 16px">
     <div class="card" style="margin-bottom:12px">
       <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins"></i> Tarification</div>
-      <div class="form-group"><label class="form-label">Tarif min consultation (DA)</label><input class="form-control" type="number" value="1000"></div>
-      <div class="form-group"><label class="form-label">Tarif max consultation (DA)</label><input class="form-control" type="number" value="10000"></div>
-      <div class="form-group"><label class="form-label">Commission Tabibi (%)</label><input class="form-control" type="number" value="5"></div>
+      <div class="form-group"><label class="form-label">Tarif min consultation (DA)</label><input class="form-control" type="number" value="1000" aria-label="Seuil 1"></div>
+      <div class="form-group"><label class="form-label">Tarif max consultation (DA)</label><input class="form-control" type="number" value="10000" aria-label="Seuil 2"></div>
+      <div class="form-group"><label class="form-label">Commission Tabibi (%)</label><input class="form-control" type="number" value="5" aria-label="Seuil 3"></div>
     </div>
     <div class="card" style="margin-bottom:12px">
       <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-envelope"></i> Notifications</div>
@@ -510,7 +510,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   renderOverview();
 });
 </script>
-</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div><script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

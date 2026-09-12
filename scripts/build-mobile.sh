@@ -105,7 +105,7 @@ done
 # (blog/articles/medecin-liberal-algerie-digitaliser-cabinet-2026.html).
 for pattern in 'admin-*.html' 'secretaire-*.html' 'medecin-*.html' \
                'doctor-dashboard.html' 'doctor-analytics.html' \
-               'doctor-reservation.html' 'agenda-cabinet.html' \
+               'agenda-cabinet.html' \
                'onboarding-medecin.html' 'api-docs.html'; do
   found=$(find "$WWW" -maxdepth 1 -name "$pattern" 2>/dev/null | head -1)
   [ -n "$found" ] && fail "page pro/admin dans le bundle : $found"

@@ -22,3 +22,13 @@ capacitor.config.ts export-ignore
 # Sauvegardes de pages (ex: index.html.bak lors du camouflage "Coming Soon") :
 # conservees dans git pour reactivation, JAMAIS servies publiquement.
 *.bak              export-ignore
+
+# [2026-09-09] Outillage et sources de build — JAMAIS dans le bundle deploye.
+# Sans ces lignes, `git archive` (base du deploiement, cf. DEPLOY_FRONTEND.md)
+# publierait les sources React de v2/, les points d'entree Vite et les
+# configurations d'outils sur tabibi.doctor. Constate par simulation le 09/09/2026.
+v2/**               export-ignore
+src/**              export-ignore
+vite.config.mjs     export-ignore
+eslint.config.mjs   export-ignore
+playwright.config.js export-ignore

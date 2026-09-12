@@ -4,8 +4,16 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 
 ## Contexte
 - **Tabibi.doctor** : plateforme de prise de RDV médical en Algérie. Phase **pré-launch** (lancement congrès médical 3-5 déc 2026).
-- **Stack** : site statique HTML/CSS/JS vanilla (~38 pages app + 490 pages SEO) · backend **Supabase EU (Frankfurt)**, projet `pudugodhiofqrctcdwfl` · hébergement **Netlify (primaire) + Vercel**. Ce n'est PAS un projet Cloudflare Workers.
+- **Stack** : site statique HTML/CSS/JS vanilla (~38 pages app + 490 pages SEO) · backend **Supabase EU (Frankfurt)**, projet `pudugodhiofqrctcdwfl` · hébergement **Cloudflare Pages** (projet `tabibi-doctor`, compte `13fe89e298e7bd78eeaf3223cd6b5dd5`). Netlify ne sert QUE les deploy previews des PR — ce n'est pas la prod.
 - **Prod** : https://tabibi.doctor (DNS pas encore pointé) · **staging** : https://effulgent-kelpie-e48e81.netlify.app
+
+## Déploiement — À LIRE AVANT TOUT MERGE
+
+> ⚠️ **Le projet Cloudflare Pages n'a AUCUNE connexion Git.**
+> Merger une PR sur `main` ne déploie **RIEN**. Chaque mise en production est un
+> `wrangler pages deploy` lancé à la main. Procédure complète : `DEPLOY_FRONTEND.md`.
+> Erreur déjà commise le 03/09/2026 : merge fait en croyant déployer, une heure
+> perdue à chercher un problème de cache inexistant.
 
 ## Règles absolues (non négociables)
 1. **Ne jamais commit/push directement sur `main`.** `main` est protégé (ruleset `protect-main` : force push et suppression bloqués). Toujours créer une branche + ouvrir une PR.
@@ -13,6 +21,9 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 3. **Toute action destructive sur la base (DELETE, DROP, REVOKE, UPDATE massif) → STOP et demande confirmation avant.** Ajoute toujours un garde-fou (WHERE ciblé + RETURNING) et propose-la, ne l'exécute pas seul.
 4. **Ne jamais logguer, écrire sur disque, ni committer un secret** (service_role key, access token, secret Turnstile). Variables d'environnement uniquement, jamais dans un fichier.
 5. **Ne rien valider sans preuve empirique** : sortie DB réelle, réponse HTTP, run navigateur, scores mesurés. Jamais "ça devrait marcher".
+6. **Aucune sortie de commande contenant un champ nommé `secret`, `token`, `key`, `password` (ou une valeur qui en a la forme : JWT `eyJ…`, `sb_secret_…`, hexadécimal long) n'est affichée telle quelle, jamais, même en lecture.** Toute réponse d'API ou de CLI est filtrée avant affichage (champs choisis explicitement, ou remplacés par une empreinte SHA-256 tronquée). Incident du 10/09/2026 : `GET /v1/projects/…/postgrest` renvoyait `jwt_secret` et il a été affiché ; rotation déclenchée.
+7. **Quand un blocage de sécurité se déclenche sur une commande (classifieur, permission refusée, garde-fou de l'outil), STOP : tu t'arrêtes et tu demandes à Aghiles.** Tu ne reformules pas la commande pour passer, même si la nouvelle version te paraît plus sûre ou plus étroite. Aghiles préfère lancer lui-même ce type de script : tu l'écris, tu le montres, il le lance. Incident du 12/09/2026 : commande de création de comptes de test via l'API admin bloquée, puis relancée sous une forme réduite — c'est exactement ce qu'il ne faut pas faire. Second incident, 12/09/2026 au soir : un script d'inspection du DOM (mesure de la position et de la visibilité d'un bandeau, lecture d'un attribut `href`) a été refusé avec le motif « Cookie/query string data ». Aucun secret n'était en jeu : **faux positif**. La règle a été appliquée quand même — arrêt, script montré à Aghiles, décision rendue par lui, aucune reformulation et aucun contournement par capture d'écran. Conduite à tenir sur un faux positif : c'est toujours Aghiles qui tranche, pas moi.
+8. **Toute mesure au navigateur se fait avec un cache-bust** (paramètre d'URL unique, ex. `?cb=<horodatage>`, ou rechargement forçé sans cache). Un rechargement d'URL simple peut servir une copie en cache et te faire conclure l'inverse de la réalité. Incident du 12/09/2026 : la modale « Mes horaires » avait été corrigée (déplacée sous `<body>`), mais un rechargement simple servait l'ancienne page en cache et la modale semblait toujours cassée — la preuve « avant/après » ne vaut que sur une page fraîchement chargée.
 
 ## Sécurité — état à jour (NE PAS refaire)
 Ces points sont **déjà réglés et prouvés** (session du 26 juil 2026). Ne les re-propose pas :

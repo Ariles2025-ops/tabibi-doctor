@@ -13,7 +13,7 @@
 <meta property="og:image" content="https://tabibi.doctor/images/og-blog.png">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://tabibi.doctor/blog/">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="../assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="../assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -149,7 +149,6 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc
   </div>
 
 </main>
-<script src="../js/tabibi-cookies.js"></script>
-<script src="../js/tabibi-beta.js"></script>
+<script type="module" src="../src/entries/blog-index.js"></script>
 </body>
 </html>

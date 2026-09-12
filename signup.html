@@ -37,7 +37,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_signup_long">
 <title>Inscription Tabibi | Créer un compte patient ou médecin</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -616,7 +616,7 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
       <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#0a4d3e,#0E5F46);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
         <i class="fa fa-user-doctor" style="font-size:36px;color:#fff"></i>
       </div>
-      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">${tabibiT('welcome_doctor','Bienvenue Dr')} ${prenom} !</h2>
+      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">${tabibiT('welcome_doctor','Bienvenue Dr')} ${(window.esc||String)(prenom)} !</h2>
       <p style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:20px">
         ${tabibiT('signup_recorded','Votre inscription a bien été enregistrée.')}
         <br><br>
@@ -741,7 +741,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 });
 </script>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

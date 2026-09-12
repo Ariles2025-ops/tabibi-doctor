@@ -34,7 +34,7 @@
   var LINKS = [
     { key: 'agenda',  href: 'agenda-cabinet.html',   icon: 'fa-calendar-week' },
     { key: 'dash',    href: 'doctor-dashboard.html', icon: 'fa-gauge-high' },
-    { key: 'stats',   href: 'doctor-analytics.html', icon: 'fa-chart-line' },
+    { key: 'stats',   href: 'doctor-analytics.html', icon: 'fa-chart-line', feature: 'doctorStats' },
     { key: 'rx',      href: 'medecin-ordonnance.html', icon: 'fa-file-prescription', feature: 'prescriptions' },
     { key: 'msg',     href: 'messages.html',         icon: 'fa-comments', feature: 'messaging' },
     { key: 'notif',   href: 'notifications.html',    icon: 'fa-bell', feature: 'notifications' },
@@ -58,7 +58,7 @@
   }
 
   function lang() {
-    try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) {}
+    try { var s = localStorage.getItem('tabibi_lang'); if (s === 'fr' || s === 'ar' || s === 'en') return s; } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-pro-sidebar.js:61'); }
     return (document.documentElement.lang || 'fr').slice(0, 2);
   }
 

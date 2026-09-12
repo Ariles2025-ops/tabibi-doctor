@@ -11,7 +11,7 @@
  *   RPC ensure_conversation(p_doctor_id) -> uuid (gating RDV confirmed/completed)
  *
  * Resolution noms :
- *   - cote patient  : public_doctors.full_name / specialty_fr (par doctor_id)
+ *   - cote patient  : RPC praticiens_par_ids → full_name / specialty_fr [C1]
  *   - cote medecin  : users.first_name/last_name (par patient_id ; fallback "Patient"
  *                     si la RLS users bloque la lecture).
  *
@@ -61,7 +61,8 @@
     var doctors = {}, patients = {};
     try {
       if (doctorIds.length) {
-        var rd = await sb.from('public_doctors').select('id,full_name,specialty_fr').in('id', doctorIds);
+        // [C1 2026-09-09] RPC praticiens_par_ids (≤ 100 UUID connus) — la vue n'est plus lisible.
+        var rd = await sb.rpc('praticiens_par_ids', { p_ids: doctorIds.slice(0, 100) });
         (rd.data || []).forEach(function (d) {
           doctors[d.id] = { name: d.full_name || 'Médecin', sub: d.specialty_fr || '' };
         });

@@ -27,7 +27,7 @@
     } catch(e) { return null; }
   }
   function set(consent) {
-    try { localStorage.setItem(KEY, JSON.stringify({ ...consent, ts: Date.now() })); } catch(e) {}
+    try { localStorage.setItem(KEY, JSON.stringify({ ...consent, ts: Date.now() })); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-cookies.js:30'); }
     apply(consent);
   }
   function apply(c) {
@@ -51,7 +51,7 @@
     try {
       const saved = localStorage.getItem('tabibi_lang');
       if (['fr','ar','en'].includes(saved)) return saved;
-    } catch(e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-cookies.js:54'); }
     return (navigator.language || '').startsWith('ar') ? 'ar' : 'fr';
   }
 
@@ -107,16 +107,25 @@
       return;
     }
     // Délai pour ne pas casser le LCP / éviter clignotement
-    setTimeout(render, 800);
+    // [PERF 2026-09-09] Le delai de 800 ms retardait l'element LCP de l'accueil
+    // (le bandeau) apres tout le reste. Rendu immediat : il se peint avec le
+    // premier rendu utile.
+    render();
   }
 
   window.tabibiCookies = {
     hasConsent: (type) => { const c = get(); return c ? !!c[type] : false; },
-    reset: () => { try { localStorage.removeItem(KEY); } catch(e) {} window.location.reload(); },
+    reset: () => { try { localStorage.removeItem(KEY); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-cookies.js:115'); } window.location.reload(); },
     show: render
   };
 
-  if (document.readyState === 'loading') {
+  // [PERF 2026-09-09] Le bandeau etait le LCP de l'accueil (Lighthouse : 6-7 s) parce
+  // qu'il attendait DOMContentLoaded, donc la fin de TOUS les scripts. Si <body>
+  // existe deja quand ce script s'execute, on rend tout de suite : le bandeau se
+  // peint avec le premier rendu utile au lieu du dernier.
+  if (document.readyState === 'loading' && document.body) {
+    init();
+  } else if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();

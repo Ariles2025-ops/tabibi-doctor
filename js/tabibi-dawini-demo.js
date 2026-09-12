@@ -30,7 +30,7 @@
       localStorage.setItem(KEY_ON, '1');
       // Flag features via l'override QA officiel (merge, sans écraser)
       var ov = {};
-      try { ov = JSON.parse(localStorage.getItem('tabibi_features_override') || '{}') || {}; } catch (e) {}
+      try { ov = JSON.parse(localStorage.getItem('tabibi_features_override') || '{}') || {}; } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-dawini-demo.js:33'); }
       ov.dawini = true;
       localStorage.setItem('tabibi_features_override', JSON.stringify(ov));
       // features.js a déjà gelé TABIBI_FEATURES pour CE chargement → reload
@@ -78,7 +78,7 @@
     try {
       var s = JSON.parse(localStorage.getItem(KEY_STATE) || 'null');
       if (s && s.requests) return s;
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-dawini-demo.js:81'); }
     // Seed : 1 demande d'exemple déjà en attente
     var seed = {
       requests: [{

@@ -13,6 +13,17 @@
 
 ---
 
+
+> **[09/09/2026] Deux chemins de déploiement coexistent désormais.**
+> - *Manuel (celui-ci)* : `git archive` → purge → `wrangler pages deploy`. Il sert les **sources**
+>   telles quelles : l'accueil y charge ses scripts un par un (aucun bundle).
+> - *Automatique (préparé)* : `.github/workflows/deploiement.yml` construit `dist-web` avec Vite,
+>   rejoue les 30 tests Playwright dessus et déploie. Inactif tant que `DEPLOIEMENT_AUTO=oui` et
+>   les secrets Cloudflare ne sont pas posés. Pour le reproduire à la main :
+>   `npm run build && npm run test:e2e:build && npx wrangler pages deploy dist-web --project-name=tabibi-doctor --branch=main`.
+> Depuis ce jour, `v2/`, `src/` et les configurations d'outillage sont en `export-ignore` :
+> ils ne partent dans aucun des deux chemins.
+
 ## La procédure (à jour 2026-08-04)
 
 ```bash

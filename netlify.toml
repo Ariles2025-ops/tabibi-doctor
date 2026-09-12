@@ -8,6 +8,99 @@
 # ────────────────────────────────────────────────────────────────────────
 # HEADERS GLOBAUX (s'appliquent à tout, ensuite affinés par règle)
 # ────────────────────────────────────────────────────────────────────────
+
+# =====================================================================
+# [SECURITE 2026-09-09] Chemins de code source : 404 FORCE sur Netlify.
+# _redirects contient deja `/supabase/* /404.html 404`, mais Netlify ignore une
+# regle quand le fichier cible EXISTE, sauf `force = true`. Constate sur le
+# preview de la PR #56 : /v2/src/App.tsx et /supabase/functions/send-sms/index.ts
+# repondaient 200. Cloudflare, lui, est couvert par functions/*/[[path]].js.
+# Ce bloc n'affecte que Netlify (previews de PR et staging).
+# =====================================================================
+[[redirects]]
+  from = "/supabase/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/migrations/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/desktop/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/v2/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/src/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/scripts/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/tests/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/docs/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/fixtures/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/templates/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/android/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/ios/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.git/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/.github/*"
+  to = "/404.html"
+  status = 404
+  force = true
+
 [[headers]]
   for = "/*"
   [headers.values]
@@ -54,7 +147,7 @@
     # Un déploiement manuel via `git archive` n'était pas touché — netlify.toml
     # est en export-ignore, donc `_headers` (complet) reprenait la main.
     # Toute évolution de CSP se fait DANS LES DEUX FICHIERS, en même temps.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com https://www.googletagmanager.com https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:; img-src 'self' data: https://*.tile.openstreetmap.org https: blob: https://www.facebook.com https://facebook.com; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io https://o4511831260987392.ingest.de.sentry.io https://www.facebook.com https://facebook.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://unpkg.com https://www.googletagmanager.com https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://pudugodhiofqrctcdwfl.supabase.co https://api.qrserver.com https://images.unsplash.com https://www.facebook.com https://facebook.com; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io https://o4511831260987392.ingest.de.sentry.io https://www.facebook.com https://facebook.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
 
 # ────────────────────────────────────────────────────────────────────────
 # HTML — pas de cache (mises à jour immédiates)
@@ -86,6 +179,16 @@
 # ────────────────────────────────────────────────────────────────────────
 # JavaScript de l'app — cache court avec revalidation
 # ────────────────────────────────────────────────────────────────────────
+[[headers]]
+  for = "/assets/build/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/assets/vendor/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
 [[headers]]
   for = "/js/*"
   [headers.values]
@@ -212,3 +315,10 @@
 # ────────────────────────────────────────────────────────────────────────
 # Pas de SPA fallback : on a de vrais fichiers HTML
 # ────────────────────────────────────────────────────────────────────────
+
+# [2026-09-10] page supprimee : les horaires se reglent dans la modale du tableau de bord
+[[redirects]]
+  from = "/doctor-reservation*"
+  to = "/doctor-dashboard"
+  status = 301
+  force = true

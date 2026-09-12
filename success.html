@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.json">
 <meta name="tabibi-page-key" content="title_success">
 <title>Confirmation | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -81,7 +81,7 @@ document.addEventListener("DOMContentLoaded",()=>{loadReceipt();makeConfetti();}
 // [CONFORMITE 2026] re-render du reçu (labels, montant localisé) au changement de langue.
 document.addEventListener("tabibi:lang-change",()=>{ try { loadReceipt(); } catch(e){} });
 </script>
-</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div><script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

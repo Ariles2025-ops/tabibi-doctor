@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android < 12. Rien du stockage WebView (session Supabase, localStorage) ne doit
+     sortir de l'appareil. allowBackup=false rend ces regles redondantes : elles
+     servent de seconde barriere si l'attribut est un jour remis a true. -->
+<full-backup-content>
+    <exclude domain="database" path="." />
+    <exclude domain="sharedpref" path="." />
+    <exclude domain="file" path="." />
+    <exclude domain="root" path="." />
+</full-backup-content>

@@ -5,8 +5,14 @@
 # zone sans effet). Ces regles ne dependent d'aucune propagation : Pages les
 # applique au routage, que le fichier existe ou non.
 # Aucune page du site ne charge ces chemins (verifie : 0 reference relative).
-/supabase/*   /404.html   404
-/migrations/* /404.html   404
-/desktop/*    /404.html   404
-/.git/*       /404.html   404
+# [2026-09-09] `404!` : sur Netlify, une regle sans `!` est ignoree quand le fichier
+# existe (constate sur le preview de la PR #56 : /supabase/functions/... en 200).
+# Cloudflare Pages n'applique pas les statuts 404 de ce fichier : sa barriere est
+# functions/*/[[path]].js. Le `!` y est donc sans effet.
+/supabase/*   /404.html   404!
+/migrations/* /404.html   404!
+/desktop/*    /404.html   404!
+/.git/*       /404.html   404!
 /   /index.html   200
+# [2026-09-10] page supprimee : les horaires se reglent dans la modale du tableau de bord
+/doctor-reservation*  /doctor-dashboard  301

@@ -491,7 +491,7 @@ Deno.serve(async (req) => {
 
   // ── 3. Client service_role (contourne la RLS — jamais exposé au client) ──
   const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-  const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const SERVICE_KEY = (Deno.env.get("TABIBI_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
   if (!SUPABASE_URL || !SERVICE_KEY) {
     console.error("[reminders] SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY manquants");
     return new Response(JSON.stringify({ error: "not configured" }), { status: 500, headers: JSON_HEADERS });

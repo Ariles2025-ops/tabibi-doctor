@@ -9,7 +9,7 @@
 <meta name="description" content="La page demandée n'existe pas. Retournez à l'accueil Tabibi ou cherchez un médecin en Algérie.">
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="https://tabibi.doctor/404.html">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/app.css">
@@ -71,7 +71,7 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc
     <h2><i class="fa fa-magnifying-glass"></i> Que cherchez-vous ?</h2>
     <form class="search-form" onsubmit="goSearch(event)">
       <input type="search" id="q" placeholder="Cardiologue Alger, dermatologue Oran..." data-i18n-placeholder="ph_404_search" autofocus aria-label="Recherche médecin">
-      <button type="submit"><i class="fa fa-arrow-right"></i></button>
+      <button type="submit" aria-label="Suivant"><i class="fa fa-arrow-right" aria-hidden="true"></i></button>
     </form>
   </div>
 
@@ -125,8 +125,6 @@ function goSearch(e){
 }
 try { document.getElementById("bad-url").textContent = location.pathname + location.search; } catch(e) {}
 </script>
-<script src="js/tabibi-beta.js"></script>
-<script src="js/tabibi-lang.js"></script>
-<script src="js/tabibi-i18n.js"></script>
+<script type="module" src="./src/entries/404.js"></script>
 </body>
 </html>

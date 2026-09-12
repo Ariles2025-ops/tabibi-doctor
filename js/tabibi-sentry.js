@@ -9,6 +9,19 @@
 //
 // A inclure en bas de chaque page HTML AVANT </body> et APRES config.js.
 
+// [2026-09-09] Point d'entree UNIQUE pour signaler une erreur attrapee.
+// Utilisable sans dependance : `(window.tabibiErreur || console.warn)(e, 'contexte')`.
+// Avant, 173 blocs `catch {}` jetaient les erreurs avant tout signalement, et
+// Sentry ne recevait presque rien.
+window.tabibiErreur = function (erreur, contexte) {
+  try {
+    if (window.Sentry && typeof window.Sentry.captureException === 'function') {
+      window.Sentry.captureException(erreur, { tags: { contexte: contexte || 'inconnu' } });
+    } else {
+      console.warn('[Tabibi]', contexte || '', erreur);
+    }
+  } catch { /* le signalement ne doit jamais casser l'appelant */ }
+};
 (function () {
   'use strict';
 
@@ -67,7 +80,7 @@
       window.Sentry.init({
         dsn: dsn,
         environment: env,
-        release: 'tabibi@v10.27.0',
+        release: 'tabibi@' + ((window.TABIBI_CONFIG && window.TABIBI_CONFIG.APP_VERSION) || 'inconnue'),
         integrations: [
           window.Sentry.browserTracingIntegration ? window.Sentry.browserTracingIntegration() : null
         ].filter(Boolean),
@@ -110,7 +123,7 @@
                 .replace(/\+?213[\s\-.]?\d{2}[\s\-.]?\d{2}[\s\-.]?\d{2}[\s\-.]?\d{2}/g, '[tel]')
                 .replace(/0[567]\d{8}/g, '[tel]');
             }
-          } catch (e) {}
+          } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-sentry.js:126'); }
           return event;
         }
       });

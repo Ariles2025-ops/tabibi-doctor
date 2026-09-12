@@ -1,7 +1,10 @@
 /* ====================================================================
  * Tabibi — window.tabibiDoctors API
  * Phase 16.5 refactor : remplace le while(true) full-scan de public_doctors
- * par des méthodes filtrées côté serveur (PostgREST .range() + filtres).
+ * par des méthodes filtrées côté serveur.
+ * [C1 2026-09-09] la vue public_doctors n'est plus lisible par le front :
+ * tout passe par les RPC chercher_praticiens / praticien / praticiens_par_ids
+ * (≤ 50 par page, wilaya OU spécialité obligatoire pour search/count).
  *
  * Avant : loadAllDoctorsViaApi() → 80 × fetch(limit=1000) → 84 Mo par visiteur
  * Après : window.tabibiDoctors.search() → 1 fetch filtré par page
@@ -114,47 +117,22 @@
     var sb = _sb();
     if (!sb) return { data: [], total: 0, error: 'no_client' };
     opts = opts || {};
-    var page     = Math.max(1, parseInt(opts.page, 10) || 1);
-    var pageSize = Math.min(100, Math.max(1, parseInt(opts.pageSize, 10) || 20));
-    var offset   = (page - 1) * pageSize;
+    var page     = Math.min(100, Math.max(1, parseInt(opts.page, 10) || 1));
+    var pageSize = Math.min(50, Math.max(1, parseInt(opts.pageSize, 10) || 20));
+
+    // [C1 2026-09-09] La RPC exige une wilaya OU une spécialité : on n'appelle
+    // pas le serveur à vide (il répondrait 400 filtre_obligatoire).
+    if (!opts.wilaya_fr && !opts.specialty_fr) {
+      return { data: [], total: 0, error: 'filtre_obligatoire' };
+    }
 
     try {
-      var q = sb.from('public_doctors').select('*', { count: 'exact' });
-
-      if (opts.wilaya_fr) {
-        q = q.eq('wilaya_fr', opts.wilaya_fr);
-      }
-
-      if (opts.specialty_fr) {
-        var mapped = _mapSpec(opts.specialty_fr);
-        if (mapped) {
-          q = q.eq('specialty_fr', mapped);
-        } else {
-          // Fallback ilike sur les 7 premiers chars normalisés
-          var specPart = opts.specialty_fr.substring(0, Math.min(7, opts.specialty_fr.length));
-          q = q.ilike('specialty_fr', '%' + specPart + '%');
-        }
-      }
-
-      if (opts.query) {
-        // Échapper les wildcards PostgREST
-        var safe = String(opts.query).replace(/[%_]/g, '\\$&').trim();
-        if (safe) {
-          q = q.or(
-            'full_name.ilike.%' + safe + '%,' +
-            'specialty_fr.ilike.%' + safe + '%,' +
-            'wilaya_fr.ilike.%' + safe + '%'
-          );
-        }
-      }
-
-      q = q.order('full_name').range(offset, offset + pageSize - 1);
-
-      var res = await q;
+      var res = await sb.rpc('chercher_praticiens', _rpcArgs(opts, page, pageSize));
       if (res.error) return { data: [], total: 0, error: res.error.message || 'query_error' };
+      var body = res.data || {};
       return {
-        data:  (res.data || []).map(convertDoctor),
-        total: res.count || 0,
+        data:  (body.lignes || []).map(convertDoctor),
+        total: body.total || 0,
         error: null
       };
     } catch (e) {
@@ -163,14 +141,32 @@
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────
-  // getById — récupère 1 médecin par UUID
-  // ──────────────────────────────────────────────────────────────────────
+  // Arguments communs search()/count() → RPC chercher_praticiens.
+  // Spécialité : mapping UI→DB si connu, sinon préfixe de 7 caractères
+  // (la RPC fait alors un ilike 'préfixe%').
+  function _rpcArgs(opts, page, pageSize) {
+    var spec = null;
+    if (opts.specialty_fr) {
+      spec = _mapSpec(opts.specialty_fr) || opts.specialty_fr.substring(0, Math.min(7, opts.specialty_fr.length));
+    }
+    return {
+      p_wilaya:     opts.wilaya_fr || null,
+      p_specialite: spec,
+      p_q:          opts.query ? String(opts.query).trim() || null : null,
+      p_type:       null,
+      p_page:       page,
+      p_limite:     pageSize
+    };
+  }
+
+  // ───────────────────────────────────────────────────────
+  // getById — récupère 1 médecin par UUID (RPC praticien)
+  // ───────────────────────────────────────────────────────
   async function getById(id) {
     var sb = _sb();
     if (!sb || !id) return { data: null, error: 'invalid_id' };
     try {
-      var res = await sb.from('public_doctors').select('*').eq('id', String(id)).maybeSingle();
+      var res = await sb.rpc('praticien', { p_id: String(id) }).maybeSingle();
       if (res.error) return { data: null, error: res.error.message };
       return { data: res.data ? convertDoctor(res.data) : null, error: null };
     } catch (e) {
@@ -178,15 +174,15 @@
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────
-  // getByLegacyId — récupère 1 médecin par legacy_id (int)
-  // ──────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────
+  // getByLegacyId — récupère 1 médecin par legacy_id (RPC praticien)
+  // ───────────────────────────────────────────────────────
   async function getByLegacyId(legacyId) {
     var sb = _sb();
     var n = parseInt(legacyId, 10);
     if (!sb || !n || isNaN(n)) return { data: null, error: 'invalid_legacy_id' };
     try {
-      var res = await sb.from('public_doctors').select('*').eq('legacy_id', n).maybeSingle();
+      var res = await sb.rpc('praticien', { p_legacy_id: n }).maybeSingle();
       if (res.error) return { data: null, error: res.error.message };
       return { data: res.data ? convertDoctor(res.data) : null, error: null };
     } catch (e) {
@@ -194,44 +190,34 @@
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────
-  // count — count() avec filtres, 0 donnée transférée (head: true)
-  // opts: { specialty_fr, wilaya_fr }
-  // ──────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────
+  // count — total filtré via la RPC (1 ligne demandée, on ne lit que total)
+  // opts: { specialty_fr, wilaya_fr } — l'un des deux est obligatoire
+  // ───────────────────────────────────────────────────────
   async function count(opts) {
     var sb = _sb();
     if (!sb) return { count: 0, error: 'no_client' };
     opts = opts || {};
+    if (!opts.wilaya_fr && !opts.specialty_fr) return { count: 0, error: 'filtre_obligatoire' };
     try {
-      var q = sb.from('public_doctors').select('*', { count: 'exact', head: true });
-      if (opts.wilaya_fr) q = q.eq('wilaya_fr', opts.wilaya_fr);
-      if (opts.specialty_fr) {
-        var mapped = _mapSpec(opts.specialty_fr);
-        if (mapped) {
-          q = q.eq('specialty_fr', mapped);
-        } else {
-          var specPart = opts.specialty_fr.substring(0, Math.min(7, opts.specialty_fr.length));
-          q = q.ilike('specialty_fr', '%' + specPart + '%');
-        }
-      }
-      var res = await q;
+      var res = await sb.rpc('chercher_praticiens', _rpcArgs(opts, 1, 1));
       if (res.error) return { count: 0, error: res.error.message };
-      return { count: res.count || 0, error: null };
+      return { count: (res.data && res.data.total) || 0, error: null };
     } catch (e) {
       return { count: 0, error: (e && e.message) || 'unknown' };
     }
   }
 
-  // ──────────────────────────────────────────────────────────────────────
-  // getByIds — batch fetch par UUIDs (max 100)
-  // ──────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────
+  // getByIds — batch fetch par UUIDs déjà connus (RPC, max 100)
+  // ───────────────────────────────────────────────────────
   async function getByIds(ids) {
     var sb = _sb();
     if (!sb || !Array.isArray(ids) || !ids.length) return { data: [], error: null };
     var safeIds = ids.map(String).filter(Boolean).slice(0, 100);
     if (!safeIds.length) return { data: [], error: null };
     try {
-      var res = await sb.from('public_doctors').select('*').in('id', safeIds);
+      var res = await sb.rpc('praticiens_par_ids', { p_ids: safeIds });
       if (res.error) return { data: [], error: res.error.message };
       return { data: (res.data || []).map(convertDoctor), error: null };
     } catch (e) {

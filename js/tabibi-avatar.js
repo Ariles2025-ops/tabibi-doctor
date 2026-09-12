@@ -131,14 +131,14 @@
     if (error) throw error;
     // Supprimer ancien avatar (best effort, on n'échoue pas si ça rate)
     if (oldPath) {
-      try { await sb.storage.from(STORAGE_BUCKET).remove([oldPath]); } catch(_) {}
+      try { await sb.storage.from(STORAGE_BUCKET).remove([oldPath]); } catch (_) { (window.tabibiErreur || console.warn)(_, 'tabibi-avatar.js:134'); }
     }
     // Mettre à jour le localStorage pour refléter immédiatement
     try {
       const u = JSON.parse(localStorage.getItem('tabibi_user') || '{}');
       u.photo_url = photoUrl;
       localStorage.setItem('tabibi_user', JSON.stringify(u));
-    } catch(_) {}
+    } catch (_) { (window.tabibiErreur || console.warn)(_, 'tabibi-avatar.js:141'); }
   }
 
   // ─── Rendu de l'avatar (photo ou initiales) ───
@@ -241,7 +241,7 @@
             const u = JSON.parse(localStorage.getItem('tabibi_user') || '{}');
             u.photo_url = dataUrl;
             localStorage.setItem('tabibi_user', JSON.stringify(u));
-          } catch(_) {}
+          } catch (_) { (window.tabibiErreur || console.warn)(_, 'tabibi-avatar.js:244'); }
           _renderAvatar(container, { ...opts, photoUrl: dataUrl });
           _toast('Photo mise à jour (mode démo)', 'success');
         };

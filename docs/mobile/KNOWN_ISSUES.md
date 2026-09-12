@@ -43,8 +43,9 @@ aucune image de splash custom n'a été configurée. Capacitor utilise l'icône 
 2. Placer dans `resources/splash.png`
 3. Générer les assets natifs :
    ```bash
-   npm install -D @capacitor/assets
-   npx capacitor-assets generate --splashscreen
+   # [2026-09-09] @capacitor/assets n'est plus une dependance du depot : elle tirait
+   # sharp, xcode et uuid vulnerables (npm audit) pour un outil utilise une fois.
+   npx --yes @capacitor/assets generate --splashscreen --iconBackgroundColor '#0F7560'
    ```
    Cela génère automatiquement les tailles pour iOS et Android.
 
@@ -54,7 +55,7 @@ aucune image de splash custom n'a été configurée. Capacitor utilise l'icône 
 
 **Impact** : Visuel uniquement. Aucun crash. **Bloquant pour stores** (image de marque requise).
 
-**Statut** : ⏳ À faire en Phase 2 — avant soumission stores
+**Statut** : ✅ **Résolu le 2026-05-29** (`b68d585`, icônes + splash Tabibi iOS/Android). Cette entrée est restée « à faire » par oubli jusqu'au 09/09/2026 : les sources sont dans `resources/` et `npx --yes @capacitor/assets generate` reproduit exactement les fichiers versionnés.
 
 ---
 

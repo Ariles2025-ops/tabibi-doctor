@@ -213,7 +213,7 @@
    */
   function resetWidget(widgetId) {
     if (window.turnstile && widgetId) {
-      try { window.turnstile.reset(widgetId); } catch (e) {}
+      try { window.turnstile.reset(widgetId); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-turnstile.js:216'); }
     }
   }
 

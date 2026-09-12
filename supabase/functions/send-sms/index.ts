@@ -19,6 +19,27 @@
 // =====================================================================
 
 import { Webhook } from "https://esm.sh/standardwebhooks@1.0.0";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+// [A9 2026-09-09] Journalisation dans public.sms_log.
+// Avant : la table existait, personne n'y ecrivait. Un OTP « jamais recu » etait
+// indiscernable d'un OTP « recu et ignore » — l'angle mort qui a rendu si long le
+// diagnostic de l'expediteur. On persiste le smsid renvoye par BudgetSMS
+// (provider_msg_id) : sms-dlr pourra ensuite y rattacher l'accuse de livraison.
+// Best-effort : un echec d'insertion ne bloque JAMAIS l'envoi de l'OTP.
+async function journaliser(entree: {
+  phone_e164: string; body: string; status: string; provider_msg_id?: string | null;
+  cost_micros?: number | null; error_code?: string | null; error_message?: string | null;
+}) {
+  try {
+    const url = Deno.env.get("SUPABASE_URL"), key = (Deno.env.get("TABIBI_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
+    if (!url || !key) return;
+    const db = createClient(url, key, { auth: { persistSession: false } });
+    const { error } = await db.from("sms_log").insert({ provider: "budgetsms", ...entree });
+    if (error) console.error("[send-sms] sms_log:", error.message);
+  } catch (e) { console.error("[send-sms] sms_log exception:", e); }
+}
+
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -90,16 +111,24 @@ Deno.serve(async (req) => {
 
     // BudgetSMS : "OK <smsid> <cost> <parts>" si accepté ; "ERR <code>" sinon.
     if (body.startsWith("OK")) {
+      // "OK <smsid> <cost> <parts>" — cost en unites BudgetSMS (EUR), stocke en micros
+      const [, smsid, cout] = body.split(/\s+/);
+      await journaliser({ phone_e164: user.phone, body: "otp", status: "sent",
+        provider_msg_id: smsid ?? null, cost_micros: cout ? Math.round(Number(cout) * 1_000_000) : null });
       return new Response(JSON.stringify({}), { status: 200, headers: JSON_HEADERS });
     }
 
     console.error("[send-sms] BudgetSMS a refusé l'envoi:", body);
+    await journaliser({ phone_e164: user.phone, body: "otp", status: "failed",
+      error_code: body.split(/\s+/)[1] ?? null, error_message: body.slice(0, 200) });
     return new Response(JSON.stringify({ error: `sms provider error: ${body}` }), {
       status: 500,
       headers: JSON_HEADERS,
     });
   } catch (err) {
     console.error("[send-sms] erreur réseau lors de l'appel BudgetSMS:", err);
+    await journaliser({ phone_e164: user.phone, body: "otp", status: "failed",
+      error_code: "network", error_message: String(err).slice(0, 200) });
     return new Response(JSON.stringify({ error: "sms send failed" }), {
       status: 500,
       headers: JSON_HEADERS,

@@ -1,0 +1,54 @@
+# =====================================================================
+# deploiement.yml — deploiement AUTOMATIQUE du site sur Cloudflare Pages
+# =====================================================================
+# Etat au 09/09/2026 : PREPARE, PAS ACTIF. Il ne fait rien tant que les deux
+# secrets ne sont pas poses dans GitHub -> Settings -> Secrets :
+#   CLOUDFLARE_API_TOKEN   (jeton « Cloudflare Pages : Edit »)
+#   CLOUDFLARE_ACCOUNT_ID  13fe89e298e7bd78eeaf3223cd6b5dd5
+# Les poser, c'est la decision humaine qui active le deploiement continu.
+#
+# POURQUOI : le projet Pages n'a aucune connexion Git. Chaque mise en prod est
+# un `wrangler pages deploy` lance a la main ; le 03/09/2026 une heure a ete
+# perdue sur un merge cru deploye. Avec ce workflow, merger sur main = deployer.
+#
+# CE QUI EST DEPLOYE : la sortie de `npm run build` (dist-web), c'est-a-dire le
+# site avec l'accueil bundle par Vite — pas l'export git archive. Les memes
+# 30 tests Playwright tournent sur cette sortie avant tout envoi.
+# =====================================================================
+name: deploiement
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency: { group: deploiement-prod, cancel-in-progress: false }
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    if: ${{ vars.DEPLOIEMENT_AUTO == 'oui' }}   # interrupteur explicite (Settings -> Variables)
+    permissions: { contents: read, deployments: write }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: '22', cache: npm }
+      - run: npm ci
+      - run: npm run lint:dette
+      - run: npm run i18n:verifier
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npm run test:e2e:build
+      - name: Deployer dist-web sur Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy dist-web --project-name=tabibi-doctor --branch=main --commit-hash=${{ github.sha }}
+      - name: Verification post-deploiement
+        run: |
+          sleep 20
+          for u in / /login /sw.js /js/i18n/fr.js /supabase/functions/send-sms/index.ts; do
+            printf "%-42s HTTP %s\n" "$u" "$(curl -s -o /dev/null -w '%{http_code}' https://tabibi.doctor$u)"
+          done
+          curl -s https://tabibi.doctor/sw.js | grep -o "CACHE_VERSION = '[^']*'"

@@ -237,10 +237,10 @@
   </p>
 
   <form onsubmit="submitPartnerRequest(event)">
-    <input type="text"  name="organization" placeholder="Organisation / Organization" required />
-    <input type="text"  name="contact_name" placeholder="Nom du contact / Contact name" required />
-    <input type="email" name="email"        placeholder="Email professionnel" required />
-    <input type="tel"   name="phone"        placeholder="Téléphone (DZ)" />
+    <input type="text"  name="organization" placeholder="Organisation / Organization" required aria-label="Organisation / Organization" />
+    <input type="text"  name="contact_name" placeholder="Nom du contact / Contact name" required aria-label="Nom du contact / Contact name" />
+    <input type="email" name="email"        placeholder="Email professionnel" required aria-label="Email professionnel" />
+    <input type="tel"   name="phone"        placeholder="Téléphone (DZ)" aria-label="Téléphone (DZ)" />
     <select name="org_type" required>
       <option value="" disabled selected>— Type d'organisation —</option>
       <option value="cnas">CNAS</option>

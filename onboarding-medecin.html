@@ -9,7 +9,7 @@
 <meta name="description" content="Inscription médecin certifié sur Tabibi — Plateforme médicale algérienne.">
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="https://tabibi.doctor/onboarding-medecin.html">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
 <link rel="stylesheet" href="css/tabibi-ui.css">
@@ -94,12 +94,12 @@ textarea{min-height:80px;resize:vertical}
     <h2><i class="fa fa-id-card" style="color:var(--blue)"></i> <span data-i18n="om_step1_name">Informations personnelles</span></h2>
     <p class="subtitle" data-i18n="om_s1_sub">Vos coordonnées d'identité civile.</p>
 
-    <div class="field"><label class="lbl required" data-i18n="om_firstname">Prénom</label><input id="f-firstname" placeholder="Ahmed" data-i18n-placeholder="ph_first_name_example" required></div>
-    <div class="field"><label class="lbl required" data-i18n="om_lastname">Nom</label><input id="f-lastname" placeholder="Benali" data-i18n-placeholder="ph_last_name_example" required></div>
-    <div class="field"><label class="lbl required" data-i18n="om_email_pro">Email professionnel</label><input id="f-email" type="email" placeholder="dr.benali@gmail.com" data-i18n-placeholder="ph_email_pro_example" required><div class="hint" data-i18n="om_email_hint">Idéalement votre email pro. Servira de login.</div></div>
-    <div class="field"><label class="lbl required" data-i18n="om_phone">Téléphone (DZ)</label><input id="f-phone" type="tel" placeholder="+213 555 12 34 56" data-i18n-placeholder="ph_phone_dz_example" required></div>
+    <div class="field"><label class="lbl required" data-i18n="om_firstname">Prénom</label><input id="f-firstname" placeholder="Ahmed" data-i18n-placeholder="ph_first_name_example" required aria-label="Ahmed"></div>
+    <div class="field"><label class="lbl required" data-i18n="om_lastname">Nom</label><input id="f-lastname" placeholder="Benali" data-i18n-placeholder="ph_last_name_example" required aria-label="Benali"></div>
+    <div class="field"><label class="lbl required" data-i18n="om_email_pro">Email professionnel</label><input id="f-email" type="email" placeholder="dr.benali@gmail.com" data-i18n-placeholder="ph_email_pro_example" required aria-label="dr.benali@gmail.com"><div class="hint" data-i18n="om_email_hint">Idéalement votre email pro. Servira de login.</div></div>
+    <div class="field"><label class="lbl required" data-i18n="om_phone">Téléphone (DZ)</label><input id="f-phone" type="tel" placeholder="+213 555 12 34 56" data-i18n-placeholder="ph_phone_dz_example" required aria-label="+213 555 12 34 56"></div>
     <div class="field"><label class="lbl required" data-i18n="om_birthdate">Date de naissance</label><input id="f-bd" type="date" required></div>
-    <div class="field"><label class="lbl required" data-i18n="om_password">Mot de passe</label><input id="f-pw" type="password" minlength="8" placeholder="Minimum 8 caractères" data-i18n-placeholder="ph_password_8_min" required></div>
+    <div class="field"><label class="lbl required" data-i18n="om_password">Mot de passe</label><input id="f-pw" type="password" minlength="8" placeholder="Minimum 8 caractères" data-i18n-placeholder="ph_password_8_min" required aria-label="Minimum 8 caractères"></div>
 
     <div class="actions">
       <button class="btn btn-primary" onclick="goStep(2)"><span data-i18n="om_continue">Continuer</span> <i class="fa fa-arrow-right"></i></button>
@@ -116,7 +116,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="field">
       <label class="lbl required" data-i18n="om_diploma_label">Diplôme de Doctorat en Médecine</label>
       <label class="upload-zone" id="up-diploma">
-        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-diploma', this)">
+        <input type="file" accept="image/*,.pdf" aria-label="Diplôme" onchange="markUploaded('up-diploma', this)">
         <i class="fa fa-cloud-arrow-up"></i>
         <div class="uz-title" data-i18n="om_upload_diploma">Téléverser le diplôme</div>
         <div class="uz-sub" data-i18n="om_upload_formats">JPG, PNG ou PDF</div>
@@ -126,7 +126,7 @@ textarea{min-height:80px;resize:vertical}
     <div class="field">
       <label class="lbl required" data-i18n="om_ordre_label">Attestation d'inscription au Conseil de l'Ordre</label>
       <label class="upload-zone" id="up-ordre">
-        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-ordre', this)">
+        <input type="file" accept="image/*,.pdf" aria-label="Carte de l’Ordre" onchange="markUploaded('up-ordre', this)">
         <i class="fa fa-cloud-arrow-up"></i>
         <div class="uz-title" data-i18n="om_upload_ordre">Téléverser l'attestation</div>
         <div class="uz-sub" data-i18n="om_upload_valid">En cours de validité</div>
@@ -135,13 +135,13 @@ textarea{min-height:80px;resize:vertical}
 
     <div class="field">
       <label class="lbl required" data-i18n="om_ordre_num">Numéro d'inscription au Conseil de l'Ordre</label>
-      <input id="f-ordre-num" placeholder="CO-XXXX-XXXXX">
+      <input id="f-ordre-num" placeholder="CO-XXXX-XXXXX" aria-label="CO-XXXX-XXXXX">
     </div>
 
     <div class="field">
       <label class="lbl" data-i18n="om_id_label">Carte d'identité ou passeport (recommandé)</label>
       <label class="upload-zone" id="up-id">
-        <input type="file" accept="image/*,.pdf" onchange="markUploaded('up-id', this)">
+        <input type="file" accept="image/*,.pdf" aria-label="Pièce d’identité" onchange="markUploaded('up-id', this)">
         <i class="fa fa-id-badge"></i>
         <div class="uz-title" data-i18n="om_upload_id">Téléverser la pièce d'identité</div>
         <div class="uz-sub" data-i18n="om_upload_speeds">Accélère la vérification</div>
@@ -172,8 +172,8 @@ textarea{min-height:80px;resize:vertical}
       </select>
     </div>
 
-    <div class="field"><label class="lbl" data-i18n="om_subspec">Sous-spécialités (séparées par virgules)</label><input id="f-subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties"></div>
-    <div class="field"><label class="lbl" data-i18n="om_start_year">Année de début d'exercice</label><input id="f-startyear" type="number" min="1980" max="2026" placeholder="2018"></div>
+    <div class="field"><label class="lbl" data-i18n="om_subspec">Sous-spécialités (séparées par virgules)</label><input id="f-subspec" placeholder="Ex : Rythmologie, Échocardiographie" data-i18n-placeholder="ph_subspecialties" aria-label="Ex : Rythmologie, Échocardiographie"></div>
+    <div class="field"><label class="lbl" data-i18n="om_start_year">Année de début d'exercice</label><input id="f-startyear" type="number" min="1980" max="2026" placeholder="2018" aria-label="2018"></div>
 
     <div class="field">
       <label class="lbl required" data-i18n="om_wilaya">Wilaya d'exercice</label>
@@ -186,8 +186,8 @@ textarea{min-height:80px;resize:vertical}
     </div>
 
     <div class="field"><label class="lbl required" data-i18n="om_cab_addr">Adresse complète du cabinet</label><textarea id="f-addr" placeholder="12 Rue Didouche Mourad, Alger Centre" data-i18n-placeholder="ph_cabinet_address"></textarea></div>
-    <div class="field"><label class="lbl" data-i18n="om_cab_name">Nom du cabinet ou de la clinique (optionnel)</label><input id="f-cabinet" placeholder="Cabinet Dr. Benali" data-i18n-placeholder="ph_cabinet_name_alt"></div>
-    <div class="field"><label class="lbl" data-i18n="om_price">Tarif consultation (DA)</label><input id="f-price" type="number" min="0" step="100" placeholder="2500"></div>
+    <div class="field"><label class="lbl" data-i18n="om_cab_name">Nom du cabinet ou de la clinique (optionnel)</label><input id="f-cabinet" placeholder="Cabinet Dr. Benali" data-i18n-placeholder="ph_cabinet_name_alt" aria-label="Cabinet Dr. Benali"></div>
+    <div class="field"><label class="lbl" data-i18n="om_price">Tarif consultation (DA)</label><input id="f-price" type="number" min="0" step="100" placeholder="2500" aria-label="2500"></div>
 
     <div class="field">
       <label class="lbl" data-i18n="om_langs">Langues parlées</label>

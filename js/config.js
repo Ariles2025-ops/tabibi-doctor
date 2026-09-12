@@ -5,9 +5,18 @@
 // avant deploiement. Voir DEPLOY_NOTES.md pour la liste des secrets a editer.
 
 window.TABIBI_CONFIG = {
+  // ---- Version de l'application (SOURCE UNIQUE) ------------------------
+  // [A12 2026-09-09] Six numeros de version coexistaient (package.json 1.0.0,
+  // tauri 0.1.0, Android 1.0.2, iOS 1.0, sw v37, Sentry 'v10.27.0' en dur).
+  // Celui-ci fait autorite pour le web et pour Sentry. Aligne sur versionName
+  // Android. A bumper a chaque livraison, dans le meme commit.
+  APP_VERSION: '1.0.2',
+
   // ---- Supabase ------------------------------------------------------
   SUPABASE_URL: 'https://pudugodhiofqrctcdwfl.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4',
+  // [ROTATION 2026-09-10] Clé publiable (sb_publishable_…), publique par conception ; l'ancienne clé anon
+  // (JWT HS256) est révoquée. Le nom de la propriété est conservé : js/, scripts/ et v2 la lisent ainsi.
+  SUPABASE_ANON_KEY: 'sb_publishable_BtOCWQiqEik8gvzcVdIiQw_NKe4Ig9d',
 
   // ---- Cloudflare Turnstile (captcha) --------------------------------
   // Site key PUBLIQUE (OK dans le code client). La Secret Key reste cote

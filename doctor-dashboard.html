@@ -13,7 +13,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_dashboard">
 <title>Espace médecin | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -177,7 +177,7 @@
 <div class="dropdown-menu hidden" id="user-drop" style="position:absolute;top:54px;right:8px;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:var(--s3);width:240px;z-index:300;overflow:hidden">
   <div style="padding:14px;background:linear-gradient(135deg,#f0fdf4,#a7f3d0)"><div style="font-weight:700;font-size:13px" id="menu-name">--</div><div style="font-size:11px;color:var(--text3)" id="menu-spec">--</div></div>
   <a href="medecin-profile.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-user" style="color:var(--green);width:20px"></i> <span data-i18n="dd_menu_profile">Mon profil</span></a>
-  <a href="doctor-reservation.html" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-calendar-week" style="color:var(--blue);width:20px"></i> <span data-i18n="dd_menu_availability">Mes disponibilités</span></a>
+  <a href="#" onclick="event.preventDefault();openScheduleConfig();" style="display:flex;align-items:center;gap:10px;padding:12px;text-decoration:none;color:var(--text);font-size:13px"><i class="fa fa-calendar-week" style="color:var(--blue);width:20px"></i> <span data-i18n="dd_menu_availability">Mes disponibilités</span></a>
   <!-- [FIX-AUDIT-2026-05] #2 : guillemets internes simples pour ne pas casser l'attribut onclick -->
   <button onclick="alert(tabibiT('alert_support_24h','Support : contact@tabibi.doctor — réponse sous 24h'))" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--text)"><i class="fa fa-circle-question" style="color:var(--text3);width:20px"></i> <span data-i18n="dd_menu_help">Aide</span></button>
   <button onclick="logout()" style="display:flex;align-items:center;gap:10px;padding:12px;width:100%;text-align:left;border:none;background:none;cursor:pointer;font-size:13px;color:var(--red);border-top:1px solid var(--border)"><i class="fa fa-right-from-bracket" style="width:20px"></i> <span data-i18n="dd_logout">Se déconnecter</span></button>
@@ -203,7 +203,7 @@
       <div style="font-size:22px;font-weight:800;margin-top:4px" id="med-name">--</div>
       <div style="font-size:12px;opacity:.85" id="med-spec-info">--</div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-        <a href="doctor-reservation.html" class="btn btn-white btn-sm"><i class="fa fa-plus" aria-hidden="true"></i> <span data-i18n="dd_add_slots">Ajouter créneaux</span></a>
+        <button type="button" onclick="openScheduleConfig()" class="btn btn-white btn-sm"><i class="fa fa-clock" aria-hidden="true"></i> <span data-i18n="dd_my_hours">Mes horaires</span></button>
         <a href="medecin-ordonnance.html" class="btn btn-white btn-sm" data-i18n-title="new_prescription" title="Nouvelle ordonnance"><i class="fa fa-file-prescription" aria-hidden="true"></i> <span data-i18n="new_prescription_short">Ordonnance</span></a>
         <a href="teleconsultation.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-video" aria-hidden="true"></i> <span data-i18n="teleconsult_short">Téléconsult.</span></a>
         <a href="admin-cabinet.html" class="btn btn-sm" style="background:rgba(255,255,255,.2);color:#fff;border:1.5px solid rgba(255,255,255,.4)"><i class="fa fa-building" aria-hidden="true"></i> <span data-i18n="my_cabinet">Mon cabinet</span></a>
@@ -237,29 +237,15 @@
     <div id="day-rdv-list"></div>
 
     <!-- Modal configuration horaires -->
-    <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
-      <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
-        <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
-          <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> <span data-i18n="dd_config_schedule">Configurer mes horaires</span></div>
-          <button onclick="closeScheduleConfig()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
-        </div>
-        <div style="padding:18px;font-size:13px;color:var(--text3);line-height:1.5">
-          <span data-i18n="dd_schedule_intro">Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.</span>
-        </div>
-        <div id="schedule-days-config" style="padding:0 18px"></div>
-        <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
-          <div style="display:flex;gap:8px">
-            <button onclick="closeScheduleConfig()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
-            <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> <span data-i18n="dd_save_schedule">Enregistrer mes horaires</span></button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═════ [Phase 4.B.3] BLOCAGES EXCEPTIONNELS ═════ -->
-    <!-- Section sous l'onglet Agenda, en surcouche du working_hours hebdo.
-         CRUD direct sur doctor_unavailable_slots (4 RLS Phase 4.A scopent
-         par doctor_profiles.user_id = auth.uid()). -->
+  <!-- ═════ [Phase 4.B.3] BLOCAGES EXCEPTIONNELS ═════ -->
+  <!-- DANS l'onglet Agenda, et il doit y rester : c'est du contenu dans le flux,
+       pas une surcouche. Seule #schedule-modal (position:fixed) a sa place en fin
+       de document. Régression du 12/09/2026 : #69 a sorti ce bloc de #tab-agenda en
+       même temps que la modale ; il s'est retrouvé après la fermeture de .app-root,
+       donc rendu sous une hauteur d'écran entière, hors de la colonne de l'app, et le
+       bandeau « Réclamez votre fiche » est devenu invisible. Ne pas refaire.
+       En surcouche du working_hours hebdo. CRUD direct sur doctor_unavailable_slots
+       (4 RLS Phase 4.A scopent par doctor_profiles.user_id = auth.uid()). -->
     <div style="margin-top:24px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
         <div style="font-size:14px;font-weight:700"><i class="fa fa-ban" style="color:#f59e0b"></i> <span data-i18n="dd_blockages">Blocages exceptionnels</span></div>
@@ -341,7 +327,7 @@
   <div id="tab-patients" class="tab-panel" style="padding:14px 16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
       <div style="font-size:15px;font-weight:700" data-i18n="my_patients">Mes patients</div>
-      <input id="patient-search" oninput="renderPatients()" placeholder="Rechercher..." data-i18n-placeholder="ph_search_short" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;width:140px">
+      <input id="patient-search" oninput="renderPatients()" placeholder="Rechercher..." data-i18n-placeholder="ph_search_short" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;width:140px" aria-label="Rechercher...">
     </div>
     <div id="patients-list"></div>
   </div>
@@ -375,7 +361,7 @@
       <div style="margin-top:20px;display:flex;flex-direction:column;gap:8px">
         <a href="medecin-profile.html" class="btn btn-success btn-full btn-lg"><i class="fa fa-pen"></i> <span data-i18n="dd_edit_profile">Modifier mon profil</span></a>
         <a href="medecin-profile.html#sec-pricing" class="btn btn-soft btn-full"><i class="fa fa-coins"></i> <span data-i18n="dd_pricing">Tarifs & types consultation</span></a>
-        <a href="doctor-reservation.html" class="btn btn-soft btn-full"><i class="fa fa-calendar-week"></i> <span data-i18n="dd_menu_availability">Mes disponibilités</span></a>
+        <button type="button" onclick="openScheduleConfig()" class="btn btn-soft btn-full"><i class="fa fa-clock"></i> <span data-i18n="dd_my_hours">Mes horaires</span></button>
         <a href="medecin-profile.html#sec-notif" class="btn btn-soft btn-full"><i class="fa fa-bell"></i> <span data-i18n="dd_notifications">Notifications</span></a>
         <a href="medecin-profile.html#sec-sec" class="btn btn-soft btn-full"><i class="fa fa-lock"></i> <span data-i18n="dd_security">Sécurité</span></a>
         <button class="btn btn-danger btn-full" onclick="logout()" style="margin-top:8px"><i class="fa fa-right-from-bracket"></i> <span data-i18n="dd_logout">Se déconnecter</span></button>
@@ -472,11 +458,19 @@ function getDefaultSchedule(){
   };
 }
 
+// [FAUX-SUCCES 2026-09-10] Les horaires vivent en base (doctor_profiles.working_hours, lus par
+// get_available_slots). Plus de copie localStorage : elle affichait « Horaires enregistrés »
+// sans rien écrire. window._docSchedule est alimenté par loadDoctorScheduleFromDb().
 function getDoctorSchedule(){
+  return window._docSchedule || getDefaultSchedule();
+}
+async function loadDoctorScheduleFromDb(){
+  try { localStorage.removeItem('tabibi_doctor_schedule'); localStorage.removeItem('tabibi_doc_slots'); } catch(e) {}
   try {
-    const s = JSON.parse(localStorage.getItem('tabibi_doctor_schedule') || 'null');
-    return s || getDefaultSchedule();
-  } catch(e) { return getDefaultSchedule(); }
+    if (!window.tabibiDoctor) return;
+    var p = await window.tabibiDoctor.getMyProfile();
+    if (p && p.id) { window._docSchedule = window.tabibiDoctor.parseScheduleDays(p.working_hours); try { renderAgenda(); } catch(e) {} }
+  } catch(e) { (window.tabibiErreur || console.warn)(e, 'doctor-dashboard.html:loadDoctorScheduleFromDb'); }
 }
 
 function openScheduleConfig(){
@@ -496,15 +490,15 @@ function openScheduleConfig(){
         <div id="sched-${d.key}-times" style="${s.on?'':'display:none'}">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12px">
             <span style="min-width:60px;color:var(--text3)">${tabibiT('dd_morning','Matin :')}</span>
-            <input type="time" value="${s.start1||''}" onchange="updateScheduleTime('${d.key}','start1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Début du matin" value="${s.start1||''}" onchange="updateScheduleTime('${d.key}','start1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span>—</span>
-            <input type="time" value="${s.end1||''}" onchange="updateScheduleTime('${d.key}','end1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Fin du matin" value="${s.end1||''}" onchange="updateScheduleTime('${d.key}','end1',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
           </div>
           <div style="display:flex;align-items:center;gap:6px;font-size:12px">
             <span style="min-width:60px;color:var(--text3)">${tabibiT('dd_afternoon','A-midi :')}</span>
-            <input type="time" value="${s.start2||''}" onchange="updateScheduleTime('${d.key}','start2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Début de l’après-midi" value="${s.start2||''}" onchange="updateScheduleTime('${d.key}','start2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span>—</span>
-            <input type="time" value="${s.end2||''}" onchange="updateScheduleTime('${d.key}','end2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
+            <input type="time" aria-label="Fin de l’après-midi" value="${s.end2||''}" onchange="updateScheduleTime('${d.key}','end2',this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:12px">
             <span style="font-size:10px;color:var(--text3);margin-left:auto">${tabibiT('dd_optional','(optionnel)')}</span>
           </div>
         </div>
@@ -544,19 +538,34 @@ function updateScheduleTime(dayKey, field, value){
   window._tempSchedule[dayKey][field] = value;
 }
 
-function saveScheduleConfig(){
+async function saveScheduleConfig(){
   if (!window._tempSchedule) return closeScheduleConfig();
-  localStorage.setItem('tabibi_doctor_schedule', JSON.stringify(window._tempSchedule));
-  closeScheduleConfig();
-  toastM(tabibiT('toast_schedule_saved','Horaires enregistrés'), 'success');
-  try { renderAgenda(); } catch(e) {}
+  // [FAUX-SUCCES 2026-09-10] Écriture réelle via update_my_doctor_profile(p_working_hours).
+  // Le toast de succès n'apparaît que si la base a répondu. Sans fiche liée, la RPC lève
+  // profile_not_found_or_not_claimed : on le dit, avec le lien vers la revendication.
+  var msg = document.getElementById('schedule-modal-msg');
+  if (!window.tabibiDoctor) { toastM(tabibiT('dd_schedule_save_error','Enregistrement impossible pour le moment.'), 'error'); return; }
+  var r = await window.tabibiDoctor.updateMyProfile({ p_working_hours: window.tabibiDoctor.serializeScheduleDays(window._tempSchedule) });
+  if (r && r.ok) {
+    window._docSchedule = JSON.parse(JSON.stringify(window._tempSchedule));
+    closeScheduleConfig();
+    toastM(tabibiT('toast_schedule_saved','Horaires enregistrés'), 'success');
+    try { renderAgenda(); } catch(e) {}
+    return;
+  }
+  var notClaimed = r && r.error === 'profile_not_found_or_not_claimed';
+  var texte = notClaimed
+    ? tabibiT('dd_claim_intro', "Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités.") + ' <a href="doctor-claim.html" style="font-weight:700;color:#92400e;text-decoration:underline">' + tabibiT('foot_claim_fiche','Réclamer ma fiche') + '</a>'
+    : tabibiT('dd_schedule_save_error','Enregistrement impossible pour le moment.') + (r && r.error ? ' (' + String(r.error) + ')' : '');
+  if (msg) { msg.innerHTML = texte; msg.style.display = 'block'; }
+  toastM(notClaimed ? tabibiT('mp_toast_claim_first',"Vous devez d'abord réclamer votre fiche dans l'annuaire avant de pouvoir l'éditer.") : tabibiT('dd_schedule_save_error','Enregistrement impossible pour le moment.'), 'error');
 }
 
 // Charge les RDV du médecin connecté depuis Supabase
 async function fetchDoctorRdvsFromSupabase(){
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
 
     let token = SB_KEY;
     let userId = null;
@@ -569,8 +578,21 @@ async function fetchDoctorRdvsFromSupabase(){
     }
     if (!userId) return null;
 
+    // [ID-ESPACE 2026-09-12] appointments.doctor_id porte doctor_profiles.id, PAS
+    // l'identifiant de compte. Cette fonction interrogeait avec userId : elle ne
+    // trouvait donc jamais rien, et comme refreshDoctorRdvs() l'utilise pour
+    // « Aujourd'hui », l'agenda ET « Mes RDV », les trois vues du médecin étaient
+    // aveugles. Mesuré le 12/09 sur un vrai RDV : 0 ligne par identifiant de
+    // compte, 1 par identifiant de fiche. On résout la fiche comme le font déjà
+    // les deux autres appels de ce fichier (badge de validation, blocages).
+    let docId = null;
+    if (window.tabibiDoctor && typeof window.tabibiDoctor.getMyDoctorId === 'function') {
+      docId = await window.tabibiDoctor.getMyDoctorId();
+    }
+    if (!docId) return null;   // médecin sans fiche liée : aucun RDV ne peut lui être rattaché
+
     // RDV où ce médecin est le destinataire
-    const url = SB_URL + '/rest/v1/appointments?select=*&doctor_id=eq.' + encodeURIComponent(userId) + '&order=scheduled_at.asc';
+    const url = SB_URL + '/rest/v1/appointments?select=*&doctor_id=eq.' + encodeURIComponent(docId) + '&order=scheduled_at.asc';
     const res = await fetch(url, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token } });
     if (!res.ok) {
       console.warn('[Tabibi/doctor] fetchDoctorRdvs HTTP', res.status);
@@ -774,7 +796,7 @@ async function updateRdvStatusInSupabase(sbId, status){
   if (!sbId) return false;
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
     let token = SB_KEY;
     if (window.tabibi && window.tabibi.supabase) {
       const { data: { session } } = await window.tabibi.supabase.auth.getSession();
@@ -1070,7 +1092,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     // Charger les vrais RDV depuis Supabase et re-render
     refreshDoctorRdvs();
     // [Phase 4.B.3] Charger les blocages exceptionnels (no-op si pas auth/pas claim)
-    setTimeout(loadUnavailSlots, 600);
+    setTimeout(loadUnavailSlots, 600); loadDoctorScheduleFromDb();
 });
 
 // ════════════════════════════════════════════════════════════════════
@@ -1386,7 +1408,7 @@ async function deleteUnavail(id) {
   }
 }
 </script>
-</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div><script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
@@ -1424,4 +1446,25 @@ async function deleteUnavail(id) {
   });
 })();
 </script>
+  <!-- Modale « Mes horaires » : sous body, hors des panneaux d'onglet (depuis l'onglet « Aujourd'hui », un parent display:none la rendait invisible — mesuré le 12/09/2026) -->
+  <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
+    <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
+      <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
+        <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> <span data-i18n="dd_config_schedule">Configurer mes horaires</span></div>
+        <button onclick="closeScheduleConfig()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
+      </div>
+      <div style="padding:18px;font-size:13px;color:var(--text3);line-height:1.5">
+        <span data-i18n="dd_schedule_intro">Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.</span>
+      </div>
+    <div id="schedule-modal-msg" style="display:none;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12.5px;margin:10px 0"></div>
+      <div id="schedule-days-config" style="padding:0 18px"></div>
+      <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
+        <div style="display:flex;gap:8px">
+          <button onclick="closeScheduleConfig()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
+          <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> <span data-i18n="dd_save_schedule">Enregistrer mes horaires</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body></html>

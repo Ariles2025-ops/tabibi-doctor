@@ -13,7 +13,7 @@
 <link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="dw_ph_title">
 <title>Dawini — Espace pharmacie | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -160,7 +160,7 @@
 <script src="js/tabibi-nav.js"></script>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
@@ -237,8 +237,8 @@ function _reqCard(req){
     html += '<div class="dwp-form">' +
       '<label class="dwp-check"><input type="checkbox" id="dispo-' + _esc(req.id) + '" checked> <span data-i18n="dw_ph_dispo">Médicament disponible</span></label>' +
       '<label class="dwp-check"><input type="checkbox" id="gen-' + _esc(req.id) + '"> <span data-i18n="dw_ph_generic_chk">J\'ai le générique</span></label>' +
-      '<input class="form-control" id="meds-' + _esc(req.id) + '" maxlength="200" style="margin-bottom:8px" placeholder="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '">' +
-      '<input class="form-control" id="com-' + _esc(req.id) + '" maxlength="300" placeholder="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '">' +
+      '<input class="form-control" id="meds-' + _esc(req.id) + '" maxlength="200" style="margin-bottom:8px" placeholder="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '" aria-label="' + _esc(_t('dw_ph_meds_ph','Préciser les médicaments disponibles (optionnel)')) + '">' +
+      '<input class="form-control" id="com-' + _esc(req.id) + '" maxlength="300" placeholder="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '" aria-label="' + _esc(_t('dw_ph_comment_ph','Commentaire — ex : disponible demain matin (optionnel)')) + '">' +
       '<div class="dwp-actions">' +
         '<button class="btn btn-primary" onclick="answer(\'' + _esc(req.id) + '\', true)"><i class="fa fa-check"></i> ' + _esc(_t('dw_ph_accept','Accepter')) + '</button>' +
         '<button class="btn btn-ghost" style="border:1.5px solid var(--red);color:var(--red)" onclick="answer(\'' + _esc(req.id) + '\', false)"><i class="fa fa-xmark"></i> ' + _esc(_t('dw_ph_refuse','Refuser')) + '</button>' +

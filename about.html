@@ -14,7 +14,7 @@
 <meta property="og:description" content="La 1ère plateforme médicale algérienne. Mission, équipe, valeurs.">
 <meta property="og:image" content="https://tabibi.doctor/assets/og-image.jpg">
 <meta property="og:locale" content="fr_DZ">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
@@ -173,11 +173,7 @@ p{margin:8px 0;color:#475569}
   </div>
 
 </main>
-<script src="js/tabibi-cookies.js"></script>
-<script src="js/tabibi-beta.js"></script>
-<script src="js/tabibi-lang.js"></script>
-<script src="js/tabibi-i18n.js"></script>
 <!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
-<script src="js/tabibi-langbar.js"></script>
+<script type="module" src="./src/entries/about.js"></script>
 </body>
 </html>

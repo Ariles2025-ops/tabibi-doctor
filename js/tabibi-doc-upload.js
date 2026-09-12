@@ -205,7 +205,7 @@
       });
       if (up2.error) {
         console.warn('[doc-upload] upload identité fail, rollback ordre:', up2.error.message);
-        try { await sb.storage.from(BUCKET).remove([ordrePath]); } catch (e) {}
+        try { await sb.storage.from(BUCKET).remove([ordrePath]); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-doc-upload.js:208'); }
         return { ok: false, error: 'upload_identite_failed', detail: up2.error.message };
       }
 
@@ -217,7 +217,7 @@
       }).eq('id', profileId);
       if (upd.error) {
         console.warn('[doc-upload] UPDATE paths fail, rollback uploads:', upd.error.message);
-        try { await sb.storage.from(BUCKET).remove([ordrePath, identitePath]); } catch (e) {}
+        try { await sb.storage.from(BUCKET).remove([ordrePath, identitePath]); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-doc-upload.js:220'); }
         return { ok: false, error: 'update_paths_failed', detail: upd.error.message };
       }
 

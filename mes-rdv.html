@@ -10,7 +10,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_my_appointments">
 <title>Mes rendez-vous | Tabibi</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -632,8 +632,15 @@ function init(){
   if(typeof hideLoading === 'function') hideLoading();
   loadAppointments();
 }
+// [R1 2026-09-10] Garde centralisée : la page s'affichait sans session (onglets vides).
+// requireAuth('patient') valide la session AVANT le cache et redirige vers login sinon.
+async function initAvecGarde(){
+  var authed = window.tabibi && window.tabibi.auth ? await window.tabibi.auth.requireAuth('patient') : null;
+  if(!authed) return;
+  init();
+}
 
-document.addEventListener("DOMContentLoaded", init);
+document.addEventListener("DOMContentLoaded", initAvecGarde);
 
 // [CONFORMITE 2026] re-render des listes (statuts, dates, vides) au changement
 // de langue — le statique est géré par l'engine. Pas pendant le chargement.
@@ -646,7 +653,7 @@ window.goBackSafe = goBackSafe;
 window.loadAppointments = loadAppointments;
 </script>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

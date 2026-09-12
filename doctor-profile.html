@@ -32,7 +32,7 @@
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_profile_long">
 <title>Profil médecin | Tabibi — RDV en ligne en Algérie</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/components.css">
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
@@ -281,18 +281,18 @@ async function _fetchDoctorFromSupabase(id){
   try {
     var sb = window.tabibi && window.tabibi.supabase;
     if (!sb) return null;
-    // Tente d'abord par UUID
+    // [C1 2026-09-09] RPC praticien(p_id | p_legacy_id) — la vue n'est plus lisible.
     if (isUuid(id)) {
-      var r1 = await sb.from('public_doctors').select('*').eq('id', id).maybeSingle();
+      var r1 = await sb.rpc('praticien', { p_id: id }).maybeSingle();
       if (r1 && r1.data) return r1.data;
-    } else {
-      // ID numerique CSV : tente colonne legacy_id si elle existe
-      var r2 = await sb.from('public_doctors').select('*').eq('legacy_id', parseInt(id, 10)).maybeSingle();
-      if (r2 && r2.data) return r2.data;
-      // Fallback : peut-etre que l'ID est en fait un slug
-      var r3 = await sb.from('public_doctors').select('*').eq('id', id).maybeSingle();
-      if (r3 && r3.data) return r3.data;
+      return null;
     }
+    var n = parseInt(id, 10);
+    if (n > 0 && String(n) === String(id).trim()) {
+      var r2 = await sb.rpc('praticien', { p_legacy_id: n }).maybeSingle();
+      if (r2 && r2.data) return r2.data;
+    }
+    // Ni UUID ni legacy_id numérique : aucune recherche libre possible.
     return null;
   } catch (e) {
     console.warn('[doctor-profile] fetchDoctor', e);
@@ -648,7 +648,7 @@ document.addEventListener('tabibi:lang-change', function(){
   } catch(e){}
 });
 </script>
-</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</div><script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
 <script src="js/config.js"></script>
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>

@@ -265,13 +265,13 @@
 
     <form id="create-form" onsubmit="submitCreate(event)">
       <label>Nom du partenaire</label>
-      <input type="text" name="partner_name" required placeholder="ex : Pharmacie Centrale Hydra" />
+      <input type="text" name="partner_name" required placeholder="ex : Pharmacie Centrale Hydra" aria-label="ex : Pharmacie Centrale Hydra" />
 
       <label>Email de contact</label>
-      <input type="email" name="partner_email" required />
+      <input type="email" name="partner_email" required aria-label="E-mail du partenaire" />
 
       <label>Téléphone (optionnel)</label>
-      <input type="tel" name="partner_contact_phone" />
+      <input type="tel" name="partner_contact_phone" aria-label="Téléphone du contact" />
 
       <label>Environnement</label>
       <select name="environment">
@@ -291,16 +291,16 @@
       </div>
 
       <label>Rate limit / minute</label>
-      <input type="number" name="rate_limit_per_minute" value="60" min="1" max="10000" />
+      <input type="number" name="rate_limit_per_minute" value="60" min="1" max="10000" aria-label="Limite par minute" />
 
       <label>Rate limit / jour</label>
-      <input type="number" name="rate_limit_per_day" value="10000" min="1" max="10000000" />
+      <input type="number" name="rate_limit_per_day" value="10000" min="1" max="10000000" aria-label="Limite par jour" />
 
       <label>IPs autorisées (CIDR, une par ligne — vide = pas de filtre)</label>
       <textarea name="ip_whitelist" placeholder="203.0.113.0/24"></textarea>
 
       <label>Expire le (optionnel)</label>
-      <input type="date" name="expires_at" />
+      <input type="date" name="expires_at" aria-label="Date d’expiration" />
 
       <div class="actions">
         <button type="button" class="btn btn-secondary" onclick="closeCreateModal(false)">Annuler</button>
@@ -312,13 +312,20 @@
 
 
 <!-- Supabase JS -->
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script src="js/tabibi-security.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
 <script type="module">
-  import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
-
-  // These should come from your existing env-config script
-  const SUPABASE_URL  = window.__SUPABASE_URL__  || "REPLACE_AT_BUILD_TIME";
-  const SUPABASE_ANON = window.__SUPABASE_ANON__ || "REPLACE_AT_BUILD_TIME";
-  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+  // [FIX 2026-09-09] Cette page n'a jamais fonctionne en production :
+  //   1. elle importait le SDK depuis esm.sh, hote ABSENT de la liste
+  //      script-src de _headers -> le module etait bloque par la CSP ;
+  //   2. elle lisait window.__SUPABASE_URL__ / __SUPABASE_ANON__, deux
+  //      variables qu'aucun fichier du depot ne definit et qu'aucune etape
+  //      de build ne remplace -> createClient() aurait recu la chaine
+  //      "REPLACE_AT_BUILD_TIME" meme si le module s'etait charge.
+  // Elle utilise desormais le client partage, comme les 37 autres pages.
+  const supabase = window.tabibi.supabase;
 
   // Expose to inline handlers
   window.__supabase = supabase;
@@ -344,7 +351,7 @@
       .order("partner_name", { ascending: true });
 
     const wrap = document.getElementById("keys-table-wrap");
-    if (error) { wrap.innerHTML = `<div class="empty">Erreur : ${error.message}</div>`; return; }
+    if (error) { wrap.innerHTML = `<div class="empty">Erreur : ${(window.esc||String)(error.message)}</div>`; return; }
     if (!data || data.length === 0) {
       wrap.innerHTML = `<div class="empty">Aucune clé. Cliquez sur "+ Nouvelle clé" pour en créer.</div>`;
       return;

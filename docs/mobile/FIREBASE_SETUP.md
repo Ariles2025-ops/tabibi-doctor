@@ -5,7 +5,7 @@
 `android/app/google-services.json` contient l'`api_key` du projet Firebase
 (clé serveur FCM) et le `project_id` Tabibi Doctor.
 
-Le dépôt étant **public**, committer ce fichier exposerait la clé à tous.
+Le dépôt est **privé** (vérifié le 09/09/2026) mais un dépôt privé se clone et se partage : committer ce fichier reste interdit.
 Il doit être placé **manuellement** sur chaque machine de build ou injecté
 via un secret CI (GitHub Actions / Bitrise).
 

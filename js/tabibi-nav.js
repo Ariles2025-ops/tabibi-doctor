@@ -39,7 +39,7 @@
     try {
       var s = localStorage.getItem('tabibi_lang');
       if (s === 'fr' || s === 'ar' || s === 'en') return s;
-    } catch (e) {}
+    } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-nav.js:42'); }
     return (document.documentElement.lang || 'fr').slice(0, 2);
   }
 
