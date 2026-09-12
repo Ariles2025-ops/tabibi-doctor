@@ -136,6 +136,50 @@ Correctif proposé (à porter sur une branche dédiée, non appliqué) : à l'ou
 (recherche annuaire par nom / n° d'ordre → `doctor-claim.html`), et masquer les outils de travail tant qu'aucune fiche n'est
 liée — plutôt qu'une bannière posée par-dessus un agenda vide.
 
+## 7 ter. Spécification de l'écran de revendication (à construire quand la vague de fusion sera passée)
+
+Décision du 12/09 : le correctif n'est **pas** ouvert maintenant (gel de fusion, 21 PR en attente, production à 29 commits
+de retard : il serait invisible). Cette spec est écrite pour être le premier chantier une fois la fusion faite.
+
+### Le signal
+
+À l'ouverture du tableau de bord médecin, l'application appelle déjà `get_my_doctor_profile()` (RPC `SECURITY DEFINER`,
+`SELECT * FROM doctor_profiles WHERE user_id = auth.uid() LIMIT 1`) via `window.tabibiDoctor.getMyProfile()`, dans
+`loadDoctorScheduleFromDb()` (`doctor-dashboard.html`). **`null` = aucune fiche liée.** Aucune requête nouvelle n'est
+nécessaire : il suffit de brancher l'interface sur ce résultat, tôt dans l'init, avant de rendre les outils de travail.
+Mesuré le 12/09 sur le compte B : `get_my_doctor_profile()` → `null`, `select doctor_profiles` sous sa session → 0 ligne.
+
+### Ce que l'écran affiche quand le signal est `null`
+
+Le contenu de l'onglet « Aujourd'hui » est **remplacé** (pas surmonté d'une bannière) par un écran de revendication :
+
+1. Titre honnête : « Votre compte n'est lié à aucune fiche médecin » + une phrase expliquant qu'il faut revendiquer sa fiche
+   dans l'annuaire pour recevoir des rendez-vous.
+2. Un champ de recherche annuaire (nom, ou numéro d'ordre) qui interroge la vue publique `public_doctors`.
+3. La liste des résultats ; chaque fiche non revendiquée porte un bouton « C'est moi, revendiquer » menant au parcours
+   existant `doctor-claim.html`, qui appelle `claim_my_doctor_profile()` (déjà en place et prouvée, PR #64).
+4. Après revendication réussie, rechargement du tableau de bord : `get_my_doctor_profile()` renvoie désormais la fiche,
+   l'écran de travail normal s'affiche.
+
+### Ce qui est masqué tant que le signal est `null`
+
+Les outils qui présupposent une fiche : boutons « Mes horaires », « Ordonnance », « Téléconsult. », « Mon cabinet » du
+bandeau ; onglets Agenda, Agenda cabinet, Mes RDV, Patients, Stats. Ils réapparaissent dès qu'une fiche est liée. Rien ne doit
+laisser croire à un espace de travail fonctionnel avant le rattachement.
+
+### Le repli quand aucune fiche ne correspond
+
+Si la recherche ne renvoie aucune fiche au nom du médecin (cas d'un praticien absent de l'annuaire importé) : un message
+« Nous n'avons pas trouvé de fiche à votre nom » + un canal humain (formulaire ou `mailto` vers l'équipe) pour demander la
+création d'une fiche, avec les pièces justificatives (numéro d'ordre). Pas de création de fiche en libre-service côté médecin
+tant que la vérification d'identité n'est pas cadrée (cf. note avocat, points 4.6 et 4.7).
+
+### Charge et branche
+
+Un garde à l'init sur `get_my_doctor_profile() === null` qui échange le contenu du panneau et masque les outils, en réutilisant
+`doctor-claim.html` et `claim_my_doctor_profile()`. Environ une demi-journée, preuve navigateur comprise. Branche dédiée
+partant de #56 : `fix/medecin-tunnel-revendication`. À ouvrir après la fusion, en premier.
+
 ## 8. Le tableau de bord d'un médecin sans fiche liée — mesuré en production le 10/09/2026
 
 Compte réel connecté sur `tabibi.doctor/doctor-dashboard` (rôle `medecin`, inscrit par téléphone le
