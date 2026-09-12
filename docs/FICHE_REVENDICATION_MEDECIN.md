@@ -151,8 +151,9 @@ retirer le toast qui invite à créer.
 
 ## 9. Récupération de mot de passe : qui peut encore entrer au congrès
 
-> **Mesuré le 12/09 : personne.** Le parcours « mot de passe oublié » refuse les numéros et les comptes n'ont pas d'e-mail :
-> aucun utilisateur ne peut réinitialiser son mot de passe. Bloquant produit avant le congrès (détail en §9.1, correctif 1 ter).
+> **Mesuré le 12/09 : personne parmi les inscrits par le formulaire.** Le parcours « mot de passe oublié » refuse les numéros
+> et `signup.html` ne crée que des comptes sans e-mail : aucun utilisateur inscrit ainsi ne peut réinitialiser son mot de passe.
+> Bloquant produit avant le congrès (détail en §9.1, correctif 1 ter).
 
 Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
 
@@ -199,8 +200,10 @@ Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
   (réponse anti-énumération de GoTrue) : passer par l'API (brique 1) ou retirer la page du parcours
   médecin.
   **Mesuré le 12/09 — c'est un bloquant produit, pas un détail d'e-mail.** Le champ refuse les numéros de téléphone
-  (« Email invalide », aucune requête ne part) et les comptes n'ont pas d'e-mail (27 médecins sur 28, tous les comptes créés
-  par `signup.html`). Conséquence : **aucun utilisateur ne peut réinitialiser son mot de passe** par le parcours prévu. Un
+  (« Email invalide », aucune requête ne part) et `signup.html` ne crée que des comptes téléphone, sans e-mail : aujourd'hui
+  1 médecin sur 28 et 2 patients sur 11 (tableau ci-dessus), mais **chaque compte créé par l'inscription actuelle, donc tous
+  ceux du congrès, sera dans ce cas**. Conséquence : **aucun utilisateur inscrit par le formulaire ne peut réinitialiser son
+  mot de passe** par le parcours prévu ; les 26 médecins à e-mail sont des comptes anciens, créés hors de ce formulaire. Un
   e-mail inexistant donne HTTP 400 `captcha_failed` (navigateur intégré) ou HTTP 200 `{}` (Chrome), et dans les deux cas le
   bandeau « vous recevrez un lien » — ce bandeau sur un 400 est le quatrième faux succès (VERIF_NAVIGATEUR.md).
   Preuve : `docs/preuves/2026-09-12_forgot-password_mesure.md`.

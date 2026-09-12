@@ -7,7 +7,7 @@ sur la requête `POST /auth/v1/recover` (capture `fetch` posée dans la page, je
 
 - Saisie : `+213555000199` (numéro de test, inexistant).
 - Résultat : le contrôle local `forgot-password.html:97` (`/^[^\s@]+@[^\s@]+\.[^\s@]+$/`) refuse → bandeau rouge **« Email invalide. »**
-- Code HTTP : **aucun** — aucune requête ne part. Un médecin inscrit par téléphone (27/28 le sont) n'a rien à saisir ici.
+- Code HTTP : **aucun** — aucune requête ne part. Un compte créé par `signup.html` (téléphone seul, sans e-mail : 1 médecin sur 28 et 2 patients sur 11 aujourd'hui, tous les nouveaux inscrits demain) n'a rien à saisir ici.
 
 ## 2. Un e-mail inexistant, depuis le navigateur intégré (production https://tabibi.doctor/forgot-password)
 
