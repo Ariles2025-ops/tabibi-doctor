@@ -667,7 +667,15 @@ function _tbBuildMapBar(){
   document.getElementById('map-f-w').onchange=_tbMapFilter;
   document.getElementById('map-f-s').onchange=_tbMapFilter;
 }
-function _tbHdrs(extra){ return Object.assign({apikey:_SB_KEY,Authorization:'Bearer '+_SB_KEY},extra||{}); }
+// [ORDRE-IMPORTS 2026-09-12] La clé est lue À CHAQUE APPEL, jamais capturée à
+// l'évaluation du module. Le point d'entrée importait home-app.js AVANT
+// config.js : window.TABIBI_CONFIG n'existait pas encore, _SB_KEY valait la
+// chaîne vide pour toute la durée de vie de la page, et chaque requête partait
+// avec « apikey: » vide. Supabase répondait 401 « No API key found in request »,
+// silencieusement : la recherche publique ne rendait rien et aucune erreur ne
+// s'affichait. Lire au moment de l'appel rend l'ordre des imports sans effet.
+function _tbCle(){ return (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || ''; }
+function _tbHdrs(extra){ var k = _tbCle(); return Object.assign({apikey:k,Authorization:'Bearer '+k},extra||{}); }
 // [C1 2026-09-09] La vue public_doctors n'est plus lisible par le front.
 // Tout passe par des RPC PostgREST (POST /rest/v1/rpc/<nom>) :
 //   chercher_praticiens (≤50/page, wilaya OU spécialité obligatoire),
