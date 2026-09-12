@@ -15,6 +15,8 @@
 -- « au moins 30 minutes dans le futur ». Cette garde ferme le trou côté
 -- base, quel que soit le front (web, mobile, secrétariat, API).
 --
+-- [v2 12/09] La garde ne s'applique qu'à l'auto-réservation patient (auth.uid() = patient_id).
+-- Médecin/secrétaire/admin qui cale un RDV sur un tiers n'est pas bloqué (urgence à 13h15 possible).
 -- Idempotent (CREATE OR REPLACE + DROP TRIGGER IF EXISTS).
 -- À EXÉCUTER PAR AGHILES. Rien n'est appliqué par l'agent.
 -- =====================================================================
@@ -82,6 +84,17 @@ begin
   if new.starts_at is null or new.ends_at is null or new.doctor_id is null then
     raise exception 'appointment_time_missing: horaire ou médecin manquant'
       using errcode = '23514';
+  end if;
+
+  -- [v2] La garde ne s'applique qu'à l'AUTO-RÉSERVATION par le patient (le chemin non
+  -- fiable, celui du bug du dimanche). Quand quelqu'un d'autre pose le RDV — médecin ou
+  -- secrétaire qui cale une urgence dans son propre agenda, admin, tâche backend en
+  -- service_role — auth.uid() n'est pas le patient : on laisse passer, il prend la
+  -- responsabilité du créneau. La policy d'INSERT « Patients create own appointments »
+  -- impose déjà auth.uid() = patient_id au patient, donc il ne peut pas contourner en
+  -- se faisant passer pour un tiers.
+  if auth.uid() is distinct from new.patient_id then
+    return new;
   end if;
 
   if not public.appointment_slot_is_available(new.doctor_id, new.starts_at, new.ends_at) then
