@@ -42,8 +42,10 @@ point de la revue de #69 est levé pour la lecture (il reste ouvert pour `medeci
 - Base : `updated_at = 2026-09-12 12:45:45+00`, `working_hours->'sat' = [{"open":"09:00","close":"13:00"}]` ; lundi, mercredi,
   vendredi inchangés.
 - Réouverture de la modale : samedi affiche 09:00–13:00 (relu depuis la base).
-- Retour à 12:00 par le même chemin : toast « Horaires enregistrés » (capture `2026-09-12_mes-horaires_A_02_apres-enregistrement.png`),
+- Retour à 12:00 par le même chemin : toast « Horaires enregistrés » (lu dans le DOM, disparu avant la capture système),
   base `updated_at = 12:47:02+00`, `sat = [{"open":"09:00","close":"12:00"}]`. Fiche remise dans son état initial.
+  Capture `2026-09-12_mes-horaires_A_02_apres-enregistrement.png` : modale rouverte après ce retour, samedi 09:00–12:00 relu depuis la base
+  (la version précédente de cette image, commit 41c88bb, montrait la fenêtre Claude par-dessus Chrome ; remplacée).
 - Conclusion : **cohérent** — le succès annoncé correspond à une écriture réelle, dans les deux sens.
 
 ## Compte B — `0555000102`, sans fiche liée
