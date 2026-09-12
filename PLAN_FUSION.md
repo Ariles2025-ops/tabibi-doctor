@@ -73,13 +73,17 @@ PR du chantier vers #56, puis #56 vers `main`) reste valable telle quelle.
    `appointment_slot_is_available` présentes (2). Le cas « médecin cale une urgence » n'est pas testable en conditions réelles
    tant que le parcours médecin n'existe pas en RLS (aucune policy d'INSERT n'autorise `patient_id <> auth.uid()` — trou
    produit noté dans `VERIF_NAVIGATEUR.md`).
-3. **Mesure du 12/09 au soir : la garde n'est PAS en base.** `pg_proc` ne connaît aucune fonction
-   `appointment_slot_is_available` et `pg_trigger` aucun `trg_appointments_zz_enforce_availability` ;
-   les neuf triggers actifs sur `public.appointments` sont ceux d'avant #73. Le fichier de migration est
-   bien sur `main` et son transaction est un `begin … commit` correct, donc le contenu n'est pas en cause.
-   Tant que ce n'est pas appliqué, l'étape 3b de `docs/RECETTE_VAGUE_2026-09.md` (cas négatifs) ne peut pas
-   passer : seul l'EXCLUDE couvre encore le double-booking, rien ne couvre le jour fermé.
-   Script prêt à coller : `garde_a_executer.sql`, avec son contrôle `fonction=1, trigger=1`.
+3. **La garde est en base depuis le 12/09 au soir — appliquée par Aghiles dans l'éditeur SQL.**
+   Mesure de contrôle : `appointment_slot_is_available(uuid, timestamptz, timestamptz)` = 1,
+   `enforce_appointment_availability()` = 1 en `SECURITY DEFINER`, trigger
+   `trg_appointments_zz_enforce_availability` posé et **actif**, et la ligne v2
+   `auth.uid() is distinct from new.patient_id` bien présente dans le corps de la fonction.
+   L'ordre de déclenchement est correct : sur les dix triggers de `public.appointments`, le suffixe `zz`
+   place la garde **après** `trg_appointments_sync_slot_times`, donc elle voit les heures déjà synchronisées.
+   L'étape 3b de `docs/RECETTE_VAGUE_2026-09.md` (cas négatifs) est donc jouable.
+   *Correction d'une mesure antérieure : à 18:41 le même contrôle rendait 0 partout et j'en avais conclu que
+   la migration n'avait pas pris. Elle a été appliquée après cette mesure. La leçon du §1 ter tient quand même :
+   c'est le catalogue qui fait foi, et il faut le relire au moment où on s'en sert, pas se fier à une lecture ancienne.*
 
 ## 1 ter. Règle du 12/09 — le SQL d'une PR s'applique **avant ou avec** son front, jamais après
 
