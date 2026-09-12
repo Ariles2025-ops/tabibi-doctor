@@ -195,3 +195,4 @@ Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
   disparaît pour les comptes sans e-mail. La détection côté client n'est pas possible proprement
   (réponse anti-énumération de GoTrue) : passer par l'API (brique 1) ou retirer la page du parcours
   médecin.
+  Mesuré le 12/09 (`docs/preuves/2026-09-12_forgot-password_mesure.md`) : numéro de téléphone → « Email invalide », aucune requête ; e-mail inexistant → HTTP 400 `captcha_failed` (navigateur intégré) ou HTTP 200 `{}` (Chrome), et dans les deux cas le bandeau « vous recevrez un lien ».
