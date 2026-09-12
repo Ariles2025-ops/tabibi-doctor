@@ -99,29 +99,19 @@ async function readConfig() {
   return { url, key };
 }
 
-/** Pagination REST : la vue compte 75 034 lignes, PostgREST en rend 1 000 au
- *  plus par requête. On ne demande que les 4 colonnes nécessaires — surtout
- *  PAS full_name, qui n'a aucune raison de transiter par ce script. */
+/** [C1 2026-09-09] La vue public_doctors n'est plus lisible par la clé anon.
+ *  La RPC seo_couples() renvoie l'agrégat (wilaya, spécialité, commune, n) :
+ *  ~6 300 lignes au lieu de 75 034, et aucun nom ne transite. */
 async function fetchAll({ url, key }) {
-  const cols = 'wilaya_code,wilaya_fr,specialty_slug,specialty_fr,city';
-  const rows = [];
-  const PAGE = 1000;
-  for (let from = 0; ; from += PAGE) {
-    const res = await fetch(`${url}/rest/v1/public_doctors?select=${cols}`, {
-      headers: {
-        apikey: key,
-        Authorization: `Bearer ${key}`,
-        Range: `${from}-${from + PAGE - 1}`,
-        'Range-Unit': 'items',
-      },
-    });
-    if (!res.ok) throw new Error(`PostgREST ${res.status} : ${await res.text()}`);
-    const batch = await res.json();
-    rows.push(...batch);
-    process.stdout.write(`\r  ${rows.length} fiches lues…`);
-    if (batch.length < PAGE) break;
-  }
-  process.stdout.write('\n');
+  const res = await fetch(`${url}/rest/v1/rpc/seo_couples`, {
+    method: 'POST',
+    headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: '{}',
+  });
+  if (!res.ok) throw new Error(`PostgREST ${res.status} : ${await res.text()}`);
+  const rows = await res.json();
+  if (!Array.isArray(rows)) throw new Error('seo_couples : réponse inattendue');
+  process.stdout.write(`  ${rows.length} couples (wilaya, spécialité, commune) lus\n`);
   return rows;
 }
 
@@ -141,9 +131,10 @@ function aggregate(rows) {
       };
       map.set(k, e);
     }
-    e.n++;
+    const n = Number(r.n) || 0;          // effectif du couple (agrégé côté SQL)
+    e.n += n;
     const city = (r.city || '').trim();
-    if (city) e.cities.set(city, (e.cities.get(city) || 0) + 1);
+    if (city) e.cities.set(city, (e.cities.get(city) || 0) + n);
   }
   return [...map.values()]
     .filter((e) => e.n >= MIN_PRACTITIONERS)
@@ -404,7 +395,7 @@ ${citiesBlock}
 // ─────────────────────────────────────────────────────────────────────
 
 const cfg = await readConfig();
-console.log('→ lecture de public_doctors…');
+console.log('→ lecture de l’agrégat seo_couples()…');
 const rows = await fetchAll(cfg);
 
 const entries = aggregate(rows);

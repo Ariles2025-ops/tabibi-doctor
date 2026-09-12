@@ -202,42 +202,35 @@ function _initialsOf(name){
   return ((parts[0]||'')[0]||'?').toUpperCase() + ((parts[1]||'')[0]||'').toUpperCase();
 }
 
-// [Phase 16.5 rollback] Retour à public_doctors avec filtres client
-// is_claimed=false + legacy_id non-null (claimable_doctors view supprimée).
-// On GARDE le fix encoding ilike (% non encodés avant q.toString()).
+// [C1 2026-09-09] Recherche des fiches à revendiquer via la RPC chercher_praticiens
+// (p_reclamables=true ⇒ legacy_id non nul + is_claimed=false, ≤ 20 lignes).
 async function _dcFetchResults(opts){
   if(_dcAbort){ try{_dcAbort.abort();}catch(e){} }
   _dcAbort = (typeof AbortController!=='undefined') ? new AbortController() : null;
   var mySeq = ++_dcSeq;
-  var q = new URLSearchParams();
-  q.set('select','id,legacy_id,full_name,full_name_ar,wilaya_fr,specialty_fr,city,entity_type,is_claimed');
-  // Filtre dur : seules les fiches avec legacy_id réclamables sont affichées
-  q.set('legacy_id','not.is.null');
-  q.set('is_claimed','eq.false');
-  if(opts.ville) q.set('wilaya_fr','eq.'+opts.ville);
-  if(opts.spec)  q.set('specialty_fr','eq.'+opts.spec);
-  q.set('full_name', 'not.match.[؀-ۿ]');   // exclut les noms en écriture arabe (cohérent annuaire)
-  if(opts.q){
-    var s = String(opts.q).replace(/[(),]/g,' ').trim();
-    if(s){
-      // [Phase 16.5 FIX kept] % non encodés — q.toString() les encode lui-même.
-      var v = '%'+s+'%';
-      q.set('or','(full_name.ilike.'+v+',full_name_ar.ilike.'+v+')');
-    }
-  }
-  q.set('order','name_sort_key.asc');
-  q.set('limit','20');
+  // [C1 2026-09-09] RPC chercher_praticiens(p_reclamables=true) : fiches avec
+  // legacy_id non revendiquées, 20 par page, wilaya OU spécialité obligatoire
+  // (la RPC refuse sinon — dcSearch() affiche l'invite avant d'arriver ici).
+  var args = {
+    p_wilaya:      opts.ville || null,
+    p_specialite:  opts.spec  || null,
+    p_q:           opts.q ? String(opts.q).trim() || null : null,
+    p_page:        1,
+    p_limite:      20,
+    p_reclamables: true
+  };
   try {
-    var r = await fetch(_SB_URL + '/rest/v1/public_doctors?' + q.toString(), {
-      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, 'Range-Unit':'items', Range:'0-19' },
+    var r = await fetch(_SB_URL + '/rest/v1/rpc/chercher_praticiens', {
+      method: 'POST',
+      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify(args),
       signal: _dcAbort ? _dcAbort.signal : undefined
     });
     if(mySeq !== _dcSeq) return null;
     if(!r.ok) return { rows:[] };
-    // [PERF] count=exact retiré (statement_timeout 57014 sur ~72k). On ne lit plus le
-    // total (Content-Range = 0-19/*) ; l'affichage se base sur rows.length.
-    var rows = await r.json();
-    return { rows: Array.isArray(rows) ? rows : [] };
+    var corps = await r.json();
+    var rows = corps && Array.isArray(corps.lignes) ? corps.lignes : [];
+    return { rows: rows, total: (corps && corps.total) || rows.length };
   } catch(e){
     if(e && e.name === 'AbortError') return null;
     console.warn('[dc] fetch error', e && e.message);
@@ -302,6 +295,12 @@ async function dcSearch(){
     document.getElementById('dc-count-line').textContent = _t('claim_search_prompt','Saisissez votre nom puis sélectionnez la fiche qui correspond.');
     return;
   }
+  // [C1] La recherche exige une wilaya OU une spécialité (plus de parcours de la base entière).
+  if(!opts.ville && !opts.spec){
+    document.getElementById('dc-list').innerHTML = '';
+    document.getElementById('dc-count-line').textContent = _t('claim_choose_filter','Choisissez votre wilaya ou votre spécialité pour lancer la recherche.');
+    return;
+  }
   _renderSkeleton();
   var res = await _dcFetchResults(opts);
   if(res) _renderResults(res);
@@ -313,19 +312,18 @@ function dcSearchDebounced(){
 
 // Populate dropdowns depuis DISTINCT DB
 async function _populateDropdowns(){
-  var headers = { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY };
-  async function fetchDistinct(col){
-    try {
-      // [Phase 16.5 rollback] dropdowns alimentés depuis public_doctors
-      var r = await fetch(_SB_URL + '/rest/v1/public_doctors?select=' + col + '&limit=10000', { headers });
-      if(!r.ok) return [];
-      var rows = await r.json();
-      var set = new Set();
-      rows.forEach(function(row){ if(row && row[col]) set.add(row[col]); });
-      return [...set].sort(function(a,b){ return a.localeCompare(b,'fr'); });
-    } catch(e){ return []; }
-  }
-  var [wilayas, specs] = await Promise.all([fetchDistinct('wilaya_fr'), fetchDistinct('specialty_fr')]);
+  // [C1 2026-09-09] listes DISTINCT servies par la RPC stats_publiques (agrégat,
+  // aucun nom) — remplace 2 lectures de 10 000 lignes de la vue.
+  var wilayas = [], specs = [];
+  try {
+    var r = await fetch(_SB_URL + '/rest/v1/rpc/stats_publiques', {
+      method:'POST', headers:{ apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, 'Content-Type':'application/json' }, body:'{}'
+    });
+    var st = r.ok ? await r.json() : {};
+    var tri = function(a,b){ return a.localeCompare(b,'fr'); };
+    wilayas = Array.isArray(st.wilayas) ? st.wilayas.slice().sort(tri) : [];
+    specs   = Array.isArray(st.specialites) ? st.specialites.slice().sort(tri) : [];
+  } catch(e){ /* listes vides : la recherche par nom + wilaya reste possible via les valeurs par défaut */ }
   var vs = document.getElementById('dc-ville');
   var ss = document.getElementById('dc-spec');
   wilayas.forEach(function(w){ var o=document.createElement('option'); o.value=w; o.textContent=w; vs.appendChild(o); });
@@ -538,8 +536,10 @@ document.addEventListener('DOMContentLoaded', function(){
     var _pre  = _dcGetParam('legacy_id') || _dcGetParam('claim_legacy_id');
     var _preN = parseInt(_pre, 10);
     if(!_preN || isNaN(_preN) || _preN < 1) return;
-    fetch(_SB_URL + '/rest/v1/public_doctors?select=full_name&legacy_id=eq.' + _preN + '&limit=1', {
-      headers: { apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY }
+    // [C1] RPC praticien(p_legacy_id) — la vue n'est plus lisible.
+    fetch(_SB_URL + '/rest/v1/rpc/praticien', {
+      method:'POST', headers:{ apikey:_SB_KEY, Authorization:'Bearer '+_SB_KEY, 'Content-Type':'application/json' },
+      body: JSON.stringify({ p_legacy_id: _preN })
     }).then(function(r){ return r.ok ? r.json() : []; }).then(function(rows){
       var fiche = (Array.isArray(rows) && rows[0]) ? rows[0] : null;
       if(fiche && typeof dcOpenModal === 'function'){

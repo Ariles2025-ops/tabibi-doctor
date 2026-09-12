@@ -7,22 +7,29 @@
   const sb = window.tabibi.supabase;
 
   window.tabibi.api = {
+    // [C1 2026-09-09] Plus aucun SELECT direct sur la vue public_doctors :
+    // recherche via la RPC chercher_praticiens (≤ 50 par page, page ≤ 100,
+    // wilaya OU spécialité obligatoire — la RPC refuse sinon, on ne l'appelle pas).
     async searchDoctors({ query = '', wilayaCode = null, specialtySlug = null, entityType = null, limit = 50, offset = 0 } = {}) {
-      let q = sb.from('public_doctors').select('*', { count: 'exact' });
-      if (wilayaCode) q = q.eq('wilaya_code', wilayaCode);
-      if (specialtySlug) q = q.eq('specialty_slug', specialtySlug);
-      if (entityType) q = q.eq('entity_type', entityType);
-      if (query) q = q.ilike('full_name', '%' + query + '%');
-      q = q.range(offset, offset + limit - 1);
-      const { data, error, count } = await q;
-      if (error) { console.error('[Tabibi/api] searchDoctors', error); return { data: [], count: 0 }; }
-      return { data: data || [], count: count || 0 };
+      if (!wilayaCode && !specialtySlug) return { data: [], count: 0, error: 'filtre_obligatoire' };
+      const limite = Math.min(50, Math.max(1, parseInt(limit, 10) || 20));
+      const page = Math.min(100, Math.floor((parseInt(offset, 10) || 0) / limite) + 1);
+      const { data, error } = await sb.rpc('chercher_praticiens', {
+        p_wilaya: wilayaCode ? String(wilayaCode) : null,
+        p_specialite: specialtySlug || null,
+        p_q: query || null,
+        p_type: entityType || null,
+        p_page: page,
+        p_limite: limite
+      });
+      if (error) { console.error('[Tabibi/api] searchDoctors', error); return { data: [], count: 0, error: error.message }; }
+      return { data: (data && data.lignes) || [], count: (data && data.total) || 0 };
     },
 
     async getDoctor(id) {
-      const { data, error } = await sb.from('public_doctors').select('*').eq('id', id).single();
+      const { data, error } = await sb.rpc('praticien', { p_id: id }).maybeSingle();
       if (error) { console.error('[Tabibi/api] getDoctor', error); return null; }
-      return data;
+      return data || null;
     },
 
     async getWilayas() {

@@ -20,7 +20,8 @@
     "test:e2e:build": "TABIBI_CIBLE=dist-web playwright test",
     "test": "npm run lint && npm run test:e2e",
     "i18n:verifier": "node scripts/i18n-verifier.mjs",
-    "verifier:cles": "node scripts/verifier-cles.mjs"
+    "verifier:cles": "node scripts/verifier-cles.mjs",
+    "verifier:c1": "node scripts/verifier-c1.mjs"
   },
   "keywords": [
     "tabibi",

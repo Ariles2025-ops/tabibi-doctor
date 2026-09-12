@@ -18,11 +18,11 @@
 name: verification
 
 on:
-  # [12/09/2026] verification.yml ne tournait que pour les PR ciblant main et les push sur main.
-  # Douze PR ciblant la branche d'integration #56 sont passees sans aucun controle automatique.
-  # Desormais : TOUTE pull request, quelle que soit sa base (#56, une branche de pile, etc.),
-  # declenche la verification ; et tout push sur main.
-  pull_request:        # aucune restriction de branche de base -> toutes les PR
+  # [2026-09-09] toutes les PR, pas seulement celles vers main : une PR empilee
+  # (base = une autre branche, ex. #57 sur #56) doit etre verifiee aussi.
+  # [12/09/2026] confirme : douze PR ciblant la branche d'integration #56 etaient
+  # passees sans aucun controle automatique. Aucune restriction de branche de base.
+  pull_request:
   push:
     branches: [main]
 
@@ -70,8 +70,10 @@ jobs:
         run: npm run i18n:verifier
 
       - name: Aucun littéral de clé hors config.js
-
         run: npm run verifier:cles
+
+      - name: Aucun acces direct a la vue public_doctors (C1)
+        run: npm run verifier:c1
 
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
