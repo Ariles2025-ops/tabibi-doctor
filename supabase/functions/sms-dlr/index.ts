@@ -89,7 +89,7 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 // « on ne cree jamais depuis un DLR » evite qu'un tiers remplisse la table.
 async function rattacherDlr(smsid: string, statut: string, ts: string | null) {
   try {
-    const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const url = Deno.env.get("SUPABASE_URL"), key = (Deno.env.get("TABIBI_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
     if (!url || !key) return;
     const db = createClient(url, key, { auth: { persistSession: false } });
     const { error, count } = await db.from("sms_log")

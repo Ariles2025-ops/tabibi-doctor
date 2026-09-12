@@ -14,7 +14,9 @@ window.TABIBI_CONFIG = {
 
   // ---- Supabase ------------------------------------------------------
   SUPABASE_URL: 'https://pudugodhiofqrctcdwfl.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4',
+  // [ROTATION 2026-09-10] Clé publiable (sb_publishable_…), publique par conception ; l'ancienne clé anon
+  // (JWT HS256) est révoquée. Le nom de la propriété est conservé : js/, scripts/ et v2 la lisent ainsi.
+  SUPABASE_ANON_KEY: 'sb_publishable_BtOCWQiqEik8gvzcVdIiQw_NKe4Ig9d',
 
   // ---- Cloudflare Turnstile (captcha) --------------------------------
   // Site key PUBLIQUE (OK dans le code client). La Secret Key reste cote

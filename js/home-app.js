@@ -324,7 +324,7 @@ async function loadTakenSlots(doctorId, dateIso, onLoaded){
   window._takenSlotsCache[key] = [];
   try {
     const SB_URL = (typeof _SB_URL !== 'undefined') ? _SB_URL : 'https://pudugodhiofqrctcdwfl.supabase.co';
-    const SB_KEY = (typeof _SB_KEY !== 'undefined') ? _SB_KEY : 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY = (typeof _SB_KEY !== 'undefined') ? _SB_KEY : ((window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '');
     const url = SB_URL + '/rest/v1/appointments?select=scheduled_at,status&doctor_id=eq.' + encodeURIComponent(doctorId) +
                 '&scheduled_at=gte.' + encodeURIComponent(dateIso + 'T00:00:00.000Z') +
                 '&scheduled_at=lte.' + encodeURIComponent(dateIso + 'T23:59:59.999Z');
@@ -1253,7 +1253,7 @@ async function finalBooking(docId,slot,docName,prix){
   let supabaseOk = false, _bkServerError = null;
   try {
     const SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+    const SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
     const token = _sbAccessToken || SB_KEY;
     const dt = new Date(isoDate + 'T' + slot);
     const res = await fetch(SB_URL + '/rest/v1/appointments', {
@@ -1532,7 +1532,7 @@ function onLangChange(){
 
 /* ══ CHARGEMENT MÉDECINS DEPUIS SUPABASE ══════════════════════ */
 const _SB_URL = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-const _SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgxNzUwNzAsImV4cCI6MjA5Mzc1MTA3MH0.XUmkPhXN8W0bX9L2-MVPuqWVjOsNP69zDqTF2XpR0U4';
+const _SB_KEY = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';  // [ROTATION 2026-09-10] plus de littéral : config.js est la source unique
 const _COLORS = [
   {bg:'#EEF4FB',tc:'#1557A0'},{bg:'#F3EEFB',tc:'#5B21B6'},{bg:'#EEF8F1',tc:'#007A23'},
   {bg:'#FAEEF4',tc:'#9D174D'},{bg:'#FEF9EE',tc:'#92400E'},{bg:'#EEF9F8',tc:'#0F766E'},

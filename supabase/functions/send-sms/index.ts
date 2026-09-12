@@ -32,7 +32,7 @@ async function journaliser(entree: {
   cost_micros?: number | null; error_code?: string | null; error_message?: string | null;
 }) {
   try {
-    const url = Deno.env.get("SUPABASE_URL"), key = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const url = Deno.env.get("SUPABASE_URL"), key = (Deno.env.get("TABIBI_SECRET_KEY") ?? Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
     if (!url || !key) return;
     const db = createClient(url, key, { auth: { persistSession: false } });
     const { error } = await db.from("sms_log").insert({ provider: "budgetsms", ...entree });
