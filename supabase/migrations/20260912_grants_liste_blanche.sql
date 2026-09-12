@@ -27,8 +27,11 @@
 --   * waiting_list INSERT pour anon : aucun trigger sur la table, aucun SMS,
 --     aucune notification ; le front tente ensuite un e-mail via l'edge
 --     send-email qui n'existe pas (waiting-list.html:917-931). Accordé.
---   * cabinet_members : voir §4, point à trancher — les deux vues
---     security_invoker du secrétariat la lisent avec les droits de l'appelant.
+--   * cabinet_members : SELECT accordé (décision du 12/09). La policy cm_select_visible
+--     ne montre à un patient que ses propres lignes : mesuré, 0 ligne. Les vues
+--     cabinet_members_directory_view et cabinet_stats_view (security_invoker) restent
+--     servies. NOTE OUVERTE : passer ces deux vues en definer ou en RPC plus tard,
+--     pour ne plus dépendre d'un SELECT direct sur la table (cf. VERIF_NAVIGATEUR.md).
 --   * appointments_set_cabinet_from_doctor : passe en SECURITY DEFINER (§5)
 --     pour ne plus exiger de droits sur users/cabinet_members au patient.
 --
@@ -92,12 +95,8 @@ grant select on public.public_doctors, public.doctor_ratings_summary, public.doc
                 public.cabinet_calendar_view, public.cabinet_members_directory_view, public.cabinet_stats_view,
                 public.api_keys_analytics
   to authenticated;
--- POINT À TRANCHER — cabinet_members : les vues cabinet_members_directory_view et
--- cabinet_stats_view sont security_invoker : elles lisent cabinet_members avec les
--- droits de l'appelant. Sans la ligne ci-dessous, l'espace secrétariat et
--- admin-cabinet perdent ces deux vues. La policy cm_select_visible ne montre à un
--- patient que ses propres lignes : mesuré, 0 ligne. Retirer la ligne si tu
--- confirmes « n'accorde pas », en acceptant la perte des deux vues.
+-- cabinet_members : décision du 12/09 — accordé (patient : 0 ligne visible, secrétariat conservé).
+-- Note ouverte : cabinet_members_directory_view / cabinet_stats_view à passer en definer ou en RPC.
 grant select on public.cabinet_members to authenticated;
 
 -- ---------------------------------------------------------------------
