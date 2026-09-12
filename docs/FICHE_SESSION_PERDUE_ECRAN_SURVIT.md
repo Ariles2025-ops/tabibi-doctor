@@ -6,6 +6,9 @@ Le faux succès affirme une écriture qui n'a pas eu lieu ; ici l'écran affirme
 **Découvert le :** 12/09/2026, pendant le parcours 1 de la recette de la vague (compte R1, médecin avec fiche).
 **Gravité :** moyenne à élevée sur un poste partagé (secrétariat, cabinet).
 **Statut :** constaté et mesuré, non corrigé. Chantier séparé.
+**Priorité révisée le 12/09 :** relevée. Le repli sur la clé anonyme (cause 3) avait été classé en dette
+mineure quand il n'était vu que comme un littéral de clé en dur. C'est en réalité lui qui rend la panne
+muette, et #67 ne l'a pas retiré : elle a retiré les littéraux, pas le repli.
 
 ---
 
@@ -52,9 +55,27 @@ La session n'a donc pas expiré : elle a été fermée ailleurs, dans la même o
 
 3. **Le repli sur la clé anonyme transforme un 401 en 403 muet.** `doctor-dashboard.html:543` et `:760`
    font `let token = SB_KEY;` puis remplacent par le jeton de session **s'il existe**. Sans session, la requête
-   part quand même, signée avec la clé anonyme. PostgREST répond alors « permission refusée » plutôt que
+   part quand même, signée avec la clé publiable. PostgREST répond alors « permission refusée » plutôt que
    « non authentifié ». Le front ne peut plus distinguer « tu n'es plus connecté » de « tu n'as pas le droit ».
    Même repli dans `patient-dashboard.html:646` et `:785`.
+
+   **C'est le même code que le littéral de clé en dur repéré le 12/09 et classé en dette mineure.**
+   Le classement était trop indulgent : ce n'était pas de la cosmétique de configuration, c'est ce repli qui
+   rend la panne muette. Une clé de secours n'est pas neutre, elle garantit qu'une requête non authentifiée
+   part quand même.
+
+   **Nuance mesurée, qui empêche de considérer l'affaire close.** #67 (fusionnée dans #56) a bien retiré les
+   littéraux : les quatre définitions passent de
+   `… || '<JWT anon révoqué>'` à `… || ''`. Mais **le repli lui-même est intact** :
+   `let token = SB_KEY;` est toujours là, aux quatre endroits. Quand `js/config.js` se charge normalement —
+   c'est-à-dire toujours — `SB_KEY` vaut la clé publiable réelle, la requête part signée en anonyme, et la
+   réponse reste un 403. #67 répare donc l'hygiène de rotation, pas la lisibilité de l'erreur.
+   Le seul gain de lisibilité est marginal : si la configuration ne se charge pas, `SB_KEY` vaut désormais la
+   chaîne vide et on obtient un 401 au lieu d'un 403 émis par une clé révoquée.
+
+   **Conséquence sur la priorité.** Ce qu'il faut remonter dans l'ordre des choses à faire, ce n'est pas le
+   littéral — c'est fait — mais la **suppression du repli** dans les pages authentifiées (point 2 du §4).
+   Tant qu'il est là, tout défaut de session se présentera comme un défaut de droits.
 
 4. **Aucune synchronisation entre onglets.** Il n'existe aucun écouteur de l'événement `storage` dans le dépôt.
    Un onglet ne sait jamais ce que les autres ont fait de la session.
@@ -72,6 +93,10 @@ Par ordre de rapport valeur / effort.
 2. **Supprimer le repli sur la clé anonyme dans les pages authentifiées.** Sans session, on n'envoie pas la
    requête : on lève l'état « déconnecté » tout de suite. Un tableau de bord n'a aucune raison d'interroger
    la base en tant qu'anonyme. Cela rend aussi les erreurs lisibles : 401 = session, 403 = droits.
+   **Priorité relevée** : c'est ce point, et non le retrait des littéraux déjà fait par #67, qui supprime
+   la panne muette. Quatre endroits à traiter : `doctor-dashboard.html:543` et `:760`,
+   `patient-dashboard.html:646` et `:785`. Le contrôle `scripts/verifier-cles.mjs` ajouté par #67 empêche le
+   retour des littéraux ; il ne dit rien du repli, qui mérite son propre garde-fou.
 
 3. **Revalider la session aux moments qui comptent** : au retour de l'onglet au premier plan
    (`visibilitychange`), et juste avant tout écrit. Une revalidation avant écrit évite de perdre la saisie.
