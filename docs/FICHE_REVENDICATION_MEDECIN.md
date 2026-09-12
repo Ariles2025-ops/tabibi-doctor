@@ -225,7 +225,8 @@ retirer le toast qui invite à créer.
 
 Mesuré le 12/09/2026 sur `auth.users`, rôle lu dans `raw_user_meta_data->>'role'`, hors les 3 comptes de test.
 (Le repère « 28 médecins / 11 patients » d'un premier relevé du 11/09 venait d'une jointure `auth.users` × `public.users`
-qu'aucune table ne reproduit — `public.users` est creuse. Les nombres ci-dessous sont les repères robustes : total des
+qu'aucune table ne reproduit — `public.users` est creuse (mesuré le 12/09 : 33 de ses 41 lignes ont un nom nul, le nom
+n'étant écrit que si l'inscription l'a mis dans les métadonnées auth). Les nombres ci-dessous sont les repères robustes : total des
 fiches 75 034, `auth.users` hors test 41.)
 
 | Comptes | Total | Téléphone seul (e-mail nul) | E-mail seul | Les deux |
