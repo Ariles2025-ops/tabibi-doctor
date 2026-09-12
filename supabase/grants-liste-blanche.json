@@ -1,0 +1,56 @@
+{
+  "_commentaire": "Liste blanche des privilèges de anon et authenticated sur le schéma public. Source de vérité versionnée, miroir de supabase/migrations/20260912_grants_liste_blanche.sql (appliquée le 12/09/2026). Contrôlée par scripts/verifier-grants.mjs : tout privilège réel absent d'ici fait échouer le contrôle. Modifier ce fichier = modifier la migration, dans la même PR.",
+  "projet": "pudugodhiofqrctcdwfl",
+  "schema": "public",
+  "tables": {
+    "anon": {
+      "public_doctors": ["SELECT"],
+      "doctor_ratings_summary": ["SELECT"],
+      "doctor_reviews_public": ["SELECT"],
+      "waiting_list": ["INSERT"]
+    },
+    "authenticated": {
+      "users": ["SELECT", "INSERT", "UPDATE"],
+      "appointments": ["SELECT", "INSERT", "UPDATE"],
+      "doctor_profiles": ["SELECT"],
+      "doctor_unavailable_slots": ["SELECT", "INSERT", "DELETE"],
+      "cabinets": ["SELECT", "UPDATE"],
+      "cabinet_members": ["SELECT"],
+      "messages": ["SELECT", "INSERT", "UPDATE"],
+      "conversations": ["SELECT"],
+      "notifications": ["SELECT", "UPDATE"],
+      "reviews": ["SELECT", "INSERT", "UPDATE"],
+      "review_reports": ["SELECT", "INSERT"],
+      "dawini_requests": ["SELECT", "UPDATE"],
+      "dawini_responses": ["SELECT"],
+      "pharmacies": ["SELECT"],
+      "medication_alerts": ["SELECT"],
+      "prescriptions": ["SELECT"],
+      "device_tokens": ["SELECT", "INSERT", "UPDATE"],
+      "waiting_list": ["SELECT", "INSERT"],
+      "specialties": ["SELECT"],
+      "wilayas": ["SELECT"],
+      "admin_actions": ["SELECT"],
+      "public_doctors": ["SELECT"],
+      "doctor_ratings_summary": ["SELECT"],
+      "doctor_reviews_public": ["SELECT"],
+      "my_upcoming_appointments": ["SELECT"],
+      "my_reviewable_appointments": ["SELECT"],
+      "doctor_patients_directory": ["SELECT"],
+      "cabinet_calendar_view": ["SELECT"],
+      "cabinet_members_directory_view": ["SELECT"],
+      "cabinet_stats_view": ["SELECT"],
+      "api_keys_analytics": ["SELECT"]
+    }
+  },
+  "sequences": {
+    "anon": {},
+    "authenticated": {}
+  },
+  "schema_usage_requis": ["anon", "authenticated"],
+  "defauts_interdits": {
+    "_commentaire": "pg_default_acl du rôle postgres, schéma public : aucune entrée anon/authenticated sur les tables (r) ni les séquences (S). Les fonctions (f) restent hors périmètre (EXECUTE par défaut, décision à part). Les défauts du rôle supabase_admin ne sont pas modifiables par postgres (42501 le 12/09) et ne s'appliquent qu'aux objets créés par supabase_admin : ils sont listés en avertissement, pas en échec.",
+    "roles_controles": ["postgres"],
+    "types": ["r", "S"]
+  }
+}

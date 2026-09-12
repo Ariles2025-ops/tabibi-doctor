@@ -13,6 +13,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint js src scripts",
+    "verifier:grants": "node scripts/verifier-grants.mjs",
     "lint:dette": "eslint js src scripts -f json | node scripts/compter-dette.mjs",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
