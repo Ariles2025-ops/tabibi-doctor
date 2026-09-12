@@ -237,48 +237,6 @@
     <div id="day-rdv-list"></div>
 
     <!-- Modal configuration horaires -->
-    <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
-      <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
-        <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
-          <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> <span data-i18n="dd_config_schedule">Configurer mes horaires</span></div>
-          <button onclick="closeScheduleConfig()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
-        </div>
-        <div style="padding:18px;font-size:13px;color:var(--text3);line-height:1.5">
-          <span data-i18n="dd_schedule_intro">Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.</span>
-        </div>
-        <div id="schedule-days-config" style="padding:0 18px"></div>
-      <div id="schedule-modal-msg" style="display:none;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12.5px;margin:10px 0"></div>
-        <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
-          <div style="display:flex;gap:8px">
-            <button onclick="closeScheduleConfig()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
-            <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> <span data-i18n="dd_save_schedule">Enregistrer mes horaires</span></button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═════ [Phase 4.B.3] BLOCAGES EXCEPTIONNELS ═════ -->
-    <!-- Section sous l'onglet Agenda, en surcouche du working_hours hebdo.
-         CRUD direct sur doctor_unavailable_slots (4 RLS Phase 4.A scopent
-         par doctor_profiles.user_id = auth.uid()). -->
-    <div style="margin-top:24px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <div style="font-size:14px;font-weight:700"><i class="fa fa-ban" style="color:#f59e0b"></i> <span data-i18n="dd_blockages">Blocages exceptionnels</span></div>
-        <button id="btn-add-unavail" onclick="openUnavailModal()" class="btn btn-soft btn-sm"><i class="fa fa-plus"></i> <span data-i18n="dd_block_slot">Bloquer un créneau</span></button>
-      </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">
-        <span data-i18n="dd_blockages_intro">Vacances, formation, fermeture exceptionnelle… Ces blocages s'ajoutent à vos horaires normaux ci-dessus.</span>
-      </div>
-      <!-- Mini-bandeau "pas claim" — visible uniquement si médecin pas encore réclamé -->
-      <div id="unavail-not-claimed" class="hidden" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
-        <i class="fa fa-circle-info" aria-hidden="true"></i>
-        <span><span data-i18n="dd_claim_intro">Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités.</span> <a href="doctor-claim.html" style="color:#78350f;font-weight:700;text-decoration:underline" data-i18n="foot_claim_fiche">Réclamer ma fiche</a></span>
-      </div>
-      <div id="unavail-list">
-        <div style="text-align:center;padding:18px;color:var(--text3);font-size:12px" data-i18n="dd_loading">Chargement...</div>
-      </div>
-    </div>
-
     <!-- Modal "Bloquer un créneau" (réutilise le pattern visuel de #schedule-modal) -->
     <div id="unavail-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeUnavailModal()">
       <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
@@ -1448,4 +1406,47 @@ async function deleteUnavail(id) {
   });
 })();
 </script>
+  <!-- Modale « Mes horaires » : sous body, hors des panneaux d'onglet (depuis l'onglet « Aujourd'hui », un parent display:none la rendait invisible — mesuré le 12/09/2026) -->
+  <div id="schedule-modal" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-end;justify-content:center" onclick="if(event.target===this)closeScheduleConfig()">
+    <div style="background:#fff;width:100%;max-width:520px;max-height:92dvh;border-radius:20px 20px 0 0;overflow-y:auto">
+      <div style="position:sticky;top:0;background:#fff;padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;z-index:2">
+        <div style="font-size:17px;font-weight:800"><i class="fa fa-clock"></i> <span data-i18n="dd_config_schedule">Configurer mes horaires</span></div>
+        <button onclick="closeScheduleConfig()" style="background:none;border:none;font-size:24px;color:var(--text3);cursor:pointer;padding:0;line-height:1">×</button>
+      </div>
+      <div style="padding:18px;font-size:13px;color:var(--text3);line-height:1.5">
+        <span data-i18n="dd_schedule_intro">Définissez vos jours et horaires de travail. Les patients ne pourront prendre RDV que sur ces créneaux.</span>
+      </div>
+      <div id="schedule-days-config" style="padding:0 18px"></div>
+    <div id="schedule-modal-msg" style="display:none;background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12.5px;margin:10px 0"></div>
+      <div style="padding:14px 18px;border-top:1px solid var(--border);background:var(--bg);position:sticky;bottom:0">
+        <div style="display:flex;gap:8px">
+          <button onclick="closeScheduleConfig()" class="btn" style="flex:1;background:var(--bg2);color:var(--text2)" data-i18n="cancel">Annuler</button>
+          <button onclick="saveScheduleConfig()" class="btn btn-success" style="flex:2"><i class="fa fa-floppy-disk"></i> <span data-i18n="dd_save_schedule">Enregistrer mes horaires</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════ [Phase 4.B.3] BLOCAGES EXCEPTIONNELS ═════ -->
+  <!-- Section sous l'onglet Agenda, en surcouche du working_hours hebdo.
+       CRUD direct sur doctor_unavailable_slots (4 RLS Phase 4.A scopent
+       par doctor_profiles.user_id = auth.uid()). -->
+  <div style="margin-top:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:700"><i class="fa fa-ban" style="color:#f59e0b"></i> <span data-i18n="dd_blockages">Blocages exceptionnels</span></div>
+      <button id="btn-add-unavail" onclick="openUnavailModal()" class="btn btn-soft btn-sm"><i class="fa fa-plus"></i> <span data-i18n="dd_block_slot">Bloquer un créneau</span></button>
+    </div>
+    <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+      <span data-i18n="dd_blockages_intro">Vacances, formation, fermeture exceptionnelle… Ces blocages s'ajoutent à vos horaires normaux ci-dessus.</span>
+    </div>
+    <!-- Mini-bandeau "pas claim" — visible uniquement si médecin pas encore réclamé -->
+    <div id="unavail-not-claimed" class="hidden" style="background:#fef3c7;border:1px solid #f59e0b;color:#92400e;padding:10px 14px;border-radius:10px;font-size:12px;display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <i class="fa fa-circle-info" aria-hidden="true"></i>
+      <span><span data-i18n="dd_claim_intro">Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités.</span> <a href="doctor-claim.html" style="color:#78350f;font-weight:700;text-decoration:underline" data-i18n="foot_claim_fiche">Réclamer ma fiche</a></span>
+    </div>
+    <div id="unavail-list">
+      <div style="text-align:center;padding:18px;color:var(--text3);font-size:12px" data-i18n="dd_loading">Chargement...</div>
+    </div>
+  </div>
+
 </body></html>

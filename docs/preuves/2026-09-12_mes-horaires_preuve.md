@@ -1,57 +1,64 @@
-# Preuve d'interface « Mes horaires » — 12/09/2026, localhost:8080 (branche fix/medecin-1-faux-succes, PR #69)
+# Preuve d'interface « Mes horaires » et parcours médecin sans fiche — 12/09/2026
 
-Comptes de test marqués `TEST-CONGRES-20260910` (purge : `tests/manual/test-congres/nettoyage.sql`, PR #65).
-Navigateur : Chrome d'Aghiles, connexion par téléphone + mot de passe, captcha Turnstile actif.
+localhost:8080, branche `fix/medecin-1-faux-succes` (PR #69). Comptes marqués `TEST-CONGRES-20260910`
+(purge : `tests/manual/test-congres/nettoyage.sql`, PR #65). Connexion par téléphone + mot de passe, captcha Turnstile actif.
 Règle : un correctif du parcours médecin n'est prouvé que par un passage dans l'interface, écran contre base.
+Note : le rechargement d'URL simple sert parfois une copie en cache ; toutes les captures « après correctif » utilisent un paramètre anti-cache (`?cb=…`).
 
-## Compte A — `0555000101`, fiche `39000325…` (legacy 9000001) liée
+## Correctif appliqué avant la preuve : la modale « Mes horaires » sortie des panneaux d'onglet
 
-### Défaut trouvé avant la première étape : depuis l'onglet « Aujourd'hui », « Mes horaires » ouvre une modale invisible
+`#schedule-modal` était placé dans `#tab-agenda` (`display:none` hors de l'onglet Agenda). Depuis l'onglet « Aujourd'hui »,
+la modale s'ouvrait à 0 × 0 : le bouton du bandeau vert semblait mort. Bloc déplacé sous `<body>`, comme `#unavail-modal`
+(« Bloquer un créneau »). Preuve : chargement `?cb=B1`, `#schedule-modal.parentElement = BODY`, clic « Mes horaires » depuis
+« Aujourd'hui » → modale 1280 × 690 (`2026-09-12_compteB_modale-depuis-aujourdhui.png`).
 
-- Écran : clic sur « Mes horaires » dans le bandeau vert (onglet « Aujourd'hui ») → rien ne se passe visuellement.
-- DOM : `#schedule-modal` passe bien en `display:flex`, mais son rectangle mesure **0 × 0** parce qu'il est placé **à l'intérieur de
-  `#tab-agenda`** (panneau `display:none` tant que l'onglet Agenda n'est pas actif). Chaîne mesurée :
-  `#schedule-modal (flex) → #tab-agenda.tab-panel (none) → main.page → .app-root`.
-- Depuis l'onglet « Agenda », la même modale s'affiche (1280 × 690).
-- Conclusion : **l'écran ment par omission** sur l'onglet d'accueil du médecin — le bouton semble mort. Correctif requis pour #69 :
-  sortir `#schedule-modal` du panneau (le monter sous `body`), comme la modale « Bloquer un créneau ». À ajouter aux trois
-  « requis » de la revue.
+## Compte A — `0555000101`, fiche `39000325…` (legacy 9000001) liée, revendiquée, approuvée
 
-### 1. Affichage de la modale contre `doctor_profiles.working_hours`
+### 1. Affichage contre `doctor_profiles.working_hours` — capture `…_A_01_modale.png`
 
-Capture : `2026-09-12_mes-horaires_A_01_modale.png` (onglet Agenda).
-
-| Jour | Écran (case, matin, après-midi) | Base (`working_hours`) | Verdict |
+| Jour | Écran | Base | Verdict |
 |---|---|---|---|
-| Lundi | cochée, 09:00–12:00, 14:00–17:00 | `[09:00–12:00, 14:00–17:00]` | cohérent |
-| Mardi | cochée, 09:00–12:00, 14:00–17:00 | `[09:00–12:00, 14:00–17:00]` | cohérent |
-| Mercredi | cochée, 09:00–12:00, après-midi vide | `[09:00–12:00]` | cohérent |
-| Jeudi | cochée, 09:00–12:00, 14:00–17:00 | `[09:00–12:00, 14:00–17:00]` | cohérent |
-| Vendredi | décochée, « Fermé » | `[]` | cohérent |
-| Samedi | cochée, 09:00–12:00, après-midi vide | `[09:00–12:00]` | cohérent |
-| Dimanche | décochée, « Fermé » | `[]` | cohérent |
+| Lundi / Mardi / Jeudi | 09:00–12:00 **et** 14:00–17:00 | idem | cohérent |
+| Mercredi / Samedi | 09:00–12:00, après-midi vide | `[09:00–12:00]` | cohérent |
+| Vendredi / Dimanche | « Fermé » | `[]` | cohérent |
 
-Lecture : `window._docSchedule` (rempli par `loadDoctorScheduleFromDb`) ; `localStorage.tabibi_doctor_schedule` et
-`tabibi_doc_slots` = `null` (plus de source locale). **La deuxième plage d'après-midi n'est pas perdue à l'affichage** : le
-point de la revue de #69 est levé pour la lecture (il reste ouvert pour `medecin-profile.html`, non testé ici).
+**La deuxième plage d'après-midi n'est pas perdue à l'affichage** : le point de la revue de #69 est levé pour la lecture.
 
-### 2. Modification, enregistrement, base
+### 2. Modification, enregistrement, base — capture `…_A_02_apres-enregistrement.png`
 
-- Action : samedi, fin de matinée 12:00 → **13:00**, « Enregistrer mes horaires ».
-- Écran : modale fermée, toast **« Horaires enregistrés »** ; requête `POST /rest/v1/rpc/update_my_doctor_profile` → **200**.
-- Base : `updated_at = 2026-09-12 12:45:45+00`, `working_hours->'sat' = [{"open":"09:00","close":"13:00"}]` ; lundi, mercredi,
-  vendredi inchangés.
-- Réouverture de la modale : samedi affiche 09:00–13:00 (relu depuis la base).
-- Retour à 12:00 par le même chemin : toast « Horaires enregistrés » (lu dans le DOM, disparu avant la capture système),
-  base `updated_at = 12:47:02+00`, `sat = [{"open":"09:00","close":"12:00"}]`. Fiche remise dans son état initial.
-  Capture `2026-09-12_mes-horaires_A_02_apres-enregistrement.png` : modale rouverte après ce retour, samedi 09:00–12:00 relu depuis la base
-  (la version précédente de cette image, commit 41c88bb, montrait la fenêtre Claude par-dessus Chrome ; remplacée).
-- Conclusion : **cohérent** — le succès annoncé correspond à une écriture réelle, dans les deux sens.
+- Samedi 12:00 → 13:00, « Enregistrer » : toast « Horaires enregistrés », `POST rpc/update_my_doctor_profile` **200**,
+  base `sat = [09:00–13:00]`, `updated_at 12:45:45`. Retour à 12:00 : base `sat = [09:00–12:00]`, `updated_at 12:47:02`.
+- Verdict : **cohérent** — succès annoncé = écriture réelle, dans les deux sens.
 
-## Compte B — `0555000102`, sans fiche liée
+## Compte B — `0555000102`, AUCUNE fiche liée — défaut principal du parcours médecin
 
-À faire après connexion d'Aghiles sur B (même écran, attendu : message honnête « Réclamez votre fiche… », aucun toast de succès).
+Mesuré : `auth.uid()` = compte B, `select * from doctor_profiles` sous sa session → **0 ligne** ; `get_my_doctor_profile()` → `null`.
+
+### Ce que B voit — capture `…_compteB_sans-fiche_dashboard.png`
+
+Un tableau de bord médecin **complet** : bandeau « Bon après-midi, Dr. TEST-CONGRES 20260910 », boutons Mes horaires,
+Ordonnance, Téléconsult., Mon cabinet, Mon profil ; menu latéral Agenda, Agenda cabinet, Mes RDV, Patients, Stats ;
+compteurs à 0 ; « Aucun RDV aujourd'hui ». **Aucune bannière « Réclamez votre fiche »**, aucun signe qu'il n'est rattaché à rien.
+
+### La modale « Mes horaires » sur B — capture `…_compteB_modale-depuis-aujourdhui.png`
+
+Elle s'ouvre et affiche des horaires **par défaut** (`getDefaultSchedule()` : 08:00–12:00 / 14:00–17:00, tous les jours de
+semaine cochés). Rien à l'écran ne distingue ces valeurs par défaut d'un vrai planning : la modale **ment par pré-remplissage**.
+
+### L'enregistrement, lui, est honnête — capture `…_compteB_sans-fiche_save-honnete.png`
+
+« Enregistrer mes horaires » → `POST rpc/update_my_doctor_profile` **403** ; message dans la modale
+« Réclamez votre fiche dans l'annuaire pour pouvoir gérer vos disponibilités » + toast
+« Vous devez d'abord réclamer votre fiche dans l'annuaire avant de pouvoir l'éditer ». **Le correctif #69 tient au moment de
+l'écriture** : pas de faux succès sur le save.
+
+### Verdict
+
+**L'écran ment par omission, en amont de l'écriture.** Le point d'écriture est honnête (403 + message), mais tout le tableau
+de bord présente un espace de travail médecin fonctionnel à quelqu'un qui n'est lié à aucune fiche, sans jamais lui offrir le
+chemin pour en revendiquer une. Ce n'est pas un défaut d'affichage : **le tunnel de revendication n'existe pas**.
+Relié : fiche de revendication (PR #63, `docs/FICHE_REVENDICATION_MEDECIN.md`).
 
 ## Compte C — patient `0555000103`, prise de RDV chez le Dr Test
 
-À faire après connexion d'Aghiles sur C.
+À faire (parcours patient, vérification du RDV en base).
