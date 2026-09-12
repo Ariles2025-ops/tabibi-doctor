@@ -28,8 +28,7 @@
   ['login.html', 'forgot-password.html', 'reset-password.html',
    'agenda-cabinet.html', 'doctor-dashboard.html', 'secretaire-dashboard.html',
    'medecin-ordonnance.html', 'medecin-profile.html', 'doctor-profile.html',
-   'doctor-analytics.html', 'medecin-waitinglist.html', 'doctor-reservation.html',
-   'messages.html', 'conversation.html', 'notifications.html',
+   'doctor-analytics.html', 'medecin-waitinglist.html',    'messages.html', 'conversation.html', 'notifications.html',
    'offline.html', '404.html'].forEach(function (p) { PAGES[p] = true; });
 
   /* Hors bundle mais avec équivalent pro raisonnable */

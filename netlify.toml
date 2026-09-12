@@ -315,3 +315,10 @@
 # ────────────────────────────────────────────────────────────────────────
 # Pas de SPA fallback : on a de vrais fichiers HTML
 # ────────────────────────────────────────────────────────────────────────
+
+# [2026-09-10] page supprimee : les horaires se reglent dans la modale du tableau de bord
+[[redirects]]
+  from = "/doctor-reservation*"
+  to = "/doctor-dashboard"
+  status = 301
+  force = true

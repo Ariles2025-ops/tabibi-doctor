@@ -14,3 +14,5 @@
 /desktop/*    /404.html   404!
 /.git/*       /404.html   404!
 /   /index.html   200
+# [2026-09-10] page supprimee : les horaires se reglent dans la modale du tableau de bord
+/doctor-reservation*  /doctor-dashboard  301

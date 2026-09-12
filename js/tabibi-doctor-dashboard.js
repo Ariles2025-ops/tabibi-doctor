@@ -133,6 +133,33 @@
     return out;
   }
 
+  // [FAUX-SUCCES 2026-09-10] Format du tableau de bord (matin + après-midi par jour)
+  // ↔ format DB working_hours lu par get_available_slots : { mon:[{open,close},…], … }.
+  var DAYS_DB = ['mon','tue','wed','thu','fri','sat','sun'];
+  function serializeScheduleDays(dash) {
+    var out = {};
+    DAYS_DB.forEach(function (d) {
+      out[d] = [];
+      var s = dash && dash[d];
+      if (!s || !s.on) return;
+      [['start1','end1'],['start2','end2']].forEach(function (pair) {
+        var o = s[pair[0]], c = s[pair[1]];
+        if (o && c && /^\d{2}:\d{2}$/.test(o) && /^\d{2}:\d{2}$/.test(c) && c > o) out[d].push({ open: o, close: c });
+      });
+    });
+    return out;
+  }
+  function parseScheduleDays(db) {
+    var out = {};
+    DAYS_DB.forEach(function (d) {
+      var arr = db && Array.isArray(db[d]) ? db[d] : [];
+      var a = arr[0] || {}, b = arr[1] || {};
+      out[d] = { on: arr.length > 0, start1: a.open || '08:00', end1: a.close || '12:00', start2: b.open || '', end2: b.close || '' };
+    });
+    out.durationMin = 30;
+    return out;
+  }
+
   function parseSchedule(dbSched) {
     var out = {};
     DAYS_FR.forEach(function (fr) { out[fr] = ["09:00", "17:00", false]; });
@@ -338,6 +365,8 @@
     invalidateDoctorIdCache: invalidateDoctorIdCache,
     updateMyProfile: updateMyProfile,
     serializeSchedule: serializeSchedule,
+    serializeScheduleDays: serializeScheduleDays,
+    parseScheduleDays: parseScheduleDays,
     parseSchedule: parseSchedule,
     uploadPhoto: uploadPhoto,
     extractStoragePath: extractStoragePath,
