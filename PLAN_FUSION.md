@@ -197,6 +197,54 @@ et après rotation elle porterait la nouvelle clé).
 Après 17, et seulement après : les correctifs médecin 2 à 5 et 1 bis / 1 ter, R3, R5, la suppression
 des projets Vercel (tableau de bord Vercel), le projet Supabase de staging (§7 de l'architecture cible).
 
+## 3 bis. Ordre arrêté le 12/09 au soir — trois PR empilées, puis la vague
+
+La recette à trois parcours **est passée** (`docs/preuves/RECETTE-P1…`, `-P2…`, `-P3…`). Elle a produit
+trois correctifs, qui se débloquent en cascade : chacun laisse la CI rouge tant que le précédent n'est pas
+fusionné, et aucun n'ajoute d'échec.
+
+| Ordre | PR | Ce qu'elle règle | Pourquoi à cette place |
+|---|---|---|---|
+| 1 | **#76** | la section des blocages revient dans l'onglet Agenda ; retrait de `getTakenSlots`, morte depuis #74 | c'est elle qui **verdit le cliquet de dette** (44 → 43). Sans elle, les deux autres restent rouges sur `lint:dette` |
+| 2 | **#77** | la clé publiable est lue à l'appel, plus à l'évaluation du module | c'est elle qui **verdit les parcours Playwright** : sans elle, `stats_publiques` rend 401 et le test du hero échoue |
+| 3 | **#78** | le tableau de bord médecin lit les RDV par l'identifiant de fiche | elle n'a aucun échec propre : elle attend simplement que les deux portes soient vertes |
+
+Puis **#56 → `main`**, et la recette rejouée une dernière fois sur l'arbre complet, les trois parcours,
+écran contre base. C'est cette dernière exécution qui vaut go de déploiement, pas les exécutions
+intermédiaires faites branche par branche.
+
+Rappel de mécanique, mesuré le 12/09 (§1 quater) : `main` ne porte aucun `verification.yml`. Une fois #56
+fusionnée, `main` en hérite, et **#58 et #72 seront alors contrôlées pour la première fois**. Ne pas les
+fusionner avant.
+
+## 3 ter. Dette d'espaces d'identifiants — deux décisions du 12/09
+
+Le parcours 3 a montré que `appointments.doctor_id` porte `doctor_profiles.id`, jamais l'identifiant de
+compte, et que **la politique RLS est écrite sur cet identifiant de fiche** :
+
+```sql
+appointments_select_doctor : doctor_id IN (select id from doctor_profiles where user_id = auth.uid())
+```
+
+L'ancien code du tableau de bord ne demandait donc pas seulement les mauvaises lignes : il demandait des
+lignes que la politique n'aurait de toute façon jamais rendues. Ce n'était pas un filtre maladroit, c'était
+une requête qui ne pouvait pas aboutir. #78 le corrige. Restent deux endroits, décidés mais non traités :
+
+1. **`doctor-analytics.html` interroge avec les deux identifiants à la fois** — `[identifiant de fiche,
+   identifiant de compte]` dans un `in.(…)`. **À trancher, pas à garder.** C'est pire qu'un défaut : le
+   symptôme disparaît et l'ambiguïté reste. Quiconque lit ce code en conclut que les deux identifiants sont
+   interchangeables, ce qui est faux, et le prochain écrira l'un pour l'autre en toute confiance.
+   Correctif : ne garder que l'identifiant de fiche, comme la politique RLS.
+
+2. **`medecin-ordonnance.html` range un identifiant de compte dans un champ nommé `id`**
+   (`currentDoctor = { id: user.id, … }`). Piège dormant : aucune requête ne le filtre aujourd'hui, il ne
+   sert qu'à afficher une spécialité. C'est exactement le genre de piège qui ressuscite un défaut six mois
+   plus tard sans que personne ne comprenne pourquoi. Correctif : renommer le champ, ou y mettre
+   l'identifiant de fiche.
+
+Aucune des deux n'entre dans la vague. Elles vont dans un chantier « un identifiant, un espace, un nom ».
+
+
 ## 4. Ce qu'on abandonne
 
 - **PR à fermer sans fusion** : #2, #13, #49, #50 (dépassées), #53 et #54 (fonctionnalités, à reprendre
