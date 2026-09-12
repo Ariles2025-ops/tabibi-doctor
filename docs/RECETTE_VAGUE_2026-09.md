@@ -43,10 +43,19 @@ Précondition : un compte médecin sans `doctor_profiles` (`get_my_doctor_profil
 | 2 | Cliquer « Mes horaires » | La modale s'ouvre, **pré-remplie d'horaires par défaut** (08:00–12:00 / 14:00–17:00) | — |
 | 3 | « Enregistrer mes horaires » | Message **honnête** : « Réclamez votre fiche dans l'annuaire… » ; RPC → **403** | aucune écriture |
 
-**Verdict attendu : l'écriture est honnête (403 + message), mais le tableau de bord ment par omission** — il n'existe pas de
-tunnel de revendication. C'est le **défaut produit connu** (chantier séparé ouvert). Tant qu'il n'est pas corrigé, la recette
-consigne cet état comme **attendu**, pas comme régression. Le jour où l'écran de revendication existe, ce parcours devra
-montrer, à l'étape 1, un écran de revendication à la place de l'agenda vide.
+**Verdict attendu : l'écriture est honnête (403 + message), mais le tableau de bord ment par omission.**
+Le jour où l'écran de revendication existe, ce parcours devra montrer, à l'étape 1, une invitation à réclamer sa fiche
+à la place de l'agenda vide.
+
+> **Requalification du 12/09, mesurée (`docs/preuves/RECETTE-P2-2026-09-12.md`).** Le constat « il n'existe pas de tunnel
+> de revendication » est faux. Le tunnel existe (`doctor-claim.html`), le bandeau d'invitation existe dans le tableau de
+> bord, et `loadUnavailSlots()` le démasque correctement pour un médecin sans fiche. Le problème est un **placement** :
+> #69 a sorti la section « BLOCAGES EXCEPTIONNELS » de `#tab-agenda` en même temps que la modale, et l'a laissée **après**
+> la fermeture de `.app-root` (ligne 1443 contre une coquille qui se ferme ligne 1371). Elle est donc rendue hors de la
+> colonne de l'application, sous une hauteur d'écran entière, invisible en pratique. Sur `main` elle est bien à la ligne
+> 272, dans l'onglet Agenda. **C'est une régression de la vague, et elle est bloquante** : le correctif est de remettre
+> le bloc dans `#tab-agenda` et de n'y laisser que `#schedule-modal` en fin de document.
+> Défaut secondaire du même parcours : le message de refus de la modale s'affiche 343 px sous le pli.
 
 ---
 
