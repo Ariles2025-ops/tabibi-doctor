@@ -40,12 +40,14 @@ begin;
 
 drop policy if exists dus_select_public on public.doctor_unavailable_slots;
 
+drop policy if exists dus_select_owner on public.doctor_unavailable_slots;
 create policy dus_select_owner on public.doctor_unavailable_slots
   for select to authenticated
   using (exists (select 1 from public.doctor_profiles dp
                   where dp.id = doctor_unavailable_slots.doctor_id
                     and dp.user_id = auth.uid()));
 
+drop policy if exists dus_select_admin on public.doctor_unavailable_slots;
 create policy dus_select_admin on public.doctor_unavailable_slots
   for select to authenticated
   using (public.is_admin());
