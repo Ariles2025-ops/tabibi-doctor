@@ -30,7 +30,7 @@ jobs:
     if: ${{ vars.DEPLOIEMENT_AUTO == 'oui' }}   # interrupteur explicite (Settings -> Variables)
     permissions: { contents: read, deployments: write }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: actions/setup-node@v5
         with: { node-version: '22', cache: npm }
       - run: npm ci
