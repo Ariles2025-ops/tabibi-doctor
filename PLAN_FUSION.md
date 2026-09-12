@@ -15,7 +15,7 @@ Leur porte de contrôle réelle est le CI de #56, qui se relance à chaque merge
 Les statuts « failure » affichés par GitHub sur les 14 PR récentes viennent tous du bot Vercel
 (déploiements bloqués : e-mail de commit non relié au compte Vercel), pas du code.
 
-### Les 14 PR du chantier (#56 → #69)
+### Les 16 PR du chantier (#56 → #71)
 
 | PR | Branche → base | Contenu | CI | Conflits | Dépend de | Migration liée |
 |---|---|---|---|---|---|---|
@@ -33,6 +33,8 @@ Les statuts « failure » affichés par GitHub sur les 14 PR récentes viennent 
 | #67 | `fix/rotation-cles` → #56 | rotation : clé publiable dans les 2 configs, 8 copies en dur retirées, `.bak`/`.comingsoon` supprimés, edge sur `TABIBI_SECRET_KEY`, `verifier:cles` en CI | pas de run ; local vert ; **edge déjà déployées (v17/v4/v7)** | aucun | #56 ; secret `TABIBI_SECRET_KEY` posé (fait) | aucune ; **révocation HS256 après déploiement du front + APK** |
 | #68 | `docs/a-faire-facture-supabase` → #56 | en-tête d'`A_FAIRE_AGHILES.md` : factures impayées | pas de run | aucun | #56 | aucune |
 | #69 | `fix/medecin-1-faux-succes` → #56 | « Mes horaires » écrit en base, « Ajouter créneaux »/`doctor-reservation` retirés ; revue à cinq axes : 3 « requis » à traiter avant merge | pas de run ; local vert ; **preuve d'interface en attente** | aucun | #56 ; les 3 points de la revue | aucune |
+| #70 | `docs/plan-fusion` → #56 | ce plan | pas de run | aucun | #56 | aucune |
+| #71 | `fix/grants-liste-blanche` → **`main`** (à recibler sur #56, ou à fusionner après l'étape 9) | GRANTS par liste blanche : migration **appliquée le 12/09**, `grants-liste-blanche.json`, `verifier:grants`, preuves avant/après | Actions vert (base main) ; Netlify preview 71 | aucun | #56 (arbre) | `20260912_grants_liste_blanche.sql` — **exécutée** |
 
 `git merge-tree` : **aucun conflit** entre aucune paire de ces branches, ni avec `main`.
 
@@ -57,6 +59,42 @@ Les statuts « failure » affichés par GitHub sur les 14 PR récentes viennent 
 | Netlify (`effulgent-kelpie`) | `main` (`0db742b`) + previews des PR vers `main` | 3 septembre |
 | Vercel | construit toutes les branches, déploiements bloqués depuis le 9 septembre (e-mail de commit) ; les déploiements antérieurs restent en ligne avec l'ancienne clé | — |
 
+### Topologie réelle des branches ouvertes (mesurée le 12/09, `git rev-list` / `merge-base`)
+
+Toutes les branches du chantier partent du **même commit** : `2f7af2c`, sommet de #56. Aucune ne contient une autre.
+Chacune porte donc les 28 commits de #56 **plus** ses commits propres — c'est pourquoi GitHub affiche « 29 à 35 commits »
+sur des PR d'un ou deux fichiers, et « 33 commits » sur #71 dont la base déclarée est `main`.
+
+| Branche (PR) | Commits propres (hors #56) | Base réelle | Base déclarée |
+|---|---|---|---|
+| `fix/p0-securite-chaine-approvisionnement` (#56) | 28 sur `main` | `main` `0db742b` | `main` |
+| `fix/rappels-cron-garde-fous` (#58) | 1 | `main` `0db742b` | `main` |
+| `fix/c1-enumeration` (#57) | 3 | `2f7af2c` (#56) | #56 |
+| `docs/readme-app` (#59) | 5 | `2f7af2c` | #56 |
+| `docs/architecture-cible` (#60) | 6 | `2f7af2c` | #56 |
+| `fix/r1-gardes-pages` (#61) | 1 | `2f7af2c` | #56 |
+| `fix/r2-indisponibilites-anon` (#62, SQL exécuté le 12/09) | 4 | `2f7af2c` | #56 |
+| `docs/fiche-revendication` (#63) | 7 | `2f7af2c` | #56 |
+| `fix/claim-revendication` (#64) | 3 | `2f7af2c` | #56 |
+| `docs/test-chaine-reelle` (#65) | 2 | `2f7af2c` | #56 |
+| `docs/claude-regle-secrets` (#66) | 2 | `2f7af2c` | #56 |
+| `fix/rotation-cles` (#67) | 2 | `2f7af2c` | #56 |
+| `docs/a-faire-facture-supabase` (#68) | 1 | `2f7af2c` | #56 |
+| `fix/medecin-1-faux-succes` (#69) | 1 | `2f7af2c` | #56 |
+| `docs/plan-fusion` (#70) | 1 | `2f7af2c` | #56 |
+| `fix/grants-liste-blanche` (#71, SQL exécuté le 12/09) | 4 | `2f7af2c` | **`main`** |
+
+`main` n'a pas avancé depuis le 3 septembre (0 commit de `main` absent de #56). Les 6 PR anciennes (#2, #13, #49, #50, #53, #54)
+ont des bases vieilles de 8 à 293 commits derrière `main` : elles ne se rebasent pas, elles se ferment (§4).
+
+**Qui doit être rebasé sur `main` avant fusion : personne, à une condition.** Tant que #56 entre dans `main` par un
+**merge commit** (étape 9, déjà prévu ainsi), `2f7af2c` devient un ancêtre de `main` et chaque branche ci-dessus ne
+présente plus que ses commits propres : fusion directe, sans rebase. Si #56 était **squashée**, les 28 commits n'existeraient
+plus sous la même identité et **toutes** les branches devraient être rebasées (`git rebase --onto main 2f7af2c <branche>`),
+16 fois, avec les mêmes fichiers touchés. Décision : merge commit pour #56, interdiction du squash sur cette PR.
+Deux gestes de rangement, sans rebase : recibler #71 sur #56 (ou la laisser sur `main` et la fusionner après l'étape 9,
+son preview Netlify sert aux preuves d'interface) ; #58 reste sur `main` (1 commit, indépendant).
+
 **Retard exact** : la production a **1 commit de retard sur `main`** (#55, l'accueil) et **29 commits sur
 ce qui est écrit** (#55 + les 28 de #56), sans compter les 13 PR empilées. Rien de ce qui a été fait
 depuis le 26 août n'est en ligne. `sw.js` passera de v37 à v38 au prochain déploiement, ce qui
@@ -78,7 +116,7 @@ et après rotation elle porterait la nouvelle clé).
 | 4 | Aghiles puis moi | — | Clé de sauvegarde v2 collée dans `/private/tmp/claude-501/verif-cle/verif-cle.txt` | empreinte `a80e6112…` identique, copie iCloud déchiffrée 5/5, fichier de vérif et clé locale effacés |
 | 5 | Aghiles puis moi | — | **Exécuter le SQL R2** (#62) | anon → 401 ; patient simulé → 0 ; RPC inchangée (mesures réelles) |
 | 6 | Aghiles (localhost) puis moi | serveur local sur `localhost:8080` (en place) | **Preuve d'interface de #69** : connexion OTP, « Mes horaires », message honnête sans fiche | captures + requête RPC ; puis les 3 « requis » de la revue appliqués dans #69 (helpers partagés, `textContent`, tests `node:test`) |
-| 7 | moi, sur accord | 6 | **Merge dans la branche d'intégration**, une PR à la fois, dans cet ordre : #66, #68, #59, #60, #63, #65 (docs), puis #61, #67, #69, #64, #62 (code et SQL présentés). Merge commit, pas de squash, pour garder les preuves dans l'historique | après chaque merge, le CI de #56 se relance : **vert** obligatoire avant le suivant |
+| 7 | moi, sur accord | 6 | **Merge dans la branche d'intégration**, une PR à la fois, dans cet ordre : #66, #68, #59, #60, #63, #65, #70 (docs), puis #61, #67, #69, #64, #62, #71 (code et SQL — #62 et #71 déjà exécutés en base le 12/09). Merge commit, pas de squash, pour garder les preuves dans l'historique | après chaque merge, le CI de #56 se relance : **vert** obligatoire avant le suivant |
 | 8 | Aghiles puis moi | 7 | **Exécuter le SQL du claim** (#64) : correctif + bloc TRUNCATE | `pg_proc` relu (drapeau présent, `for update` présent) ; TRUNCATE = 0 table ; bloc de simulation rejoué sans les `CREATE` |
 | 9 | Aghiles, puis moi | 1, 3, 7 verts | **Merge de #56 dans `main`** (merge commit) | CI de `main` vert ; Netlify `main` reconstruit ; aucun bot Vercel |
 | 10 | moi, sur accord | 9 | **Déploiement Cloudflare** par la procédure en vigueur (`git archive main` → purge → `wrangler pages deploy`) ; R5 (chaîne unique) viendra après, hors de ce plan | `tabibi.doctor/` sert l'accueil complet ; `sw.js` v38 ; `js/config.js` porte la clé publiable ; `/js/home-app.js` 200 ; `/supabase/migrations/` 404 ; 30 tests Playwright rejoués contre la production |
