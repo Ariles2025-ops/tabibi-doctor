@@ -60,9 +60,95 @@ fonction est inchangée. Quatorze lignes ajoutées dont sept de commentaire, une
 | rendez-vous créé | `a7be539b-…`, lundi 14/09 **10:00** heure d'Alger, `pending` |
 | `doctor_id` écrit | `85a6972c-…`, l'identifiant de fiche |
 
-### Vu depuis R1
+### Vu depuis R1 — les trois vues, le 13/09 à 00h16 heure de Paris
 
-*(à compléter : les trois vues, écran contre base)*
+Session vérifiée avant mesure : `2ed31cea-…`, `recette-20260912.medecin-fiche@tabibi.doctor`,
+et `getMyDoctorId()` résout bien `85a6972c-…`.
+
+Ce que la base contient pour cette fiche :
+
+| Rendez-vous | Statut | Heure d'Alger |
+|---|---|---|
+| `a7be539b` | `pending` | lundi 14/09 **10:00** |
+| `2750cd25` | `cancelled` | lundi 14/09 **09:00** |
+
+| Vue | Le rendez-vous apparaît | Écran contre base | Verdict |
+|---|---|---|---|
+| **Aujourd'hui** | sans objet, rien aujourd'hui | « RDV aujourd'hui 0 » = base 0 ✔ ; cloche 3 = 3 notifications ✔ ; **« Ce mois » 2 alors que 1 seul RDV n'est pas annulé** | l'écran ment sur un compteur |
+| **Agenda, lundi 14** | **oui, les deux** | « RDV DU LUNDI 14 SEPTEMBRE (2) », 10:00 et 11:00 | **le correctif fonctionne**, mais l'heure est fausse et un annulé s'affiche comme valide |
+| **Mes RDV** | **oui, les deux** | « lun. 14 sept. · 11:00 · En attente » et « lun. 14 sept. · 10:00 · Annulé » | **le correctif fonctionne**, statut honnête, heure fausse |
+
+**Le défaut visé est corrigé** : avant, les trois vues étaient vides ; elles affichent maintenant les
+rendez-vous de la fiche. La lecture par identifiant de fiche fonctionne, et la RLS la laisse passer.
+
+---
+
+## Trois défauts restants, trouvés en vérifiant le correctif
+
+Aucun n'est causé par cette PR. Tous sont dans `doctor-dashboard.html`, aucun n'est corrigé ici.
+
+### A. L'heure est rendue dans le fuseau du navigateur, pas dans celui du cabinet
+
+`normDoctorRow` calcule l'heure avec `dt.getHours()`, donc dans le fuseau de la machine :
+
+```js
+const dt   = new Date(r.scheduled_at);
+const date = dt.toISOString().split('T')[0];        // date en UTC
+const time = String(dt.getHours()).padStart(2,'0')  // heure LOCALE du navigateur
+```
+
+Mesure : navigateur sur **Europe/Paris**, UTC+2 en heure d'été. Le rendez-vous stocké à `09:00Z`
+vaut **10:00 à Alger** et s'affiche **11:00**.
+
+Le même rendez-vous, la même minute, sur deux écrans :
+
+| Écran | Heure affichée |
+|---|---|
+| côté patient (`reservation.html`, `mes-rdv.html`) | **10:00**, heure d'Alger |
+| côté médecin (les trois vues) | **11:00**, heure du navigateur |
+
+Pour un produit de rendez-vous médicaux, c'est grave : un médecin en déplacement, ou dont la machine
+n'est pas réglée sur Alger, lit une heure fausse. Le correctif est de formater en `Africa/Algiers`
+comme le fait déjà le côté patient.
+
+Note de rigueur : sur une machine réglée sur Alger (UTC+1), ce défaut ne se voit pas. Il a été mesuré
+sur une machine à Paris.
+
+### B. Date et heure ne sont pas calculées dans le même fuseau
+
+Dans les deux lignes ci-dessus, `date` sort de `toISOString()` (UTC) et `time` de `getHours()` (local).
+Les deux ne peuvent pas être cohérents. Conséquence visible immédiatement, à 00h16 heure de Paris :
+
+- `currentDay` (ligne 381) et la bande de semaine de `renderAgenda` (ligne 700) valent **la veille** ;
+- la bande affiche « lun. 7 … dim. 13 » mais ses cellules appellent `selDay('2026-09-06')` …
+  `selDay('2026-09-12')` : **chaque cellule charge le jour précédent celui qu'elle affiche** ;
+- l'agenda s'était ouvert sur « SAMEDI 12 SEPTEMBRE » alors qu'on était dimanche 13.
+
+Ce décalage n'apparaît qu'entre minuit et l'heure du décalage UTC (une heure à Alger, deux à Paris en
+été). C'est pour cela qu'il n'avait pas été vu jusqu'ici.
+
+### C. Un rendez-vous annulé s'affiche comme valide dans l'agenda, et se compte
+
+- `renderAgenda` filtre `dayRdvs` **par date seulement**, jamais par statut : l'annulé est listé, et le
+  titre annonce « (2) ».
+- Le badge est choisi par `status==='Confirmed' ? bleu : status==='Pending' ? ambre : vert`. `Cancelled`
+  tombe dans le **vert avec une coche**, c'est-à-dire l'apparence d'un rendez-vous honoré.
+- Le compteur « Ce mois » (ligne 95) compte lui aussi sans filtrer le statut : il affiche **2** pour
+  **1** rendez-vous réel.
+
+« Mes RDV », en revanche, affiche correctement « Annulé ». Les deux vues du même fichier ne s'accordent
+pas sur ce qu'est un rendez-vous.
+
+### D. L'agenda n'a aucune navigation de semaine
+
+`renderAgenda` reconstruit toujours la semaine de `new Date()`. Il n'existe ni bouton précédent ni
+bouton suivant. Aujourd'hui dimanche 13, **lundi 14 n'est pas atteignable à l'écran** : il a fallu
+appeler `selDay('2026-09-14')` pour afficher la journée qui contient les deux rendez-vous. Un médecin ne
+peut pas consulter la semaine suivante.
+
+**Aucun de ces quatre points n'est corrigé dans cette PR**, qui se limite à l'espace d'identifiants.
+Ils forment un chantier cohérent : « le tableau de bord médecin dit l'heure du cabinet, et ne compte que
+ce qui existe ».
 
 ### Portes locales
 
