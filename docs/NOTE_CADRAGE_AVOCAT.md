@@ -128,6 +128,12 @@ Le parcours à distance transite par WhatsApp, service opéré par Meta. Des pi�
 
 *Rattachement documentaire* : `docs/PROCEDURE_CLAIM_WHATSAPP.md`.
 
+### 4.9 — Droit à la suppression de compte (effacement)
+
+**Constat** : la page « Mes droits RGPD » (`legal/rgpd-droits.html`) et les espaces profil annonçaient une suppression de compte automatisée (« vous recevrez un e-mail de confirmation, suppression sous 7 jours ») qu'aucun traitement n'honorait : la table et la fonction visées n'existent pas, aucun e-mail ne partait. La page a été corrigée le 12/09/2026 pour décrire un **canal humain** (demande écrite à contact@tabibi.doctor, accusé sous 72 h, suppression sous 30 jours) en attendant l'automatisation.
+
+**Questions** : la loi 25-11 (et la loi 18-07) impose-t-elle un délai maximal de traitement d'une demande d'effacement, et lequel ? Un canal manuel par e-mail est-il un moyen d'exercice suffisant, ou un dispositif en ligne dédié est-il exigé ? Quelles données un médecin ayant consulté le patient peut-il ou doit-il conserver malgré la demande (dossier médical, obligation de conservation), et pour quelle durée ? L'accusé de réception et la traçabilité de la demande sont-ils obligatoires ? Le délai de 30 jours annoncé est-il conforme ?
+
 ### 4.8 — Points annexes
 
 - **Téléconsultation** : envisagée mais non garantie au lancement. Conditions posées par la loi n° 18-11 du 2 juillet 2018 relative à la santé, et opportunité de la reporter.
