@@ -112,6 +112,30 @@ les colonnes), s'applique aussi à la seule fonction légitime qui pose `is_clai
   et propage le statut sur `users.status` ; non rejoué.
 - Le comportement de `signup.html` en mode « inscription avec claim » (`[C3]`, `profile_id`).
 
+## 7 bis. Défaut principal confirmé au navigateur le 12/09/2026 — le tunnel de revendication n'existe pas
+
+Compte de test B (`0555000102`, `TEST-CONGRES-20260910`, **sans fiche liée** : `get_my_doctor_profile()` → null,
+`select * from doctor_profiles` sous sa session → 0 ligne). Connecté par Aghiles, parcouru au navigateur :
+
+- Il voit un **tableau de bord médecin complet** : boutons Mes horaires, Ordonnance, Téléconsult., Mon cabinet, Mon profil ;
+  menu Agenda, Agenda cabinet, Mes RDV, Patients, Stats ; compteurs à 0 ; « Aucun RDV aujourd'hui ».
+- **Aucune bannière « Réclamez votre fiche »**, aucun indice qu'il n'est rattaché à rien.
+- La modale « Mes horaires » s'ouvre et se **pré-remplit d'horaires par défaut** (08:00–12:00 / 14:00–17:00) : rien ne les
+  distingue d'un vrai planning.
+- Seul l'enregistrement est honnête : `update_my_doctor_profile` → **403**, message « Réclamez votre fiche dans l'annuaire
+  pour pouvoir gérer vos disponibilités » (correctif #69, qui tient au point d'écriture).
+
+**Ce n'est pas un défaut d'affichage, c'est l'absence du tunnel de revendication.** L'application sait, dès l'ouverture du
+tableau de bord, qu'aucune fiche n'est liée (elle appelle `get_my_doctor_profile()` dans `loadDoctorScheduleFromDb()` et
+obtient null), mais n'en tire aucune conséquence sur l'écran. Un médecin arrivé là après inscription est dans une impasse :
+espace de travail vide, zéro chemin pour revendiquer. Preuve : `docs/preuves/2026-09-12_mes-horaires_preuve.md`,
+captures `2026-09-12_compteB_*.png`.
+
+Correctif proposé (à porter sur une branche dédiée, non appliqué) : à l'ouverture du tableau de bord, si
+`get_my_doctor_profile()` renvoie null, remplacer le contenu de l'onglet « Aujourd'hui » par un **écran de revendication**
+(recherche annuaire par nom / n° d'ordre → `doctor-claim.html`), et masquer les outils de travail tant qu'aucune fiche n'est
+liée — plutôt qu'une bannière posée par-dessus un agenda vide.
+
 ## 8. Le tableau de bord d'un médecin sans fiche liée — mesuré en production le 10/09/2026
 
 Compte réel connecté sur `tabibi.doctor/doctor-dashboard` (rôle `medecin`, inscrit par téléphone le

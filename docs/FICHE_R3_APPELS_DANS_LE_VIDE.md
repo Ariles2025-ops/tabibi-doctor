@@ -14,9 +14,12 @@ dépend de la façon dont l'appelant avale l'erreur. Relevé par comparaison ent
 | `update_prescription_draft` | `medecin-ordonnance.html:514` (même bouton, brouillon existant) | `prescriptions: false` | idem : toast d'erreur, rien d'écrit. |
 | `request_prescription_signature` | `medecin-ordonnance.html:564` (bouton « Signer ») | `prescriptions: false` | erreur avant même l'appel à l'edge `generate-prescription-pdf`, elle-même **non déployée**. La signature est impossible de bout en bout. |
 
-Point d'attention : le bouton « Ordonnance » est affiché dans le bandeau vert du tableau de bord médecin (vu le 12/09 sur le
-compte de test A) alors que la fonctionnalité est à `false` et que ses quatre RPC n'existent pas. C'est un cinquième candidat
-« faux succès » à mesurer : que dit l'écran quand un médecin clique « Enregistrer le brouillon » ?
+Point d'attention — **mesuré le 12/09** (compte B) : le bouton « Ordonnance » est affiché dans le bandeau vert du tableau de
+bord médecin alors que ses quatre RPC n'existent pas. La page `medecin-ordonnance.html` affiche un bandeau « Fonctionnalité
+bientôt disponible » et le clic sur « Sauvegarder brouillon », patient valide renseigné, **n'émet aucune requête** : le drapeau
+`prescriptions: false` bloque l'appel côté client avant qu'il n'atteigne `create_prescription_draft`. **Ce n'est donc pas un
+cinquième faux succès** — le bandeau prévient, le drapeau garde. Réserve : si `prescriptions` passe à `true` sans que ces 4 RPC
+ni l'edge `generate-prescription-pdf` existent, le bouton deviendra un vrai faux succès. Le drapeau est le seul garde-fou.
 
 ## B. Six edge functions appelées par le front et non déployées
 
