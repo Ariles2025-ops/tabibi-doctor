@@ -514,6 +514,38 @@ un second fournisseur choisi ; la clé `age` générée et déposée hors ligne 
 
 ---
 
+## 9 bis. Leçon du 12/09 : une règle métier vit à un seul endroit
+
+Le 12/09/2026, un patient a pu réserver un rendez-vous **un dimanche où le médecin est fermé**, à une heure **décalée
+d'une heure**, via le bouton « Prendre RDV » de l'accueil. La cause n'était pas une erreur isolée : c'était une **règle
+métier dupliquée**. La disponibilité — quels créneaux existent, tenant compte des horaires, des absences et des RDV déjà
+pris — était implémentée deux fois :
+
+- **`get_available_slots` (base)**, utilisée par `reservation.html` : correcte, ancrée sur `Africa/Algiers`.
+- **une grille codée en dur (`js/home-app.js`)**, utilisée par le quick-book de l'accueil : `["08:00",…,"16:30"]`, une date
+  par défaut au lendemain, un parsing du créneau dans le fuseau du navigateur. Elle ignorait `working_hours`, les absences,
+  le jour d'ouverture, et le fuseau.
+
+Les deux se sont contredites, et c'est la mauvaise qui a servi au chemin le plus visible. **Le principe d'architecture qui
+en découle, et qui doit guider la cible :** une règle métier — disponibilité, tarif, éligibilité, quota — a **une seule
+implémentation de référence**, et tous les fronts l'appellent. Ils ne la ré-implémentent pas « pour aller vite côté client ».
+
+Concrètement, dans la cible :
+
+1. La disponibilité reste dans la base (`get_available_slots`) et, depuis le 12/09, une **garde en base**
+   (`enforce_appointment_availability`, migration `20260912_garde_disponibilite_rdv.sql`) refuse toute écriture hors
+   disponibilité — le vrai point unique d'application, valable pour le web, le mobile Capacitor, le secrétariat et l'API.
+   Aucun front ne peut plus la contourner, même par bug.
+2. Les fronts (web, Astro public, React pro, app mobile) **consomment** cette règle via une RPC ou l'API Hono ; ils n'en
+   gardent pas de copie. Un « cache optimiste » côté client est acceptable pour l'affichage, jamais comme source de vérité
+   d'une écriture.
+3. Toute grille, tout barème, toute condition d'éligibilité recopiés dans un front sont une dette : ils divergeront. Le
+   bug du 12/09 est la démonstration coûteuse de ce qui arrive alors.
+
+Corollaire pour le fuseau horaire : une seule fonction convertit heure locale ⟷ UTC, ancrée sur `Africa/Algiers`
+(`tabibi-booking.js` le fait ; le quick-back de l'accueil ne le faisait pas, d'où le décalage). Le fuseau est une règle,
+lui aussi, et il vit à un seul endroit.
+
 ## 9. Ce qui n'a pas été mesuré
 
 - Les tailles de bundle SvelteKit et le plancher React 19 : valeurs publiques, non compilées ici.
