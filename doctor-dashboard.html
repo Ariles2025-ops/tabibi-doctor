@@ -551,8 +551,21 @@ async function fetchDoctorRdvsFromSupabase(){
     }
     if (!userId) return null;
 
+    // [ID-ESPACE 2026-09-12] appointments.doctor_id porte doctor_profiles.id, PAS
+    // l'identifiant de compte. Cette fonction interrogeait avec userId : elle ne
+    // trouvait donc jamais rien, et comme refreshDoctorRdvs() l'utilise pour
+    // « Aujourd'hui », l'agenda ET « Mes RDV », les trois vues du médecin étaient
+    // aveugles. Mesuré le 12/09 sur un vrai RDV : 0 ligne par identifiant de
+    // compte, 1 par identifiant de fiche. On résout la fiche comme le font déjà
+    // les deux autres appels de ce fichier (badge de validation, blocages).
+    let docId = null;
+    if (window.tabibiDoctor && typeof window.tabibiDoctor.getMyDoctorId === 'function') {
+      docId = await window.tabibiDoctor.getMyDoctorId();
+    }
+    if (!docId) return null;   // médecin sans fiche liée : aucun RDV ne peut lui être rattaché
+
     // RDV où ce médecin est le destinataire
-    const url = SB_URL + '/rest/v1/appointments?select=*&doctor_id=eq.' + encodeURIComponent(userId) + '&order=scheduled_at.asc';
+    const url = SB_URL + '/rest/v1/appointments?select=*&doctor_id=eq.' + encodeURIComponent(docId) + '&order=scheduled_at.asc';
     const res = await fetch(url, { headers: { apikey: SB_KEY, Authorization: 'Bearer ' + token } });
     if (!res.ok) {
       console.warn('[Tabibi/doctor] fetchDoctorRdvs HTTP', res.status);
