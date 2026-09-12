@@ -18,8 +18,11 @@
 name: verification
 
 on:
-  pull_request:
-    branches: [main]
+  # [12/09/2026] verification.yml ne tournait que pour les PR ciblant main et les push sur main.
+  # Douze PR ciblant la branche d'integration #56 sont passees sans aucun controle automatique.
+  # Desormais : TOUTE pull request, quelle que soit sa base (#56, une branche de pile, etc.),
+  # declenche la verification ; et tout push sur main.
+  pull_request:        # aucune restriction de branche de base -> toutes les PR
   push:
     branches: [main]
 
