@@ -73,6 +73,43 @@ PR du chantier vers #56, puis #56 vers `main`) reste valable telle quelle.
    `appointment_slot_is_available` présentes (2). Le cas « médecin cale une urgence » n'est pas testable en conditions réelles
    tant que le parcours médecin n'existe pas en RLS (aucune policy d'INSERT n'autorise `patient_id <> auth.uid()` — trou
    produit noté dans `VERIF_NAVIGATEUR.md`).
+3. **Mesure du 12/09 au soir : la garde n'est PAS en base.** `pg_proc` ne connaît aucune fonction
+   `appointment_slot_is_available` et `pg_trigger` aucun `trg_appointments_zz_enforce_availability` ;
+   les neuf triggers actifs sur `public.appointments` sont ceux d'avant #73. Le fichier de migration est
+   bien sur `main` et son transaction est un `begin … commit` correct, donc le contenu n'est pas en cause.
+   Tant que ce n'est pas appliqué, l'étape 3b de `docs/RECETTE_VAGUE_2026-09.md` (cas négatifs) ne peut pas
+   passer : seul l'EXCLUDE couvre encore le double-booking, rien ne couvre le jour fermé.
+   Script prêt à coller : `garde_a_executer.sql`, avec son contrôle `fonction=1, trigger=1`.
+
+## 1 ter. Règle du 12/09 — le SQL d'une PR s'applique **avant ou avec** son front, jamais après
+
+**La règle.** Une PR qui contient à la fois du SQL et du front n'est pas « fusionnée » quand sa branche est fusionnée.
+Elle est fusionnée quand sa migration est appliquée en base **et** que son front est en ligne, dans cet ordre.
+Fusionner le front seul met le produit dans un état où l'écran appelle un objet qui n'existe pas.
+
+**Le cas qui l'a enseignée : #57.** Sa branche portait `20260909_c1a_rpc_praticiens.sql` (six RPC :
+`chercher_praticiens`, `praticien`, `praticiens_par_ids`, `praticiens_carte`, `stats_publiques`, `seo_couples`)
+et le front qui les appelle. La branche a été fusionnée dans #56 le 12/09 ; la migration, elle, ne l'était pas.
+Résultat mesuré sur `localhost:8080` servant #56 : `POST /rest/v1/rpc/chercher_praticiens` → **404 PGRST202**,
+la recherche publique de praticiens ne rendait plus rien. La production n'était pas touchée : elle servait
+encore l'ancien code, qui lisait la vue `public_doctors` directement. Le défaut n'existait que sur la vague.
+1A a été appliquée le 12/09 ; après application, `stats_publiques` rend 200 et `chercher_praticiens`
+avec un filtre wilaya rend des lignes réelles.
+
+**Ce qu'on fait à chaque fusion, désormais.**
+1. Avant de fusionner une branche, lister ses fichiers sous `supabase/migrations/`.
+2. Pour chaque migration, vérifier en base que ses objets existent (fonction, trigger, policy, privilège) —
+   la présence du fichier dans le dépôt ne prouve rien, seule la base fait foi.
+3. Si un objet manque : appliquer la migration **d'abord**, prouver l'objet, puis fusionner le front.
+4. Une migration qui *retire* un accès (comme 1B, qui ferme `public_doctors` à `anon`) suit la règle inverse :
+   elle s'applique **après** que tous ses appelants soient passés au nouveau chemin, jamais avant.
+5. Avant une recette de vague, refaire le tour complet des migrations de la branche d'intégration.
+   Découvrir un objet manquant pendant un parcours coûte le parcours entier.
+
+**Corollaire.** « La migration a été lancée » n'est pas une preuve. Le contrôle est une requête sur les catalogues
+(`pg_proc`, `pg_trigger`, `pg_policies`, `information_schema.role_table_grants`) qui rend l'objet.
+Un script de preuve enveloppé dans `begin … rollback` affiche un succès et ne laisse rien derrière lui.
+
 
 ## 2. Topologie
 
