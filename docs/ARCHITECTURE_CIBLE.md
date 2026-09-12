@@ -546,6 +546,47 @@ Corollaire pour le fuseau horaire : une seule fonction convertit heure locale �
 (`tabibi-booking.js` le fait ; le quick-back de l'accueil ne le faisait pas, d'où le décalage). Le fuseau est une règle,
 lui aussi, et il vit à un seul endroit.
 
+## 9 ter. Corollaire du 13/09 : le fuseau du cabinet est une règle métier, pas un détail d'affichage
+
+Même leçon que le §9 bis, sur un autre objet. Le 13/09/2026, en vérifiant #78, le tableau de bord médecin
+affichait **11:00** pour un rendez-vous que le côté patient affichait **10:00**. Le même rendez-vous, la
+même minute, deux écrans, deux heures.
+
+La cause est une règle métier laissée à chaque appelant. `normDoctorRow` fait :
+
+```js
+const dt   = new Date(r.scheduled_at);
+const date = dt.toISOString().split('T')[0];         // la DATE en UTC
+const time = String(dt.getHours()).padStart(2,'0');  // l'HEURE dans le fuseau de la machine
+```
+
+Deux fuseaux dans deux lignes voisines, et aucun des deux n'est celui du cabinet. Conséquences mesurées :
+
+- sur une machine à Paris (UTC+2 en été), toutes les heures du tableau de bord sont décalées d'une heure
+  par rapport à Alger ;
+- entre minuit et l'heure du décalage UTC, la date bascule à la veille : la bande de semaine affichait
+  « lun. 7 … dim. 13 » alors que chaque cellule chargeait le jour précédent, et l'agenda s'ouvrait sur
+  samedi 12 un dimanche 13.
+
+**Le principe.** `Africa/Algiers` n'est pas une préférence d'affichage, c'est le fuseau **du cabinet** :
+c'est lui qui définit ce qu'est « lundi matin » pour un médecin algérien et pour son patient. À ce titre
+c'est une règle métier, et le §9 bis s'applique : **une seule implémentation de référence**.
+
+Dans la cible :
+
+1. Un **utilitaire partagé** — un seul — convertit un instant en date et heure du cabinet, et inversement.
+   Tous les fronts l'appellent : web v1, Astro public, React pro, app mobile.
+2. **Aucun `getHours()`, aucun `toISOString().split('T')[0]` sur une date locale** dans du code qui produit
+   une date ou une heure affichée à un utilisateur. Ce sont les deux motifs à traquer.
+3. La base reste la référence : elle stocke en `timestamptz` et `get_available_slots` ancre déjà sur
+   `Africa/Algiers`. Le front ne doit pas réinventer cette conversion, il doit la refléter.
+4. Le jour où Tabibi sortira d'Algérie, le fuseau deviendra une **propriété du cabinet** et non une
+   constante. Passer par un utilitaire aujourd'hui, c'est rendre ce changement possible plus tard sans
+   parcourir tout le dépôt.
+
+Le détail des quatre défauts constatés est dans `docs/FICHE_TABLEAU_DE_BORD_HEURE_ET_COMPTES.md`.
+
+
 ## 9. Ce qui n'a pas été mesuré
 
 - Les tailles de bundle SvelteKit et le plancher React 19 : valeurs publiques, non compilées ici.
