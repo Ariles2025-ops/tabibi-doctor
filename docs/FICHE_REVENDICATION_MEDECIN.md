@@ -7,7 +7,7 @@
 
 ## 1. Le fait de départ
 
-`doctor_profiles.user_id` est **nul sur les 75 034 lignes**. 28 comptes ont le rôle `medecin`, aucun
+`doctor_profiles.user_id` est **nul sur les 75 034 lignes**. 29 comptes portent le rôle `medecin`, aucun
 n'est relié à une fiche. Toute règle d'accès « le médecin propriétaire » compare `doctor_profiles.user_id`
 à `auth.uid()` : aujourd'hui elle ne correspond à personne, et le modèle d'accès médecin n'a **jamais
 été exercé** en production.
@@ -223,12 +223,15 @@ retirer le toast qui invite à créer.
 > et `signup.html` ne crée que des comptes sans e-mail : aucun utilisateur inscrit ainsi ne peut réinitialiser son mot de passe.
 > Bloquant produit avant le congrès (détail en §9.1, correctif 1 ter).
 
-Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
+Mesuré le 12/09/2026 sur `auth.users`, rôle lu dans `raw_user_meta_data->>'role'`, hors les 3 comptes de test.
+(Le repère « 28 médecins / 11 patients » d'un premier relevé du 11/09 venait d'une jointure `auth.users` × `public.users`
+qu'aucune table ne reproduit — `public.users` est creuse. Les nombres ci-dessous sont les repères robustes : total des
+fiches 75 034, `auth.users` hors test 41.)
 
 | Comptes | Total | Téléphone seul (e-mail nul) | E-mail seul | Les deux |
 |---|---|---|---|---|
-| médecins | 28 | **1** (le compte connecté au tableau de bord, créé le 31/07) | 26 | 1 |
-| patients | 11 | 2 | — | — |
+| médecins | 29 | **1** (le compte connecté au tableau de bord, créé le 31/07) | 27 | 1 |
+| patients | 7 | 2 | 5 | — |
 
 - **L'inscription actuelle crée des comptes téléphone seul** : `signup.html:397` appelle
   `auth.signUp({ phone, password })` et écrit `email: NULL` (`:474`). Les 26 comptes médecin « e-mail
@@ -269,9 +272,9 @@ Mesuré le 11/09/2026 (`auth.users` joint à `public.users`).
   médecin.
   **Mesuré le 12/09 — c'est un bloquant produit, pas un détail d'e-mail.** Le champ refuse les numéros de téléphone
   (« Email invalide », aucune requête ne part) et `signup.html` ne crée que des comptes téléphone, sans e-mail : aujourd'hui
-  1 médecin sur 28 et 2 patients sur 11 (tableau ci-dessus), mais **chaque compte créé par l'inscription actuelle, donc tous
+  1 médecin sur 29 et 2 patients sur 7 (tableau ci-dessus), mais **chaque compte créé par l'inscription actuelle, donc tous
   ceux du congrès, sera dans ce cas**. Conséquence : **aucun utilisateur inscrit par le formulaire ne peut réinitialiser son
-  mot de passe** par le parcours prévu ; les 26 médecins à e-mail sont des comptes anciens, créés hors de ce formulaire. Un
+  mot de passe** par le parcours prévu ; les 27 médecins à e-mail sont des comptes anciens, créés hors de ce formulaire. Un
   e-mail inexistant donne HTTP 400 `captcha_failed` (navigateur intégré) ou HTTP 200 `{}` (Chrome), et dans les deux cas le
   bandeau « vous recevrez un lien » — ce bandeau sur un 400 est le quatrième faux succès (VERIF_NAVIGATEUR.md).
   Preuve : `docs/preuves/2026-09-12_forgot-password_mesure.md`.
