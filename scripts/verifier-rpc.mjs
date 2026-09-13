@@ -132,7 +132,11 @@ async function pgProc() {
 // 56 -> 55 le 13/09/2026, lot 2a : js/tabibi-dawini.js:443, le seul site du
 // depot qui declarait ACTIVEMENT un succes sur un echec (`return { ok:true }`
 // hors de tout test du retour).
-const PLAFOND_RPC_DIRECT = 55;
+// 55 -> 53 le 13/09/2026, lot 2b : teleconsultation.html:549 et :598, les deux
+// seuls sites ou une ecriture refusee ne laissait AUCUNE trace — ni dans
+// `error` de transport (la RPC refuse par un jsonb {"error":…} sans lever), ni
+// dans un rejet (supabase-js resout, le `.catch` etait mort).
+const PLAFOND_RPC_DIRECT = 53;
 
 function appelsDirects() {
   const par = {};
