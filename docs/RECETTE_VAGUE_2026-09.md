@@ -55,6 +55,23 @@ retournee contre lui.
 | absente de la liste ET de `package.json` | sautee, signalee « pas encore obligatoire » |
 | presente dans la liste ET absente de `package.json` | **ROUGE, sortie 1** |
 
+**Et les portes ATTENDUES sont une LISTE DECLAREE, pas un commentaire.** `PORTES_A_VENIR` est
+imprimee a chaque passage :
+
+```
+  2 porte(s) attendue(s), pas encore obligatoire(s) : verifier:rpc, verifier:catch
+      verifier:rpc       fix/garde-rpc — les RPC appelees existent en base
+      verifier:catch     docs/regle-suppression-et-20-catch — aucun catch muet sur une ecriture
+```
+
+C'etait une paire de commentaires. **Un commentaire depend de quelqu'un qui le lit : c'est
+`tail -1` en plus petit.** Si personne ne le decommente, la porte entre dans `main` et reste
+sautee en silence, le script restant vert. Une ligne de sortie qu'on voit, pas un commentaire
+qu'on oublie — et elle disparait d'elle-meme le jour ou la liste se vide.
+
+Une porte attendue qui EXISTE desormais est signalee **⇧ A PROMOUVOIR en obligatoire** : elle
+tourne sans plancher, donc elle pourrait disparaitre en silence plus tard.
+
 Une porte entre dans la liste le jour ou sa branche entre dans `main`. **La liste des sautees doit
 MAIGRIR, jamais grossir.**
 
