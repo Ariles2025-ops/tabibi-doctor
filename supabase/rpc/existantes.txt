@@ -1,0 +1,43 @@
+# Les RPC appelees par le front QUI EXISTENT en base (public.*).
+# Reference versionnee, comparee au code par scripts/verifier-rpc.mjs (etage
+# structurel) et a pg_proc par le meme script en --base.
+# Regeneree par : node scripts/verifier-rpc.mjs --base --ecrire
+accept_cabinet_invitation
+admin_doctor_doc_paths
+admin_validate_doctor
+admin_validation_counts
+admin_validation_list
+admin_validation_total
+can_review_doctor
+chercher_praticiens
+claim_my_doctor_profile
+dawini_cancel_alert
+dawini_create_alert
+dawini_create_request
+dawini_expire_old
+dawini_get_patient_contact
+dawini_pharmacy_stats
+dawini_respond
+dawini_shortage_by_wilaya
+dawini_top_missing
+doctor_set_ordre_number
+ensure_conversation
+generate_api_key_pair
+get_available_slots
+get_my_cabinets
+get_my_doctor_profile
+get_patient_medical_data
+get_video_session
+invite_cabinet_member
+mark_video_session_ended
+mark_video_session_started
+praticien
+praticiens_par_ids
+remove_cabinet_member
+revoke_api_key
+rotate_api_key
+seo_couples
+set_video_recording_consent
+stats_publiques
+update_my_doctor_profile
+upsert_patient_medical_data

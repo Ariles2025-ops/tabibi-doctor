@@ -4,6 +4,43 @@
 > `|| 'Pending'` et que le bouton qui annonce sans agir : **un defaut qui se presente comme un etat
 > normal.**
 
+## L'angle mort de cet inventaire : le SQL
+
+**Ce document ne compte que le JavaScript.** `EXCEPTION WHEN OTHERS THEN NULL` est l'orthographe
+Postgres de `catch(e){}`, et aucune des 226 lignes ci-dessous ne le voit.
+
+Exemple trouve le 13/09/2026 dans `public.accept_cabinet_invitation` :
+
+```sql
+BEGIN
+  INSERT INTO public.audit_log(actor_id, action, target_type, target_id, payload)
+  VALUES (v_user, 'cabinet_member:accept', 'cabinet', p_cabinet_id,
+          jsonb_build_object('role', v_role));
+EXCEPTION WHEN OTHERS THEN NULL; END;
+```
+
+Le handler avale l'echec de l'ecriture du **journal d'audit** — la trace que la loi 25-11 exige.
+L'adhesion est enregistree, l'audit ne l'est pas, et rien ne le dit.
+
+Mesure en cours : `scratchpad/catch-sql-mesure.sql`, en lecture seule, a lancer par Aghiles.
+Quatre requetes : les fonctions porteuses d'un `EXCEPTION WHEN OTHERS`, le compte global, le corps
+exact des handlers pour les qualifier a la main, et **celles qui ecrivent dans `audit_log` avec un
+handler nu**.
+
+## Un defaut voisin, trouve en lisant la meme fonction
+
+`accept_cabinet_invitation` rend `{"error": "no_pending_invitation"}` quand l'UPDATE ne touche
+**aucune** ligne — elle ne ment pas. Mais `signup.html:499` ne lit que `acceptRes.error`, qui est
+l'erreur de **transport** du client PostgREST, pas le contenu de la reponse. Un appel qui reussit en
+renvoyant `{"error": ...}` a `acceptRes.error === null`.
+
+Le code enchaine donc sur `_persistAndGo(..., "secretaire", "active", ...)`, le toast
+« Compte cree avec succes ! » et la redirection vers le tableau de bord secretaire — **sans aucune
+adhesion au cabinet**. Idem pour `not_authenticated`.
+
+Ce n'est pas un `catch` muet : c'est **la mauvaise moitie de la reponse qui est lue**. Meme famille,
+autre mecanisme — la fonction dit non, personne ne l'ecoute.
+
 ## Le compte
 
 **465 blocs `catch` dans le depot. 226 n'ecrivent RIEN** — ni `console.warn/error`, ni

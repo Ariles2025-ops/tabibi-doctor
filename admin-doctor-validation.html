@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-rpc.js"></script><script src="js/tabibi-security.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="description" content="Validation des médecins — Administration Tabibi.">
 <link rel="canonical" href="https://tabibi.doctor/admin-doctor-validation.html">
@@ -368,8 +368,16 @@ async function doValidate(){
   const sb=window.tabibi&&window.tabibi.supabase;
   if(!sb){toastM('Supabase indisponible','error');return;}
   try{
-    const{error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'validate',p_notes:null});
+    // [13/09/2026] Ce code ne capturait meme pas `data`. admin_validate_doctor rend
+    // son refus DANS la reponse : {"ok":false,"error":"not_admin"} ou
+    // {"ok":false,"error":"reason_required"}. L'appel REUSSIT au sens du transport,
+    // donc `error` etait null, et le code enchainait sur l'ENVOI D'UN E-MAIL
+    // « votre fiche est validee » au medecin — alors que rien n'etait valide en base.
+    // Le mensonge sortait de l'application et atteignait un tiers.
+    const{data,error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'validate',p_notes:null});
     if(error)throw error;
+    if(data&&data.error)throw new Error(data.error);
+    if(data&&data.ok===false)throw new Error('refus');
     if(window.tabibiBrevo){
       try{
         const fn=name.replace(/^dr\.?\s*/i,'').split(' ')[0]||name;
@@ -423,8 +431,13 @@ async function doReject(){
   const sb=window.tabibi&&window.tabibi.supabase;
   if(!sb){toastM('Supabase indisponible','error');return;}
   try{
-    const{error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'reject',p_notes:reason});
-    if(error)throw error;
+      // Meme defaut que la validation, et meme consequence : un e-mail de REJET
+      // partait vers le medecin alors que rien n'etait ecrit en base. reason_required
+      // et not_admin sont rendus dans la reponse, pas en erreur de transport.
+      const{data,error}=await sb.rpc('admin_validate_doctor',{p_doctor_id:id,p_action:'reject',p_notes:reason});
+      if(error)throw error;
+      if(data&&data.error)throw new Error(data.error);
+      if(data&&data.ok===false)throw new Error('refus');
     if(window.tabibiBrevo){
       try{
         const fn=name.replace(/^dr\.?\s*/i,'').split(' ')[0]||name;
