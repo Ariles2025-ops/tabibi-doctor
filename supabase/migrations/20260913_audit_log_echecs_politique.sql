@@ -13,9 +13,19 @@
 -- en silence le jour ou elle la rallume.
 --
 -- Elle a ZERO politique, donc refus par defaut. Les ecritures de rebut passent
--- quand meme — mesure faite — mais elles passent grace a l'attribut de role
--- BYPASSRLS de `postgres`. C'est une propriete AMBIANTE : rien dans le schema
+-- quand meme — mais grace a l'attribut de role BYPASSRLS de `postgres`, pas
+-- grace a quoi que ce soit de declare. Propriete AMBIANTE : rien dans le schema
 -- ne dit que cette table accepte les ecritures, et personne ne peut le lire.
+--
+-- CE QUI JUSTIFIE CE FICHIER N'EST PAS CE RAISONNEMENT, C'EST LA MESURE
+-- (20260913_politique_sans_bypassrls.sql, lancee en production, transaction
+-- annulee). Un role NOLOGIN SANS BYPASSRLS, non proprietaire, possedant une
+-- fonction SECURITY DEFINER, FORCE actif :
+--     E1  sans politique -> REFUSE 42501 « new row violates row-level security
+--                           policy » — la RLS agit reellement sur ce role ;
+--     E2  avec politique -> ABOUTI.
+-- LA POLITIQUE PORTE L'ECRITURE ; BYPASSRLS ne fait que la masquer. Sans cette
+-- mesure, ce fichier declarerait une permissivite qu'on n'a jamais vue agir.
 --
 --   CE QUI DEPEND DE L'AMBIANCE N'EST PAS DECIDE, IL EST SUBI.
 --

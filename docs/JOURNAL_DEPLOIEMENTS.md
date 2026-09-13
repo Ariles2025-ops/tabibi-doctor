@@ -49,7 +49,8 @@ Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauve
 | # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
 |---|---|---|---|---|---|---|
 | B1 | 2026-09-13 ~14:45 UTC | `20260913_reparation_plpgsql_check.sql` — 15 `CREATE OR REPLACE` | `8e3b05d` (fichier), `e3f1956` (retour arrière) | `20260913_reparation_RETOUR_ARRIERE.sql`, capture `pg_get_functiondef` du 13/09 14:22 UTC, fraîcheur prouvée par 15 empreintes `md5` → 0 ligne | `20260913_reparation_VERIFICATION.sql` → **0 ligne** | Aghiles |
-| B2 | 2026-09-13 ~15:20 UTC | `20260913_audit_log_echecs.sql` — table de rebut | `400f464` | `DROP TABLE public.audit_log_echecs` (additive, aucune donnée) | 5 contrôles sur 6 conformes — **1 divergence ouverte : `rls_active`** | Aghiles |
+| B3 | 2026-09-13 ~17:00 UTC | `20260913_audit_log_echecs_politique.sql` — déclarer la permissivité | `d5501e3` | `DROP POLICY audit_log_echecs_insert_permissif ON public.audit_log_echecs` | politique en place — **2 contrôles restants** (voir B3) | Aghiles |
+| B2 | 2026-09-13 ~15:20 UTC | `20260913_audit_log_echecs.sql` — table de rebut | `400f464` | `DROP TABLE public.audit_log_echecs` (additive, aucune donnée) | 6 contrôles conformes — **divergence `rls_active` refermée par mesure** | Aghiles |
 | B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
 
 ### B1 — les cinq mesures fonctionnelles, 13/09/2026
@@ -89,9 +90,30 @@ Appliquée au deuxième essai. Le premier a échoué sur `FATAL 53300 — too ma
 **Conforme :** `existe` = 1 · droits `anon`/`authenticated`/`PUBLIC` = **AUCUN** · aucune clé
 étrangère · aucun déclencheur · aucune politique.
 
-**Divergence :** `rls_active` = **TRUE**, attendu `false`. La migration ne contient aucun
-`ENABLE ROW LEVEL SECURITY` — vérifié par analyse du texte, pas par relecture. **Cause non établie à
-ce jour.** Diagnostic prêt : `supabase/mesures/20260913_rls_cause.sql`.
+**Divergence, désormais REFERMÉE par mesure.** `rls_active` = **TRUE**, attendu `false`, alors que la
+migration ne contient aucun `ENABLE ROW LEVEL SECURITY` (vérifié par analyse du texte).
+
+*Cause, mesurée et non déduite.* Un `CREATE TABLE public.temoin (id int)` nu, relu dans la même
+transaction annulée, sort déjà en `relrowsecurity = true`. Les 7 déclencheurs d'événement du projet
+concernent `pg_cron`, `pg_graphql`, `pg_net` et PostgREST — aucun ne mentionne `row level security`.
+**Toutes les explications au niveau SQL sont donc éliminées** : l'activation a lieu en dessous, dans
+une bibliothèque préchargée. `supautils` est l'hypothèse — les GUC `supautils.*` sont présents — et
+elle est écrite comme hypothèse, pas comme fait.
+
+*Ce n'est pas propre à cette table.* `public` compte **55 tables, 55 avec RLS active, 0 sans**. Les
+15 dernières créées sont toutes à `true`.
+
+*La trouvaille « 20 tables en refus par défaut » se referme, elle aussi, sur une mesure et non sur
+une lecture.* Elles sont **19** — `audit_log_echecs` a quitté la liste, ce qui prouve au passage que
+la politique B3 est en place. Ces 19 sont **16 tables `api_usage_log_*`** (une par jour, du 18 mai au
+2 juin), **`appointment_notifications`**, **`prescription_seq_year`** et **`rate_limits`**. Droits
+`anon`/`authenticated` : **AUCUN sur les 19**. Le refus par défaut ne protège donc rien que les
+`REVOKE` ne ferment déjà : ce n'est pas un trou, c'est une **double fermeture sur des tables
+internes**. À consigner, pas à corriger.
+
+Deux lignes en sortent, indépendantes du rebut : l'arrêt net des `api_usage_log_*` au 2 juin
+(`supabase/mesures/20260913_api_usage_log_arret.sql`) et l'outbox `appointment_notifications`
+(`supabase/mesures/20260913_outbox_confirmations.sql`).
 
 #### La propriété critique, prouvée et non déduite
 
@@ -115,11 +137,51 @@ table` est un refus de **privilège**, pas de RLS : un refus RLS s'annonce
 RLS n'a jamais été mise à l'épreuve — elle est derrière le contrôle de droits, qui tranche en
 premier. La double fermeture existe ; une seule des deux a été exercée.
 
-**La fragilité que cette mesure révèle, et qui pèse sur le choix à venir.** La face 2 réussit parce
-que le propriétaire contourne la RLS. C'est une propriété **ambiante**, pas déclarée : un seul
-`ALTER TABLE … FORCE ROW LEVEL SECURITY` la supprimerait, et avec zéro politique, **toutes** les
-écritures de rebut échoueraient d'un coup. Elles échoueraient bruyamment — `42501` fait lever
-l'opération, ce n'est pas un piège silencieux — mais la fonction de la table serait perdue.
+**Le mécanisme réel, et ma correction.** J'avais écrit que la face 2 réussissait grâce à l'exemption
+du propriétaire, et qu'un `ALTER TABLE … FORCE ROW LEVEL SECURITY` ferait échouer toutes les
+écritures de rebut. **Mesure D1 : avec `FORCE` et zéro politique, l'écriture passe encore.** `FORCE`
+retire l'exemption du *propriétaire* ; il ne retire pas l'attribut de *rôle* `BYPASSRLS`, et
+`postgres` le porte. Le scénario de panne que je décrivais ne peut pas se produire.
+
+La conclusion survit, portée par autre chose que ce que je croyais : **ce qui porte l'écriture est
+`BYPASSRLS`** — plus solide que l'exemption du propriétaire, et toujours pas déclaré. Rien dans le
+schéma ne dit que cette table accepte les écritures. D'où B3.
+
+---
+### B3 — déclarer la permissivité, et la mesure qui la justifie
+
+La politique existe : `audit_log_echecs` a **quitté** la liste des tables « RLS active, zéro
+politique », qui est passée de 20 à 19. C'est une preuve d'état, pas une lecture de fichier.
+
+**Ce qui justifie B3 n'est pas un raisonnement mais la mesure E1/E2**
+(`20260913_politique_sans_bypassrls.sql`, lancée en production, transaction annulée). Un rôle
+`NOLOGIN` **sans `BYPASSRLS`**, non propriétaire, possédant une fonction `SECURITY DEFINER`, avec
+`FORCE` actif :
+
+| | | |
+|---|---|---|
+| **E1** | sans politique | **REFUSÉ `42501` — `new row violates row-level security policy`** |
+| **E2** | avec politique | **ABOUTI** |
+
+**La politique porte l'écriture ; `BYPASSRLS` ne fait que la masquer.** Sans cette mesure, B3
+déclarait une permissivité qu'on n'avait jamais vue agir.
+
+Le `SQLSTATE` de E1 est le même `42501` que le refus du matin, mais **le message diffère** :
+`permission denied for table` (refus de privilège) contre `new row violates row-level security
+policy` (refus de RLS). C'est la première fois de la journée que la RLS est **réellement exercée**
+sur cette table — tous les refus précédents s'arrêtaient au contrôle de droits, qui tranche avant.
+Le dispositif accorde délibérément `INSERT` au rôle témoin pour cette raison : sans ce `GRANT`, E1
+aurait échoué sur les privilèges et n'aurait rien appris.
+
+*Deux corrections d'Aghiles ont été nécessaires pour que la mesure atteigne E1* (appartenance au rôle
+créé, puis `CREATE` sur le schéma pour le transfert de propriété). Elles restent dans le fichier,
+commentées. Ni l'appartenance ni `CREATE` sur un schéma ne sont `BYPASSRLS` ou une exemption de
+politique — et `E1 refuse`, ce qui le prouve à l'exécution plutôt qu'au raisonnement.
+
+**Deux contrôles restent à faire** sur B3, que la sortie du bloc 1 ne couvre pas : que la politique
+soit bien `FOR INSERT` (`polcmd = 'a'`), et surtout que `droits_anon_authenticated` vaille toujours
+**AUCUN** — la preuve que poser une politique permissive n'a **rien ouvert**. Quitter la liste des
+« zéro politique » prouve qu'une politique existe, pas laquelle.
 
 ---
 **Règles de la colonne « Cible de retour » :**
