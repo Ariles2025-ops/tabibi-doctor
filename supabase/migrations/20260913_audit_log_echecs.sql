@@ -15,7 +15,7 @@
 --   - AUCUNE cle etrangere. Un utilisateur supprime ne doit pas faire echouer
 --     le rebut de sa propre trace.
 --   - AUCUN declencheur. Rien qui puisse lever pendant l'ecriture de secours.
---   - AUCUNE RLS. Aucune politique a evaluer, donc aucune politique a refuser.
+--   - AUCUNE RLS -- CE POINT S'EST REVELE FAUX A L'APPLICATION, voir plus bas.
 --   - AUCUNE colonne NOT NULL au-dela de l'identite et de l'horodatage. Une
 --     contrainte non satisfaite est un mode de panne de plus.
 --   - AUCUN compteur, nulle part. Un nombre qui monte dit qu'il s'est passe
@@ -34,6 +34,38 @@
 -- pas au proprietaire, et les fonctions qui ecriront ici sont SECURITY DEFINER.
 -- RLS et GRANT sont deux mecanismes differents ; on retire le second sans
 -- reintroduire le premier.
+--
+-- ---------------------------------------------------------------------
+-- CE QUE L'APPLICATION A REVELE, LE 13/09/2026 — en-tete corrige APRES mesure
+-- ---------------------------------------------------------------------
+-- Ce fichier ne contient aucun `ENABLE ROW LEVEL SECURITY` (verifie par analyse
+-- du texte). La table creee a pourtant `relrowsecurity = true`.
+--
+-- CAUSE, mesuree et non deduite : un `CREATE TABLE public.temoin (id int)` nu,
+-- relu dans la meme transaction annulee, sort deja en `relrowsecurity = true`.
+-- Aucun declencheur d'evenement n'y touche (les 7 existants concernent pg_cron,
+-- pg_graphql, pg_net et PostgREST ; aucun ne mentionne « row level security »).
+-- Toutes les explications au niveau SQL sont donc ELIMINEES : l'activation a
+-- lieu en dessous, dans une bibliotheque prechargee. `supautils` est
+-- l'hypothese — les GUC `supautils.*` sont presents — pas un fait mesure.
+--
+-- CE N'EST PAS PROPRE A CETTE TABLE : `public` compte 55 tables, 55 avec RLS
+-- active, 0 sans. Vingt sont en refus par defaut (zero politique).
+-- Cf. docs/CARTE_RLS_SANS_POLITIQUE.md.
+--
+-- LA SPECIFICATION TIENT-ELLE QUAND MEME ? Oui, mesure :
+--   - un role `authenticated` ecrivant EN DIRECT est refuse `42501 permission
+--     denied for table` — un refus de PRIVILEGE, pas de RLS : ce sont les
+--     REVOKE ci-dessous qui ferment la porte, et ils tranchent AVANT la RLS ;
+--   - le meme role, via une fonction SECURITY DEFINER au regime des sept,
+--     ECRIT, et la ligne se relit.
+-- La RLS active ne bloque pas le rebut.
+--
+-- MAIS CE QUI PORTE L'ECRITURE N'EST PAS DECLARE : c'est l'attribut de role
+-- BYPASSRLS de `postgres`. Meme `FORCE ROW LEVEL SECURITY` ne l'enleve pas
+-- (mesure : avec FORCE et zero politique, l'ecriture passe encore). Une
+-- propriete subie, pas decidee — cf. la regle du meme nom. La migration
+-- 20260913_audit_log_echecs_politique.sql declare cette permissivite.
 -- =====================================================================
 
 CREATE TABLE IF NOT EXISTS public.audit_log_echecs (

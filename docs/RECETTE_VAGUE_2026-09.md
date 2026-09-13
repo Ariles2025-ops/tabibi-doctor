@@ -172,6 +172,29 @@ B remarche immediatement et laisse la dependance intacte : **la correction elle-
 l'etat ambiant**. Le jour ou quelqu'un resserre un `search_path` — comme le 09/09 — tout recasse,
 en silence, et il faudra re-decouvrir la meme chose. A a ete retenue.
 
+**Un quatrieme cas, le 13/09 au soir, et il se cache d'un cran plus bas que les trois autres.** La
+table de rebut `audit_log_echecs` est creee avec la RLS active — pas par sa migration, qui ne
+contient aucun `ENABLE ROW LEVEL SECURITY`, mais par la plateforme, **en dessous du SQL** : un
+`CREATE TABLE public.temoin (id int)` nu, relu dans la meme transaction annulee, sort deja en
+`relrowsecurity = true`. Les 55 tables de `public` sont dans cet etat ; vingt sans aucune politique,
+donc en refus par defaut.
+
+Les ecritures de rebut passent quand meme. **Mais il a fallu deux mesures pour savoir pourquoi, et
+la premiere reponse etait fausse.** J'avais ecrit qu'un `FORCE ROW LEVEL SECURITY` les ferait toutes
+echouer, en supprimant l'exemption du proprietaire. Mesure : avec `FORCE` **et** zero politique,
+l'ecriture passe encore. `FORCE` retire l'exemption du **proprietaire** ; il ne retire pas l'attribut
+de **role** `BYPASSRLS`, et `postgres` le porte.
+
+La conclusion survit, portee par autre chose que ce que je croyais : **ce n'est pas l'exemption du
+proprietaire qui porte l'ecriture, c'est `BYPASSRLS`.** Plus solide, toujours pas declare. Rien dans
+le schema ne dit que cette table accepte les ecritures — on le devine. D'ou la correction retenue :
+ni desactiver la RLS (combat perdu d'avance contre la plateforme, et reperdu en silence le jour ou
+elle la rallume), ni la subir en l'ignorant, mais **declarer la permissivite** par une politique
+explicite. Elle ne change rien a ce qui se passe ; elle rend lisible ce qui n'etait que suppose.
+
+Lecon dans la lecon : **se tromper sur le mecanisme sans se tromper sur le risque reste se tromper.**
+Un raisonnement juste par accident ne protege que jusqu'a la prochaine fois.
+
 **C'est « une regle vit a un seul endroit » vu par l'autre bout.** Cette regle-la dit ou ecrire la
 decision ; celle-ci dit comment reconnaitre qu'on ne l'a pas ecrite du tout. Les deux se verifient
 de la meme facon : deplacer le code — un autre fuseau, un autre ordre de chargement, un autre
