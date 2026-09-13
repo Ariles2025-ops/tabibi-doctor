@@ -87,6 +87,23 @@ export default [
       // `toLocaleString` n'est pas interdit non plus : dans ce depot il formate des
       // NOMBRES (prix, compteurs), jamais des dates. L'interdire noierait le signal.
       'no-restricted-syntax': ['warn',
+        // [13/09/2026] VOLET 1 du ratchet tabibiRpc : interdire le destructuring
+        // d'un resultat de la passerelle. C'est la forme la plus dangereuse,
+        // parce qu'elle jette `ok` AU NIVEAU DE LA SYNTAXE :
+        //     const { data } = await tabibiRpc('x', {});   // `ok` est perdu
+        // Le contrat est { ok, data, erreur } avec data:null des que ok est faux ;
+        // destructurer `data` seul rend un null qu'on croira vide, pas refuse.
+        //
+        // Le VOLET 2 — « lit .data sans avoir teste .ok » — demande une analyse de
+        // portee, donc une regle personnalisee. Il attend qu'il y ait des sites a
+        // garder : aujourd'hui zero site passe par la passerelle.
+        {
+          selector: "VariableDeclarator[init.type='AwaitExpression'][init.argument.callee.name='tabibiRpc'] > ObjectPattern",
+          message:
+            'Ne destructurez pas un resultat tabibiRpc : `ok` serait perdu. '
+            + 'Liez le resultat, puis branchez dessus : '
+            + 'const r = await tabibiRpc(...); if (!r.ok) { ...; return; }',
+        },
         ...['getHours', 'getMinutes', 'getDate', 'getDay', 'getMonth', 'getFullYear',
             'toLocaleTimeString', 'toLocaleDateString'].map((m) => ({
           selector: `MemberExpression[property.name='${m}']`,

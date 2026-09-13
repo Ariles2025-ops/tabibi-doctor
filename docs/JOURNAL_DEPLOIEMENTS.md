@@ -1,5 +1,27 @@
 # Journal des déploiements — tabibi.doctor
 
+## ⚠️ 13/09/2026 — LA PORTE EST OUVERTE SUR UN AUTRE HOTE
+
+**Constaté :** `https://effulgent-kelpie-e48e81.netlify.app` et chaque *Deploy Preview* de PR
+servent **l'application complète, porte ouverte** — recherche, prise de rendez-vous, connexion,
+téléchargement APK — **branchée sur la base de PRODUCTION** (même clé anon, même projet).
+
+**Toutes les entrées « porte fermée » des déploiements 1 à 9 de ce journal ne valent que pour
+Cloudflare Pages.** Elles sont vraies pour l'hôte qu'elles décrivent et fausses pour l'ensemble.
+
+**Pourquoi**, mesuré : `netlify.toml:6` porte `publish = "."` et **aucune `command`**. Netlify sert
+la racine du dépôt telle quelle. Or la porte n'est pas dans le code : `scripts/porte.mjs` copie
+`porte/porte-fermee.html` **par-dessus `dist-web/index.html`, après le build**, et seule la procédure
+manuelle `wrangler` l'exécute. À la racine, `index.html` est l'application entière — 115 765 octets.
+
+**La porte n'est pas une propriété du code. C'est une propriété d'UN geste de déploiement.** Tout
+hébergeur qui sert le dépôt sans passer par ce geste sert l'application ouverte.
+
+Action à Aghiles : supprimer ou déconnecter le ou les sites Netlify. Analyse et proposition dans
+`.claude/RETOUR.md` du 13/09.
+
+---
+
 Une ligne par déploiement de production, à partir du 13/09/2026. Avant cette date, les déploiements
 n'étaient consignés nulle part : c'est ce qui a permis à la production de rester dix-huit jours sur un
 état que `main` ne décrivait plus (cf. `PLAN_FUSION.md` §3 quater et `docs/ETAT_PORTE.md`).
