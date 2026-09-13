@@ -1,0 +1,209 @@
+-- =====================================================================
+-- 20260913_regime_audit_log.sql — MESURE + PROPOSITION, lecture seule
+-- =====================================================================
+-- ETAT : MESURE FAITE le 13/09/2026. AUCUNE ECRITURE. La proposition de la
+-- derniere section attend l'arbitrage du stratege ; rien n'est applique.
+--
+-- LA QUESTION : onze fonctions ecrivent dans `public.audit_log`. Pour chacune,
+-- cette ecriture est-elle CONSTITUTIVE de l'acte, ou une PREUVE a cote ?
+--
+--   CONSTITUTIVE — l'acte n'est pas valide sans sa trace. Si la trace echoue,
+--     l'acte ne doit pas avoir lieu. En plpgsql : INSERT nu, la transaction
+--     entiere est annulee.
+--   PREUVE — l'acte tient sans elle. Si la trace echoue, l'acte reste, et
+--     l'echec doit se VOIR. En plpgsql : BEGIN … EXCEPTION … END autour, mais
+--     **jamais `THEN NULL`**.
+--
+-- ---------------------------------------------------------------------
+-- UN PIEGE DE MESURE, RENCONTRE EN ECRIVANT CE FICHIER
+-- ---------------------------------------------------------------------
+-- `pg_get_functiondef()` LEVE sur un agregat : « array_agg is an aggregate
+-- function ». Filtrer par `nspname='public'` dans le WHERE NE SUFFIT PAS — le
+-- planificateur peut evaluer `pg_get_functiondef` avant le filtre, donc sur les
+-- agregats de `pg_catalog`. Il faut une BARRIERE : `WITH … AS MATERIALIZED`,
+-- plus `prokind = 'f'`. Sans elle, la requete echoue et on croit a un probleme
+-- de droits.
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 1. LES ONZE, ET LEUR REGIME ACTUEL
+-- ---------------------------------------------------------------------
+with fns as materialized (
+  select p.oid, p.proname, p.prosecdef,
+         pg_get_function_identity_arguments(p.oid) as args
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.prokind = 'f'
+), d as materialized (
+  select f.*, pg_get_functiondef(f.oid) as def from fns f
+)
+select proname, args,
+       (def ~* 'EXCEPTION\s+WHEN\s+OTHERS\s+THEN\s*\n?\s*NULL') as handler_muet,
+       cardinality(string_to_array(def, E'\n')) as lignes
+  from d
+ where def ~* 'INSERT\s+INTO\s+(public\.)?audit_log'
+ order by 1;
+
+-- Sortie du 13/09/2026, apres LECTURE de chaque corps (le booleen ci-dessus
+-- oriente ; il ne conclut pas) :
+--
+--   REGIME ACTUEL = PREUVE  (BEGIN … EXCEPTION WHEN OTHERS THEN NULL; END)  7
+--     accept_cabinet_invitation · create_cabinet · create_video_session
+--     invite_cabinet_member · remove_cabinet_member
+--     set_video_recording_consent · transfer_cabinet_ownership
+--
+--   REGIME ACTUEL = CONSTITUTIVE  (INSERT nu)                               4
+--     disable_two_factor · enroll_two_factor · record_consent
+--     fn_audit_changes (declencheur)
+--
+-- ---------------------------------------------------------------------
+-- 2. CE QUE LE REGIME ACTUEL EST VRAIMENT : UN ACCIDENT
+-- ---------------------------------------------------------------------
+-- Le partage ne suit pas la nature de la trace. Il suit **qui a ecrit quelle
+-- fonction**. La famille « cabinet » et la video portent toutes le meme
+-- gabarit copie-colle, commentaire compris :
+--
+--     -- audit (si table audit_log existe -- cf hardening)
+--     BEGIN … EXCEPTION WHEN OTHERS THEN NULL; -- audit_log facultatif  END;
+--     -- audit_log absente: on continue
+--
+-- **Ces handlers protegent contre « la table audit_log n'existe pas ».** Cette
+-- condition est levee : `public.audit_log` existe et contient 169 lignes
+-- (mesure du 13/09). Ils ne protegent donc plus de rien — ils cachent.
+--
+-- Et `THEN NULL` est exactement la faute que docs/FICHE_CATCH_SILENCIEUX.md
+-- documente cote SQL : `EXCEPTION WHEN OTHERS` n'est pas fautif en soi,
+-- `THEN NULL` l'est. `public.rls_auto_enable()` fait mieux avec un `RAISE LOG`.
+--
+-- ---------------------------------------------------------------------
+-- 3. POURQUOI LA RLS NE PEUT PAS FAIRE ECHOUER CES INSERTS
+-- ---------------------------------------------------------------------
+-- Mesure sur `public.audit_log` : rls = true, **force = false**, proprietaire
+-- `postgres`, 2 politiques, `anon` et `authenticated` sans INSERT.
+--
+-- Les onze fonctions sont SECURITY DEFINER et appartiennent a `postgres`. La
+-- RLS ne s'applique pas au proprietaire d'une table tant que FORCE n'est pas
+-- pose. **Aucun de ces INSERT ne peut etre refuse par la RLS.** Les causes
+-- d'echec restantes sont etroites : disque plein, verrou, contrainte NOT NULL
+-- sur `action` (jamais nulle ici), ou une evolution de schema.
+--
+-- ⚠️  Corollaire a ne pas rater : si quelqu'un pose `FORCE ROW LEVEL SECURITY`
+-- sur `audit_log` un jour, les sept handlers muets feront disparaitre l'audit
+-- **en silence**, et les quatre INSERT nus feront echouer les actes. Deux
+-- comportements opposes pour une meme cause. C'est l'argument le plus fort pour
+-- decider le regime maintenant.
+--
+-- ---------------------------------------------------------------------
+-- 4. LE REGIME N'A JAMAIS ETE EPROUVE — MESURE, PAS DEDUCTION
+-- ---------------------------------------------------------------------
+--   select action, count(*) from public.audit_log group by action;
+--     users_update 84 · appointments_create 28 · appointments_delete 27
+--     users_delete 21 · appointments_update 9                    total 169
+--
+-- **Les 169 lignes viennent TOUTES de `fn_audit_changes`** (le declencheur :
+-- ses actions sont `<table>_create|_update|_delete`). **Zero ligne des dix RPC.**
+--
+-- On pourrait en conclure que les handlers muets avalent. CE SERAIT FAUX, et la
+-- contre-mesure le montre :
+--   cabinets 0 · cabinet_members 0 · two_factor_secrets 0
+--   video_sessions 0 · consents_log 0
+--
+-- **Les cinq tables sont vides : ces dix RPC n'ont jamais abouti une seule
+-- fois.** L'absence de trace ne prouve rien sur les handlers. Le regime n'a
+-- jamais ete exerce — on le decide AVANT qu'il compte, comme le cron Dawini.
+-- C'est la seule fois ou ca ne coute rien.
+--
+-- =====================================================================
+-- 5. LA PROPOSITION — le critere d'abord, pour qu'il soit critiquable
+-- =====================================================================
+--
+--   > Une ecriture d'audit est CONSTITUTIVE quand **executer l'acte sans sa
+--   > trace est PIRE que ne pas l'executer du tout.** Sinon elle est PREUVE.
+--
+-- Ce critere a un cout qu'il faut assumer : une trace constitutive qui echoue
+-- BLOQUE l'utilisateur. Rendre tout constitutif n'est pas « plus sur » — pour
+-- l'activation d'une protection, bloquer laisse l'utilisateur MOINS protege.
+--
+-- +---------------------------------+-------------+-------------+
+-- | Fonction                        | Aujourd'hui | Proposition |
+-- +---------------------------------+-------------+-------------+
+-- | fn_audit_changes                | CONSTITUTIVE| CONSTITUTIVE|  inchange
+-- | disable_two_factor              | CONSTITUTIVE| CONSTITUTIVE|  inchange
+-- | set_video_recording_consent     | PREUVE      | CONSTITUTIVE|  CHANGE
+-- | transfer_cabinet_ownership      | PREUVE      | CONSTITUTIVE|  CHANGE
+-- | remove_cabinet_member           | PREUVE      | CONSTITUTIVE|  CHANGE (*)
+-- +---------------------------------+-------------+-------------+
+-- | enroll_two_factor               | CONSTITUTIVE| PREUVE      |  CHANGE
+-- | record_consent                  | CONSTITUTIVE| PREUVE      |  CHANGE
+-- | accept_cabinet_invitation       | PREUVE      | PREUVE      |  inchange
+-- | create_cabinet                  | PREUVE      | PREUVE      |  inchange
+-- | create_video_session            | PREUVE      | PREUVE      |  inchange
+-- | invite_cabinet_member           | PREUVE      | PREUVE      |  inchange
+-- +---------------------------------+-------------+-------------+
+--   5 CONSTITUTIVES · 6 PREUVES · 5 changements de regime
+--
+-- LES RAISONS, UNE PAR LIGNE QUI CHANGE :
+--
+-- set_video_recording_consent -> CONSTITUTIVE
+--   Consentement a l'ENREGISTREMENT d'un acte medical. La licéité de
+--   l'enregistrement repose sur cette trace. Enregistrer une consultation sans
+--   preuve du consentement est pire que ne pas pouvoir le recueillir.
+--
+-- transfer_cabinet_ownership -> CONSTITUTIVE
+--   `cabinets.owner_user_id` enregistre le NOUVEAU proprietaire. Rien
+--   n'enregistre QUI a transfere. La ligne d'audit est le seul endroit ou
+--   l'acteur existe, et un litige de propriete de cabinet est previsible.
+--   Bloquer est acceptable : on reessaie.
+--
+-- remove_cabinet_member -> CONSTITUTIVE (*)
+--   Meme raison : `active = false` ne dit ni qui a retire, ni quel role la
+--   personne avait. L'audit est le seul enregistrement.
+--   (*) MAIS LA MEILLEURE CORRECTION N'EST PAS LA : ajouter
+--   `removed_by_user_id` et `removed_at` a `cabinet_members` mettrait le fait
+--   dans la table metier, et la trace redeviendrait une PREUVE. Rendre l'audit
+--   constitutif est le PALLIATIF ; les colonnes sont le remede. **A trancher.**
+--
+-- enroll_two_factor -> PREUVE
+--   C'est le contre-exemple qui valide le critere. Si la trace echoue, bloquer
+--   l'activation laisse l'utilisateur SANS deuxieme facteur. Une activation non
+--   tracee vaut mieux qu'une protection absente. Asymetrique avec `disable`,
+--   et c'est voulu : desactiver est le geste de l'attaquant, activer ne l'est
+--   pas.
+--
+-- record_consent -> PREUVE
+--   L'enregistrement legal est `public.consents_log`, dont l'INSERT est nu (et
+--   le reste). La ligne `audit_log` est un DOUBLON, pose uniquement pour quatre
+--   scopes sensibles. Un doublon n'a pas a bloquer l'acte que l'original a deja
+--   enregistre. **La contrainte RGPD est portee par `consents_log`, pas par
+--   `audit_log`** — et c'est `consents_log` qu'il faut proteger.
+--
+-- =====================================================================
+-- 6. LE SECOND AXE, ET IL VAUT POUR LES SIX PREUVES
+-- =====================================================================
+-- Une PREUVE a le droit d'echouer sans annuler l'acte. Elle N'A PAS le droit
+-- d'echouer en silence.
+--
+--   AUJOURD'HUI :  EXCEPTION WHEN OTHERS THEN NULL; END;
+--   PROPOSE     :  EXCEPTION WHEN OTHERS THEN
+--                    RAISE WARNING 'audit_log: % non ecrit (%)', '<action>', SQLERRM;
+--                  END;
+--
+-- `RAISE WARNING` remonte au client PostgREST ET dans le journal Postgres, sans
+-- annuler la transaction. C'est le geste de `public.rls_auto_enable()`, deja en
+-- base, deja documente comme le bon.
+--
+-- **Six fonctions a changer sur cet axe** : accept_cabinet_invitation,
+-- create_cabinet, create_video_session, invite_cabinet_member,
+-- enroll_two_factor, record_consent.
+--
+-- =====================================================================
+-- 7. CE QUE J'AI BESOIN DE TOI AVANT D'ECRIRE LA MIGRATION
+-- =====================================================================
+-- 1. Le critere du §5 : tu le prends, tu le corriges, ou tu en poses un autre ?
+-- 2. Les cinq changements de regime, un par un.
+-- 3. `remove_cabinet_member` : palliatif (audit constitutif) ou remede
+--    (colonnes `removed_by_user_id` / `removed_at`) ?
+-- 4. Mon compte est **5 / 6**, le tien etait **3 / 8**. Je ne connais plus le
+--    raisonnement du tien (le PONT.md de SEQ 9 a ete ecrase) : je propose a
+--    neuf plutot que de reconstituer un chiffre. Dis-moi ou l'on diverge.
+--
+-- Rien ne part en migration avant ces quatre reponses.
