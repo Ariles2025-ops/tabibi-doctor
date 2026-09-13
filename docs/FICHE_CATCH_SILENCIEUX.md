@@ -4,6 +4,67 @@
 > `|| 'Pending'` et que le bouton qui annonce sans agir : **un defaut qui se presente comme un etat
 > normal.**
 
+## LE DEFAUT SOUS LE DEFAUT : dix INSERT d'audit qui ne peuvent pas aboutir
+
+Le debat « faut-il bloquer ou mettre au rebut ? » reposait sur une hypothese fausse : que l'ecriture
+d'audit fonctionnait et n'echouait qu'occasionnellement. **Elle n'a jamais fonctionne.**
+
+Les dix fonctions ecrivent toutes ceci :
+
+```sql
+INSERT INTO public.audit_log(actor_id, action, target_type, target_id, payload)
+```
+
+`audit_log` n'a ni `actor_id`, ni `target_type`, ni `target_id`, ni `payload`. Ses colonnes sont
+`user_id, user_email, user_role, action, table_name, record_id, before_data, after_data,
+ip_address, user_agent, success, error_msg, created_at`.
+
+**Mesure du 13/09/2026** : zero ligne pour les actions de ces dix fonctions. Les 169 lignes
+d'`audit_log` viennent toutes de `fn_audit_changes`, la seule qui utilise les bonnes colonnes
+(`users_update` 84, `appointments_create` 28, `appointments_delete` 27, `users_delete` 21,
+`appointments_update` 9).
+
+### Mesure de l'abort, en transaction annulee
+
+Protocole : un bloc `DO` qui **leve toujours a la fin**, donc rien ne peut persister. Chaque appel
+est enveloppe pour capturer `SQLSTATE` et `SQLERRM`.
+
+| Fonction | Resultat exact |
+|---|---|
+| `disable_two_factor` | `42703 : column "actor_id" of relation "audit_log" does not exist` |
+| `record_consent`, scope **sensible** | `42703 : column "actor_id" … does not exist` |
+| `record_consent`, scope ordinaire (`cgu`) | `{"ok":true,…}`, `consents_log=1` |
+| `enroll_two_factor` | `P0001 : app.tabibi_2fa_pepper non configure` — elle n'atteint **jamais** l'audit |
+
+**La frontiere exacte** : `record_consent` fonctionne pour `cgu`, `privacy`, `cookies`,
+`marketing_*`, et **abortit systematiquement pour `health_data_processing`, `telemedicine`** — car
+l'INSERT d'audit n'est fait que pour les scopes sensibles. Les seuls qui comptent sous la 25-11.
+
+### Deux deductions de lecture qui etaient FAUSSES
+
+Ecrites ici parce que la lecon vaut plus que le resultat.
+
+1. « Aucun consentement ne peut etre enregistre » — **faux**. Les scopes ordinaires passent.
+2. Mes deux premieres mesures de `enroll_two_factor` ont rendu `ABOUTI` puis
+   `invalid_recovery_codes_count` : mes arguments etaient invalides, la fonction sortait AVANT
+   l'audit. **Elles ne prouvaient rien**, et je les ai d'abord prises pour des resultats.
+
+**Une mesure qui ne va pas jusqu'au point qu'on veut observer ne dit rien sur ce point.** Verifier
+que l'appel est ALLE la ou on croit fait partie de la mesure.
+
+### Le balayage preliminaire des 328
+
+En attendant `plpgsql_check`, une analyse statique des corps contre `information_schema.columns` :
+
+- `INSERT INTO t(colonnes)` : **10 fonctions en defaut**, toutes sur `audit_log`, toutes sur les
+  memes quatre colonnes ;
+- `UPDATE t SET colonne =` : **0**.
+
+Mais ce balayage ne voit que les colonnes d'`INSERT` et d'`UPDATE`. `plpgsql_check` voit aussi les
+types, les variables non affectees, les `SELECT`, les appels de fonctions inexistantes. **Le chiffre
+de 10 est un plancher, pas un total** — d'ou l'ordre : balayer d'abord, reparer ensuite, en une
+seule migration.
+
 ## L'angle mort de cet inventaire : le SQL
 
 **Ce document ne compte que le JavaScript.** `EXCEPTION WHEN OTHERS THEN NULL` est l'orthographe
