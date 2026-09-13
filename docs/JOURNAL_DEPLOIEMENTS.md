@@ -49,6 +49,7 @@ Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauve
 | # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
 |---|---|---|---|---|---|---|
 | B1 | 2026-09-13 ~14:45 UTC | `20260913_reparation_plpgsql_check.sql` — 15 `CREATE OR REPLACE` | `8e3b05d` (fichier), `e3f1956` (retour arrière) | `20260913_reparation_RETOUR_ARRIERE.sql`, capture `pg_get_functiondef` du 13/09 14:22 UTC, fraîcheur prouvée par 15 empreintes `md5` → 0 ligne | `20260913_reparation_VERIFICATION.sql` → **0 ligne** | Aghiles |
+| B4 | 2026-09-13 ~18:00 UTC | `20260913_revoke_ddl_anonyme.sql` — fermeture d'une porte de DDL anonyme | `(consigné après coup)` | `GRANT EXECUTE … TO anon, authenticated` (rouvre la porte) | base : `anon=false` · **sonde HTTP : 401, 42501** | Aghiles, **avant le fichier** |
 | B3 | 2026-09-13 ~17:00 UTC | `20260913_audit_log_echecs_politique.sql` — déclarer la permissivité | `d5501e3` | `DROP POLICY audit_log_echecs_insert_permissif ON public.audit_log_echecs` | **3 contrôles sur 3 conformes** | Aghiles |
 | B2 | 2026-09-13 ~15:20 UTC | `20260913_audit_log_echecs.sql` — table de rebut | `400f464` | `DROP TABLE public.audit_log_echecs` (additive, aucune donnée) | 6 contrôles conformes — **divergence `rls_active` refermée par mesure** | Aghiles |
 | B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
@@ -93,12 +94,30 @@ Appliquée au deuxième essai. Le premier a échoué sur `FATAL 53300 — too ma
 **Divergence, désormais REFERMÉE par mesure.** `rls_active` = **TRUE**, attendu `false`, alors que la
 migration ne contient aucun `ENABLE ROW LEVEL SECURITY` (vérifié par analyse du texte).
 
-*Cause, mesurée et non déduite.* Un `CREATE TABLE public.temoin (id int)` nu, relu dans la même
-transaction annulée, sort déjà en `relrowsecurity = true`. Les 7 déclencheurs d'événement du projet
-concernent `pg_cron`, `pg_graphql`, `pg_net` et PostgREST — aucun ne mentionne `row level security`.
-**Toutes les explications au niveau SQL sont donc éliminées** : l'activation a lieu en dessous, dans
-une bibliothèque préchargée. `supautils` est l'hypothèse — les GUC `supautils.*` sont présents — et
-elle est écrite comme hypothèse, pas comme fait.
+*Cause, ÉTABLIE — et la première réponse était fausse.* Un `CREATE TABLE public.temoin (id int)` nu,
+relu dans la même transaction annulée, sort déjà en `relrowsecurity = true` : l'activation ne vient
+d'aucun de nos fichiers. **Nous en avions conclu « en dessous du SQL, `supautils` comme hypothèse ».
+C'était faux.** Elle vient d'un déclencheur d'événement, mesuré directement :
+
+| | |
+|---|---|
+| `ensure_rls` | `ddl_command_end`, actif, tags `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` |
+| → `public.rls_auto_enable()` | `SECURITY DEFINER`, propriétaire `postgres`, `search_path pg_catalog` |
+
+Son corps boucle sur `pg_event_trigger_ddl_commands()` et exécute, pour tout objet créé dans
+`public` : `alter table if exists %s enable row level security`. C'est lui qui met **55 tables sur
+55** sous RLS à leur création.
+
+*Comment on s'est trompés.* Le diagnostic rendait 19 lignes ; une partie a été lue, et l'absence
+d'une ligne qu'on n'avait pas cherchée jusqu'au bout a été rapportée comme un fait. Même classe
+d'erreur que le `sha256` qui était un MD5 et que la taille servie du `mailto:` : **conclure sur ce
+qu'on a vu, pas sur ce qu'il y avait.** La piste « un `ENABLE` qu'aucun fichier ne contient vient
+presque toujours d'un déclencheur d'événement sur `ddl_command_end` » était la bonne, et elle a été
+fermée d'un cran trop tôt.
+
+*Ligne ouverte :* `ensure_rls` est **absent du dépôt et de l'historique git** — installé hors
+fichier. Il est probablement utile. Mais un mécanisme que personne n'a écrit dans le dépôt doit y
+être écrit, ou retiré. À décider, pas maintenant.
 
 *Ce n'est pas propre à cette table.* `public` compte **55 tables, 55 avec RLS active, 0 sans**. Les
 15 dernières créées sont toutes à `true`.

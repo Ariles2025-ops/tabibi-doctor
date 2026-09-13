@@ -41,13 +41,23 @@
 -- Ce fichier ne contient aucun `ENABLE ROW LEVEL SECURITY` (verifie par analyse
 -- du texte). La table creee a pourtant `relrowsecurity = true`.
 --
--- CAUSE, mesuree et non deduite : un `CREATE TABLE public.temoin (id int)` nu,
--- relu dans la meme transaction annulee, sort deja en `relrowsecurity = true`.
--- Aucun declencheur d'evenement n'y touche (les 7 existants concernent pg_cron,
--- pg_graphql, pg_net et PostgREST ; aucun ne mentionne « row level security »).
--- Toutes les explications au niveau SQL sont donc ELIMINEES : l'activation a
--- lieu en dessous, dans une bibliotheque prechargee. `supautils` est
--- l'hypothese — les GUC `supautils.*` sont presents — pas un fait mesure.
+-- CAUSE, ETABLIE — et la premiere reponse etait fausse.
+-- Un `CREATE TABLE public.temoin (id int)` nu, relu dans la meme transaction
+-- annulee, sort deja en `relrowsecurity = true` : l'activation ne vient donc
+-- d'aucun de nos fichiers. On en avait conclu « en dessous du SQL, supautils ».
+-- FAUX. Elle vient d'un DECLENCHEUR D'EVENEMENT, mesure directement :
+--
+--   ensure_rls | ddl_command_end | actif | tags CREATE TABLE, CREATE TABLE AS,
+--              | SELECT INTO     | -> public.rls_auto_enable()
+--
+-- SECURITY DEFINER, proprietaire postgres, search_path pg_catalog. Son corps
+-- boucle sur pg_event_trigger_ddl_commands() et execute, pour tout objet cree
+-- dans public :  alter table if exists %s enable row level security
+--
+-- C'est lui qui met 55 tables sur 55 sous RLS a leur creation. Il est ABSENT du
+-- depot et de l'historique git : installe hors fichier. Ligne ouverte — un
+-- mecanisme que personne n'a ecrit dans le depot doit y etre ecrit, ou retire.
+-- Cf. supabase/migrations/20260913_revoke_ddl_anonyme.sql.
 --
 -- CE N'EST PAS PROPRE A CETTE TABLE : `public` compte 55 tables, 55 avec RLS
 -- active, 0 sans. Vingt sont en refus par defaut (zero politique).

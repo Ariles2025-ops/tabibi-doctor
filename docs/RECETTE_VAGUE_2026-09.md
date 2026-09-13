@@ -298,6 +298,36 @@ pour la page servie.
 - Ce qui vaut pour une table vaut pour le schema : si la plateforme ajoute quelque chose a une
   table, elle l'ajoute probablement a toutes. On mesure l'ecart **systemique**, pas le cas isole.
 
+### UN PERIMETRE QU'ON EXCLUT D'UN DURCISSEMENT DOIT ETRE NOMME, DATE, ET ROUVERT
+
+**Un durcissement partiel est legitime. Une exclusion sans date de reexamen devient une couverture :
+la ligne rassure au lieu d'alerter.**
+
+La liste blanche du 12/09/2026 a borne son perimetre et l'a ecrit noir sur blanc :
+« **EXECUTE intact, 289 fonctions** ». C'etait honnete — la borne etait nommee.
+
+Ce qui a manque, c'est la **reprise**. Un mois plus tard, personne n'etait revenu sur la phrase. Le
+13/09, la mesure a trouve derriere elle `api_usage_log_ensure_partition` : `SECURITY DEFINER`, corps
+faisant `CREATE TABLE`, **executable par `anon`** — prouve de l'exterieur avec la cle anon publique,
+HTTP 204. N'importe qui pouvait creer une table par date, sans limite.
+
+Le raisonnement de l'exclusion tenait tant que les fonctions n'etaient qu'un moyen d'acces aux
+tables. Mais **une fonction `SECURITY DEFINER` n'est pas soumise aux droits de son appelant** : elle
+s'execute avec ceux de son proprietaire. Verrouiller les tables et laisser les fonctions ouvertes,
+c'est fermer la porte et laisser la fenetre.
+
+**La phrase d'exclusion est devenue la preuve qu'on avait regarde.** C'est son danger propre : elle
+se relit comme une decision prise, alors qu'elle enonce une decision remise a plus tard.
+
+**En pratique :**
+- Une exclusion de perimetre s'ecrit avec **trois choses** : ce qui est exclu, **pourquoi**, et
+  **quand on y revient**. Sans la troisieme, ce n'est pas une borne, c'est un report.
+- Le « pourquoi » se formule comme une **hypothese refutable** — ici : « les fonctions ne sont qu'un
+  moyen d'acces aux tables ». Ecrite ainsi, elle se serait effondree a la premiere relecture.
+- Ce qui est exclu entre dans une liste tenue, au meme titre que les fonctionnalites
+  annoncees-mais-jamais-exercees. Les deux listes ont la meme propriete : **elles ne se voient dans
+  aucun compteur.**
+
 ### UN MESSAGE DE COMMIT EST UN RAPPORT, PAS UNE INTENTION
 
 **Il se redige apres avoir verifie ce qu'il rapporte, et se relit depuis `git show`, jamais depuis
