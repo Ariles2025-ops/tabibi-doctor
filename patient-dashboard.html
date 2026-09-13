@@ -524,7 +524,7 @@ function renderReview(){
     </div>`;
 }
 function setStars(n){reviewStars=n;renderReview();}
-function submitReview(){if(!reviewStars){toastM(tabibiT('toast_select_rating',"Sélectionnez une note"),"error");return;}const all=getAllRdvs();const i=all.findIndex(x=>x.id===reviewRdv.id);if(i>-1){all[i].reviewed=true;all[i].rating=reviewStars;all[i].reviewText=document.getElementById("rev-text").value;localStorage.setItem("tabibi_rdv",JSON.stringify(all));}toastM(tabibiT('toast_review_thanks',"Merci pour votre avis !"),"success");closeModal("review-modal");filtRdv("completed",document.querySelector("[data-f='completed']"));}
+function submitReview(){if(!reviewStars){toastM(tabibiT('toast_select_rating',"Sélectionnez une note"),"error");return;}const all=getAllRdvs();const i=all.findIndex(x=>x.id===reviewRdv.id);if(i>-1){all[i].reviewed=true;all[i].rating=reviewStars;all[i].reviewText=document.getElementById("rev-text").value;localStorage.setItem("tabibi_rdv",JSON.stringify(all));}toastM(tabibiT('toast_review_thanks',"Merci pour votre avis !"),"success");closeModal("review-modal");}
 
 /* ─── DOCUMENTS ─── */
 function getDocs(){
@@ -730,12 +730,9 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     } catch(e) { console.warn('[reviews] load reviewable failed', e); }
   }
 
-  // Recharger après soumission
-  document.addEventListener('tabibi:review-submitted', () => {
-    if (typeof filtRdv === 'function') {
-      try { filtRdv('completed', document.querySelector("[data-f='completed']")); } catch(e) {}
-    }
-  });
+    // [13/09/2026] L'ecouteur rechargeait la liste #rdv-list, supprimee avec le
+    // panneau #tab-rdv neutralise en phase 5.2.5. Il n'a plus rien a recharger :
+    // la liste des rendez-vous du patient vit sur mes-rdv.html.
 
   // Init après que la session soit prête
   if (document.readyState === 'loading') {

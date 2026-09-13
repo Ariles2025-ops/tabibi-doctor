@@ -35,10 +35,21 @@ const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'andro
 // Le plafond est le compte REEL mesure apres correction, jamais releve « en
 // attendant ». Chaque entree est un usage legitime, justifie ici.
 const PLAFOND = {
-  // [13/09/2026, revision] L'ancien plafond de 11 melangeait CODE et COMMENTAIRE :
-  // le script ne sautait que les lignes COMMENCANT par // ou *. Il compte
-  // desormais sur du code depouille pour de bon. Chaque entree ci-dessous est du
-  // CODE, verifie ligne par ligne, et aucune ne formate l'instant d'un RDV.
+  // ATTENTION AU LECTEUR FUTUR : ce plafond est passe de 11 a 23 le 13/09/2026.
+  // **La dette n'a pas double. C'est 11 qui etait FAUX.**
+  //
+  // L'ancien compteur ne sautait que les lignes COMMENCANT par // ou * : il
+  // melangeait code et commentaires, et il ne cherchait pas encore les
+  // composantes d'horloge locale (getFullYear, getMonth, getDate...) dans le
+  // JS inline. Le nouveau chiffre mesure du CODE SEUL, sur un perimetre plus
+  // large. Les deux ne sont pas comparables.
+  //
+  // Ne le rabaissez donc pas en croyant corriger une regression : il n'y en a
+  // pas. Rabaissez-le en supprimant des lignes de la liste ci-dessous, une par
+  // une, apres avoir corrige le code correspondant.
+  //
+  // Chaque entree est du CODE, verifie ligne par ligne, et aucune ne formate
+  // l'instant d'un rendez-vous :
   //
   'js/tabibi-temps.js': 2,      // l'utilitaire lui-meme : la Date y est ancree a
                                 // minuit UTC, `toISOString().slice(0,10)` la relit
