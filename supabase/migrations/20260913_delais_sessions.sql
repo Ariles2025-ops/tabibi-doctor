@@ -1,0 +1,100 @@
+-- =====================================================================
+-- 20260913_delais_sessions.sql
+-- Une transaction inactive ne doit pas tenir sa connexion indefiniment
+-- =====================================================================
+-- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
+--
+-- ---------------------------------------------------------------------
+-- CE QUE CE FICHIER NE CORRIGE PAS — a lire en premier
+-- ---------------------------------------------------------------------
+-- **Il n'aurait PAS empeche l'incident `53300 too many clients already` du
+-- 13/09 au matin.** `idle_in_transaction_session_timeout` ne coupe que les
+-- sessions `idle in transaction` ; le releve de capacite du meme jour en compte
+-- **zero**. Les onglets d'editeur SQL qui ont sature le pool etaient `idle`
+-- tout court — un etat que ce reglage ne regarde pas.
+--
+-- Le reglage qui mord sur cet incident-la s'appelle `idle_session_timeout`.
+-- Mesure du 13/09 : **il vaut 0 lui aussi**, et il n'etait dans aucune de nos
+-- listes. Il n'est PAS dans ce fichier, voir la derniere section.
+--
+-- CE QUE CE FICHIER CORRIGE, ALORS : une transaction restee ouverte tient sa
+-- connexion ET SES VERROUS, et empeche `VACUUM` de nettoyer, indefiniment.
+-- C'est une panne differente, plus lente et plus vicieuse que la saturation.
+--
+-- ---------------------------------------------------------------------
+-- POURQUOI PAR ROLE, ET PAS GLOBALEMENT
+-- ---------------------------------------------------------------------
+-- Les deux reglages ont `context = user` (mesure sur `pg_settings`) : ils se
+-- posent par ROLE. Une valeur globale ferait les deux mal — ce qui protege
+-- l'application etrangle l'operateur, et l'inverse.
+--
+--   authenticator (PostgREST) -> 60 s
+--     PostgREST fait UNE transaction par requete, deja bornee par
+--     `statement_timeout` = 120 s. Une transaction INACTIVE 60 s n'existe pas
+--     dans ce mode. Aucun effet connu ; c'est un filet.
+--
+--   postgres (nous) -> 15 min, PAS 60 s
+--     ⚠️  60 s TUERAIT UNE MIGRATION INTERACTIVE : `BEGIN;` puis lecture d'une
+--     sortie avant `COMMIT`. C'est exactement le geste du stratege quand il
+--     applique un de ces fichiers. La transaction serait annulee, et l'ecran
+--     dirait « deconnecte », pas « j'ai annule votre transaction ».
+--     15 min laisse le temps de lire ; ca borne quand meme un oubli.
+--
+-- =====================================================================
+-- CE QU'IL FAUT FAIRE
+-- =====================================================================
+
+ALTER ROLE authenticator SET idle_in_transaction_session_timeout = '60s';
+ALTER ROLE postgres      SET idle_in_transaction_session_timeout = '15min';
+
+-- =====================================================================
+-- VERIFICATION — a lancer APRES, dans un passage separe
+-- =====================================================================
+-- Attendu, exactement deux lignes :
+--   authenticator : idle_in_transaction_session_timeout=60s
+--   postgres      : idle_in_transaction_session_timeout=15min
+--
+-- select r.rolname, s.setconfig
+--   from pg_db_role_setting s
+--   join pg_roles r on r.oid = s.setrole
+--  where r.rolname in ('authenticator','postgres');
+--
+-- ⚠️  UN REGLAGE DE ROLE NE S'APPLIQUE QU'AUX NOUVELLES SESSIONS. Les
+-- connexions deja ouvertes (le pool PostgREST, notamment) gardent l'ancienne
+-- valeur jusqu'a leur reconnexion. Lire `pg_settings` depuis une session
+-- existante ne prouvera donc RIEN — c'est `pg_db_role_setting` qui fait foi.
+--
+-- =====================================================================
+-- RETOUR ARRIERE
+-- =====================================================================
+-- ALTER ROLE authenticator RESET idle_in_transaction_session_timeout;
+-- ALTER ROLE postgres      RESET idle_in_transaction_session_timeout;
+--
+-- =====================================================================
+-- CE QUI N'EST PAS DANS CE FICHIER, ET POURQUOI — ligne ouverte
+-- =====================================================================
+-- `idle_session_timeout` sur `postgres` : **NON, pas maintenant.** Tranche par
+-- le stratege le 13/09, et la raison est bonne :
+--
+--   `pg_net 0.20.0` tourne sous le role `postgres` (bloc 4 du releve de
+--   capacite), et c'est lui qui porte les rappels par `net.http_post`. Un delai
+--   de session sur ce role peut le faire tourner en reconnexion permanente.
+--   `pg_cron scheduler` et `postgres_exporter` sont dans le meme cas.
+--
+-- La documentation dit que le delai ne s'applique pas aux processus
+-- d'arriere-plan, mais **ces connexions apparaissent dans `pg_stat_activity`
+-- comme des sessions** : la question n'est pas tranchee par la lecture. Elle se
+-- mesure.
+--
+-- LIGNE OUVERTE, a faire avant de decider : mesurer l'age des sessions `pg_net`
+-- et `mgmt-api` sur 24 h.
+--   select application_name, usename,
+--          justify_interval(now() - backend_start) as age_session,
+--          justify_interval(now() - state_change)  as inactive_depuis, state
+--     from pg_stat_activity
+--    where usename = 'postgres'
+--    order by backend_start;
+--
+-- Si ces sessions vivent des heures, un `idle_session_timeout` les couperait :
+-- il faudrait alors un role dedie pour l'editeur SQL, pas un reglage sur
+-- `postgres`. **A mesurer, pas a supposer.**

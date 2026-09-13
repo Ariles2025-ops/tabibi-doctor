@@ -761,3 +761,14 @@ est atteignable — `openReview` retombe sur l'ancienne modale quand le `doctor_
 
 **L'inventaire a trouve un bug que les tests n'avaient pas trouve.**
 
+
+---
+
+## Lignes ouvertes
+
+Ce qui reste à décider, écrit pour être lu **sans connaître le code**. Une ligne = une décision
+qui attend quelqu'un, pas une tâche technique.
+
+- **13/09/2026 — Périmètre de l'export « mes données ».**
+  L'export « mes données » ne contient ni les favoris enregistrés côté serveur ni l'historique des
+  consentements ; périmètre à trancher avec l'avocat avant le lancement.
