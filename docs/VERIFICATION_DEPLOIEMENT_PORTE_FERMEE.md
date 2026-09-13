@@ -5,6 +5,34 @@ mesurable, pas une impression. Si une seule échoue : **retour arrière immédia
 
 Toutes les requêtes portent un cache-bust (`?cb=$RANDOM`).
 
+## Procedure de migration — une migration se lance SEULE
+
+**L'editeur SQL de Supabase enveloppe TOUT le script dans UNE transaction.** Si la deuxieme requete
+echoue, la premiere est annulee avec elle — y compris un `CREATE EXTENSION`.
+
+Vecu le 13/09/2026 : la migration `plpgsql_check` avait le balayage dans le meme fichier. Le premier
+essai a echoue sur la requete de balayage, et le `CREATE EXTENSION` a ete annule avec elle. **On a
+cru l'extension installee alors qu'elle ne l'etait pas.**
+
+Les deux regles qui en decoulent :
+
+1. **Une migration presentee doit etre lancable SEULE.** Un seul acte par fichier. Rien apres, rien
+   autour. Ce qui suit — balayage, mesure, controle — vit dans des requetes SEPAREES, en commentaire
+   ou dans un fichier a part, jamais dans le meme script.
+2. **Sa reussite se verifie par une requete separee**, lancee apres, dans un autre passage. Ne
+   jamais deduire d'une absence d'erreur a l'ecran que l'acte a tenu : dans une transaction
+   enveloppante, l'erreur d'une requete annule tout ce qui precede.
+
+C'est la meme famille que le reste : **l'absence d'erreur n'est pas une preuve de succes.** Une
+console propre, un `tail -1`, un « auto-merging », une migration sans message rouge — ce sont des
+signaux qui repondent a ce qu'on leur a demande, pas a ce qu'on a oublie de demander.
+
+Verification type, dans un passage separe :
+
+```sql
+select extname, extversion from pg_extension where extname = 'plpgsql_check';
+```
+
 ## Etape obligatoire AVANT le build — les RPC appelees existent
 
 **Si elle echoue, le deploiement ne part pas.**
