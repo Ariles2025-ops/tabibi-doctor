@@ -4,8 +4,27 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 
 ## Contexte
 - **Tabibi.doctor** : plateforme de prise de RDV médical en Algérie. Phase **pré-launch** (lancement congrès médical 3-5 déc 2026).
-- **Stack** : site statique HTML/CSS/JS vanilla (~38 pages app + 490 pages SEO) · backend **Supabase EU (Frankfurt)**, projet `pudugodhiofqrctcdwfl` · hébergement **Cloudflare Pages** (projet `tabibi-doctor`, compte `13fe89e298e7bd78eeaf3223cd6b5dd5`). Netlify ne sert QUE les deploy previews des PR — ce n'est pas la prod.
-- **Prod** : https://tabibi.doctor (DNS pas encore pointé) · **staging** : https://effulgent-kelpie-e48e81.netlify.app
+- **Stack** : site statique HTML/CSS/JS vanilla (~38 pages app + 490 pages SEO) · backend **Supabase EU (Frankfurt)**, projet `pudugodhiofqrctcdwfl` · hébergement **Cloudflare Pages** (projet `tabibi-doctor`, compte `13fe89e298e7bd78eeaf3223cd6b5dd5`). ~~Netlify ne sert QUE les deploy previews des PR — ce n'est pas la prod.~~ **FAUX, mesuré le 13/09/2026 — voir ci-dessous.**
+- **Prod** : https://tabibi.doctor (DNS pas encore pointé) · **Netlify** : https://effulgent-kelpie-e48e81.netlify.app
+
+> ⚠️ **NETLIFY SERT L'APPLICATION COMPLÈTE, PAS SEULEMENT DES PREVIEWS.** Mesuré le
+> 13/09/2026, cache contourné : la **racine** `effulgent-kelpie-e48e81.netlify.app`
+> rend « Trouvez votre médecin… », **115 196 octets**, sans balise `tabibi-porte` —
+> l'application, branchée sur la base de **production** (même clé anon, même projet).
+> Chaque *Deploy Preview* de PR fait de même.
+>
+> Dix minutes après la fusion de #105 — qui a inversé la porte, `index.html` étant
+> désormais la page fermée — **la racine Netlify servait toujours l'application**, et
+> une version antérieure à `4f6a027`. Elle est donc **figée sur un ancien build, ou
+> branchée ailleurs que sur `main`.**
+>
+> **Configuration de production Netlify : INCONNUE DEPUIS LE DÉPÔT.** `netlify.toml`
+> porte `publish = "."` sans `command`, mais la branche de production, l'état des
+> builds et le verrouillage éventuel d'un déploiement ne se lisent **qu'en console**.
+> À lire et à trancher là-bas : supprimer le site, ou le déconnecter.
+>
+> Ce qui est acquis : **la prochaine fois que Netlify construit `main`, il servira la
+> porte fermée.** L'inversion est bonne ; elle attend un build qui ne vient pas.
 
 ## Déploiement — À LIRE AVANT TOUT MERGE
 

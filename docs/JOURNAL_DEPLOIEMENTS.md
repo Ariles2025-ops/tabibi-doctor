@@ -31,10 +31,27 @@ dans un environnement incomplet.
 
 **Corrigé** par `a474d51` : le navigateur s'installe avant les portes.
 
-**#86 reste inexpliqué.** Cause différente : à ce commit, `verifier:toutes` n'existait pas encore
-dans le workflow, et le navigateur (ligne 102) venait bien avant e2e (ligne 105). Un échec à 29 s
-tombe donc **avant** la ligne 102 — dans l'une des portes, pas dans e2e. Laquelle, il faut lire le
-journal du run ; le jeton de la session n'a pas la permission `actions`.
+**#86 : LU, et la chaine est complete.** Etape « Aucun litteral de cle hors config.js », 25 s :
+
+```
+> node scripts/verifier-cles.mjs
+✗ index-baseline.html : JWT Supabase (ancienne cle anon/service_role) (3 occurrences)
+1 fichier(s) portent un litteral de cle hors js/config.js, v2/src/lib/config.ts.
+```
+
+C'est `index-baseline.html`, commis contre la regle le matin meme, puis retire par #107
+(`fix/retirer-index-baseline`) — ce qui explique que **#87 soit le seul vert de la serie**.
+
+**La chaine, de bout en bout :**
+
+| Run | Fusion | Cause de l'echec |
+|---|---|---|
+| #86 | #106 | `index-baseline.html` portait un JWT — `verifier:cles` rouge |
+| #87 | #107 | **vert** — #107 retirait justement `index-baseline.html` |
+| #88–#91 | #108–#111 | `verifier:toutes` lancait e2e avant l'installation du navigateur |
+
+**Deux causes distinctes, separees par un seul run vert.** C'est ce qui a rendu la serie
+illisible : elle ne ressemblait pas a une panne unique, donc elle n'a ressemble a rien.
 
 ---
 
