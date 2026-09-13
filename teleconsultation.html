@@ -543,11 +543,26 @@
 
       state.callFrame = frame;
 
-      frame.on('joined-meeting', function () {
+      frame.on('joined-meeting', async function () {
         state.joinedAt = Date.now();
-        // Marquer started cote serveur
-        window.tabibi.supabase.rpc('mark_video_session_started', { p_session_id: state.sessionId })
-          .catch(function (e) { captureErr(e, { step: 'mark_started' }); });
+        // Marquer started cote serveur.
+        //
+        // [13/09/2026] AVANT, ce site ne lisait RIEN du retour :
+        //   window.tabibi.supabase.rpc('mark_video_session_started', {…})
+        //     .catch(function (e) { captureErr(e, { step: 'mark_started' }); });
+        // Le `.catch` ne se declenchait JAMAIS. `supabase-js` ne rejette pas
+        // sans `.throwOnError()` : il resout avec `{ error, data:null }`.
+        // Et `mark_video_session_started` refuse SANS lever — elle rend
+        // `jsonb {"error":"…"}`. Un refus etait donc doublement invisible :
+        // ni dans `error` de transport, ni dans un rejet.
+        // Resultat : l'appel video demarrait normalement, la session n'etait
+        // pas marquee demarree en base, et rien nulle part ne le disait.
+        //
+        // L'echec de marquage NE DOIT PAS bloquer l'appel — le patient est
+        // deja dans la salle. Mais il doit SE VOIR : captureErr journalise en
+        // console et remonte a Sentry.
+        var r = await window.tabibiRpc('mark_video_session_started', { p_session_id: state.sessionId });
+        if (!r.ok) captureErr(new Error('mark_started refuse : ' + r.erreur), { step: 'mark_started' });
       });
 
       frame.on('participant-joined', function (ev) {
@@ -594,12 +609,19 @@
   async function onLeaveCall () {
     var duration = state.joinedAt ? Math.floor((Date.now() - state.joinedAt) / 1000) : null;
 
-    try {
-      await window.tabibi.supabase.rpc('mark_video_session_ended', {
-        p_session_id: state.sessionId,
-        p_duration: duration,
-      });
-    } catch (e) { captureErr(e, { step: 'mark_ended' }); }
+    // [13/09/2026] AVANT, ce site ne lisait RIEN du retour :
+    //   try { await …supabase.rpc('mark_video_session_ended', {…}); }
+    //   catch (e) { captureErr(e, { step: 'mark_ended' }); }
+    // Meme defaut qu'a `joined-meeting` : le `catch` etait MORT (supabase-js
+    // resout, il ne rejette pas) et `mark_video_session_ended` refuse sans
+    // lever, par un `jsonb {"error":"…"}`. La fin d'appel s'affichait
+    // normalement, la duree n'etait jamais enregistree, la session jamais
+    // close — et aucune trace.
+    var rEnd = await window.tabibiRpc('mark_video_session_ended', {
+      p_session_id: state.sessionId,
+      p_duration: duration,
+    });
+    if (!rEnd.ok) captureErr(new Error('mark_ended refuse : ' + rEnd.erreur), { step: 'mark_ended' });
 
     try {
       if (state.callFrame) {

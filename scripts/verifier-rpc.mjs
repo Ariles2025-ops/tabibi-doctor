@@ -129,7 +129,14 @@ async function pgProc() {
 // court-circuite la passerelle. Il ne monte jamais.
 // 60 -> 56 le 13/09/2026, lot 1 : les quatre sites a effet externe irreversible
 // (envoi d e-mail apres admin_validate_doctor) passent par la passerelle.
-const PLAFOND_RPC_DIRECT = 56;
+// 56 -> 55 le 13/09/2026, lot 2a : js/tabibi-dawini.js:443, le seul site du
+// depot qui declarait ACTIVEMENT un succes sur un echec (`return { ok:true }`
+// hors de tout test du retour).
+// 55 -> 53 le 13/09/2026, lot 2b : teleconsultation.html:549 et :598, les deux
+// seuls sites ou une ecriture refusee ne laissait AUCUNE trace — ni dans
+// `error` de transport (la RPC refuse par un jsonb {"error":…} sans lever), ni
+// dans un rejet (supabase-js resout, le `.catch` etait mort).
+const PLAFOND_RPC_DIRECT = 53;
 
 function appelsDirects() {
   const par = {};
