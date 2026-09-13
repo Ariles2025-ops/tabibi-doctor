@@ -475,6 +475,27 @@ if (!r.ok) { masquerLeBouton(); return; }          // QUESTION : reponse, on s'a
 Et `data` vaut **null** des que `ok` est faux : celui qui ignore `ok` casse visiblement, au lieu de
 continuer sur un mensonge. Normaliser sans cela n'obligerait personne a regarder.
 
+### UNE DUREE DE RUN QUI CHUTE EST UN SIGNAL, PAS UN PROGRES
+
+Un `verification` qui passait 2 a 3 minutes et qui tombe a **1 minute** n'est pas devenu rapide : il
+a **cesse de faire quelque chose**.
+
+Le 13/09/2026, `verifier:toutes` lancait e2e **avant** l'installation de Chromium en CI. Les
+25 tests tombaient en 30 secondes sur une **absence de navigateur**, pas sur une regression. `main`
+est reste rouge de la fusion #108 a la #111 — **quatre fusions et un deploiement sur porte rouge** —
+et personne ne l'a vu, parce que rien ne crie quand un run raccourcit.
+
+**Ce qu'il faut regarder, et que personne ne regardait :** la duree du run, a cote de son resultat.
+Une porte qui disparait laisse une trace dans le temps bien avant d'en laisser une dans le resultat.
+
+Et la lecon qui double celle-ci : **une mesure locale ne mesure pas le meme environnement que la
+CI.** 66/66 en local pendant que la CI rendait 25 rouges, parce que le navigateur existait ici et pas
+la-bas. **C'est la CI qui a raison sur ce que la CI fait** — une porte verte chez soi ne dit rien de
+la porte de la CI.
+
+C'est le defaut exact de la regle « ce qui controle doit etre controle », ecrite le jour meme : une
+porte a disparu en silence le jour ou on a ecrit qu'une porte ne doit pas disparaitre en silence.
+
 ### SUPPRIMER EST L'OPERATION DANGEREUSE DE CE DEPOT
 
 Pas modifier. **Supprimer.** Le 13/09/2026, deux regressions sont parties en production dans la

@@ -1,5 +1,43 @@
 # Journal des déploiements — tabibi.doctor
 
+## ⚠️ 13/09/2026 — `main` EST RESTÉ ROUGE DE #108 À #111, SANS QUE PERSONNE LE VOIE
+
+**Constaté**, runs `verification` lus sur GitHub Actions :
+
+| Run | Fusion | Résultat | Durée |
+|---|---|---|---|
+| #86 | #106 `fix/succes-sur-refus` | **FAILED** | 29 s |
+| #87 | #107 | succès | 3 min 35 |
+| #88 | #108 `fix/verifier-toutes` | **FAILED** | 1 min 13 |
+| #89 | #109 `fix/portes-a-venir` | **FAILED** | 1 min 15 |
+| #90 | #110 `fix/garde-rpc` | **FAILED** | 1 min 05 |
+| #91 | #111 `docs/regle-suppression-et-20-catch` | **FAILED** | 1 min 14 |
+
+**Quatre fusions sur porte rouge, et le déploiement 9 est parti d'un `main` rouge.**
+
+**La cause**, pour #88 à #91 : `.github/workflows/verification.yml` lançait
+`npm run verifier:toutes` — qui exécute e2e — **avant** le pas « Installer le navigateur de test ».
+En CI, Playwright n'avait aucun Chromium à cet instant : les 25 tests tombaient en 30 secondes sur
+une **absence**, pas sur une régression. En local le navigateur existe, d'où 66/66 chez nous et rouge
+chez eux. **C'est la CI qui a raison sur ce que la CI fait.**
+
+**Pourquoi personne ne l'a vu** : la durée des runs est passée de 2-3 minutes à 1 minute, et rien ne
+le crie. Un run qui raccourcit ressemble à un progrès.
+
+C'est le défaut exact de la règle « ce qui contrôle doit être contrôlé », écrite **le jour même**,
+deux pas plus bas dans ce fichier. **Une porte a disparu en silence le jour où on a écrit qu'une
+porte ne doit pas disparaître en silence.** Le pas lisait bien les codes de sortie — il les lisait
+dans un environnement incomplet.
+
+**Corrigé** par `a474d51` : le navigateur s'installe avant les portes.
+
+**#86 reste inexpliqué.** Cause différente : à ce commit, `verifier:toutes` n'existait pas encore
+dans le workflow, et le navigateur (ligne 102) venait bien avant e2e (ligne 105). Un échec à 29 s
+tombe donc **avant** la ligne 102 — dans l'une des portes, pas dans e2e. Laquelle, il faut lire le
+journal du run ; le jeton de la session n'a pas la permission `actions`.
+
+---
+
 ## ⚠️ 13/09/2026 — LA PORTE EST OUVERTE SUR UN AUTRE HOTE
 
 **Constaté :** `https://effulgent-kelpie-e48e81.netlify.app` et chaque *Deploy Preview* de PR

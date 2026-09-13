@@ -34,8 +34,17 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 >   déployer.** C'est la raison d'être de l'inversion du 13/09 : depuis, `index.html`
 >   à la racine **est** la page fermée, et `npm run verifier:porte` échoue sinon.
 >
-> À vérifier dans la console, et à trancher : la connexion Git a-t-elle été ajoutée
-> après le 03/09, ou n'a-t-elle jamais été retirée ?
+> **TRANCHÉ, console en main, le 13/09/2026 : elle n'a JAMAIS été retirée.** La
+> connexion Git est active, branche `main`, et les 91 déploiements remontent à un
+> mois au moins — les `fix(seo)` d'août sont des auto-déploiements.
+>
+> Le paragraphe conservé plus haut n'a donc **jamais** décrit la réalité de cette
+> période. Il a servi de référence pendant des semaines, et il a été cité de bonne
+> foi, par moi, toute la journée du 13/09.
+>
+> **La leçon, et elle vaut pour ce fichier entier : une règle de référence n'est
+> pas une mesure.** Un document qui dit « il n'y a pas de X » doit porter la date
+> et la méthode de la mesure qui l'établit, sinon il n'établit rien — il répète.
 
 ## Règles absolues (non négociables)
 1. **Ne jamais commit/push directement sur `main`.** `main` est protégé (ruleset `protect-main` : force push et suppression bloqués). Toujours créer une branche + ouvrir une PR.
