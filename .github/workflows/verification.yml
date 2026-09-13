@@ -75,6 +75,13 @@ jobs:
       - name: Aucun acces direct a la vue public_doctors (C1)
         run: npm run verifier:c1
 
+      - name: L'utilitaire de statut connait tous les statuts declares
+        # Etage STRUCTUREL uniquement : l'utilitaire contre la reference du
+        # depot. Aucun secret, aucun reseau. Il ne voit PAS un ALTER TYPE fait
+        # en base — c'est `--base`, etape obligatoire de la procedure de
+        # deploiement manuelle (DEPLOY_FRONTEND.md), pas d'ici.
+        run: npm run verifier:statuts
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 

@@ -13,9 +13,40 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### Regle generale — une assertion visuelle porte sur le STYLE CALCULE
+
+**Jamais sur la classe.** Une classe est une intention ; le style calcule est ce que l'oeil recoit.
+Entre les deux il y a la cascade, les valeurs par defaut, et les regles qu'on a oublie d'ecrire.
+
+Le 13/09/2026, le tableau de bord medecin affichait les bons badges — « Annule » en rouge, « Statut
+inconnu » en gris — et **les quatre cartes gardaient une bordure gauche verte**, parce que
+`.appt-card` avait `border-left:4px solid var(--green)` en base et que rien ne surchargeait cette
+valeur pour un annule. Les assertions sur les badges passaient toutes. Seule la capture l'a montre.
+
+C'est **exactement la meme faute** que « la console est propre » sur un bouton qui ment : on mesure
+ce qui repond, pas ce qui trompe.
+
+```js
+// NON — teste l'intention
+await expect(carte).toHaveClass(/cancelled/);
+
+// OUI — teste ce que l'oeil recoit
+const couleurs = await liste.locator('.appt-card').evaluateAll(
+  (els) => els.map((e) => getComputedStyle(e).borderLeftColor));
+expect(couleurs.filter(estVert).length).toBeLessThanOrEqual(1);
+```
+
+Deux corollaires :
+
+1. **Regarder la capture, pas seulement le vert du test.** Une assertion ne voit que ce qu'on lui a
+   demande de voir. Un defaut de valeur par defaut n'est jamais dans la liste.
+2. **Verifier que l'ecran teste est l'ecran servi.** Le meme jour, des assertions portaient sur
+   `#rdv-list` de `patient-dashboard.html` — du DOM mort, neutralise depuis la phase 5.2.5, dont
+   l'onglet redirige vers `mes-rdv.html`. Elles passaient, sur un ecran que personne ne voit.
+
 ### Portes locales — la liste complète, dans cet ordre
 
-Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », **les six** doivent passer. Aucune
+Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », **les sept** doivent passer. Aucune
 n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 
 | # | Commande | Ce qu'elle attrape | Échoue si |
@@ -25,7 +56,13 @@ n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 | 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
 | 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
 | 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
-| 6 | `npm run build` puis `npm run test:e2e` | 30 parcours critiques, sources et sortie de build | un test rouge |
+| 6 | `npm run verifier:statuts` | un statut de rendez-vous declare d'un cote et pas de l'autre | un ecart, dans un sens ou l'autre |
+| 7 | `npm run build` puis `npm run test:e2e` | les parcours critiques, sources et sortie de build | un test rouge |
+
+La porte 6 est l'etage **structurel** : elle compare `js/tabibi-statut-rdv.js` a
+`supabase/enums/appointment_status.txt`, sans secret et sans reseau. Elle ne voit **pas** un
+`ALTER TYPE` fait en base — cela, c'est `node scripts/verifier-statuts.mjs --base`, **etape
+obligatoire de la procedure de deploiement manuelle**, pas une porte locale.
 
 > **Pourquoi la ligne 2 est en gras.** Le 12/09/2026, une PR a été annoncée « portes vertes » puis a fait rougir
 > la CI. `npm run lint` avait été lancé, pas `npm run lint:dette`. Or `lint` compte 129 avertissements et ne

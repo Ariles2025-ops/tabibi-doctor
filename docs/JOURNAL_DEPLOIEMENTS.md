@@ -21,6 +21,27 @@ deployment*. Atomique, sans reconstruction.
 
 ---
 
+## Gabarit — a recopier pour chaque deploiement
+
+### Avant d'envoyer — lignes a cocher
+
+- [ ] **Enum des statuts de rendez-vous.** `SUPABASE_ACCESS_TOKEN=$(security find-generic-password -s "Supabase CLI" -w) node scripts/verifier-statuts.mjs --base` → `Statuts alignes.`, sortie 0. **Si elle echoue, on n'envoie pas.** Jeton local, aucun secret en CI. Pourquoi cette etape vit ici et pas dans un workflow : `docs/VERIFICATION_DEPLOIEMENT_PORTE_FERMEE.md`.
+- [ ] Les portes locales passent : `eslint`, `lint:dette`, `i18n:verifier`, `verifier:cles`, `verifier:c1`, `verifier:statuts`, `build`, `test:e2e`.
+- [ ] **Parcours permanent « aucun bouton ne ment »** sur `dist-web` : `grep -rnE 'onclick="[^"]*(alert|confirm)\(' dist-web/*.html dist-web/legal/*.html` — zero menteur actif.
+- [ ] **Parcours 4, fixture sale** : `npx playwright test tests/e2e/parcours-4-fixture-sale.spec.js --project=desktop` — 3 verts, **captures regardees**, pas seulement le vert du test.
+- [ ] Branche de production du projet Pages verifiee (`main`).
+- [ ] Etat de la porte decide et applique (`node scripts/porte.mjs fermee|ouverte`).
+- [ ] **Les mesures annoncees, chiffrees, ECRITES avant l'envoi.** Une taille se mesure sur ce qui sera **servi**, pas sur ce qui est construit : Cloudflare reecrit les `mailto:` (+316 o constates au deploiement 4).
+- [ ] Cible de retour arriere notee — l'identifiant du deploiement actuellement en production.
+
+### Apres l'envoi — sur le domaine reel, cache-bust
+
+- [ ] Les mesures constatees, en face des annoncees. **Toute divergence est expliquee, pas absorbee.**
+- [ ] Parcours permanent rejoue **sur le domaine reel** : la production reecrit le HTML servi.
+- [ ] Ligne ajoutee au tableau en tete de ce journal.
+
+---
+
 ## Déploiement 2 — 13/09/2026, la vague de fusion, porte fermée
 
 **Ce qui est parti** : la vague de fusion de #56 (dix-huit PR en trois paquets, plus #76, #77, #78),
