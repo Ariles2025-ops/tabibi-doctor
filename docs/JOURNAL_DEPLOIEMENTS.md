@@ -49,6 +49,7 @@ Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauve
 | # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
 |---|---|---|---|---|---|---|
 | B1 | 2026-09-13 ~14:45 UTC | `20260913_reparation_plpgsql_check.sql` — 15 `CREATE OR REPLACE` | `8e3b05d` (fichier), `e3f1956` (retour arrière) | `20260913_reparation_RETOUR_ARRIERE.sql`, capture `pg_get_functiondef` du 13/09 14:22 UTC, fraîcheur prouvée par 15 empreintes `md5` → 0 ligne | `20260913_reparation_VERIFICATION.sql` → **0 ligne** | Aghiles |
+| B2 | 2026-09-13 ~15:20 UTC | `20260913_audit_log_echecs.sql` — table de rebut | `400f464` | `DROP TABLE public.audit_log_echecs` (additive, aucune donnée) | 5 contrôles sur 6 conformes — **1 divergence ouverte : `rls_active`** | Aghiles |
 | B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
 
 ### B1 — les cinq mesures fonctionnelles, 13/09/2026
@@ -79,6 +80,48 @@ NULL` des handlers d'audit sont intacts. La table `audit_log_echecs` et les rég
 constitutive/preuve sont la migration suivante — et ce débat cesse d'être théorique maintenant que
 l'écriture d'audit fonctionne.
 
+### B2 — la table de rebut, et la divergence restée ouverte
+
+Appliquée au deuxième essai. Le premier a échoué sur `FATAL 53300 — too many clients already` :
+échec **à la connexion**, avant toute exécution, rien n'avait été tenté (cf.
+`docs/CARTE_CAPACITE_CONNEXIONS.md`).
+
+**Conforme :** `existe` = 1 · droits `anon`/`authenticated`/`PUBLIC` = **AUCUN** · aucune clé
+étrangère · aucun déclencheur · aucune politique.
+
+**Divergence :** `rls_active` = **TRUE**, attendu `false`. La migration ne contient aucun
+`ENABLE ROW LEVEL SECURITY` — vérifié par analyse du texte, pas par relecture. **Cause non établie à
+ce jour.** Diagnostic prêt : `supabase/mesures/20260913_rls_cause.sql`.
+
+#### La propriété critique, prouvée et non déduite
+
+La spécification de cette table est « elle ne peut échouer que sur disque plein ». Une RLS active
+sans aucune politique est un refus par défaut : il fallait prouver que l'écriture arrive quand même,
+pas le déduire du contournement par le propriétaire.
+
+`supabase/mesures/20260913_rebut_ecriture_preuve.sql`, transaction annulée :
+
+| Face | Chemin | Résultat |
+|---|---|---|
+| 1 | `authenticated`, `INSERT` **direct** | **REFUSÉ `42501`** — permission denied for table |
+| 2 | `authenticated`, via fonction `SECURITY DEFINER` (régime exact des sept) | **ABOUTI** |
+| — | relecture | lignes 0 → 1, contenu relu = `'ligne-temoin-13-09-2026'` |
+
+État au moment de la mesure : `RLS=true`, propriétaire `postgres`, **0 politique**.
+
+**Ce que la face 1 prouve exactement — et ce qu'elle ne prouve pas.** `42501 permission denied for
+table` est un refus de **privilège**, pas de RLS : un refus RLS s'annonce
+`new row violates row-level security policy`. Ce sont donc les `REVOKE` qui ferment la porte, et la
+RLS n'a jamais été mise à l'épreuve — elle est derrière le contrôle de droits, qui tranche en
+premier. La double fermeture existe ; une seule des deux a été exercée.
+
+**La fragilité que cette mesure révèle, et qui pèse sur le choix à venir.** La face 2 réussit parce
+que le propriétaire contourne la RLS. C'est une propriété **ambiante**, pas déclarée : un seul
+`ALTER TABLE … FORCE ROW LEVEL SECURITY` la supprimerait, et avec zéro politique, **toutes** les
+écritures de rebut échoueraient d'un coup. Elles échoueraient bruyamment — `42501` fait lever
+l'opération, ce n'est pas un piège silencieux — mais la fonction de la table serait perdue.
+
+---
 **Règles de la colonne « Cible de retour » :**
 - Une migration qui remplace du code (`CREATE OR REPLACE`, `ALTER`) exige un fichier de capture
   **généré et versionné avant** son application. Il ne se lance pas ; il existe.
