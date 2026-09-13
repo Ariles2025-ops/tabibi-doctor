@@ -45,6 +45,11 @@ Disallow: /teleconsultation.html
 Disallow: /reset-password.html
 Disallow: /forgot-password.html
 
+# [PORTE 2026-09-13] Accueil public deploye mais hors page d'entree quand la
+# porte est fermee : atteignable a une URL devinable, il ne doit pas etre
+# explore. La page porte aussi <meta name="robots" content="noindex,nofollow">.
+Disallow: /accueil-public.html
+
 # Fichiers SQL exposes accidentellement (devraient etre 404 via netlify.toml)
 Disallow: /*.sql$
 

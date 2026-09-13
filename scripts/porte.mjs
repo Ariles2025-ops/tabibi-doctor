@@ -44,7 +44,22 @@ if (etat === 'fermee') {
   if (!existsSync(source)) { console.error(`✗ ${source} introuvable.`); process.exit(2); }
   // On garde l'accueil public sous un nom stable : il reste déployé, mais
   // il n'est plus la page d'entrée. Rien n'est perdu, rien n'est deviné.
-  if (existsSync(cible)) copyFileSync(cible, join(dist, 'accueil-public.html'));
+  //
+  // [NOINDEX 2026-09-13] Porte fermée, cet accueil devient atteignable à une URL
+  // devinable alors que la porte est censée être close. index.html porte
+  // « index,follow » : recopié tel quel, il serait indexable. On force donc
+  // « noindex,nofollow » sur la copie — jamais sur l'original, qui reste
+  // indexable le jour où la porte s'ouvre. Complété par un Disallow dans
+  // robots.txt : la balise couvre l'indexation, robots.txt couvre l'exploration.
+  if (existsSync(cible)) {
+    const accueil = join(dist, 'accueil-public.html');
+    let pub = readFileSync(cible, 'utf8');
+    pub = pub.replace(/<meta\s+name="robots"[^>]*>/i, '<meta name="robots" content="noindex,nofollow">');
+    if (!/name="robots"/i.test(pub)) {
+      pub = pub.replace('</head>', '  <meta name="robots" content="noindex,nofollow">\n</head>');
+    }
+    writeFileSync(accueil, pub);
+  }
   copyFileSync(source, cible);
 }
 
