@@ -1,0 +1,159 @@
+#!/usr/bin/env node
+// =====================================================================
+// verifier-rpc.mjs — le front appelle-t-il des fonctions qui existent ?
+// =====================================================================
+// C'est la garde la plus rentable du depot, parce que le defaut qu'elle attrape
+// est INVISIBLE : le front appelle une RPC absente, PostgREST rend 404, et le
+// `catch` avale. Aucune erreur a l'ecran, aucune ligne dans la console.
+//
+// Ce n'est pas theorique. Pendant la recette de septembre 2026, les fonctions
+// de la vague 1A ont tue la recherche de medecins et personne ne l'a vu :
+// l'appel echouait, le catch avalait, la liste sortait vide comme si aucun
+// medecin ne correspondait.
+//
+// Mesure du 13/09/2026 : 44 RPC appelees, **5 absentes de la base**.
+//   create_prescription_draft, update_prescription_draft,
+//   request_prescription_signature   -> medecin-ordonnance.html
+//   mark_prescription_delivered      -> patient-ordonnances.html
+//   validate_cabinet_invitation      -> signup.html
+//
+// DEUX ETAGES, comme verifier-statuts.mjs, et pour la meme raison :
+//
+//   structurel (defaut, AUCUN secret) — chaque `rpc('x')` du depot doit etre
+//     soit dans supabase/rpc/existantes.txt, soit declare ci-dessous comme
+//     absence CONNUE et justifiee. Deterministe, hors ligne, en CI.
+//
+//   --base (exige SUPABASE_ACCESS_TOKEN) — la reference contre `pg_proc` reel.
+//     C'est le seul etage qui voit une fonction SUPPRIMEE en base sans que le
+//     depot bouge : le structurel resterait vert, coherent avec lui-meme, et
+//     faux. Etape obligatoire de la procedure de deploiement manuelle
+//     (docs/VERIFICATION_DEPLOIEMENT_PORTE_FERMEE.md), pas en CI : aucun secret
+//     Supabase n'entre dans le depot.
+//
+// Usage : node scripts/verifier-rpc.mjs [--base] [--ecrire]
+// =====================================================================
+import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+
+const ROUGE = (s) => `\x1b[31m${s}\x1b[0m`;
+const REF = 'supabase/rpc/existantes.txt';
+
+// Absences CONNUES : le front les appelle, la base ne les a pas. Chacune est un
+// appel mort, inventorie dans docs/FICHE_R3_APPELS_DANS_LE_VIDE.md. Elles ne
+// font pas echouer le controle — mais toute NOUVELLE absence, si.
+// Retirer une ligne d'ici quand la fonction est deployee, ou quand l'appel est
+// supprime du front. La liste doit MAIGRIR, jamais grossir.
+const ABSENCES_CONNUES = {
+  create_prescription_draft: 'ordonnances, drapeau prescriptions:false — R3 section A',
+  update_prescription_draft: 'ordonnances, drapeau prescriptions:false — R3 section A',
+  request_prescription_signature: 'ordonnances, drapeau prescriptions:false — R3 section A',
+  mark_prescription_delivered: 'tracage de delivrance, catch muet — R3 section A',
+  validate_cabinet_invitation: 'inscription secretaire, catch muet — R3 section A',
+};
+
+const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',
+  'desktop', 'v2', 'seo', '.git', 'tests', 'blog', 'docs', 'supabase', 'migrations']);
+
+function fichiers(dir = '.', acc = []) {
+  for (const e of readdirSync(dir, { withFileTypes: true })) {
+    if (e.name.startsWith('.') || IGNORE.has(e.name)) continue;
+    const p = join(dir, e.name);
+    if (e.isDirectory()) fichiers(p, acc);
+    else if (/\.(html|js|mjs)$/.test(e.name) && !e.name.includes('vendor')
+             && e.name !== 'index-baseline.html') acc.push(p);
+  }
+  return acc;
+}
+
+// Les appels du depot, commentaires exclus : un `// rpc('ancienne_fonction')`
+// dans un commentaire ne doit pas faire echouer le controle.
+function appelsDuDepot() {
+  const re = /(?:\.rpc\(\s*|rest\/v1\/rpc\/)['"]?([a-z_][a-z0-9_]*)['"]?/gi;
+  const par = new Map();
+  for (const f of fichiers()) {
+    let code = readFileSync(f, 'utf8');
+    code = code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+    let m;
+    while ((m = re.exec(code)) !== null) {
+      if (!par.has(m[1])) par.set(m[1], new Set());
+      par.get(m[1]).add(f);
+    }
+  }
+  return par;
+}
+
+const reference = () => readFileSync(REF, 'utf8').split('\n')
+  .map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+
+async function pgProc() {
+  const jeton = process.env.SUPABASE_ACCESS_TOKEN;
+  if (!jeton) {
+    console.error(ROUGE("✗ --base exige SUPABASE_ACCESS_TOKEN dans l'environnement."));
+    console.error('  Le script ne lit rien du trousseau : le jeton est fourni par l\'appelant.');
+    process.exit(2);
+  }
+  const r = await fetch('https://api.supabase.com/v1/projects/pudugodhiofqrctcdwfl/database/query', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${jeton}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: "select p.proname from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'" }),
+  });
+  if (!r.ok) { console.error(ROUGE(`✗ lecture de pg_proc : HTTP ${r.status}`)); process.exit(2); }
+  const rows = await r.json();
+  if (!Array.isArray(rows)) { console.error(ROUGE('✗ reponse inattendue')); process.exit(2); }
+  return rows.map((x) => x.proname);
+}
+
+const base = process.argv.includes('--base');
+const ecrire = process.argv.includes('--ecrire');
+const appels = appelsDuDepot();
+let echec = false;
+
+if (base) {
+  console.log('Controle BASE — la reference contre pg_proc reel.');
+  const enBase = new Set(await pgProc());
+  const presentes = [...appels.keys()].filter((k) => enBase.has(k)).sort();
+  if (ecrire) {
+    writeFileSync(REF, readFileSync(REF, 'utf8').split('\n').filter((l) => l.startsWith('#')).join('\n')
+      + '\n' + presentes.join('\n') + '\n');
+    console.log(`  ${REF} regenere : ${presentes.length} entrees.`);
+  }
+  const ref = reference();
+  const disparues = ref.filter((k) => !enBase.has(k));
+  const revenues = Object.keys(ABSENCES_CONNUES).filter((k) => enBase.has(k));
+  console.log(`  ${appels.size} RPC appelees · ${enBase.size} fonctions en base · reference ${ref.length}`);
+  if (disparues.length) {
+    echec = true;
+    console.error(ROUGE(`\n✗ ${disparues.length} fonction(s) de la reference ONT DISPARU de la base : ${disparues.join(', ')}`));
+    console.error('  Le front les appelle. PostgREST rendra 404 et le catch avalera : aucune erreur visible.');
+  }
+  if (revenues.length) {
+    console.log(`\n↑ ${revenues.length} absence(s) connue(s) existent desormais en base : ${revenues.join(', ')}`);
+    console.log('  Les retirer de ABSENCES_CONNUES et regenerer la reference (--ecrire).');
+  }
+} else {
+  console.log('Controle STRUCTUREL — les appels du depot contre la reference versionnee (aucun secret).');
+  console.log('  Il ne voit PAS une fonction supprimee en base : pour cela, --base.');
+  const ref = new Set(reference());
+  const inconnues = [...appels.keys()].filter((k) => !ref.has(k) && !(k in ABSENCES_CONNUES)).sort();
+  const inutiles = [...ref].filter((k) => !appels.has(k)).sort();
+  console.log(`  ${appels.size} RPC appelees · ${ref.size} dans la reference · ${Object.keys(ABSENCES_CONNUES).length} absences connues`);
+  if (inconnues.length) {
+    echec = true;
+    console.error(ROUGE(`\n✗ ${inconnues.length} RPC appelee(s) et absente(s) de la reference :`));
+    for (const k of inconnues) console.error(`    ${k}  <- ${[...appels.get(k)].join(', ')}`);
+    console.error('  Soit la fonction existe et la reference est perimee (--base --ecrire),');
+    console.error('  soit elle n\'existe pas : le front appelle dans le vide et le catch avale.');
+  }
+  if (inutiles.length) {
+    console.log(`\n↓ ${inutiles.length} entree(s) de la reference que plus personne n'appelle : ${inutiles.join(', ')}`);
+  }
+}
+
+const connues = Object.keys(ABSENCES_CONNUES);
+if (connues.length) {
+  console.log(`\n${connues.length} absence(s) CONNUE(S), inventoriee(s) dans docs/FICHE_R3_APPELS_DANS_LE_VIDE.md :`);
+  for (const k of connues) console.log(`  ${k}  — ${ABSENCES_CONNUES[k]}`);
+  console.log('  Cette liste doit MAIGRIR, jamais grossir.');
+}
+if (echec) process.exit(1);
+console.log('\nToute RPC appelee est declaree.');

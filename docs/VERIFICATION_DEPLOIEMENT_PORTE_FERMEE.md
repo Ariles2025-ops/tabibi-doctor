@@ -5,6 +5,29 @@ mesurable, pas une impression. Si une seule échoue : **retour arrière immédia
 
 Toutes les requêtes portent un cache-bust (`?cb=$RANDOM`).
 
+## Etape obligatoire AVANT le build — les RPC appelees existent
+
+**Si elle echoue, le deploiement ne part pas.**
+
+```bash
+SUPABASE_ACCESS_TOKEN=$(security find-generic-password -s "Supabase CLI" -w) \
+  node scripts/verifier-rpc.mjs --base
+```
+
+Attendu : aucune fonction de `supabase/rpc/existantes.txt` disparue de `pg_proc`.
+
+**Pourquoi cet etage ne peut pas etre en CI.** Le structurel (`npm run verifier:rpc`, sans secret)
+compare le code a une reference versionnee : il reste vert si une fonction est SUPPRIMEE en base,
+puisque le depot est alors coherent avec lui-meme, et faux. Seul `--base` le voit.
+
+Et le defaut qu'il attrape est **invisible** : PostgREST rend 404, le `catch` avale, l'ecran sort
+vide comme s'il n'y avait rien a montrer. C'est arrive pendant la recette de septembre 2026, ou les
+fonctions de la vague 1A ont tue la recherche de medecins sans que personne le remarque.
+
+Mesure du 13/09/2026 : **44 RPC appelees, 5 absentes** — les cinq de
+`docs/FICHE_R3_APPELS_DANS_LE_VIDE.md`, declarees comme absences connues dans le script. Cette liste
+doit **maigrir, jamais grossir**.
+
 ## Etape obligatoire AVANT le build — l'enum des statuts
 
 **Si elle echoue, le deploiement ne part pas.** C'est tout.
