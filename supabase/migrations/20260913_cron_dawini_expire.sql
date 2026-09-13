@@ -1,0 +1,127 @@
+-- =====================================================================
+-- 20260913_cron_dawini_expire.sql
+-- L'expiration Dawini cesse de dependre d'un visiteur qui ouvre une page
+-- =====================================================================
+-- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
+--
+-- ---------------------------------------------------------------------
+-- LE DEFAUT
+-- ---------------------------------------------------------------------
+-- `public.dawini_expire_old()` fait passer les demandes perimees de `pending`
+-- a `expired` :
+--   UPDATE public.dawini_requests SET status='expired'
+--    WHERE status='pending' AND expires_at <= now();
+--
+-- ELLE N'EST APPELEE QUE PAR LE FRONT, a `js/tabibi-dawini.js:440`, depuis
+-- `dawini.html:800` et `dawini-pharmacie.html:366`. Il n'existe AUCUNE tache
+-- pg_cron qui la porte : mesure du 13/09/2026 sur `cron.job`, deux taches en
+-- tout, `cleanup_old_logs` (jobid 1) et `appointment-reminders` (jobid 2),
+-- aucune ne touche `dawini_requests`.
+--
+-- Consequence : une demande expire quand quelqu'un OUVRE LA PAGE. Personne
+-- n'ouvre la page un dimanche, la demande reste `pending` — visible des
+-- pharmacies, comptee dans les listes, repondable — alors qu'elle est morte.
+--
+-- C'est la meme famille que le declencheur `ensure_rls` : un mecanisme qui
+-- n'existe pas la ou on croit qu'il est.
+--
+-- ---------------------------------------------------------------------
+-- CE QUE CE FICHIER NE PROUVE PAS, ET QU'IL FAUT DIRE
+-- ---------------------------------------------------------------------
+-- `public.dawini_requests` est VIDE — zero ligne, toutes lignes et tous statuts
+-- confondus, mesure le 13/09/2026. Nous sommes en pre-lancement.
+--
+-- Donc : **le defaut n'a jamais nui a personne, et cette tache n'aura rien a
+-- faire aujourd'hui.** Elle est posee AVANT qu'il y ait des donnees, pas apres
+-- un incident. C'est la seule fois ou ca coute zero.
+--
+-- Corollaire a ne pas rater : la verification ci-dessous prouvera que la tache
+-- TOURNE, pas qu'elle EXPIRE quoi que ce soit. `succeeded` sur zero ligne
+-- touchee est un succes. Le jour ou il y aura des demandes, il faudra une
+-- seconde verification, fonctionnelle celle-la — c'est la meme non-regression
+-- Dawini authentifiee qui attend depuis ce matin.
+--
+-- ---------------------------------------------------------------------
+-- LES CHOIX, ET POURQUOI
+-- ---------------------------------------------------------------------
+-- ROLE : `postgres`. Mesure dans `cron.job`, colonne `username` : les deux
+--   taches existantes tournent sous `postgres`, base `postgres`. On ne cree pas
+--   un role de plus pour une tache de plus. `dawini_expire_old` est SECURITY
+--   DEFINER et `has_function_privilege('postgres', …, 'EXECUTE')` vaut true
+--   (verifie le 13/09, apres le REVOKE de 20260913_revoke_liste_A.sql qui n'a
+--   retire l'EXECUTE qu'a PUBLIC et `anon`).
+--
+-- CADENCE : `*/15 * * * *`, la meme qu'`appointment-reminders` — qui a fait
+--   96 passages sur 96 en `succeeded` dans les dernieres 24 h. La cadence est
+--   donc eprouvee sur cette base. Une demande Dawini vit en heures : un retard
+--   de 15 minutes sur son expiration est sans consequence.
+--
+-- UPSERT PAR NOM : pg_cron 1.6.4 (mesure). Depuis 1.4, `cron.schedule(nom,
+--   planning, commande)` remplace la tache de meme nom au lieu d'en creer une
+--   seconde. Rejouer ce fichier est donc sans danger — pas de doublon.
+--
+-- =====================================================================
+-- CE QU'IL FAUT FAIRE
+-- =====================================================================
+
+select cron.schedule(
+  'dawini-expire-old',
+  '*/15 * * * *',
+  $$ SELECT public.dawini_expire_old(); $$
+);
+
+-- =====================================================================
+-- VERIFICATION — a lancer APRES, dans un passage separe
+-- =====================================================================
+-- 1. LA TACHE EXISTE ET EST ACTIVE. Attendu, exactement :
+--    dawini-expire-old | */15 * * * * | postgres | postgres | t
+--
+-- select jobname, schedule, username, database, active
+--   from cron.job where jobname = 'dawini-expire-old';
+--
+-- 2. ELLE PASSE. A lancer dans les 20 MINUTES qui suivent (la cadence est de
+--    15 min : au-dela de 20, une absence de ligne veut dire qu'elle ne tourne
+--    pas, en deca elle peut seulement vouloir dire qu'elle n'a pas encore eu
+--    son tour). Attendu : au moins une ligne, status `succeeded`.
+--
+-- select d.status, d.start_time, d.end_time, d.return_message
+--   from cron.job_run_details d join cron.job j on j.jobid = d.jobid
+--  where j.jobname = 'dawini-expire-old'
+--  order by d.start_time desc limit 5;
+--
+-- ⚠️  `succeeded` NE PROUVE PAS QU'UNE DEMANDE A EXPIRE. La table est vide :
+-- l'UPDATE touche zero ligne et reussit. Ce controle prouve que la tache
+-- s'execute, rien d'autre.
+--
+-- 3. LA PREUVE FONCTIONNELLE, quand il y aura des donnees — ou tout de suite,
+--    sur une base LOCALE, jamais en production :
+--      begin;
+--        insert into public.dawini_requests (…, status, expires_at)
+--             values (…, 'pending', now() - interval '1 hour');
+--        select public.dawini_expire_old();
+--        select status from public.dawini_requests where id = …;  -- 'expired'
+--      rollback;
+--
+-- =====================================================================
+-- RETOUR ARRIERE
+-- =====================================================================
+-- select cron.unschedule('dawini-expire-old');
+--
+-- Ce que vous rouvrez en le faisant : l'expiration Dawini redevient dependante
+-- de l'ouverture d'une page par un humain authentifie. Une demande morte reste
+-- `pending` tant que personne ne passe — visible, listee, repondable.
+--
+-- =====================================================================
+-- CE QUE CETTE MIGRATION CHANGE DANS LE FRONT — A FAIRE APRES, PAS AVANT
+-- =====================================================================
+-- Une fois cette tache VERIFIEE en place (points 1 et 2 ci-dessus), l'appel de
+-- `js/tabibi-dawini.js:440` n'est plus le mecanisme d'expiration : c'est un
+-- raccourci d'affichage, pour que l'utilisateur qui ouvre la page ne voie pas
+-- une demande morte pendant les quelques minutes qui restent avant le prochain
+-- passage du cron.
+--
+-- Le commentaire de cette fonction le dit aujourd'hui au CONDITIONNEL (« tant
+-- que 20260913_cron_dawini_expire.sql n'est pas appliquee »). Il devra etre
+-- reecrit a l'indicatif — et seulement une fois la verification faite. Ecrire
+-- « le cron porte l'expiration » avant de l'avoir constate serait exactement la
+-- faute que CLAUDE.md documente : une regle de reference n'est pas une mesure.
