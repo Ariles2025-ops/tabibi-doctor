@@ -39,6 +39,12 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run build
       - run: npm run test:e2e:build
+
+      # [PORTE 2026-09-13] L'etat de porte est un CHOIX explicite, jamais un
+      # heritage du contenu de main. Variable de depot TABIBI_PORTE : « fermee »
+      # (defaut) ou « ouverte ». Voir docs/ETAT_PORTE.md.
+      - name: Etat de porte du site
+        run: node scripts/porte.mjs "${{ vars.TABIBI_PORTE || 'fermee' }}"
       - name: Deployer dist-web sur Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
