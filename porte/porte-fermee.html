@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<!-- Récupération mot de passe : conserve la redirection auth existante -->
+<script>
+(function () {
+  try {
+    var h = window.location.hash || '';
+    if (/[#&]type=recovery/.test(h) && window.location.pathname.indexOf('reset-password') === -1) {
+      window.location.replace('/reset-password.html' + h);
+    }
+  } catch (e) {}
+})();
+</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<title>Tabibi — Bientôt disponible</title>
+<meta name="description" content="Tabibi arrive bientôt. La plateforme algérienne pour prendre rendez-vous avec un médecin en ligne — lancement décembre 2026.">
+<link rel="canonical" href="https://tabibi.doctor/">
+<meta name="robots" content="index,follow">
+<meta name="theme-color" content="#0F7560">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://tabibi.doctor/">
+<meta property="og:title" content="Tabibi — Bientôt disponible">
+<meta property="og:description" content="La plateforme algérienne de rendez-vous médicaux arrive. Lancement décembre 2026.">
+<meta property="og:image" content="https://tabibi.doctor/assets/og-image.jpg">
+<meta property="og:site_name" content="Tabibi">
+<meta property="og:locale" content="fr_DZ">
+<style>
+  :root{
+    --tb-teal:#0F7560;
+    --tb-gold:#d4a437;
+    --tb-text:#556070;
+    --tb-bg:#f7f6f2;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    color:var(--tb-text);
+    background:
+      radial-gradient(1200px 600px at 50% -10%, rgba(15,117,96,.10), transparent 60%),
+      radial-gradient(900px 500px at 50% 120%, rgba(212,164,55,.10), transparent 60%),
+      var(--tb-bg);
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .cs{
+    width:100%;
+    max-width:560px;
+    text-align:center;
+  }
+  .cs__logo{
+    width:96px;
+    height:96px;
+    margin:0 auto 28px;
+    display:block;
+    filter:drop-shadow(0 8px 24px rgba(15,117,96,.18));
+  }
+  .cs__brand{
+    font-size:clamp(30px,7vw,44px);
+    font-weight:800;
+    letter-spacing:-.02em;
+    color:var(--tb-teal);
+    margin-bottom:6px;
+  }
+  .cs__brand span{color:var(--tb-gold)}
+  .cs__soon{
+    font-size:clamp(15px,3.4vw,18px);
+    font-weight:600;
+    color:var(--tb-text);
+    margin-bottom:22px;
+  }
+  .cs__pill{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    padding:10px 20px;
+    border-radius:999px;
+    background:#fff;
+    border:1px solid rgba(15,117,96,.15);
+    box-shadow:0 4px 18px rgba(85,96,112,.08);
+    font-size:clamp(14px,3.2vw,16px);
+    font-weight:700;
+    color:var(--tb-teal);
+  }
+  .cs__dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--tb-gold);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:.35;transform:scale(.7)}
+  }
+  .cs__ar{
+    margin-top:20px;
+    font-size:clamp(15px,3.6vw,19px);
+    color:var(--tb-teal);
+    font-weight:600;
+    direction:rtl;
+  }
+  .cs__foot{
+    margin-top:36px;
+    font-size:12px;
+    color:rgba(85,96,112,.6);
+  }
+  @media (max-width:480px){
+    .cs__logo{width:80px;height:80px;margin-bottom:22px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .cs__dot{animation:none}
+  }
+</style>
+</head>
+<body>
+  <main class="cs" role="main">
+    <!-- Logo Tabibi (caducée dans carré arrondi) -->
+    <svg class="cs__logo" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tabibi">
+      <title>Tabibi</title>
+      <rect x="0" y="0" width="120" height="120" fill="#0F7560" rx="24"/>
+      <rect x="56" y="28" width="8" height="70" fill="#FFFFFF" rx="2"/>
+      <path d="M 42 35 Q 28 31 22 41 Q 30 38 42 41 Z" fill="#FFFFFF"/>
+      <path d="M 78 35 Q 92 31 98 41 Q 90 38 78 41 Z" fill="#FFFFFF"/>
+      <path d="M 60 38 Q 48 48 60 58 Q 72 68 60 78 Q 48 88 60 95" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round"/>
+      <g transform="translate(98, 22)">
+        <polygon points="0,-9 2.5,-2.5 9,-2.5 3.5,2 5.5,9 0,4.5 -5.5,9 -3.5,2 -9,-2.5 -2.5,-2.5" fill="#D4A437"/>
+      </g>
+    </svg>
+
+    <div class="cs__brand">Tabibi<span>.</span></div>
+    <div class="cs__soon">Arrive bientôt — Décembre 2026</div>
+
+    <div class="cs__pill" aria-live="polite">
+      <span class="cs__dot" aria-hidden="true"></span>
+      En cours de préparation
+    </div>
+
+    <div class="cs__ar">طبيبي — قريباً · ديسمبر 2026</div>
+
+    <p class="cs__foot">© 2026 Tabibi — Algérie</p>
+  </main>
+</body>
+</html>
