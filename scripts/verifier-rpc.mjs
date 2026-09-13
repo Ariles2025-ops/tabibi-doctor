@@ -127,7 +127,9 @@ async function pgProc() {
 //
 // Ce plafond descend a chaque site migre, et interdit qu'un NOUVEAU site
 // court-circuite la passerelle. Il ne monte jamais.
-const PLAFOND_RPC_DIRECT = 60;   // mesure du 13/09/2026, 140 fichiers source
+// 60 -> 56 le 13/09/2026, lot 1 : les quatre sites a effet externe irreversible
+// (envoi d e-mail apres admin_validate_doctor) passent par la passerelle.
+const PLAFOND_RPC_DIRECT = 56;
 
 function appelsDirects() {
   const par = {};
