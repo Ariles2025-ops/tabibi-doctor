@@ -25,6 +25,7 @@
     "verifier:statuts": "node scripts/verifier-statuts.mjs",
     "verifier:panneaux": "node scripts/verifier-panneaux.mjs",
     "verifier:fuseau": "node scripts/verifier-fuseau.mjs",
+    "verifier:rpc-passage": "node scripts/verifier-rpc-passage.mjs",
     "porte:fermee": "node scripts/porte.mjs fermee",
     "porte:ouverte": "node scripts/porte.mjs ouverte",
     "build:porte-fermee": "npm run build && npm run porte:fermee",

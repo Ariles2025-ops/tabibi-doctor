@@ -13,6 +13,56 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### Quand le mensonge sort de l'application, il passe EN PREMIER
+
+Tous les defauts qui se presentent comme un etat normal ne se valent pas. Quand le mensonge d'un
+ecran declenche un effet **EXTERNE et irreversible** — un e-mail parti, un compte cree, un paiement
+— il passe avant tous les autres de la meme famille.
+
+Un badge vert de trop se corrige demain et personne n'en a souffert. Un e-mail « votre fiche est
+validee » envoye a un medecin dont la fiche n'a PAS ete validee ne se rattrape pas : il est chez lui,
+il y croit, et il agira dessus.
+
+Cas du 13/09/2026, dans l'ordre ou ils ont ete traites :
+
+| Site | Effet du mensonge | Reversible ? |
+|---|---|---|
+| `admin-doctor-validation.html:371` et `:434` | **un e-mail part au medecin** — « fiche validee » ou « fiche rejetee » | **non** |
+| `signup.html:499` | **un compte secretaire est cree** en role actif, sans adhesion au cabinet | difficilement |
+| les autres ecrans de la meme famille | un affichage faux | oui |
+
+### Une COMMANDE qui echoue et une QUESTION qui repond non ne sont pas la meme chose
+
+C'est la distinction qui decide de la REACTION, jamais du signalement.
+
+- **Une commande** — « valide cette fiche », « retire ce membre », « cree ce rendez-vous ». Si elle
+  echoue, quelque chose ne s'est pas produit alors que l'utilisateur l'a demande. C'est un
+  **incident** : il faut le dire, fort, et surtout ne pas enchainer.
+- **Une question** — « ce patient peut-il laisser un avis ? », « ce code d'invitation est-il encore
+  valable ? ». Un non est une **reponse**, pas une panne. `can_review_doctor` qui dit non,
+  `accept_cabinet_invitation` qui rend `no_pending_invitation` sur un code deja consomme : le
+  systeme fonctionne exactement comme prevu.
+
+**Lever sur une question fabrique des incidents qu'on finit par ignorer** — et le jour ou un vrai
+incident sort, il se noie dans le bruit qu'on a appris a ne plus lire.
+
+C'est la raison pour laquelle `js/tabibi-rpc.js` **normalise** au lieu de lever : il garantit
+qu'aucune moitie de la reponse n'est perdue, il n'impose pas la reaction. L'appelant sait, lui, s'il
+a pose une question ou donne un ordre.
+
+```js
+const r = await tabibiRpc('invite_cabinet_member', { ... });
+if (!r.ok) { toast(r.erreur, 'error'); return; }   // COMMANDE : incident, on s'arrete
+```
+
+```js
+const r = await tabibiRpc('can_review_doctor', { ... });
+if (!r.ok) { masquerLeBouton(); return; }          // QUESTION : reponse, on s'adapte
+```
+
+Et `data` vaut **null** des que `ok` est faux : celui qui ignore `ok` casse visiblement, au lieu de
+continuer sur un mensonge. Normaliser sans cela n'obligerait personne a regarder.
+
 ### Regle premiere — UNE PAGE QUI CHARGE N'EST PAS UNE PAGE QUI MARCHE
 
 Toute preuve d'ecran doit **EXERCER** l'ecran : ouvrir l'onglet, declencher le rendu, **compter ce
@@ -206,6 +256,7 @@ n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 | 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
 | 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
 | 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
+| 6 quinquies | `npm run verifier:rpc-passage` | un appel RPC hors de `tabibiRpc()` | le compte depasse le plafond |
 | 6 bis | `npm run verifier:fuseau` | une lecture d'horloge locale sur une date de rendez-vous | le compte depasse le plafond |
 | 6 | `npm run verifier:statuts` | un statut de rendez-vous declare d'un cote et pas de l'autre | un ecart, dans un sens ou l'autre |
 | 7 | `npm run build` puis `npm run test:e2e` | les parcours critiques, sources et sortie de build | un test rouge |
