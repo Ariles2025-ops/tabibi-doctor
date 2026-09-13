@@ -15,6 +15,7 @@ deployment*. Atomique, sans reconstruction.
 
 | # | Date (UTC) | Commit déployé | Déploiement Cloudflare | Porte | Retour arrière vers | Lancé par |
 |---|---|---|---|---|---|---|
+| 4 | 2026-09-13 ~09:19 | `e94ca04263c9b621160111be9c16cd15fbb09881` | `1c7f727a-…` | **fermée** | `eeeeef33-65c9-4204-b2fe-b66735b6aa9c` | Claude, sur go d'Aghiles |
 | 3 | 2026-09-13 ~08:58 | `dc133ebd9dc1a7427fc5bce367112d810080335d` | `eeeeef33-…` | **fermée** | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | Claude, sur go d'Aghiles |
 | 2 | 2026-09-13 ~01:30 | `5cec711f90f5b982f4b100eb30ff456753ae97a8` | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | **fermée** | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | Claude, sur go d'Aghiles |
 | 1 | 2026-08-26 (reconstitué) | `f06aa3d` (PR #51) | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | fermée | — | non consigné à l'époque |
@@ -68,6 +69,69 @@ Aucune divergence.
 
 Il ne touche pas à la base. Porte fermée, la page d'entrée est statique : une suspension Supabase ne
 casserait pas ce qui est en ligne. C'est ce qui a permis de déployer sans attendre la facture.
+
+---
+
+## Deploiement 4 — 13/09/2026, les boutons honnetes
+
+**Ce qui est parti** : #93 (aucun bouton n'annonce ce qu'il ne fait pas), #94 (vendorisation du SDK
+Daily, retrait d'`unpkg.com` de `script-src`), #95 (documentation). Trois fusions locales, chacune
+verifiee avant la suivante.
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| taille de `/` | 5 004 o | 5 004 o | **5 004 o** |
+| titre | Bientot disponible | inchange | **inchange** |
+| balise `tabibi-porte` | `fermee` | `fermee` | **`fermee`** |
+| `/accueil-public.html` | 200 + `noindex,nofollow` | 200 + `noindex,nofollow` | **200 + `noindex,nofollow`** |
+| `script-src` contient `unpkg.com` | oui | **non** | **non** |
+| boutons menteurs actifs | **6** | **0** | **0** |
+
+### Une divergence, et ce qu'elle apprend
+
+**Taille de `/accueil-public.html` : annoncee 115 952 o, servie 116 268 o. Ecart de 316 octets.**
+
+Ce n'est pas un defaut de deploiement. J'avais annonce la taille du fichier **construit**, alors que
+la production sert le fichier **reecrit** : Cloudflare transforme les 2 `href="mailto:"` de la page en
+un `__cf_email__` et injecte la balise du decodeur. Verifie : `mailto:` = 2 dans `dist-web`, **0** dans
+la page servie ; `__cf_email__` = 0 dans `dist-web`, **1** dans la page servie ; une balise
+`email-decode.min.js` en plus.
+
+C'est exactement le piege consigne le matin meme dans `DEPLOY_FRONTEND.md`, section « Reglages cote
+hebergeur qui reecrivent le HTML servi » — et je l'ai refait dans l'heure. **Regle qui en decoule :
+une taille annoncee doit etre mesuree sur ce qui sera servi, pas sur ce qui est construit.** Pour
+toute page contenant un `mailto:`, prevoir l'ecart, ou comparer autre chose que la taille.
+
+### Parcours permanent — zero bouton actif annoncant une action accomplie
+
+Nouveau controle de la fiche de recette, mesure **sur le domaine reel** et pas seulement sur
+`dist-web`, precisement parce que la production reecrit le HTML. Vingt pages balayees avec cache-bust :
+
+| Page servie | `onclick` `alert`/`confirm` | Verdict |
+|---|---|---|
+| `patient-profile` | 1 | honnete — « Module mesures · Bientot disponible » |
+| `doctor-dashboard` | 3 | honnetes — adresse du support, et deux vues de detail sur de vraies donnees |
+| les dix-huit autres | 0 | — |
+
+**Total : 4, tous honnetes. Zero menteur actif** — contre six avant ce deploiement.
+
+Ce que la production portait encore hier et ne porte plus : les faux compteurs de la cloche admin
+(supprimee), « Export CSV en cours... » et « Backup cree » (desactives), « Telechargement de … »
+(desactive), « Demande envoyee — reponse sous 30 jours (RGPD) » (desactive, avec porte de sortie),
+« Lien copie » (remplace par une vraie copie presse-papiers).
+
+### Les portes de sortie, verifiees en ligne
+
+`patient-profile` sert **2 notes visibles**, **2 liens `tel:+213777169074`**, **2 renvois vers
+`legal/rgpd-droits.html`**, et **2 badges SUR DEMANDE**. Le telephone est la parce que `tel:` echappe
+a la reecriture Cloudflare, contrairement au `mailto:` : c'est le seul element de la note qui reste
+lisible si le decodeur ne s'execute pas. `doctor-profile` sert bien `clipboard.writeText`.
+
+### Ce que ce deploiement ne fait pas
+
+Il ne touche pas a la base. Porte fermee, la page d'entree reste statique.
 
 ---
 

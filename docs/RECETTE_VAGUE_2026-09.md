@@ -157,7 +157,7 @@ et l'a laissee passer **deux fois** : une console propre ne detecte pas un bouto
 s'execute sans erreur — c'est precisement le probleme. Il affiche une phrase, ne fait rien, et rien
 dans les journaux ne le signale.
 
-### La mesure
+### La mesure — deux fois : sur le build, puis sur le domaine reel
 
 Sur la sortie de build, pas sur les sources — c'est ce qui part en ligne qui compte :
 
@@ -165,6 +165,40 @@ Sur la sortie de build, pas sur les sources — c'est ce qui part en ligne qui c
 npm run build
 grep -rnE 'onclick="[^"]*(alert|confirm)\(' dist-web/*.html dist-web/legal/*.html
 ```
+
+**Puis apres deploiement, sur le domaine reel, avec cache-bust.** La production reecrit le HTML servi
+(cf. `DEPLOY_FRONTEND.md`, « Reglages cote hebergeur qui reecrivent le HTML servi ») : ce qui est
+construit n'est pas mot pour mot ce qui est lu.
+
+```bash
+CB=$(date +%s)
+for p in index accueil-public login signup reservation mes-rdv about telecharger \
+         patient-profile patient-dashboard patient-ordonnances \
+         doctor-profile doctor-dashboard medecin-profile \
+         admin-dashboard secretaire-dashboard agenda-cabinet notifications messages dawini; do
+  u="https://tabibi.doctor/$p?cb=$CB"; [ "$p" = "index" ] && u="https://tabibi.doctor/?cb=$CB"
+  n=$(curl -sL "$u" | grep -o 'onclick="[^"]*\(alert\|confirm\)(' | wc -l | tr -d ' ')
+  [ "$n" != "0" ] && printf "%-22s %s\n" "$p" "$n"
+done
+```
+
+Attendu au 13/09/2026 apres le deploiement 4 : `patient-profile` 1, `doctor-dashboard` 3, zero
+partout ailleurs. **Quatre au total, tous honnetes.**
+
+### Le meme controle sur les copies mobiles
+
+`ios/App/App/public/` et `android/app/src/main/assets/public/` ne sont pas versionnes
+(`ios/.gitignore:4`, `android/.gitignore:96`) : ce sont des sorties de `scripts/build-mobile.sh`. Les
+regenerer et mesurer, sinon le prochain APK repart avec les boutons corriges nulle part.
+
+```bash
+bash scripts/build-mobile.sh
+```
+
+Le total y est **plus petit** que sur `dist-web`, et c'est normal : `admin-*.html` et
+`doctor-dashboard.html` sont exclus du bundle mobile par un garde-fou qui fait echouer le build s'ils
+y reapparaissent (`scripts/build-mobile.sh:107`). Comparer sur le **perimetre commun** — les pages
+presentes dans le bundle mobile — pas sur les totaux bruts.
 
 ### Le tri, bouton par bouton
 
