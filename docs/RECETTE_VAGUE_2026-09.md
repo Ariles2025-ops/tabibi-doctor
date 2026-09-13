@@ -243,6 +243,11 @@ tourne quand je le donne. Ca ne l'excuse pas, ca le nomme.
 - Les corrections faites pour qu'une mesure demarre **restent dans le fichier, commentees**, avec la
   raison de leur presence et la raison pour laquelle elles ne faussent rien. Une correction retiree
   apres coup est une marche que le suivant devra remonter.
+- Le premier fichier de mesure de la journee a avoir tourne **du premier coup, sans correction**, est
+  `20260913_outbox_confirmations.sql` — et ce n'est pas un hasard : c'est le premier a avoir liste ce
+  qu'il allait remuer (bloc 0), rendu la definition de ce qu'il observait (bloc 1) et enonce ses
+  verdicts avant de mesurer. **Un fichier qui decrit son dispositif avant de s'executer est aussi
+  celui qui s'execute.**
 - Un `EXCEPTION WHEN OTHERS` dans un bloc de mesure imprime toujours `SQLSTATE`. Sans lui, un arret
   en chemin et un refus au point observe ont la meme apparence — et c'est exactement la maladie que
   ce depot passe sa journee a soigner.

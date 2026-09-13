@@ -1,7 +1,14 @@
 -- =====================================================================
 -- MESURE — l'outbox des confirmations de rendez-vous est-il VIDE ou MUET ?
 -- =====================================================================
--- ETAT : BROUILLON — n'a jamais ete execute au moment de sa remise.
+-- ETAT : MESURE — a tourne le 13/09/2026 en production, DU PREMIER COUP, sans
+--        aucune correction. Premier fichier de la journee dans ce cas : les
+--        precedents avaient soit echoue avant le point observe, soit demande
+--        deux corrections pour demarrer.
+--        VERDICT V1 — le piege n'existe pas. La transition vers `confirmed`
+--        fait ARRIVER la ligne (outbox 0 -> 1). Declencheur, WHEN, INSERT et
+--        table sont sains. Le vide venait de l'absence d'usage : la base
+--        entiere contient UN rendez-vous, cree le 13/09, statut cancelled.
 --
 -- ECRITURE, MAIS TRANSACTION ANNULEE D'OFFICE : le bloc leve toujours.
 -- NE JAMAIS EXTRAIRE UNE PARTIE DE CE FICHIER. C'est le RAISE final qui

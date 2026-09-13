@@ -111,9 +111,24 @@ la politique B3 est en place. Ces 19 sont **16 tables `api_usage_log_*`** (une p
 `REVOKE` ne ferment déjà : ce n'est pas un trou, c'est une **double fermeture sur des tables
 internes**. À consigner, pas à corriger.
 
-Deux lignes en sortent, indépendantes du rebut : l'arrêt net des `api_usage_log_*` au 2 juin
-(`supabase/mesures/20260913_api_usage_log_arret.sql`) et l'outbox `appointment_notifications`
-(`supabase/mesures/20260913_outbox_confirmations.sql`).
+Deux lignes en sortaient, indépendantes du rebut. **La première est refermée le jour même.**
+
+*L'outbox `appointment_notifications` — verdict V1, le piège n'existe pas.* Un seul écrivain, zéro
+ligne, handler nu : on ne pouvait pas distinguer « aucun rendez-vous n'a jamais été confirmé » de
+« chaque confirmation a échoué en silence ». Mesure `20260913_outbox_confirmations.sql`, un
+rendez-vous réel poussé dans tous les statuts : la transition vers `confirmed` **fait arriver la
+ligne** (outbox 0 → 1), les quatre autres ne déclenchent rien, conformément au `WHEN`. Déclencheur,
+`WHEN`, `INSERT` et table sont **sains**. Le vide venait de l'absence d'usage : **la base entière
+contient un seul rendez-vous**, créé le 13/09, statut `cancelled`. Porte fermée, zéro utilisateur.
+
+C'est le contre-exemple qui manquait à la journée : `une table à zéro ligne est un soupçon, jamais
+une donnée` — et un soupçon peut se lever. Ici il s'est levé par l'exercice, pas par le raisonnement.
+
+*L'arrêt net des `api_usage_log_*` au 2 juin* reste ouverte
+(`supabase/mesures/20260913_api_usage_log_arret.sql`).
+
+Cf. `docs/CARTE_RLS_SANS_POLITIQUE.md`, qui porte le détail et l'entrée de régime à trancher sur le
+handler nu de l'outbox.
 
 #### La propriété critique, prouvée et non déduite
 
