@@ -81,6 +81,71 @@ a maintenant produit une panne fonctionnelle *et* une surface d'escalade.
 décision : ajouter `SET search_path TO 'public','pg_temp'` ne change le comportement d'aucune, et
 ferme le vecteur.
 
+## Les trois listes — mesure du 13/09/2026, exécutée directement
+
+**57 fonctions `SECURITY DEFINER` exécutables par `anon`** (59 avant les deux `REVOKE`).
+
+Deux distinctions que le premier balayage n'avait pas, et qui changent le chiffre du simple au
+décuple.
+
+**Première : dix-sept sont des fonctions de DÉCLENCHEUR.** PostgREST n'expose pas les fonctions dont
+le type de retour est `trigger` : un visiteur anonyme ne peut pas les appeler. Elles restent à
+auditer pour ce qu'elles font *quand un déclencheur les invoque*, mais elles ne sont pas une porte.
+
+**Seconde : la garde peut être INDIRECTE.** `dawini_respond` ne contient pas `auth.uid()`, et le
+balayage l'avait donc classée « sans garde ». Son corps commence pourtant par :
+
+```sql
+v_pharm_id uuid := public.dawini_my_pharmacy_id();
+IF v_pharm_id IS NULL THEN RAISE EXCEPTION 'not_a_pharmacy' USING ERRCODE = '28000'; END IF;
+```
+
+La garde est là, une fonction plus loin. Chercher `auth.uid()` littéralement produit des faux
+positifs de gravité — exactement ce que la règle du dépôt dit de ne pas faire : **le balayage dit par
+où commencer, il ne conclut pas.** La mesure ci-dessous résout un niveau d'indirection.
+
+### A — Écrit SANS aucune garde : **2** (à fermer)
+
+| Fonction | Ce qu'elle écrit | Ce qu'un anonyme peut en faire |
+|---|---|---|
+| `dawini_expire_old()` | `UPDATE dawini_requests SET status='expired' WHERE status='pending' AND expires_at <= now()` | **Rien de nuisible** : le `WHERE` est temporel, pas contrôlé par l'appelant. Appeler tôt ne fait rien de plus que le `pg_cron`. Écriture non authentifiée quand même — à réserver au rôle de tâche. |
+| `fn_check_rate_limit(p_key text, …)` | `INSERT`/`UPDATE` sur `rate_limits`, **clé fournie par l'appelant** | **Réel.** Appeler en boucle avec la clé d'un tiers pousse `attempts` au-delà du plafond et pose `blocked_until` : **blocage ciblé d'un autre utilisateur**. Et toute chaîne acceptée comme clé ⇒ croissance non bornée de la table. |
+
+`fn_check_rate_limit` répond à la ligne laissée ouverte plus haut — « prouver que sa clé n'est pas
+arbitrairement choisie par l'appelant ». **Elle l'est.** La signature est `p_key text`, sans aucune
+dérivation depuis la session.
+
+### B — Écrit AVEC une garde lue : **9** (à vérifier une par une, plus tard)
+
+`admin_validate_doctor`, `claim_my_doctor_profile`, `dawini_cancel_alert`, `dawini_create_alert`,
+`dawini_create_request`, `dawini_respond`, `update_my_doctor_profile`, `upsert_patient_medical_data`.
+
+La garde est **lue** ; qu'elle soit *suffisante* reste à établir corps par corps. Une garde présente
+n'est pas une garde correcte.
+
+### C — Ne fait que lire : **29** (liste blanche candidate)
+
+`_api_is_admin_safe`, `admin_doctor_doc_paths`, `admin_validation_counts`, `admin_validation_list`,
+`admin_validation_total`, `appointment_slot_is_available`, `can_review_doctor`,
+`check_doctor_account_exists`, `chercher_praticiens`, `current_doctor_profile_id`,
+`current_user_role`, `dawini_can_view_object`, `dawini_get_patient_contact`, `dawini_my_pharmacy_id`,
+`dawini_my_pharmacy_wilaya`, `dawini_pharmacy_stats`, `dawini_shortage_by_wilaya`,
+`dawini_top_missing`, `dawini_zone_active`, `get_available_slots`, `get_my_doctor_profile`,
+`get_patient_medical_data`, `is_admin`, `is_doctor_bookable`, `praticien`, `praticiens_carte`,
+`praticiens_par_ids`, `seo_couples`, `stats_publiques`.
+
+**Candidate, pas acquise** : `get_patient_medical_data` et `admin_doctor_doc_paths` lisent des
+données sensibles. Ne rien écrire ne veut pas dire ne rien exposer.
+
+### D — Déclencheurs, hors périmètre RPC : **17**
+
+`appointments_secretaire_limit`, `appointments_set_cabinet_from_doctor`, `dawini_alerts_on_available`,
+`doctor_schedule_protect`, `enforce_appointment_availability`, `fn_audit_changes`,
+`fn_handle_review_report`, `fn_update_doctor_rating`, `fn_verify_review`, `handle_new_auth_user`,
+`lock_doctor_protected_columns`, `notifications_protect`, `refresh_doctor_rating`,
+`tg_appointment_confirmed_outbox`, `tg_message_after_insert`, `tg_notify_appointment`,
+`video_sessions_protect_columns`.
+
 ## Ce qui reste à faire
 
 - [ ] Lire les **40 corps** un par un sous l'angle « que peut en faire un visiteur anonyme ».
