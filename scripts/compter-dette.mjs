@@ -18,6 +18,13 @@ const PLAFONDS = {
   'no-console': 28,
   'no-restricted-properties': 57, // innerHTML dans js/ ; 58 -> 57 le 12/09/2026 — un cliquet qui ne se resserre jamais ne sert à rien
   'no-undef': 0,
+  // [13/09/2026] Horloge locale sur une date de rendez-vous. Plafond au compte
+  // REEL apres correction (18 -> 3), jamais releve « en attendant ». Les trois
+  // restants : js/home-app.js:1339 et js/tabibi-legal-version.js:40 sont des
+  // REPLIS quand le formateur partage n'est pas charge ; js/tabibi-reviews.js:326
+  // est le mois d'un avis, pas une date de rendez-vous.
+  // Le JS inline des pages HTML echappe a eslint : c'est verifier-fuseau.mjs.
+  'no-restricted-syntax': 3,
 };
 
 let brut = '';

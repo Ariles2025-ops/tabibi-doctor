@@ -74,6 +74,28 @@ export default [
           + "ou construire le noeud avec textContent. 23 injections non echappees "
           + "recensees le 09/09/2026.",
       }],
+      // [13/09/2026] L'heure d'un rendez-vous se lit dans le fuseau du CABINET,
+      // jamais dans celui du navigateur. Regle SEPAREE de no-restricted-properties
+      // pour que le plafond innerHTML (57) et celui de l'horloge restent distincts
+      // dans le cliquet de dette.
+      //
+      // `toISOString` n'est PAS interdit : c'est la facon correcte d'envoyer un
+      // instant au serveur. C'est `toISOString().split('T')[0]` utilise comme date
+      // d'affichage qui ment, et cela releve de scripts/verifier-fuseau.mjs, qui
+      // voit aussi le JS inline des pages HTML — invisible a eslint.
+      //
+      // `toLocaleString` n'est pas interdit non plus : dans ce depot il formate des
+      // NOMBRES (prix, compteurs), jamais des dates. L'interdire noierait le signal.
+      'no-restricted-syntax': ['warn',
+        ...['getHours', 'getMinutes', 'getDate', 'getDay', 'getMonth', 'getFullYear',
+            'toLocaleTimeString', 'toLocaleDateString'].map((m) => ({
+          selector: `MemberExpression[property.name='${m}']`,
+          message:
+            `${m}() lit l'horloge du NAVIGATEUR. Une date de rendez-vous se lit dans `
+            + "le fuseau du CABINET : window.tabibiTemps.jourDe / heureDe / instant, "
+            + "ou jourCalendaire pour un 'YYYY-MM-DD'. Voir js/tabibi-temps.js.",
+        })),
+      ],
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       'no-unused-vars': ['warn', { args: 'none' }],
       'no-undef': 'error',

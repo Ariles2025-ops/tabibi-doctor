@@ -13,6 +13,59 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### Regle generale — un INSTANT et un JOUR CALENDAIRE sont deux TYPES differents
+
+Un rendez-vous a lieu a un **instant**. Des horaires d'ouverture portent sur un **jour calendaire**.
+Ce ne sont pas deux facons de dire la meme chose : deux types, deux regles d'affichage opposees.
+
+- Un **instant** (`timestamptz`) se rend **dans le fuseau du CABINET**. Le medecin et le patient
+  doivent lire la meme heure, ou qu'ils soient.
+- Un **jour calendaire** (`'YYYY-MM-DD'`) se rend **sans aucun fuseau**. Le 16 septembre est le
+  16 septembre partout ; lui appliquer un fuseau ne peut que le deplacer.
+
+**Tout bug de fuseau nait a l'endroit ou l'un est converti en l'autre par `new Date()`.**
+
+Les quatre cas, mesures le 13/09/2026 (RDV a 00h30 heure cabinet = `2026-09-15T23:30:00Z`) :
+
+| Cas | Ce que le code fait | Alger | Paris | UTC |
+|---|---|---|---|---|
+| **1. Instant, sans fuseau** | `toISOString()` pour la date, `getHours()` pour l'heure | mer. 16 · 00:30 | mer. 16 · **01:30** | **mar. 15** · **23:30** |
+| **1 bis. Instant, fuseau cabinet** | `tabibiTemps.jourDe` / `heureDe` | mer. 16 · 00:30 | mer. 16 · 00:30 | mer. 16 · 00:30 |
+| **2. Jour calendaire `'2026-09-16'`** | formate sans fuseau | mer. 16 | mer. 16 | mer. 16 |
+| **3. Date construite en LOCAL pour un jour** | `x.setHours(0,0,0,0)` puis rendu en fuseau cabinet | mer. 16 | **mar. 15** | mer. 16 |
+| **4. `new Date(jour+'T'+heure)`** | chaine sans fuseau, parsee en LOCAL | 09:00 | **08:00** | 10:00 |
+
+Le cas 1 est le defaut d'origine : la date sortait en UTC pendant que l'heure sortait en local, et
+**les deux se contredisaient**. Le fuseau n'y etait pour rien — c'est le MELANGE.
+
+Les cas 3 et 4 sont le piege inverse, et c'est pour cela que « ajouter un `timeZone` partout » est une
+mauvaise reponse : poser le fuseau du cabinet sur une valeur qui n'est PAS un instant la casse. Le
+cas 4 est le plus grave : quand son resultat est ecrit en base, ce n'est plus un defaut d'affichage,
+c'est **une donnee fausse**.
+
+En pratique, `js/tabibi-temps.js` :
+
+```js
+tabibiTemps.jourDe(instant)    // 'YYYY-MM-DD' du CABINET — remplace toISOString().split('T')[0]
+tabibiTemps.heureDe(instant)   // 'HH:MM' du CABINET      — remplace getHours()/getMinutes()
+tabibiTemps.instant(v, opts)   // un instant, fuseau cabinet
+tabibiTemps.jourCalendaire(s)  // un jour, AUCUN fuseau, jamais de new Date()
+tabibiTemps.ajouterJours(s, n) // arithmetique sans derive
+tabibiTemps.instantDepuisJourEtHeure(jour, heure)  // heure murale cabinet -> instant UTC
+```
+
+Le fuseau du cabinet est **une constante nommee**, a un seul endroit. On ne code pas « +1 » : le jour
+du deuxieme pays, elle devient une colonne de `doctor_profiles`. **Et il faudra alors corriger DEUX
+couches** — la meme regle vit en SQL, ou `'Africa/Algiers'` est ecrit en dur dans
+`get_available_slots`, la garde de disponibilite et le trigger de notifications.
+
+Les deux gardes : `npm run lint:dette` (`no-restricted-syntax`, plafond **3**) pour `js/src/scripts`,
+et `npm run verifier:fuseau` pour le JS inline des pages HTML — **invisible a eslint**, et c'est la
+que vivaient 105 des 134 lectures d'horloge du 13/09.
+
+La preuve : `npx playwright test tests/e2e/fuseau-cabinet.spec.js` — le meme rendez-vous a 00h30 lu
+depuis Alger, Paris et UTC, plus les trois cas de non-regression.
+
 ### Regle generale — une assertion visuelle porte sur le STYLE CALCULE
 
 **Jamais sur la classe.** Une classe est une intention ; le style calcule est ce que l'oeil recoit.
@@ -56,6 +109,7 @@ n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 | 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
 | 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
 | 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
+| 6 bis | `npm run verifier:fuseau` | une lecture d'horloge locale sur une date de rendez-vous | le compte depasse le plafond |
 | 6 | `npm run verifier:statuts` | un statut de rendez-vous declare d'un cote et pas de l'autre | un ecart, dans un sens ou l'autre |
 | 7 | `npm run build` puis `npm run test:e2e` | les parcours critiques, sources et sortie de build | un test rouge |
 

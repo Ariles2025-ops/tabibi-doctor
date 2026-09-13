@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-temps.js"></script><script src="js/tabibi-security.js"></script>
 <script src="js/tabibi-avatar.js"></script>
 <script src="js/tabibi-statut-rdv.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
@@ -370,8 +370,11 @@ function showBookingStep(step){
   const d=bookingDoc;
   let content="";
   if(step===1){
-    const dates=[];for(let i=1;i<=14;i++){const dt=new Date();dt.setDate(dt.getDate()+i);dates.push(dt);}
-    if(!bookingDate) bookingDate=dates[0].toISOString().split("T")[0];
+    // [13/09/2026] Quatorze JOURS CALENDAIRES du fuseau du cabinet, pas
+    // quatorze instants locaux convertis en UTC.
+    const _T=window.tabibiTemps;
+    const dates=[];for(let i=1;i<=14;i++){dates.push(_T.ajouterJours(_T.aujourdhui(), i));}
+    if(!bookingDate) bookingDate=dates[0];
     const slots=["08:30","09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00","15:30","16:00"];
     // Slots déjà occupés : on les charge depuis Supabase en arrière-plan, en attendant on n'en bloque aucun
     const cacheKey = d.id + '|' + bookingDate;
@@ -389,7 +392,7 @@ function showBookingStep(step){
         </div>
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase"><i class="fa fa-calendar"></i> Choisissez une date</div>
         <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
-          ${dates.map(dt=>{const iso=dt.toISOString().split("T")[0];const day=["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][dt.getDay()];return `<button class="day-tab ${iso===bookingDate?'active':''}" onclick="selDate('${iso}')"><div>${day}</div><div style="font-size:14px;margin-top:2px">${dt.getDate()}</div><div style="font-size:9px;opacity:.7">${["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"][dt.getMonth()]}</div></button>`;}).join("")}
+          ${dates.map(iso=>{const day=["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][_T.jourSemaine(iso)];return `<button class="day-tab ${iso===bookingDate?'active':''}" onclick="selDate('${iso}')"><div>${day}</div><div style="font-size:14px;margin-top:2px">${dt.getDate()}</div><div style="font-size:9px;opacity:.7">${["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"][dt.getMonth()]}</div></button>`;}).join("")}
         </div>
         <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase"><i class="fa fa-clock"></i> Créneaux disponibles</div>
         <div class="slot-grid" id="slot-grid-container">${slots.map(s=>{const isTaken=taken.includes(s);const isSel=s===bookingTime;return `<button class="slot-pill ${isTaken?'taken':''} ${isSel?'selected':''}" ${isTaken?'disabled':`onclick="selTime('${s}')"`}>${s}</button>`;}).join("")}</div>
@@ -407,8 +410,8 @@ function showBookingStep(step){
       });
     }
   } else if(step===2){
-    const dt=new Date(bookingDate);
-    const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long",year:"numeric"}));
+    
+    const dateLbl=window.tabibiTemps.jourCalendaire(bookingDate, {weekday:"long",day:"numeric",month:"long",year:"numeric"});
     content=`
       <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding-right:40px">
         <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="showBookingStep(1)" aria-label="Étape précédente"><i class="fa fa-arrow-left"></i></button>
@@ -436,8 +439,8 @@ function showBookingStep(step){
         <div data-feature="payments" style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px"><i class="fa fa-shield" aria-hidden="true"></i> Paiement sécurisé · SSL/TLS</div>
       </div>`;
   } else if(step===3){
-    const dt=new Date(bookingDate);
-    const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long",year:"numeric"}));
+    
+    const dateLbl=window.tabibiTemps.jourCalendaire(bookingDate, {weekday:"long",day:"numeric",month:"long",year:"numeric"});
     content=`
       <div style="padding:30px 16px;text-align:center">
         <div style="width:96px;height:96px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:pop .5s">
@@ -546,9 +549,12 @@ async function fetchMyAppointmentsFromSupabase(){
     }
 
     const fromSb = rows.map(r => {
-      const dt = new Date(r.scheduled_at);
-      const date = dt.toISOString().split('T')[0];
-      const time = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      // [13/09/2026] LA SOURCE DU DECALAGE. `toISOString()` rendait le jour en
+      // UTC et `getHours()` l'heure du NAVIGATEUR : a Paris, un RDV a 00h30 heure
+      // d'Alger sortait « mardi 15, 01:30 » au lieu de « mercredi 16, 00:30 ».
+      // Les deux se lisent desormais dans le fuseau du CABINET (js/tabibi-temps.js).
+      const date = window.tabibiTemps.jourDe(r.scheduled_at);
+      const time = window.tabibiTemps.heureDe(r.scheduled_at);
       const doc = _docMap[r.doctor_id] || null;
       return {
         id: r.id || ('sb_' + r.scheduled_at),
