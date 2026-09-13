@@ -17,7 +17,16 @@ useDefault = true
 
 [allowlist]
 description = "Cle anon Supabase du projet pudugodhiofqrctcdwfl (publique, RLS)"
-regexTarget = "match"
+# [2026-09-13] Etait `regexTarget = "match"`, et c'est ce qui rendait le motif
+# `verify_api_key` inoperant : avec « match », gitleaks compare l'expression au
+# TEXTE CAPTURE PAR LA REGLE, qui pour `generic-api-key` commence au mot-cle et
+# ne contient ni le `--` ni la parenthese ouvrante. Un motif qui exige
+# `\('verify_api_key'` ne pouvait donc jamais matcher.
+#
+# Avec « line », la comparaison porte sur la ligne entiere. Le motif JWT
+# ci-dessous reste valide : ce qui matche un fragment matche aussi la ligne qui
+# le contient.
+regexTarget = "line"
 regexes = [
   '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24i[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]+''',
   # [2026-09-13] PR #105, `verification / verifier` rouge en 10 s sur gitleaks.

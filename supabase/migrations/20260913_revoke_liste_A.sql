@@ -2,7 +2,20 @@
 -- 20260913_revoke_liste_A.sql
 -- Liste A : les deux SECURITY DEFINER qui ECRIVENT sans aucune garde
 -- =====================================================================
--- ETAT : A APPLIQUER. Ce fichier n'a pas encore ete lance.
+-- ETAT : APPLIQUEE le 13/09/2026. Lancee par le stratege, telle quelle.
+--
+-- VERIFICATION EN BASE, relevee apres application :
+--   dawini_expire_old      anon=false  authenticated=TRUE   postgres=true
+--   fn_check_rate_limit    anon=false  authenticated=false  postgres=true
+--
+-- CONTRE-EPREUVE DE L'EXTERIEUR, cle anon publique, les deux sondes ci-dessous :
+--   POST /rest/v1/rpc/fn_check_rate_limit  -> 401  42501 permission denied for function
+--   POST /rest/v1/rpc/dawini_expire_old    -> 401  42501 permission denied for function
+--
+-- ⚠️  LA NON-REGRESSION AUTHENTIFIEE RESTE A FAIRE. Ouvrir `dawini.html` avec
+-- une session et verifier qu'une demande `pending` dont `expires_at` est passe
+-- bascule toujours en `expired`. Personne ne l'a faite : elle est NOTEE, pas
+-- deduite. C'est le seul risque que ce fichier porte encore.
 --
 -- Origine : mesure du 13/09/2026 sur les 57 fonctions SECURITY DEFINER
 -- executables par `anon` (docs/CARTE_SECURITY_DEFINER_ANONYMES.md). Deux
