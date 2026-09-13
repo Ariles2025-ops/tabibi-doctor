@@ -35,6 +35,7 @@ const PORTES = [
   ['fuseau',   'npm',  ['run', '--silent', 'verifier:fuseau']],
   ['rpc',      'npm',  ['run', '--silent', 'verifier:rpc']],
   ['passage',  'npm',  ['run', '--silent', 'verifier:rpc-passage']],
+  ['passerelle','npm', ['run', '--silent', 'verifier:passerelle']],
   ['catch',    'npm',  ['run', '--silent', 'verifier:catch']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
@@ -53,7 +54,8 @@ const PORTES = [
 const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
-  'verifier:rpc', 'verifier:rpc-passage', 'verifier:catch', 'build', 'test:e2e',
+  'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle',
+  'verifier:catch', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.

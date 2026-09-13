@@ -99,6 +99,15 @@ jobs:
         # descendre a chaque lot migre, jamais monter.
         run: npm run verifier:rpc-passage
 
+      - name: Une page qui appelle la passerelle la charge
+        # Le defaut est TRANSITIF, et c'est ce qui le rend invisible :
+        # dawini-pharmacie.html -> js/tabibi-dawini.js -> window.tabibiRpc.
+        # La page ne mentionne jamais `tabibiRpc` ; chercher le mot dedans ne
+        # trouve rien. Le 13/09/2026 elle ne chargeait pas la passerelle, et
+        # rien a l'ecran ne l'aurait dit. Controle aussi que le chemin de la
+        # balise EXISTE : balise presente + 404 = le meme mensonge, en pire.
+        run: npm run verifier:passerelle
+
       - name: Toute RPC appelee est declaree
         # Etage STRUCTUREL. Une RPC absente rend 404, le catch avale, l'ecran
         # sort vide : arrive pendant la recette avec la vague 1A, qui a tue la
