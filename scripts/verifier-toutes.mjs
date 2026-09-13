@@ -54,8 +54,21 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc-passage', 'build', 'test:e2e',
-  // 'verifier:rpc'   -> a ajouter avec la fusion de fix/garde-rpc
-  // 'verifier:catch' -> a ajouter avec la fusion de docs/regle-suppression-et-20-catch
+]);
+
+// LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
+//
+// Ceci etait une paire de COMMENTAIRES dans PORTES_OBLIGATOIRES. Un commentaire
+// depend de quelqu'un qui le lit — c'est `tail -1` en plus petit. Si personne ne
+// le decommente, la porte entre dans main et reste sautee EN SILENCE, le script
+// restant vert. Une absence deguisee en normalite, une fois de plus.
+//
+// C'est desormais une liste declaree, que le script IMPRIME a chaque passage.
+// Une ligne de sortie qu'on voit, pas un commentaire qu'on oublie. Elle
+// disparait d'elle-meme le jour ou la liste se vide.
+const PORTES_A_VENIR = new Map([
+  ['verifier:rpc', 'fix/garde-rpc — les RPC appelees existent en base'],
+  ['verifier:catch', 'docs/regle-suppression-et-20-catch — aucun catch muet sur une ecriture'],
 ]);
 
 const ROUGE = (s) => `\x1b[31m${s}\x1b[0m`;
@@ -84,7 +97,9 @@ for (const [nom, cmd, args] of PORTES) {
       echec = nom;
       break;
     }
-    console.log(`  ${'-'.padEnd(6)} ${nom.padEnd(10)} absente de package.json, sautee (pas encore obligatoire)`);
+    const attendue = PORTES_A_VENIR.has(npmScript);
+    console.log(`  ${'-'.padEnd(6)} ${nom.padEnd(10)} absente de package.json, sautee`
+      + (attendue ? ' (attendue)' : ' (non declaree)'));
     continue;
   }
   const t = Date.now();
@@ -102,6 +117,23 @@ for (const [nom, cmd, args] of PORTES) {
   if (sortie) console.error(sortie.split('\n').slice(-25).map((l) => '  ' + l).join('\n'));
   echec = nom;
   break;
+}
+
+// Bilan des portes ATTENDUES, imprime a chaque passage tant que la liste n'est
+// pas vide. Une porte attendue qui EXISTE desormais doit etre promue : sans ce
+// signal, elle tournerait sans plancher et pourrait disparaitre en silence.
+const aPromouvoir = [...PORTES_A_VENIR.keys()].filter((k) => scripts[k]);
+const encoreAbsentes = [...PORTES_A_VENIR.keys()].filter((k) => !scripts[k]);
+if (encoreAbsentes.length) {
+  console.log('');
+  console.log(`  ${encoreAbsentes.length} porte(s) attendue(s), pas encore obligatoire(s) : ${encoreAbsentes.join(', ')}`);
+  for (const k of encoreAbsentes) console.log(`      ${k.padEnd(18)} ${PORTES_A_VENIR.get(k)}`);
+}
+if (aPromouvoir.length) {
+  console.log('');
+  console.log(ROUGE(`  ⇧ ${aPromouvoir.length} porte(s) A PROMOUVOIR en obligatoire : ${aPromouvoir.join(', ')}`));
+  console.log('      Elle(s) existe(nt) desormais dans package.json et tournent SANS PLANCHER :');
+  console.log('      les deplacer de PORTES_A_VENIR vers PORTES_OBLIGATOIRES.');
 }
 
 console.log('');
