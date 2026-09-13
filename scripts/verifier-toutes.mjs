@@ -40,6 +40,24 @@ const PORTES = [
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
 ];
 
+// LE PLANCHER. Une porte de cette liste DOIT exister dans package.json.
+//
+// Sans lui, le garde-fou « absente -> sautee » devient une faille : il suffirait
+// de retirer une ligne du package.json pour que la porte disparaisse en
+// silence, signalee d'un tiret, et que tout reste vert. C'est l'ABSENCE
+// DEGUISEE EN NORMALITE — exactement la faute que ce script existe pour
+// empecher, retournee contre lui.
+//
+// Regle : une porte y entre le jour ou sa branche entre dans main. La liste des
+// « sautees » doit MAIGRIR, jamais grossir.
+const PORTES_OBLIGATOIRES = new Set([
+  'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
+  'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
+  'verifier:rpc-passage', 'build', 'test:e2e',
+  // 'verifier:rpc'   -> a ajouter avec la fusion de fix/garde-rpc
+  // 'verifier:catch' -> a ajouter avec la fusion de docs/regle-suppression-et-20-catch
+]);
+
 const ROUGE = (s) => `\x1b[31m${s}\x1b[0m`;
 const VERT = (s) => `\x1b[32m${s}\x1b[0m`;
 
@@ -56,7 +74,17 @@ const t0 = Date.now();
 for (const [nom, cmd, args] of PORTES) {
   const npmScript = cmd === 'npm' && args[0] === 'run' ? args[args.length - 1] : null;
   if (npmScript && !scripts[npmScript]) {
-    console.log(`  ${'-'.padEnd(6)} ${nom.padEnd(10)} absente de package.json, sautee`);
+    if (PORTES_OBLIGATOIRES.has(npmScript)) {
+      console.log(`  ${ROUGE('  !!  ')} ${nom.padEnd(10)} OBLIGATOIRE et ABSENTE de package.json`);
+      console.error('');
+      console.error(ROUGE(`\u2717 La porte « ${nom} » (${npmScript}) est declaree OBLIGATOIRE et n'existe plus.`));
+      console.error(`  Une porte ne disparait pas sans decision : soit on la retablit dans`);
+      console.error(`  package.json, soit on la retire de PORTES_OBLIGATOIRES en disant pourquoi.`);
+      console.error(`  Une absence silencieuse est une absence deguisee en normalite.`);
+      echec = nom;
+      break;
+    }
+    console.log(`  ${'-'.padEnd(6)} ${nom.padEnd(10)} absente de package.json, sautee (pas encore obligatoire)`);
     continue;
   }
   const t = Date.now();

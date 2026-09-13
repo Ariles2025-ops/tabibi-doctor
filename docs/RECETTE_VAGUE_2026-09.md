@@ -44,6 +44,20 @@ Contre-epreuve exigee de lui comme des autres — trois familles de casse, trois
 | une erreur de syntaxe | `eslint` | **1** |
 | un `vite.config` invalide | `build` | **1** |
 
+**Le plancher.** `PORTES_OBLIGATOIRES`, en dur dans le script, liste les portes qui DOIVENT exister
+dans `package.json`. Sans lui, le garde-fou « porte absente → sautee » devenait une faille : retirer
+une ligne du `package.json` aurait fait disparaitre la porte en silence, signalee d'un tiret, tout
+restant vert. **L'absence deguisee en normalite** — la faute meme que ce script existe pour empecher,
+retournee contre lui.
+
+| Cas | Comportement |
+|---|---|
+| absente de la liste ET de `package.json` | sautee, signalee « pas encore obligatoire » |
+| presente dans la liste ET absente de `package.json` | **ROUGE, sortie 1** |
+
+Une porte entre dans la liste le jour ou sa branche entre dans `main`. **La liste des sautees doit
+MAIGRIR, jamais grossir.**
+
 Et la generalisation, qui vaut au-dela de ce cas : **chaque fois qu'on ajoute une garde, se demander
 qui lit son verdict, et si CE lecteur a ete contre-epreuve.** Une garde n'est utile qu'a la hauteur
 de la fiabilite de ce qui la consomme. Neuf contre-epreuves valaient zero parce que la dixieme
