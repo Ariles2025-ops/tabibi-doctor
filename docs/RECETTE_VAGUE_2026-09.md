@@ -84,6 +84,54 @@ Meme famille que le reste de cette section : une console propre, un test vert, u
 une derniere ligne de sortie — ce sont des signaux qui repondent a la question qu'on leur a posee,
 jamais a celle qu'on a oublie de poser.
 
+### CE QUI DEPEND DE L'AMBIANCE N'EST PAS DECIDE, IL EST SUBI
+
+**Si le comportement vient de l'endroit ou l'on se trouve et non de ce qu'on a declare, ce n'est pas
+une configuration : c'est un accident qui n'a pas encore eu lieu.**
+
+Le 13/09/2026, trois pannes differentes se sont revelees etre la meme. A chaque fois, le code ne
+disait pas ce qu'il voulait — il prenait ce qui trainait autour de lui.
+
+1. **Le fuseau du navigateur.** Les dates etaient lues en UTC et les heures affichees en heure
+   locale du poste. Rien ne le declarait nulle part : le resultat dependait du reglage de la
+   machine qui ouvrait la page. Le meme rendez-vous ne tombait pas le meme jour a Alger et a
+   Montreal. Corrige par `js/tabibi-temps.js`, ou `FUSEAU_CABINET = 'Africa/Algiers'` est ecrit une
+   fois et n'est **jamais surchargeable** par l'appelant.
+
+2. **La cle lue a l'evaluation du module.** La valeur etait capturee au chargement, donc elle
+   valait ce que l'environnement contenait a cet instant-la. Selon l'ordre de chargement, la meme
+   ligne de code donnait la bonne cle ou `undefined`, sans erreur.
+
+3. **Le `search_path`.** Six fonctions appellent pgcrypto (`digest`, `gen_random_bytes`,
+   `pgp_sym_encrypt`, `pgp_sym_decrypt`) sans qualifier le schema. Tant que `extensions` trainait
+   dans le `search_path` de la session, ca marchait. Le durcissement du 09/09/2026 a pose
+   `SET search_path TO 'public','pg_temp'` sur ces fonctions : les six appels ne resolvent plus
+   (`42883`). Le chiffrement des donnees de sante n'a jamais fonctionne, dans aucun des deux sens.
+
+Dans les trois cas, personne n'avait choisi le comportement. Il a ete **subi**.
+
+**La consequence sur la reparation, et c'est la raison qui a tranche la migration du 13/09 :** face
+au `42883`, deux corrections etaient possibles.
+
+- **A — qualifier l'appel** : `extensions.digest(...)`. La fonction dit ou elle va chercher.
+- **B — elargir le `search_path`** : ajouter `extensions` a la declaration des six fonctions.
+
+B remarche immediatement et laisse la dependance intacte : **la correction elle-meme dependrait de
+l'etat ambiant**. Le jour ou quelqu'un resserre un `search_path` — comme le 09/09 — tout recasse,
+en silence, et il faudra re-decouvrir la meme chose. A a ete retenue.
+
+**C'est « une regle vit a un seul endroit » vu par l'autre bout.** Cette regle-la dit ou ecrire la
+decision ; celle-ci dit comment reconnaitre qu'on ne l'a pas ecrite du tout. Les deux se verifient
+de la meme facon : deplacer le code — un autre fuseau, un autre ordre de chargement, un autre
+`search_path` — et regarder si le resultat bouge. **S'il bouge, la decision n'a pas ete prise.**
+
+**En pratique :**
+- Une fonction SQL qui appelle une extension **qualifie le schema**, toujours. Un `search_path`
+  large n'est pas une correction, c'est un report.
+- Un calcul de date declare son fuseau. `new Date()` seul n'est pas une declaration.
+- Une valeur d'environnement se lit **au moment de s'en servir**, pas a l'evaluation du module.
+- Contre-epreuve : changer l'ambiance sans toucher au code. Si la sortie change, c'est un defaut.
+
 ### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
 
 Un defaut silencieux ne reste pas a sa place. Il devient la donnee d'entree du suivant, qui n'a aucun
