@@ -18,6 +18,22 @@
 // fait ce travail, et mieux. Un filet vers du code neutralise parce qu'il etait
 // faux n'est pas un filet.
 //
+// SON ANGLE MORT, declare : ce script voit les PANNEAUX, pas les FONCTIONS
+// orphelines. Le 13/09/2026 il a bien trouve #tab-stats, mais il n'a rien dit
+// de showBookingStep, selDate, selTime, confirmBooking, renderPayMethods et
+// payMethodsDisponibles — une grappe de six fonctions qui ne s'appelaient que
+// les unes les autres, sans aucune entree. Elles ont ete trouvees a la main.
+//
+// Une garde qui ne declare pas son angle mort en cree un : on croit le domaine
+// couvert parce que le controle est vert.
+//
+// Pourquoi ce n'est pas automatise : une analyse d'atteignabilite naive a
+// classe toggleMenu() et refreshOverview() comme morts alors qu'ils sont bien
+// vivants — elle ne voit pas les `onclick` ecrits dans des gabarits JS. Deux
+// faux positifs sur des fonctions vivantes suffisent a rendre l'outil
+// dangereux. Tant qu'il n'est pas fiable, la suppression de fonctions se fait
+// a la main, occurrence par occurrence.
+//
 // Usage : node scripts/verifier-panneaux.mjs
 // =====================================================================
 import { readdirSync, readFileSync } from 'node:fs';

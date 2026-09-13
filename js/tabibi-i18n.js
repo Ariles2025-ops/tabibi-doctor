@@ -119,6 +119,19 @@
    */
   function formatDate(date, options) {
     try {
+      // [13/09/2026] Rendait la date dans le fuseau du NAVIGATEUR. Aiguille
+      // desormais vers js/tabibi-temps.js selon ce qu'il recoit : une chaine
+      // 'YYYY-MM-DD' est un JOUR CALENDAIRE (aucun fuseau), tout le reste est
+      // un INSTANT (fuseau du CABINET). C'est la confusion entre les deux qui
+      // produisait le decalage d'un jour.
+      var T = (typeof window !== 'undefined') && window.tabibiTemps;
+      if (T) {
+        var brut = String(date == null ? '' : date);
+        if (typeof date === 'string' && brut.length <= 10 && /^\d{4}-\d{2}-\d{2}$/.test(brut)) {
+          return T.jourCalendaire(brut, options || { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+        return T.instant(date, options || { year: 'numeric', month: 'long', day: 'numeric' });
+      }
       const d = (date instanceof Date) ? date : new Date(date);
       if (isNaN(d.getTime())) return '';
       const locale = LOCALES[getLang()] || 'fr-FR';
@@ -134,6 +147,9 @@
    */
   function formatTime(date, options) {
     try {
+      // Une heure est toujours celle d'un INSTANT : fuseau du cabinet.
+      var T2 = (typeof window !== 'undefined') && window.tabibiTemps;
+      if (T2) return T2.instant(date, options || { hour: '2-digit', minute: '2-digit', hour12: false });
       const d = (date instanceof Date) ? date : new Date(date);
       if (isNaN(d.getTime())) return '';
       const locale = LOCALES[getLang()] || 'fr-FR';

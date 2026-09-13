@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-temps.js"></script><script src="js/tabibi-security.js"></script>
 <script src="js/tabibi-avatar.js"></script>
 <script src="js/tabibi-statut-rdv.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
@@ -205,7 +205,6 @@ function toastM(m,t){const c=document.getElementById("toast-container");if(!c)re
 let currentSpec="all";
 let docPage=1;
 const DOC_PER_PAGE=24;
-let bookingDoc=null, bookingDate=null, bookingTime=null, bookingPay="cash";
 // [FIX-PROD-2026-05-19] Safety net : DOCTORS doit toujours exister, même si app.js n'a pas encore tourné
 window.DOCTORS = window.DOCTORS || [];
 
@@ -323,7 +322,11 @@ function buildDocPagination(cur, total){
 // dashboard est désactivé. Tous les clics sur "Réserver" depuis cette page
 // redirigent vers doctor-profile.html?id=... (qui propose le bouton "Prendre
 // RDV" Phase 5.2.2 → reservation.html wizard Phase 5.2.3). showBookingStep,
-// selDate, finalBooking restent définies pour ne pas casser d'éventuels
+// [13/09/2026] Ses fonctions avaient ete gardees « pour ne pas casser
+  // d'eventuels listeners orphelins » : il n'y en avait aucun. showBookingStep,
+  // selDate, selTime, confirmBooking, renderPayMethods, payMethodsDisponibles
+  // et PAY_METHODS_LIST supprimees apres verification MANUELLE, occurrence par
+  // occurrence, qu'aucun appelant n'existait dans le depot. Ancien texte :
 // listeners orphelins, mais ne sont plus appelées par aucun chemin actif.
 function openBooking(docId){
   if(!docId){ if(typeof toastM==='function') toastM("Médecin manquant.","error"); return; }
@@ -365,142 +368,11 @@ async function fetchTakenSlots(doctorId, dateIso){
     return _bookedSlotsCache[cacheKey]; // déjà initialisé à []
   }
 }
-
-function showBookingStep(step){
-  const d=bookingDoc;
-  let content="";
-  if(step===1){
-    const dates=[];for(let i=1;i<=14;i++){const dt=new Date();dt.setDate(dt.getDate()+i);dates.push(dt);}
-    if(!bookingDate) bookingDate=dates[0].toISOString().split("T")[0];
-    const slots=["08:30","09:00","09:30","10:00","10:30","11:00","11:30","14:00","14:30","15:00","15:30","16:00"];
-    // Slots déjà occupés : on les charge depuis Supabase en arrière-plan, en attendant on n'en bloque aucun
-    const cacheKey = d.id + '|' + bookingDate;
-    const taken = _bookedSlotsCache[cacheKey] || [];
-    content=`
-      <div class="modal-hdr" style="position:relative;display:flex;align-items:center;gap:10px;padding-right:40px">
-        <div style="width:42px;height:42px;border-radius:10px;background:${d.bg};color:${d.tc};display:flex;align-items:center;justify-content:center;font-weight:800">${d.in}</div>
-        <div style="flex:1"><div class="modal-title" style="font-size:15px;margin:0">${esc(d.fr)}</div><div style="font-size:11px;color:var(--text3)">${esc(d.spec)} · ${esc(d.ville)}</div></div>
-        <button class="modal-close" onclick="closeBooking()">×</button>
-      </div>
-      <div style="padding:0 16px 16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;background:var(--blue-l);border-radius:12px;margin-bottom:14px">
-          <div><div style="font-size:11px;color:var(--blue);font-weight:700">PRIX CONSULTATION</div><div style="font-size:22px;font-weight:800;color:var(--blue)">${d.prix.toLocaleString()} DA</div></div>
-          <i class="fa fa-coins" style="font-size:32px;color:var(--blue);opacity:.4"></i>
-        </div>
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase"><i class="fa fa-calendar"></i> Choisissez une date</div>
-        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none">
-          ${dates.map(dt=>{const iso=dt.toISOString().split("T")[0];const day=["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"][dt.getDay()];return `<button class="day-tab ${iso===bookingDate?'active':''}" onclick="selDate('${iso}')"><div>${day}</div><div style="font-size:14px;margin-top:2px">${dt.getDate()}</div><div style="font-size:9px;opacity:.7">${["Jan","Fév","Mar","Avr","Mai","Juin","Juil","Aoû","Sep","Oct","Nov","Déc"][dt.getMonth()]}</div></button>`;}).join("")}
-        </div>
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;text-transform:uppercase"><i class="fa fa-clock"></i> Créneaux disponibles</div>
-        <div class="slot-grid" id="slot-grid-container">${slots.map(s=>{const isTaken=taken.includes(s);const isSel=s===bookingTime;return `<button class="slot-pill ${isTaken?'taken':''} ${isSel?'selected':''}" ${isTaken?'disabled':`onclick="selTime('${s}')"`}>${s}</button>`;}).join("")}</div>
-        <div style="font-size:11px;color:var(--text3);margin:8px 0 16px"><i class="fa fa-info-circle"></i> Les créneaux barrés sont déjà réservés</div>
-        <button class="btn btn-primary btn-full btn-xl" ${!bookingTime?'disabled style="opacity:.5"':''} onclick="showBookingStep(2)">${bookingTime?`Continuer avec le créneau de ${bookingTime}`:'Sélectionnez un créneau'} <i class="fa fa-arrow-right"></i></button>
-      </div>`;
-    // Charger les slots pris en arrière-plan UNE SEULE FOIS et re-render dès qu'on les a
-    if (_bookedSlotsCache[cacheKey] === undefined) {
-      const expectedDocId = d.id, expectedDate = bookingDate;
-      fetchTakenSlots(d.id, bookingDate).then(t => {
-        // Si l'utilisateur n'a pas changé entre-temps, on re-rend
-        if (bookingDoc && bookingDoc.id === expectedDocId && bookingDate === expectedDate) {
-          showBookingStep(1);
-        }
-      });
-    }
-  } else if(step===2){
-    const dt=new Date(bookingDate);
-    const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long",year:"numeric"}));
-    content=`
-      <div class="modal-hdr" style="display:flex;align-items:center;gap:10px;padding-right:40px">
-        <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="showBookingStep(1)" aria-label="Étape précédente"><i class="fa fa-arrow-left"></i></button>
-        <div class="modal-title" style="flex:1;font-size:15px" data-i18n="rdv_details">Détails du rendez-vous</div>
-        <button class="modal-close" onclick="closeBooking()">×</button>
-      </div>
-      <div style="padding:0 16px 16px">
-        <div style="background:var(--green-l);border-radius:12px;padding:12px;margin-bottom:14px;display:flex;gap:10px;align-items:center">
-          <i class="fa fa-calendar-check" style="color:var(--green);font-size:20px"></i>
-          <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--green-d)">${dateLbl}</div><div style="font-size:12px;color:var(--text2)">à ${bookingTime} avec ${esc(d.fr)}</div></div>
-        </div>
-        <div class="form-group"><label class="form-label">Motif de consultation *</label><textarea class="form-control" id="bk-reason" rows="3" placeholder="Décrivez vos symptômes, le motif de votre visite..." data-i18n-placeholder="ph_symptoms_long" required></textarea></div>
-        <div class="form-group"><label class="form-label">Type de consultation</label>
-          <select class="form-control" id="bk-type"><option value="premiere" data-i18n="first_consultation">Première consultation</option><option value="suivi" data-i18n="followup">Consultation de suivi</option><option value="urgence" data-i18n="emergency">Urgence</option><option value="controle" data-i18n="checkup">Contrôle de résultats</option></select></div>
-        <div class="form-group"><label class="form-label" data-i18n="who_is_rdv_for">Pour qui est ce RDV ?</label>
-          <select class="form-control" id="bk-for"><option value="self" data-i18n="myself">Moi-même</option>
-            ${(JSON.parse(localStorage.getItem("tabibi_family")||"[]")).map(f=>`<option value="${f.name}">${f.name} (${f.relation})</option>`).join("")}</select></div>
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin:14px 0 8px;text-transform:uppercase"><i class="fa fa-credit-card"></i> Mode de paiement</div>
-        <div id="pay-wrap"></div>
-        <div style="background:var(--bg2);border-radius:12px;padding:12px;margin:14px 0;display:flex;justify-content:space-between;align-items:center">
-          <div style="font-size:13px">Total à payer</div>
-          <div style="font-size:22px;font-weight:800;color:var(--blue)">${d.prix.toLocaleString()} DA</div>
-        </div>
-        <button class="btn btn-success btn-full btn-xl" onclick="confirmBooking()"><i class="fa fa-check"></i> Confirmer ma réservation</button>
-        <div data-feature="payments" style="font-size:10px;color:var(--text3);text-align:center;margin-top:8px"><i class="fa fa-shield" aria-hidden="true"></i> Paiement sécurisé · SSL/TLS</div>
-      </div>`;
-  } else if(step===3){
-    const dt=new Date(bookingDate);
-    const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long",year:"numeric"}));
-    content=`
-      <div style="padding:30px 16px;text-align:center">
-        <div style="width:96px;height:96px;background:var(--green-l);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:pop .5s">
-          <i class="fa fa-circle-check" style="font-size:48px;color:var(--green)"></i>
-        </div>
-        <h2 style="font-size:22px;font-weight:800;margin-bottom:8px" data-i18n="booking_confirmed">Réservation confirmée !</h2>
-        <p style="color:var(--text3);font-size:13px;margin-bottom:20px">SMS et email de confirmation envoyés</p>
-        <div class="card" style="text-align:left;margin-bottom:16px">
-          <div style="font-size:11px;color:var(--text3);text-transform:uppercase;font-weight:700;margin-bottom:10px">Récapitulatif</div>
-          <div style="display:grid;gap:8px">
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text3)">Médecin</span><span style="font-weight:600">${esc(d.fr)}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text3)" data-i18n="specialty">Spécialité</span><span style="font-weight:600">${esc(d.spec)}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text3)">Date</span><span style="font-weight:600">${dateLbl}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text3)">Heure</span><span style="font-weight:600">${bookingTime}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:var(--text3)" data-i18n="address">Adresse</span><span style="font-weight:600;text-align:right;max-width:60%;font-size:11px">${esc(d.addr||d.ville)}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:13px;padding-top:8px;border-top:1px solid var(--bg2)"><span style="color:var(--text3)">Mode paiement</span><span style="font-weight:600">${PAY_LABELS[bookingPay]}</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:15px"><span style="font-weight:600">Montant</span><span style="font-weight:800;color:var(--blue)">${d.prix.toLocaleString()} DA</span></div>
-          </div>
-        </div>
-        <button class="btn btn-primary btn-full btn-lg" onclick="closeBooking();goTab(1);"><i class="fa fa-calendar"></i> Voir mes RDV</button>
-        <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="closeBooking()"><i class="fa fa-search"></i> Réserver un autre médecin</button>
-      </div>`;
-  }
-  document.getElementById("book-content").innerHTML=content;
-  if(step===2) renderPayMethods();
-}
-
-const PAY_METHODS_LIST=[
-  {id:"cash",name:"Espèces au cabinet",icon:"fa-money-bill",color:"#2E8B57",sub:"Payez sur place"},
-  {id:"edahabia",name:"Edahabia (Algérie Poste)",icon:"fa-credit-card",color:"#d97706",sub:"Paiement sécurisé"},
-  {id:"cib",name:"Carte CIB",icon:"fa-credit-card",color:"#0a4d3e",sub:"Visa/Mastercard"},
-  {id:"paymee",name:"Paymee",icon:"fa-mobile-screen",color:"#7c3aed",sub:"Par téléphone"},
-  {id:"cnas",name:"CNAS / CASNOS",icon:"fa-shield",color:"#16a34a",sub:"Tiers payant"}
-];
 const PAY_LABELS={cash:"Espèces au cabinet",edahabia:"Edahabia",cib:"Carte CIB",paymee:"Paymee",cnas:"CNAS / CASNOS"};
 // [A3 2026-09-09] Tant que TABIBI_FEATURES.payments est false, seul le paiement
 // au cabinet existe reellement. Avant, cinq moyens (Edahabia, CIB, Paymee, CNAS)
 // etaient affiches avec la mention « Paiement securise » sans aucun backend :
 // une promesse d'interface non tenue, sur un produit de sante.
-function payMethodsDisponibles(){
-  var ok = !!(window.TABIBI_FEATURES && window.TABIBI_FEATURES.payments);
-  return ok ? PAY_METHODS_LIST : PAY_METHODS_LIST.filter(function(m){ return m.id === "cash"; });
-}
-function renderPayMethods(){document.getElementById("pay-wrap").innerHTML=payMethodsDisponibles().map(m=>`<label class="pay-method ${bookingPay===m.id?'selected':''}" data-method="${m.id}" style="display:flex;align-items:center;gap:10px;padding:12px;border:2px solid ${bookingPay===m.id?m.color:'var(--border)'};border-radius:12px;background:${bookingPay===m.id?m.color+'11':'#fff'};margin-bottom:6px;cursor:pointer"><input type="radio" name="pay" value="${m.id}" ${bookingPay===m.id?'checked':''} onchange="bookingPay='${m.id}';renderPayMethods()" style="margin:0"><div style="width:36px;height:36px;border-radius:8px;background:${m.color}22;color:${m.color};display:flex;align-items:center;justify-content:center"><i class="fa ${m.icon}"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">${m.name}</div><div style="font-size:11px;color:var(--text3)">${m.sub}</div></div></label>`).join("");}
-function selDate(iso){bookingDate=iso;bookingTime=null;showBookingStep(1);}
-function selTime(t){bookingTime=t;showBookingStep(1);}
-async function confirmBooking(){const reason=document.getElementById("bk-reason")?.value.trim();if(!reason){toastM(tabibiT('toast_reason_required',"Veuillez saisir le motif de consultation"),"error");return;}const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");const appt={id:"r"+Date.now(),doctorId:bookingDoc.id,doctorName:bookingDoc.fr,spec:bookingDoc.spec,addr:bookingDoc.addr||bookingDoc.ville,ville:bookingDoc.ville,date:bookingDate,time:bookingTime,slot:bookingTime,reason,consultType:document.getElementById("bk-type").value,forWhom:document.getElementById("bk-for").value,payMethod:bookingPay,prix:bookingDoc.prix,status:"confirmed",patientName:u.name||"",patientPhone:u.phone||"",createdAt:new Date().toISOString()};const all=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");all.unshift(appt);localStorage.setItem("tabibi_rdv",JSON.stringify(all));
-  // Sauvegarder dans Supabase
-  try{
-    const SB_URL=(window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
-    const SB_KEY=(window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_ANON_KEY) || '';
-    let token=SB_KEY;
-    if(window.tabibi?.supabase){const{data:{session}}=await window.tabibi.supabase.auth.getSession();if(session?.access_token)token=session.access_token;}
-    const dt=new Date(appt.date+'T'+appt.time);
-    await fetch(SB_URL+'/rest/v1/appointments',{method:'POST',headers:{'apikey':SB_KEY,'Authorization':'Bearer '+token,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify({doctor_id:appt.doctorId,scheduled_at:dt.toISOString(),duration_minutes:30,reason:appt.reason,notes_patient:appt.notes||'',status:'pending',consult_type:appt.consultType,pay_method:appt.payMethod,prix:appt.prix})});
-    /* [FIX-PROD-2026-05-19] log retiré */
-    // Invalider le cache des slots pour ce médecin/date pour que le créneau apparaisse comme pris au prochain affichage
-    delete _bookedSlotsCache[appt.doctorId + '|' + appt.date];
-  }catch(e){console.warn('[Tabibi] RDV local seulement:',e);}
-  showBookingStep(3);
-  // Notif push
-  const n=getNotifs();n.unshift({id:Date.now(),type:"rdv",icon:"fa-calendar-plus",color:"var(--blue)",title:"Demande de RDV envoyée",msg:`${bookingDoc.fr} — ${bookingDate} à ${bookingTime} · en attente de confirmation`,time:"à l'instant",unread:true});localStorage.setItem("tabibi_notifs",JSON.stringify(n));renderNotifs();
-}
 
 /* ─── MES RDV ─── */
 function getAllRdvs(){return JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");}
@@ -546,9 +418,12 @@ async function fetchMyAppointmentsFromSupabase(){
     }
 
     const fromSb = rows.map(r => {
-      const dt = new Date(r.scheduled_at);
-      const date = dt.toISOString().split('T')[0];
-      const time = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      // [13/09/2026] LA SOURCE DU DECALAGE. `toISOString()` rendait le jour en
+      // UTC et `getHours()` l'heure du NAVIGATEUR : a Paris, un RDV a 00h30 heure
+      // d'Alger sortait « mardi 15, 01:30 » au lieu de « mercredi 16, 00:30 ».
+      // Les deux se lisent desormais dans le fuseau du CABINET (js/tabibi-temps.js).
+      const date = window.tabibiTemps.jourDe(r.scheduled_at);
+      const time = window.tabibiTemps.heureDe(r.scheduled_at);
       const doc = _docMap[r.doctor_id] || null;
       return {
         id: r.id || ('sb_' + r.scheduled_at),

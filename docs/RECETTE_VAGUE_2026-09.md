@@ -45,6 +45,89 @@ grep -n "^| [0-9]" docs/JOURNAL_DEPLOIEMENTS.md  # l'ordre des lignes datees
 et lire. C'est la meme famille de faute que « la console est propre » et que « le test est vert » :
 un signal automatique repond a la question qu'on lui a posee, jamais a celle qu'on a oublie de poser.
 
+### Regle generale — un INSTANT et un JOUR CALENDAIRE sont deux TYPES differents
+
+Un rendez-vous a lieu a un **instant**. Des horaires d'ouverture portent sur un **jour calendaire**.
+Ce ne sont pas deux facons de dire la meme chose : deux types, deux regles d'affichage opposees.
+
+- Un **instant** (`timestamptz`) se rend **dans le fuseau du CABINET**. Le medecin et le patient
+  doivent lire la meme heure, ou qu'ils soient.
+- Un **jour calendaire** (`'YYYY-MM-DD'`) se rend **sans aucun fuseau**. Le 16 septembre est le
+  16 septembre partout ; lui appliquer un fuseau ne peut que le deplacer.
+
+**Tout bug de fuseau nait a l'endroit ou l'un est converti en l'autre par `new Date()`.**
+
+Les quatre cas, mesures le 13/09/2026 (RDV a 00h30 heure cabinet = `2026-09-15T23:30:00Z`) :
+
+| Cas | Ce que le code fait | Alger | Paris | UTC |
+|---|---|---|---|---|
+| **1. Instant, sans fuseau** | `toISOString()` pour la date, `getHours()` pour l'heure | mer. 16 · 00:30 | mer. 16 · **01:30** | **mar. 15** · **23:30** |
+| **1 bis. Instant, fuseau cabinet** | `tabibiTemps.jourDe` / `heureDe` | mer. 16 · 00:30 | mer. 16 · 00:30 | mer. 16 · 00:30 |
+| **2. Jour calendaire `'2026-09-16'`** | formate sans fuseau | mer. 16 | mer. 16 | mer. 16 |
+| **3. Date construite en LOCAL pour un jour** | `x.setHours(0,0,0,0)` puis rendu en fuseau cabinet | mer. 16 | **mar. 15** | mer. 16 |
+| **4. `new Date(jour+'T'+heure)`** | chaine sans fuseau, parsee en LOCAL | 09:00 | **08:00** | 10:00 |
+
+Le cas 1 est le defaut d'origine : la date sortait en UTC pendant que l'heure sortait en local, et
+**les deux se contredisaient**. Le fuseau n'y etait pour rien — c'est le MELANGE.
+
+Les cas 3 et 4 sont le piege inverse, et c'est pour cela que « ajouter un `timeZone` partout » est une
+mauvaise reponse : poser le fuseau du cabinet sur une valeur qui n'est PAS un instant la casse. Le
+cas 4 est le plus grave : quand son resultat est ecrit en base, ce n'est plus un defaut d'affichage,
+c'est **une donnee fausse**.
+
+En pratique, `js/tabibi-temps.js` :
+
+```js
+tabibiTemps.jourDe(instant)    // 'YYYY-MM-DD' du CABINET — remplace toISOString().split('T')[0]
+tabibiTemps.heureDe(instant)   // 'HH:MM' du CABINET      — remplace getHours()/getMinutes()
+tabibiTemps.instant(v, opts)   // un instant, fuseau cabinet
+tabibiTemps.jourCalendaire(s)  // un jour, AUCUN fuseau, jamais de new Date()
+tabibiTemps.ajouterJours(s, n) // arithmetique sans derive
+tabibiTemps.instantDepuisJourEtHeure(jour, heure)  // heure murale cabinet -> instant UTC
+```
+
+Le fuseau du cabinet est **une constante nommee**, a un seul endroit. On ne code pas « +1 » : le jour
+du deuxieme pays, elle devient une colonne de `doctor_profiles`. **Et il faudra alors corriger DEUX
+couches** — la meme regle vit en SQL, ou `'Africa/Algiers'` est ecrit en dur dans
+`get_available_slots`, la garde de disponibilite et le trigger de notifications.
+
+Les deux gardes : `npm run lint:dette` (`no-restricted-syntax`, plafond **3**) pour `js/src/scripts`,
+et `npm run verifier:fuseau` pour le JS inline des pages HTML — **invisible a eslint**, et c'est la
+que vivaient 105 des 134 lectures d'horloge du 13/09.
+
+### Pourquoi la garde doit etre a l'ECRITURE, pas a la lecture
+
+**Un instant faux ecrit en base est indiscernable d'un instant juste.** `2026-09-14T08:00:00+00` est
+une valeur parfaitement valide. Rien, dans la colonne, ne dit si elle vient d'un patient qui a
+choisi 09:00 heure cabinet ou d'un navigateur parisien qui croyait ecrire 09:00. **Aucun audit
+posterieur ne peut les separer** — il n'y a pas de trace de l'intention, seulement le resultat.
+
+Le 13/09/2026, `secretaire-dashboard.html:437` faisait
+`new Date(date + "T" + time + ":00").toISOString()`. Depuis Paris, un rendez-vous saisi a 09:00
+partait a `07:00Z`, soit **08:00 heure cabinet**. Une heure d'ecart, silencieuse, definitive.
+
+Nous avons eu de la chance : la table ne contenait **qu'une seule ligne**,
+`2026-09-14 08:00:00+00`, soit 09:00 pile heure cabinet, minutes a `00`, creee par le parcours
+patient. Rien a rattraper.
+
+**Si la table avait contenu six mois de rendez-vous, cette ligne aurait produit des degats
+irreparables et invisibles.** Pas un ecran a corriger : des milliers de rendez-vous decales d'une
+heure, sans moyen de savoir lesquels.
+
+C'est pour cela que la garde vit **au point d'ecriture** :
+
+- `tabibiTemps.instantDepuisJourEtHeure(jour, heure)` est le SEUL chemin autorise pour transformer
+  une heure murale saisie en instant. Il calcule le decalage du fuseau du cabinet a la date visee,
+  au lieu de laisser `new Date()` appliquer celui du navigateur.
+- `scripts/verifier-fuseau.mjs` attrape `new Date(<chaine sans fuseau>)` **avant** qu'il n'atteigne
+  la base, pas apres.
+
+La regle qui en decoule, generale : **un defaut d'affichage se corrige un jour ; un defaut
+d'ecriture se corrige jamais.** Quand les deux existent, on commence par l'ecriture.
+
+La preuve : `npx playwright test tests/e2e/fuseau-cabinet.spec.js` — le meme rendez-vous a 00h30 lu
+depuis Alger, Paris et UTC, plus les trois cas de non-regression.
+
 ### Regle generale — une assertion visuelle porte sur le STYLE CALCULE
 
 **Jamais sur la classe.** Une classe est une intention ; le style calcule est ce que l'oeil recoit.
@@ -88,6 +171,7 @@ n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 | 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
 | 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
 | 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
+| 6 bis | `npm run verifier:fuseau` | une lecture d'horloge locale sur une date de rendez-vous | le compte depasse le plafond |
 | 6 | `npm run verifier:statuts` | un statut de rendez-vous declare d'un cote et pas de l'autre | un ecart, dans un sens ou l'autre |
 | 7 | `npm run build` puis `npm run test:e2e` | les parcours critiques, sources et sortie de build | un test rouge |
 

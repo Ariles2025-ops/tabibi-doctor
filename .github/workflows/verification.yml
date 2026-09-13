@@ -87,6 +87,11 @@ jobs:
         # vrai : incident du 13/09/2026, #tab-rdv de patient-dashboard.
         run: npm run verifier:panneaux
 
+      - name: Aucune horloge locale sur une date de rendez-vous
+        # eslint ne lit que js/src/scripts. Ce controle voit AUSSI le JS inline
+        # des pages HTML, ou vivaient 105 des 134 lectures d'horloge du 13/09.
+        run: npm run verifier:fuseau
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 

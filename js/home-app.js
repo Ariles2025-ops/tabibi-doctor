@@ -309,7 +309,7 @@ window._takenSlotsCache = window._takenSlotsCache || {};
 
 async function loadTakenSlots(doctorId, dateIso, onLoaded){
   if (!doctorId) return;
-  if (!dateIso) { const t=new Date(); t.setDate(t.getDate()+1); dateIso = t.toISOString().split('T')[0]; }
+  if (!dateIso) { dateIso = window.tabibiTemps.ajouterJours(window.tabibiTemps.aujourdhui(), 1); }
   const key = doctorId + '|' + dateIso;
   if (window._takenSlotsCache[key] !== undefined) {
     if (typeof onLoaded === 'function') onLoaded(window._takenSlotsCache[key]);
@@ -328,7 +328,7 @@ async function loadTakenSlots(doctorId, dateIso, onLoaded){
     if (!Array.isArray(rows)) { if (typeof onLoaded === 'function') onLoaded([]); return; }
     const taken = rows
       .filter(r => r.status !== 'cancelled' && r.status !== 'Cancelled')
-      .map(r => { const d = new Date(r.scheduled_at); return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0'); });
+      .map(r => window.tabibiTemps.heureDe(r.scheduled_at));   // heure du CABINET
     window._takenSlotsCache[key] = taken;
     if (typeof onLoaded === 'function') onLoaded(taken);
   } catch(e) {
@@ -1171,8 +1171,8 @@ function showDoctorModal(d){
   window._profileDoctorId=d.id;
   window._profileSlot=null;
   // Date par défaut pour la réservation = demain (cohérent avec loadTakenSlots)
-  const _tmrw = new Date(); _tmrw.setDate(_tmrw.getDate()+1);
-  window._profileDate = _tmrw.toISOString().split("T")[0];
+  // [13/09/2026] « demain » se calcule dans le fuseau du cabinet, pas du navigateur.
+  window._profileDate = window.tabibiTemps.ajouterJours(window.tabibiTemps.aujourdhui(), 1);
 
   // Re-render des slots (lit window._takenSlotsCache, alimente par loadTakenSlots)
   function renderProfileSlots(){
@@ -1245,7 +1245,7 @@ async function finalBooking(docId,slot,docName,prix){
   const payMethod=window._bkPay||"cash";
   // Date : si window._profileDate (sélectionnée par l'utilisateur) on la prend, sinon demain par défaut
   const isoDate = window._profileDate || (function(){
-    const t=new Date(); t.setDate(t.getDate()+1); return t.toISOString().split("T")[0];
+    return window.tabibiTemps.ajouterJours(window.tabibiTemps.aujourdhui(), 1);
   })();
 
   // [FIX P17] Auth obligatoire AVANT tout INSERT : la RLS de public.appointments impose
@@ -1336,7 +1336,7 @@ async function finalBooking(docId,slot,docName,prix){
   // Confirmation visuelle
   const dateLbl = (function(){
     try {
-      return (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(isoDate), {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : new Date(isoDate).toLocaleDateString("fr-FR", {weekday:'long', day:'numeric', month:'long', year:'numeric'}));
+      return (window.tabibiFormatDate ? window.tabibiFormatDate(isoDate, {weekday:'long', day:'numeric', month:'long', year:'numeric'}) : new Date(isoDate).toLocaleDateString("fr-FR", {weekday:'long', day:'numeric', month:'long', year:'numeric'}));
     } catch(e) { return isoDate; }
   })();
   // [FIX P17] Gating strict : AUCUN toast de succès si l'écriture en base a échoué.

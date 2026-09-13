@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-temps.js"></script><script src="js/tabibi-security.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
 <script src="js/tabibi-avatar.js"></script>
 <script src="js/tabibi-statut-rdv.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
@@ -397,7 +397,7 @@ async function toggleNotif(){
 function toggleMenu(){document.getElementById("user-drop").classList.toggle("hidden");document.getElementById("notif-drop").classList.add("hidden");}
 document.addEventListener("click",e=>{if(!e.target.closest(".dropdown-menu") && !e.target.closest("#user-pill") && !e.target.closest("button[title='Notifications']")){document.getElementById("notif-drop")?.classList.add("hidden");document.getElementById("user-drop")?.classList.add("hidden");}});
 
-let currentDay = new Date().toISOString().split("T")[0];
+let currentDay = window.tabibiTemps.aujourdhui();
 
 function sw(tab,btn){
   try {
@@ -629,9 +629,12 @@ async function fetchDoctorRdvsFromSupabase(){
     }
 
     const list = rows.map(r => {
-      const dt = new Date(r.scheduled_at);
-      const date = dt.toISOString().split('T')[0];
-      const time = String(dt.getHours()).padStart(2,'0') + ':' + String(dt.getMinutes()).padStart(2,'0');
+      // [13/09/2026] LA SOURCE DU DECALAGE. `toISOString()` rendait le jour en
+      // UTC et `getHours()` l'heure du NAVIGATEUR : a Paris, un RDV a 00h30 heure
+      // d'Alger sortait « mardi 15, 01:30 » au lieu de « mercredi 16, 00:30 ».
+      // Les deux se lisent desormais dans le fuseau du CABINET (js/tabibi-temps.js).
+      const date = window.tabibiTemps.jourDe(r.scheduled_at);
+      const time = window.tabibiTemps.heureDe(r.scheduled_at);
       const p = patientsMap[r.patient_id] || { name: 'Patient', phone: '' };
       return {
         id: r.id,
@@ -678,7 +681,7 @@ function refreshDoctorRdvs(){
 
 function renderToday(){
   const rdvs = getDocRdvs();
-  const today = new Date().toISOString().split("T")[0];
+  const today = window.tabibiTemps.aujourdhui();
   const todays = rdvs.filter(r=>r.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
   document.getElementById("kpi-today").textContent = todays.length;
   document.getElementById("today-count").textContent = todays.length+" "+tabibiT('dd_rdv_unit','RDV');
@@ -719,18 +722,22 @@ function renderToday(){
 }
 
 function renderAgenda(){
-  const today = new Date();
-  const monday = new Date(today); monday.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
+  // [13/09/2026] Semaine calculee en JOURS CALENDAIRES, dans le fuseau du
+  // cabinet. Avant : `new Date()` local, `setDate(getDay())` local, puis
+  // `toISOString()` UTC — trois lectures d'horloge differentes pour une grille
+  // qui ne represente que des jours.
+  const _T = window.tabibiTemps;
+  const today = _T.aujourdhui();
+  const monday = _T.lundiDe(today);
   const rdvs = getDocRdvs();
   const days = ["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]; // fallback ; label réel = tabibiFormatDate(weekday:short) ci-dessous
   document.getElementById("cal-week").innerHTML = days.map((d,i)=>{
-    const dt=new Date(monday);dt.setDate(monday.getDate()+i);
-    const iso=dt.toISOString().split("T")[0];
+    const iso=_T.ajouterJours(monday, i);
     const cnt=rdvs.filter(r=>r.date===iso).length;
-    const isToday=iso===today.toISOString().split("T")[0];
+    const isToday=iso===today;
     const isSel=iso===currentDay;
     return `<button class="cal-day ${isToday?'today':''} ${cnt>0?'has-rdv':''}" style="${isSel?'background:var(--blue);color:#fff;border-color:var(--blue)':''}" onclick="selDay('${iso}')">
-      <div style="font-size:10px">${window.tabibiFormatDate?window.tabibiFormatDate(dt,{weekday:'short'}):d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${dt.getDate()}</div>
+      <div style="font-size:10px">${_T.jourCalendaire(iso,{weekday:'short'})||d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${dt.getDate()}</div>
       ${cnt>0?`<div style="font-size:9px;margin-top:2px">${cnt} ${tabibiT('dd_rdv_unit','RDV')}</div>`:''}
     </button>`;
   }).join("");
@@ -751,7 +758,7 @@ function filtMRdv(f,btn){
   document.querySelectorAll("[data-fr]").forEach(b=>b.classList.remove("active"));
   if(btn) btn.classList.add("active");
   let list = getDocRdvs();
-  const today = new Date().toISOString().split("T")[0];
+  const today = window.tabibiTemps.aujourdhui();
   if(f==="today") list = list.filter(r=>r.date===today);
   else if(f!=="all") list = list.filter(r=>window.tabibiStatutRdv.decrire(r.status).cle===f);
   if(!list.length){document.getElementById("rdv-full-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-xmark" style="font-size:48px;opacity:.3;margin-bottom:14px;display:block"></i>${tabibiT('dd_no_rdv','Aucun rendez-vous')}</div>`;return;}
@@ -775,7 +782,10 @@ function contactPatientByEmail(rdvId){
   const doctorName = u.name || 'Votre médecin';
   // Format de date FR pour le mail
   let dateLbl = r.date;
-  try { dateLbl = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(r.date+'T'+r.time), {weekday:'long',day:'numeric',month:'long',year:'numeric'}) : new Date(r.date+'T'+r.time).toLocaleDateString("fr-FR", {weekday:'long',day:'numeric',month:'long',year:'numeric'})); } catch(e){}
+  // [13/09/2026] `new Date(r.date+'T'+r.time)` est parse en heure LOCALE : a
+  // Paris, 09:00 devenait 07:00 UTC. r.date est deja un JOUR CALENDAIRE du
+  // fuseau du cabinet — on le formate comme tel, sans repasser par un instant.
+  try { dateLbl = window.tabibiTemps.jourCalendaire(r.date, {weekday:'long',day:'numeric',month:'long',year:'numeric'}); } catch(e){}
   const subject = encodeURIComponent('Votre rendez-vous du ' + dateLbl + ' — Tabibi');
   const body = encodeURIComponent(
     'Bonjour ' + (r.patientName || '') + ',\n\n' +

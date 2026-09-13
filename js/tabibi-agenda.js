@@ -71,10 +71,15 @@
   }
   function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, function (c) { return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
 
-  /* ── Dates (locales, pattern secretaire-dashboard — pas d'UTC shift) ─ */
-  function startOfWeek(d) { var x = new Date(d); var day = (x.getDay() + 6) % 7; x.setDate(x.getDate() - day); x.setHours(0, 0, 0, 0); return x; }
-  function addDays(d, n) { var x = new Date(d); x.setDate(x.getDate() + n); return x; }
-  function fmtDateISO(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  /* ── Dates ── [13/09/2026] Ces trois helpers lisaient les composantes LOCALES
+     du navigateur : justes tant qu'on est a Alger, faux ailleurs. Ils travaillent
+     desormais en JOURS CALENDAIRES du fuseau du CABINET (js/tabibi-temps.js).
+     Les objets Date qui circulent sont ancres a minuit UTC : une ancre neutre,
+     que jourDe() relit sans derive. */
+  function jourVersDate(jour) { return new Date(jour + 'T00:00:00Z'); }
+  function startOfWeek(v) { return jourVersDate(window.tabibiTemps.lundiDe(window.tabibiTemps.jourDe(v))); }
+  function addDays(d, n) { return jourVersDate(window.tabibiTemps.ajouterJours(window.tabibiTemps.jourDe(d), n)); }
+  function fmtDateISO(d) { return window.tabibiTemps.jourDe(d); }
 
   /* ── Heure du CABINET : l'agenda affiche l'heure d'Alger (UTC+1 fixe,
      pas de DST) quel que soit le fuseau de la machine. Un Mac en
@@ -259,9 +264,10 @@
                fri: [], sat: [] }; // semaine DZ : dim→jeu, week-end ven/sam
     S.profile = { working_hours: wh };
     var mk = function (dayIdx, hm, dur, status, patient, reason) {
-      var base = addDays(S.weekStart, dayIdx); var m = hmToMin(hm);
-      // Instant exact heure d'Alger (UTC+1 fixe, sans DST)
-      var d = new Date(Date.UTC(base.getFullYear(), base.getMonth(), base.getDate(), Math.floor(m / 60) - 1, m % 60, 0));
+      var base = addDays(S.weekStart, dayIdx);
+      // [13/09/2026] Codait « - 1 » en dur pour simuler UTC+1. On ne code pas le
+      // decalage, on demande le fuseau du cabinet.
+      var d = new Date(window.tabibiTemps.instantDepuisJourEtHeure(fmtDateISO(base), hm));
       return { id: 'demo-' + dayIdx + '-' + hm, start: d, durMin: dur, status: status,
                patient: patient, doctor: 'Dr Benali', phone: '0555 12 34 56', reason: reason };
     };
@@ -282,8 +288,10 @@
       mk(4, '09:00', 30, 'confirmed', 'W. Bouaziz', 'Suivi grossesse'),
       mk(4, '15:30', 30, 'pending', 'I. Khelifi', 'Consultation')
     ];
-    var alg = function (dayIdx, h) { var b = addDays(S.weekStart, dayIdx);
-      return new Date(Date.UTC(b.getFullYear(), b.getMonth(), b.getDate(), h - 1, 0, 0)); };
+    var alg = function (dayIdx, h) {
+      var jour = fmtDateISO(addDays(S.weekStart, dayIdx));
+      return new Date(window.tabibiTemps.instantDepuisJourEtHeure(jour, String(h).padStart(2, '0') + ':00'));
+    };
     var u1s = alg(2, 14), u1e = alg(2, 18), u2s = alg(4, 11), u2e = alg(4, 12);
     S.unavail = [{ start: u1s, end: u1e, reason: 'Congrès' }, { start: u2s, end: u2e, reason: 'Visite domicile' }];
     return Promise.resolve();
@@ -322,8 +330,10 @@
     computeBounds();
     var grid = document.getElementById('ag-grid'); if (!grid) return;
     var L = lang(), px = S.pxPerMin, m0 = S.boundsMin, m1 = S.boundsMax, H = (m1 - m0) * px;
-    var fmtDay = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { weekday: 'short', day: 'numeric' });
-    var fmtLbl = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { day: 'numeric', month: 'short', year: 'numeric' });
+    // [13/09/2026] Ces deux formateurs rendaient les jours de la grille dans le
+    // fuseau du NAVIGATEUR. La grille d'un agenda porte sur les jours du CABINET.
+    var fmtDay = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { weekday: 'short', day: 'numeric', timeZone: TZ });
+    var fmtLbl = new Intl.DateTimeFormat(L === 'ar' ? 'ar-DZ' : (L === 'en' ? 'en-GB' : 'fr-FR'), { day: 'numeric', month: 'short', year: 'numeric', timeZone: TZ });
     var todayIso = fmtDateISO(new Date());
 
     document.getElementById('ag-week-label').textContent =

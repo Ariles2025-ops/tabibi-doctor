@@ -133,13 +133,9 @@
   function _addDaysIso(iso, days) {
     // Avance/recule de N jours sur une string 'YYYY-MM-DD' en local Algiers.
     // Reconstruit via Date local (Algeria CET sans DST → safe).
-    var parts = iso.split('-');
-    var d = new Date(parseInt(parts[0], 10),
-                     parseInt(parts[1], 10) - 1,
-                     parseInt(parts[2], 10),
-                     12, 0, 0);   // 12:00 local pour éviter rollover ±1h DST hypothétique
-    d.setDate(d.getDate() + days);
-    return _isoDateAlgiers(d);
+    // [13/09/2026] L'ancre a 12:00 LOCALE contournait le rollover ; elle ne
+    // reglait pas le fond. L'arithmetique se fait sur le JOUR CALENDAIRE.
+    return window.tabibiTemps.ajouterJours(iso, days);
   }
   function _isDateInRange(dateInput) {
     // Accepte Date, string ISO, ou string YYYY-MM-DD.
