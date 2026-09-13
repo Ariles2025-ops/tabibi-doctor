@@ -278,6 +278,44 @@ une requête qui ne pouvait pas aboutir. #78 le corrige. Restent deux endroits, 
 Aucune des deux n'entre dans la vague. Elles vont dans un chantier « un identifiant, un espace, un nom ».
 
 
+## 3 quater. Leçon du 13/09 — un artefact servi en production qui n'existe pas dans le dépôt
+
+**La règle.** Ce qui est servi aux utilisateurs doit être **reconstructible depuis le dépôt, à
+l'identique, à tout moment**. Un fichier qui ne vit que dans un déploiement est une bombe à
+retardement : il fonctionne tant que personne ne redéploie, et il disparaît sans bruit au premier
+déploiement suivant.
+
+**Le cas.** À 3 h du matin le 13/09, en allant simplement relever un marqueur de version avant de
+déployer, on a constaté que `tabibi.doctor` servait une page « Bientôt disponible » **absente de
+`main`**. Elle venait de `f06aa3d` (PR #51, 26/08), déployée à l'époque ; la PR #55 avait rétabli
+l'accueil public sur `main` le 03/09 **sans jamais redéployer**. La production était donc figée
+depuis dix-huit jours sur un état que rien, dans `main`, ne laissait deviner.
+
+Conséquence évitée de justesse : `wrangler pages deploy` depuis `main` aurait **ouvert le site au
+public**, alors que la revendication médecin n'existe pas, qu'aucun e-mail transactionnel ne part,
+que personne ne peut réinitialiser son mot de passe et que la conformité 25-11 n'est pas faite.
+Ce n'était pas un déploiement, c'était un lancement — décidé par personne.
+
+**Ce qui a rendu la découverte possible.** Une seule chose : avoir exigé un **marqueur vérifiable de
+l'état courant avant d'agir**, plutôt que de supposer. La consigne « je veux pouvoir comparer après,
+pas supposer » a payé en moins de cinq minutes.
+
+**Ce qu'on en fait.**
+
+1. L'état de porte devient une **déclaration versionnée** (`docs/ETAT_PORTE.md`) et un **choix
+   explicite au déploiement** (`scripts/porte.mjs`, variable `TABIBI_PORTE`, défaut `fermee`).
+   Voir la PR « porte : état explicite et rejouable ».
+2. **Défaut sûr** : si personne ne se prononce, la porte reste fermée. Ouvrir demande un geste.
+3. **Marqueur sortant** : chaque déploiement pose `<meta name="tabibi-porte" content="…">`, pour
+   qu'on puisse lire de l'extérieur ce qui est en ligne, sans supposer.
+4. **Avant tout déploiement**, relever l'état réel de la production et le comparer au dépôt. Un
+   `sha256` de la page d'entrée suffit à détecter une dérive de ce genre.
+
+**La question à se poser ailleurs.** Cette page n'était pas le seul artefact possible. Tout ce qui
+peut être déposé à la main dans un hébergement — page de maintenance, redirection, fichier de
+vérification, règle de cache — mérite le même traitement : dans le dépôt, ou nulle part.
+
+
 ## 4. Ce qu'on abandonne
 
 - **PR à fermer sans fusion** : #2, #13, #49, #50 (dépassées), #53 et #54 (fonctionnalités, à reprendre
