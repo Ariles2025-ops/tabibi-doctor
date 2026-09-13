@@ -49,7 +49,7 @@ Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauve
 | # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
 |---|---|---|---|---|---|---|
 | B1 | 2026-09-13 ~14:45 UTC | `20260913_reparation_plpgsql_check.sql` — 15 `CREATE OR REPLACE` | `8e3b05d` (fichier), `e3f1956` (retour arrière) | `20260913_reparation_RETOUR_ARRIERE.sql`, capture `pg_get_functiondef` du 13/09 14:22 UTC, fraîcheur prouvée par 15 empreintes `md5` → 0 ligne | `20260913_reparation_VERIFICATION.sql` → **0 ligne** | Aghiles |
-| B3 | 2026-09-13 ~17:00 UTC | `20260913_audit_log_echecs_politique.sql` — déclarer la permissivité | `d5501e3` | `DROP POLICY audit_log_echecs_insert_permissif ON public.audit_log_echecs` | politique en place — **2 contrôles restants** (voir B3) | Aghiles |
+| B3 | 2026-09-13 ~17:00 UTC | `20260913_audit_log_echecs_politique.sql` — déclarer la permissivité | `d5501e3` | `DROP POLICY audit_log_echecs_insert_permissif ON public.audit_log_echecs` | **3 contrôles sur 3 conformes** | Aghiles |
 | B2 | 2026-09-13 ~15:20 UTC | `20260913_audit_log_echecs.sql` — table de rebut | `400f464` | `DROP TABLE public.audit_log_echecs` (additive, aucune donnée) | 6 contrôles conformes — **divergence `rls_active` refermée par mesure** | Aghiles |
 | B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
 
@@ -178,10 +178,20 @@ créé, puis `CREATE` sur le schéma pour le transfert de propriété). Elles re
 commentées. Ni l'appartenance ni `CREATE` sur un schéma ne sont `BYPASSRLS` ou une exemption de
 politique — et `E1 refuse`, ce qui le prouve à l'exécution plutôt qu'au raisonnement.
 
-**Deux contrôles restent à faire** sur B3, que la sortie du bloc 1 ne couvre pas : que la politique
-soit bien `FOR INSERT` (`polcmd = 'a'`), et surtout que `droits_anon_authenticated` vaille toujours
-**AUCUN** — la preuve que poser une politique permissive n'a **rien ouvert**. Quitter la liste des
-« zéro politique » prouve qu'une politique existe, pas laquelle.
+**Vérification, passage séparé, trois contrôles sur trois conformes :**
+
+| Contrôle | Valeur | Attendu |
+|---|---|---|
+| `politique_existe` | 1 | 1 |
+| `commande` | `INSERT` | `INSERT` |
+| `droits_anon_authenticated` | **AUCUN** | **AUCUN** |
+
+Le troisième est le seul qui compte vraiment : il prouve que poser une politique permissive n'a
+**rien ouvert**. Les `REVOKE` restent la porte ; la politique déclare seulement qu'une fois la porte
+franchie, aucune ligne n'est filtrée.
+
+Les deux premiers étaient nécessaires parce que quitter la liste des « zéro politique » prouve
+qu'**une** politique existe, pas **laquelle**. B3 est close.
 
 ---
 **Règles de la colonne « Cible de retour » :**
