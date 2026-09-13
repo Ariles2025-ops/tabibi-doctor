@@ -32,6 +32,22 @@ ni l'edge `generate-prescription-pdf` existent, le bouton deviendra un vrai faux
 | `create-video-room` | `teleconsultation.html` | la téléconsultation (Daily) ne peut pas ouvrir de salle ; page « bientôt disponible » en pratique. |
 | `contact-partner` | `api-docs.html` | le formulaire partenaires API n'envoie rien. |
 
+> **Remesure du 13/09/2026.** Les lignes ci-dessus datent du 12/09 et sont conservees telles quelles.
+> Une d'entre elles ne decrit plus le code : **`request-account-deletion` n'est plus appelee par
+> `legal/rgpd-droits.html`.** L'appel a ete retire le 12/09/2026 et ne survit qu'en commentaire dans
+> la page. Verifie sur la production du 13/09 (`https://tabibi.doctor/legal/rgpd-droits`, cache-bust) :
+> une seule occurrence de la chaine, dans un commentaire qui documente le retrait, zero `<form>`,
+> zero `onclick` avec `alert(` ou `confirm(`.
+>
+> La suppression de compte y est passee a un **canal humain** assume : demande ecrite a
+> `contact@tabibi.doctor` ou appel au `+213 777 16 90 74` (en clair dans le HTML, non obfusque),
+> accuse de reception sous 72 h ouvrees, suppression sous 30 jours. L'ancien code inserait dans une
+> table inexistante (`account_deletion_requests`), appelait l'edge non deployee, puis affichait
+> « Vous recevrez un email de confirmation » et deconnectait l'utilisateur — alors que rien ne partait.
+>
+> Cette ligne reste donc a l'inventaire pour la **reintroduction** du parcours automatique, pas comme
+> un appel mort en production. Les cinq autres lignes n'ont pas ete remesurees.
+
 ## Ce que R3 demande
 
 1. Décider fonction par fonction : déployer (le code existe-t-il sous `supabase/functions/` ?) ou retirer l'appel et le bouton.

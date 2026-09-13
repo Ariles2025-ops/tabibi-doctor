@@ -393,6 +393,59 @@ de Pages elle-même. Le comportement au query string, noté ici comme
 
 ---
 
+## Reglages cote hebergeur qui reecrivent le HTML servi
+
+Consigne le 13/09/2026. **Le HTML servi n'est pas toujours le HTML deploye.** Certains reglages du
+tableau de bord Cloudflare modifient la reponse a la volee, sans aucune trace dans le depot. Aucun
+`grep` sur les sources, aucune relecture de PR ne les montre : ils n'existent que dans la console.
+
+### Email Address Obfuscation — actif
+
+Cloudflare reecrit **tout `href="mailto:…"`** dans les pages servies :
+
+    <!-- deploye -->
+    <a href="mailto:contact@tabibi.doctor?subject=...">contact@tabibi.doctor</a>
+
+    <!-- servi -->
+    <a href="/cdn-cgi/l/email-protection#e5868a8b91848691a5...">
+      <span class="__cf_email__" data-cfemail="781b17160c191b0c380c191a111a11561c171b0c170a">[email&#160;protected]</span></a>
+
+Decodage : le premier octet hexadecimal est la cle, les suivants sont en XOR avec elle.
+
+```bash
+python3 -c "h='781b17160c191b0c380c191a111a11561c171b0c170a';b=bytes.fromhex(h);print(''.join(chr(c^b[0]) for c in b[1:]))"
+# contact@tabibi.doctor
+```
+
+Le decodeur `/cdn-cgi/scripts/<hash>/cloudflare-static/email-decode.min.js` est servi par la **meme
+origine** (HTTP 200, 1 239 o) : il passe sous `'self'` et n'oblige a elargir aucune directive CSP.
+
+### Les trois consequences operationnelles
+
+1. **Chercher une adresse e-mail par `grep` sur le HTML servi ne prouve rien.** Le 13/09, un
+   `grep contact@tabibi.doctor` sur `medecin-profile` servi a renvoye **0**, et la conclusion
+   evidente — « le medecin n'a aucune porte de sortie indiquee » — etait fausse. Pour verifier :
+   decoder `data-cfemail`, ou mesurer le rendu apres execution du JS.
+2. **Sans JavaScript, le lecteur voit litteralement `[email protected]`.** Ni lisible, ni cliquable.
+   Une adresse e-mail placee dans un lien ne peut donc jamais etre le **seul** recours d'une page.
+3. **Ce qui sauve la porte de sortie, c'est le telephone en clair.** `tel:` n'est pas obfusque.
+   `legal/rgpd-droits.html` porte `+213 777 16 90 74` en clair, avec la procedure complete ; c'est
+   lui qui tient quand le decodeur ne s'execute pas. Toute page qui coupe un droit derriere un
+   `mailto:` doit donc aussi porter le telephone, ou renvoyer vers la page RGPD qui le porte.
+
+### La regle qui en decoule
+
+Une page qui indique un recours (suppression de compte, copie RGPD, reclamation) doit rester
+utilisable **JavaScript desactive**. Le test : couper le JS, recharger avec cache-bust, et verifier
+qu'un moyen de contact reste lisible. Un `mailto:` seul echoue ce test sur cet hebergeur.
+
+### A verifier au tableau de bord avant d'y toucher
+
+Meme famille de reglages invisibles depuis le depot, non encore inventories :
+Rocket Loader, Auto Minify, Mirage, Polish, et les Transform Rules eventuelles. Le cas
+`googletagmanager`, autorise par `script-src` alors qu'aucun fichier du depot ne le reference,
+releve peut-etre de la meme categorie : **regarder la console avant tout retrait**.
+
 ## Vérification post-déploiement
 
 ```bash

@@ -36,9 +36,6 @@
 <div data-tabibi-header data-variant="app" data-home="index.html">
   <span data-slot="sub">Administration · طبيبي</span>
   <div data-slot="actions">
-    <button class="btn btn-icon btn-icon-sm" onclick="alert(tabibiT('alert_admin_notif_demo','3 alertes admin · 7 médecins en attente · 5 signalements'))" title="Notifications" style="background:rgba(0,0,0,.04);color:var(--text2);width:36px;height:36px;position:relative">
-      <i class="fa fa-bell" style="font-size:14px"></i><span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;background:var(--red);color:#fff;font-size:10px;font-weight:800;border-radius:9px;display:flex;align-items:center;justify-content:center;border:2px solid #fff;animation:bell-ring 2s ease-in-out infinite">3</span>
-    </button>
     <button title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:800;font-size:13px;border:none;cursor:default;flex-shrink:0;box-shadow:0 2px 6px rgba(124,58,237,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">AT</span></button>
     <button onclick="logout()" aria-label="Se déconnecter" title="Se déconnecter" style="width:36px;height:36px;border-radius:10px;background:#fff0f0;color:#D21010;border:none;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px;transition:.15s;margin-left:4px" onmouseover="this.style.background='#D21010';this.style.color='#fff'" onmouseout="this.style.background='#fff0f0';this.style.color='#D21010'"><i class="fa fa-right-from-bracket"></i></button>
   </div>
@@ -138,8 +135,8 @@
     </div>
     <div class="card" style="margin-bottom:12px">
       <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-database"></i> Données</div>
-      <button class="btn btn-soft btn-full" style="margin-bottom:6px" onclick="alert(tabibiT('alert_export_csv_pending','Export CSV en cours...'))"><i class="fa fa-file-csv"></i> Exporter données (CSV)</button>
-      <button class="btn btn-soft btn-full" style="margin-bottom:6px" onclick="alert(tabibiT('alert_backup_created','Backup créé'))"><i class="fa fa-cloud-arrow-up"></i> Backup manuel</button>
+      <button class="btn btn-soft btn-full" style="margin-bottom:6px;opacity:.55;cursor:not-allowed" disabled aria-disabled="true" title="Non disponible — aucun export n'est câblé"><i class="fa fa-file-csv"></i> Exporter données (CSV) <span style="margin-inline-start:auto;font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800">NON DISPONIBLE</span></button>
+      <button class="btn btn-soft btn-full" style="margin-bottom:6px;opacity:.55;cursor:not-allowed" disabled aria-disabled="true" title="Non disponible — aucune sauvegarde n'est câblée"><i class="fa fa-cloud-arrow-up"></i> Backup manuel <span style="margin-inline-start:auto;font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800">NON DISPONIBLE</span></button>
     </div>
     <button class="btn btn-primary btn-full btn-lg" disabled style="opacity:.55;cursor:not-allowed" title="Bientôt disponible — paramètres non câblés" aria-disabled="true"><i class="fa fa-save"></i> Sauvegarder paramètres <span style="font-size:10px;background:rgba(255,255,255,.25);border-radius:999px;padding:2px 8px;font-weight:800;margin-inline-start:6px">BIENTÔT</span></button>
     <button class="btn btn-danger btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> Se déconnecter</button>

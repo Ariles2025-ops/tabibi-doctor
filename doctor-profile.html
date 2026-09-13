@@ -57,7 +57,7 @@
   <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="history.back()" aria-label="Retour"><i class="fa fa-arrow-left"></i></button>
   <div class="app-bar-body"><div class="app-bar-title" data-i18n="dp_pagetitle">Profil médecin</div></div>
   <button type="button" class="btn btn-icon btn-icon-sm" id="fav-btn" onclick="toggleFav()" style="background:var(--bg2);color:var(--text3)" aria-label="Ajouter aux favoris"><i class="fa fa-heart"></i></button>
-  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="navigator.share?navigator.share({title:'Tabibi',text:document.title,url:location.href}):alert(tabibiT('alert_link_copied','Lien copié'))" aria-label="Partager le profil"><i class="fa fa-share-nodes"></i></button>
+  <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="partagerProfil()" aria-label="Partager le profil"><i class="fa fa-share-nodes"></i></button>
   <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
   <div data-langbar></div>
 </header>
@@ -173,6 +173,27 @@
 <script>
 // [FIX 2026-05-26] scripts/app.js supprimé (404 — paginait public_doctors en entier, remplacé par fetch ciblé)
 // Code mort retiré (anciens avis hard-codés). Les vrais avis viennent de Supabase via tabibi-reviews.js
+
+// [13/09/2026] Le repli annoncait « Lien copie » sans rien copier — et c'etait le cas
+// NORMAL sur ordinateur, ou navigator.share n'existe pas. Vraie copie, et le message
+// n'apparait que sur la promesse resolue ; sur rejet on montre le lien a copier a la main.
+function partagerProfil(){
+  var url = location.href;
+  if (navigator.share) {
+    navigator.share({ title: 'Tabibi', text: document.title, url: url }).catch(function(){});
+    return;
+  }
+  var manuel = function(){
+    window.prompt(tabibiT('alert_link_copy_manual', 'Copie automatique refusee — copiez ce lien :'), url);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function(){
+      alert(tabibiT('alert_link_copied', 'Lien copie'));
+    }).catch(manuel);
+    return;
+  }
+  manuel();
+}
 
 let currentDoc=null;
 
