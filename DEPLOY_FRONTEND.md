@@ -433,6 +433,17 @@ origine** (HTTP 200, 1 239 o) : il passe sous `'self'` et n'oblige a elargir auc
    lui qui tient quand le decodeur ne s'execute pas. Toute page qui coupe un droit derriere un
    `mailto:` doit donc aussi porter le telephone, ou renvoyer vers la page RGPD qui le porte.
 
+### Consequence sur les mesures de taille — vecue le 13/09/2026
+
+La reecriture **change la taille de la reponse**. Le deploiement 4 a annonce `accueil-public.html` a
+115 952 o (taille du fichier construit) et la production en a servi **116 268 o** : +316 octets, parce
+que Cloudflare a transforme les 2 `href="mailto:"` en un `__cf_email__` et ajoute la balise du
+decodeur. Le deploiement etait bon ; c'est l'annonce qui etait mesuree au mauvais endroit — quelques
+heures apres avoir ecrit cette section.
+
+**Une taille annoncee se mesure sur ce qui sera servi, pas sur ce qui est construit.** Pour toute page
+contenant un `mailto:`, prevoir l'ecart, ou comparer un marqueur de contenu plutot que la taille.
+
 ### La regle qui en decoule
 
 Une page qui indique un recours (suppression de compte, copie RGPD, reclamation) doit rester
