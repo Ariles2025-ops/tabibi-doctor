@@ -109,7 +109,7 @@
   /* ── Normalisation ──────────────────────────────────────────────── */
   function normCabinetRow(a) {
     return { id: a.appointment_id, start: new Date(a.scheduled_at),
-      durMin: a.duration_minutes || 30, status: (a.status || 'pending').toLowerCase(),
+      durMin: a.duration_minutes || 30, status: String(a.status == null ? '' : a.status).trim().toLowerCase(),
       // Même chaîne de repli qu'en mode médecin seul : la vue cabinet lit la
       // même public.users clairsemée, un patient sans nom y est tout aussi
       // fréquent.
@@ -131,7 +131,7 @@
   function normDoctorRow(a, patientsMap) {
     var p = patientsMap[a.patient_id] || {};
     return { id: a.id, start: new Date(a.scheduled_at),
-      durMin: a.duration_minutes || 30, status: (a.status || 'pending').toLowerCase(),
+      durMin: a.duration_minutes || 30, status: String(a.status == null ? '' : a.status).trim().toLowerCase(),
       patient: patientLabel(p), doctor: '', phone: p.phone || '', reason: a.reason_short || a.reason || '' };
   }
 
@@ -311,7 +311,12 @@
   }
 
   /* ── Rendu ──────────────────────────────────────────────────────── */
-  function statusLabel(s) { return t('ag_status_' + s); }
+  // [13/09/2026] Renvoyait la cle brute « ag_status_<valeur> » sur un statut
+  // inconnu. Source unique : tabibiStatutRdv.
+  function statusLabel(s) { return window.tabibiStatutRdv.decrire(s).libelle; }
+  // Classe CSS de statut : une valeur inconnue ne doit pas produire une
+  // classe inconnue (fond transparent, indiscernable d'un rendu normal).
+  function statusClass(s) { var d = window.tabibiStatutRdv.decrire(s); return d.connu ? d.cle : 'inconnu'; }
 
   function render() {
     computeBounds();
@@ -372,7 +377,7 @@
         var top = (Math.max(sMin, m0) - m0) * px;
         var h = Math.max(a.durMin * px, 20);
         var wPct = 100 / pl.cols, xPct = pl.col * wPct;
-        html += '<button type="button" class="ag-appt ' + esc(a.status) + (S.selected === a.id ? ' sel' : '') + '"' +
+        html += '<button type="button" class="ag-appt ' + esc(statusClass(a.status)) + (S.selected === a.id ? ' sel' : '') + '"' +
           ' style="top:' + top + 'px;height:' + h + 'px;inset-inline-start:' + xPct + '%;width:calc(' + wPct + '% - 3px)"' +
           ' data-appt="' + esc(a.id) + '" title="' + esc(a.patient + ' · ' + fmtHM(sMin) + ' · ' + statusLabel(a.status)) + '">' +
           '<span class="ag-appt-t">' + fmtHM(sMin) + '</span> <span class="ag-appt-n">' + esc(a.patient) + '</span>' +
@@ -442,7 +447,7 @@
     box.innerHTML =
       '<div class="ag-card">' +
         '<div class="ag-card-top">' +
-          '<span class="status-pill ' + esc(a.status) + '">' + esc(statusLabel(a.status)) + '</span>' +
+          '<span class="status-pill ' + esc(statusClass(a.status)) + '">' + esc(statusLabel(a.status)) + '</span>' +
           '<span class="ag-card-when"><bdi>' + fmtHM(sMin) + '</bdi> · ' + a.durMin + ' ' + t('ag_min') + '</span>' +
         '</div>' +
         '<div class="ag-card-name">' + esc(a.patient) + '</div>' +
@@ -453,8 +458,8 @@
           (a.phone ? '<div class="r"><i class="fa fa-phone"></i> <bdi>' + esc(a.phone) + '</bdi></div>' : '') +
         '</div>' +
         '<div class="ag-card-actions">' +
-          (a.status === 'pending' ? '<button class="btn" style="background:#0F7560;color:#fff" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'confirmed\')"><i class="fa fa-check"></i> ' + t('ag_confirm') + '</button>' : '') +
-          (a.status !== 'cancelled' && a.status !== 'completed' ? '<button class="btn" style="background:#fff0f0;color:#D21010" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'cancelled\')"><i class="fa fa-times"></i> ' + t('ag_cancel') + '</button>' : '') +
+          (window.tabibiStatutRdv.decrire(a.status).peut('confirmer') ? '<button class="btn" style="background:#0F7560;color:#fff" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'confirmed\')"><i class="fa fa-check"></i> ' + t('ag_confirm') + '</button>' : '') +
+          (window.tabibiStatutRdv.decrire(a.status).peut('annuler') ? '<button class="btn" style="background:#fff0f0;color:#D21010" onclick="tabibiAgenda.setStatus(\'' + esc(a.id) + '\',\'cancelled\')"><i class="fa fa-times"></i> ' + t('ag_cancel') + '</button>' : '') +
           '<button class="btn btn-ghost" onclick="tabibiAgenda.closeDetail()">' + t('ag_close') + '</button>' +
         '</div>' +
       '</div>';

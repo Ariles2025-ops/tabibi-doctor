@@ -157,6 +157,7 @@
 </main>
 <!-- [Phase 0] Tab-bar factorisée → js/tabibi-nav.js -->
 <nav class="tab-bar" id="tab-bar"></nav>
+<script src="js/tabibi-statut-rdv.js"></script>
 <script src="js/tabibi-nav.js"></script>
 <div id="uarea-mob" class="hidden"></div>
 
@@ -278,9 +279,13 @@ function _groupAppointments(rows){
     var status = String(r.status || '').toLowerCase();
     var when = r.starts_at || r.scheduled_at;
     var whenMs = when ? new Date(when).getTime() : 0;
-    if(status === 'cancelled'){
+    var d = window.tabibiStatutRdv.decrire(status);
+    if(d.cle === 'cancelled'){
       groups.cancelled.push(r);
-    } else if(status === 'completed' || status === 'no_show'){
+    } else if(d.cle === 'completed' || d.cle === 'no_show'){
+      groups.past.push(r);
+    } else if(!d.connu){
+      // Un statut inconnu n'est PAS « a venir » : on ne promet rien.
       groups.past.push(r);
     } else if(whenMs && whenMs < now){
       groups.past.push(r);
@@ -306,7 +311,7 @@ function _groupAppointments(rows){
 // ── Can cancel (>24h avant) ─────────────────────────────────────────────
 function _canCancel(row){
   var status = String(row.status || '').toLowerCase();
-  if(status !== 'pending' && status !== 'confirmed') return false;
+  if(!window.tabibiStatutRdv.decrire(status).peut('annuler')) return false;
   var when = row.starts_at || row.scheduled_at;
   if(!when) return false;
   var ms = new Date(when).getTime() - Date.now();
@@ -323,11 +328,10 @@ function _renderCard(row, opts){
   var loc  = _consultLocation(row);
   var when = row.starts_at || row.scheduled_at;
   var canCancel = _canCancel(row);
-  var statusBadge = '';
-  if(status === 'cancelled') statusBadge = '<span class="badge-sm is-status-cancelled">' + _escapeHtml(_t('rdv_status_cancelled', 'Annulé')) + '</span>';
-  else if(status === 'completed') statusBadge = '<span class="badge-sm is-status-completed">' + _escapeHtml(_t('rdv_status_completed', 'Terminé')) + '</span>';
-  else if(status === 'pending') statusBadge = '<span class="badge-sm is-status-pending">' + _escapeHtml(_t('rdv_status_pending', 'En attente')) + '</span>';
-  else if(status === 'no_show') statusBadge = '<span class="badge-sm is-status-cancelled">' + _escapeHtml(_t('rdv_status_noshow', 'Absent')) + '</span>';
+  // [13/09/2026] La chaine if/else n'avait pas de else : un statut inconnu
+  // sortait SANS badge, exactement comme un confirme. Source unique desormais.
+  var _d = window.tabibiStatutRdv.decrire(status);
+  var statusBadge = '<span class="badge-sm ' + _d.classe + '">' + _escapeHtml(_d.libelle) + '</span>';
 
   var locBadge = '<span class="badge-sm is-' + loc.kind + '">'
                + '<i class="fa fa-' + (loc.kind === 'visio' ? 'video' : 'location-dot') + '"></i> '

@@ -204,6 +204,63 @@ le 13/09/2026 : onze `onclick` `alert`/`confirm` au total, dont **zero menteur a
 
 ---
 
+## Parcours 4 — LA FIXTURE SALE (permanent)
+
+**A derouler a chaque vague.** Une base propre cache le defaut : c'est pour ca que « le rendez-vous
+annule affiche comme honore et compte » a survecu a la recette de septembre. Un seul rendez-vous en
+base, annule, et aucun ecran ne montrait le probleme.
+
+La fixture contient donc ce qu'une vraie base finira par contenir :
+
+| Ligne | Statut | Attendu |
+|---|---|---|
+| A. Honore | `completed` | **compte** dans « Consultations du mois », badge vert |
+| B. Annule | `cancelled` | visible **comme annule**, hors de tous les totaux |
+| C. Absent | `no_show` | compte dans « Absents » **seulement**, jamais en consultations |
+| D. Invente | valeur hors enum | **neutre**, libelle « Statut inconnu », aucune action, hors de tous les totaux |
+
+**Si l'annule ou l'invente ressort vert, c'est rate.**
+
+### Comment la derouler
+
+```bash
+npx playwright test tests/e2e/parcours-4-fixture-sale.spec.js --project=desktop
+```
+
+Le test n'ecrit rien en base et ne cree aucun compte : il coupe le reseau vers Supabase, sert un
+bouchon a la place de `js/auth.js` et injecte la fixture la ou arriveraient les vraies lignes.
+Captures produites dans `docs/preuves/parcours4-*.png`.
+
+### Ce qu'il faut regarder, et pas seulement asserter
+
+Le 13/09/2026, les assertions sur les badges passaient **alors que la bordure gauche des quatre
+cartes restait verte** : `.appt-card` avait `border-left:4px solid var(--green)` en base, donc
+l'annule et l'inconnu en heritaient. Seule la capture l'a montre. Deux lecons :
+
+1. **Regarder la capture, pas seulement le vert du test.** Un defaut de couleur par defaut ne se
+   voit pas dans une assertion qui ne l'interroge pas.
+2. **Mesurer la couleur CALCULEE**, pas la classe. Le test le fait desormais sur `borderLeftColor`.
+
+Autre piege du meme jour : les assertions patient portaient sur `#rdv-list` de
+`patient-dashboard.html`, **du DOM mort** — le panneau `#tab-rdv` est neutralise depuis la phase
+5.2.5 et son onglet redirige vers `mes-rdv.html`. Verifier que l'ecran teste est bien l'ecran servi.
+
+### La garde qui empeche la rechute
+
+`appointment_status` est un ENUM Postgres. Le jour ou quelqu'un fait un `ALTER TYPE ... ADD VALUE`
+sans declarer la valeur dans `js/tabibi-statut-rdv.js`, tous les ecrans retombent sur « Statut
+inconnu » — repli sur, mais pas un etat acceptable.
+
+```bash
+npm run verifier:statuts              # structurel, aucun secret
+node scripts/verifier-statuts.mjs --base   # contre l'enum reel (exige SUPABASE_ACCESS_TOKEN)
+```
+
+Le mode structurel ne voit PAS un `ALTER TYPE` fait en base : c'est le mode `--base` qui l'attrape.
+Les deux doivent tourner, a des moments differents. Voir la decision de branchement au journal.
+
+---
+
 ## Décision
 
 - **Go** si les parcours 1 et 3 sont « cohérent » de bout en bout, et si le parcours 2 se comporte comme l'état connu
