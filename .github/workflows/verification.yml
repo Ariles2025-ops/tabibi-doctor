@@ -82,6 +82,11 @@ jobs:
         # deploiement manuelle (DEPLOY_FRONTEND.md), pas d'ici.
         run: npm run verifier:statuts
 
+      - name: Aucun panneau d'onglet sans declencheur
+        # Un panneau desactive mais laisse en place se fait tester a la place du
+        # vrai : incident du 13/09/2026, #tab-rdv de patient-dashboard.
+        run: npm run verifier:panneaux
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 

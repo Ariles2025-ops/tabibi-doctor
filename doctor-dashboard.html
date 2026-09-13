@@ -341,22 +341,6 @@
   </div>
 
   <!-- ═════ STATISTIQUES ═════ -->
-  <div id="tab-stats" class="tab-panel" style="padding:14px 16px">
-    <div style="font-size:15px;font-weight:700;margin-bottom:14px"><i class="fa fa-chart-column" style="color:var(--blue)"></i> <span data-i18n="dd_stats_monthly">Statistiques mensuelles</span></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="stats-cards"></div>
-    <div class="card" style="margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-coins" style="color:#f59e0b"></i> <span data-i18n="dd_stats_revenue">Revenus par semaine (DA)</span></div>
-      <div id="rev-bars"></div>
-    </div>
-    <div class="card" style="margin-bottom:12px">
-      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-stethoscope" style="color:var(--blue)"></i> <span data-i18n="dd_stats_types">Types de consultations</span></div>
-      <div id="type-bars"></div>
-    </div>
-    <div class="card">
-      <div style="font-size:14px;font-weight:700;margin-bottom:14px"><i class="fa fa-credit-card" style="color:#7c3aed"></i> <span data-i18n="dd_stats_paymethods">Modes de paiement</span></div>
-      <div id="pay-bars"></div>
-    </div>
-  </div>
 
   <!-- ═════ PROFIL ═════ -->
   <div id="tab-profile" class="tab-panel" style="padding:14px 16px">
@@ -427,7 +411,6 @@ function sw(tab,btn){
     if(tab==="agenda") { try { renderAgenda(); } catch(e){ console.warn('[doctor-dashboard] renderAgenda:', e); } }
     if(tab==="rdv") { try { filtMRdv("all",document.querySelector("[data-fr='all']")); } catch(e){ console.warn('[doctor-dashboard] filtMRdv:', e); } }
     if(tab==="patients") { try { renderPatients(); } catch(e){ console.warn('[doctor-dashboard] renderPatients:', e); } }
-    if(tab==="stats") { try { renderStats(); } catch(e){ console.warn('[doctor-dashboard] renderStats:', e); } }
     if(tab==="profile") { try { renderProfile(); } catch(e){ console.warn('[doctor-dashboard] renderProfile:', e); } }
   } catch(e) { console.warn('[doctor-dashboard] sw() top-level:', e); }
 }
@@ -905,13 +888,6 @@ function renderPatients(){
     </div>`).join("");
 }
 
-function renderStats(){
-  // [Phase 2 launch] Stats détaillées (revenus, note, paiements, taux présence) non
-  // branchées sur Supabase (avis + paiements feature-OFF) → état vide, pas de faux chiffres.
-  var _empty = '<div style="padding:24px 8px;text-align:center;color:var(--text3);font-size:13px"><i class="fa fa-chart-column" style="display:block;font-size:22px;margin-bottom:8px;color:var(--text4)"></i>'+tabibiT('dd_stats_soon','Statistiques détaillées bientôt disponibles.')+'</div>';
-  var _sc = document.getElementById("stats-cards"); if (_sc) _sc.innerHTML = _empty;
-  ["rev-bars","type-bars","pay-bars"].forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=""; });
-}
 
 function renderProfile(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
@@ -1025,7 +1001,6 @@ document.addEventListener("tabibi:lang-change", function(){
   try { renderAgenda(); } catch(e){}
   try { var _ab = document.querySelector("[data-fr].active"); filtMRdv(_ab ? _ab.dataset.fr : "all", _ab); } catch(e){}
   try { renderPatients(); } catch(e){}
-  try { renderStats(); } catch(e){}
   try { renderProfile(); } catch(e){}
 });
 
