@@ -99,6 +99,13 @@ jobs:
         # descendre a chaque lot migre, jamais monter.
         run: npm run verifier:rpc-passage
 
+      - name: Toute RPC appelee est declaree
+        # Etage STRUCTUREL. Une RPC absente rend 404, le catch avale, l'ecran
+        # sort vide : arrive pendant la recette avec la vague 1A, qui a tue la
+        # recherche de medecins sans que personne le voie. L'etage --base est
+        # une etape de la procedure de deploiement, pas de la CI.
+        run: npm run verifier:rpc
+
       - name: Toutes les portes, lues sur leur code de sortie
         # CE QUI CONTROLE DOIT ETRE CONTROLE. Le 13/09/2026, neuf gardes
         # contre-epreuvees etaient lues par une boucle shell qui imprimait la
@@ -107,7 +114,6 @@ jobs:
         # Ce pas est redondant avec ceux ci-dessus, a dessein : il verifie que
         # l'enchaineur lui-meme rend bien un code non nul.
         run: npm run verifier:toutes
-
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 
