@@ -2,9 +2,23 @@
 -- 20260913_regime_audit_log.sql
 -- Le regime de chaque ecriture d'audit, decide au lieu d'herite
 -- =====================================================================
--- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
--- A APPLIQUER **APRES** 20260913_cabinet_members_tracabilite.sql, qui pose les
--- colonnes sans lesquelles `remove_cabinet_member` ne pourrait pas etre PREUVE.
+-- ETAT : APPLIQUEE le 13/09/2026. Lancee par le stratege, apres lecture integrale.
+--        9 CREATE OR REPLACE (2 constitutives + 7 preuves).
+--
+-- VERIFICATION RELEVEE APRES APPLICATION :
+--   plpgsql_check : 0 defaut sur les 9.
+--   aucun `WHEN OTHERS THEN NULL` restant dans leur source.
+--   `audit_log_echecs` : 0 ligne — aucun echec d'audit depuis la mise en place.
+--
+-- ⚠️  CE QUI N'EST TOUJOURS PAS PROUVE : le comportement a l'execution. Les
+-- verifications 2 et 3 de la derniere section exigent une fixture, et
+-- `cabinets`, `video_sessions`, `two_factor_secrets`, `cabinet_members` et
+-- `consents_log` sont toutes VIDES. « 0 defaut statique » n'est pas « ca marche ».
+-- Le regime est POSE et RELU ; il n'est pas EPROUVE.
+--
+-- Ordre respecte : 20260913_cabinet_members_tracabilite.sql a bien ete appliquee
+-- AVANT (verifie le 13/09 : les trois colonnes existent sur cabinet_members, et
+-- plpgsql_check rend 0 defaut sur remove_cabinet_member qui les reference).
 --
 -- Mesure et raisonnement complets : supabase/mesures/20260913_regime_audit_log.sql
 --
@@ -99,10 +113,14 @@
 --      tour. On rend alors les DEUX erreurs. Sans ce niveau, la panne la plus
 --      grave serait la plus silencieuse.
 --
--- ⚠️  SANS COMPTEUR, LE REBUT EST UN TIROIR. Le compteur admin
--- (« N ecritures d'audit en rebut ») est dans `admin-dashboard.html`, meme lot.
+-- ⚠️  SANS COMPTEUR, LE REBUT EST UN TIROIR — ET IL L'EST ENCORE.
+-- Le compteur admin (« N ecritures d'audit en rebut ») N'EST PAS dans ce lot :
+-- ses deux RPC (20260913_rebut_lisible.sql) viennent d'etre creees, et le front
+-- ne peut pas les appeler tant que `verifier:rpc --base --ecrire` n'a pas
+-- regenere la reference. Il vient au lot suivant.
 -- Une table de rebut que personne ne regarde ne vaut pas mieux qu'un
--- `THEN NULL` : elle deplace le silence, elle ne le supprime pas.
+-- `THEN NULL` : elle deplace le silence, elle ne le supprime pas. C'est dit,
+-- ce n'est pas masque.
 --
 -- ---------------------------------------------------------------------
 -- POURQUOI CE FICHIER EST SUR, ET OU EST LE RISQUE

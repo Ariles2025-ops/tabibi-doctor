@@ -2,10 +2,40 @@
 -- 20260913_rebut_lisible.sql
 -- Sans compteur, le rebut est un tiroir. Or le tiroir est SOUDE.
 -- =====================================================================
--- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
--- A APPLIQUER AVANT que le compteur admin puisse etre ecrit dans le front :
--- les deux RPC de ce fichier n'existent pas encore, et `verifier:rpc` refuse
--- tout appel a une RPC absente de la base.
+-- ETAT : APPLIQUEE le 13/09/2026, AVEC LA CORRECTION DU BLOC CI-DESSOUS.
+--        Verifie apres application : les deux RPC existent,
+--        anon = false / false, authenticated = true / true,
+--        et `audit_log_echecs` compte 0 ligne (aucun echec d'audit depuis la
+--        mise en place du regime).
+--
+-- ⚠️  LE COMPTEUR ADMIN DU FRONT N'EXISTE TOUJOURS PAS. Il vient au lot suivant,
+-- apres `verifier:rpc --base --ecrire`. D'ici la, le rebut est un tiroir — dit,
+-- pas masque.
+--
+-- ---------------------------------------------------------------------
+-- UN DEFAUT DE CE FICHIER, TROUVE PAR plpgsql_check AVANT TOUT APPEL
+-- ---------------------------------------------------------------------
+-- La premiere version portait, dans LES DEUX fonctions :
+--
+--     IF (SELECT role FROM public.users WHERE id = auth.uid()) IS DISTINCT …
+--
+-- Dans `admin_audit_rebut_list`, c'est faux — et d'une facon que la CREATION NE
+-- VOIT PAS. La fonction est `RETURNS TABLE (id bigint, …)` : **`id` y est une
+-- VARIABLE plpgsql**, pas seulement une colonne. Le `WHERE id = auth.uid()`
+-- devient donc ambigu, et Postgres leve `42702 column reference "id" is
+-- ambiguous` — **a l'execution, pour tout admin qui appelle la liste.**
+--
+-- `CREATE OR REPLACE` a accepte la fonction sans broncher. `plpgsql_check` l'a
+-- attrapee. C'est exactement la classe de defauts de la journee : **un
+-- dispositif qui se cree sans erreur et qui echoue quand quelqu'un s'en sert.**
+--
+-- Corrige ci-dessous, dans les deux fonctions — `admin_audit_rebut_count` n'est
+-- pas ambigue (pas de `RETURNS TABLE`), mais elle est qualifiee aussi, par
+-- uniformite : une regle qui souffre une exception ne se retient pas.
+--
+--   LA REGLE, inscrite au journal : **toute fonction `RETURNS TABLE` qualifie
+--   ses colonnes dans TOUTES ses requetes, y compris les sous-requetes de
+--   controle qui n'ont rien a voir avec la table rendue.**
 --
 -- ---------------------------------------------------------------------
 -- CE QUI A ETE TROUVE EN VOULANT ECRIRE LE COMPTEUR
@@ -70,7 +100,7 @@ AS $function$
 DECLARE
   v_n integer;
 BEGIN
-  IF (SELECT role FROM public.users WHERE id = auth.uid()) IS DISTINCT FROM 'admin'::public.user_role THEN
+  IF (SELECT u.role FROM public.users u WHERE u.id = auth.uid()) IS DISTINCT FROM 'admin'::public.user_role THEN
     RAISE EXCEPTION 'not_admin' USING ERRCODE = '42501';
   END IF;
   SELECT count(*) INTO v_n FROM public.audit_log_echecs;
@@ -97,7 +127,7 @@ CREATE OR REPLACE FUNCTION public.admin_audit_rebut_list(p_limit integer DEFAULT
  SET search_path TO 'public', 'pg_temp'
 AS $function$
 BEGIN
-  IF (SELECT role FROM public.users WHERE id = auth.uid()) IS DISTINCT FROM 'admin'::public.user_role THEN
+  IF (SELECT u.role FROM public.users u WHERE u.id = auth.uid()) IS DISTINCT FROM 'admin'::public.user_role THEN
     RAISE EXCEPTION 'not_admin' USING ERRCODE = '42501';
   END IF;
   RETURN QUERY

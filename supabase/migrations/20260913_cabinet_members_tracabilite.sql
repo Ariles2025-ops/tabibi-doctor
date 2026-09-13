@@ -2,9 +2,16 @@
 -- 20260913_cabinet_members_tracabilite.sql
 -- QUI a retire un membre du cabinet, et QUAND — dans la table metier
 -- =====================================================================
--- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
--- A APPLIQUER **AVANT** 20260913_regime_audit_log.sql : ce dernier compte sur
--- ces colonnes pour classer `remove_cabinet_member` en PREUVE.
+-- ETAT : APPLIQUEE le 13/09/2026, AVANT 20260913_regime_audit_log.sql.
+--
+-- VERIFICATION RELEVEE APRES APPLICATION :
+--   public.cabinet_members porte removed_at, removed_by_user_id et
+--   removed_from_role ; plpgsql_check rend 0 defaut sur
+--   remove_cabinet_member, qui les reference.
+--
+-- ⚠️  NON EPROUVEE. `cabinet_members` est VIDE : aucun retrait n'a jamais eu
+-- lieu, donc aucune de ces colonnes n'a jamais ete renseignee. La
+-- verification 3 de la derniere section exige une fixture et reste A FAIRE.
 --
 -- ---------------------------------------------------------------------
 -- LE DEFAUT

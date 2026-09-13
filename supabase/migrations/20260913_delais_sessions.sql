@@ -2,7 +2,14 @@
 -- 20260913_delais_sessions.sql
 -- Une transaction inactive ne doit pas tenir sa connexion indefiniment
 -- =====================================================================
--- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
+-- ETAT : APPLIQUEE le 13/09/2026. Lancee par le stratege.
+--
+-- VERIFICATION RELEVEE APRES APPLICATION, sur pg_db_role_setting :
+--   authenticator : idle_in_transaction_session_timeout = 60s
+--                   (a cote de statement_timeout = 8s et lock_timeout = 8s,
+--                    DEJA PRESENTS — je ne les avais pas mesures, ils sont plus
+--                    serres que le statement_timeout global de 120 000 ms.)
+--   postgres      : idle_in_transaction_session_timeout = 15min
 --
 -- ---------------------------------------------------------------------
 -- CE QUE CE FICHIER NE CORRIGE PAS — a lire en premier

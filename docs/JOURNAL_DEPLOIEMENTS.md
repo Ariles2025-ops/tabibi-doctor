@@ -772,3 +772,23 @@ qui attend quelqu'un, pas une tâche technique.
 - **13/09/2026 — Périmètre de l'export « mes données ».**
   L'export « mes données » ne contient ni les favoris enregistrés côté serveur ni l'historique des
   consentements ; périmètre à trancher avec l'avocat avant le lancement.
+
+- **13/09/2026 — Les consentements des comptes antérieurs au 18 juillet.**
+  34 des 40 comptes réels n'ont aucun consentement enregistré, dont la totalité des patients :
+  ils ont été créés avant que l'enregistrement existe. Le mécanisme fonctionne depuis — les
+  6 comptes avec consentement sont tous postérieurs au 18 juillet. **Régularisation à définir
+  avec le juriste** : re-demander, ou considérer l'inscription comme valant consentement.
+  Aucune migration de données n'est faite en attendant.
+
+## Règles nées d'un défaut
+
+Une règle n'entre ici que le jour où quelque chose a cassé faute d'elle. Chacune porte l'incident.
+
+- **Toute fonction `RETURNS TABLE` qualifie ses colonnes dans TOUTES ses requêtes**, y compris
+  les sous-requêtes de contrôle qui n'ont rien à voir avec la table rendue.
+  *13/09/2026* — `admin_audit_rebut_list` était `RETURNS TABLE (id bigint, …)`, donc `id` y est
+  une **variable plpgsql**. Son contrôle d'accès écrivait `WHERE id = auth.uid()` : ambigu.
+  Postgres aurait levé `42702 column reference "id" is ambiguous` **à l'exécution, pour tout
+  administrateur appelant la liste**. `CREATE OR REPLACE` a accepté la fonction sans broncher ;
+  **c'est `plpgsql_check` qui l'a attrapée, avant le premier appel.** La création ne prouve pas
+  qu'une fonction marche.

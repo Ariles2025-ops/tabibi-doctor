@@ -13,6 +13,13 @@
 //   l'invente NEUTRE, libelle « Statut inconnu », hors total
 // Si l'un des deux ressort vert, c'est rate.
 // =====================================================================
+// [13/09/2026] LES CAPTURES VONT DANS `test-results/`, JAMAIS DANS `docs/preuves/`.
+// Avant, ce test reecrivait `docs/preuves/parcours4-*.png` — des fichiers SUIVIS par
+// git. Consequence : **chaque passage de portes salissait trois preuves**, `git status`
+// n'etait jamais propre apres une verification, et un `git add -A` les emportait (c'est
+// arrive le 13/09). Une preuve ne se regenere pas par accident.
+// `test-results/` est deja dans .gitignore. Pour FIGER une preuve, on la copie a la main
+// dans `docs/preuves/` — c'est un geste delibere, avec une date et une raison.
 const { test, expect } = require('@playwright/test');
 
 const AUJ = new Date().toISOString().split('T')[0];
@@ -139,7 +146,7 @@ test.describe('parcours 4 — fixture sale', () => {
     expect(vert.length).toBeLessThanOrEqual(1);
 
     await page.locator('#today-list').scrollIntoViewIfNeeded();
-    await page.screenshot({ path: 'docs/preuves/parcours4-medecin.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/parcours4-medecin.png', fullPage: true });
   });
 
   // Le vrai ecran patient est mes-rdv.html : le panneau #tab-rdv de
@@ -181,9 +188,9 @@ test.describe('parcours 4 — fixture sale', () => {
     // l'inventé ; « Annules » porte l'annule.
     await page.evaluate(() => window.showTab('past'));
     await page.waitForTimeout(400);
-    await page.screenshot({ path: 'docs/preuves/parcours4-patient-passes.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/parcours4-patient-passes.png', fullPage: true });
     await page.evaluate(() => window.showTab('cancelled'));
     await page.waitForTimeout(400);
-    await page.screenshot({ path: 'docs/preuves/parcours4-patient-annules.png', fullPage: true });
+    await page.screenshot({ path: 'test-results/parcours4-patient-annules.png', fullPage: true });
   });
 });
