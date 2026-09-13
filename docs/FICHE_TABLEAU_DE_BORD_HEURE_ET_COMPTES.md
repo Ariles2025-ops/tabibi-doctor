@@ -85,6 +85,43 @@ arbitrer avec le reste du backlog médecin, pas avec les correctifs ci-dessus.
 
 ---
 
+---
+
+## À trancher, pas à corriger — les notifications orphelines
+
+**Ce n'est pas un défaut, c'est une décision qui n'a jamais été prise.** Elle est notée ici pour qu'elle
+le soit, pas pour être corrigée d'office dans un sens ou dans l'autre.
+
+### Le constat
+
+Le 13/09/2026, après avoir supprimé les rendez-vous de test, la cloche de R1 affichait toujours ses
+notifications. Elles pointent vers des rendez-vous qui n'existent plus. Il n'y a **aucune suppression
+en cascade** de `notifications` quand un `appointment` disparaît. Compté en fin de recette : 5
+notifications pour R1, pour zéro rendez-vous actif.
+
+### Les deux réponses possibles, et ce qu'elles coûtent
+
+**Historique volontaire.** On assume que la notification est la trace d'un événement qui a eu lieu :
+« un patient a réservé le 14 à 9h », « il a annulé ». L'événement reste vrai même si le rendez-vous a
+été effacé. C'est cohérent pour un produit médical, où l'on veut souvent pouvoir dire ce qui s'est
+passé. Il faut alors que la notification **survive proprement** : ne pas offrir de lien mort vers un
+rendez-vous disparu, et le dire dans son texte.
+
+**Suppression en cascade.** On considère la notification comme un accessoire du rendez-vous : plus de
+rendez-vous, plus de notification. La cloche redevient un reflet exact de l'état courant. C'est plus
+simple à comprendre pour l'utilisateur, mais on perd la trace, et une purge de test devient une purge
+d'historique.
+
+### Ce qui penche, sans trancher
+
+La suppression sèche d'un rendez-vous n'arrive aujourd'hui **que** pendant une recette. En usage réel,
+un rendez-vous est **annulé**, pas effacé : il garde sa ligne, son statut et son horodatage. La question
+ne se pose donc en pratique que pour les données de test — ce qui plaide pour ne pas construire une
+cascade au motif d'un cas qui n'existe pas en production, et plutôt pour vérifier que les notifications
+ne portent pas de lien mort.
+
+**Décision attendue d'Aghiles.** Tant qu'elle n'est pas prise, ne rien changer.
+
 ## Ordre
 
 1. L'annulé affiché comme honoré. Le plus grave, le plus petit, le premier.

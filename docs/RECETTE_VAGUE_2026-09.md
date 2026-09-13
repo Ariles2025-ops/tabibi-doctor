@@ -39,6 +39,33 @@ Ces six portes sont celles du job `verifier` de `.github/workflows/verification.
 
 ---
 
+## Étape 0 — Remise à zéro de la fixture. **Avant le parcours 1, pas pendant.**
+
+**Cette étape est obligatoire et vient en premier.** Le 13/09/2026 elle a été traitée comme une
+vérification en cours de route : on a démarré le parcours 1, constaté que deux rendez-vous de test
+traînaient encore, puis remis à zéro. Un aller-retour perdu, et un compteur qu'on a d'abord soupçonné
+d'être faux alors qu'il disait la vérité sur une base sale.
+
+Avant de demander la moindre connexion, remettre la fixture dans l'état que décrivent les préconditions
+ci-dessous, et le **prouver par un contrôle**, pas par une intention.
+
+| # | Action | Contrôle attendu |
+|---|---|---|
+| 0.1 | Supprimer les rendez-vous de test, bornés au marqueur `RECETTE-<date>` | le `DELETE` rend **exactement** le nombre de lignes attendu, ni plus ni moins |
+| 0.2 | Vérifier la fiche du médecin de test | `working_hours` conforme : lun/mar/jeu matin **et** après-midi, mer/sam matin, ven/dim fermés |
+| 0.3 | Compter les créneaux du lundi visé | **12** créneaux de 30 min |
+| 0.4 | Compter les rendez-vous sur la fiche | **0** |
+
+Tant que ces quatre lignes ne sont pas vraies, **ne pas commencer**. Un parcours joué sur une fixture
+sale ne prouve rien : on ne sait plus si un écart vient du code ou des données.
+
+**Corollaire à garder en tête.** Certains défauts ne sont visibles que sur une fixture *sale*. Le
+compteur « Ce mois » qui additionne les rendez-vous annulés affiche 0 sur une base propre, en accord
+avec elle : il paraît correct. Il ne ment que lorsqu'un annulé existe. Une fixture propre est
+nécessaire pour lire les parcours, elle ne suffit pas pour trouver ce genre de défaut.
+
+---
+
 ## Parcours 1 — Médecin AVEC fiche liée
 
 Précondition : un compte médecin dont `doctor_profiles.user_id = auth.uid()`, fiche `is_claimed=true`,
