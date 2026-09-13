@@ -69,6 +69,81 @@ neutralise. Le chemin est atteignable — `openReview` retombe sur l'ancienne mo
 a jour.
 
 
+## Le chemin d'ECRITURE — la mesure resserree du 13/09/2026
+
+Aghiles a demande « les 20, pas les 226 ». En les lisant un par un, **20 etait encore trop large** :
+ma classification comptait `rpc(...)` comme une ecriture, or PostgREST poste aussi les **lectures**
+(`stats_publiques` rend des listes de wilayas). Et elle comptait les `.catch()` de promesse comme des
+`try/catch`.
+
+Apres tri : **11 catch non signalants entourent un appel qui mute**, et de ces onze,
+**5 rendent l'erreur a l'appelant** — ce qui est une reponse valable.
+
+Les cinq rendus ont ete verifies **cote appelant**, ce que la mesure automatique ne peut pas faire :
+
+| Rendu | Appelant | L'utilisateur voit-il ? |
+|---|---|---|
+| `js/tabibi-dawini.js:246` `dawini_create_request` | `dawini.html:472` | **oui** — `toastM(errorMessage(r.error), 'error')` |
+| `js/tabibi-doctor-dashboard.js:102` `update_my_doctor_profile` | `medecin-profile.html:915` | **oui** — trois branches d'erreur nommees, chacune avec son toast |
+| `js/tabibi-dawini.js:306` `.update({status:'closed'})` | idem module | rend `{ ok:false, error }` |
+| `js/tabibi-dawini.js:403` `dawini_respond` | idem | rend `{ ok:false, error }` |
+| `js/tabibi-dawini.js:444` `dawini_expire_old` | idem | rend `{ ok:false }` **sans la cause** — a durcir |
+
+## Les TROIS qui restent vraiment muets
+
+C'est la vraie reponse a « que se passe-t-il si l'ecriture echoue ? ».
+
+### 1. `js/tabibi-messaging.js:199` — `messages.update({ read_at })`
+
+```js
+} catch (e) { /* ignore */ }
+```
+
+**Si ca echoue** : les messages restent marques non-lus en base. Le badge de la cloche ne se vide
+pas, et revient au rechargement suivant. **L'utilisateur le VOIT** — il ne comprend simplement pas
+pourquoi. Genant, pas dangereux : aucune donnee n'est perdue, l'ecran ne ment pas sur un succes.
+
+### 2. `patient-ordonnances.html:243` — `mark_prescription_delivered`
+
+```js
+} catch (e) { /* tracage non bloquant */ }
+```
+
+**Si ca echoue** : rien n'est trace. Et **ca echoue TOUJOURS** : cette RPC n'existe pas en base
+(`docs/FICHE_R3_APPELS_DANS_LE_VIDE.md`, section A). Le commentaire « tracage non bloquant » decrit
+une degradation acceptable ; la realite est une fonction qui n'a jamais rien fait. Le drapeau
+`prescriptions: false` la masque aujourd'hui.
+
+### 3. `signup.html:498` — `validate_cabinet_invitation`
+
+```js
+} catch(_v){}
+```
+
+**Si ca echoue** : l'inscription continue vers `accept_cabinet_invitation`, qui existe. Et **ca
+echoue toujours aussi** : cette RPC est absente de la base (meme fiche). C'est donc un appel mort
+dans un chemin d'inscription — la validation du code de cabinet n'a jamais eu lieu. Ce que
+`accept_cabinet_invitation` refuse ensuite reste refuse ; ce qu'elle accepte n'a pas ete pre-valide.
+
+## La regle
+
+> **Un catch sur une ecriture ne peut JAMAIS etre muet.** Il signale a l'utilisateur, il rend
+> l'erreur a l'appelant, ou il releve. Jamais il n'avale.
+
+Sans quoi **l'ecran dit oui pendant que la base dit non, et personne ne le sait**. C'est la faute la
+plus grave de la famille : contrairement au badge vert par defaut ou au bouton qui ment, elle ne
+laisse aucune trace a l'ecran. Le patient croit son rendez-vous pris ; il ne l'est pas.
+
+Et un commentaire n'est pas un signalement. `/* tracage non bloquant */` explique une intention ; il
+ne dit rien a l'utilisateur, ni au journal, ni a l'appelant.
+
+**La garde** : `npm run verifier:catch`, branchee dans `verification.yml`. Elle ne garde QUE le
+chemin d'ecriture — on ne met pas 226 lignes sous un chiffre, on garde ce qui peut mentir sur une
+donnee. Plafond **3**, justifie ligne par ligne dans le script. Contre-epreuve : un `catch(e){}`
+autour d'un `PATCH` la fait sortir en 1 ; le meme avec `window.tabibiErreur(e, 'x')` passe.
+
+---
+
 ## Categorie A — ECRITURE — un echec passerait pour un succes
 
 **20 blocs.**

@@ -28,6 +28,7 @@
     "verifier:rpc": "node scripts/verifier-rpc.mjs",
     "verifier:rpc-passage": "node scripts/verifier-rpc-passage.mjs",
     "verifier:toutes": "node scripts/verifier-toutes.mjs",
+    "verifier:catch": "node scripts/verifier-catch.mjs",
     "porte:fermee": "node scripts/porte.mjs fermee",
     "porte:ouverte": "node scripts/porte.mjs ouverte",
     "build:porte-fermee": "npm run build && npm run porte:fermee",

@@ -53,7 +53,7 @@ const PORTES = [
 const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
-  'verifier:rpc', 'verifier:rpc-passage', 'build', 'test:e2e',
+  'verifier:rpc', 'verifier:rpc-passage', 'verifier:catch', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
@@ -67,7 +67,6 @@ const PORTES_OBLIGATOIRES = new Set([
 // Une ligne de sortie qu'on voit, pas un commentaire qu'on oublie. Elle
 // disparait d'elle-meme le jour ou la liste se vide.
 const PORTES_A_VENIR = new Map([
-  ['verifier:catch', 'docs/regle-suppression-et-20-catch — aucun catch muet sur une ecriture'],
 ]);
 
 const ROUGE = (s) => `\x1b[31m${s}\x1b[0m`;

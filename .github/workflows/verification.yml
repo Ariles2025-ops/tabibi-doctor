@@ -106,6 +106,11 @@ jobs:
         # une etape de la procedure de deploiement, pas de la CI.
         run: npm run verifier:rpc
 
+      - name: Aucun catch muet sur un chemin d'ecriture
+        # L'ecran dirait oui pendant que la base dit non. Ne garde QUE les
+        # ecritures : l'inventaire complet est dans docs/FICHE_CATCH_SILENCIEUX.md.
+        run: npm run verifier:catch
+
       - name: Toutes les portes, lues sur leur code de sortie
         # CE QUI CONTROLE DOIT ETRE CONTROLE. Le 13/09/2026, neuf gardes
         # contre-epreuvees etaient lues par une boucle shell qui imprimait la
@@ -114,6 +119,7 @@ jobs:
         # Ce pas est redondant avec ceux ci-dessus, a dessein : il verifie que
         # l'enchaineur lui-meme rend bien un code non nul.
         run: npm run verifier:toutes
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 
