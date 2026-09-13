@@ -183,6 +183,74 @@ adhesion au cabinet**. Idem pour `not_authenticated`.
 Ce n'est pas un `catch` muet : c'est **la mauvaise moitie de la reponse qui est lue**. Meme famille,
 autre mecanisme — la fonction dit non, personne ne l'ecoute.
 
+## Le `catch` MORT — une troisieme famille, mesuree le 13/09/2026
+
+Un `catch` muet avale une erreur. Un `catch` **mort** ne l'avale meme pas : **l'erreur passe a cote
+sans le toucher.** Le bloc est syntaxiquement present, visuellement rassurant, et ne peut pas se
+declencher.
+
+### La classe exacte — et ce n'est PAS « supabase-js »
+
+Mesure dans le client **vendorise `supabase-js 2.116.0`**, en lisant son code, pas sa documentation :
+
+| Module | Code | Peut-il rejeter ? |
+|---|---|---|
+| **PostgREST** — `.rpc()`, `.from()` | `this.shouldThrowOnError \|\| (i = i.catch(e => …))` puis retour de `{success:false, error:{…}, data:null, status:0}` | **JAMAIS** sans `.throwOnError()`. Refus RLS, 404, **et meme l'echec reseau** deviennent une valeur RESOLUE |
+| **auth** — `.auth.*` | `catch(e){ if (isAuthError(e)) return {…, error:e}; throw e }` | **OUI** — releve tout ce qui n'est pas une `AuthError` |
+| **storage** — `.storage.*` | `handleOperation` : `catch(e){ if (isStorageError(e)) return {…}; throw e }` | **OUI** — meme forme |
+
+**La classe est donc « `catch` autour d'un appel PostgREST », pas « autour de supabase-js ».** Dire
+le second ferait classer comme morts 69 blocs qui entourent `auth`/`storage` et sont bien vivants.
+
+### Le critere, et il est strict
+
+> **Un `catch` n'est mort que si RIEN D'AUTRE dans le `try` ne peut lever.**
+
+Ca s'est verifie deux fois le 13/09 :
+
+- `js/tabibi-dawini.js:443` — le `catch` semblait mort. Il ne l'etait qu'a **moitie** :
+  `_withTimeout` fait `Promise.race` contre un `setTimeout` qui **rejette** pour de bon. Il
+  attrapait le delai ; jamais le refus.
+- `js/tabibi-claim.js:56` — un `r.data[0]`, un `.map()`, un `JSON.parse` suffisent a le reveiller.
+
+### Le compte : **5 sur 576**
+
+`scripts/mesurer-catch-morts.mjs`, rejouable. **Parsing acorn et marche d'AST** — pas de regex : le
+decoupeur de commentaires maison s'etait desynchronise sur les apostrophes francaises, et la
+classification par regex s'est trompee quatre fois dans la journee. **Zero echec de parsing** :
+sauter un fichier en silence serait la faute meme qu'on recense.
+
+| | |
+|---|---|
+| `try/catch` du depot | **576** |
+| dont le `try` touche supabase | 135 |
+| — PostgREST seul | 66 |
+| — `auth`/`storage`/`functions` (peut rejeter) | 69 |
+| **MORTS** | **5** |
+
+| Site | `catch` | Verdict |
+|---|---|---|
+| `js/tabibi-claim.js:56` | `tabibiErreur(…)` | mort **mais signalant** — inutile, inoffensif |
+| `js/tabibi-rpc.js:67` | `tabibiErreur(…)` | mort **mais signalant** — defensif deliberé, c'est la passerelle |
+| `legal/rgpd-droits.html:239` | `{}` | **mort, muet, et consequence reelle — CORRIGE le 13/09** |
+| `patient-ordonnances.html:240` | `{}` | mort, muet — tracage best-effort documente, derriere `prescriptions:false` |
+| `signup.html:498` | `{}` | mort, muet — mais la RPC n'existe pas (404) et l'appel suivant est verifie. Inerte |
+
+**Le chiffre est petit, et c'est ce qui le rend credible** : dans ce depot on fait presque toujours
+quelque chose du resultat a l'interieur du `try`, et ce quelque chose peut lever.
+
+**La precision qu'on ne passe pas sous silence** : ces 5 sont morts *vis-a-vis du resultat de la
+requete*. Ils peuvent encore se declencher si **l'objet client lui-meme manque**
+(`window.tabibi.supabase` indefini → `TypeError`). Ce n'est pas le chemin que quiconque avait en
+tete, mais ce n'est pas « jamais ».
+
+### Une sous-famille : vivant, mais aveugle au refus
+
+Une vingtaine des 61 restants (`js/tabibi-dawini.js`, `js/tabibi-booking.js`) ne sont vivants **que
+par `_withTimeout`**. Ils attrapent le delai, jamais le refus. **Ce n'est pas un defaut** — ces
+modules testent `r.error` juste apres, dans le `try`. Mais c'est la meme mecanique, et un jour
+quelqu'un retirera le test sans toucher au `catch`.
+
 ## Le compte
 
 **465 blocs `catch` dans le depot. 226 n'ecrivent RIEN** — ni `console.warn/error`, ni

@@ -2,7 +2,22 @@
 -- 20260913_cron_dawini_expire.sql
 -- L'expiration Dawini cesse de dependre d'un visiteur qui ouvre une page
 -- =====================================================================
--- ETAT : A APPLIQUER. Ecrite par Claude, lue et lancee par le stratege.
+-- ETAT : APPLIQUEE le 13/09/2026. Lancee par le stratege, telle quelle.
+--
+-- RELEVE EN BASE APRES APPLICATION :
+--   jobid 3 | dawini-expire-old | */15 * * * * | active=true
+--           | username=postgres | database=postgres
+--           | SELECT public.dawini_expire_old();
+--   A cote de cleanup_old_logs (jobid 1) et appointment-reminders (jobid 2),
+--   memes role et base — ce que la mesure annoncait.
+--
+-- ⚠️  CE QUI N'EST PAS ENCORE PROUVE : le premier passage. Il tombe au
+-- prochain quart d'heure ; `cron.job_run_details` sera lu au passage suivant.
+-- Et meme alors, `succeeded` ne prouvera QUE l'execution : `dawini_requests`
+-- est vide, l'UPDATE touche zero ligne et reussit.
+--
+-- TANT QUE CE PASSAGE N'EST PAS CONSTATE, le commentaire de
+-- `js/tabibi-dawini.js:440` RESTE AU CONDITIONNEL. Voir la derniere section.
 --
 -- ---------------------------------------------------------------------
 -- LE DEFAUT

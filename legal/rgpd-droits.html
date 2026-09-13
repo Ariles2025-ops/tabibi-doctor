@@ -209,37 +209,68 @@ document.getElementById('btn-export').addEventListener('click', async function()
     },
     medical: null,
     appointments: [],
+    appointments_source: null,
     favorites: [],
+    favorites_source: null,
     reviews: [],
+    // [13/09/2026] `errors` n'est pas un journal technique : c'est la partie du
+    // fichier qui dit ce qui MANQUE. Une section vide alors qu'une lecture a
+    // ete refusee rend l'export faux sans que rien ne le signale.
     errors: []
   };
 
   // Donnees medicales
   try {
     var med = await sb.rpc('get_patient_medical_data');
-    if (med.error) payload.errors.push('medical: ' + med.error.message);
+    if (med.error) payload.errors.push('donnees medicales : la base a refuse la lecture : ' + med.error.message);
     else payload.medical = (med.data && med.data[0]) || null;
-  } catch (e) { payload.errors.push('medical: ' + e.message); }
+  } catch (e) { payload.errors.push('donnees medicales : ' + e.message); }
 
-  // RDV (table rdv si elle existe, sinon localStorage en fallback)
+  // RDV (table appointments, sinon localStorage en repli)
+  // [13/09/2026] Le repli sur le cache local etait SILENCIEUX : le fichier
+  // portait des rendez-vous sans dire qu'ils ne venaient pas de la base, et
+  // `errors` restait vide. Un export honnete dit ce qu'il contient ET d'ou ca
+  // vient — sinon le lecteur ne peut pas savoir que sa liste est peut-etre
+  // incomplete ou perimee.
   try {
     var rdv = await sb.from('appointments').select('*').eq('patient_id', user.id);
     if (rdv.error) {
-      // Fallback localStorage
-      try { payload.appointments = JSON.parse(localStorage.getItem('tabibi_rdv') || '[]'); } catch (e) {}
+      payload.appointments_source = 'cache local du navigateur';
+      payload.errors.push('rendez-vous : lus depuis le cache local, la base a refuse : ' + rdv.error.message);
+      try {
+        payload.appointments = JSON.parse(localStorage.getItem('tabibi_rdv') || '[]');
+      } catch (e) {
+        payload.errors.push('rendez-vous : cache local illisible : ' + e.message);
+      }
     } else {
+      payload.appointments_source = 'base de donnees';
       payload.appointments = rdv.data || [];
     }
-  } catch (e) { payload.errors.push('rdv: ' + e.message); }
+  } catch (e) { payload.errors.push('rendez-vous : ' + e.message); }
 
-  // Favoris (localStorage seulement pour le moment)
-  try { payload.favorites = JSON.parse(localStorage.getItem('tabibi_favs') || '[]'); } catch (e) {}
+  // Favoris (localStorage seulement — la table `favorites` existe mais n'est
+  // pas lisible par `authenticated` : aucun GRANT SELECT. Mesure du 13/09.)
+  // [13/09/2026] Le `catch` etait vide : un cache corrompu rendait
+  // `"favorites": []` sans un mot. Meme faute que les avis.
+  try {
+    payload.favorites = JSON.parse(localStorage.getItem('tabibi_favs') || '[]');
+    payload.favorites_source = 'cache local du navigateur';
+  } catch (e) {
+    payload.errors.push('favoris : cache local illisible : ' + e.message);
+  }
 
   // Avis
+  // [13/09/2026] AVANT : `if (!rev.error) payload.reviews = rev.data || [];`
+  // et rien dans la branche d'erreur. `payload.reviews` valant deja `[]`, un
+  // refus produisait un fichier disant `"reviews": []` ET `"errors": []` —
+  // indiscernable de « vous n'avez ecrit aucun avis ». Sur une demande de
+  // portabilite (article 20), c'est un mensonge.
+  // Le `catch` etait MORT en prime : supabase-js ne rejette pas sur `.from()`.
   try {
     var rev = await sb.from('reviews').select('*').eq('patient_id', user.id);
-    if (!rev.error) payload.reviews = rev.data || [];
-  } catch (e) {}
+    if (rev.error) payload.errors.push('avis : la base a refuse la lecture : ' + rev.error.message);
+    else payload.reviews = rev.data || [];
+  } catch (e) { payload.errors.push('avis : ' + e.message); }
 
   var json = JSON.stringify(payload, null, 2);
   var blob = new Blob([json], { type: 'application/json' });
@@ -254,7 +285,16 @@ document.getElementById('btn-export').addEventListener('click', async function()
   prev.style.display = 'block';
   prev.textContent = json.length > 2000 ? json.slice(0,2000) + '\n...[tronque, fichier complet telecharge]' : json;
 
-  toastM('Export telecharge', 'success');
+  // [13/09/2026] Ce toast etait INCONDITIONNEL : « Export telecharge »,
+  // 'success', meme quand `payload.errors` etait plein. Corriger les silences
+  // du fichier et laisser l'ecran dire « succes » aurait deplace le mensonge,
+  // pas supprime : l'utilisateur n'ouvre pas forcement le JSON.
+  if (payload.errors.length) {
+    toastM('Export telecharge, mais INCOMPLET : ' + payload.errors.length
+           + ' donnee(s) n\'ont pas pu etre lues. Voir la section « errors » du fichier.', 'error');
+  } else {
+    toastM('Export telecharge', 'success');
+  }
   btn.disabled = false;
   btn.innerHTML = orig;
 });
