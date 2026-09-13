@@ -15,6 +15,7 @@ deployment*. Atomique, sans reconstruction.
 
 | # | Date (UTC) | Commit déployé | Déploiement Cloudflare | Porte | Retour arrière vers | Lancé par |
 |---|---|---|---|---|---|---|
+| 6 | 2026-09-13 ~10:31 | `c37f4e0d8b1d10be6a2a60065523d06328cdd191` | `66da5afc-…` | **fermée** | `55c94431-82f8-48df-80fb-dd91a67637f2` | Claude, sur go d'Aghiles |
 | 5 | 2026-09-13 ~10:16 | `8c24384ccd511d4bac455ce1e70e5d1ea02dbd7f` | `55c94431-…` | **fermée** | `1c7f727a-b16f-428a-8add-48e064458a39` | Claude, sur go d'Aghiles |
 | 4 | 2026-09-13 ~09:19 | `e94ca04263c9b621160111be9c16cd15fbb09881` | `1c7f727a-…` | **fermée** | `eeeeef33-65c9-4204-b2fe-b66735b6aa9c` | Claude, sur go d'Aghiles |
 | 3 | 2026-09-13 ~08:58 | `dc133ebd9dc1a7427fc5bce367112d810080335d` | `eeeeef33-…` | **fermée** | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | Claude, sur go d'Aghiles |
@@ -305,3 +306,62 @@ hachuree pour l'inconnu.
 
 Il ne touche pas a la base. Il ne contient ni le retrait de `googletagmanager` de la CSP, ni la
 suppression du DOM mort : les deux PR attendent une validation.
+
+---
+
+## Deploiement 6 — 13/09/2026, la CSP et le DOM mort
+
+**Ce qui est parti** : #98 (retrait de `googletagmanager` de `script-src`), #99 (suppression du DOM
+mort de `patient-dashboard` et du panneau `#tab-stats`, plus la garde `verifier:panneaux`), #100
+(journal du deploiement 5). Ces deux premieres changent ce qui est **servi** — la politique et le
+DOM — donc elles ne valaient rien tant qu'elles n'etaient pas en ligne.
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| taille de `/` | 5 004 o | 5 004 o | **5 004 o** |
+| balise `tabibi-porte` | `fermee` | `fermee` | **`fermee`** |
+| `script-src` : `googletagmanager` | 1 | 0 | **0** |
+| `script-src` : origines `https` | 5 | 4 | **4** |
+| `patient-dashboard` : `#tab-book` | 1 | 0 | **0** |
+| `patient-dashboard` : `#tab-rdv` | 1 | 0 | **0** |
+| `patient-dashboard` : `#book-modal` | 1 | 0 | **0** |
+| `openBooking` defini | 2 | 1 | **1** |
+| Favoris : cartes `onclick="openBooking` | 2 | 1 | **1** |
+| boutons menteurs actifs | 0 | 0 | **0** |
+
+Aucune divergence.
+
+### La mesure qui pouvait casser, prouvee au navigateur sur le domaine reel
+
+Un `grep` sur le HTML servi dit que le DOM mort n'y est plus. Il ne dit **pas** que les Favoris
+fonctionnent encore. Or c'est precisement le risque : `openBooking` etait la seule fonction du bloc
+supprime a avoir un appelant vivant — le panneau Favoris genere ses cartes avec
+`onclick="openBooking(...)"`.
+
+Mesure sur `https://tabibi.doctor`, avec un vrai medecin public mis en favori :
+
+```
+FAVORIS : {"cartes":1,
+           "onclick":"openBooking('023bbccc-e2ba-45ad-8c9a-8fca85da18fa')",
+           "texte":"OD Dr. Ouanza Dental Clinic Dentiste · Adrar 1,500 DA Reserver"}
+erreurs : AUCUNE
+apres clic ->  /doctor-profile?id=023bbccc-e
+```
+
+La chaine tient de bout en bout : la carte rend, le gestionnaire est en place, le clic mene bien a
+la fiche du medecin. **Zero `pageerror`.** Les panneaux servis sont `tab-overview`, `tab-docs`,
+`tab-favs` — les trois qui ont un declencheur.
+
+### Parcours permanent, sur le domaine reel
+
+Vingt pages, cache-bust : `patient-profile` 1, `doctor-dashboard` 3, zero ailleurs. Quatre au total,
+tous honnetes.
+
+### Ce que ce deploiement ne fait pas
+
+Il ne touche pas a la base. Il ne comble pas le manque produit revele par la suppression de
+`#tab-stats` : ni les revenus par semaine, ni les types de consultation, ni les modes de paiement ne
+sont couverts par `doctor-analytics.html` — mesure du 13/09, carte produit ouverte a part.
+
