@@ -13,6 +13,38 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### Regle de fusion — « auto-merging » ne veut pas dire « coherent »
+
+`Auto-merging <fichier>` signifie exactement une chose : **git n'a pas trouve de conflit textuel.**
+Il ne dit rien de la coherence du resultat. Git compare des lignes ; il ne sait pas qu'un journal se
+lit dans l'ordre, qu'une table est datee, ou qu'une section 4 ne se place pas avant une section 3.
+
+**Apres toute fusion qui touche un document structure** — journal de deploiement, fiche de recette,
+table de mesures datee, inventaire — relire l'**ORDRE** et la coherence du resultat, pas seulement
+l'absence de marqueurs `<<<<<<<`.
+
+Le cas du 13/09/2026. Les PR #96 et #97 touchaient toutes deux
+`docs/JOURNAL_DEPLOIEMENTS.md`. Les deux fusions ont affiche `Auto-merging`, sans un seul conflit, et
+les sept portes sont passees au vert sur l'arbre fusionne. Le journal se lisait pourtant
+**2, 4, 3** : l'insertion du deploiement 4 avait ete ancree avant la section 3, et la fusion a
+fidelement conserve cette erreur. Aucun outil ne pouvait la signaler — il n'y avait rien d'anormal a
+signaler, au sens de git.
+
+Une deuxieme lecon du meme jour, sur le meme sujet : **ne pas annoncer « 0 conflit » sur la foi d'un
+`git merge-tree` a blanc.** Le test avait annonce zero conflit entre trois branches ; la fusion reelle
+de #94 en a produit un sur `docs/FICHE_R3_APPELS_DANS_LE_VIDE.md`. Le resultat d'une fusion ne se
+connait qu'a la fusion.
+
+En pratique, apres chaque fusion touchant un tel document :
+
+```bash
+grep -n "^## " docs/JOURNAL_DEPLOIEMENTS.md      # l'ordre des sections
+grep -n "^| [0-9]" docs/JOURNAL_DEPLOIEMENTS.md  # l'ordre des lignes datees
+```
+
+et lire. C'est la meme famille de faute que « la console est propre » et que « le test est vert » :
+un signal automatique repond a la question qu'on lui a posee, jamais a celle qu'on a oublie de poser.
+
 ### Regle generale — une assertion visuelle porte sur le STYLE CALCULE
 
 **Jamais sur la classe.** Une classe est une intention ; le style calcule est ce que l'oeil recoit.
