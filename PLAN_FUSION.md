@@ -311,6 +311,45 @@ pas supposer » a payé en moins de cinq minutes.
 4. **Avant tout déploiement**, relever l'état réel de la production et le comparer au dépôt. Un
    `sha256` de la page d'entrée suffit à détecter une dérive de ce genre.
 
+### Inventaire du 13/09 — ce qui peut être déposé à la main, et ce qui l'est
+
+Vérifié en comparant ce que sert la production à ce que contient `main`.
+
+**Fichiers : rien à signaler.** Aucun artefact servi n'est sans équivalent dans le dépôt.
+
+| Chemin | Servi | Dans le dépôt |
+|---|---|---|
+| `robots.txt`, `sitemap.xml`, `favicon.ico`, `manifest.json`, `sw.js`, `404.html` | 200 | présents |
+| `_headers`, `_redirects` | 404 (normal : Pages les consomme comme configuration) | présents |
+| `.well-known/apple-app-site-association`, `.well-known/assetlinks.json`, `.well-known/security.txt` | 404 | absents |
+| `_routes.json`, `sitemap-index.xml`, `ads.txt` | 404 | absents |
+
+Contrôle plus fin : la politique de sécurité de contenu servie est **identique** à
+`f06aa3d:_headers`, y compris `cdn.jsdelivr.net` et `cdnjs.cloudflare.com` dans `script-src`. Donc
+`_headers` est bien la source des en-têtes, et **aucune règle Cloudflare n'en injecte par-dessus**.
+C'est le point qu'il fallait vérifier, et il est bon.
+
+**Le risque a changé de nature.** Le fichier n'est plus le problème ; la **configuration côté
+hébergeur** l'est. Elle vit dans un tableau de bord, elle n'a aucun équivalent versionné, et elle est
+modifiable en trois clics sans laisser de trace dans le dépôt :
+
+| Objet | Où il vit | Équivalent versionné |
+|---|---|---|
+| domaines personnalisés du projet Pages (`tabibi.doctor`, `www`) | tableau de bord Pages | **aucun** |
+| règles de cache de la zone | tableau de bord, section Caching | **aucun** |
+| règles de sécurité et WAF | tableau de bord, section Security | **aucun** |
+| redirections en masse, règles de redirection | tableau de bord | **aucun** |
+| DNS de la zone | tableau de bord | **aucun** |
+| variables et secrets du projet Pages | tableau de bord | **aucun** (par nature, pour les secrets) |
+| configuration du widget Turnstile, domaines autorisés | tableau de bord Turnstile | clé publique dans `js/config.js`, **le reste non** |
+
+Aucune n'est un défaut aujourd'hui. Toutes sont des artefacts non reproductibles, exactement de la
+même famille que la page « Bientôt disponible ». La différence est qu'on le sait maintenant.
+
+**Prochaine étape proposée, hors vague** : exporter ces configurations dans le dépôt sous une forme
+lisible — même en lecture seule, même à la main, même partielle. Un fichier qui décrit l'état attendu
+vaut mieux qu'un tableau de bord dont personne ne se souvient.
+
 **La question à se poser ailleurs.** Cette page n'était pas le seul artefact possible. Tout ce qui
 peut être déposé à la main dans un hébergement — page de maintenance, redirection, fichier de
 vérification, règle de cache — mérite le même traitement : dans le dépôt, ou nulle part.
