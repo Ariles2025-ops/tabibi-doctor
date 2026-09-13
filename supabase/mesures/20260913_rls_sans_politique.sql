@@ -1,6 +1,7 @@
 -- =====================================================================
 -- MESURE — les 20 tables en REFUS PAR DEFAUT, et appointment_notifications
 -- LECTURE SEULE. Un seul passage. Mesure, PAS correction.
+-- ETAT : BROUILLON — n'a jamais ete execute au moment de sa remise.
 -- =====================================================================
 -- Constat du 13/09 : `public` compte 55 tables, 55 avec RLS active, 0 sans.
 -- Vingt d'entre elles ont ZERO politique — donc refus par defaut. Tout ce qui

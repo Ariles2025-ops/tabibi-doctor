@@ -1,6 +1,13 @@
 -- =====================================================================
 -- PREUVE MANQUANTE — la POLITIQUE porte-t-elle l'ecriture, ou est-ce BYPASSRLS ?
 -- LECTURE/ECRITURE, MAIS TRANSACTION ANNULEE D'OFFICE (le bloc leve toujours).
+-- ETAT : MESURE — a tourne le 13/09/2026 en production, apres deux corrections
+--        d'Aghiles (voir plus bas). Verdict : C EST DEMONTRE.
+--        E1 sans politique -> REFUSE 42501 « new row violates row-level security
+--        policy » ; E2 avec politique -> ABOUTI. Premiere fois de la journee que la
+--        RLS est REELLEMENT exercee sur cette table : les refus precedents etaient
+--        des refus de PRIVILEGE (« permission denied for table »), qui tranchent
+--        avant elle.
 -- =====================================================================
 -- CE QUE D1/D2 ONT MONTRE, ET LEUR LIMITE. D1 (FORCE, zero politique) a ecrit.
 -- D2 (FORCE + politique) a ecrit. Les deux parce que `postgres` porte
@@ -39,6 +46,18 @@ BEGIN
 
   -- Le role temoin : NOLOGIN, et surtout NOBYPASSRLS (defaut).
   EXECUTE 'CREATE ROLE temoin_sans_bypass_13092026 NOLOGIN';
+  -- MESURE DU 13/09 : sans cette ligne, la mesure ne demarre pas. `postgres`
+  -- n'est PAS membre implicite du role qu'il vient de creer : le transfert de
+  -- propriete plus bas leve alors 42501 « must be able to SET ROLE ». Ce GRANT
+  -- donne l'appartenance, il ne donne PAS BYPASSRLS — le role temoin reste
+  -- NOBYPASSRLS, la mesure garde son sens.
+  EXECUTE 'GRANT temoin_sans_bypass_13092026 TO ' || quote_ident(current_user);
+  -- Deuxieme condition du transfert de propriete : Postgres exige que le
+  -- NOUVEAU proprietaire d'une fonction ait CREATE sur le schema qui la
+  -- contient. Sans ce GRANT : 42501 « permission denied for schema public ».
+  -- CREATE sur un schema n'est ni BYPASSRLS ni une exemption de politique :
+  -- le role temoin reste soumis a la RLS, ce que la mesure veut eprouver.
+  EXECUTE 'GRANT CREATE ON SCHEMA public TO temoin_sans_bypass_13092026';
   EXECUTE 'GRANT INSERT ON public.audit_log_echecs TO temoin_sans_bypass_13092026';
   v_msg := v_msg || E'\n  role temoin cree : BYPASSRLS='
                  || (SELECT rolbypassrls::text FROM pg_roles

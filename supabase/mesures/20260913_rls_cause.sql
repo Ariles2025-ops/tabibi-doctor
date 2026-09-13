@@ -1,6 +1,11 @@
 -- =====================================================================
 -- DIAGNOSTIC — pourquoi audit_log_echecs a la RLS active
 -- LECTURE SEULE. Un seul passage. Aucune ecriture, aucun ALTER.
+-- ETAT : MESURE — a tourne le 13/09/2026 en production. Resultats : 7 declencheurs
+--        d'evenement, AUCUN touchant a la RLS (hypothese du declencheur ECARTEE) ;
+--        public = 55 tables, 55 avec RLS active, 0 sans, dont 20 a zero politique ;
+--        les 15 dernieres creees toutes a true. Cause etablie hors SQL par une
+--        mesure d'Aghiles : un CREATE TABLE nu sort deja en relrowsecurity=true.
 -- =====================================================================
 -- La migration ne contient aucun ENABLE ROW LEVEL SECURITY. L'etat dit le
 -- contraire. On cherche QUI l'a active, pas on suppose.

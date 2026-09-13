@@ -207,6 +207,46 @@ de la meme facon : deplacer le code — un autre fuseau, un autre ordre de charg
 - Une valeur d'environnement se lit **au moment de s'en servir**, pas a l'evaluation du module.
 - Contre-epreuve : changer l'ambiance sans toucher au code. Si la sortie change, c'est un defaut.
 
+### UNE MESURE QUI NE S'EXECUTE PAS JUSQU'AU BOUT N'A PAS MESURE
+
+**Un fichier de mesure qui n'a jamais tourne est un brouillon. Il se livre sous ce nom, ou il ne se
+livre pas.**
+
+Deux fois le 13/09/2026, une mesure s'est arretee **avant** le point qu'elle devait observer, et les
+deux fois l'arret ne ressemblait pas a un echec.
+
+1. **`enroll_two_factor`, le matin.** La fonction sortait tot — codes de recuperation hors de
+   l'intervalle 6..12 — et le bloc rendait quand meme un message. J'ai lu `ABOUTI` comme un
+   resultat. La fonction n'avait jamais atteint son `INSERT` d'audit. **Une sortie anticipee produit
+   une sortie, pas une mesure.**
+2. **`politique_sans_bypassrls`, le soir.** Le fichier ne demarrait pas : deux `42501` successifs
+   sur le transfert de propriete de la fonction temoin, avant meme E1. Aghiles a du le corriger deux
+   fois pour qu'il atteigne le point observe. Je l'avais livre comme une mesure ; c'etait un
+   brouillon.
+
+Le meme defaut que trois fois le matin sur les fixtures (scope invalide, source invalide, statut
+invalide) : **verifier que l'appel EST ALLE ou l'on croit fait partie de la mesure.** Ici, un cran
+plus tot encore — verifier que le fichier demarre.
+
+**La consequence sur ce depot, et elle me concerne directement :** je n'ai pas d'acces a la base.
+Tout fichier de mesure que je remets est donc, par construction, **un brouillon** — il n'a jamais
+tourne quand je le donne. Ca ne l'excuse pas, ca le nomme.
+
+**En pratique :**
+- Un fichier de mesure porte, en tete, l'etat de ce qu'il est : **BROUILLON — jamais execute**, ou
+  **MESURE — a tourne le \<date\>, sortie en \<reference\>**. La premiere mention se remplace par la
+  seconde apres le premier passage reussi, jamais avant.
+- Une mesure enonce, avant d'etre lancee, le point qu'elle doit atteindre, et **imprime qu'elle l'a
+  atteint** — pas seulement son resultat. C'est ce que font les lignes « fixture : ... » et
+  « fonction temoin creee ... » : elles servent a distinguer un refus du point observe d'un arret en
+  chemin.
+- Les corrections faites pour qu'une mesure demarre **restent dans le fichier, commentees**, avec la
+  raison de leur presence et la raison pour laquelle elles ne faussent rien. Une correction retiree
+  apres coup est une marche que le suivant devra remonter.
+- Un `EXCEPTION WHEN OTHERS` dans un bloc de mesure imprime toujours `SQLSTATE`. Sans lui, un arret
+  en chemin et un refus au point observe ont la meme apparence — et c'est exactement la maladie que
+  ce depot passe sa journee a soigner.
+
 ### LE FICHIER DIT CE QU'IL FAIT, PAS CE QUE LA BASE EN FAIT
 
 **Verifier le fichier n'est pas verifier l'etat. Un objet en base est le produit du script ET de

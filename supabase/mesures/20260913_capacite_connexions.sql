@@ -1,6 +1,7 @@
 -- =====================================================================
 -- MESURE DE CAPACITE — connexions Postgres
 -- 20260913, ne dans l'incident 53300 « too many clients already »
+-- ETAT : BROUILLON — n'a jamais ete execute au moment de sa remise.
 -- =====================================================================
 -- LECTURE SEULE. Aucune ecriture, aucun pg_terminate_backend, aucun reglage
 -- modifie. Un seul passage : le resultat est une table etiquetee.
