@@ -436,12 +436,54 @@
     }
   }
 
-  // Fait passer les demandes périmées en 'expired' (pg_cron en v2).
+  // Fait passer les demandes périmées en 'expired'.
+  //
+  // [13/09/2026] CE QUE CETTE FONCTION FAISAIT, ET POURQUOI C'ÉTAIT UN MENSONGE.
+  //   try { await _withTimeout(s.rpc('dawini_expire_old'), 6000, …); return { ok: true }; }
+  //   catch (e) { return { ok: false }; }
+  // `supabase-js` NE REJETTE PAS : sans `.throwOnError()`, son `then()` attache
+  // `i.catch(…)` et convertit TOUT — refus RLS, 404, réseau coupé — en valeur
+  // RÉSOLUE `{ error, data:null, status:0 }` (vérifié dans le client vendorisé
+  // 2.116.0). Le `catch` ci-dessus n'était donc mort que pour MOITIÉ : il
+  // attrapait bien le délai de `_withTimeout`, qui rejette vraiment, mais
+  // JAMAIS un refus de la base. Un `42501 permission denied` ressortait en
+  // `{ ok: true }`.
+  //
+  // Ça compte depuis aujourd'hui : `dawini_expire_old` a été retirée à `anon`
+  // (20260913_revoke_liste_A.sql). Si ce REVOKE avait cassé le chemin
+  // authentifié, CET APPEL AURAIT DIT QUE TOUT ALLAIT BIEN.
+  //
+  // LES DEUX APPELANTS N'EN FONT RIEN : `dawini.html:800` et
+  // `dawini-pharmacie.html:366` écrivent `window.tabibiDawini.expireOld();`
+  // sans `await` ni affectation. Rendre `{ ok:false }` ne serait donc VU de
+  // personne — remplacer un mensonge par un silence. D'où la trace explicite
+  // ci-dessous : l'échec doit laisser une marque même quand nul ne lit.
+  //
+  // ⚠️  ET CE N'EST PAS LE MÉCANISME D'EXPIRATION. Il n'existe aucune tâche
+  // pg_cron pour Dawini (mesuré le 13/09 : `appointment-reminders` et
+  // `cleanup_old_logs`, aucune ne touche `dawini_requests`). Tant que
+  // 20260913_cron_dawini_expire.sql n'est pas appliquée, l'expiration ne vit
+  // QUE dans cet appel — donc uniquement quand un humain ouvre la page.
   async function expireOld() {
-    var s = sb();
-    if (!s) return { ok: false };
-    try { await _withTimeout(s.rpc('dawini_expire_old'), 6000, 'dawini_expire'); return { ok: true }; }
-    catch (e) { return { ok: false }; }
+    if (typeof window.tabibiRpc !== 'function') {
+      (window.tabibiErreur || console.error)(
+        new Error('tabibiRpc absent — js/tabibi-rpc.js non chargé'), 'dawini:expireOld');
+      return { ok: false, erreur: 'passerelle_absente' };
+    }
+    var r;
+    try {
+      r = await _withTimeout(window.tabibiRpc('dawini_expire_old'), 6000, 'dawini_expire');
+    } catch (e) {
+      // Seul `_withTimeout` atteint ce catch : lui rejette pour de bon.
+      (window.tabibiErreur || console.error)(e, 'dawini:expireOld:timeout');
+      return { ok: false, erreur: 'timeout' };
+    }
+    if (!r.ok) {
+      (window.tabibiErreur || console.error)(
+        new Error('expiration Dawini refusée : ' + r.erreur), 'dawini:expireOld');
+      return { ok: false, erreur: r.erreur };
+    }
+    return { ok: true, erreur: null };
   }
 
   // ───────────────────────────────────────────────────────────────────
