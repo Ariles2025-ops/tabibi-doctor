@@ -1,0 +1,88 @@
+-- =====================================================================
+-- 20260913_revoke_ddl_anonyme.sql
+-- Fermeture d'une porte de DDL anonyme mesuree OUVERTE en production
+-- =====================================================================
+-- ETAT : DEJA APPLIQUEE. Lancee par Aghiles le 13/09/2026, AVANT l'ecriture de
+-- ce fichier, et il l'assume : une porte de DDL anonyme mesuree ouverte ne reste
+-- pas ouverte le temps d'ecrire un en-tete.
+--
+-- Ce fichier n'est donc pas une migration a lancer : c'est la CONSIGNATION de ce
+-- qui a ete fait, pour que la base et le depot disent la meme chose. Il est
+-- idempotent — le relancer ne change rien.
+--
+-- ---------------------------------------------------------------------
+-- CE QUI ETAIT OUVERT
+-- ---------------------------------------------------------------------
+-- public.api_usage_log_ensure_partition(p_day date)
+--   SECURITY DEFINER, et son corps fait CREATE TABLE. Executable par `anon`.
+--   PREUVE DE L'EXTERIEUR, avec la cle anon publique :
+--     POST /rest/v1/rpc/api_usage_log_ensure_partition {"p_day":"2026-05-18"}
+--     -> HTTP 204. Date deja partitionnee, donc IF NOT EXISTS rend l'appel
+--        inoffensif — mais l'appel PASSE. Avec une date non partitionnee, il
+--        cree une table. Sans limite, sans authentification.
+--
+-- public.rls_auto_enable()
+--   Fonction du declencheur d'evenement `ensure_rls` (voir plus bas), elle aussi
+--   executable par `anon`. Elle n'est pas censee etre appelee a la main.
+--
+-- ---------------------------------------------------------------------
+-- CE QUI A ETE FAIT
+-- ---------------------------------------------------------------------
+REVOKE EXECUTE ON FUNCTION public.api_usage_log_ensure_partition(date)
+  FROM PUBLIC, anon, authenticated;
+
+REVOKE EXECUTE ON FUNCTION public.rls_auto_enable()
+  FROM PUBLIC, anon, authenticated;
+
+-- ---------------------------------------------------------------------
+-- VERIFICATION — deux etages, et le second seul fait foi
+-- ---------------------------------------------------------------------
+-- 1. EN BASE (passage separe). Attendu : anon=false, authenticated=false,
+--    postgres=true sur les deux. Verifie le 13/09, conforme.
+--
+--      SELECT p.proname,
+--             has_function_privilege('anon', p.oid, 'EXECUTE')          AS anon,
+--             has_function_privilege('authenticated', p.oid, 'EXECUTE') AS authentifie,
+--             has_function_privilege('postgres', p.oid, 'EXECUTE')      AS postgres
+--        FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+--       WHERE n.nspname = 'public'
+--         AND p.proname IN ('api_usage_log_ensure_partition','rls_auto_enable');
+--
+-- 2. DE L'EXTERIEUR — la meme sonde qui avait prouve l'ouverture. C'est elle
+--    qui fait foi : la base peut dire « revoque » pendant que PostgREST sert
+--    encore une definition en cache. Resultat du 13/09 :
+--      HTTP 401, 42501 « permission denied for function »
+--      partitions : 16 avant, 16 apres — la sonde n'a rien cree.
+--
+--    LE FICHIER DIT CE QU'IL FAIT, PAS CE QUE LA BASE EN FAIT — et la base ne
+--    dit pas ce que l'API en fait. Une fermeture cote serveur se verifie du
+--    cote d'ou venait la menace.
+--
+-- ---------------------------------------------------------------------
+-- RETOUR ARRIERE (a ne lancer que si une fonctionnalite legitime casse)
+-- ---------------------------------------------------------------------
+--   GRANT EXECUTE ON FUNCTION public.api_usage_log_ensure_partition(date)
+--     TO anon, authenticated;
+--   GRANT EXECUTE ON FUNCTION public.rls_auto_enable() TO anon, authenticated;
+--
+-- Risque du retour arriere : il rouvre exactement la porte mesuree ouverte.
+-- Aucun appelant legitime n'existe — aucun appel a log_api_call n'a ete trouve
+-- dans le depot hors types generes, et les 16 partitions contiennent 0 ligne.
+--
+-- ---------------------------------------------------------------------
+-- CONTEXTE : `ensure_rls`, le declencheur que personne n'a ecrit
+-- ---------------------------------------------------------------------
+-- pg_event_trigger : `ensure_rls`, ddl_command_end, actif, tags CREATE TABLE,
+-- CREATE TABLE AS, SELECT INTO -> public.rls_auto_enable(), SECURITY DEFINER,
+-- proprietaire postgres, search_path pg_catalog. Son corps boucle sur
+-- pg_event_trigger_ddl_commands() et execute, pour tout objet cree dans public :
+--   alter table if exists %s enable row level security
+--
+-- C'est lui qui met toutes les tables de `public` sous RLS a leur creation — 55
+-- sur 55 — et c'est lui qui explique la divergence de audit_log_echecs.
+--
+-- IL EST ABSENT DU DEPOT ET DE L'HISTORIQUE GIT : installe hors fichier, a la
+-- main ou par un modele. Il est probablement utile. Mais un mecanisme que
+-- personne n'a ecrit dans le depot doit y etre ecrit, ou retire — c'est une
+-- ligne ouverte, a decider, pas maintenant.
+-- =====================================================================

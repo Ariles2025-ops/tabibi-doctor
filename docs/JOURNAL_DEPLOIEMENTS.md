@@ -1,8 +1,76 @@
 # Journal des déploiements — tabibi.doctor
 
+## ⚠️ 13/09/2026 — `main` EST RESTÉ ROUGE DE #108 À #111, SANS QUE PERSONNE LE VOIE
+
+**Constaté**, runs `verification` lus sur GitHub Actions :
+
+| Run | Fusion | Résultat | Durée |
+|---|---|---|---|
+| #86 | #106 `fix/succes-sur-refus` | **FAILED** | 29 s |
+| #87 | #107 | succès | 3 min 35 |
+| #88 | #108 `fix/verifier-toutes` | **FAILED** | 1 min 13 |
+| #89 | #109 `fix/portes-a-venir` | **FAILED** | 1 min 15 |
+| #90 | #110 `fix/garde-rpc` | **FAILED** | 1 min 05 |
+| #91 | #111 `docs/regle-suppression-et-20-catch` | **FAILED** | 1 min 14 |
+
+**Quatre fusions sur porte rouge, et le déploiement 9 est parti d'un `main` rouge.**
+
+**La cause**, pour #88 à #91 : `.github/workflows/verification.yml` lançait
+`npm run verifier:toutes` — qui exécute e2e — **avant** le pas « Installer le navigateur de test ».
+En CI, Playwright n'avait aucun Chromium à cet instant : les 25 tests tombaient en 30 secondes sur
+une **absence**, pas sur une régression. En local le navigateur existe, d'où 66/66 chez nous et rouge
+chez eux. **C'est la CI qui a raison sur ce que la CI fait.**
+
+**Pourquoi personne ne l'a vu** : la durée des runs est passée de 2-3 minutes à 1 minute, et rien ne
+le crie. Un run qui raccourcit ressemble à un progrès.
+
+C'est le défaut exact de la règle « ce qui contrôle doit être contrôlé », écrite **le jour même**,
+deux pas plus bas dans ce fichier. **Une porte a disparu en silence le jour où on a écrit qu'une
+porte ne doit pas disparaître en silence.** Le pas lisait bien les codes de sortie — il les lisait
+dans un environnement incomplet.
+
+**Corrigé** par `a474d51` : le navigateur s'installe avant les portes.
+
+**#86 reste inexpliqué.** Cause différente : à ce commit, `verifier:toutes` n'existait pas encore
+dans le workflow, et le navigateur (ligne 102) venait bien avant e2e (ligne 105). Un échec à 29 s
+tombe donc **avant** la ligne 102 — dans l'une des portes, pas dans e2e. Laquelle, il faut lire le
+journal du run ; le jeton de la session n'a pas la permission `actions`.
+
+---
+
+## ⚠️ 13/09/2026 — LA PORTE EST OUVERTE SUR UN AUTRE HOTE
+
+**Constaté :** `https://effulgent-kelpie-e48e81.netlify.app` et chaque *Deploy Preview* de PR
+servent **l'application complète, porte ouverte** — recherche, prise de rendez-vous, connexion,
+téléchargement APK — **branchée sur la base de PRODUCTION** (même clé anon, même projet).
+
+**Toutes les entrées « porte fermée » des déploiements 1 à 9 de ce journal ne valent que pour
+Cloudflare Pages.** Elles sont vraies pour l'hôte qu'elles décrivent et fausses pour l'ensemble.
+
+**Pourquoi**, mesuré : `netlify.toml:6` porte `publish = "."` et **aucune `command`**. Netlify sert
+la racine du dépôt telle quelle. Or la porte n'est pas dans le code : `scripts/porte.mjs` copie
+`porte/porte-fermee.html` **par-dessus `dist-web/index.html`, après le build**, et seule la procédure
+manuelle `wrangler` l'exécute. À la racine, `index.html` est l'application entière — 115 765 octets.
+
+**La porte n'est pas une propriété du code. C'est une propriété d'UN geste de déploiement.** Tout
+hébergeur qui sert le dépôt sans passer par ce geste sert l'application ouverte.
+
+Action à Aghiles : supprimer ou déconnecter le ou les sites Netlify. Analyse et proposition dans
+`.claude/RETOUR.md` du 13/09.
+
+---
+
 Une ligne par déploiement de production, à partir du 13/09/2026. Avant cette date, les déploiements
 n'étaient consignés nulle part : c'est ce qui a permis à la production de rester dix-huit jours sur un
 état que `main` ne décrivait plus (cf. `PLAN_FUSION.md` §3 quater et `docs/ETAT_PORTE.md`).
+
+Le journal couvre **deux cibles**. Une migration appliquée en production est un déploiement : elle a
+son commit, sa date et sa cible de retour, et elle peut casser la production aussi surement qu'un
+artefact. Jusqu'au 13/09/2026 le journal ne traçait que Cloudflare — c'est pourquoi la fermeture C1
+du 09/09, qui a cassé les avis pendant quatre jours, n'apparaît nulle part.
+
+- **Cloudflare Pages** — l'artefact servi. Table ci-dessous.
+- **Base Supabase** — les migrations appliquées. Table « Déploiements de base ».
 
 Hébergement : **Cloudflare Pages**, projet `tabibi-doctor`, branche de production **`main`**, sans
 connexion Git — tous les déploiements sont poussés à la main par `wrangler pages deploy`.
@@ -23,6 +91,217 @@ deployment*. Atomique, sans reconstruction.
 | 3 | 2026-09-13 ~08:58 | `dc133ebd9dc1a7427fc5bce367112d810080335d` | `eeeeef33-…` | **fermée** | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | Claude, sur go d'Aghiles |
 | 2 | 2026-09-13 ~01:30 | `5cec711f90f5b982f4b100eb30ff456753ae97a8` | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | **fermée** | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | Claude, sur go d'Aghiles |
 | 1 | 2026-08-26 (reconstitué) | `f06aa3d` (PR #51) | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | fermée | — | non consigné à l'époque |
+
+---
+
+## Déploiements de base
+
+Projet Supabase `pudugodhiofqrctcdwfl` (EU/Francfort). Une ligne par migration appliquée en
+production. La migration est écrite et présentée par Claude, **lancée par Aghiles** dans l'éditeur
+SQL, jamais appliquée par Claude.
+
+**Le retour arrière n'existe que s'il a été capturé avant.** `CREATE OR REPLACE FUNCTION` écrase
+sans laisser de trace : Postgres ne garde aucune version précédente d'un corps de fonction. La
+cible de retour n'est donc pas un identifiant fourni par la plateforme, comme chez Cloudflare —
+c'est **un fichier du dépôt, généré avant la migration**, contenant les définitions d'avant.
+Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauvegarde.
+
+| # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
+|---|---|---|---|---|---|---|
+| B1 | 2026-09-13 ~14:45 UTC | `20260913_reparation_plpgsql_check.sql` — 15 `CREATE OR REPLACE` | `8e3b05d` (fichier), `e3f1956` (retour arrière) | `20260913_reparation_RETOUR_ARRIERE.sql`, capture `pg_get_functiondef` du 13/09 14:22 UTC, fraîcheur prouvée par 15 empreintes `md5` → 0 ligne | `20260913_reparation_VERIFICATION.sql` → **0 ligne** | Aghiles |
+| B4 | 2026-09-13 ~18:00 UTC | `20260913_revoke_ddl_anonyme.sql` — fermeture d'une porte de DDL anonyme | `(consigné après coup)` | `GRANT EXECUTE … TO anon, authenticated` (rouvre la porte) | base : `anon=false` · **sonde HTTP : 401, 42501** | Aghiles, **avant le fichier** |
+| B3 | 2026-09-13 ~17:00 UTC | `20260913_audit_log_echecs_politique.sql` — déclarer la permissivité | `d5501e3` | `DROP POLICY audit_log_echecs_insert_permissif ON public.audit_log_echecs` | **3 contrôles sur 3 conformes** | Aghiles |
+| B2 | 2026-09-13 ~15:20 UTC | `20260913_audit_log_echecs.sql` — table de rebut | `400f464` | `DROP TABLE public.audit_log_echecs` (additive, aucune donnée) | 6 contrôles conformes — **divergence `rls_active` refermée par mesure** | Aghiles |
+| B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
+
+### B1 — les cinq mesures fonctionnelles, 13/09/2026
+
+Le balayage à 0 ligne prouve que les quinze corps **compilent**. Les cinq mesures ci-dessous prouvent
+qu'ils **fonctionnent**. Lancées dans une transaction annulée d'office (bloc `DO` qui lève toujours) :
+rien n'a persisté.
+
+| # | Mesure | Avant | Après | Verdict |
+|---|---|---|---|---|
+| A | `INSERT` dans `reviews`, statut `published` → déclencheur `fn_update_doctor_rating` | `review_count` = 0 | `rating` = **5.00**, `review_count` = **1** | le déclencheur a **écrit** — dans la table, plus dans la vue |
+| B | `tabibi_pii_encrypt` puis `tabibi_pii_decrypt` | — | chiffré **83 octets**, déchiffré = le témoin **exact** | aller-retour **fidèle**, pour la première fois |
+| B bis¹ | `tabibi_pii_decrypt(NULL)` | — | `NULL` | la garde explicite tient : **absente** |
+| B bis² | `tabibi_pii_decrypt('\x0badc0ffee')` | rendait `NULL` en silence | **lève `39000`** | **illisible** — une panne de déchiffrement se voit enfin |
+| C | `record_consent('health_data_processing', …, 'signup')` → `INSERT` d'audit | `audit_log` `consent:grant` = 0 | = **1** | **ligne d'audit écrite** |
+
+B bis¹ et B bis² sont la même fonction sur deux entrées : c'est ce couple qui prouve le retrait du
+`EXCEPTION WHEN OTHERS THEN RETURN NULL`. Avant, les deux rendaient `NULL` — **« absente » et
+« illisible » étaient la même réponse sur une donnée de santé.** Elles ne le sont plus.
+
+Mesure A : le `INSERT` abouti ne suffisait pas comme preuve. C'est le passage de `review_count` de
+0 à 1 qui tranche — un `INSERT` qui passe avec un déclencheur sans effet se serait lu comme un
+succès. Même raison pour C : le retour `{"ok": true}` de `record_consent` ne prouve rien seul, c'est
+le compteur d'`audit_log` qui prouve.
+
+**Ce que B1 ne fait pas :** aucun régime d'erreur n'a changé. Les sept `EXCEPTION WHEN OTHERS THEN
+NULL` des handlers d'audit sont intacts. La table `audit_log_echecs` et les régimes
+constitutive/preuve sont la migration suivante — et ce débat cesse d'être théorique maintenant que
+l'écriture d'audit fonctionne.
+
+### B2 — la table de rebut, et la divergence restée ouverte
+
+Appliquée au deuxième essai. Le premier a échoué sur `FATAL 53300 — too many clients already` :
+échec **à la connexion**, avant toute exécution, rien n'avait été tenté (cf.
+`docs/CARTE_CAPACITE_CONNEXIONS.md`).
+
+**Conforme :** `existe` = 1 · droits `anon`/`authenticated`/`PUBLIC` = **AUCUN** · aucune clé
+étrangère · aucun déclencheur · aucune politique.
+
+**Divergence, désormais REFERMÉE par mesure.** `rls_active` = **TRUE**, attendu `false`, alors que la
+migration ne contient aucun `ENABLE ROW LEVEL SECURITY` (vérifié par analyse du texte).
+
+*Cause, ÉTABLIE — et la première réponse était fausse.* Un `CREATE TABLE public.temoin (id int)` nu,
+relu dans la même transaction annulée, sort déjà en `relrowsecurity = true` : l'activation ne vient
+d'aucun de nos fichiers. **Nous en avions conclu « en dessous du SQL, `supautils` comme hypothèse ».
+C'était faux.** Elle vient d'un déclencheur d'événement, mesuré directement :
+
+| | |
+|---|---|
+| `ensure_rls` | `ddl_command_end`, actif, tags `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` |
+| → `public.rls_auto_enable()` | `SECURITY DEFINER`, propriétaire `postgres`, `search_path pg_catalog` |
+
+Son corps boucle sur `pg_event_trigger_ddl_commands()` et exécute, pour tout objet créé dans
+`public` : `alter table if exists %s enable row level security`. C'est lui qui met **55 tables sur
+55** sous RLS à leur création.
+
+*Comment on s'est trompés.* Le diagnostic rendait 19 lignes ; une partie a été lue, et l'absence
+d'une ligne qu'on n'avait pas cherchée jusqu'au bout a été rapportée comme un fait. Même classe
+d'erreur que le `sha256` qui était un MD5 et que la taille servie du `mailto:` : **conclure sur ce
+qu'on a vu, pas sur ce qu'il y avait.** La piste « un `ENABLE` qu'aucun fichier ne contient vient
+presque toujours d'un déclencheur d'événement sur `ddl_command_end` » était la bonne, et elle a été
+fermée d'un cran trop tôt.
+
+*Ligne ouverte :* `ensure_rls` est **absent du dépôt et de l'historique git** — installé hors
+fichier. Il est probablement utile. Mais un mécanisme que personne n'a écrit dans le dépôt doit y
+être écrit, ou retiré. À décider, pas maintenant.
+
+*Ce n'est pas propre à cette table.* `public` compte **55 tables, 55 avec RLS active, 0 sans**. Les
+15 dernières créées sont toutes à `true`.
+
+*La trouvaille « 20 tables en refus par défaut » se referme, elle aussi, sur une mesure et non sur
+une lecture.* Elles sont **19** — `audit_log_echecs` a quitté la liste, ce qui prouve au passage que
+la politique B3 est en place. Ces 19 sont **16 tables `api_usage_log_*`** (une par jour, du 18 mai au
+2 juin), **`appointment_notifications`**, **`prescription_seq_year`** et **`rate_limits`**. Droits
+`anon`/`authenticated` : **AUCUN sur les 19**. Le refus par défaut ne protège donc rien que les
+`REVOKE` ne ferment déjà : ce n'est pas un trou, c'est une **double fermeture sur des tables
+internes**. À consigner, pas à corriger.
+
+Deux lignes en sortaient, indépendantes du rebut. **La première est refermée le jour même.**
+
+*L'outbox `appointment_notifications` — verdict V1, le piège n'existe pas.* Un seul écrivain, zéro
+ligne, handler nu : on ne pouvait pas distinguer « aucun rendez-vous n'a jamais été confirmé » de
+« chaque confirmation a échoué en silence ». Mesure `20260913_outbox_confirmations.sql`, un
+rendez-vous réel poussé dans tous les statuts : la transition vers `confirmed` **fait arriver la
+ligne** (outbox 0 → 1), les quatre autres ne déclenchent rien, conformément au `WHEN`. Déclencheur,
+`WHEN`, `INSERT` et table sont **sains**. Le vide venait de l'absence d'usage : **la base entière
+contient un seul rendez-vous**, créé le 13/09, statut `cancelled`. Porte fermée, zéro utilisateur.
+
+C'est le contre-exemple qui manquait à la journée : `une table à zéro ligne est un soupçon, jamais
+une donnée` — et un soupçon peut se lever. Ici il s'est levé par l'exercice, pas par le raisonnement.
+
+*L'arrêt net des `api_usage_log_*` au 2 juin* reste ouverte
+(`supabase/mesures/20260913_api_usage_log_arret.sql`).
+
+Cf. `docs/CARTE_RLS_SANS_POLITIQUE.md`, qui porte le détail et l'entrée de régime à trancher sur le
+handler nu de l'outbox.
+
+#### La propriété critique, prouvée et non déduite
+
+La spécification de cette table est « elle ne peut échouer que sur disque plein ». Une RLS active
+sans aucune politique est un refus par défaut : il fallait prouver que l'écriture arrive quand même,
+pas le déduire du contournement par le propriétaire.
+
+`supabase/mesures/20260913_rebut_ecriture_preuve.sql`, transaction annulée :
+
+| Face | Chemin | Résultat |
+|---|---|---|
+| 1 | `authenticated`, `INSERT` **direct** | **REFUSÉ `42501`** — permission denied for table |
+| 2 | `authenticated`, via fonction `SECURITY DEFINER` (régime exact des sept) | **ABOUTI** |
+| — | relecture | lignes 0 → 1, contenu relu = `'ligne-temoin-13-09-2026'` |
+
+État au moment de la mesure : `RLS=true`, propriétaire `postgres`, **0 politique**.
+
+**Ce que la face 1 prouve exactement — et ce qu'elle ne prouve pas.** `42501 permission denied for
+table` est un refus de **privilège**, pas de RLS : un refus RLS s'annonce
+`new row violates row-level security policy`. Ce sont donc les `REVOKE` qui ferment la porte, et la
+RLS n'a jamais été mise à l'épreuve — elle est derrière le contrôle de droits, qui tranche en
+premier. La double fermeture existe ; une seule des deux a été exercée.
+
+**Le mécanisme réel, et ma correction.** J'avais écrit que la face 2 réussissait grâce à l'exemption
+du propriétaire, et qu'un `ALTER TABLE … FORCE ROW LEVEL SECURITY` ferait échouer toutes les
+écritures de rebut. **Mesure D1 : avec `FORCE` et zéro politique, l'écriture passe encore.** `FORCE`
+retire l'exemption du *propriétaire* ; il ne retire pas l'attribut de *rôle* `BYPASSRLS`, et
+`postgres` le porte. Le scénario de panne que je décrivais ne peut pas se produire.
+
+La conclusion survit, portée par autre chose que ce que je croyais : **ce qui porte l'écriture est
+`BYPASSRLS`** — plus solide que l'exemption du propriétaire, et toujours pas déclaré. Rien dans le
+schéma ne dit que cette table accepte les écritures. D'où B3.
+
+---
+### B3 — déclarer la permissivité, et la mesure qui la justifie
+
+La politique existe : `audit_log_echecs` a **quitté** la liste des tables « RLS active, zéro
+politique », qui est passée de 20 à 19. C'est une preuve d'état, pas une lecture de fichier.
+
+**Ce qui justifie B3 n'est pas un raisonnement mais la mesure E1/E2**
+(`20260913_politique_sans_bypassrls.sql`, lancée en production, transaction annulée). Un rôle
+`NOLOGIN` **sans `BYPASSRLS`**, non propriétaire, possédant une fonction `SECURITY DEFINER`, avec
+`FORCE` actif :
+
+| | | |
+|---|---|---|
+| **E1** | sans politique | **REFUSÉ `42501` — `new row violates row-level security policy`** |
+| **E2** | avec politique | **ABOUTI** |
+
+**La politique porte l'écriture ; `BYPASSRLS` ne fait que la masquer.** Sans cette mesure, B3
+déclarait une permissivité qu'on n'avait jamais vue agir.
+
+Le `SQLSTATE` de E1 est le même `42501` que le refus du matin, mais **le message diffère** :
+`permission denied for table` (refus de privilège) contre `new row violates row-level security
+policy` (refus de RLS). C'est la première fois de la journée que la RLS est **réellement exercée**
+sur cette table — tous les refus précédents s'arrêtaient au contrôle de droits, qui tranche avant.
+Le dispositif accorde délibérément `INSERT` au rôle témoin pour cette raison : sans ce `GRANT`, E1
+aurait échoué sur les privilèges et n'aurait rien appris.
+
+*Deux corrections d'Aghiles ont été nécessaires pour que la mesure atteigne E1* (appartenance au rôle
+créé, puis `CREATE` sur le schéma pour le transfert de propriété). Elles restent dans le fichier,
+commentées. Ni l'appartenance ni `CREATE` sur un schéma ne sont `BYPASSRLS` ou une exemption de
+politique — et `E1 refuse`, ce qui le prouve à l'exécution plutôt qu'au raisonnement.
+
+**Vérification, passage séparé, trois contrôles sur trois conformes :**
+
+| Contrôle | Valeur | Attendu |
+|---|---|---|
+| `politique_existe` | 1 | 1 |
+| `commande` | `INSERT` | `INSERT` |
+| `droits_anon_authenticated` | **AUCUN** | **AUCUN** |
+
+Le troisième est le seul qui compte vraiment : il prouve que poser une politique permissive n'a
+**rien ouvert**. Les `REVOKE` restent la porte ; la politique déclare seulement qu'une fois la porte
+franchie, aucune ligne n'est filtrée.
+
+Les deux premiers étaient nécessaires parce que quitter la liste des « zéro politique » prouve
+qu'**une** politique existe, pas **laquelle**. B3 est close.
+
+---
+**Règles de la colonne « Cible de retour » :**
+- Une migration qui remplace du code (`CREATE OR REPLACE`, `ALTER`) exige un fichier de capture
+  **généré et versionné avant** son application. Il ne se lance pas ; il existe.
+- Un fichier de capture se vérifie **fidèle** avant qu'on s'y fie : empreintes `md5` des définitions
+  vivantes comparées à celles de la capture, en lecture seule, dans un passage séparé.
+- Une migration additive (nouvelle table, nouvel index) note sa cible de retour en clair
+  (`DROP TABLE ...`), pas « — ».
+- *Sans objet* est une réponse valable, mais elle s'écrit et se justifie.
+
+**Trois passages séparés, toujours** — l'éditeur SQL de Supabase enveloppe tout un script dans UNE
+transaction, donc une vérification ajoutée au script peut annuler la migration en échouant :
+1. la vérification de fraîcheur de la capture (lecture seule, doit rendre 0 ligne) ;
+2. la migration, **seule** ;
+3. la vérification, **seule**, qui doit rendre 0 ligne.
 
 ---
 

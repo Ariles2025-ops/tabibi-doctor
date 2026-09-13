@@ -4,6 +4,148 @@
 > `|| 'Pending'` et que le bouton qui annonce sans agir : **un defaut qui se presente comme un etat
 > normal.**
 
+## LE BALAYAGE plpgsql_check — 15 defauts, 15 fonctions, TROIS classes
+
+Lance le 13/09/2026, declencheurs inclus (`plpgsql_check_function_tb(oid, relid)` joint a
+`pg_trigger`, faute de quoi les fonctions de declencheur sont silencieusement exclues).
+
+| Classe | SQLSTATE | Nombre |
+|---|---|---|
+| colonne inexistante | `42703` | **8** |
+| **fonction inexistante** | `42883` | **6** |
+| mise a jour d'une vue | `55000` | **1** |
+
+### Classe 1 — `42703`, l'audit (8 fonctions)
+
+`accept_cabinet_invitation`, `create_cabinet`, `create_video_session`, `disable_two_factor`,
+`invite_cabinet_member`, `remove_cabinet_member`, `set_video_recording_consent`,
+`transfer_cabinet_ownership` — toutes sur `audit_log(actor_id, …)`.
+
+### Classe 2 — `42883`, pgcrypto : la plus grave, et elle depasse l'audit
+
+| Fonction | Appel introuvable |
+|---|---|
+| `tabibi_pii_encrypt` | `pgp_sym_encrypt(text, text)` |
+| `tabibi_pii_decrypt` | `pgp_sym_decrypt(bytea, text)` |
+| `record_consent` | `digest(text, unknown)` |
+| `enroll_two_factor` | `digest(text, unknown)` |
+| `verify_api_key` | `digest(text, unknown)` |
+| `generate_api_key_pair` | `gen_random_bytes(integer)` |
+
+**La cause est une seule ligne, repetee six fois** : ces fonctions ont
+`SET search_path TO 'public', 'pg_temp'`, or **`pgcrypto` est installee dans le schema
+`extensions`** (verifie dans `pg_extension`). Les appels non qualifies sont donc irresolubles a
+l'execution.
+
+Ce n'est pas six defauts : c'est un seul, dans six fonctions.
+
+### La mesure sur `tabibi_pii_decrypt`
+
+Protocole : bloc `DO` qui leve toujours ; et surtout, **preuve que la mesure atteint le point
+observe** — un cipher NON NUL, fabrique par l'appel qualifie, pour passer la garde
+`IF cipher IS NULL THEN RETURN NULL`.
+
+```
+  tabibi_pii_key()                        -> longueur 44
+  cipher temoin (appel qualifie)          -> 85 octets, NON NUL
+  public.tabibi_pii_decrypt(cipher)       -> NULL (silencieux)
+  extensions.pgp_sym_decrypt(meme cipher) -> 'valeur-temoin-13-09'
+  public.tabibi_pii_encrypt(temoin)       -> 42883 : function pgp_sym_encrypt does not exist
+```
+
+La cle est bonne, la donnee est bonne, le dechiffrement qualifie rend la valeur. **Seule la
+resolution de nom est cassee.**
+
+Et l'asymetrie est vicieuse :
+
+- **`tabibi_pii_encrypt` LEVE** — visible ;
+- **`tabibi_pii_decrypt` rend NULL** — invisible. Son `EXCEPTION WHEN OTHERS THEN RETURN NULL`
+  transforme une panne en « il n'y a rien ». Une donnee presente en base apparaitrait ABSENTE, sans
+  une erreur nulle part.
+
+**Degat latent, pas actif** : les sept colonnes `bytea` du schema sont toutes a zero valeur —
+`appointments.diagnostic_enc`, `notes_medecin_enc`, `users.allergies_enc`, `antecedents_enc`,
+`patient_medical_data.chifa_card_enc`, `matricule_enc`. Rien n'a jamais pu etre chiffre, puisque le
+chiffrement leve. Rien n'est donc perdu.
+
+Le chiffrement des donnees de sante n'a **jamais fonctionne, dans aucun sens**. Meme famille que le
+SDK de teleconsultation et que le 2FA : une fonctionnalite qui n'a jamais existe.
+
+### Classe 3 — `55000`, le declencheur
+
+`fn_update_doctor_rating`, pose sur `reviews` : `cannot update view "public_doctors"`. Sequelle de la
+fermeture C1 du 09/09/2026, quand `doctor_profiles` a ete verrouillee et les lectures publiques
+redirigees vers la vue. Le declencheur, lui, ecrit toujours dans la vue. **La note moyenne d'un
+medecin ne peut pas se mettre a jour**, et c'est le seul defaut que le balayage n'aurait pas vu sans
+la jointure sur `pg_trigger`.
+
+### Ce que mon balayage prealable n'avait pas vu
+
+Mon analyse statique avait trouve 10 fonctions, toutes de la classe 1. Elle ne cherchait que les
+colonnes d'`INSERT` et d'`UPDATE`. **Elle a manque les six `42883` et le declencheur** — soit la
+moitie du total, dont le defaut le plus grave. Le chiffre de 10 etait bien un plancher.
+
+## LE DEFAUT SOUS LE DEFAUT : dix INSERT d'audit qui ne peuvent pas aboutir
+
+Le debat « faut-il bloquer ou mettre au rebut ? » reposait sur une hypothese fausse : que l'ecriture
+d'audit fonctionnait et n'echouait qu'occasionnellement. **Elle n'a jamais fonctionne.**
+
+Les dix fonctions ecrivent toutes ceci :
+
+```sql
+INSERT INTO public.audit_log(actor_id, action, target_type, target_id, payload)
+```
+
+`audit_log` n'a ni `actor_id`, ni `target_type`, ni `target_id`, ni `payload`. Ses colonnes sont
+`user_id, user_email, user_role, action, table_name, record_id, before_data, after_data,
+ip_address, user_agent, success, error_msg, created_at`.
+
+**Mesure du 13/09/2026** : zero ligne pour les actions de ces dix fonctions. Les 169 lignes
+d'`audit_log` viennent toutes de `fn_audit_changes`, la seule qui utilise les bonnes colonnes
+(`users_update` 84, `appointments_create` 28, `appointments_delete` 27, `users_delete` 21,
+`appointments_update` 9).
+
+### Mesure de l'abort, en transaction annulee
+
+Protocole : un bloc `DO` qui **leve toujours a la fin**, donc rien ne peut persister. Chaque appel
+est enveloppe pour capturer `SQLSTATE` et `SQLERRM`.
+
+| Fonction | Resultat exact |
+|---|---|
+| `disable_two_factor` | `42703 : column "actor_id" of relation "audit_log" does not exist` |
+| `record_consent`, scope **sensible** | `42703 : column "actor_id" … does not exist` |
+| `record_consent`, scope ordinaire (`cgu`) | `{"ok":true,…}`, `consents_log=1` |
+| `enroll_two_factor` | `P0001 : app.tabibi_2fa_pepper non configure` — elle n'atteint **jamais** l'audit |
+
+**La frontiere exacte** : `record_consent` fonctionne pour `cgu`, `privacy`, `cookies`,
+`marketing_*`, et **abortit systematiquement pour `health_data_processing`, `telemedicine`** — car
+l'INSERT d'audit n'est fait que pour les scopes sensibles. Les seuls qui comptent sous la 25-11.
+
+### Deux deductions de lecture qui etaient FAUSSES
+
+Ecrites ici parce que la lecon vaut plus que le resultat.
+
+1. « Aucun consentement ne peut etre enregistre » — **faux**. Les scopes ordinaires passent.
+2. Mes deux premieres mesures de `enroll_two_factor` ont rendu `ABOUTI` puis
+   `invalid_recovery_codes_count` : mes arguments etaient invalides, la fonction sortait AVANT
+   l'audit. **Elles ne prouvaient rien**, et je les ai d'abord prises pour des resultats.
+
+**Une mesure qui ne va pas jusqu'au point qu'on veut observer ne dit rien sur ce point.** Verifier
+que l'appel est ALLE la ou on croit fait partie de la mesure.
+
+### Le balayage preliminaire des 328
+
+En attendant `plpgsql_check`, une analyse statique des corps contre `information_schema.columns` :
+
+- `INSERT INTO t(colonnes)` : **10 fonctions en defaut**, toutes sur `audit_log`, toutes sur les
+  memes quatre colonnes ;
+- `UPDATE t SET colonne =` : **0**.
+
+Mais ce balayage ne voit que les colonnes d'`INSERT` et d'`UPDATE`. `plpgsql_check` voit aussi les
+types, les variables non affectees, les `SELECT`, les appels de fonctions inexistantes. **Le chiffre
+de 10 est un plancher, pas un total** — d'ou l'ordre : balayer d'abord, reparer ensuite, en une
+seule migration.
+
 ## L'angle mort de cet inventaire : le SQL
 
 **Ce document ne compte que le JavaScript.** `EXCEPTION WHEN OTHERS THEN NULL` est l'orthographe

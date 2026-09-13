@@ -106,10 +106,25 @@ jobs:
         # une etape de la procedure de deploiement, pas de la CI.
         run: npm run verifier:rpc
 
+      - name: index.html a la racine EST la page fermee
+        # La porte doit etre l'ETAT DU DEPOT, pas un geste de deploiement.
+        # Le 13/09, Netlify servait l'app complete sur la base de production
+        # parce qu'il publie la racine telle quelle, sans lancer porte.mjs.
+        run: npm run verifier:porte
+
       - name: Aucun catch muet sur un chemin d'ecriture
         # L'ecran dirait oui pendant que la base dit non. Ne garde QUE les
         # ecritures : l'inventaire complet est dans docs/FICHE_CATCH_SILENCIEUX.md.
         run: npm run verifier:catch
+
+      - name: Installer le navigateur de test
+        # [13/09/2026] DEPLACE AVANT « Toutes les portes ». `verifier:toutes`
+        # lance e2e, et e2e a besoin de Chromium. Il etait installe APRES :
+        # en CI, les 25 tests tombaient en 30 s sur un navigateur absent,
+        # main est reste ROUGE de #108 a #111 sans que personne le voie, et
+        # le deploiement 9 est parti d'un main rouge. En local le navigateur
+        # existe, donc 66/66 : c'est la CI qui a raison sur ce que la CI fait.
+        run: npx playwright install --with-deps chromium
 
       - name: Toutes les portes, lues sur leur code de sortie
         # CE QUI CONTROLE DOIT ETRE CONTROLE. Le 13/09/2026, neuf gardes
@@ -120,8 +135,6 @@ jobs:
         # l'enchaineur lui-meme rend bien un code non nul.
         run: npm run verifier:toutes
 
-      - name: Installer le navigateur de test
-        run: npx playwright install --with-deps chromium
 
       - name: Parcours critiques (sources)
         # 30 tests sur 2 profils (Pixel 5 + Desktop Chrome) : accueil, inscription,

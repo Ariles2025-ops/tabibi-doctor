@@ -1,0 +1,60 @@
+-- =====================================================================
+-- 20260913_plpgsql_check.sql — activer la verification des corps plpgsql
+-- =====================================================================
+-- POURQUOI. Postgres ne valide PAS le corps d'une fonction plpgsql a sa
+-- creation. Une fonction peut citer une colonne qui n'existe pas : elle se cree
+-- sans un mot, et n'echoue qu'a l'execution.
+--
+-- C'est ainsi que DIX fonctions ont ecrit dans le vide depuis toujours. Elles
+-- font toutes le meme INSERT :
+--
+--   INSERT INTO public.audit_log(actor_id, action, target_type, target_id, payload)
+--
+-- Or `audit_log` n'a ni `actor_id`, ni `target_type`, ni `target_id`, ni
+-- `payload`. Ses colonnes sont `user_id, action, table_name, record_id,
+-- before_data, after_data`. Mesure du 13/09/2026 : ZERO ligne pour les actions
+-- de ces dix fonctions, contre 169 lignes ecrites par `fn_audit_changes`, la
+-- seule qui utilise les bonnes colonnes.
+--
+-- Sept d'entre elles avalent l'erreur dans un `EXCEPTION WHEN OTHERS THEN NULL`.
+-- Les trois autres ABORTENT : mesure faite en transaction annulee,
+-- `disable_two_factor` et `record_consent` sur un scope sensible rendent
+-- `42703 : column "actor_id" of relation "audit_log" does not exist`.
+--
+-- CE QUE CETTE MIGRATION FAIT. Elle installe l'extension, rien d'autre. Aucune
+-- fonction n'est modifiee ici : on BALAIE d'abord, on repare ensuite, en une
+-- seule migration couvrant tout ce que le balayage remonte. Reparer dix et en
+-- decouvrir vingt demain, ce serait corriger la liste au lieu de la classe.
+--
+-- plpgsql_check 2.8 est disponible sur ce projet (verifie le 13/09/2026,
+-- `pg_available_extensions`), non installee.
+--
+-- A LANCER PAR AGHILES dans l'editeur SQL. Jamais par l'agent.
+-- =====================================================================
+
+CREATE EXTENSION IF NOT EXISTS plpgsql_check;
+
+-- ---------------------------------------------------------------------
+-- LE BALAYAGE — lecture seule, a lancer juste apres l'extension.
+-- Rend une ligne par defaut trouve, dans les 328 fonctions de `public`.
+-- ---------------------------------------------------------------------
+-- select p.proname,
+--        c.functionid::regprocedure as fonction,
+--        c.lineno, c.statement, c.sqlstate, c.message, c.level
+--   from pg_proc p
+--   join pg_namespace n on n.oid = p.pronamespace
+--   cross join lateral plpgsql_check_function_tb(p.oid) c
+--  where n.nspname = 'public'
+--    and p.prolang = (select oid from pg_language where lanname = 'plpgsql')
+--  order by c.level desc, p.proname, c.lineno;
+
+-- ---------------------------------------------------------------------
+-- Le compte, en une ligne :
+-- ---------------------------------------------------------------------
+-- select c.level, count(*) as n, count(distinct p.proname) as fonctions
+--   from pg_proc p
+--   join pg_namespace n on n.oid = p.pronamespace
+--   cross join lateral plpgsql_check_function_tb(p.oid) c
+--  where n.nspname = 'public'
+--    and p.prolang = (select oid from pg_language where lanname = 'plpgsql')
+--  group by c.level order by 2 desc;

@@ -84,6 +84,315 @@ Meme famille que le reste de cette section : une console propre, un test vert, u
 une derniere ligne de sortie — ce sont des signaux qui repondent a la question qu'on leur a posee,
 jamais a celle qu'on a oublie de poser.
 
+### TROIS FONCTIONNALITES ANNONCEES N'AVAIENT JAMAIS FONCTIONNE
+
+**Aucune n'etait une regression. Aucune n'avait ete remarquee. Les trois etaient proposees a
+l'ecran.**
+
+Le 13/09/2026, trois pannes decouvertes separement se sont revelees avoir la meme forme :
+
+| Fonctionnalite | Ce qui manquait | Depuis | Etat a l'ecran |
+|---|---|---|---|
+| Teleconsultation | le SDK Daily n'a **jamais** ete charge | le premier jour | bouton actif |
+| 2FA | le pepper `app.tabibi_2fa_pepper` n'a **jamais** ete pose | le premier jour | « Configurer la 2FA », sans `disabled` |
+| Chiffrement des donnees de sante | pgcrypto **jamais** resolu (`42883`), dans les deux sens | le premier jour | rien a l'ecran — et c'est pire |
+
+Le mot qui compte est **jamais**. Une regression se detecte : quelque chose marchait, puis ne marche
+plus, et quelqu'un s'en plaint. Ici, il n'y a pas de « avant ». Aucun signal ne pouvait apparaitre,
+parce qu'il n'y a jamais eu d'etat de reference duquel s'ecarter. Les sept colonnes `bytea` du
+chiffrement sont toutes vides ; `two_factor_secrets` a 0 ligne ; `reviews` avait 0 ligne. **Chaque
+fois, le vide se lisait comme « personne ne s'en est encore servi ».**
+
+**Le point commun n'est pas technique. Personne n'est jamais alle jusqu'au bout d'un parcours.**
+
+Le code a ete lu, revu, durci, deploye. Les pages chargeaient. Les fonctions se creaient sans un mot
+— Postgres ne valide pas un corps plpgsql a la creation. Les boutons s'affichaient. Ce qui n'a
+jamais eu lieu, c'est quelqu'un qui clique « demarrer la teleconsultation » et attend de voir une
+video ; quelqu'un qui scanne le QR code de la 2FA et se reconnecte le lendemain ; quelqu'un qui
+saisit une donnee de sante et la relit.
+
+Les trois auraient ete trouvees en dix minutes par **une seule personne allant au bout d'un seul
+parcours**. Aucune revue de code ne les aurait trouvees, parce qu'aucune n'est une erreur de
+raisonnement : ce sont des dependances d'environnement absentes, et le code qui les utilise est
+correct. C'est `CE QUI DEPEND DE L'AMBIANCE N'EST PAS DECIDE, IL EST SUBI` lu a l'echelle du produit.
+
+**La consequence pour Tabibi, et elle est prioritaire sur le code :**
+
+> **Le test avec un vrai medecin est plus urgent que n'importe quelle carte du tableau.**
+
+Pas une demonstration, pas un parcours joue par nous : un medecin qui essaie de faire son travail,
+et qu'on regarde faire sans l'aider. Chaque semaine ou ce test n'a pas lieu, l'inventaire des
+fonctionnalites annoncees-mais-jamais-exercees continue de grossir sans que rien ne le signale. Le
+congres du 3-5 decembre 2026 n'est pas une echeance de developpement : c'est la date ou des inconnus
+iront au bout des parcours, tous, en meme temps.
+
+**En pratique :**
+- Une fonctionnalite n'est **annoncee a l'ecran** qu'apres avoir ete exercee de bout en bout au
+  moins une fois, par un humain, sur l'environnement reel. Sinon elle est derriere un drapeau, ou
+  son bouton est `disabled` avec sa raison affichee.
+- On tient la liste des fonctionnalites **annoncees mais jamais exercees**. Elle est le stock de
+  dette le plus dangereux du produit : il ne se voit dans aucun compteur, aucun lint, aucun test.
+- Une table a **0 ligne** sur une fonctionnalite livree est un soupcon, jamais une donnee
+  (cf. `UN DURCISSEMENT DOIT ETRE SUIVI D'UN EXERCICE DE CE QU'IL TOUCHE`).
+- Le parcours de recette se fait **en entier**, jusqu'a l'effet observable, ou il ne compte pas.
+
+### CE QUI DEPEND DE L'AMBIANCE N'EST PAS DECIDE, IL EST SUBI
+
+**Si le comportement vient de l'endroit ou l'on se trouve et non de ce qu'on a declare, ce n'est pas
+une configuration : c'est un accident qui n'a pas encore eu lieu.**
+
+Le 13/09/2026, trois pannes differentes se sont revelees etre la meme. A chaque fois, le code ne
+disait pas ce qu'il voulait — il prenait ce qui trainait autour de lui.
+
+1. **Le fuseau du navigateur.** Les dates etaient lues en UTC et les heures affichees en heure
+   locale du poste. Rien ne le declarait nulle part : le resultat dependait du reglage de la
+   machine qui ouvrait la page. Le meme rendez-vous ne tombait pas le meme jour a Alger et a
+   Montreal. Corrige par `js/tabibi-temps.js`, ou `FUSEAU_CABINET = 'Africa/Algiers'` est ecrit une
+   fois et n'est **jamais surchargeable** par l'appelant.
+
+2. **La cle lue a l'evaluation du module.** La valeur etait capturee au chargement, donc elle
+   valait ce que l'environnement contenait a cet instant-la. Selon l'ordre de chargement, la meme
+   ligne de code donnait la bonne cle ou `undefined`, sans erreur.
+
+3. **Le `search_path`.** Six fonctions appellent pgcrypto (`digest`, `gen_random_bytes`,
+   `pgp_sym_encrypt`, `pgp_sym_decrypt`) sans qualifier le schema. Tant que `extensions` trainait
+   dans le `search_path` de la session, ca marchait. Le durcissement du 09/09/2026 a pose
+   `SET search_path TO 'public','pg_temp'` sur ces fonctions : les six appels ne resolvent plus
+   (`42883`). Le chiffrement des donnees de sante n'a jamais fonctionne, dans aucun des deux sens.
+
+Dans les trois cas, personne n'avait choisi le comportement. Il a ete **subi**.
+
+**La consequence sur la reparation, et c'est la raison qui a tranche la migration du 13/09 :** face
+au `42883`, deux corrections etaient possibles.
+
+- **A — qualifier l'appel** : `extensions.digest(...)`. La fonction dit ou elle va chercher.
+- **B — elargir le `search_path`** : ajouter `extensions` a la declaration des six fonctions.
+
+B remarche immediatement et laisse la dependance intacte : **la correction elle-meme dependrait de
+l'etat ambiant**. Le jour ou quelqu'un resserre un `search_path` — comme le 09/09 — tout recasse,
+en silence, et il faudra re-decouvrir la meme chose. A a ete retenue.
+
+**Un quatrieme cas, le 13/09 au soir, et il se cache d'un cran plus bas que les trois autres.** La
+table de rebut `audit_log_echecs` est creee avec la RLS active — pas par sa migration, qui ne
+contient aucun `ENABLE ROW LEVEL SECURITY`, mais par la plateforme, **en dessous du SQL** : un
+`CREATE TABLE public.temoin (id int)` nu, relu dans la meme transaction annulee, sort deja en
+`relrowsecurity = true`. Les 55 tables de `public` sont dans cet etat ; vingt sans aucune politique,
+donc en refus par defaut.
+
+Les ecritures de rebut passent quand meme. **Mais il a fallu deux mesures pour savoir pourquoi, et
+la premiere reponse etait fausse.** J'avais ecrit qu'un `FORCE ROW LEVEL SECURITY` les ferait toutes
+echouer, en supprimant l'exemption du proprietaire. Mesure : avec `FORCE` **et** zero politique,
+l'ecriture passe encore. `FORCE` retire l'exemption du **proprietaire** ; il ne retire pas l'attribut
+de **role** `BYPASSRLS`, et `postgres` le porte.
+
+La conclusion survit, portee par autre chose que ce que je croyais : **ce n'est pas l'exemption du
+proprietaire qui porte l'ecriture, c'est `BYPASSRLS`.** Plus solide, toujours pas declare. Rien dans
+le schema ne dit que cette table accepte les ecritures — on le devine. D'ou la correction retenue :
+ni desactiver la RLS (combat perdu d'avance contre la plateforme, et reperdu en silence le jour ou
+elle la rallume), ni la subir en l'ignorant, mais **declarer la permissivite** par une politique
+explicite. Elle ne change rien a ce qui se passe ; elle rend lisible ce qui n'etait que suppose.
+
+Lecon dans la lecon : **se tromper sur le mecanisme sans se tromper sur le risque reste se tromper.**
+Un raisonnement juste par accident ne protege que jusqu'a la prochaine fois.
+
+**C'est « une regle vit a un seul endroit » vu par l'autre bout.** Cette regle-la dit ou ecrire la
+decision ; celle-ci dit comment reconnaitre qu'on ne l'a pas ecrite du tout. Les deux se verifient
+de la meme facon : deplacer le code — un autre fuseau, un autre ordre de chargement, un autre
+`search_path` — et regarder si le resultat bouge. **S'il bouge, la decision n'a pas ete prise.**
+
+**En pratique :**
+- Une fonction SQL qui appelle une extension **qualifie le schema**, toujours. Un `search_path`
+  large n'est pas une correction, c'est un report.
+- Un calcul de date declare son fuseau. `new Date()` seul n'est pas une declaration.
+- Une valeur d'environnement se lit **au moment de s'en servir**, pas a l'evaluation du module.
+- Contre-epreuve : changer l'ambiance sans toucher au code. Si la sortie change, c'est un defaut.
+
+### UNE MESURE QUI NE S'EXECUTE PAS JUSQU'AU BOUT N'A PAS MESURE
+
+**Un fichier de mesure qui n'a jamais tourne est un brouillon. Il se livre sous ce nom, ou il ne se
+livre pas.**
+
+Deux fois le 13/09/2026, une mesure s'est arretee **avant** le point qu'elle devait observer, et les
+deux fois l'arret ne ressemblait pas a un echec.
+
+1. **`enroll_two_factor`, le matin.** La fonction sortait tot — codes de recuperation hors de
+   l'intervalle 6..12 — et le bloc rendait quand meme un message. J'ai lu `ABOUTI` comme un
+   resultat. La fonction n'avait jamais atteint son `INSERT` d'audit. **Une sortie anticipee produit
+   une sortie, pas une mesure.**
+2. **`politique_sans_bypassrls`, le soir.** Le fichier ne demarrait pas : deux `42501` successifs
+   sur le transfert de propriete de la fonction temoin, avant meme E1. Aghiles a du le corriger deux
+   fois pour qu'il atteigne le point observe. Je l'avais livre comme une mesure ; c'etait un
+   brouillon.
+
+Le meme defaut que trois fois le matin sur les fixtures (scope invalide, source invalide, statut
+invalide) : **verifier que l'appel EST ALLE ou l'on croit fait partie de la mesure.** Ici, un cran
+plus tot encore — verifier que le fichier demarre.
+
+**La consequence sur ce depot, et elle me concerne directement :** je n'ai pas d'acces a la base.
+Tout fichier de mesure que je remets est donc, par construction, **un brouillon** — il n'a jamais
+tourne quand je le donne. Ca ne l'excuse pas, ca le nomme.
+
+**En pratique :**
+- Un fichier de mesure porte, en tete, l'etat de ce qu'il est : **BROUILLON — jamais execute**, ou
+  **MESURE — a tourne le \<date\>, sortie en \<reference\>**. La premiere mention se remplace par la
+  seconde apres le premier passage reussi, jamais avant.
+- Une mesure enonce, avant d'etre lancee, le point qu'elle doit atteindre, et **imprime qu'elle l'a
+  atteint** — pas seulement son resultat. C'est ce que font les lignes « fixture : ... » et
+  « fonction temoin creee ... » : elles servent a distinguer un refus du point observe d'un arret en
+  chemin.
+- Les corrections faites pour qu'une mesure demarre **restent dans le fichier, commentees**, avec la
+  raison de leur presence et la raison pour laquelle elles ne faussent rien. Une correction retiree
+  apres coup est une marche que le suivant devra remonter.
+- Le premier fichier de mesure de la journee a avoir tourne **du premier coup, sans correction**, est
+  `20260913_outbox_confirmations.sql` — et ce n'est pas un hasard : c'est le premier a avoir liste ce
+  qu'il allait remuer (bloc 0), rendu la definition de ce qu'il observait (bloc 1) et enonce ses
+  verdicts avant de mesurer. **Un fichier qui decrit son dispositif avant de s'executer est aussi
+  celui qui s'execute.**
+- Un `EXCEPTION WHEN OTHERS` dans un bloc de mesure imprime toujours `SQLSTATE`. Sans lui, un arret
+  en chemin et un refus au point observe ont la meme apparence — et c'est exactement la maladie que
+  ce depot passe sa journee a soigner.
+
+### LE FICHIER DIT CE QU'IL FAIT, PAS CE QUE LA BASE EN FAIT
+
+**Verifier le fichier n'est pas verifier l'etat. Un objet en base est le produit du script ET de
+tout ce que la plateforme y ajoute.**
+
+Le 13/09/2026, `20260913_audit_log_echecs.sql` a ete verifie ligne par ligne avant d'etre presente :
+aucune `REFERENCES`, aucun `CREATE TRIGGER`, aucune `CREATE POLICY`, **aucun
+`ENABLE ROW LEVEL SECURITY`** — controle par analyse du texte, pas par lecture rapide. Le fichier
+etait exactement ce qu'il annoncait.
+
+**La table creee a la RLS active.** Quelque chose, entre le `CREATE TABLE` et l'objet final, l'a
+allumee. Le fichier ne pouvait pas le dire, et aucune relecture du fichier ne l'aurait trouve.
+
+C'est la troisieme fois de la journee qu'une verification d'etat rattrape ce qu'une lecture de
+source ne pouvait pas voir :
+
+1. **Les corps de fonctions.** Quinze fonctions se sont creees sans un mot — Postgres ne valide pas
+   un corps plpgsql a la creation. Le fichier de migration etait valide ; les fonctions etaient
+   cassees. Il a fallu `plpgsql_check` sur la base, pas une relecture du depot.
+2. **La taille servie.** `accueil-public.html` annonce a 115 952 octets, sa taille construite ;
+   servi a 116 268, parce que Cloudflare reecrit les `mailto:` en sortie. Le fichier du depot etait
+   juste ; l'artefact servi etait autre.
+3. **La RLS de `audit_log_echecs`**, ci-dessus.
+
+Trois etages differents — la base, l'hebergeur, la plateforme — et le meme ecart : **entre ce qu'on
+ecrit et ce qui existe, il y a toujours un intermediaire qui ajoute quelque chose**, et cet
+intermediaire n'apparait dans aucun diff.
+
+C'est le pendant de `UN MESSAGE DE COMMIT EST UN RAPPORT, PAS UNE INTENTION`. La, le compte-rendu
+prenait l'intention pour le resultat ; ici, c'est la verification elle-meme. **Les deux se soignent
+en allant lire l'objet reel** — `git show` pour le commit, `pg_class` pour la table, l'en-tete HTTP
+pour la page servie.
+
+**En pratique :**
+- Une migration se verifie **sur la base apres application**, jamais sur son texte avant. Le controle
+  du texte sert a ne pas presenter une betise ; il ne prouve rien sur le resultat.
+- La verification interroge les **catalogues** (`pg_class`, `pg_policy`, `pg_constraint`,
+  `pg_trigger`, `information_schema`), pas le fichier qui vient d'etre lance.
+- Elle enonce les **valeurs attendues** avant d'etre lancee — sinon on lit le resultat comme une
+  confirmation. Ici, `rls_active = false` etait ecrit d'avance : c'est ce qui a rendu la divergence
+  visible au lieu de passer pour un detail.
+- Une propriete qu'on **deduit** (« le proprietaire contourne la RLS, donc ca doit passer ») se
+  mesure. « Sans doute » n'est pas une verification.
+- Ce qui vaut pour une table vaut pour le schema : si la plateforme ajoute quelque chose a une
+  table, elle l'ajoute probablement a toutes. On mesure l'ecart **systemique**, pas le cas isole.
+
+### UN PERIMETRE QU'ON EXCLUT D'UN DURCISSEMENT DOIT ETRE NOMME, DATE, ET ROUVERT
+
+**Un durcissement partiel est legitime. Une exclusion sans date de reexamen devient une couverture :
+la ligne rassure au lieu d'alerter.**
+
+La liste blanche du 12/09/2026 a borne son perimetre et l'a ecrit noir sur blanc :
+« **EXECUTE intact, 289 fonctions** ». C'etait honnete — la borne etait nommee.
+
+Ce qui a manque, c'est la **reprise**. Un mois plus tard, personne n'etait revenu sur la phrase. Le
+13/09, la mesure a trouve derriere elle `api_usage_log_ensure_partition` : `SECURITY DEFINER`, corps
+faisant `CREATE TABLE`, **executable par `anon`** — prouve de l'exterieur avec la cle anon publique,
+HTTP 204. N'importe qui pouvait creer une table par date, sans limite.
+
+Le raisonnement de l'exclusion tenait tant que les fonctions n'etaient qu'un moyen d'acces aux
+tables. Mais **une fonction `SECURITY DEFINER` n'est pas soumise aux droits de son appelant** : elle
+s'execute avec ceux de son proprietaire. Verrouiller les tables et laisser les fonctions ouvertes,
+c'est fermer la porte et laisser la fenetre.
+
+**La phrase d'exclusion est devenue la preuve qu'on avait regarde.** C'est son danger propre : elle
+se relit comme une decision prise, alors qu'elle enonce une decision remise a plus tard.
+
+**En pratique :**
+- Une exclusion de perimetre s'ecrit avec **trois choses** : ce qui est exclu, **pourquoi**, et
+  **quand on y revient**. Sans la troisieme, ce n'est pas une borne, c'est un report.
+- Le « pourquoi » se formule comme une **hypothese refutable** — ici : « les fonctions ne sont qu'un
+  moyen d'acces aux tables ». Ecrite ainsi, elle se serait effondree a la premiere relecture.
+- Ce qui est exclu entre dans une liste tenue, au meme titre que les fonctionnalites
+  annoncees-mais-jamais-exercees. Les deux listes ont la meme propriete : **elles ne se voient dans
+  aucun compteur.**
+
+### UN MESSAGE DE COMMIT EST UN RAPPORT, PAS UNE INTENTION
+
+**Il se redige apres avoir verifie ce qu'il rapporte, et se relit depuis `git show`, jamais depuis
+le disque.**
+
+Le 13/09/2026, le commit `8e3b05d` s'intitule « La migration de reparation unique, **et la regle de
+l'ambiance** ». Son corps contient une section `REGLE — CE QUI DEPEND DE L'AMBIANCE...` complete,
+avec ses trois cas et son test. Il n'a touche que deux fichiers SQL. **La regle n'etait dans aucun
+fichier du depot.**
+
+Le python qui l'inserait s'ancrait sur un titre vivant sur `docs/trois-regles-et-journal-9`, branche
+non fusionnee, alors que `db/plpgsql-check` part de `main`. L'assertion a leve. Le fichier n'a pas
+ete ecrit. **Et le commit est parti quand meme, avec son message intact.**
+
+Le message avait ete redige d'apres l'intention — ce que j'allais faire — au lieu du resultat. Rien
+ne signalait l'ecart : `git commit` ne verifie pas que le message correspond au diff. C'est
+`UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE` a l'etage du compte-rendu : l'insertion echoue en
+silence, et le journal du depot devient faux.
+
+Le danger n'est pas le commit rate — c'est qu'il **devient la memoire**. Dans six mois, `git log`
+dira que la regle a ete ecrite ce jour-la. Personne ne rouvrira le fichier pour verifier.
+
+**En pratique :**
+- Le message se redige **apres** le `git add`, en regardant `git diff --cached --stat`. Si le
+  message nomme un fichier absent de cette liste, il ment.
+- La relecture se fait par `git show HEAD:<chemin> | grep ...`, **jamais** en relisant le disque :
+  le disque contient ce qu'on voulait, l'objet git contient ce qu'on a commis.
+- Un script qui ecrit un fichier **leve** en cas d'echec, et on regarde s'il a leve avant de
+  commiter. Une assertion dont on ne lit pas le resultat ne protege personne.
+- Corollaire : un commit qui annonce N changements se verifie par `--stat`, pas par relecture.
+
+### UN DURCISSEMENT DOIT ETRE SUIVI D'UN EXERCICE DE CE QU'IL TOUCHE
+
+**Fermer un acces prouve qu'on a ferme. Il reste a prouver que ce qui devait passer passe encore.**
+
+La fermeture C1 du 09/09/2026 a verrouille `doctor_profiles` : lecture par la vue `public_doctors`,
+ecriture directe revoquee. La recette a verifie que **la lecture** passait bien par la vue. Elle n'a
+jamais verifie que **l'ecriture** existait encore.
+
+Or le declencheur `fn_update_doctor_rating`, qui met a jour la note d'un medecin apres un avis,
+ecrit dans `public_doctors` — la vue. Depuis le 09/09, tout `INSERT` dans `reviews` echoue en
+`55000 cannot update view "public_doctors"`. Le handler de la fonction attrape `undefined_table` et
+`undefined_column` ; **pas** `55000`. Mesure du 13/09 : l'erreur remonte, en statut `published`
+comme en `pending`.
+
+**Quatre jours sans qu'un seul avis puisse etre poste**, et la table `reviews` a 0 ligne — ce qui,
+avant mesure, se lisait comme « personne n'a encore laisse d'avis ». Le defaut s'est presente comme
+un etat normal. Personne ne l'a vu parce que personne n'a essaye.
+
+Le meme durcissement a pose `SET search_path TO 'public','pg_temp'` sur six fonctions qui appellent
+pgcrypto sans qualifier le schema (`42883`, cf. `CE QUI DEPEND DE L'AMBIANCE...`). Deux
+fonctionnalites cassees par la meme fermeture, aucune des deux detectee : **un durcissement casse
+par le cote de l'ECRITURE, et une recette regarde par le cote de la LECTURE.**
+
+**En pratique :**
+- Tout `REVOKE`, toute RLS posee, tout `search_path` resserre s'accompagne, dans la meme PR, de
+  **l'exercice du chemin d'ecriture** correspondant — pas de sa relecture, de son exercice : un
+  `INSERT` reel, annule par `ROLLBACK`.
+- La question n'est pas « qui ne peut plus ? » mais « **qui devait pouvoir, et peut-il encore ?** ».
+  On liste les declencheurs et les fonctions `SECURITY DEFINER` qui touchent l'objet durci, et on
+  les lance.
+- Une table a **0 ligne** apres un durcissement est un **soupcon**, jamais une donnee. On distingue
+  « personne n'a ecrit » de « personne ne peut ecrire » par un essai, pas par un raisonnement.
+- `plpgsql_check` fait ce balayage a froid : il se relance apres chaque durcissement, pas une fois.
+
 ### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
 
 Un defaut silencieux ne reste pas a sa place. Il devient la donnee d'entree du suivant, qui n'a aucun
@@ -165,6 +474,27 @@ if (!r.ok) { masquerLeBouton(); return; }          // QUESTION : reponse, on s'a
 
 Et `data` vaut **null** des que `ok` est faux : celui qui ignore `ok` casse visiblement, au lieu de
 continuer sur un mensonge. Normaliser sans cela n'obligerait personne a regarder.
+
+### UNE DUREE DE RUN QUI CHUTE EST UN SIGNAL, PAS UN PROGRES
+
+Un `verification` qui passait 2 a 3 minutes et qui tombe a **1 minute** n'est pas devenu rapide : il
+a **cesse de faire quelque chose**.
+
+Le 13/09/2026, `verifier:toutes` lancait e2e **avant** l'installation de Chromium en CI. Les
+25 tests tombaient en 30 secondes sur une **absence de navigateur**, pas sur une regression. `main`
+est reste rouge de la fusion #108 a la #111 — **quatre fusions et un deploiement sur porte rouge** —
+et personne ne l'a vu, parce que rien ne crie quand un run raccourcit.
+
+**Ce qu'il faut regarder, et que personne ne regardait :** la duree du run, a cote de son resultat.
+Une porte qui disparait laisse une trace dans le temps bien avant d'en laisser une dans le resultat.
+
+Et la lecon qui double celle-ci : **une mesure locale ne mesure pas le meme environnement que la
+CI.** 66/66 en local pendant que la CI rendait 25 rouges, parce que le navigateur existait ici et pas
+la-bas. **C'est la CI qui a raison sur ce que la CI fait** — une porte verte chez soi ne dit rien de
+la porte de la CI.
+
+C'est le defaut exact de la regle « ce qui controle doit etre controle », ecrite le jour meme : une
+porte a disparu en silence le jour ou on a ecrit qu'une porte ne doit pas disparaitre en silence.
 
 ### SUPPRIMER EST L'OPERATION DANGEREUSE DE CE DEPOT
 

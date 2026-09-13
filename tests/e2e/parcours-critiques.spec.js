@@ -42,16 +42,34 @@ function collecteErreurs(page) {
 // ---------------------------------------------------------------------
 // 1. Page d'accueil — la vitrine doit s'afficher
 // ---------------------------------------------------------------------
-test("l'accueil se charge et affiche le hero", async ({ page }) => {
+// [INVERSION 2026-09-13] Ce test affirmait « le site ne doit pas servir la page
+// Coming Soon par accident » sur `/index.html`. C'est exactement l'hypothese
+// qu'on vient d'inverser : `index.html` a la racine EST desormais la page
+// fermee, DELIBEREMENT, et l'application vit dans `accueil-public.html`.
+//
+// Avant, l'app etait a la racine et un geste la fermait — donc tout hebergeur
+// qui ne lance pas `scripts/porte.mjs` servait l'app ouverte sur la base de
+// production. C'est arrive sur Netlify. Le test gardait la mauvaise moitie.
+//
+// Il garde desormais les DEUX : la porte est bien fermee a la racine, et
+// l'application se charge toujours la ou elle vit.
+test("la racine sert la page fermee, deliberement", async ({ page }) => {
   const erreurs = collecteErreurs(page);
   await page.goto(`${BASE}/index.html`, { waitUntil: 'domcontentloaded' });
 
   await expect(page).toHaveTitle(/Tabibi/i);
-  await expect(page.locator('h1').first()).toBeVisible();
+  expect(await page.title()).toMatch(/bientôt disponible/i);
 
-  // Le site ne doit pas servir la page Coming Soon par accident
-  const titre = await page.title();
-  expect(titre).not.toMatch(/bientôt disponible/i);
+  expect(erreurs, `Erreurs console:\n${erreurs.join('\n')}`).toHaveLength(0);
+});
+
+test("l'application se charge et affiche le hero", async ({ page }) => {
+  const erreurs = collecteErreurs(page);
+  await page.goto(`${BASE}/accueil-public.html`, { waitUntil: 'domcontentloaded' });
+
+  await expect(page).toHaveTitle(/Tabibi/i);
+  await expect(page.locator('h1').first()).toBeVisible();
+  expect(await page.title()).not.toMatch(/bientôt disponible/i);
 
   expect(erreurs, `Erreurs console:\n${erreurs.join('\n')}`).toHaveLength(0);
 });

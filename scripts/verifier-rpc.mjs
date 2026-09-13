@@ -110,6 +110,37 @@ async function pgProc() {
   return rows.map((x) => x.proname);
 }
 
+// ---------------------------------------------------------------------
+// LE RATCHET DE MIGRATION VERS LA PASSERELLE
+// ---------------------------------------------------------------------
+// Une reponse PostgREST a DEUX moities — `error` (transport) et `data.error`
+// (metier) — et lire la mauvaise fait annoncer un succes sur un refus. Le
+// 13/09/2026, deux ecrans le faisaient : signup.html sur
+// `accept_cabinet_invitation` (compte cree dans un etat faux) et
+// admin-doctor-validation.html sur `admin_validate_doctor` (e-mail de
+// validation envoye pour rien). Les deux sont corriges, A LA MAIN.
+//
+// `window.tabibiRpc()` (js/tabibi-rpc.js) normalise les deux moities en
+// { ok, data, erreur } avec `data: null` des que `ok` est faux. Il NE LEVE PAS :
+// une passerelle qui leve obligerait chaque site a un try/catch, et un
+// try/catch de plus est un catch silencieux de plus.
+//
+// Ce plafond descend a chaque site migre, et interdit qu'un NOUVEAU site
+// court-circuite la passerelle. Il ne monte jamais.
+const PLAFOND_RPC_DIRECT = 60;   // mesure du 13/09/2026, 140 fichiers source
+
+function appelsDirects() {
+  const par = {};
+  for (const f of fichiers()) {
+    if (f === 'js/tabibi-rpc.js') continue;   // la passerelle elle-meme
+    let code = readFileSync(f, 'utf8');
+    code = code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+    const m = code.match(/\.rpc\s*\(/g);
+    if (m) par[f] = m.length;
+  }
+  return par;
+}
+
 const base = process.argv.includes('--base');
 const ecrire = process.argv.includes('--ecrire');
 const appels = appelsDuDepot();
@@ -151,6 +182,21 @@ if (base) {
     console.error('  Soit la fonction existe et la reference est perimee (--base --ecrire),');
     console.error('  soit elle n\'existe pas : le front appelle dans le vide et le catch avale.');
   }
+  const directs = appelsDirects();
+  const totalDirects = Object.values(directs).reduce((a, b) => a + b, 0);
+  console.log(`  ${totalDirects} appel(s) .rpc( direct(s), hors passerelle · plafond ${PLAFOND_RPC_DIRECT}`);
+  if (totalDirects > PLAFOND_RPC_DIRECT) {
+    echec = true;
+    console.error(ROUGE(`\n\u2717 ${totalDirects} > ${PLAFOND_RPC_DIRECT} : un site court-circuite window.tabibiRpc().`));
+    console.error('  Une reponse PostgREST a deux moities. Lire la mauvaise fait annoncer un succes');
+    console.error('  sur un refus — c\'est arrive deux fois le 13/09/2026. Passer par la passerelle :');
+    console.error("    const r = await tabibiRpc('nom', args); if (!r.ok) { ...; return; }");
+    const pires = Object.entries(directs).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    for (const [f, n] of pires) console.error(`    ${String(n).padStart(3)}  ${f}`);
+  } else if (totalDirects < PLAFOND_RPC_DIRECT) {
+    console.log(`  \u2193 ${PLAFOND_RPC_DIRECT - totalDirects} de moins que le plafond : abaissez-le a ${totalDirects}.`);
+  }
+
   if (inutiles.length) {
     console.log(`\n↓ ${inutiles.length} entree(s) de la reference que plus personne n'appelle : ${inutiles.join(', ')}`);
   }

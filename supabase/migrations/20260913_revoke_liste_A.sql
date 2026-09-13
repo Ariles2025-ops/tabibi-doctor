@@ -1,0 +1,130 @@
+-- =====================================================================
+-- 20260913_revoke_liste_A.sql
+-- Liste A : les deux SECURITY DEFINER qui ECRIVENT sans aucune garde
+-- =====================================================================
+-- ETAT : APPLIQUEE le 13/09/2026. Lancee par le stratege, telle quelle.
+--
+-- VERIFICATION EN BASE, relevee apres application :
+--   dawini_expire_old      anon=false  authenticated=TRUE   postgres=true
+--   fn_check_rate_limit    anon=false  authenticated=false  postgres=true
+--
+-- CONTRE-EPREUVE DE L'EXTERIEUR, cle anon publique, les deux sondes ci-dessous :
+--   POST /rest/v1/rpc/fn_check_rate_limit  -> 401  42501 permission denied for function
+--   POST /rest/v1/rpc/dawini_expire_old    -> 401  42501 permission denied for function
+--
+-- ⚠️  LA NON-REGRESSION AUTHENTIFIEE RESTE A FAIRE. Ouvrir `dawini.html` avec
+-- une session et verifier qu'une demande `pending` dont `expires_at` est passe
+-- bascule toujours en `expired`. Personne ne l'a faite : elle est NOTEE, pas
+-- deduite. C'est le seul risque que ce fichier porte encore.
+--
+-- Origine : mesure du 13/09/2026 sur les 57 fonctions SECURITY DEFINER
+-- executables par `anon` (docs/CARTE_SECURITY_DEFINER_ANONYMES.md). Deux
+-- ecrivent sans lire aucune garde, ni directement ni par indirection.
+--
+-- ---------------------------------------------------------------------
+-- POURQUOI LES DEUX REVOKE NE SONT PAS SYMETRIQUES
+-- ---------------------------------------------------------------------
+-- Ils ne ferment pas la meme chose parce qu'ils ne risquent pas la meme chose.
+--
+-- public.fn_check_rate_limit(p_key text, p_max_attempts int, p_window_seconds int)
+--   -> REVOKE a PUBLIC, anon ET authenticated. Ferme completement.
+--
+--   Sa cle est choisie par l'appelant : la signature est `p_key text`, sans
+--   aucune derivation depuis la session. Lu dans le corps, deux consequences :
+--     1. appeler en boucle avec la cle d'un TIERS pousse `attempts` au-dela du
+--        plafond et pose `blocked_until` -> blocage cible d'un autre
+--        utilisateur, jusqu'a une heure ;
+--     2. toute chaine est acceptee comme cle -> croissance non bornee de
+--        `public.rate_limits`.
+--
+--   Et personne ne l'appelle : ZERO reference dans le front, hors types generes
+--   et sorties de build. La fermer ne casse rien.
+--
+-- public.dawini_expire_old()
+--   -> REVOKE a PUBLIC et anon SEULEMENT. `authenticated` garde l'EXECUTE.
+--
+--   Son corps est un UPDATE dont le WHERE est TEMPOREL et non controle par
+--   l'appelant :
+--     UPDATE public.dawini_requests SET status='expired'
+--      WHERE status='pending' AND expires_at <= now();
+--   Un appelant ne peut donc rien expirer qui ne soit deja expire. Le risque
+--   n'est pas dans ce qu'elle fait, il est dans QUI peut la declencher.
+--
+--   ET ELLE EST APPELEE PAR LE FRONT, a `js/tabibi-dawini.js:443`, depuis
+--   `dawini.html:800` et `dawini-pharmacie.html:366`. La retirer a
+--   `authenticated` casserait l'expiration des demandes Dawini.
+--
+-- ---------------------------------------------------------------------
+-- VERIFIE AVANT D'ECRIRE : aucun chemin ANONYME n'atteint dawini_expire_old
+-- ---------------------------------------------------------------------
+-- Les deux ecrans qui l'appellent redirigent vers `login.html` avant l'appel :
+--   dawini.html:788-796           getSession() puis window.location = 'login.html?next=...'
+--   dawini-pharmacie.html:348-354 idem
+-- Le mode demo (`?demo=1`, cle localStorage) court-circuite bien cette garde,
+-- MAIS il remplace l'objet entier : `js/tabibi-dawini-demo.js:198` definit
+--   expireOld: function () { return Promise.resolve({ ok: true }); }
+-- soit un bouchon sans appel reseau. Aucun chemin anonyme, donc.
+--
+-- ---------------------------------------------------------------------
+-- UNE CORRECTION QUE JE DOIS A CE FICHIER
+-- ---------------------------------------------------------------------
+-- Dans la carte, j'avais ecrit que l'appeler tot « ne fait rien de plus que le
+-- pg_cron ». C'EST FAUX : il n'y a PAS de tache pg_cron pour l'expiration
+-- Dawini. La mesure du 13/09 a rendu deux taches, `appointment-reminders` et
+-- `cleanup_old_logs`, et aucune ne touche `dawini_requests`. L'expiration ne
+-- vit QUE dans cet appel du front.
+--
+-- LIGNE OUVERTE, a trancher : soit une tache pg_cron porte l'expiration, soit
+-- on assume que c'est le front qui la porte -- mais alors le catch de
+-- `js/tabibi-dawini.js:443` doit cesser de mentir. Il rend `{ ok: true }` quoi
+-- qu'il arrive : un des 226 silencieux inventories dans
+-- docs/FICHE_CATCH_SILENCIEUX.md, et un qui declare un succes sur un echec.
+--
+-- =====================================================================
+-- CE QU'IL FAUT FAIRE
+-- =====================================================================
+
+-- 1. Fermeture complete : personne ne l'appelle, et elle est detournable.
+REVOKE EXECUTE ON FUNCTION public.fn_check_rate_limit(text, integer, integer)
+  FROM PUBLIC, anon, authenticated;
+
+-- 2. Fermeture au seul visiteur anonyme : le front authentifie en a besoin.
+REVOKE EXECUTE ON FUNCTION public.dawini_expire_old()
+  FROM PUBLIC, anon;
+
+-- =====================================================================
+-- VERIFICATION — a lancer APRES, dans un passage separe
+-- =====================================================================
+-- Attendu, exactement :
+--   fn_check_rate_limit  anon=false  authenticated=false
+--   dawini_expire_old    anon=false  authenticated=TRUE
+--
+-- select p.proname,
+--        pg_get_function_identity_arguments(p.oid)      as args,
+--        has_function_privilege('anon',          p.oid, 'EXECUTE') as anon,
+--        has_function_privilege('authenticated', p.oid, 'EXECUTE') as authenticated,
+--        has_function_privilege('postgres',      p.oid, 'EXECUTE') as postgres
+--   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--  where n.nspname = 'public'
+--    and p.proname in ('fn_check_rate_limit','dawini_expire_old')
+--  order by 1;
+--
+-- CONTRE-EPREUVE DE L'EXTERIEUR, avec la cle anon publique. Attendu : 401 et
+-- `42501 permission denied for function` sur les deux.
+--   POST /rest/v1/rpc/fn_check_rate_limit {"p_key":"sonde","p_max_attempts":1,"p_window_seconds":60}
+--   POST /rest/v1/rpc/dawini_expire_old   {}
+--
+-- ET LA NON-REGRESSION, qui est le vrai risque de ce fichier : ouvrir
+-- `dawini.html` AUTHENTIFIE et verifier que l'expiration passe toujours —
+-- console sans `42501`, et une demande `pending` dont `expires_at` est passe
+-- bascule bien en `expired`.
+--
+-- =====================================================================
+-- RETOUR ARRIERE
+-- =====================================================================
+-- GRANT EXECUTE ON FUNCTION public.fn_check_rate_limit(text, integer, integer)
+--   TO anon, authenticated;
+-- GRANT EXECUTE ON FUNCTION public.dawini_expire_old() TO anon;
+--
+-- Ce que vous reouvrez en le faisant : le blocage cible d'un utilisateur tiers
+-- par sa cle de limitation, et la croissance non bornee de `rate_limits`.

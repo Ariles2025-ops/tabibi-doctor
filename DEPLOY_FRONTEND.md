@@ -24,6 +24,17 @@
 > Depuis ce jour, `v2/`, `src/` et les configurations d'outillage sont en `export-ignore` :
 > ils ne partent dans aucun des deux chemins.
 
+> **La porte est l'ETAT DU DEPOT depuis le 13/09/2026.** `index.html` a la racine **EST** la page
+> « Bientot disponible » ; l'application vit dans `accueil-public.html`. Consequence pour le
+> developpement local : **ouvrir `index.html` sert la page fermee**. Pour travailler sur
+> l'application, ouvrir **`accueil-public.html` directement**. Rien d'autre a faire, aucun drapeau,
+> aucune variable.
+>
+> Pourquoi cette inversion : avant, l'app etait a la racine et un geste la fermait — donc tout
+> hebergeur qui ne lance pas `scripts/porte.mjs` servait l'app ouverte. C'est ce qui s'est passe sur
+> Netlify (`netlify.toml:6`, `publish = "."`, sans `command`). Desormais, **oublier le geste ferme
+> la porte.** La garde `npm run verifier:porte` echoue si `index.html` n'est plus la page fermee.
+
 > **Etape 0 obligatoire, avant le build** — l'enum des statuts de rendez-vous :
 > `SUPABASE_ACCESS_TOKEN=$(security find-generic-password -s "Supabase CLI" -w) node scripts/verifier-statuts.mjs --base`
 > Si elle echoue, le deploiement ne part pas. Detail et raison dans
