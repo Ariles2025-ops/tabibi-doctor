@@ -357,10 +357,10 @@ async function fetchTakenSlots(doctorId, dateIso){
     if (!Array.isArray(rows)) return _bookedSlotsCache[cacheKey];
     const taken = rows
       .filter(r => window.tabibiStatutRdv.decrire(r.status).cle !== 'cancelled')
-      .map(r => {
-        const d = new Date(r.scheduled_at);
-        return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
-      });
+      // [13/09/2026] Lisait l'heure du NAVIGATEUR : depuis Paris, un creneau
+      // occupe a 09:00 heure cabinet bloquait 10:00 dans la grille et laissait
+      // 09:00 libre. Jumeau du defaut corrige dans js/home-app.js:331.
+      .map(r => window.tabibiTemps.heureDe(r.scheduled_at));
     _bookedSlotsCache[cacheKey] = taken;
     return taken;
   } catch(e) {
@@ -576,7 +576,8 @@ async function renderFavs(){
 function renderOverview(){
   try {
     const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
-    const h=new Date().getHours();
+    // L'heure du CABINET, pour rester coherent avec les rendez-vous affiches.
+  const h=parseInt(window.tabibiTemps.heureDe(new Date()).slice(0,2), 10);
     const $=(id)=>document.getElementById(id);
     const set=(id,v,prop)=>{const el=$(id);if(el){if(prop==='html')el.innerHTML=v;else el.textContent=v;}};
     set("greet", h<12?'Bonjour <i class="fa fa-sun" style="color:#fbbf24"></i>':h<18?'Bon après-midi <i class="fa fa-cloud-sun" style="color:#fbbf24"></i>':'Bonsoir <i class="fa fa-moon"></i>', 'html');

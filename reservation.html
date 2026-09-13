@@ -288,12 +288,9 @@ function _isEn(){
 function _dateLocale(){ return _isEn() ? 'en-GB' : 'fr-FR'; }
 function _isoDay(d){ return _DF_ALGIERS.format(d); }
 function _todayIso(){ return _isoDay(new Date()); }
-function _addDaysIso(iso, n){
-  var p = iso.split('-');
-  var d = new Date(parseInt(p[0],10), parseInt(p[1],10)-1, parseInt(p[2],10), 12, 0, 0);
-  d.setDate(d.getDate() + n);
-  return _isoDay(d);
-}
+// [13/09/2026] L'ancre a 12:00 LOCALE contournait le rollover sans regler le
+// fond. L'arithmetique se fait sur le JOUR CALENDAIRE (js/tabibi-temps.js).
+function _addDaysIso(iso, n){ return window.tabibiTemps.ajouterJours(iso, n); }
 function _maxIso(){ return _addDaysIso(_todayIso(), 90); }
 function _formatDayFr(iso){
   // 'YYYY-MM-DD' → FR 'mer. 22 mai 2026' | AR 'الأربعاء 22 ماي 2026' (mois maghrébin, chiffres latins)

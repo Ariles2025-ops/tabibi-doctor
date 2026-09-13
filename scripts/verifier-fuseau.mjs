@@ -35,13 +35,29 @@ const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'andro
 // Le plafond est le compte REEL mesure apres correction, jamais releve « en
 // attendant ». Chaque entree est un usage legitime, justifie ici.
 const PLAFOND = {
-  'js/tabibi-temps.js': 2,        // l'utilitaire lui-meme : c'est lui qui convertit
-  'js/tabibi-i18n.js': 2,         // le repli quand tabibiTemps n'est pas charge
-  'admin-api-keys.html': 2,       // statistiques d'usage de cles API, pas des rendez-vous
-  'patient-ordonnances.html': 2,  // dates de validite d'ordonnance
-  'medecin-ordonnance.html': 1,   // date de generation du document
-  'patient-dashboard.html': 1,    // date d'un document ajoute a la main
-  'legal/rgpd-droits.html': 1,    // date dans le nom du fichier d'export
+  // [13/09/2026, revision] L'ancien plafond de 11 melangeait CODE et COMMENTAIRE :
+  // le script ne sautait que les lignes COMMENCANT par // ou *. Il compte
+  // desormais sur du code depouille pour de bon. Chaque entree ci-dessous est du
+  // CODE, verifie ligne par ligne, et aucune ne formate l'instant d'un RDV.
+  //
+  'js/tabibi-temps.js': 2,      // l'utilitaire lui-meme : la Date y est ancree a
+                                // minuit UTC, `toISOString().slice(0,10)` la relit
+                                // sans derive possible.
+  'js/tabibi-i18n.js': 2,       // les deux Intl de REPLI, atteints seulement si
+                                // tabibiTemps n'est pas charge.
+  'reservation.html': 8,        // arithmetique ENTIERE de la grille mensuelle :
+                                // new Date(y, m, 1).getDay() sur un couple annee/
+                                // mois deja fixe. Le point d'entree est correct :
+                                // _todayIso() passe par un formateur en fuseau
+                                // cabinet, et _addDaysIso par tabibiTemps.
+  'admin-api-keys.html': 4,     // fenetre de 30 jours de statistiques d'usage de
+                                // cles API. Aucun rendez-vous.
+  'doctor-analytics.html': 2,   // libelles d'axe (jour de semaine, mois) calcules
+                                // sur un point median deja arrondi.
+  'patient-ordonnances.html': 2, // dates de validite d'ordonnance.
+  'patient-dashboard.html': 1,  // date d'un document ajoute a la main.
+  'medecin-ordonnance.html': 1, // date de generation du document.
+  'legal/rgpd-droits.html': 1,  // date dans le nom du fichier d'export.
 };
 
 function fichiers(dir = '.', acc = []) {
@@ -55,12 +71,55 @@ function fichiers(dir = '.', acc = []) {
   return acc;
 }
 
+// ---------------------------------------------------------------------------
+// Un compteur de motifs qui ne distingue pas le CODE du COMMENTAIRE derive :
+// son plafond melange les deux, et un commentaire ajoute le fait monter. Pire,
+// un commentaire QUI DECRIT le defaut le fait ressembler au defaut.
+//
+// Le 13/09/2026, une mesure a la main sur le HTML servi a compte
+// `toISOString().split('T')[0] -> 1` dans doctor-dashboard : c'etait la ligne
+// 1222, un commentaire expliquant pourquoi on ne l'utilise PAS.
+//
+// Une premiere tentative de depouillement, une machine a etats sur le fichier
+// entier, s'est DESYNCHRONISEE : les apostrophes de la prose francaise en HTML
+// (« l'heure », « d'affichage ») ouvraient un etat « chaine » qui ne se refermait
+// jamais, et tout ce qui suivait echappait au comptage. Elle donnait 23 au lieu
+// de 25 sur un fichier ou l'on venait d'ajouter deux commentaires.
+//
+// On ne lit donc que ce qui est EXECUTABLE : le corps des <script> et les
+// attributs on*. La prose HTML ne peut pas contenir de code, ses apostrophes ne
+// nous concernent pas. Dans ce code-la, on retire les commentaires // et /* */,
+// en epargnant les `//` d'URL (precedes de « : »).
+function partiesExecutables(src, estHtml) {
+  if (!estHtml) return src;
+  const morceaux = [];
+  const re = /<script\b[^>]*>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = re.exec(src)) !== null) morceaux.push(m[1]);
+  const attrs = src.match(/\son[a-z]+\s*=\s*"[^"]*"/gi) || [];
+  return morceaux.join('\n') + '\n' + attrs.join('\n');
+}
+
+function sansCommentaires(src, estHtml) {
+  let code = partiesExecutables(src, estHtml);
+  code = code.replace(/\/\*[\s\S]*?\*\//g, (b) => b.replace(/[^\n]/g, ' '));
+  code = code.replace(/(^|[^:])\/\/[^\n]*/g, (t, avant) => avant);
+  return code;
+}
+
 const SIGNATURES = [
   { nom: 'date-utc-affichee',
     // `.slice(0,10)` n'est retenu que sur une expression qui ressemble a une
     // date : sinon la signature ramasse n'importe quelle troncature de chaine.
     re: /toISOString\(\)\s*\.\s*(?:split\(['"]T['"]\)\s*\[\s*0\s*\]|slice\(\s*0\s*,\s*10\s*\))|[A-Za-z_$][\w$]*(?:_at|[Dd]ate|[Ii]so|[Jj]our|scheduled|starts|ends)[\w$]*\s*(?:\|\|\s*["'`]{2}\s*\))?\s*\.slice\(\s*0\s*,\s*10\s*\)/g,
     aide: "jour UTC pris pour un jour cabinet -> window.tabibiTemps.jourDe(instant)" },
+  { nom: 'composantes-locales',
+    // eslint couvre ceci sur js/src/scripts (no-restricted-syntax). Ici on le
+    // fait pour le JS inline des pages, ou il est aveugle. C'est par ce trou
+    // qu'est passe `_tomorrowLocalIso()` de doctor-dashboard, qui pre-remplissait
+    // une indisponibilite avec « demain » dans le fuseau du NAVIGATEUR.
+    re: /\.(?:getFullYear|getMonth|getDate|getDay|getHours|getMinutes)\s*\(/g,
+    aide: "composantes d'horloge locale -> window.tabibiTemps.aujourdhui() / jourDe / heureDe" },
   { nom: 'date-parse-locale',
     re: /new Date\(\s*[^)'"`]*['"`]\s*\+|new Date\(\s*['"`]\d{4}-\d{2}-\d{2}T[^Z'"`]*['"`]\s*\)/g,
     aide: "chaine sans fuseau parsee en LOCAL -> window.tabibiTemps.instantDepuisJourEtHeure(jour, heure)" },
@@ -71,18 +130,16 @@ const parFichier = {};
 for (const f of fichiers()) {
   const src = readFileSync(f, 'utf8');
   let n = 0;
-  // Les lignes de commentaire ne comptent pas : elles DECRIVENT le defaut.
-  const code = src.split('\n').filter((l) => !/^\s*(\*|\/\/)/.test(l)).join('\n');
+  const code = sansCommentaires(src, /\.html$/.test(f));
   for (const s of SIGNATURES) {
     s.re.lastIndex = 0;
     const m = code.match(s.re);
     if (m) n += m.length;
   }
   // 3e signature : Intl.DateTimeFormat sans timeZone dans les 5 lignes suivantes
-  const L = src.split('\n');
+  const L = code.split('\n');
   for (let i = 0; i < L.length; i++) {
     if (!L[i].includes('Intl.DateTimeFormat')) continue;
-    if (/^\s*(\*|\/\/)/.test(L[i])) continue;
     if (!L.slice(i, i + 5).join('\n').includes('timeZone')) n++;
   }
   if (n) { parFichier[f] = n; total += n; }
