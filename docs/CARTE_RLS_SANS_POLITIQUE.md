@@ -9,11 +9,40 @@ Le schéma `public` compte **55 tables, 55 avec RLS active, 0 sans**. Ce n'est p
 `CREATE TABLE public.temoin (id int)` **nu**, relu dans la même transaction annulée, sort déjà en
 `relrowsecurity = true`.
 
-Les 7 déclencheurs d'événement du projet concernent `pg_cron`, `pg_graphql`, `pg_net` et PostgREST —
-aucun ne mentionne `row level security`. **Toutes les explications au niveau SQL sont éliminées** :
-l'activation a lieu en dessous, dans une bibliothèque préchargée. `supautils` est l'hypothèse — les
-GUC `supautils.*` sont présents, `shared_preload_libraries` ne le nomme pas — et elle reste écrite
-comme hypothèse.
+> **Ce paragraphe était FAUX. Conservé tel quel, corrigé dessous.**
+>
+> Les 7 déclencheurs d'événement du projet concernent `pg_cron`, `pg_graphql`, `pg_net` et
+> PostgREST — aucun ne mentionne `row level security`. **Toutes les explications au niveau SQL
+> sont éliminées** : l'activation a lieu en dessous, dans une bibliothèque préchargée.
+> `supautils` est l'hypothèse — les GUC `supautils.*` sont présents, `shared_preload_libraries`
+> ne le nomme pas — et elle reste écrite comme hypothèse.
+
+**Correction du 13/09/2026.** L'activation vient bien d'un déclencheur d'événement, au niveau SQL.
+Mesure directe sur `pg_event_trigger`, rapportée par le stratège :
+
+| | |
+|---|---|
+| `ensure_rls` | `ddl_command_end`, actif, tags `CREATE TABLE`, `CREATE TABLE AS`, `SELECT INTO` |
+| → `public.rls_auto_enable()` | `SECURITY DEFINER`, propriétaire `postgres`, `search_path pg_catalog` |
+
+Le corps boucle sur `pg_event_trigger_ddl_commands()` et, pour tout objet créé dans `public` :
+
+```sql
+EXECUTE format('alter table if exists %s enable row level security', cmd.object_identity);
+```
+
+**D'où venait l'erreur.** Le diagnostic rendait 19 lignes ; seule une partie a été lue, et
+l'absence d'une ligne qui n'avait pas été cherchée jusqu'au bout a été rapportée comme un fait.
+**Conclure sur ce qu'on a vu, pas sur ce qu'il y avait** — même classe d'erreur que le `sha256`
+pris pour un MD5 et que le `mailto:` réécrit par Cloudflare. La bonne piste avait été donnée :
+« un `ENABLE` qu'aucun fichier ne contient vient presque toujours d'un déclencheur d'événement
+sur `ddl_command_end` ».
+
+**Ce que ça ne change pas** : la décision C tient, la politique reste démontrée par E1/E2.
+**Ce que ça ouvre** : `ensure_rls` est absent du dépôt et de l'historique git — installé hors
+fichier. Il met 55 tables sur 55 sous RLS, donc il est probablement utile ; mais **un mécanisme
+que personne n'a écrit dans le dépôt doit y être écrit, ou retiré.** À trancher, pas maintenant —
+la ligne est ouverte dans `docs/CARTE_SECURITY_DEFINER_ANONYMES.md`.
 
 ## Les 19 en refus par défaut — ce n'est pas un trou
 
