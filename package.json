@@ -23,6 +23,7 @@
     "verifier:cles": "node scripts/verifier-cles.mjs",
     "verifier:c1": "node scripts/verifier-c1.mjs",
     "verifier:statuts": "node scripts/verifier-statuts.mjs",
+    "verifier:panneaux": "node scripts/verifier-panneaux.mjs",
     "porte:fermee": "node scripts/porte.mjs fermee",
     "porte:ouverte": "node scripts/porte.mjs ouverte",
     "build:porte-fermee": "npm run build && npm run porte:fermee",

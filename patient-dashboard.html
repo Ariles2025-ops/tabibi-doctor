@@ -111,63 +111,11 @@
 
 <main id="main" class="page" role="main">
 
-  <!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Panel #tab-book conservé en DOM
-       pour rollback rapide mais inerte : (a) tab button redirige vers index.html,
-       (b) classe 'active' déplacée sur #tab-overview, (c) openBooking() en bas
-       du fichier ne déclenche plus #book-modal. Ne PAS supprimer ce bloc — il
-       sera retiré définitivement après validation E2E Phase 5.3. -->
-  <div id="tab-book" class="tab-panel">
-    <div style="padding:14px 16px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff">
-      <div style="font-size:18px;font-weight:800;margin-bottom:4px">Trouvez votre médecin <i class="fa fa-stethoscope"></i></div>
-      <div style="font-size:12px;opacity:.85;margin-bottom:12px"><span id="dash-doc-count">...</span> médecins certifiés disponibles en Algérie</div>
-      <div style="position:relative">
-        <i class="fa fa-search" style="position:absolute;top:50%;left:14px;transform:translateY(-50%);color:var(--text4)"></i>
-        <input id="docSearch" oninput="docPage=1;clearTimeout(window._docSearchT);window._docSearchT=setTimeout(renderDocs,150);" type="search" placeholder="Spécialité, nom, ville..." data-i18n-placeholder="search_doctor_ph" style="width:100%;padding:12px 14px 12px 40px;border:none;border-radius:12px;font-size:14px;outline:none" aria-label="Spécialité, nom, ville...">
-      </div>
-    </div>
-    <div style="padding:12px 16px;display:flex;gap:8px;overflow-x:auto;background:#fff;border-bottom:1px solid var(--border);scrollbar-width:none">
-      <button class="chip active" data-spec="all" onclick="filterSpec('all',this)"><i class="fa fa-list" style="margin-right:6px"></i>Toutes</button>
-      <button class="chip" data-spec="Médecine Gén." onclick="filterSpec('Médecine Gén.',this)"><i class="fa fa-stethoscope" style="margin-right:6px"></i>Généraliste</button>
-      <button class="chip" data-spec="Cardiologie" onclick="filterSpec('Cardiologie',this)"><i class="fa fa-heart-pulse" style="margin-right:6px"></i>Cardiologie</button>
-      <button class="chip" data-spec="Dermatologie" onclick="filterSpec('Dermatologie',this)"><i class="fa fa-hand-dots" style="margin-right:6px"></i>Dermatologie</button>
-      <button class="chip" data-spec="Pédiatrie" onclick="filterSpec('Pédiatrie',this)"><i class="fa fa-baby" style="margin-right:6px"></i>Pédiatrie</button>
-      <button class="chip" data-spec="Gynécologie" onclick="filterSpec('Gynécologie',this)"><i class="fa fa-venus" style="margin-right:6px"></i>Gynécologie</button>
-      <button class="chip" data-spec="Ophtalmologie" onclick="filterSpec('Ophtalmologie',this)"><i class="fa fa-eye" style="margin-right:6px"></i>Ophtalmologie</button>
-      <button class="chip" data-spec="ORL" onclick="filterSpec('ORL',this)"><i class="fa fa-ear-listen" style="margin-right:6px"></i>ORL</button>
-      <button class="chip" data-spec="Dentiste" onclick="filterSpec('Dentiste',this)"><i class="fa fa-tooth" style="margin-right:6px"></i>Dentiste</button>
-      <button class="chip" data-spec="Neurologie" onclick="filterSpec('Neurologie',this)"><i class="fa fa-brain" style="margin-right:6px"></i>Neurologie</button>
-      <button class="chip" data-spec="Psychiatrie" onclick="filterSpec('Psychiatrie',this)"><i class="fa fa-head-side-virus" style="margin-right:6px"></i>Psychiatrie</button>
-      <button class="chip" data-spec="Orthopédie" onclick="filterSpec('Orthopédie',this)"><i class="fa fa-bone" style="margin-right:6px"></i>Orthopédie</button>
-      <button class="chip" data-spec="Radiologie" onclick="filterSpec('Radiologie',this)"><i class="fa fa-x-ray" style="margin-right:6px"></i>Radiologie</button>
-      <button class="chip" data-spec="Urologie" onclick="filterSpec('Urologie',this)"><i class="fa fa-droplet" style="margin-right:6px"></i>Urologie</button>
-      <button class="chip" data-spec="Pneumologie" onclick="filterSpec('Pneumologie',this)"><i class="fa fa-lungs" style="margin-right:6px"></i>Pneumologie</button>
-      <button class="chip" data-spec="Rhumatologie" onclick="filterSpec('Rhumatologie',this)"><i class="fa fa-person-cane" style="margin-right:6px"></i>Rhumatologie</button>
-      <button class="chip" data-spec="Endocrinologie" onclick="filterSpec('Endocrinologie',this)"><i class="fa fa-vial" style="margin-right:6px"></i>Endocrinologie</button>
-      <button class="chip" data-spec="Gastro-entérologie" onclick="filterSpec('Gastro-entérologie',this)"><i class="fa fa-pills" style="margin-right:6px"></i>Gastro-entéro.</button>
-      <button class="chip" data-spec="Néphrologie" onclick="filterSpec('Néphrologie',this)"><i class="fa fa-flask" style="margin-right:6px"></i>Néphrologie</button>
-      <button class="chip" data-spec="Kinésithérapie" onclick="filterSpec('Kinésithérapie',this)"><i class="fa fa-dumbbell" style="margin-right:6px"></i>Kiné</button>
-    </div>
-    <div style="padding:14px 16px">
-      <div id="doc-results-count" style="font-size:12px;color:var(--text3);margin-bottom:10px"></div>
-      <div id="doc-results"></div>
-    </div>
-  </div>
 
-  <!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Panel #tab-rdv conservé en DOM
-       pour rollback rapide mais inerte (tab button redirige vers /mes-rdv.html
-       qui est la nouvelle page dédiée Phase 5.2.4). Ne PAS supprimer. -->
-  <div id="tab-rdv" class="tab-panel" style="padding:14px 16px">
-    <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none">
-      <button class="chip active" data-f="all" onclick="filtRdv('all',this)">Tous (<span id="cnt-all">0</span>)</button>
-      <button class="chip" data-f="upcoming" onclick="filtRdv('upcoming',this)">À venir (<span id="cnt-up">0</span>)</button>
-      <button class="chip" data-f="completed" onclick="filtRdv('completed',this)">Terminés (<span id="cnt-c">0</span>)</button>
-      <button class="chip" data-f="cancelled" onclick="filtRdv('cancelled',this)">Annulés (<span id="cnt-x">0</span>)</button>
-    </div>
-    <div id="rdv-list"></div>
-  </div>
 
   <!-- ═════ VUE GÉNÉRALE ═════ -->
-  <!-- [Phase 5.4 fix] active déplacé ici depuis #tab-book (Phase 5.2.5 avait
+  <!-- [Phase 5.4 fix] 'active' porte ici. Il venait de #tab-book, supprime le 13/09/2026
+         (DOM mort). La phase 5.2.5 avait
        déplacé le 'active' sur le BOUTON tab mais oublié le PANEL → écran blanc). -->
   <div id="tab-overview" class="tab-panel active">
     <div style="background:linear-gradient(135deg,#0a4d3e,#0F7560);padding:20px 16px 28px;color:#fff;border-radius:0 0 24px 24px;margin-bottom:14px">
@@ -223,15 +171,6 @@
 
 </main>
 
-<!-- LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Modal #book-modal conservé en DOM
-     pour rollback mais jamais déclenché (openBooking redirige vers
-     doctor-profile.html). Conservera la classe 'hidden' en permanence. -->
-<div class="modal-bg hidden" id="book-modal">
-  <div class="modal-sheet" style="max-height:92dvh">
-    <div class="modal-handle"></div>
-    <div id="book-content"></div>
-  </div>
-</div>
 
 <!-- ═════ MODAL AVIS ═════ -->
 <div class="modal-bg hidden" id="review-modal">
@@ -278,8 +217,6 @@ function sw(tab,btn){
     if(target) target.classList.add("active");
     document.querySelectorAll(".dash-tabs .dash-tab").forEach(b=>b.classList.remove("active"));
     if(btn) btn.classList.add("active");
-    if(tab==="book") { try { renderDocs(); } catch(e){ console.warn('[patient-dashboard] renderDocs:', e); } }
-    if(tab==="rdv") { try { filtRdv("all",document.querySelector("[data-f='all']")); } catch(e){ console.warn('[patient-dashboard] filtRdv:', e); } }
     if(tab==="overview") { try { renderOverview(); } catch(e){ console.warn('[patient-dashboard] renderOverview:', e); } }
     if(tab==="favs") { try { renderFavs(); } catch(e){ console.warn('[patient-dashboard] renderFavs:', e); } }
     if(tab==="docs") { try { filtDoc("all",document.querySelector("[data-doc='all']")); } catch(e){ console.warn('[patient-dashboard] filtDoc:', e); } }
@@ -358,66 +295,6 @@ function markAllRead(){const n=getNotifs().map(x=>({...x,unread:false}));localSt
 /* ─── BOOKING ─── */
 // [Phase 16.5 refactor] renderDocs() : filtre SERVEUR via window.tabibiDoctors.search()
 // → 1 requête paginée par appel (vs full table scan 84 Mo avant)
-async function renderDocs(){
-  const box     = document.getElementById("doc-results");
-  const countEl = document.getElementById("doc-results-count");
-
-  if(!window.tabibiDoctors){
-    if(box) box.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--text3)"><i class="fa fa-spinner fa-spin" style="font-size:36px;color:var(--blue);margin-bottom:14px;display:block"></i><div style="font-weight:600">Chargement...</div></div>';
-    setTimeout(renderDocs, 300);
-    return;
-  }
-
-  if(box) box.innerHTML='<div style="text-align:center;padding:40px 20px;color:var(--text3)"><i class="fa fa-spinner fa-spin" style="font-size:36px;color:var(--blue);margin-bottom:14px;display:block"></i><div style="font-weight:600">Chargement des médecins...</div></div>';
-
-  const q          = (document.getElementById("docSearch")?.value || "").trim();
-  const specFilter = (currentSpec && currentSpec !== "all") ? currentSpec : null;
-
-  const { data, total, error } = await window.tabibiDoctors.search({
-    query:        q || null,
-    specialty_fr: specFilter,
-    page:         docPage,
-    pageSize:     DOC_PER_PAGE
-  });
-
-  if(error){
-    if(box) box.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)">Erreur chargement. Réessayez.</div>';
-    return;
-  }
-
-  if(countEl) countEl.textContent = total.toLocaleString('fr-DZ') + ' médecin' + (total>1?'s':'') + ' disponible' + (total>1?'s':'');
-
-  if(!data.length){
-    if(box) box.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-user-doctor" style="font-size:42px;margin-bottom:12px;display:block;opacity:.4"></i>Aucun médecin trouvé</div>';
-    return;
-  }
-
-  const totalPages = Math.max(1, Math.ceil(total / DOC_PER_PAGE));
-  if(box) box.innerHTML = data.map(d=>`
-    <div class="doc-search-card" onclick="openBooking('${d.id}')">
-      <div class="row1">
-        <div class="ava" style="background:${d.bg};color:${d.tc}">${d.in}</div>
-        <div class="info">
-          <div class="nm">${esc(d.fr)}</div>
-          <div class="sp"><i class="fa fa-stethoscope fa-xs"></i> ${esc(d.spec)}</div>
-          <div class="lc"><i class="fa fa-location-dot fa-xs"></i> ${esc(d.addr||d.ville)}</div>
-        </div>
-        <button type="button" class="btn btn-icon btn-icon-sm" style="background:${isFav(d.id)?'var(--red-l)':'var(--bg2)'};color:${isFav(d.id)?'var(--red)':`+r"'var(--text3)'"+r`}" onclick="event.stopPropagation();toggFav('${d.id}')" aria-label="${isFav(d.id)?'Retirer des favoris':'Ajouter aux favoris'}"><i class="fa fa-heart"></i></button>
-      </div>
-      <div class="row2">
-        <span style="color:#f59e0b">${'★'.repeat(Math.round(d.note))}${'☆'.repeat(5-Math.round(d.note))}</span>
-        <span style="font-weight:700">${d.note}</span>
-        <span style="color:var(--text3)">(${d.avis} avis)</span>
-        ${d.cert?'<span class="badge badge-green" style="font-size:9px">✓ Certifié</span>':''}
-        ${d.urgent?'<span class="badge badge-red" style="font-size:9px"><i class="fa fa-bolt" style="color:#f59e0b"></i> Urgences</span>':''}
-        <span class="badge badge-blue" style="font-size:9px">${(d.langs||[]).join(' · ')}</span>
-      </div>
-      <div class="row3">
-        <div><div class="price">${d.prix.toLocaleString()} <small>DA</small></div><div style="font-size:10px;color:var(--text3)">par consultation</div></div>
-        <button class="btn btn-primary btn-md" onclick="event.stopPropagation();openBooking('${d.id}')"><i class="fa fa-calendar-plus"></i> Réserver</button>
-      </div>
-    </div>`).join("") + buildDocPagination(docPage, totalPages);
-}
 
 // Pagination compacte style Google pour la liste des médecins du dashboard
 function buildDocPagination(cur, total){
@@ -442,14 +319,6 @@ function buildDocPagination(cur, total){
   return parts.join("");
 }
 
-function goDocPage(p){
-  docPage = p;
-  renderDocs();
-  // Scroll vers le haut de la liste
-  const el = document.getElementById("doc-results");
-  if (el && el.scrollIntoView) el.scrollIntoView({behavior:"smooth", block:"start"});
-}
-function filterSpec(spec,btn){currentSpec=spec;docPage=1;document.querySelectorAll("[data-spec]").forEach(b=>b.classList.remove("active"));if(btn) btn.classList.add("active");renderDocs();}
 // LEGACY-BOOKING-NEUTRALIZED phase5.2.5 — Le modal de booking interne au
 // dashboard est désactivé. Tous les clics sur "Réserver" depuis cette page
 // redirigent vers doctor-profile.html?id=... (qui propose le bouton "Prendre
@@ -461,8 +330,6 @@ function openBooking(docId){
   location.href = 'doctor-profile.html?id=' + encodeURIComponent(docId);
 }
 // Ancien corps (gardé pour rollback) :
-// function openBooking(docId){bookingDoc=DOCTORS.find(x=>x.id===docId);if(!bookingDoc){toastM(tabibiT('toast_doctor_not_found',"Médecin introuvable"),"error");return;}bookingDate=null;bookingTime=null;bookingPay="cash";showBookingStep(1);document.getElementById("book-modal").classList.remove("hidden");document.body.style.overflow="hidden";}
-function closeBooking(){document.getElementById("book-modal").classList.add("hidden");document.body.style.overflow="";}
 
 // Cache des slots occupés par (doctorId|date) pour éviter de re-fetch à chaque render
 let _bookedSlotsCache = {};
@@ -723,53 +590,7 @@ async function fetchMyAppointmentsFromSupabase(){
   }
 }
 
-function filtRdv(f,btn){
-  try {
-    document.querySelectorAll("[data-f]").forEach(b=>b.classList.remove("active"));
-    if(btn) btn.classList.add("active");
-    // 1er render avec les données locales (instantané)
-    doFiltRdvRender(f);
-    // Puis on tente de rafraîchir depuis Supabase, et on re-render si on a des nouvelles données
-    fetchMyAppointmentsFromSupabase().then(merged => {
-      if (merged) { try { doFiltRdvRender(f); } catch(e) { console.warn('[patient-dashboard] doFiltRdvRender (post-sync):', e); } }
-    }).catch(e => console.warn('[patient-dashboard] fetchMyAppointmentsFromSupabase:', e));
-  } catch(e) { console.warn('[patient-dashboard] filtRdv:', e); }
-}
 
-function doFiltRdvRender(f){
-  const all=getAllRdvs();
-  const elAll=document.getElementById("cnt-all");if(elAll)elAll.textContent=all.length;
-  var _S=window.tabibiStatutRdv;
-  var _aVenir=function(r){var c=_S.decrire(r.status).cle;return c==="confirmed"||c==="pending";};
-  const elUp=document.getElementById("cnt-up");if(elUp)elUp.textContent=all.filter(_aVenir).length;
-  const elC=document.getElementById("cnt-c");if(elC)elC.textContent=_S.compter(all).consultations;
-  const elX=document.getElementById("cnt-x");if(elX)elX.textContent=all.filter(function(r){return _S.decrire(r.status).cle==="cancelled";}).length;
-  let list=all;
-  if(f==="upcoming") list=all.filter(_aVenir);
-  else if(f!=="all") list=all.filter(r=>r.status===f);
-  // [13/09/2026] STC/STL/cls retires : un statut absent de ces objets rendait
-  // class="badge undefined" et le libelle brut. Source unique : tabibiStatutRdv.
-  if(!list.length){document.getElementById("rdv-list").innerHTML=`<div style="text-align:center;padding:40px 20px"><i class="fa fa-calendar-xmark" style="font-size:48px;color:var(--text4);margin-bottom:14px;display:block"></i><div style="font-weight:700;color:var(--text2);margin-bottom:6px">Aucun rendez-vous</div><div style="font-size:13px;color:var(--text3);margin-bottom:16px">Réservez votre premier RDV maintenant</div><button class="btn btn-primary btn-lg" onclick="location.href='index.html';return false"><i class="fa fa-search"></i> Trouver un médecin</button></div>`;return;}
-  document.getElementById("rdv-list").innerHTML=list.map(r=>{const dt=new Date(r.date);const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"short",day:"numeric",month:"short",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short",year:"numeric"}));return `<div class="rdv-card-full ${window.tabibiStatutRdv.decrire(r.status).cle||''}">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
-        <div style="flex:1"><div style="font-weight:700;font-size:14px">${esc(r.doctorName)}</div><div style="font-size:12px;color:var(--text3)">${esc(r.spec||"")}</div></div>
-        <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:8px">
-        <div><i class="fa fa-calendar fa-xs" style="color:var(--blue)"></i> ${dateLbl}</div>
-        <div><i class="fa fa-clock fa-xs" style="color:var(--blue)"></i> ${r.time}</div>
-      </div>
-      ${r.reason?`<div style="font-size:12px;color:var(--text2);font-style:italic;padding:8px;background:var(--bg2);border-radius:8px;margin-bottom:8px">"${esc(r.reason)}"</div>`:""}
-      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bg2)">
-        <div><div style="font-size:10px;color:var(--text3)">${r.payMethod==="cash"?"<i class='fa fa-money-bill-wave'></i> À payer sur place":"<i class='fa fa-check-circle' style='color:#2E8B57'></i> "+(PAY_LABELS[r.payMethod]||r.payMethod)}</div><div style="font-size:16px;font-weight:800;color:var(--blue)">${(r.prix||0).toLocaleString()} DA</div></div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${(function(c){return c==="confirmed"||c==="pending";})(window.tabibiStatutRdv.decrire(r.status).cle)?`<button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red-l)" onclick="cancelRdv('${r.id}')"><i class="fa fa-xmark"></i> Annuler</button>`:""}
-          ${window.tabibiStatutRdv.decrire(r.status).cle==="completed"&&!r.reviewed?`<button class="btn btn-soft btn-sm" onclick="openReview('${r.id}')"><i class="fa fa-star"></i> Noter</button>`:""}
-          ${window.tabibiStatutRdv.decrire(r.status).cle==="completed"?`<button class="btn btn-ghost btn-sm" onclick="downloadReceipt('${r.id}')"><i class="fa fa-download"></i> Reçu</button>`:""}
-        </div>
-      </div>
-    </div>`;}).join("");
-}
 async function cancelRdv(id){
   if(!confirm("Annuler ce rendez-vous ?")) return;
   const all=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
@@ -799,7 +620,6 @@ async function cancelRdv(id){
     } catch(e) { console.warn('[Tabibi] cancelRdv sync:', e && e.message); }
   }
   toastM(tabibiT('toast_rdv_cancelled',"RDV annulé"),"info");
-  filtRdv(document.querySelector("[data-f].active")?.dataset.f||"all", null);
 }
 
 function downloadReceipt(id){
@@ -965,8 +785,6 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   document.getElementById("menu-name").textContent=u.name||"";
   document.getElementById("menu-email").textContent=u.email||"";
   renderNotifs();
-  filtRdv("all", document.querySelector("[data-f='all']"));
-  renderDocs();
   // [Phase 16.5] loadDoctorsIntoApp() supprimée (full scan).
   // renderDocs() ci-dessus suffit — elle appelle tabibiDoctors.search() directement.
 });
