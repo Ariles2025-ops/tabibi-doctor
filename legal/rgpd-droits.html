@@ -102,15 +102,18 @@
     </div>
     <div class="desc">
       <span class="danger">⚠ Action irréversible.</span>
-      Votre compte, vos RDV, vos données médicales et toutes les données associées seront supprimés
-      définitivement sous <strong>30 jours</strong> (délai légal pour conservation des journaux d'authentification).
-      Les médecins que vous avez consultés conservent les données médicales obligatoires
-      (dossier médical) selon la loi DZ.
+      La suppression de votre compte se fait aujourd'hui par <strong>demande écrite</strong>, traitée
+      manuellement par notre équipe. Écrivez à
+      <a href="mailto:contact@tabibi.doctor?subject=Demande%20de%20suppression%20de%20compte">contact@tabibi.doctor</a>
+      depuis l'adresse de votre compte, ou appelez le <a href="tel:+213777169074">+213&nbsp;777&nbsp;16&nbsp;90&nbsp;74</a>.
+      Nous accusons réception sous <strong>72&nbsp;heures ouvrées</strong> et procédons à la suppression sous
+      <strong>30&nbsp;jours</strong>. Les médecins que vous avez consultés conservent les données médicales dont la
+      loi leur impose la conservation (dossier médical).
     </div>
-    <button class="btn btn-danger" id="btn-delete" disabled>
-      <i class="fa fa-user-slash"></i> Demander la suppression de mon compte
-    </button>
-    <div class="footnote">Vous recevrez un email de confirmation. La suppression effective intervient sous 7 jours ouvrés.</div>
+    <a class="btn btn-danger" href="mailto:contact@tabibi.doctor?subject=Demande%20de%20suppression%20de%20compte&amp;body=Bonjour%2C%0A%0AJe%20demande%20la%20suppression%20de%20mon%20compte%20Tabibi%20et%20des%20donn%C3%A9es%20associ%C3%A9es.%0A%0ANum%C3%A9ro%20de%20t%C3%A9l%C3%A9phone%20du%20compte%20%3A%20%0A%0AMerci%20de%20confirmer%20la%20prise%20en%20compte.">
+      <i class="fa fa-envelope"></i> Écrire pour demander la suppression
+    </a>
+    <div class="footnote">Procédure manuelle assumée : aucune suppression n'est déclenchée par ce site tant que le traitement automatisé n'est pas en place. Votre demande est relevée par une personne.</div>
   </div>
 
   <!-- DROIT A LA PORTABILITE -->
@@ -181,7 +184,7 @@ function waitForSupabase() {
   }
   document.getElementById('btn-export').disabled = false;
   document.getElementById('btn-optout').disabled = false;
-  document.getElementById('btn-delete').disabled = false;
+  // btn-delete retiré : la suppression passe par le lien mailto de la carte, toujours actif.
 })();
 
 document.getElementById('btn-export').addEventListener('click', async function() {
@@ -282,50 +285,37 @@ document.getElementById('btn-optout').addEventListener('click', async function()
   }
 });
 
-document.getElementById('btn-delete').addEventListener('click', async function() {
-  if (!confirm('⚠ SUPPRIMER VOTRE COMPTE ?\n\nCette action est IRREVERSIBLE.\nVos RDV, donnees medicales et historique seront effacees sous 7 jours ouvres.')) return;
-  var confirm2 = prompt('Pour confirmer, tapez exactement: SUPPRIMER');
-  if (confirm2 !== 'SUPPRIMER') { toastM('Annule', 'info'); return; }
-
+document.getElementById('btn-optout').addEventListener('click', async function() {
+  if (!confirm('Désactiver toute prospection commerciale ? Vous continuerez à recevoir les messages opérationnels (rappels RDV, etc.).')) return;
   var sb = window.tabibi && window.tabibi.supabase;
   var session = await sb.auth.getSession();
   var user = session.data.session && session.data.session.user;
   if (!user) return;
 
-  var btn = this;
-  var orig = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi...';
-
-  // Strategie:
-  // 1. Marquer la demande dans une table account_deletion_requests (a creer)
-  // 2. Une Edge Function (cron) traite les demandes apres 7 jours
-  // 3. Notification email DPO en parallele
   try {
-    var r = await sb.from('account_deletion_requests').insert({
+    var r = await sb.from('user_preferences').upsert({
       user_id: user.id,
-      requested_at: new Date().toISOString(),
-      status: 'pending',
-      reason: 'user_request_rgpd'
-    });
+      marketing_email: false,
+      marketing_sms: false,
+      marketing_whatsapp: false,
+      opt_out_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
     if (r.error) {
-      // Table peut ne pas exister encore. Fallback: appel Edge Function
-      console.warn('[delete] insert failed, trying edge fn', r.error);
-      var ef = await sb.functions.invoke('request-account-deletion', { body: { reason: 'user_request_rgpd' } });
-      if (ef.error) throw ef.error;
+      console.warn('[opt-out] preferences error, fallback localStorage', r.error);
+      localStorage.setItem('tabibi_marketing_optout', '1');
     }
-    toastM('Demande enregistree. Vous recevrez un email de confirmation.', 'success');
-    // Purger localement
-    try { localStorage.clear(); } catch (e) {}
-    await sb.auth.signOut();
-    setTimeout(function(){ location.href = 'index.html'; }, 2000);
+    toastM('Prospection commerciale desactivee.', 'success');
   } catch (e) {
-    console.error('[delete] error', e);
-    toastM('Echec. Contactez dpo@tabibi.doctor', 'error');
-    btn.disabled = false;
-    btn.innerHTML = orig;
+    localStorage.setItem('tabibi_marketing_optout', '1');
+    toastM('Prospection commerciale desactivee (local).', 'success');
   }
 });
+
+// [12/09/2026] Suppression de compte : passée à un canal humain (mailto contact@tabibi.doctor + téléphone,
+// voir la carte « Supprimer mon compte »). L'ancien code ci-dessous a été retiré : il insérait dans une table
+// inexistante (account_deletion_requests), appelait une edge non déployée (request-account-deletion), puis
+// affichait « Vous recevrez un email de confirmation » et déconnectait l'utilisateur — alors qu'aucune
+// suppression ni aucun e-mail ne partait. À réintroduire quand la RPC de suppression et son edge existeront.
 </script>
 
 <script src="../assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
