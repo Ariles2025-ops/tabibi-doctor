@@ -99,6 +99,15 @@ jobs:
         # descendre a chaque lot migre, jamais monter.
         run: npm run verifier:rpc-passage
 
+      - name: Le depot ne contient que ce qu'on y a mis expres
+        # Ne le 13/09/2026 d'un `git add -A` lance pour committer trois
+        # fichiers : 23 fichiers etrangers emportes dans une branche de mesure,
+        # dont deux archives de 2,8 Mo et l'etat sqlite local de miniflare.
+        # Le bruit CACHE la revue : 31 fichiers au lieu de 7, et le relecteur
+        # ne lit plus rien. La regle est dans CLAUDE.md (on ajoute PAR CHEMIN) ;
+        # cette porte n'est que le filet.
+        run: npm run verifier:proprete
+
       - name: Une page qui appelle la passerelle la charge
         # Le defaut est TRANSITIF, et c'est ce qui le rend invisible :
         # dawini-pharmacie.html -> js/tabibi-dawini.js -> window.tabibiRpc.

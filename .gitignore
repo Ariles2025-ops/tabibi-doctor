@@ -123,3 +123,14 @@ index.html.avant-extraction
 .claude/RETOUR.md
 .claude/.pont_vu
 .claude/pont-attendre.sh
+
+# --- Repertoire de travail, JAMAIS versionne ---------------------------
+# Ajoute le 13/09/2026 apres un `git add -A` qui a emporte 23 fichiers
+# etrangers dans une branche de mesure : etat local de wrangler/miniflare,
+# corbeille de travail (dont deux archives de 2,8 Mo), et les livraisons
+# deposees par l'app Claude dans le dossier du projet.
+# La regle qui va avec est dans CLAUDE.md : on ajoute PAR CHEMIN, jamais
+# `git add -A` ni `git add .`. Le .gitignore est le filet, pas la regle.
+.wrangler/
+_to_delete/
+Claude outputs/

@@ -36,6 +36,7 @@ const PORTES = [
   ['rpc',      'npm',  ['run', '--silent', 'verifier:rpc']],
   ['passage',  'npm',  ['run', '--silent', 'verifier:rpc-passage']],
   ['passerelle','npm', ['run', '--silent', 'verifier:passerelle']],
+  ['proprete', 'npm',  ['run', '--silent', 'verifier:proprete']],
   ['catch',    'npm',  ['run', '--silent', 'verifier:catch']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
@@ -54,7 +55,7 @@ const PORTES = [
 const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
-  'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle',
+  'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
   'verifier:catch', 'build', 'test:e2e',
 ]);
 
