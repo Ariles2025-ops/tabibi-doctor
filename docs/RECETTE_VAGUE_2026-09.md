@@ -13,6 +13,61 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### SUPPRIMER EST L'OPERATION DANGEREUSE DE CE DEPOT
+
+Pas modifier. **Supprimer.** Le 13/09/2026, deux regressions sont parties en production dans la
+meme journee, et **les deux sont nees d'une suppression** :
+
+| Ce qui a ete supprime | Ce qui est reste derriere | Consequence |
+|---|---|---|
+| la variable `dt` d'une boucle refactoree | `${dt.getDate()}` dans le gabarit, deux lignes plus bas | `ReferenceError`, grille d'agenda **VIDE** en production |
+| la fonction `filtRdv` avec son panneau mort | `filtRdv(...)` a la fin de `submitReview()` | `ReferenceError` sur « Publier mon avis » |
+
+**Pourquoi ce depot y est particulierement expose.** La moitie des appels vivent dans des attributs
+`onclick`, a l'interieur de gabarits `` `...` `` construits en JavaScript. Ils sont invisibles a
+eslint, invisibles a l'analyse statique, et ne s'executent que si l'utilisateur clique — donc
+invisibles aux tests qui se contentent de charger la page.
+
+**La regle.** Apres toute suppression d'une fonction ou d'une variable, chercher son nom dans
+**TOUT le depot**, attributs `on*` compris, et **prouver zero appelant AVANT de committer**.
+
+```bash
+grep -rn "\bnomSupprime\b" . --include="*.html" --include="*.js" \
+  | grep -vE "node_modules|^\./(dist|dist-web|www|ios|android)/"
+```
+
+Chaque occurrence restante se qualifie a la main : definition, appel, commentaire, ou copie de
+build. **Zero appel, ou on ne commite pas.**
+
+**Pas un outil d'atteignabilite.** Une recherche par NOM. L'analyse d'atteignabilite tentee le
+13/09 a classe `toggleMenu()` et `refreshOverview()` comme morts alors qu'ils sont vivants : elle ne
+voit pas les `onclick` ecrits dans des gabarits. Deux faux positifs sur des fonctions vivantes
+suffisent a rendre un outil dangereux. Le grep, lui, ne se trompe jamais sur ce qu'il a vu — il
+demande seulement qu'on lise ses resultats.
+
+Et le corollaire, qui a manque les deux fois : **exercer l'ecran apres la suppression**, pas
+seulement le charger. Voir la regle suivante.
+
+### Un `catch` sur une ECRITURE ne peut jamais etre muet
+
+Il signale a l'utilisateur, il rend l'erreur a l'appelant, ou il releve. **Jamais il n'avale.**
+
+Sans quoi **l'ecran dit oui pendant que la base dit non, et personne ne le sait.** C'est la faute la
+plus grave de la famille des defauts qui se presentent comme un etat normal — badge vert par defaut,
+`|| 'Pending'`, bouton qui annonce sans agir. Les autres laissent au moins une trace a l'ecran :
+celle-ci n'en laisse aucune. Le patient croit son rendez-vous pris ; il ne l'est pas.
+
+**Un commentaire n'est pas un signalement.** `/* tracage non bloquant */` explique une intention ;
+il ne dit rien a l'utilisateur, ni au journal, ni a l'appelant.
+
+Mesure du 13/09/2026 : 465 blocs `catch`, **226 n'ecrivent rien**. Sur le chemin d'ecriture, apres
+tri fin, **onze**, dont cinq rendent l'erreur a un appelant qui l'affiche. **Trois restent vraiment
+muets**, et deux d'entre eux appellent des RPC qui n'existent pas — ils echouent donc TOUJOURS, en
+silence, depuis toujours. Detail et verdict : `docs/FICHE_CATCH_SILENCIEUX.md`.
+
+Garde : `npm run verifier:catch`, qui ne couvre QUE le chemin d'ecriture. On ne met pas 226 lignes
+sous un chiffre ; on garde ce qui peut mentir sur une donnee.
+
 ### Regle premiere — UNE PAGE QUI CHARGE N'EST PAS UNE PAGE QUI MARCHE
 
 Toute preuve d'ecran doit **EXERCER** l'ecran : ouvrir l'onglet, declencher le rendu, **compter ce
@@ -206,6 +261,7 @@ n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 | 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
 | 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
 | 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
+| 6 ter | `npm run verifier:catch` | un `catch` muet sur un chemin d'ECRITURE | le compte depasse le plafond |
 | 6 bis | `npm run verifier:fuseau` | une lecture d'horloge locale sur une date de rendez-vous | le compte depasse le plafond |
 | 6 | `npm run verifier:statuts` | un statut de rendez-vous declare d'un cote et pas de l'autre | un ecart, dans un sens ou l'autre |
 | 7 | `npm run build` puis `npm run test:e2e` | les parcours critiques, sources et sortie de build | un test rouge |

@@ -92,6 +92,11 @@ jobs:
         # des pages HTML, ou vivaient 105 des 134 lectures d'horloge du 13/09.
         run: npm run verifier:fuseau
 
+      - name: Aucun catch muet sur un chemin d'ecriture
+        # L'ecran dirait oui pendant que la base dit non. Ne garde QUE les
+        # ecritures : l'inventaire complet est dans docs/FICHE_CATCH_SILENCIEUX.md.
+        run: npm run verifier:catch
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 
