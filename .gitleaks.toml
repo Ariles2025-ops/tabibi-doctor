@@ -20,4 +20,22 @@ description = "Cle anon Supabase du projet pudugodhiofqrctcdwfl (publique, RLS)"
 regexTarget = "match"
 regexes = [
   '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB1ZHVnb2RoaW9mcXJjdGNkd2ZsIiwicm9sZSI6ImFub24i[A-Za-z0-9_\-]*\.[A-Za-z0-9_\-]+''',
+  # [2026-09-13] PR #105, `verification / verifier` rouge en 10 s sur gitleaks.
+  # Une detection `generic-api-key` sur
+  #   supabase/migrations/20260913_reparation_RETOUR_ARRIERE.sql:38
+  #   --       ('verify_api_key','a009c7b0c32233748a3bb675b9721945'),
+  #
+  # CE QUE C'EST : l'empreinte MD5 du CORPS de la fonction public.verify_api_key,
+  # dans la table de capture d'un retour arriere — elle sert a verifier qu'on
+  # restaure bien la meme definition. Ce n'est pas une cle, ce n'est le secret
+  # de rien : c'est un condensat d'un texte SQL public, et la ligne est un
+  # commentaire.
+  #
+  # POURQUOI LA REGLE MORD : `generic-api-key` cherche un mot-cle de type
+  # « api_key » a proximite d'une chaine a forte entropie. Ici le mot-cle est
+  # dans le NOM de la fonction capturee, et les 32 hexadecimaux sont l'empreinte.
+  # Les deux conditions sont reunies par accident.
+  #
+  # PORTEE : ce motif exact, et lui seul. Pas le fichier, pas la regle.
+  '''\('verify_api_key','[0-9a-f]{32}'\)''',
 ]
