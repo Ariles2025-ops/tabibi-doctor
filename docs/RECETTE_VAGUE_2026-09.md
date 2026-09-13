@@ -84,6 +84,58 @@ Meme famille que le reste de cette section : une console propre, un test vert, u
 une derniere ligne de sortie — ce sont des signaux qui repondent a la question qu'on leur a posee,
 jamais a celle qu'on a oublie de poser.
 
+### TROIS FONCTIONNALITES ANNONCEES N'AVAIENT JAMAIS FONCTIONNE
+
+**Aucune n'etait une regression. Aucune n'avait ete remarquee. Les trois etaient proposees a
+l'ecran.**
+
+Le 13/09/2026, trois pannes decouvertes separement se sont revelees avoir la meme forme :
+
+| Fonctionnalite | Ce qui manquait | Depuis | Etat a l'ecran |
+|---|---|---|---|
+| Teleconsultation | le SDK Daily n'a **jamais** ete charge | le premier jour | bouton actif |
+| 2FA | le pepper `app.tabibi_2fa_pepper` n'a **jamais** ete pose | le premier jour | « Configurer la 2FA », sans `disabled` |
+| Chiffrement des donnees de sante | pgcrypto **jamais** resolu (`42883`), dans les deux sens | le premier jour | rien a l'ecran — et c'est pire |
+
+Le mot qui compte est **jamais**. Une regression se detecte : quelque chose marchait, puis ne marche
+plus, et quelqu'un s'en plaint. Ici, il n'y a pas de « avant ». Aucun signal ne pouvait apparaitre,
+parce qu'il n'y a jamais eu d'etat de reference duquel s'ecarter. Les sept colonnes `bytea` du
+chiffrement sont toutes vides ; `two_factor_secrets` a 0 ligne ; `reviews` avait 0 ligne. **Chaque
+fois, le vide se lisait comme « personne ne s'en est encore servi ».**
+
+**Le point commun n'est pas technique. Personne n'est jamais alle jusqu'au bout d'un parcours.**
+
+Le code a ete lu, revu, durci, deploye. Les pages chargeaient. Les fonctions se creaient sans un mot
+— Postgres ne valide pas un corps plpgsql a la creation. Les boutons s'affichaient. Ce qui n'a
+jamais eu lieu, c'est quelqu'un qui clique « demarrer la teleconsultation » et attend de voir une
+video ; quelqu'un qui scanne le QR code de la 2FA et se reconnecte le lendemain ; quelqu'un qui
+saisit une donnee de sante et la relit.
+
+Les trois auraient ete trouvees en dix minutes par **une seule personne allant au bout d'un seul
+parcours**. Aucune revue de code ne les aurait trouvees, parce qu'aucune n'est une erreur de
+raisonnement : ce sont des dependances d'environnement absentes, et le code qui les utilise est
+correct. C'est `CE QUI DEPEND DE L'AMBIANCE N'EST PAS DECIDE, IL EST SUBI` lu a l'echelle du produit.
+
+**La consequence pour Tabibi, et elle est prioritaire sur le code :**
+
+> **Le test avec un vrai medecin est plus urgent que n'importe quelle carte du tableau.**
+
+Pas une demonstration, pas un parcours joue par nous : un medecin qui essaie de faire son travail,
+et qu'on regarde faire sans l'aider. Chaque semaine ou ce test n'a pas lieu, l'inventaire des
+fonctionnalites annoncees-mais-jamais-exercees continue de grossir sans que rien ne le signale. Le
+congres du 3-5 decembre 2026 n'est pas une echeance de developpement : c'est la date ou des inconnus
+iront au bout des parcours, tous, en meme temps.
+
+**En pratique :**
+- Une fonctionnalite n'est **annoncee a l'ecran** qu'apres avoir ete exercee de bout en bout au
+  moins une fois, par un humain, sur l'environnement reel. Sinon elle est derriere un drapeau, ou
+  son bouton est `disabled` avec sa raison affichee.
+- On tient la liste des fonctionnalites **annoncees mais jamais exercees**. Elle est le stock de
+  dette le plus dangereux du produit : il ne se voit dans aucun compteur, aucun lint, aucun test.
+- Une table a **0 ligne** sur une fonctionnalite livree est un soupcon, jamais une donnee
+  (cf. `UN DURCISSEMENT DOIT ETRE SUIVI D'UN EXERCICE DE CE QU'IL TOUCHE`).
+- Le parcours de recette se fait **en entier**, jusqu'a l'effet observable, ou il ne compte pas.
+
 ### CE QUI DEPEND DE L'AMBIANCE N'EST PAS DECIDE, IL EST SUBI
 
 **Si le comportement vient de l'endroit ou l'on se trouve et non de ce qu'on a declare, ce n'est pas

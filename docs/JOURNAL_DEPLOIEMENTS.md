@@ -48,8 +48,36 @@ Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauve
 
 | # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
 |---|---|---|---|---|---|---|
-| B1 | *à venir* | `20260913_reparation_plpgsql_check.sql` | `db/plpgsql-check` | `20260913_reparation_RETOUR_ARRIERE.sql` | `20260913_reparation_VERIFICATION.sql` → 0 ligne | Aghiles |
+| B1 | 2026-09-13 ~14:45 UTC | `20260913_reparation_plpgsql_check.sql` — 15 `CREATE OR REPLACE` | `8e3b05d` (fichier), `e3f1956` (retour arrière) | `20260913_reparation_RETOUR_ARRIERE.sql`, capture `pg_get_functiondef` du 13/09 14:22 UTC, fraîcheur prouvée par 15 empreintes `md5` → 0 ligne | `20260913_reparation_VERIFICATION.sql` → **0 ligne** | Aghiles |
 | B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
+
+### B1 — les cinq mesures fonctionnelles, 13/09/2026
+
+Le balayage à 0 ligne prouve que les quinze corps **compilent**. Les cinq mesures ci-dessous prouvent
+qu'ils **fonctionnent**. Lancées dans une transaction annulée d'office (bloc `DO` qui lève toujours) :
+rien n'a persisté.
+
+| # | Mesure | Avant | Après | Verdict |
+|---|---|---|---|---|
+| A | `INSERT` dans `reviews`, statut `published` → déclencheur `fn_update_doctor_rating` | `review_count` = 0 | `rating` = **5.00**, `review_count` = **1** | le déclencheur a **écrit** — dans la table, plus dans la vue |
+| B | `tabibi_pii_encrypt` puis `tabibi_pii_decrypt` | — | chiffré **83 octets**, déchiffré = le témoin **exact** | aller-retour **fidèle**, pour la première fois |
+| B bis¹ | `tabibi_pii_decrypt(NULL)` | — | `NULL` | la garde explicite tient : **absente** |
+| B bis² | `tabibi_pii_decrypt('\x0badc0ffee')` | rendait `NULL` en silence | **lève `39000`** | **illisible** — une panne de déchiffrement se voit enfin |
+| C | `record_consent('health_data_processing', …, 'signup')` → `INSERT` d'audit | `audit_log` `consent:grant` = 0 | = **1** | **ligne d'audit écrite** |
+
+B bis¹ et B bis² sont la même fonction sur deux entrées : c'est ce couple qui prouve le retrait du
+`EXCEPTION WHEN OTHERS THEN RETURN NULL`. Avant, les deux rendaient `NULL` — **« absente » et
+« illisible » étaient la même réponse sur une donnée de santé.** Elles ne le sont plus.
+
+Mesure A : le `INSERT` abouti ne suffisait pas comme preuve. C'est le passage de `review_count` de
+0 à 1 qui tranche — un `INSERT` qui passe avec un déclencheur sans effet se serait lu comme un
+succès. Même raison pour C : le retour `{"ok": true}` de `record_consent` ne prouve rien seul, c'est
+le compteur d'`audit_log` qui prouve.
+
+**Ce que B1 ne fait pas :** aucun régime d'erreur n'a changé. Les sept `EXCEPTION WHEN OTHERS THEN
+NULL` des handlers d'audit sont intacts. La table `audit_log_echecs` et les régimes
+constitutive/preuve sont la migration suivante — et ce débat cesse d'être théorique maintenant que
+l'écriture d'audit fonctionne.
 
 **Règles de la colonne « Cible de retour » :**
 - Une migration qui remplace du code (`CREATE OR REPLACE`, `ALTER`) exige un fichier de capture
