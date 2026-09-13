@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-rpc.js"></script><script src="js/tabibi-security.js"></script>
 <!-- [PIXEL 2026-07-30] Meta Pixel : inerte tant que la categorie
      marketing du bandeau cookies n'est pas acceptee. -->
 <script src="js/tabibi-pixel.js"></script>
@@ -497,8 +497,18 @@ async function verifyOtpAndCreateProfile(e){
       try{
         try{ await window.tabibi.supabase.rpc("validate_cabinet_invitation", { p_code: P.cabinetCode }); } catch(_v){}
         const acceptRes = await window.tabibi.supabase.rpc("accept_cabinet_invitation", { p_cabinet_id: P.cabinetCode });
-        if(acceptRes && acceptRes.error){
-          console.warn("[signup] accept_cabinet_invitation:", acceptRes.error.message);
+        // [13/09/2026] Ce code ne lisait que `acceptRes.error`, l'erreur de TRANSPORT
+        // du client PostgREST. La fonction rend son refus DANS la reponse :
+        // {"error":"no_pending_invitation"} quand l'UPDATE ne touche aucune ligne,
+        // {"error":"not_authenticated"} sans session. Un appel qui REUSSIT en
+        // renvoyant une erreur metier a acceptRes.error === null : on enchainait donc
+        // sur « Compte cree avec succes ! », role secretaire actif et redirection,
+        // SANS AUCUNE ADHESION AU CABINET.
+        const acceptErr = (acceptRes && acceptRes.error && acceptRes.error.message)
+                       || (acceptRes && acceptRes.data && acceptRes.data.error)
+                       || (acceptRes && acceptRes.data && acceptRes.data.ok === false ? 'refus' : null);
+        if(acceptErr){
+          console.warn("[signup] accept_cabinet_invitation:", acceptErr);
           toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"),"error");
           if(btn){ btn.disabled=false; btn.innerHTML=origText; } return;
         }

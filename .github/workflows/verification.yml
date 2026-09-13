@@ -92,6 +92,13 @@ jobs:
         # des pages HTML, ou vivaient 105 des 134 lectures d'horloge du 13/09.
         run: npm run verifier:fuseau
 
+      - name: Tout appel RPC passe par le point de passage
+        # Une reponse PostgREST a deux moities : res.error (transport) et
+        # res.data.error (metier). Lire la premiere seule, c'est voir un succes
+        # la ou la base a dit non. Le plafond est le compte ACTUEL : il doit
+        # descendre a chaque lot migre, jamais monter.
+        run: npm run verifier:rpc-passage
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 
