@@ -36,8 +36,19 @@ echo "🔨 Build mobile — bundle grand public vers $WWW/"
 # WebView (bug « asset not found » déjà rencontré côté desktop).
 # doctor-claim.html est inclus volontairement : doctor-profile.html charge
 # js/tabibi-claim.js qui y redirige (médecin qui découvre sa fiche).
+#
+# ⚠️  `index.html` N'EST PLUS LA PAGE D'ACCUEIL — il ne doit PAS etre dans cette
+# liste. Depuis l'inversion de la porte du 13/09/2026 (PR #105), `index.html` a
+# la racine EST la page « bientot disponible », et l'accueil public vit dans
+# `accueil-public.html`. Un `cp index.html www/` embarquerait donc la PORTE
+# FERMEE comme ecran d'accueil de l'application mobile.
+#
+# LA PORTE EST UN GESTE DE DEPLOIEMENT WEB. L'application mobile n'est pas
+# derriere elle : elle se distribue par les magasins, a son propre rythme. On
+# copie donc `accueil-public.html` SOUS LE NOM `index.html` (cf. plus bas), et
+# le garde-fou de fin de script fait echouer le build si la page fermee se
+# retrouve malgre tout dans le bundle.
 PAGES="
-index.html
 login.html signup.html forgot-password.html reset-password.html
 verify-email.html email-verified.html
 doctor-profile.html doctor-claim.html
@@ -78,6 +89,17 @@ for f in $PAGES; do
   fi
 done
 
+# ── L'ACCUEIL — accueil-public.html copie SOUS LE NOM index.html ─────
+# Cf. le commentaire de PAGES : la porte est un geste WEB, l'app mobile n'est
+# pas derriere elle. Si le fichier manque, on ECHOUE : une app sans accueil
+# est une app cassee, et un simple avertissement se perdrait dans la sortie.
+if [ ! -f accueil-public.html ]; then
+  echo "❌ ERREUR bundle : accueil-public.html introuvable — pas d'accueil mobile."
+  exit 1
+fi
+cp accueil-public.html "$WWW/index.html"
+echo "  → accueil : accueil-public.html -> $WWW/index.html"
+
 echo "  → dossiers..."
 for d in $DIRS; do
   [ -d "$d" ] && cp -R "$d" "$WWW/$d"
@@ -110,6 +132,19 @@ for pattern in 'admin-*.html' 'secretaire-*.html' 'medecin-*.html' \
   found=$(find "$WWW" -maxdepth 1 -name "$pattern" 2>/dev/null | head -1)
   [ -n "$found" ] && fail "page pro/admin dans le bundle : $found"
 done
+
+# LA PORTE FERMEE NE DOIT JAMAIS ETRE DANS LE BUNDLE.
+# Le garde-fou ne fait pas confiance a la liste blanche : il compare le CONTENU.
+# Si `porte/porte-fermee.html` et `www/index.html` ont la meme empreinte, c'est
+# que la page « bientot disponible » est devenue l'ecran d'accueil de l'app.
+if [ -f porte/porte-fermee.html ]; then
+  sha_fermee=$(shasum -a 256 porte/porte-fermee.html | cut -d' ' -f1)
+  sha_accueil=$(shasum -a 256 "$WWW/index.html" | cut -d' ' -f1)
+  [ "$sha_fermee" = "$sha_accueil" ] && fail "la PORTE FERMEE est l'accueil du bundle mobile"
+fi
+# Et le filet de secours, si la page fermee changeait de contenu : son titre.
+grep -qi '<title>[^<]*Bient[oô]t disponible' "$WWW/index.html" \
+  && fail "l'accueil du bundle mobile est la page « bientot disponible »"
 
 # Filet large : aucun script shell, aucun SQL.
 found_sh=$(find "$WWW" -name "*.sh" 2>/dev/null | head -1)
