@@ -9,11 +9,33 @@ Ce fichier est lu automatiquement par Claude Code à chaque session. Respecte-le
 
 ## Déploiement — À LIRE AVANT TOUT MERGE
 
-> ⚠️ **Le projet Cloudflare Pages n'a AUCUNE connexion Git.**
-> Merger une PR sur `main` ne déploie **RIEN**. Chaque mise en production est un
-> `wrangler pages deploy` lancé à la main. Procédure complète : `DEPLOY_FRONTEND.md`.
-> Erreur déjà commise le 03/09/2026 : merge fait en croyant déployer, une heure
-> perdue à chercher un problème de cache inexistant.
+> ⚠️ **CE PARAGRAPHE ÉTAIT FAUX. Conservé tel quel, corrigé dessous.**
+>
+> > **Le projet Cloudflare Pages n'a AUCUNE connexion Git.**
+> > Merger une PR sur `main` ne déploie **RIEN**. Chaque mise en production est un
+> > `wrangler pages deploy` lancé à la main. Procédure complète : `DEPLOY_FRONTEND.md`.
+> > Erreur déjà commise le 03/09/2026 : merge fait en croyant déployer, une heure
+> > perdue à chercher un problème de cache inexistant.
+
+> ⚠️ **CORRECTION DU 13/09/2026 — FUSIONNER SUR `main` DÉPLOIE.**
+>
+> Mesuré sur la console Cloudflare : **91 déploiements, un par fusion.** Le projet
+> Pages EST connecté au dépôt et redéploie automatiquement à chaque `merge` sur
+> `main`. La règle ci-dessus a peut-être été vraie ; elle ne l'est plus, et elle a
+> été citée de bonne foi toute la journée du 13/09 dans des rapports qui en
+> concluaient qu'une fusion était sans effet.
+>
+> **Ce que ça change, concrètement :**
+> - Une fusion sur `main` est un **déploiement**. Elle se traite comme tel :
+>   mesures annoncées avant, constatées après, ligne au journal.
+> - Les déploiements numérotés du journal sont ceux lancés **à la main**. Ils sont
+>   noyés dans une série continue d'auto-déploiements que personne ne comptait.
+> - **La porte doit survivre à une fusion faite par quelqu'un qui ne pense pas
+>   déployer.** C'est la raison d'être de l'inversion du 13/09 : depuis, `index.html`
+>   à la racine **est** la page fermée, et `npm run verifier:porte` échoue sinon.
+>
+> À vérifier dans la console, et à trancher : la connexion Git a-t-elle été ajoutée
+> après le 03/09, ou n'a-t-elle jamais été retirée ?
 
 ## Règles absolues (non négociables)
 1. **Ne jamais commit/push directement sur `main`.** `main` est protégé (ruleset `protect-main` : force push et suppression bloqués). Toujours créer une branche + ouvrir une PR.

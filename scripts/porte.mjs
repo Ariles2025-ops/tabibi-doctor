@@ -20,7 +20,7 @@
 // Usage :  node scripts/porte.mjs fermee|ouverte  [--dist dist-web]
 // Sortie : le script écrit ce qu'il a fait et le marqueur à vérifier ensuite.
 // =====================================================================
-import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 const args = process.argv.slice(2);
@@ -39,28 +39,39 @@ if (!existsSync(dist)) {
 const cible = join(dist, 'index.html');
 const MARQUEUR = 'tabibi-porte';
 
-if (etat === 'fermee') {
-  const source = 'porte/porte-fermee.html';
-  if (!existsSync(source)) { console.error(`✗ ${source} introuvable.`); process.exit(2); }
-  // On garde l'accueil public sous un nom stable : il reste déployé, mais
-  // il n'est plus la page d'entrée. Rien n'est perdu, rien n'est deviné.
-  //
-  // [NOINDEX 2026-09-13] Porte fermée, cet accueil devient atteignable à une URL
-  // devinable alors que la porte est censée être close. index.html porte
-  // « index,follow » : recopié tel quel, il serait indexable. On force donc
-  // « noindex,nofollow » sur la copie — jamais sur l'original, qui reste
-  // indexable le jour où la porte s'ouvre. Complété par un Disallow dans
-  // robots.txt : la balise couvre l'indexation, robots.txt couvre l'exploration.
-  if (existsSync(cible)) {
-    const accueil = join(dist, 'accueil-public.html');
-    let pub = readFileSync(cible, 'utf8');
-    pub = pub.replace(/<meta\s+name="robots"[^>]*>/i, '<meta name="robots" content="noindex,nofollow">');
-    if (!/name="robots"/i.test(pub)) {
-      pub = pub.replace('</head>', '  <meta name="robots" content="noindex,nofollow">\n</head>');
-    }
-    writeFileSync(accueil, pub);
+// [INVERSION 2026-09-13] La porte etait un GESTE ; elle est desormais l'ETAT DU
+// DEPOT. Avant : `index.html` = l'application, et ce script la FERMAIT apres le
+// build — donc tout hebergeur qui ne lance pas ce script servait l'app ouverte.
+// C'est ce qui s'est passe sur Netlify (`netlify.toml:6`, `publish = "."`, sans
+// `command`) : l'application complete, branchee sur la base de PRODUCTION,
+// pendant que neuf entrees du journal disaient « porte fermee ».
+//
+// Apres : `index.html` a la racine EST la page fermee, et l'application vit dans
+// `accueil-public.html`. Oublier ce script FERME la porte au lieu de l'ouvrir.
+// Le sens de l'erreur est enfin le bon.
+//
+//   fermee   -> rien a copier, le build porte deja la page fermee. On pose le
+//               marqueur, c'est tout.
+//   ouverte  -> on copie `accueil-public.html` par-dessus `index.html` et on
+//               retablit `index,follow`. Le marqueur devient la PREUVE QUE LE
+//               GESTE D'OUVERTURE A EU LIEU, au lieu d'etre la preuve qu'il a eu
+//               lieu dans le bon sens.
+//
+// La garde qui tient tout ceci : `npm run verifier:porte`.
+if (etat === 'ouverte') {
+  const source = join(dist, 'accueil-public.html');
+  if (!existsSync(source)) {
+    console.error(`✗ ${source} introuvable : impossible d'ouvrir la porte.`);
+    console.error("  L'application doit etre construite dans dist-web sous ce nom.");
+    process.exit(2);
   }
-  copyFileSync(source, cible);
+  let pub = readFileSync(source, 'utf8');
+  // Le fichier source porte `noindex,nofollow` tant que la porte est fermee,
+  // puisqu'il est servi tel quel par tout hebergeur qui publie la racine. En
+  // l'ouvrant, il devient la page d'accueil publique : il redevient indexable.
+  pub = pub.replace(/<meta\s+name="robots"[^>]*>/i,
+                    '<meta name="robots" content="index,follow,max-image-preview:large">');
+  writeFileSync(cible, pub);
 }
 
 // Marqueur vérifiable de l'extérieur, dans les deux états.

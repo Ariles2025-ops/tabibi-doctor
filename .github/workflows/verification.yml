@@ -106,6 +106,12 @@ jobs:
         # une etape de la procedure de deploiement, pas de la CI.
         run: npm run verifier:rpc
 
+      - name: index.html a la racine EST la page fermee
+        # La porte doit etre l'ETAT DU DEPOT, pas un geste de deploiement.
+        # Le 13/09, Netlify servait l'app complete sur la base de production
+        # parce qu'il publie la racine telle quelle, sans lancer porte.mjs.
+        run: npm run verifier:porte
+
       - name: Aucun catch muet sur un chemin d'ecriture
         # L'ecran dirait oui pendant que la base dit non. Ne garde QUE les
         # ecritures : l'inventaire complet est dans docs/FICHE_CATCH_SILENCIEUX.md.

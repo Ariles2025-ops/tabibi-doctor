@@ -26,6 +26,7 @@
     "verifier:panneaux": "node scripts/verifier-panneaux.mjs",
     "verifier:fuseau": "node scripts/verifier-fuseau.mjs",
     "verifier:rpc": "node scripts/verifier-rpc.mjs",
+    "verifier:porte": "node scripts/verifier-porte.mjs",
     "verifier:rpc-passage": "node scripts/verifier-rpc-passage.mjs",
     "verifier:toutes": "node scripts/verifier-toutes.mjs",
     "verifier:catch": "node scripts/verifier-catch.mjs",
