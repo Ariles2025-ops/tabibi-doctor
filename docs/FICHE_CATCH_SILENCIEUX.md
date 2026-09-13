@@ -4,6 +4,59 @@
 > `|| 'Pending'` et que le bouton qui annonce sans agir : **un defaut qui se presente comme un etat
 > normal.**
 
+## Le classement des ONZE ecritures d'audit — constitutive ou preuve ?
+
+**Le critere** (tranche par Aghiles le 13/09/2026) :
+
+> Quand la trace est **CONSTITUTIVE** de l'acte, l'echec d'audit **BLOQUE**.
+> Quand elle en est la **PREUVE**, il ne bloque pas, mais part au **REBUT**.
+
+Un consentement sans trace n'a aucune valeur juridique : il n'existe pas. Une adhesion a un cabinet,
+elle, reste valide sans sa ligne de journal — la trace sert a le prouver, pas a le faire.
+
+| # | Fonction | Trace | Raison | Regime actuel | Cible |
+|---|---|---|---|---|---|
+| 1 | `record_consent` | **CONSTITUTIVE** | c'est le consentement lui-meme ; sans trace il est inopposable | bloque | **bloque** ✔ |
+| 2 | `fn_audit_changes` | **CONSTITUTIVE** | trigger dont la trace EST la seule raison d'etre ; pas de trace, pas de changement | bloque | **bloque** ✔ |
+| 3 | `set_video_recording_consent` | **CONSTITUTIVE** | consentement a l'enregistrement d'un acte medical — meme regime que `record_consent` | **nu** | **bloque** ⚠ |
+| 4 | `accept_cabinet_invitation` | preuve | l'adhesion existe en base sans sa ligne de journal | nu | rebut |
+| 5 | `create_cabinet` | preuve | le cabinet existe ; la trace dit qui l'a cree | nu | rebut |
+| 6 | `create_video_session` | preuve | la session existe et porte deja ses horodatages | nu | rebut |
+| 7 | `invite_cabinet_member` | preuve | l'invitation est une ligne de `cabinet_members`, pas une ligne de journal | nu | rebut |
+| 8 | `remove_cabinet_member` | preuve | l'acces est retire quoi qu'il arrive ; la trace prouve qu'on l'a fait | nu | rebut |
+| 9 | `transfer_cabinet_ownership` | preuve | le transfert est effectif sans sa trace — **le cas limite**, voir ci-dessous | nu | rebut |
+| 10 | `disable_two_factor` | preuve | le 2FA est desactive quoi qu'il arrive ; la trace est l'evenement de securite | **bloque** | **rebut** ⚠ |
+| 11 | `enroll_two_factor` | preuve | idem, en sens inverse | **bloque** | **rebut** ⚠ |
+
+**Bilan : 3 constitutives, 8 preuves.** Deux fonctions sont deja au bon regime. **Neuf changent** —
+et pas dans le meme sens : une passe de « nu » a « bloque », deux passent de « bloque » a « rebut »,
+six passent de « nu » a « rebut ».
+
+C'est le point qu'Aghiles avait vu d'emblee : **on aligne chacune sur son regime, pas les quatre sur
+les sept.** Aligner mecaniquement aurait fait sauter le blocage de `record_consent` — un
+consentement perdu en silence.
+
+### Le cas limite assume : `transfer_cabinet_ownership`
+
+Un transfert de propriete de cabinet change le **responsable du traitement** au sens de la loi 25-11.
+On peut soutenir que la trace en est constitutive. Classe en **preuve** parce que le transfert est
+materialise ailleurs — la colonne de proprietaire de `cabinets` fait foi, et elle, elle n'est pas
+protegee par un handler. La trace dit QUAND et PAR QUI ; elle ne fait pas le transfert.
+
+A revoir si un jour le proprietaire se deduit du journal plutot que d'une colonne.
+
+### Ce que « rebut » veut dire, precisement
+
+Option A + B, tranchee le 13/09 :
+
+- une table `audit_log_echecs` **la plus bete possible** — aucune cle etrangere, aucun declencheur,
+  aucune RLS — pour ne pouvoir echouer que sur disque plein ;
+- **si elle echoue, l'operation LEVE.** Un seul etage de repli, apres on crie ;
+- **`RAISE WARNING` en complement**, parce que les journaux Postgres ne sont lus par personne — mais
+  ils existent, et ils donnent le detail au moment de l'incident.
+
+Jamais un compteur : un nombre qui monte dit qu'il s'est passe quelque chose, jamais quoi ni pour qui.
+
 ## L'angle mort de cet inventaire : le SQL
 
 **Ce document ne compte que le JavaScript.** `EXCEPTION WHEN OTHERS THEN NULL` est l'orthographe

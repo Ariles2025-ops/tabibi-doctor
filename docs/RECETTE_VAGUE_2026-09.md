@@ -69,6 +69,14 @@ C'etait une paire de commentaires. **Un commentaire depend de quelqu'un qui le l
 sautee en silence, le script restant vert. Une ligne de sortie qu'on voit, pas un commentaire
 qu'on oublie — et elle disparait d'elle-meme le jour ou la liste se vide.
 
+**LA PROMOTION SE FAIT DANS LA MEME PR QUE LA FUSION, TOUJOURS.** C'est le mecanisme ; le signal
+n'est que le filet pour l'oubli. Une porte qui entre dans `main` y entre promue, sinon elle tourne
+sans plancher et pourrait disparaitre en silence plus tard.
+
+Le signal est **signale, pas rouge**, et c'est deliberé : la promotion se faisant dans la meme PR,
+la fenetre n'existe pas ; et **un rouge qui ne correspond pas a une casse apprend a ignorer le
+rouge.**
+
 Une porte attendue qui EXISTE desormais est signalee **⇧ A PROMOUVOIR en obligatoire** : elle
 tourne sans plancher, donc elle pourrait disparaitre en silence plus tard.
 
@@ -83,6 +91,40 @@ manquait.
 Meme famille que le reste de cette section : une console propre, un test vert, un « auto-merging »,
 une derniere ligne de sortie — ce sont des signaux qui repondent a la question qu'on leur a posee,
 jamais a celle qu'on a oublie de poser.
+
+### UNE CONTRE-EPREUVE DOIT INCLURE DU CODE QUE LA GARDE N'A PAS SERVI A ECRIRE
+
+Une garde eprouvee uniquement sur le code qui l'a inspiree **ne teste que la memoire de son auteur.**
+Elle connait par coeur les cas qu'on avait sous les yeux en l'ecrivant, et rien d'autre.
+
+Le 13/09/2026 : `verifier:rpc` avait sa contre-epreuve dans les deux sens, verte. Le jour ou sa
+branche a rencontre `js/tabibi-rpc.js` — ecrit apres elle, sur une autre branche — elle est passee au
+rouge sur **deux faux positifs** : `nom`, la variable de `sb.rpc(nom, args)`, et `direct`, un mot
+dans le texte d'une autre garde. Sa regex rendait les guillemets optionnels. Personne ne l'avait vu
+parce que tout le code existant ecrivait `rpc('quelque_chose')`.
+
+En pratique, pour chaque garde neuve :
+
+- **la faire tourner sur un fichier qu'elle n'a jamais vu** — une autre branche, un autre dossier,
+  du code d'outillage, un fichier d'une famille differente ;
+- **lui donner une forme legitime qui ressemble au defaut** : un appel indirect, un nom en variable,
+  le motif cite dans un commentaire ou dans une chaine ;
+- et se souvenir qu'un **faux positif est aussi grave qu'un faux negatif** : il apprend a ignorer le
+  rouge. Un rouge qui ne correspond pas a une casse use la garde plus vite qu'une absence de garde.
+
+### UN FICHIER STRUCTURE S'EDITE PAR SA STRUCTURE
+
+`package.json` par `json.load` / `json.dumps`. Un YAML par un analyseur. Jamais ligne par ligne,
+jamais par expression reguliere sur du texte.
+
+Le 13/09/2026, une contre-epreuve editait `package.json` en remplacant une ligne. Le resultat etait
+un JSON valide mais **amputé de `lint:dette`**, et l'essai a rendu un verdict faux. Le fichier a ete
+restaure intact, mais la mesure ne valait rien.
+
+C'est la meme famille que la machine a etats qui se desynchronisait sur les apostrophes de la prose
+francaise : **la forme du fichier n'est pas du texte.** Un JSON a des cles, un YAML a des niveaux,
+un HTML a des noeuds. Les traiter comme des lignes marche jusqu'au jour ou ca ne marche plus, et ce
+jour-la l'erreur est silencieuse.
 
 ### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
 

@@ -15,6 +15,7 @@ deployment*. Atomique, sans reconstruction.
 
 | # | Date (UTC) | Commit déployé | Déploiement Cloudflare | Porte | Retour arrière vers | Lancé par |
 |---|---|---|---|---|---|---|
+| 9 | 2026-09-13 ~16:12 | `b34a61e` | `b224b5dd-…` | **fermée** | `4e66ec32-8033-43f7-b9f9-dcee75e8aba2` | Claude, sur go d'Aghiles |
 | 8 | 2026-09-13 ~11:36 | `47a4b39e10e7b77b220222f0ed7bb4179f3256cb` | `4e66ec32-…` | **fermée** | *aucun — on repare en avant* | Claude, sur go d'Aghiles |
 | 7 | 2026-09-13 ~11:02 | `088e166c1baef3d541a3d6b83c04ce55f3a0b4dd` | `42ef43df-…` | **fermée** | `66da5afc-a3af-484f-a02f-4ea96a018d75` | Claude, sur go d'Aghiles |
 | 6 | 2026-09-13 ~10:31 | `c37f4e0d8b1d10be6a2a60065523d06328cdd191` | `66da5afc-…` | **fermée** | `55c94431-82f8-48df-80fb-dd91a67637f2` | Claude, sur go d'Aghiles |
@@ -464,4 +465,77 @@ est atteignable — `openReview` retombe sur l'ancienne modale quand le `doctor_
 `docs/FICHE_CATCH_SILENCIEUX.md`.
 
 **L'inventaire a trouve un bug que les tests n'avaient pas trouve.**
+
+---
+
+## Deploiement 9 — 13/09/2026, les ecrans qui annoncaient un succes sur un refus
+
+**Ce qui est parti** : #106 (le point de passage RPC et les trois sites corriges), #107 (retrait
+d'`index-baseline.html`), #108 et #109 (`verifier:toutes` et son plancher).
+
+### Le defaut repare
+
+Une reponse PostgREST a deux moities : `res.error` (transport) et `res.data.error` (metier). Une
+fonction qui rend `{"error":"..."}` a **REUSSI** au sens du transport — `res.error` vaut null. Trois
+sites ne lisaient que cette moitie-la :
+
+| Site | Ce que l'utilisateur voyait |
+|---|---|
+| `admin-doctor-validation.html:377` (valider) | « fiche validee » **et un e-mail part au medecin**, alors que rien n'etait ecrit |
+| `admin-doctor-validation.html:437` (rejeter) | idem, avec l'e-mail de rejet |
+| `signup.html:499` | « Compte cree avec succes ! », role secretaire actif, redirection — **sans adhesion au cabinet** |
+
+Sur 44 RPC appelees, 8 peuvent rendre une erreur metier ; les cinq autres sites lisaient deja les
+deux moities correctement.
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| `signup` lit `acceptRes.data` | 0 | 2 | **2** |
+| `admin-doctor-validation` lit `data.error` | 0 | 2 | **2** |
+| `js/tabibi-rpc.js` | **404** | 200 | **200, 4 052 o** |
+| `signup` inclut `tabibi-rpc.js` | 0 | 1 | **1** |
+| taille de `/` · porte | 5 004 o · `fermee` | inchangees | **inchangees** |
+
+Aucune divergence.
+
+### Le point de passage, EXERCE sur le domaine reel
+
+```
+metier    -> {ok:false, data:null, erreur:"no_pending_invitation"}
+okFalse   -> {ok:false, data:null, erreur:"refus"}
+succes    -> {ok:true,  data:{ok:true,v:1}, erreur:null}
+transport -> {ok:false, data:null, erreur:"reseau"}
+erreurs : AUCUNE
+```
+
+`data` vaut **null** des que `ok` est faux : celui qui ignore `ok` casse visiblement au lieu de
+continuer sur un mensonge.
+
+### L'incident de ce deploiement, et ce qu'il a change
+
+**Ce deploiement a failli partir depuis un `main` rouge.** La boucle shell qui lisait les portes
+imprimait la DERNIERE LIGNE de chaque controle, jamais son code de sortie. La phrase d'erreur de
+`verifier:cles` s'est affichee dans la colonne des resultats exactement comme les huit verts.
+
+Ce qui l'avait declenchee : un `git add -A -- *.html` trop large avait versionne
+`index-baseline.html`, un fichier qu'Aghiles avait explicitement exclu, porteur d'un JWT
+`role=anon` — la cle **publique**, et l'ancienne. Aucun secret expose, aucune rotation. Mais la porte
+disait vrai et c'est elle qui a attrape l'erreur, pas moi.
+
+Consequences, toutes en ligne depuis :
+
+- **`npm run verifier:toutes`** enchaine les portes, s'arrete a la premiere rouge et rend un code non
+  nul. C'est lui qu'on lance, jamais une boucle ecrite a la main.
+- **`PORTES_OBLIGATOIRES`**, un plancher : une porte declaree obligatoire et absente de
+  `package.json` est ROUGE. Sans lui, supprimer une porte l'aurait rendue « sautee » en silence.
+- **`PORTES_A_VENIR`**, une liste imprimee et non un commentaire — un commentaire depend de quelqu'un
+  qui le lit, c'est `tail -1` en plus petit.
+- **`verifier:cles` nomme le role** : `role=anon (cle publique)` ou `role=service_role ⚠ CRITIQUE`.
+
+### Ce que ce deploiement ne fait pas
+
+Il ne migre pas les 61 sites vers le point de passage — cela se fera par lots verifies, dans l'ordre
+donne par la regle de l'effet externe : 6 / 23 / 31.
 
