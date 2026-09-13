@@ -13,6 +13,46 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### CE QUI CONTROLE DOIT ETRE CONTROLE
+
+**Un verdict se lit sur un CODE DE SORTIE, jamais sur une ligne de texte.**
+
+Le 13/09/2026, neuf gardes avaient chacune leur contre-epreuve, verifiee dans les deux sens. La
+boucle shell qui les executait, elle, n'en avait aucune :
+
+```bash
+for g in ...; do printf "  %-10s %s\n" "$n" "$(eval "$c" 2>&1 | tail -1)"; done
+```
+
+Elle imprimait la **derniere ligne** de chaque controle. Quand `verifier:cles` a echoue, sa phrase
+d'erreur — `1 fichier(s) portent un litteral de cle hors js/config.js` — s'est affichee dans la
+colonne des resultats exactement comme les huit verts. Elle a ete lue comme un statut. **La fusion
+est partie sur `main` avec une porte rouge**, et ce qui l'avait causee etait un fichier qu'Aghiles
+avait explicitement interdit de versionner, ajoute par un `git add -A -- *.html` trop large.
+
+La garde a fait son travail. C'est le dispositif qui la lisait qui mentait.
+
+**En pratique : on lance `npm run verifier:toutes`, jamais une boucle ecrite a la main.** Le script
+enchaine les portes, s'arrete a la premiere rouge, affiche ses vingt-cinq dernieres lignes, et rend
+lui-meme un code non nul.
+
+Contre-epreuve exigee de lui comme des autres — trois familles de casse, trois sorties en 1 :
+
+| Casse | Arret sur | Sortie |
+|---|---|---|
+| un littéral de cle injecte | `dette` (la premiere rouge atteinte) | **1** |
+| une erreur de syntaxe | `eslint` | **1** |
+| un `vite.config` invalide | `build` | **1** |
+
+Et la generalisation, qui vaut au-dela de ce cas : **chaque fois qu'on ajoute une garde, se demander
+qui lit son verdict, et si CE lecteur a ete contre-epreuve.** Une garde n'est utile qu'a la hauteur
+de la fiabilite de ce qui la consomme. Neuf contre-epreuves valaient zero parce que la dixieme
+manquait.
+
+Meme famille que le reste de cette section : une console propre, un test vert, un « auto-merging »,
+une derniere ligne de sortie — ce sont des signaux qui repondent a la question qu'on leur a posee,
+jamais a celle qu'on a oublie de poser.
+
 ### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
 
 Un defaut silencieux ne reste pas a sa place. Il devient la donnee d'entree du suivant, qui n'a aucun
@@ -278,7 +318,10 @@ Deux corollaires :
 
 ### Portes locales — la liste complète, dans cet ordre
 
-Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », **les sept** doivent passer. Aucune
+Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », elles doivent TOUTES passer.
+**On les lance par `npm run verifier:toutes`**, qui s'arrete a la premiere rouge et rend un code non
+nul — jamais par une boucle ecrite a la main, qui lirait une ligne de texte au lieu d'un verdict.
+Aucune
 n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 
 | # | Commande | Ce qu'elle attrape | Échoue si |
