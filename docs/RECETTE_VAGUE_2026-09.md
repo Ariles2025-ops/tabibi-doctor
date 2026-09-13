@@ -13,6 +13,38 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
+
+Un defaut silencieux ne reste pas a sa place. Il devient la donnee d'entree du suivant, qui n'a aucun
+moyen de savoir qu'elle est fausse — et le second echoue a son tour sans rien signaler, sur une
+valeur parfaitement plausible.
+
+Le cas du 13/09/2026, en deux fonctions :
+
+1. `mark_video_session_started` pose `started_at`. Le front l'appelle avec un
+   `.catch(captureErr)` : un refus metier (`forbidden`, `invalid_status`) est avale, `started_at`
+   reste **NULL**.
+2. `mark_video_session_ended` calcule la duree depuis `started_at` quand le front ne la fournit pas :
+
+```sql
+ELSIF v_session.started_at IS NOT NULL THEN
+  v_final := LEAST(14400, GREATEST(0, EXTRACT(EPOCH FROM (now() - v_session.started_at))::integer));
+ELSE
+  v_final := 0;
+```
+
+**Quarante minutes de teleconsultation enregistrees a 0 seconde.** Aucune erreur, nulle part. Et
+`duration_seconds` est une valeur qu'on facture ou qu'on produit en justificatif : elle a l'air
+normale, elle est verifiable par personne.
+
+Ce que cela impose :
+
+- **Un echec sur un chemin d'ecriture ne se juge jamais isolement.** La question n'est pas « est-ce
+  grave que cet appel echoue ? » mais « qu'est-ce qui LIT ce qu'il aurait du ecrire ? ».
+- **Une valeur par defaut plausible est plus dangereuse qu'une valeur absente.** `v_final := 0`
+  produit un nombre valide ; un NULL aurait saute aux yeux. C'est la meme faute que le badge vert par
+  defaut et le `|| 'Pending'` : un defaut qui se presente comme un etat normal.
+
 ### Quand le mensonge sort de l'application, il passe EN PREMIER
 
 Tous les defauts qui se presentent comme un etat normal ne se valent pas. Quand le mensonge d'un
