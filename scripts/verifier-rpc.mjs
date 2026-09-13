@@ -52,7 +52,9 @@ const ABSENCES_CONNUES = {
 };
 
 const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',
-  'desktop', 'v2', 'seo', '.git', 'tests', 'blog', 'docs', 'supabase', 'migrations']);
+  'desktop', 'v2', 'seo', '.git', 'tests', 'blog', 'docs', 'supabase', 'migrations',
+  // outillage de build : les gardes citent des noms de RPC dans leur propre texte
+  'scripts']);
 
 function fichiers(dir = '.', acc = []) {
   for (const e of readdirSync(dir, { withFileTypes: true })) {
@@ -68,15 +70,20 @@ function fichiers(dir = '.', acc = []) {
 // Les appels du depot, commentaires exclus : un `// rpc('ancienne_fonction')`
 // dans un commentaire ne doit pas faire echouer le controle.
 function appelsDuDepot() {
-  const re = /(?:\.rpc\(\s*|rest\/v1\/rpc\/)['"]?([a-z_][a-z0-9_]*)['"]?/gi;
+  // [13/09/2026] Les guillemets etaient OPTIONNELS : `sb.rpc(nom, args)` du point
+  // de passage faisait croire a une RPC nommee « nom ». Un nom de RPC est
+  // toujours un litteral ; une variable n'est pas verifiable ici, c'est le role
+  // de verifier-rpc-passage de garantir qu'elle vient du point de passage.
+  const re = /(?:\.rpc\(\s*(['"])|rest\/v1\/rpc\/)([a-z_][a-z0-9_]*)/gi;
   const par = new Map();
   for (const f of fichiers()) {
     let code = readFileSync(f, 'utf8');
     code = code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
     let m;
     while ((m = re.exec(code)) !== null) {
-      if (!par.has(m[1])) par.set(m[1], new Set());
-      par.get(m[1]).add(f);
+      const nom = m[2];
+      if (!par.has(nom)) par.set(nom, new Set());
+      par.get(nom).add(f);
     }
   }
   return par;

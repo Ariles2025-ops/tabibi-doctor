@@ -92,6 +92,13 @@ jobs:
         # des pages HTML, ou vivaient 105 des 134 lectures d'horloge du 13/09.
         run: npm run verifier:fuseau
 
+      - name: Tout appel RPC passe par le point de passage
+        # Une reponse PostgREST a deux moities : res.error (transport) et
+        # res.data.error (metier). Lire la premiere seule, c'est voir un succes
+        # la ou la base a dit non. Le plafond est le compte ACTUEL : il doit
+        # descendre a chaque lot migre, jamais monter.
+        run: npm run verifier:rpc-passage
+
       - name: Toute RPC appelee est declaree
         # Etage STRUCTUREL. Une RPC absente rend 404, le catch avale, l'ecran
         # sort vide : arrive pendant la recette avec la vague 1A, qui a tue la
@@ -99,6 +106,14 @@ jobs:
         # une etape de la procedure de deploiement, pas de la CI.
         run: npm run verifier:rpc
 
+      - name: Toutes les portes, lues sur leur code de sortie
+        # CE QUI CONTROLE DOIT ETRE CONTROLE. Le 13/09/2026, neuf gardes
+        # contre-epreuvees etaient lues par une boucle shell qui imprimait la
+        # derniere ligne de chaque sortie, jamais son code : une porte rouge
+        # s'est affichee comme une verte et le merge est parti sur main.
+        # Ce pas est redondant avec ceux ci-dessus, a dessein : il verifie que
+        # l'enchaineur lui-meme rend bien un code non nul.
+        run: npm run verifier:toutes
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 

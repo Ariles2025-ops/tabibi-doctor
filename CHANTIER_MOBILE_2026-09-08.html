@@ -1,0 +1,379 @@
+<title>Chantier mobile Tabibi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Public+Sans:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+  :root {
+    --ground: #fbfaf7;
+    --surface: #ffffff;
+    --surface-2: #f2f1ec;
+    --ink: #1b2622;
+    --ink-2: #5a6862;
+    --ink-3: #8a968f;
+    --rule: #e0ded6;
+    --or: #b8862a;
+    --or-fill: #f6ecd7;
+    --vert: #0f7560;
+    --rouge: #ab2f26;
+    --rouge-fill: #f9e8e6;
+    --ambre: #9a5f1c;
+    --ambre-fill: #f8eddd;
+    --ok: #2c6f4c;
+    --ok-fill: #e4efe8;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #111715;
+      --surface: #171f1c;
+      --surface-2: #1e2724;
+      --ink: #e8ede9;
+      --ink-2: #a3b0aa;
+      --ink-3: #77847e;
+      --rule: #2b3733;
+      --or: #dfb15c;
+      --or-fill: #2a2318;
+      --vert: #4bb79c;
+      --rouge: #ea8177;
+      --rouge-fill: #2c1a18;
+      --ambre: #d69b52;
+      --ambre-fill: #2a2015;
+      --ok: #6cbb90;
+      --ok-fill: #17251d;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #111715;
+    --surface: #171f1c;
+    --surface-2: #1e2724;
+    --ink: #e8ede9;
+    --ink-2: #a3b0aa;
+    --ink-3: #77847e;
+    --rule: #2b3733;
+    --or: #dfb15c;
+    --or-fill: #2a2318;
+    --vert: #4bb79c;
+    --rouge: #ea8177;
+    --rouge-fill: #2c1a18;
+    --ambre: #d69b52;
+    --ambre-fill: #2a2015;
+    --ok: #6cbb90;
+    --ok-fill: #17251d;
+  }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page { max-width: 1000px; margin: 0 auto; padding: 40px 24px 72px; }
+
+  h1, h2, h3 { font-family: "Bricolage Grotesque", "Public Sans", sans-serif; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(30px, 5vw, 46px); font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+  h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; font-weight: 600; }
+  p { margin: 0; }
+  code, .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 0.87em; }
+  code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
+
+  .eyebrow {
+    font-family: "IBM Plex Mono", monospace; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-3);
+  }
+
+  /* ── En-tête ── */
+  header { display: flex; flex-direction: column; gap: 18px; padding-bottom: 32px; border-bottom: 2px solid var(--ink); }
+  .lede { font-size: 18px; color: var(--ink-2); max-width: 62ch; }
+  .meta { display: flex; flex-wrap: wrap; gap: 10px 28px; align-items: baseline; }
+  .compte {
+    display: inline-flex; align-items: baseline; gap: 9px;
+    background: var(--or-fill); color: var(--or);
+    border: 1px solid color-mix(in srgb, var(--or) 35%, transparent);
+    border-radius: 2px; padding: 5px 11px;
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .compte b { font-size: 15px; letter-spacing: 0; }
+  .meta .note { font-size: 13px; color: var(--ink-3); }
+
+  section { padding-top: 44px; display: flex; flex-direction: column; gap: 18px; }
+  .titre { display: flex; flex-direction: column; gap: 5px; }
+  .titre p { color: var(--ink-2); font-size: 15px; max-width: 66ch; }
+
+  /* ── Blocages ── */
+  .blocages { display: flex; flex-direction: column; gap: 12px; }
+  .blocage {
+    display: grid; grid-template-columns: auto 1fr; gap: 0 18px;
+    background: var(--surface); border: 1px solid var(--rule);
+    border-left: 4px solid var(--sev); border-radius: 3px; padding: 18px 20px;
+  }
+  .blocage[data-sev="critique"] { --sev: var(--rouge); }
+  .blocage[data-sev="serieux"]  { --sev: var(--ambre); }
+  .rang {
+    font-family: "IBM Plex Mono", monospace; font-size: 13px; font-weight: 600;
+    color: var(--sev); padding-top: 2px; font-variant-numeric: tabular-nums;
+  }
+  .blocage h3 { color: var(--ink); }
+  .blocage .corps { display: flex; flex-direction: column; gap: 7px; }
+  .blocage p { color: var(--ink-2); font-size: 15px; }
+  .sev {
+    font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--sev);
+    background: var(--sev-fill); padding: 2px 7px; border-radius: 2px; align-self: flex-start;
+  }
+  .blocage[data-sev="critique"] .sev { --sev-fill: var(--rouge-fill); }
+  .blocage[data-sev="serieux"]  .sev { --sev-fill: var(--ambre-fill); }
+
+  /* ── Fiche technique ── */
+  .fiche { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+  .fiche div { background: var(--surface); padding: 15px 17px; display: flex; flex-direction: column; gap: 3px; }
+  .fiche dt { font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.11em; text-transform: uppercase; color: var(--ink-3); }
+  .fiche dd { margin: 0; font-size: 15.5px; font-weight: 600; color: var(--ink); }
+  .fiche dd span { display: block; font-weight: 400; font-size: 13px; color: var(--ink-2); }
+
+  /* ── Outillage ── */
+  .outils { display: flex; flex-wrap: wrap; gap: 8px; }
+  .outil {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--rule); background: var(--surface);
+    border-radius: 2px; padding: 7px 12px; font-size: 14px;
+  }
+  .outil .pastille { width: 7px; height: 7px; border-radius: 50%; background: var(--etat); flex: none; }
+  .outil[data-etat="ok"] { --etat: var(--ok); }
+  .outil[data-etat="ko"] { --etat: var(--rouge); border-color: color-mix(in srgb, var(--rouge) 40%, var(--rule)); }
+  .outil .quoi { font-family: "IBM Plex Mono", monospace; font-size: 13px; }
+  .outil .dit { color: var(--ink-2); font-size: 13px; }
+
+  /* ── Plan ── */
+  .plan { display: flex; flex-direction: column; gap: 26px; }
+  .phase { display: grid; grid-template-columns: 148px 1fr; gap: 22px; align-items: start; }
+  .phase > .quand { display: flex; flex-direction: column; gap: 2px; padding-top: 3px; }
+  .quand b { font-family: "Bricolage Grotesque", sans-serif; font-size: 15px; font-weight: 700; color: var(--ink); }
+  .quand span { font-size: 12.5px; color: var(--ink-3); }
+  ol.etapes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; counter-reset: none; }
+  ol.etapes li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; align-items: baseline; }
+  ol.etapes .n {
+    font-family: "IBM Plex Mono", monospace; font-size: 12px; font-weight: 600;
+    color: var(--or); font-variant-numeric: tabular-nums;
+  }
+  ol.etapes p { font-size: 15px; }
+  ol.etapes p em { font-style: normal; color: var(--ink-2); }
+
+  /* ── Tableau ── */
+  .scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 3px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 11px 16px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  thead th {
+    font-family: "IBM Plex Mono", monospace; font-size: 10.5px; letter-spacing: 0.11em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 600; background: var(--surface-2);
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td .mono { color: var(--ink); }
+  td .dit { display: block; color: var(--ink-2); font-size: 13.5px; margin-top: 2px; }
+
+  /* ── Pièges ── */
+  ul.pieges { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+  ul.pieges li { padding-left: 18px; border-left: 2px solid var(--or); font-size: 15px; color: var(--ink-2); }
+  ul.pieges b { color: var(--ink); font-weight: 600; }
+
+  footer { margin-top: 52px; padding-top: 20px; border-top: 1px solid var(--rule); font-size: 13.5px; color: var(--ink-3); display: flex; flex-direction: column; gap: 5px; }
+
+  @media (max-width: 620px) {
+    .phase { grid-template-columns: 1fr; gap: 10px; }
+    .blocage { grid-template-columns: 1fr; gap: 8px; }
+  }
+  :focus-visible { outline: 2px solid var(--or); outline-offset: 2px; }
+</style>
+
+<div class="page">
+
+  <header>
+    <div class="eyebrow">Relevé du 8 septembre 2026 · dépôt local + état réel de la machine</div>
+    <h1>Chantier mobile Tabibi</h1>
+    <p class="lede">L'app Android existe, elle est signée et distribuée en APK direct. Ce qui manque n'est pas du code : c'est une sauvegarde de clé, un compte développeur et deux branchements qui ont l'air finis sans l'être.</p>
+    <div class="meta">
+      <span class="compte">J−86 <b>congrès 3-5 déc.</b></span>
+      <span class="note">Android <span class="mono">1.0.2 · build 4</span> — iOS jamais compilé</span>
+    </div>
+  </header>
+
+  <section>
+    <div class="titre">
+      <div class="eyebrow">Ce qui bloque</div>
+      <h2>Trois points décident du reste</h2>
+      <p>Aucun des trois ne se voit en lisant le code : le premier vit hors du dépôt, les deux autres ressemblent à du travail terminé.</p>
+    </div>
+    <div class="blocages">
+
+      <article class="blocage" data-sev="critique">
+        <div class="rang">01</div>
+        <div class="corps">
+          <span class="sev">Critique · irréversible</span>
+          <h3>La clé de signature Android n'existe qu'ici</h3>
+          <p>Les deux copies — <code>TABIBI-KEYSTORE-SAUVEGARDE/</code> et <code>android/tabibi-release.jks</code> — sont sur le même disque. Perdre ce Mac, c'est perdre le droit de mettre à jour l'app chez tous ceux qui l'ont déjà installée : il faudrait republier sous un autre nom de package et repartir de zéro.</p>
+          <p>La vraie clé : <span class="mono">1957fe12…</span>. Celle de <code>COPIE-2-SECURITE</code> (<span class="mono">952590eb…</span>) n'est pas la bonne — autre clé, autre mot de passe.</p>
+        </div>
+      </article>
+
+      <article class="blocage" data-sev="critique">
+        <div class="rang">02</div>
+        <div class="corps">
+          <span class="sev">Critique · délai externe</span>
+          <h3>iOS n'a pas de point de départ</h3>
+          <p>Xcode n'est pas installé (seulement les Command Line Tools), le projet n'a aucun <code>DEVELOPMENT_TEAM</code>, et il faut un D-U-N-S pour la SARL avant même d'ouvrir le compte Apple Developer. Ce D-U-N-S prend 2 à 4 semaines et personne ne peut l'accélérer.</p>
+          <p>C'est le seul point du dossier où attendre coûte des semaines au lieu des heures.</p>
+        </div>
+      </article>
+
+      <article class="blocage" data-sev="serieux">
+        <div class="rang">03</div>
+        <div class="corps">
+          <span class="sev">Sérieux · silencieux</span>
+          <h3>Deux branchements qui ont l'air faits</h3>
+          <p><b>Le push mobile n'enregistre aucun token</b> : le déclencheur est posé sur <code>doctor-dashboard.html</code>, page que le bundle mobile ne contient même pas. Et <code>onPushNotification()</code> existe sans être appelé nulle part.</p>
+          <p><b>Le captcha n'est pas validé en WebView iOS</b> : Android sert en <code>https://localhost</code> et passe, iOS sert en <code>capacitor://localhost</code> — le schéma non-http qui avait déjà cassé Tauri.</p>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="titre">
+      <div class="eyebrow">L'app aujourd'hui</div>
+      <h2>Ce qui tourne déjà</h2>
+    </div>
+    <dl class="fiche">
+      <div><dt>Socle</dt><dd>Capacitor 8.3.4<span>16 plugins natifs</span></dd></div>
+      <div><dt>Identité</dt><dd class="mono">dz.tabibi.app<span>Tabibi · Medical</span></dd></div>
+      <div><dt>Android</dt><dd>1.0.2 — build 4<span>minSdk 26 · target 36</span></dd></div>
+      <div><dt>Binaires signés</dt><dd>APK 9,1 Mo + AAB<span>produits le 31/08/2026</span></dd></div>
+      <div><dt>Distribution</dt><dd>APK en direct<span>bucket Supabase, hors store</span></dd></div>
+      <div><dt>Contenu embarqué</dt><dd>27 pages<span>liste blanche, garde-fous au build</span></dd></div>
+    </dl>
+    <p style="color:var(--ink-2); font-size:15px; max-width:66ch;">L'espace médecin et secrétariat n'est pas dans l'app : c'est un choix assumé, il vit dans le logiciel desktop Tauri. Le bundle mobile est celui du grand public et du patient, et le script de build échoue volontairement si une page pro, <code>seo/</code> ou <code>scripts/</code> y réapparaît — l'APK de juillet embarquait la console d'admin.</p>
+  </section>
+
+  <section>
+    <div class="titre">
+      <div class="eyebrow">Sur cette machine</div>
+      <h2>Chaîne d'outils, vérifiée aujourd'hui</h2>
+    </div>
+    <div class="outils">
+      <span class="outil" data-etat="ok"><i class="pastille"></i><span class="quoi">Node 22.20</span><span class="dit">+ npm 10.9</span></span>
+      <span class="outil" data-etat="ok"><i class="pastille"></i><span class="quoi">JDK 21 Temurin</span><span class="dit">JAVA_HOME à exporter</span></span>
+      <span class="outil" data-etat="ok"><i class="pastille"></i><span class="quoi">Android SDK</span><span class="dit">~/Library/Android/sdk</span></span>
+      <span class="outil" data-etat="ok"><i class="pastille"></i><span class="quoi">supabase</span><span class="dit">CLI liée au projet</span></span>
+      <span class="outil" data-etat="ok"><i class="pastille"></i><span class="quoi">gh</span></span>
+      <span class="outil" data-etat="ko"><i class="pastille"></i><span class="quoi">Xcode</span><span class="dit">absent — aucun build iOS</span></span>
+    </div>
+  </section>
+
+  <section>
+    <div class="titre">
+      <div class="eyebrow">L'ordre compte</div>
+      <h2>Le plan, du plus urgent au plus lent</h2>
+      <p>L'ordre suit les délais, pas la difficulté : ce qui dépend d'un tiers part en premier, même si le travail, lui, viendra plus tard.</p>
+    </div>
+    <div class="plan">
+
+      <div class="phase">
+        <div class="quand"><b>Aujourd'hui</b><span>20 minutes, zéro code</span></div>
+        <ol class="etapes">
+          <li><span class="n">01</span><p>Sortir <code>TABIBI-KEYSTORE-SAUVEGARDE/</code> de la machine, sur <b>deux supports indépendants</b> — une clé USB rangée ailleurs, un coffre chiffré. <em>Vérifier chaque copie avec <code>shasum -a 256</code> : elle doit rendre <span class="mono">1957fe12…</span></em></p></li>
+          <li><span class="n">02</span><p>Ranger le mot de passe du keystore dans un gestionnaire de mots de passe, <b>pas</b> à côté de la clé.</p></li>
+        </ol>
+      </div>
+
+      <div class="phase">
+        <div class="quand"><b>En parallèle</b><span>à lancer maintenant, 2 à 4 semaines d'attente</span></div>
+        <ol class="etapes">
+          <li><span class="n">03</span><p>Demander le <b>D-U-N-S</b> de la SARL, puis ouvrir l'<b>Apple Developer Program</b>. <em>Sans ce départ aujourd'hui, iOS ne sortira pas pour décembre.</em></p></li>
+          <li><span class="n">04</span><p>Ouvrir le compte <b>Google Play Developer</b> — 25 $ une fois, et ça règle du même coup le canal de mise à jour.</p></li>
+        </ol>
+      </div>
+
+      <div class="phase">
+        <div class="quand"><b>Cette semaine</b><span>Android d'abord — 99 % du marché DZ</span></div>
+        <ol class="etapes">
+          <li><span class="n">05</span><p>Exporter <code>JAVA_HOME</code> vers le JDK 21, refaire un build complet et confirmer que la chaîne tourne toujours.</p></li>
+          <li><span class="n">06</span><p>Icône et splash aux couleurs Tabibi. <em>Aujourd'hui c'est encore le logo Capacitor par défaut — motif de refus sur Play.</em></p></li>
+          <li><span class="n">07</span><p>Réparer le push : déplacer le déclencheur vers une page réellement embarquée, câbler la réception, poser <code>google-services.json</code>, écrire la fonction d'envoi qui lit <code>device_tokens</code>.</p></li>
+          <li><span class="n">08</span><p>Pousser l'AAB en <b>test interne</b> sur Play. C'est le chemin le plus court vers une distribution qui se met à jour toute seule.</p></li>
+        </ol>
+      </div>
+
+      <div class="phase">
+        <div class="quand"><b>Avant le congrès</b><span>pendant que Play instruit</span></div>
+        <ol class="etapes">
+          <li><span class="n">09</span><p>Installer Xcode, poser le <code>DEVELOPMENT_TEAM</code>, tester le captcha sur un vrai iPhone.</p></li>
+          <li><span class="n">10</span><p>Détecter l'OS sur <code>telecharger.html</code> — un iPhone reçoit aujourd'hui le même lien APK que tout le monde.</p></li>
+          <li><span class="n">11</span><p>Une seule source de vérité pour le numéro de version, affichée dans l'app. <em>Aujourd'hui : 1.0.0, 0.1.0, 1.0.2, 1.0 et v37 cohabitent.</em></p></li>
+          <li><span class="n">12</span><p>Purger les comptes de test en production, tourner le mot de passe passé dans l'historique git, révoquer la RPC <code>match_doctor_for_claim</code> exposée à <code>anon</code> et jamais appelée.</p></li>
+        </ol>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="titre">
+      <div class="eyebrow">Cartographie</div>
+      <h2>Où vit quoi</h2>
+    </div>
+    <div class="scroll">
+      <table>
+        <thead>
+          <tr><th>Emplacement</th><th>Contenu</th><th>État</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="mono">~/Desktop/tabibi-doctor</span></td>
+            <td>Le dépôt<span class="dit">web, android, ios, desktop Tauri, v2 React, migrations</span></td>
+            <td>Branche <span class="mono">chore/verite-deploiement-et-version</span></td>
+          </tr>
+          <tr>
+            <td><span class="mono">TABIBI-KEYSTORE-SAUVEGARDE</span></td>
+            <td>Clé de signature officielle + son relevé d'audit</td>
+            <td>Même disque que la copie de travail</td>
+          </tr>
+          <tr>
+            <td><span class="mono">MEDECINALGERIE</span></td>
+            <td>Fichiers de démarchage<span class="dit">CSV médecins, présentation, paquets VCF</span></td>
+            <td>Hors dépôt — correct, ce sont des données personnelles</td>
+          </tr>
+          <tr>
+            <td><span class="mono">Tabibi-Extras</span></td>
+            <td>Outils d'envoi WhatsApp et SMS</td>
+            <td>Hors dépôt</td>
+          </tr>
+          <tr>
+            <td><span class="mono">COPIE-2-SECURITE</span></td>
+            <td>Un fichier nommé « BACKUP » qui n'est pas la clé de l'app</td>
+            <td>Piège identifié, ne pas s'y fier</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="color:var(--ink-2); font-size:15px; max-width:66ch;">Non commité et non versionné dans le dépôt : la refonte de l'accueil du 4 septembre — 2 046 lignes sorties de <code>index.html</code> vers <code>js/home-app.js</code> — plus tout <code>v2/</code> et les tests Playwright. Un nettoyage malheureux efface ce travail.</p>
+  </section>
+
+  <section>
+    <div class="titre">
+      <div class="eyebrow">À ne jamais oublier</div>
+      <h2>Les pièges du projet</h2>
+    </div>
+    <ul class="pieges">
+      <li><b><code>appointments.doctor_id</code> pointe vers <code>doctor_profiles.id</code>, pas vers <code>auth.uid()</code></b> — mais d'anciennes lignes utilisent quand même <code>auth.uid()</code>. Le code interroge volontairement les deux. « Simplifier » ce point vide un agenda sans lever la moindre erreur.</li>
+      <li><b>Cloudflare Pages n'est pas branché à Git.</b> Merger une PR ne déploie rien : chaque mise en production est un <code>wrangler pages deploy</code> lancé à la main.</li>
+      <li><b>Les noms de mois en arabe ne sont pas des dates de lancement.</b> Un <code>grep</code> sur « septembre » les remonte ; les modifier affiche un mauvais mois sur tous les rendez-vous.</li>
+      <li><b>Les couleurs de marque sont figées</b> : or <code>#d4a437</code>, vert <code>#0F7560</code>, gris <code>#556070</code>.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <span>Relevé effectué le 8 septembre 2026 à partir du dépôt local, des documents du projet et de l'état réel de la machine.</span>
+    <span>Version longue et détaillée : <code>DOSSIER_TABIBI_2026-09-08.md</code>, à la racine du dépôt.</span>
+  </footer>
+
+</div>

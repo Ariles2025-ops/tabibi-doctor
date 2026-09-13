@@ -13,6 +13,159 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### CE QUI CONTROLE DOIT ETRE CONTROLE
+
+**Un verdict se lit sur un CODE DE SORTIE, jamais sur une ligne de texte.**
+
+Le 13/09/2026, neuf gardes avaient chacune leur contre-epreuve, verifiee dans les deux sens. La
+boucle shell qui les executait, elle, n'en avait aucune :
+
+```bash
+for g in ...; do printf "  %-10s %s\n" "$n" "$(eval "$c" 2>&1 | tail -1)"; done
+```
+
+Elle imprimait la **derniere ligne** de chaque controle. Quand `verifier:cles` a echoue, sa phrase
+d'erreur — `1 fichier(s) portent un litteral de cle hors js/config.js` — s'est affichee dans la
+colonne des resultats exactement comme les huit verts. Elle a ete lue comme un statut. **La fusion
+est partie sur `main` avec une porte rouge**, et ce qui l'avait causee etait un fichier qu'Aghiles
+avait explicitement interdit de versionner, ajoute par un `git add -A -- *.html` trop large.
+
+La garde a fait son travail. C'est le dispositif qui la lisait qui mentait.
+
+**En pratique : on lance `npm run verifier:toutes`, jamais une boucle ecrite a la main.** Le script
+enchaine les portes, s'arrete a la premiere rouge, affiche ses vingt-cinq dernieres lignes, et rend
+lui-meme un code non nul.
+
+Contre-epreuve exigee de lui comme des autres — trois familles de casse, trois sorties en 1 :
+
+| Casse | Arret sur | Sortie |
+|---|---|---|
+| un littéral de cle injecte | `dette` (la premiere rouge atteinte) | **1** |
+| une erreur de syntaxe | `eslint` | **1** |
+| un `vite.config` invalide | `build` | **1** |
+
+**Le plancher.** `PORTES_OBLIGATOIRES`, en dur dans le script, liste les portes qui DOIVENT exister
+dans `package.json`. Sans lui, le garde-fou « porte absente → sautee » devenait une faille : retirer
+une ligne du `package.json` aurait fait disparaitre la porte en silence, signalee d'un tiret, tout
+restant vert. **L'absence deguisee en normalite** — la faute meme que ce script existe pour empecher,
+retournee contre lui.
+
+| Cas | Comportement |
+|---|---|
+| absente de la liste ET de `package.json` | sautee, signalee « pas encore obligatoire » |
+| presente dans la liste ET absente de `package.json` | **ROUGE, sortie 1** |
+
+**Et les portes ATTENDUES sont une LISTE DECLAREE, pas un commentaire.** `PORTES_A_VENIR` est
+imprimee a chaque passage :
+
+```
+  2 porte(s) attendue(s), pas encore obligatoire(s) : verifier:rpc, verifier:catch
+      verifier:rpc       fix/garde-rpc — les RPC appelees existent en base
+      verifier:catch     docs/regle-suppression-et-20-catch — aucun catch muet sur une ecriture
+```
+
+C'etait une paire de commentaires. **Un commentaire depend de quelqu'un qui le lit : c'est
+`tail -1` en plus petit.** Si personne ne le decommente, la porte entre dans `main` et reste
+sautee en silence, le script restant vert. Une ligne de sortie qu'on voit, pas un commentaire
+qu'on oublie — et elle disparait d'elle-meme le jour ou la liste se vide.
+
+Une porte attendue qui EXISTE desormais est signalee **⇧ A PROMOUVOIR en obligatoire** : elle
+tourne sans plancher, donc elle pourrait disparaitre en silence plus tard.
+
+Une porte entre dans la liste le jour ou sa branche entre dans `main`. **La liste des sautees doit
+MAIGRIR, jamais grossir.**
+
+Et la generalisation, qui vaut au-dela de ce cas : **chaque fois qu'on ajoute une garde, se demander
+qui lit son verdict, et si CE lecteur a ete contre-epreuve.** Une garde n'est utile qu'a la hauteur
+de la fiabilite de ce qui la consomme. Neuf contre-epreuves valaient zero parce que la dixieme
+manquait.
+
+Meme famille que le reste de cette section : une console propre, un test vert, un « auto-merging »,
+une derniere ligne de sortie — ce sont des signaux qui repondent a la question qu'on leur a posee,
+jamais a celle qu'on a oublie de poser.
+
+### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
+
+Un defaut silencieux ne reste pas a sa place. Il devient la donnee d'entree du suivant, qui n'a aucun
+moyen de savoir qu'elle est fausse — et le second echoue a son tour sans rien signaler, sur une
+valeur parfaitement plausible.
+
+Le cas du 13/09/2026, en deux fonctions :
+
+1. `mark_video_session_started` pose `started_at`. Le front l'appelle avec un
+   `.catch(captureErr)` : un refus metier (`forbidden`, `invalid_status`) est avale, `started_at`
+   reste **NULL**.
+2. `mark_video_session_ended` calcule la duree depuis `started_at` quand le front ne la fournit pas :
+
+```sql
+ELSIF v_session.started_at IS NOT NULL THEN
+  v_final := LEAST(14400, GREATEST(0, EXTRACT(EPOCH FROM (now() - v_session.started_at))::integer));
+ELSE
+  v_final := 0;
+```
+
+**Quarante minutes de teleconsultation enregistrees a 0 seconde.** Aucune erreur, nulle part. Et
+`duration_seconds` est une valeur qu'on facture ou qu'on produit en justificatif : elle a l'air
+normale, elle est verifiable par personne.
+
+Ce que cela impose :
+
+- **Un echec sur un chemin d'ecriture ne se juge jamais isolement.** La question n'est pas « est-ce
+  grave que cet appel echoue ? » mais « qu'est-ce qui LIT ce qu'il aurait du ecrire ? ».
+- **Une valeur par defaut plausible est plus dangereuse qu'une valeur absente.** `v_final := 0`
+  produit un nombre valide ; un NULL aurait saute aux yeux. C'est la meme faute que le badge vert par
+  defaut et le `|| 'Pending'` : un defaut qui se presente comme un etat normal.
+
+### Quand le mensonge sort de l'application, il passe EN PREMIER
+
+Tous les defauts qui se presentent comme un etat normal ne se valent pas. Quand le mensonge d'un
+ecran declenche un effet **EXTERNE et irreversible** — un e-mail parti, un compte cree, un paiement
+— il passe avant tous les autres de la meme famille.
+
+Un badge vert de trop se corrige demain et personne n'en a souffert. Un e-mail « votre fiche est
+validee » envoye a un medecin dont la fiche n'a PAS ete validee ne se rattrape pas : il est chez lui,
+il y croit, et il agira dessus.
+
+Cas du 13/09/2026, dans l'ordre ou ils ont ete traites :
+
+| Site | Effet du mensonge | Reversible ? |
+|---|---|---|
+| `admin-doctor-validation.html:371` et `:434` | **un e-mail part au medecin** — « fiche validee » ou « fiche rejetee » | **non** |
+| `signup.html:499` | **un compte secretaire est cree** en role actif, sans adhesion au cabinet | difficilement |
+| les autres ecrans de la meme famille | un affichage faux | oui |
+
+### Une COMMANDE qui echoue et une QUESTION qui repond non ne sont pas la meme chose
+
+C'est la distinction qui decide de la REACTION, jamais du signalement.
+
+- **Une commande** — « valide cette fiche », « retire ce membre », « cree ce rendez-vous ». Si elle
+  echoue, quelque chose ne s'est pas produit alors que l'utilisateur l'a demande. C'est un
+  **incident** : il faut le dire, fort, et surtout ne pas enchainer.
+- **Une question** — « ce patient peut-il laisser un avis ? », « ce code d'invitation est-il encore
+  valable ? ». Un non est une **reponse**, pas une panne. `can_review_doctor` qui dit non,
+  `accept_cabinet_invitation` qui rend `no_pending_invitation` sur un code deja consomme : le
+  systeme fonctionne exactement comme prevu.
+
+**Lever sur une question fabrique des incidents qu'on finit par ignorer** — et le jour ou un vrai
+incident sort, il se noie dans le bruit qu'on a appris a ne plus lire.
+
+C'est la raison pour laquelle `js/tabibi-rpc.js` **normalise** au lieu de lever : il garantit
+qu'aucune moitie de la reponse n'est perdue, il n'impose pas la reaction. L'appelant sait, lui, s'il
+a pose une question ou donne un ordre.
+
+```js
+const r = await tabibiRpc('invite_cabinet_member', { ... });
+if (!r.ok) { toast(r.erreur, 'error'); return; }   // COMMANDE : incident, on s'arrete
+```
+
+```js
+const r = await tabibiRpc('can_review_doctor', { ... });
+if (!r.ok) { masquerLeBouton(); return; }          // QUESTION : reponse, on s'adapte
+```
+
+Et `data` vaut **null** des que `ok` est faux : celui qui ignore `ok` casse visiblement, au lieu de
+continuer sur un mensonge. Normaliser sans cela n'obligerait personne a regarder.
+
 ### Regle premiere — UNE PAGE QUI CHARGE N'EST PAS UNE PAGE QUI MARCHE
 
 Toute preuve d'ecran doit **EXERCER** l'ecran : ouvrir l'onglet, declencher le rendu, **compter ce
@@ -196,7 +349,10 @@ Deux corollaires :
 
 ### Portes locales — la liste complète, dans cet ordre
 
-Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », **les sept** doivent passer. Aucune
+Avant de pousser quoi que ce soit, et avant d'annoncer « portes vertes », elles doivent TOUTES passer.
+**On les lance par `npm run verifier:toutes`**, qui s'arrete a la premiere rouge et rend un code non
+nul — jamais par une boucle ecrite a la main, qui lirait une ligne de texte au lieu d'un verdict.
+Aucune
 n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 
 | # | Commande | Ce qu'elle attrape | Échoue si |
@@ -206,6 +362,7 @@ n'est facultative, et `lint` ne remplace **pas** `lint:dette`.
 | 3 | `npm run i18n:verifier` | clés manquantes ou orphelines dans fr/ar/en | désalignement |
 | 4 | `npm run verifier:cles` | littéral de clé hors `js/config.js` | une occurrence |
 | 5 | `npm run verifier:c1` | accès direct à la vue `public_doctors` | un appelant |
+| 6 quinquies | `npm run verifier:rpc-passage` | un appel RPC hors de `tabibiRpc()` | le compte depasse le plafond |
 | 6 bis | `npm run verifier:fuseau` | une lecture d'horloge locale sur une date de rendez-vous | le compte depasse le plafond |
 | 6 | `npm run verifier:statuts` | un statut de rendez-vous declare d'un cote et pas de l'autre | un ecart, dans un sens ou l'autre |
 | 7 | `npm run build` puis `npm run test:e2e` | les parcours critiques, sources et sortie de build | un test rouge |

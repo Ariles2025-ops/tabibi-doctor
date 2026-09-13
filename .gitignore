@@ -113,3 +113,9 @@ v2/dist/
 
 # [2026-09-09] rapports Lighthouse : sorties de mesure, pas du code (900 Ko)
 tests/reports/
+
+# Relique locale de l extraction du JS inline (08/09/2026). Contient l ANCIENNE
+# cle anon Supabase (publique par nature, remplacee par sb_publishable_*) et fait
+# echouer verifier:cles. Jamais versionnee : ajoutee par erreur le 13/09, retiree.
+index-baseline.html
+index.html.avant-extraction
