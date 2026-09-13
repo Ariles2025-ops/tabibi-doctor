@@ -458,9 +458,17 @@ qu'un moyen de contact reste lisible. Un `mailto:` seul echoue ce test sur cet h
 ### A verifier au tableau de bord avant d'y toucher
 
 Meme famille de reglages invisibles depuis le depot, non encore inventories :
-Rocket Loader, Auto Minify, Mirage, Polish, et les Transform Rules eventuelles. Le cas
-`googletagmanager`, autorise par `script-src` alors qu'aucun fichier du depot ne le reference,
-releve peut-etre de la meme categorie : **regarder la console avant tout retrait**.
+Rocket Loader, Auto Minify, Mirage, Polish, et les Transform Rules eventuelles.
+
+**Cas clos le 13/09/2026 — `googletagmanager`.** L'origine etait autorisee par `script-src`
+alors qu'aucun fichier du depot ne la reference. La question etait de savoir si un reglage cote
+hebergeur l'injectait, comme le fait l'obfuscation d'e-mail. Verification au tableau de bord par
+Aghiles : **Zaraz n'est pas configure** (ecran d'accueil « Tag setup »), **Google Tag Gateway est
+inactif** (« Turn on and configure »). Aucun mecanisme d'injection. L'origine a donc ete retiree
+de `_headers`.
+
+La methode reste la bonne pour les suivants : **regarder la console avant tout retrait**, parce
+qu'un `git grep` vide ne prouve rien sur un hebergeur qui reecrit. Ici il ne reecrivait pas.
 
 ## Vérification post-déploiement
 
