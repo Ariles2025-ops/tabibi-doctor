@@ -63,6 +63,36 @@ Les deux gardes : `npm run lint:dette` (`no-restricted-syntax`, plafond **3**) p
 et `npm run verifier:fuseau` pour le JS inline des pages HTML — **invisible a eslint**, et c'est la
 que vivaient 105 des 134 lectures d'horloge du 13/09.
 
+### Pourquoi la garde doit etre a l'ECRITURE, pas a la lecture
+
+**Un instant faux ecrit en base est indiscernable d'un instant juste.** `2026-09-14T08:00:00+00` est
+une valeur parfaitement valide. Rien, dans la colonne, ne dit si elle vient d'un patient qui a
+choisi 09:00 heure cabinet ou d'un navigateur parisien qui croyait ecrire 09:00. **Aucun audit
+posterieur ne peut les separer** — il n'y a pas de trace de l'intention, seulement le resultat.
+
+Le 13/09/2026, `secretaire-dashboard.html:437` faisait
+`new Date(date + "T" + time + ":00").toISOString()`. Depuis Paris, un rendez-vous saisi a 09:00
+partait a `07:00Z`, soit **08:00 heure cabinet**. Une heure d'ecart, silencieuse, definitive.
+
+Nous avons eu de la chance : la table ne contenait **qu'une seule ligne**,
+`2026-09-14 08:00:00+00`, soit 09:00 pile heure cabinet, minutes a `00`, creee par le parcours
+patient. Rien a rattraper.
+
+**Si la table avait contenu six mois de rendez-vous, cette ligne aurait produit des degats
+irreparables et invisibles.** Pas un ecran a corriger : des milliers de rendez-vous decales d'une
+heure, sans moyen de savoir lesquels.
+
+C'est pour cela que la garde vit **au point d'ecriture** :
+
+- `tabibiTemps.instantDepuisJourEtHeure(jour, heure)` est le SEUL chemin autorise pour transformer
+  une heure murale saisie en instant. Il calcule le decalage du fuseau du cabinet a la date visee,
+  au lieu de laisser `new Date()` appliquer celui du navigateur.
+- `scripts/verifier-fuseau.mjs` attrape `new Date(<chaine sans fuseau>)` **avant** qu'il n'atteigne
+  la base, pas apres.
+
+La regle qui en decoule, generale : **un defaut d'affichage se corrige un jour ; un defaut
+d'ecriture se corrige jamais.** Quand les deux existent, on commence par l'ecriture.
+
 La preuve : `npx playwright test tests/e2e/fuseau-cabinet.spec.js` — le meme rendez-vous a 00h30 lu
 depuis Alger, Paris et UTC, plus les trois cas de non-regression.
 

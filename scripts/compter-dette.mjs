@@ -18,11 +18,21 @@ const PLAFONDS = {
   'no-console': 28,
   'no-restricted-properties': 57, // innerHTML dans js/ ; 58 -> 57 le 12/09/2026 — un cliquet qui ne se resserre jamais ne sert à rien
   'no-undef': 0,
-  // [13/09/2026] Horloge locale sur une date de rendez-vous. Plafond au compte
-  // REEL apres correction (18 -> 3), jamais releve « en attendant ». Les trois
-  // restants : js/home-app.js:1339 et js/tabibi-legal-version.js:40 sont des
-  // REPLIS quand le formateur partage n'est pas charge ; js/tabibi-reviews.js:326
-  // est le mois d'un avis, pas une date de rendez-vous.
+  // [13/09/2026] Horloge locale. Plafond au compte REEL apres correction
+  // (18 -> 3), jamais releve « en attendant ».
+  //
+  // La justification n'est PAS « ce sont des replis legitimes » : un repli peut
+  // mentir comme le reste. C'est qu'AUCUN des trois ne formate l'instant d'un
+  // rendez-vous — et un jour calendaire n'a pas de fuseau, donc rien a fausser.
+  //
+  //   js/home-app.js:1339         un JOUR CALENDAIRE ('YYYY-MM-DD'). Aucun
+  //                               fuseau ne s'y applique : le 16 septembre est
+  //                               le 16 septembre partout.
+  //   js/tabibi-legal-version.js:40  la date de mise a jour d'un document legal.
+  //                               Pas un rendez-vous, pas d'heure affichee.
+  //   js/tabibi-reviews.js:326    le mois et l'annee d'un avis. Granularite
+  //                               mensuelle : aucun fuseau ne la fait basculer.
+  //
   // Le JS inline des pages HTML echappe a eslint : c'est verifier-fuseau.mjs.
   'no-restricted-syntax': 3,
 };
