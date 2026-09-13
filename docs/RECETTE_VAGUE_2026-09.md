@@ -132,6 +132,71 @@ de la meme facon : deplacer le code — un autre fuseau, un autre ordre de charg
 - Une valeur d'environnement se lit **au moment de s'en servir**, pas a l'evaluation du module.
 - Contre-epreuve : changer l'ambiance sans toucher au code. Si la sortie change, c'est un defaut.
 
+### UN MESSAGE DE COMMIT EST UN RAPPORT, PAS UNE INTENTION
+
+**Il se redige apres avoir verifie ce qu'il rapporte, et se relit depuis `git show`, jamais depuis
+le disque.**
+
+Le 13/09/2026, le commit `8e3b05d` s'intitule « La migration de reparation unique, **et la regle de
+l'ambiance** ». Son corps contient une section `REGLE — CE QUI DEPEND DE L'AMBIANCE...` complete,
+avec ses trois cas et son test. Il n'a touche que deux fichiers SQL. **La regle n'etait dans aucun
+fichier du depot.**
+
+Le python qui l'inserait s'ancrait sur un titre vivant sur `docs/trois-regles-et-journal-9`, branche
+non fusionnee, alors que `db/plpgsql-check` part de `main`. L'assertion a leve. Le fichier n'a pas
+ete ecrit. **Et le commit est parti quand meme, avec son message intact.**
+
+Le message avait ete redige d'apres l'intention — ce que j'allais faire — au lieu du resultat. Rien
+ne signalait l'ecart : `git commit` ne verifie pas que le message correspond au diff. C'est
+`UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE` a l'etage du compte-rendu : l'insertion echoue en
+silence, et le journal du depot devient faux.
+
+Le danger n'est pas le commit rate — c'est qu'il **devient la memoire**. Dans six mois, `git log`
+dira que la regle a ete ecrite ce jour-la. Personne ne rouvrira le fichier pour verifier.
+
+**En pratique :**
+- Le message se redige **apres** le `git add`, en regardant `git diff --cached --stat`. Si le
+  message nomme un fichier absent de cette liste, il ment.
+- La relecture se fait par `git show HEAD:<chemin> | grep ...`, **jamais** en relisant le disque :
+  le disque contient ce qu'on voulait, l'objet git contient ce qu'on a commis.
+- Un script qui ecrit un fichier **leve** en cas d'echec, et on regarde s'il a leve avant de
+  commiter. Une assertion dont on ne lit pas le resultat ne protege personne.
+- Corollaire : un commit qui annonce N changements se verifie par `--stat`, pas par relecture.
+
+### UN DURCISSEMENT DOIT ETRE SUIVI D'UN EXERCICE DE CE QU'IL TOUCHE
+
+**Fermer un acces prouve qu'on a ferme. Il reste a prouver que ce qui devait passer passe encore.**
+
+La fermeture C1 du 09/09/2026 a verrouille `doctor_profiles` : lecture par la vue `public_doctors`,
+ecriture directe revoquee. La recette a verifie que **la lecture** passait bien par la vue. Elle n'a
+jamais verifie que **l'ecriture** existait encore.
+
+Or le declencheur `fn_update_doctor_rating`, qui met a jour la note d'un medecin apres un avis,
+ecrit dans `public_doctors` — la vue. Depuis le 09/09, tout `INSERT` dans `reviews` echoue en
+`55000 cannot update view "public_doctors"`. Le handler de la fonction attrape `undefined_table` et
+`undefined_column` ; **pas** `55000`. Mesure du 13/09 : l'erreur remonte, en statut `published`
+comme en `pending`.
+
+**Quatre jours sans qu'un seul avis puisse etre poste**, et la table `reviews` a 0 ligne — ce qui,
+avant mesure, se lisait comme « personne n'a encore laisse d'avis ». Le defaut s'est presente comme
+un etat normal. Personne ne l'a vu parce que personne n'a essaye.
+
+Le meme durcissement a pose `SET search_path TO 'public','pg_temp'` sur six fonctions qui appellent
+pgcrypto sans qualifier le schema (`42883`, cf. `CE QUI DEPEND DE L'AMBIANCE...`). Deux
+fonctionnalites cassees par la meme fermeture, aucune des deux detectee : **un durcissement casse
+par le cote de l'ECRITURE, et une recette regarde par le cote de la LECTURE.**
+
+**En pratique :**
+- Tout `REVOKE`, toute RLS posee, tout `search_path` resserre s'accompagne, dans la meme PR, de
+  **l'exercice du chemin d'ecriture** correspondant — pas de sa relecture, de son exercice : un
+  `INSERT` reel, annule par `ROLLBACK`.
+- La question n'est pas « qui ne peut plus ? » mais « **qui devait pouvoir, et peut-il encore ?** ».
+  On liste les declencheurs et les fonctions `SECURITY DEFINER` qui touchent l'objet durci, et on
+  les lance.
+- Une table a **0 ligne** apres un durcissement est un **soupcon**, jamais une donnee. On distingue
+  « personne n'a ecrit » de « personne ne peut ecrire » par un essai, pas par un raisonnement.
+- `plpgsql_check` fait ce balayage a froid : il se relance apres chaque durcissement, pas une fois.
+
 ### UN ECHEC SILENCIEUX EN CORROMPT UN AUTRE
 
 Un defaut silencieux ne reste pas a sa place. Il devient la donnee d'entree du suivant, qui n'a aucun

@@ -4,6 +4,14 @@ Une ligne par déploiement de production, à partir du 13/09/2026. Avant cette d
 n'étaient consignés nulle part : c'est ce qui a permis à la production de rester dix-huit jours sur un
 état que `main` ne décrivait plus (cf. `PLAN_FUSION.md` §3 quater et `docs/ETAT_PORTE.md`).
 
+Le journal couvre **deux cibles**. Une migration appliquée en production est un déploiement : elle a
+son commit, sa date et sa cible de retour, et elle peut casser la production aussi surement qu'un
+artefact. Jusqu'au 13/09/2026 le journal ne traçait que Cloudflare — c'est pourquoi la fermeture C1
+du 09/09, qui a cassé les avis pendant quatre jours, n'apparaît nulle part.
+
+- **Cloudflare Pages** — l'artefact servi. Table ci-dessous.
+- **Base Supabase** — les migrations appliquées. Table « Déploiements de base ».
+
 Hébergement : **Cloudflare Pages**, projet `tabibi-doctor`, branche de production **`main`**, sans
 connexion Git — tous les déploiements sont poussés à la main par `wrangler pages deploy`.
 
@@ -23,6 +31,40 @@ deployment*. Atomique, sans reconstruction.
 | 3 | 2026-09-13 ~08:58 | `dc133ebd9dc1a7427fc5bce367112d810080335d` | `eeeeef33-…` | **fermée** | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | Claude, sur go d'Aghiles |
 | 2 | 2026-09-13 ~01:30 | `5cec711f90f5b982f4b100eb30ff456753ae97a8` | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | **fermée** | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | Claude, sur go d'Aghiles |
 | 1 | 2026-08-26 (reconstitué) | `f06aa3d` (PR #51) | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | fermée | — | non consigné à l'époque |
+
+---
+
+## Déploiements de base
+
+Projet Supabase `pudugodhiofqrctcdwfl` (EU/Francfort). Une ligne par migration appliquée en
+production. La migration est écrite et présentée par Claude, **lancée par Aghiles** dans l'éditeur
+SQL, jamais appliquée par Claude.
+
+**Le retour arrière n'existe que s'il a été capturé avant.** `CREATE OR REPLACE FUNCTION` écrase
+sans laisser de trace : Postgres ne garde aucune version précédente d'un corps de fonction. La
+cible de retour n'est donc pas un identifiant fourni par la plateforme, comme chez Cloudflare —
+c'est **un fichier du dépôt, généré avant la migration**, contenant les définitions d'avant.
+Pas de fichier capturé = pas de retour arrière, quel que soit le plan de sauvegarde.
+
+| # | Date | Migration | Commit | Cible de retour | Vérification | Lancée par |
+|---|---|---|---|---|---|---|
+| B1 | *à venir* | `20260913_reparation_plpgsql_check.sql` | `db/plpgsql-check` | `20260913_reparation_RETOUR_ARRIERE.sql` | `20260913_reparation_VERIFICATION.sql` → 0 ligne | Aghiles |
+| B0 | 2026-09-13 | `20260913_plpgsql_check.sql` (`CREATE EXTENSION`) | — | *sans objet — extension seule* | `plpgsql_check_function_tb` sur le schéma | Aghiles |
+
+**Règles de la colonne « Cible de retour » :**
+- Une migration qui remplace du code (`CREATE OR REPLACE`, `ALTER`) exige un fichier de capture
+  **généré et versionné avant** son application. Il ne se lance pas ; il existe.
+- Un fichier de capture se vérifie **fidèle** avant qu'on s'y fie : empreintes `md5` des définitions
+  vivantes comparées à celles de la capture, en lecture seule, dans un passage séparé.
+- Une migration additive (nouvelle table, nouvel index) note sa cible de retour en clair
+  (`DROP TABLE ...`), pas « — ».
+- *Sans objet* est une réponse valable, mais elle s'écrit et se justifie.
+
+**Trois passages séparés, toujours** — l'éditeur SQL de Supabase enveloppe tout un script dans UNE
+transaction, donc une vérification ajoutée au script peut annuler la migration en échouant :
+1. la vérification de fraîcheur de la capture (lecture seule, doit rendre 0 ligne) ;
+2. la migration, **seule** ;
+3. la vérification, **seule**, qui doit rendre 0 ligne.
 
 ---
 
