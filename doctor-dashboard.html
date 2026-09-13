@@ -737,7 +737,7 @@ function renderAgenda(){
     const isToday=iso===today;
     const isSel=iso===currentDay;
     return `<button class="cal-day ${isToday?'today':''} ${cnt>0?'has-rdv':''}" style="${isSel?'background:var(--blue);color:#fff;border-color:var(--blue)':''}" onclick="selDay('${iso}')">
-      <div style="font-size:10px">${_T.jourCalendaire(iso,{weekday:'short'})||d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${dt.getDate()}</div>
+      <div style="font-size:10px">${_T.jourCalendaire(iso,{weekday:'short'})||d}</div><div style="font-size:14px;margin-top:2px;font-weight:700">${_T.jourCalendaire(iso,{day:'numeric'})}</div>
       ${cnt>0?`<div style="font-size:9px;margin-top:2px">${cnt} ${tabibiT('dd_rdv_unit','RDV')}</div>`:''}
     </button>`;
   }).join("");
@@ -1080,7 +1080,8 @@ document.addEventListener("DOMContentLoaded", async ()=>{
       const _firstName = (u.name||"").replace("Dr. ","").split(" ")[0];
       const hdr = document.getElementById("hdr-title");
       if (hdr) hdr.textContent = _t('hello') + ', ' + _firstName;
-      const h2=new Date().getHours();
+      // L'heure du CABINET : le medecin est au cabinet, pas chez son navigateur.
+      const h2=parseInt(window.tabibiTemps.heureDe(new Date()).slice(0,2), 10);
       const greet = document.getElementById("med-greet");
       if (greet) greet.innerHTML = h2<12 ? (_t('good_morning') + " <i class='fa fa-sun'></i>") : h2<18 ? _t('good_afternoon') : (_t('good_evening') + " <i class='fa fa-moon'></i>");
     };
@@ -1217,23 +1218,14 @@ function _buildLocalDate(yyyymmdd, hhmm) {
   return new Date(y, mo - 1, d, h, mi, 0, 0);
 }
 
-// [Phase 4.B.3-fix2] Renvoie la date locale d'aujourd'hui au format YYYY-MM-DD
-// → utilise getFullYear/getMonth/getDate (composantes locales) plutôt que
-// toISOString().split('T')[0] qui shift en UTC (bug près de minuit côté Algérie).
-function _todayLocalIso() {
-  var d = new Date();
-  var y = d.getFullYear();
-  var mo = String(d.getMonth() + 1).padStart(2, '0');
-  var da = String(d.getDate()).padStart(2, '0');
-  return y + '-' + mo + '-' + da;
-}
+// [13/09/2026] _todayLocalIso() etait definie et jamais appelee : supprimee.
+// _tomorrowLocalIso() lisait « demain » dans le fuseau du NAVIGATEUR, et son
+// resultat part en base comme periode d'indisponibilite. Un medecin a Paris a
+// 00h30 aurait bloque le mauvais jour. Le jour se calcule dans le fuseau du
+// CABINET. Le commentaire d'origine se felicitait d'eviter toISOString() en
+// lisant les composantes locales : juste tant qu'on est a Alger, faux ailleurs.
 function _tomorrowLocalIso() {
-  var d = new Date();
-  d.setDate(d.getDate() + 1);
-  var y = d.getFullYear();
-  var mo = String(d.getMonth() + 1).padStart(2, '0');
-  var da = String(d.getDate()).padStart(2, '0');
-  return y + '-' + mo + '-' + da;
+  return window.tabibiTemps.ajouterJours(window.tabibiTemps.aujourdhui(), 1);
 }
 
 function openUnavailModal() {

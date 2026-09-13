@@ -114,3 +114,35 @@ test.describe('capture aux trois fuseaux', () => {
     });
   }
 });
+
+// =====================================================================
+// Non-regression : la grille de semaine de l'agenda medecin
+// =====================================================================
+// Le 13/09/2026, le refactor du fuseau a laisse un `${dt.getDate()}` dans un
+// gabarit ou `dt` n'existait plus. La ReferenceError etait avalee par le
+// try/catch de sw() : grille VIDE, console PROPRE, et le defaut est parti en
+// production. La verification d'alors n'avait teste que le CHARGEMENT de la
+// page, pas l'ouverture de l'onglet Agenda.
+//
+// Une page qui charge sans erreur n'est pas une page qui marche.
+// =====================================================================
+test.describe('agenda medecin', () => {
+  test('la grille de semaine rend ses sept jours', async ({ page }) => {
+    const err = [];
+    page.on('pageerror', (e) => err.push(String(e).slice(0, 140)));
+    await page.route('**/js/auth.js', (r) => r.fulfill({ status: 200, contentType: 'application/javascript',
+      body: `window.tabibi=window.tabibi||{};window.tabibi.auth={requireAuth:async()=>JSON.parse(localStorage.getItem('tabibi_user')||'null'),getUser:async()=>null,logout:async()=>{}};` }));
+    await page.route('**/*.supabase.co/**', (r) => r.abort());
+    await page.addInitScript(() => {
+      localStorage.setItem('tabibi_user', JSON.stringify({ id: 'fx', role: 'medecin', name: 'Fx' }));
+      localStorage.setItem('tabibi_lang', 'fr');
+    });
+    await page.goto('/doctor-dashboard.html');
+    await page.waitForTimeout(1200);
+    await page.evaluate(() => window.sw('agenda', document.querySelector("[onclick*=\"sw('agenda'\"]")));
+    await page.waitForTimeout(1200);
+    const cases = await page.locator('#cal-week .cal-day').count();
+    expect(cases).toBe(7);
+    expect(err).toEqual([]);
+  });
+});
