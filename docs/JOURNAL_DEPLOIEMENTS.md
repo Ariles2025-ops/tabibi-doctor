@@ -15,6 +15,7 @@ deployment*. Atomique, sans reconstruction.
 
 | # | Date (UTC) | Commit déployé | Déploiement Cloudflare | Porte | Retour arrière vers | Lancé par |
 |---|---|---|---|---|---|---|
+| 5 | 2026-09-13 ~10:16 | `8c24384ccd511d4bac455ce1e70e5d1ea02dbd7f` | `55c94431-…` | **fermée** | `1c7f727a-b16f-428a-8add-48e064458a39` | Claude, sur go d'Aghiles |
 | 4 | 2026-09-13 ~09:19 | `e94ca04263c9b621160111be9c16cd15fbb09881` | `1c7f727a-…` | **fermée** | `eeeeef33-65c9-4204-b2fe-b66735b6aa9c` | Claude, sur go d'Aghiles |
 | 3 | 2026-09-13 ~08:58 | `dc133ebd9dc1a7427fc5bce367112d810080335d` | `eeeeef33-…` | **fermée** | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | Claude, sur go d'Aghiles |
 | 2 | 2026-09-13 ~01:30 | `5cec711f90f5b982f4b100eb30ff456753ae97a8` | `5e3d8d18-9b03-43e2-837b-943926cd4c0e` | **fermée** | `59b36480-2e0b-44ca-ab8b-86e04bbc06cd` | Claude, sur go d'Aghiles |
@@ -90,69 +91,6 @@ Aucune divergence.
 
 Il ne touche pas à la base. Porte fermée, la page d'entrée est statique : une suspension Supabase ne
 casserait pas ce qui est en ligne. C'est ce qui a permis de déployer sans attendre la facture.
-
----
-
-## Deploiement 4 — 13/09/2026, les boutons honnetes
-
-**Ce qui est parti** : #93 (aucun bouton n'annonce ce qu'il ne fait pas), #94 (vendorisation du SDK
-Daily, retrait d'`unpkg.com` de `script-src`), #95 (documentation). Trois fusions locales, chacune
-verifiee avant la suivante.
-
-### Les mesures, annoncees avant, constatees apres
-
-| Mesure | Avant | Annonce | Constate |
-|---|---|---|---|
-| taille de `/` | 5 004 o | 5 004 o | **5 004 o** |
-| titre | Bientot disponible | inchange | **inchange** |
-| balise `tabibi-porte` | `fermee` | `fermee` | **`fermee`** |
-| `/accueil-public.html` | 200 + `noindex,nofollow` | 200 + `noindex,nofollow` | **200 + `noindex,nofollow`** |
-| `script-src` contient `unpkg.com` | oui | **non** | **non** |
-| boutons menteurs actifs | **6** | **0** | **0** |
-
-### Une divergence, et ce qu'elle apprend
-
-**Taille de `/accueil-public.html` : annoncee 115 952 o, servie 116 268 o. Ecart de 316 octets.**
-
-Ce n'est pas un defaut de deploiement. J'avais annonce la taille du fichier **construit**, alors que
-la production sert le fichier **reecrit** : Cloudflare transforme les 2 `href="mailto:"` de la page en
-un `__cf_email__` et injecte la balise du decodeur. Verifie : `mailto:` = 2 dans `dist-web`, **0** dans
-la page servie ; `__cf_email__` = 0 dans `dist-web`, **1** dans la page servie ; une balise
-`email-decode.min.js` en plus.
-
-C'est exactement le piege consigne le matin meme dans `DEPLOY_FRONTEND.md`, section « Reglages cote
-hebergeur qui reecrivent le HTML servi » — et je l'ai refait dans l'heure. **Regle qui en decoule :
-une taille annoncee doit etre mesuree sur ce qui sera servi, pas sur ce qui est construit.** Pour
-toute page contenant un `mailto:`, prevoir l'ecart, ou comparer autre chose que la taille.
-
-### Parcours permanent — zero bouton actif annoncant une action accomplie
-
-Nouveau controle de la fiche de recette, mesure **sur le domaine reel** et pas seulement sur
-`dist-web`, precisement parce que la production reecrit le HTML. Vingt pages balayees avec cache-bust :
-
-| Page servie | `onclick` `alert`/`confirm` | Verdict |
-|---|---|---|
-| `patient-profile` | 1 | honnete — « Module mesures · Bientot disponible » |
-| `doctor-dashboard` | 3 | honnetes — adresse du support, et deux vues de detail sur de vraies donnees |
-| les dix-huit autres | 0 | — |
-
-**Total : 4, tous honnetes. Zero menteur actif** — contre six avant ce deploiement.
-
-Ce que la production portait encore hier et ne porte plus : les faux compteurs de la cloche admin
-(supprimee), « Export CSV en cours... » et « Backup cree » (desactives), « Telechargement de … »
-(desactive), « Demande envoyee — reponse sous 30 jours (RGPD) » (desactive, avec porte de sortie),
-« Lien copie » (remplace par une vraie copie presse-papiers).
-
-### Les portes de sortie, verifiees en ligne
-
-`patient-profile` sert **2 notes visibles**, **2 liens `tel:+213777169074`**, **2 renvois vers
-`legal/rgpd-droits.html`**, et **2 badges SUR DEMANDE**. Le telephone est la parce que `tel:` echappe
-a la reecriture Cloudflare, contrairement au `mailto:` : c'est le seul element de la note qui reste
-lisible si le decodeur ne s'execute pas. `doctor-profile` sert bien `clipboard.writeText`.
-
-### Ce que ce deploiement ne fait pas
-
-Il ne touche pas a la base. Porte fermee, la page d'entree reste statique.
 
 ---
 
@@ -244,3 +182,126 @@ Trois consequences a retenir :
 
 A decider : uniformiser les deux pages sur le modele visible de `medecin-profile`, et rendre le
 telephone present des la page de profil plutot qu'a un clic de distance.
+
+---
+
+## Deploiement 4 — 13/09/2026, les boutons honnetes
+
+**Ce qui est parti** : #93 (aucun bouton n'annonce ce qu'il ne fait pas), #94 (vendorisation du SDK
+Daily, retrait d'`unpkg.com` de `script-src`), #95 (documentation). Trois fusions locales, chacune
+verifiee avant la suivante.
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| taille de `/` | 5 004 o | 5 004 o | **5 004 o** |
+| titre | Bientot disponible | inchange | **inchange** |
+| balise `tabibi-porte` | `fermee` | `fermee` | **`fermee`** |
+| `/accueil-public.html` | 200 + `noindex,nofollow` | 200 + `noindex,nofollow` | **200 + `noindex,nofollow`** |
+| `script-src` contient `unpkg.com` | oui | **non** | **non** |
+| boutons menteurs actifs | **6** | **0** | **0** |
+
+### Une divergence, et ce qu'elle apprend
+
+**Taille de `/accueil-public.html` : annoncee 115 952 o, servie 116 268 o. Ecart de 316 octets.**
+
+Ce n'est pas un defaut de deploiement. J'avais annonce la taille du fichier **construit**, alors que
+la production sert le fichier **reecrit** : Cloudflare transforme les 2 `href="mailto:"` de la page en
+un `__cf_email__` et injecte la balise du decodeur. Verifie : `mailto:` = 2 dans `dist-web`, **0** dans
+la page servie ; `__cf_email__` = 0 dans `dist-web`, **1** dans la page servie ; une balise
+`email-decode.min.js` en plus.
+
+C'est exactement le piege consigne le matin meme dans `DEPLOY_FRONTEND.md`, section « Reglages cote
+hebergeur qui reecrivent le HTML servi » — et je l'ai refait dans l'heure. **Regle qui en decoule :
+une taille annoncee doit etre mesuree sur ce qui sera servi, pas sur ce qui est construit.** Pour
+toute page contenant un `mailto:`, prevoir l'ecart, ou comparer autre chose que la taille.
+
+### Parcours permanent — zero bouton actif annoncant une action accomplie
+
+Nouveau controle de la fiche de recette, mesure **sur le domaine reel** et pas seulement sur
+`dist-web`, precisement parce que la production reecrit le HTML. Vingt pages balayees avec cache-bust :
+
+| Page servie | `onclick` `alert`/`confirm` | Verdict |
+|---|---|---|
+| `patient-profile` | 1 | honnete — « Module mesures · Bientot disponible » |
+| `doctor-dashboard` | 3 | honnetes — adresse du support, et deux vues de detail sur de vraies donnees |
+| les dix-huit autres | 0 | — |
+
+**Total : 4, tous honnetes. Zero menteur actif** — contre six avant ce deploiement.
+
+Ce que la production portait encore hier et ne porte plus : les faux compteurs de la cloche admin
+(supprimee), « Export CSV en cours... » et « Backup cree » (desactives), « Telechargement de … »
+(desactive), « Demande envoyee — reponse sous 30 jours (RGPD) » (desactive, avec porte de sortie),
+« Lien copie » (remplace par une vraie copie presse-papiers).
+
+### Les portes de sortie, verifiees en ligne
+
+`patient-profile` sert **2 notes visibles**, **2 liens `tel:+213777169074`**, **2 renvois vers
+`legal/rgpd-droits.html`**, et **2 badges SUR DEMANDE**. Le telephone est la parce que `tel:` echappe
+a la reecriture Cloudflare, contrairement au `mailto:` : c'est le seul element de la note qui reste
+lisible si le decodeur ne s'execute pas. `doctor-profile` sert bien `clipboard.writeText`.
+
+### Ce que ce deploiement ne fait pas
+
+Il ne touche pas a la base. Porte fermee, la page d'entree reste statique.
+
+---
+
+---
+
+## Deploiement 5 — 13/09/2026, le statut de rendez-vous
+
+**Ce qui est parti** : #96 (journal du deploiement 4) et #97 (source unique du statut de
+rendez-vous). Premier deploiement conduit avec le gabarit ci-dessus.
+
+### Etape obligatoire, cochee en premier
+
+`node scripts/verifier-statuts.mjs --base` → `Statuts alignes.`, sortie 0, les cinq valeurs de
+`appointment_status` dans le meme ordre que l'utilitaire. Jeton local, aucun secret en CI.
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| taille de `/` | 5 004 o | 5 004 o | **5 004 o** |
+| balise `tabibi-porte` | `fermee` | `fermee` | **`fermee`** |
+| `/accueil-public.html` **servi** | 116 268 o | 116 268 o | **116 268 o** |
+| `doctor-dashboard` : `const STATUS_MAP =` | 1 | 0 | **0** |
+| `doctor-dashboard` : ternaire au vert par defaut | 3 | 0 | **0** |
+| `doctor-dashboard` : compteur « Absents » | 0 | 2 | **2** |
+| `js/tabibi-statut-rdv.js` | absent | 200 | **200, 4 420 o** |
+| boutons menteurs actifs | 0 | 0 | **0** |
+
+**Aucune divergence.** La taille de `accueil-public.html` a ete annoncee a 116 268 o — soit les
+115 952 o construits **plus les 316 o de la reecriture Cloudflare** des deux `mailto:`. C'est la
+correction directe de l'erreur du deploiement 4, ou la taille du fichier construit avait ete annoncee
+telle quelle. La regle tient : une taille annoncee se mesure sur ce qui sera servi.
+
+### Ce que la production ne porte plus
+
+Le ternaire `status==='Confirmed' ? bleu : status==='Pending' ? ambre : **vert**` a disparu des trois
+endroits ou il vivait. Un rendez-vous annule, un absent, un statut inconnu ne peuvent plus sortir
+verts. `STATUS_MAP`, qui inventait des valeurs capitalisees absentes de l'enum et repliait tout
+inconnu sur « En attente », n'est plus servi.
+
+Le tableau de bord medecin sert desormais deux compteurs distincts : « Consultations du mois »
+(`completed` seul) et « Absents » (`no_show`). Il comptait jusqu'ici tous les rendez-vous du mois,
+annules compris.
+
+### Parcours permanent, sur le domaine reel
+
+Vingt pages, cache-bust : `patient-profile` 1, `doctor-dashboard` 3, zero ailleurs. **Quatre au
+total, tous honnetes.** `mes-rdv` et `patient-dashboard` servent bien `tabibiStatutRdv`.
+
+### Parcours 4 avant l'envoi
+
+3 verts, et **les captures regardees** — pas seulement produites. C'est ainsi qu'on avait vu, la
+veille, que les quatre cartes gardaient une bordure verte malgre des badges corrects. Cette fois les
+bordures sont distinctes : grise pour l'honore, rouge pour l'annule, grise pour l'absent, neutre
+hachuree pour l'inconnu.
+
+### Ce que ce deploiement ne fait pas
+
+Il ne touche pas a la base. Il ne contient ni le retrait de `googletagmanager` de la CSP, ni la
+suppression du DOM mort : les deux PR attendent une validation.
