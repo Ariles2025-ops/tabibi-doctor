@@ -107,6 +107,55 @@ Audit sur 53 pages du dépôt, puis vérification sur le domaine réel.
 | `medecin-profile.html` | **0** — corrigé par #72 |
 | `index.html`, `accueil-public`, `secretaire-dashboard`, `mes-rdv`, `reservation`, `login`, `signup` | 0 |
 
-**Six d'entre eux affirment une action qui n'a pas lieu** (détail et verdict dans le rapport de session).
-Aucun n'est une régression : tous précèdent la vague. Aucun n'est corrigé par ce déploiement.
+Onze boutons au total. **Six affirment une action qui n'a pas lieu.** Aucun n'est une regression :
+tous precedent la vague, et **aucun n'est corrige par ce deploiement** — les six sont actifs en
+production au 13/09/2026 (aucun ne porte `disabled`).
 
+| # | Fichier:ligne | Ce que le bouton annonce | Ce qu'il fait reellement |
+|---|---|---|---|
+| 1 | `admin-dashboard.html:39` | « 3 alertes admin · 7 medecins en attente · 5 signalements » | rien. Les trois nombres sont ecrits en dur ; la cle i18n s'appelle litteralement `alert_admin_notif_demo`. Des chiffres inventes presentes comme un etat reel. |
+| 2 | `admin-dashboard.html:141` | « Export CSV en cours... » | rien. Aucune requete, aucun fichier. |
+| 3 | `admin-dashboard.html:142` | « Backup cree » | rien. **Le plus grave des trois** : passe compose, il affirme une sauvegarde accomplie. |
+| 4 | `patient-dashboard.html:853` | « Telechargement de \<nom du document\> » | rien. Aucun telechargement ne demarre. |
+| 5 | `patient-profile.html:248` | « Demande envoyee — reponse sous 30 jours (RGPD) » | rien. **Le plus grave de tous** : le patient croit avoir exerce un droit legal. Rien n'est envoye, personne n'est saisi, le delai de 30 jours ne court pas. |
+| 6 | `doctor-profile.html:60` | « Lien copie » (repli quand `navigator.share` est absent) | rien n'est ecrit dans le presse-papiers. Sur desktop, ou `navigator.share` n'existe pas, c'est le cas par defaut. |
+
+Les cinq autres ne mentent pas et n'ont pas a etre touches : `patient-profile.html:99`
+(« Module mesures · Bientot disponible ») annonce honnetement une absence ; `doctor-dashboard.html:182`
+affiche l'adresse du support ; `doctor-dashboard.html:716` et `:883` affichent de vraies donnees de la
+ligne cliquee (vue de detail du pauvre). Cas limite a part : `patient-profile.html:111` renvoie en
+popup son propre libelle (« Prendre RDV vaccination ») — il n'affirme rien de faux, mais c'est un
+bouton mort sans indication. A trancher avec les six autres.
+
+---
+
+### Piege de mesure — l'obfuscation d'e-mail de Cloudflare
+
+Verification demandee le 13/09 : `contact@tabibi.doctor` est-il present sur `medecin-profile` en
+production ? Un `grep` sur le HTML servi renvoie **0**. La conclusion evidente — « le medecin n'a
+aucune porte de sortie indiquee » — est fausse.
+
+Cloudflare a **Email Address Obfuscation** actif. Tout `href="mailto:…"` est reecrit dans la reponse :
+
+    <a href="/cdn-cgi/l/email-protection#e5868a8b91848691a5…">
+      <span class="__cf_email__" data-cfemail="781b17160c191b0c380c191a111a11561c171b0c170a">[email&#160;protected]</span></a>
+
+Decodage (1er octet = cle, XOR sur les suivants) : **`contact@tabibi.doctor`**. Le decodeur
+`/cdn-cgi/scripts/…/email-decode.min.js` est servi par la meme origine (HTTP 200, 1 239 o), donc
+autorise par `'self'` sans elargir la CSP.
+
+Trois consequences a retenir :
+
+1. **Chercher une adresse e-mail par `grep` sur le HTML servi ne prouve rien.** Il faut decoder
+   `data-cfemail`, ou mesurer le rendu apres execution du JS.
+2. **`patient-profile` echappe a la reecriture parce qu'il n'utilise pas de lien.** Son adresse est
+   dans un attribut `title` (survol seulement — invisible au doigt sur mobile) et dans une chaine JS
+   d'un bouton desactive, donc inatteignable. Sa porte de sortie est en realite **plus faible** que
+   celle de `medecin-profile`, qui porte une note visible sous les deux boutons.
+3. **Le repli sans JS reste mauvais** : le medecin lit alors « [email protected] », inutilisable. Mais
+   la meme note renvoie vers `legal/rgpd-droits.html` (HTTP 200), qui donne la procedure complete et
+   le **telephone en clair** `+213 777 16 90 74` — non obfusque, lui. La porte de sortie survit donc
+   a une panne de JS, par le telephone.
+
+A decider : uniformiser les deux pages sur le modele visible de `medecin-profile`, et rendre le
+telephone present des la page de profil plutot qu'a un clic de distance.

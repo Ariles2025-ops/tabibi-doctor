@@ -570,6 +570,26 @@ ligne du service worker ne concerne que les visiteurs passés par l'accueil.
 | Les 45 pages (`/login`, `/signup`, `/doctor-dashboard`, `/agenda-cabinet`, `/medecin-profile`, `/admin-*`, `/dawini`, `/patient-*`, `/mes-rdv`, `/reservation`, `/teleconsultation`, pages légales…) | **200 partout** (relevé du 10/09, titres conformes) ; seule `/` est « Bientôt disponible » | 200 | 200 |
 | Cache | HTML `max-age=0, must-revalidate` ; `/login` `no-store` | idem | HTML `max-age=0` |
 
+> **Remesure du 13/09/2026, apres le deploiement 3** (commit `dc133eb`, porte fermee). Les lignes du
+> tableau ci-dessus datent du **10 septembre 2026** (cf. en-tete du chapitre 7) et sont conservees
+> telles quelles. Deux d'entre elles ne decrivent plus la production :
+>
+> - **Content-Security-Policy.** `jsdelivr` et `cdnjs` ont bien disparu de `script-src`, et le joker
+>   `https:` a disparu de `img-src` : la production a donc bien recu le `_headers` de la branche.
+>   Valeur servie par `https://tabibi.doctor/login`, mesuree avec cache-bust :
+>   `script-src 'self' 'unsafe-inline' blob: https://unpkg.com https://www.googletagmanager.com`
+>   `https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net`
+>   `img-src 'self' data: blob: https://*.tile.openstreetmap.org https://pudugodhiofqrctcdwfl.supabase.co`
+>   `https://api.qrserver.com https://images.unsplash.com https://www.facebook.com https://facebook.com`
+>   Il reste donc **`unpkg.com`** (retire par la PR `fix/daily-vendorise`, non fusionnee au 13/09) et
+>   **`googletagmanager`** (aucun fichier du depot ne le reference ; a examiner cote tableau de bord
+>   Cloudflare avant tout retrait).
+> - **`/js/home-app.js`.** Mesure a **HTTP 200, 124 321 octets**, et non 404 : le fichier est en ligne
+>   depuis le deploiement 2.
+>
+> Les autres lignes n'ont pas ete remesurees.
+
+
 ### 7.5 Accessibilité
 
 Niveau visé : `CLAUDE.md` demande « AA » ; aucun document du dépôt ne cite WCAG ni RGAA (le seul
