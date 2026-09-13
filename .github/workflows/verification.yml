@@ -99,6 +99,15 @@ jobs:
         # descendre a chaque lot migre, jamais monter.
         run: npm run verifier:rpc-passage
 
+      - name: Toutes les portes, lues sur leur code de sortie
+        # CE QUI CONTROLE DOIT ETRE CONTROLE. Le 13/09/2026, neuf gardes
+        # contre-epreuvees etaient lues par une boucle shell qui imprimait la
+        # derniere ligne de chaque sortie, jamais son code : une porte rouge
+        # s'est affichee comme une verte et le merge est parti sur main.
+        # Ce pas est redondant avec ceux ci-dessus, a dessein : il verifie que
+        # l'enchaineur lui-meme rend bien un code non nul.
+        run: npm run verifier:toutes
+
       - name: Installer le navigateur de test
         run: npx playwright install --with-deps chromium
 
