@@ -422,3 +422,10 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   .tab-bar,
   .install-banner { max-width: 1240px; }
 }
+
+/* [13/09/2026] Etat NEUTRE d'un statut de rendez-vous inconnu — voir
+   js/tabibi-statut-rdv.js. Le vert est une autorisation, jamais un defaut. */
+.is-statut-inconnu{
+  background:repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 4px,#e5e7eb 4px,#e5e7eb 8px);
+  color:#4b5563; border:1px dashed #9ca3af; font-style:italic;
+}

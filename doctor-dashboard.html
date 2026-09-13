@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
 <script src="js/tabibi-avatar.js"></script>
+<script src="js/tabibi-statut-rdv.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <!-- SEO -->
 <meta name="description" content="Espace médecin privé Tabibi.">
@@ -19,10 +20,16 @@
 <!-- [UI 2026-07-09] Design system premium partagé (identité landing) -->
 <link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
-.appt-card { background:#fff; border-radius:12px; padding:14px; box-shadow:var(--s1); margin-bottom:10px; border-left:4px solid var(--green); }
+/* [13/09/2026] La bordure de base etait VERTE : un annule, un absent et un
+   statut inconnu heritaient tous du vert. Le vert est une autorisation,
+   pas un defaut — la base est neutre et chaque statut merite sa couleur. */
+.appt-card { background:#fff; border-radius:12px; padding:14px; box-shadow:var(--s1); margin-bottom:10px; border-left:4px solid #9ca3af; }
 .appt-card.urgent { border-left-color:var(--red); background:#fef2f2; }
 .appt-card.pending { border-left-color:#f59e0b; background:#fffbeb; }
+.appt-card.confirmed { border-left-color:var(--green); }
 .appt-card.completed { border-left-color:var(--text4); opacity:.7; }
+.appt-card.cancelled { border-left-color:var(--red); background:#fff7f7; opacity:.7; }
+.appt-card.no_show   { border-left-color:#6b7280; background:#f9fafb; opacity:.8; }
 .cal-week { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-bottom:14px; }
 .cal-day { padding:10px 4px; text-align:center; border-radius:10px; border:1.5px solid var(--border); background:#fff; cursor:pointer; }
 .cal-day.today { background:var(--green-l); border-color:var(--green); color:var(--green-d); font-weight:700; }
@@ -212,7 +219,8 @@
     </div>
     <div class="today-kpis" style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="card" style="padding:12px;border-left:3px solid var(--blue)"><div id="kpi-today" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_today">RDV aujourd'hui</div></div>
-      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_month">Ce mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid var(--green)"><div id="kpi-month" style="font-size:22px;font-weight:800;color:var(--green)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_consultations_mois">Consultations du mois</div></div>
+      <div class="card" style="padding:12px;border-left:3px solid #6b7280"><div id="kpi-absents" style="font-size:22px;font-weight:800;color:#6b7280">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_absents_mois">Absents</div></div>
       <div class="card" style="padding:12px;border-left:3px solid #f59e0b"><div id="kpi-rev" style="font-size:18px;font-weight:800;color:#f59e0b">—</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_revenue">Revenus mois</div></div>
       <div class="card" style="padding:12px;border-left:3px solid #7c3aed"><div id="kpi-rate" style="font-size:22px;font-weight:800;color:#7c3aed">—</div><div style="font-size:11px;color:var(--text3)" data-i18n="dd_kpi_rating">Note moyenne</div></div>
     </div>
@@ -316,9 +324,9 @@
     <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none">
       <button class="chip active" data-fr="all" onclick="filtMRdv('all',this)" data-i18n="dd_rdv_all">Tous</button>
       <button class="chip" data-fr="today" onclick="filtMRdv('today',this)" data-i18n="tab_today">Aujourd'hui</button>
-      <button class="chip" data-fr="Pending" onclick="filtMRdv('Pending',this)" data-i18n="dd_rdv_pending">En attente</button>
-      <button class="chip" data-fr="Confirmed" onclick="filtMRdv('Confirmed',this)" data-i18n="confirmed_rdv">Confirmés</button>
-      <button class="chip" data-fr="Completed" onclick="filtMRdv('Completed',this)" data-i18n="completed_rdv">Terminés</button>
+      <button class="chip" data-fr="pending" onclick="filtMRdv('pending',this)" data-i18n="dd_rdv_pending">En attente</button>
+      <button class="chip" data-fr="confirmed" onclick="filtMRdv('confirmed',this)" data-i18n="confirmed_rdv">Confirmés</button>
+      <button class="chip" data-fr="completed" onclick="filtMRdv('completed',this)" data-i18n="completed_rdv">Terminés</button>
     </div>
     <div id="rdv-full-list"></div>
   </div>
@@ -637,7 +645,6 @@ async function fetchDoctorRdvsFromSupabase(){
       }
     }
 
-    const STATUS_MAP = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled', no_show: 'NoShow' };
     const list = rows.map(r => {
       const dt = new Date(r.scheduled_at);
       const date = dt.toISOString().split('T')[0];
@@ -651,7 +658,10 @@ async function fetchDoctorRdvsFromSupabase(){
         patientName: p.name,
         patientPhone: p.phone,
         motif: r.reason || 'Consultation',
-        status: STATUS_MAP[String(r.status||'').toLowerCase()] || 'Pending',
+        // [13/09/2026] Le statut est repris TEL QUEL, en minuscules. L'ancien
+        // STATUS_MAP capitalisait et repliait tout inconnu sur 'Pending' :
+        // il inventait des valeurs absentes de l'enum. tabibiStatutRdv tranche.
+        status: String(r.status||'').trim().toLowerCase(),
         urgent: r.consult_type === 'urgence',
         consultType: r.consult_type,
         payMethod: r.pay_method,
@@ -689,27 +699,34 @@ function renderToday(){
   const todays = rdvs.filter(r=>r.date===today).sort((a,b)=>(a.time||"").localeCompare(b.time||""));
   document.getElementById("kpi-today").textContent = todays.length;
   document.getElementById("today-count").textContent = todays.length+" "+tabibiT('dd_rdv_unit','RDV');
-  // [Phase 2 launch] RDV du mois courant — vrai count depuis les RDV Supabase (kpi-month).
+  // [13/09/2026] « Ce mois » comptait TOUS les RDV du mois, annules compris.
+  // Un annule n'est pas une consultation. Les totaux viennent desormais de
+  // tabibiStatutRdv.compter() : consultations = completed seul, absents =
+  // no_show a part. Un statut inconnu n'entre dans aucun des deux.
   var _ym = today.slice(0,7);
+  var _duMois = rdvs.filter(function(r){ return (r.date||"").slice(0,7) === _ym; });
+  var _c = window.tabibiStatutRdv.compter(_duMois);
   var _km = document.getElementById("kpi-month");
-  if (_km) _km.textContent = rdvs.filter(function(r){ return (r.date||"").slice(0,7) === _ym; }).length;
+  if (_km) _km.textContent = _c.consultations;
+  var _ka = document.getElementById("kpi-absents");
+  if (_ka) _ka.textContent = _c.absents;
   if(!todays.length){
     document.getElementById("today-list").innerHTML = `<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-day" style="font-size:42px;margin-bottom:12px;display:block;opacity:.4"></i>${tabibiT('dd_no_rdv_today',"Aucun RDV aujourd'hui")}</div>`;
     return;
   }
   document.getElementById("today-list").innerHTML = todays.map(r=>`
-    <div class="appt-card ${r.urgent?'urgent':r.status==='Pending'?'pending':r.status==='Completed'?'completed':''}">
+    <div class="appt-card ${r.urgent?'urgent':(window.tabibiStatutRdv.decrire(r.status).cle||'')}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
         <div style="flex:1"><div style="font-size:18px;font-weight:800;color:var(--blue)">${r.time}</div>
           <div style="font-weight:700;font-size:14px;margin-top:4px">${esc(r.patientName)} ${r.urgent?'<span class="badge badge-red" style="font-size:9px"><i class="fa fa-bolt" style="color:#f59e0b"></i> '+tabibiT('dd_urgent','URGENT')+'</span>':''}</div>
           <div style="font-size:12px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${esc(r.patientPhone||"")}</div></div>
-        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${tabibiT('dd_status_'+String(r.status).toLowerCase(), r.status)}</span>
+        <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
       </div>
       <div style="font-size:12px;font-style:italic;color:var(--text2);padding:6px 8px;background:rgba(255,255,255,.5);border-radius:6px;margin-bottom:8px">"${esc(r.motif)}"</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${r.status==="Pending"?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> ${tabibiT('dd_confirm','Confirmer')}</button>
+        ${window.tabibiStatutRdv.decrire(r.status).peut("confirmer")?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> ${tabibiT('dd_confirm','Confirmer')}</button>
           <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${r.id}')"><i class="fa fa-xmark"></i> ${tabibiT('dd_refuse','Refuser')}</button>`:""}
-        ${r.status==="Confirmed"?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>
+        ${window.tabibiStatutRdv.decrire(r.status).peut("marquerTermine")?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>
             <button class="btn btn-ghost btn-sm" style="color:var(--text2)" onclick="markNoShow('${r.id}')"><i class="fa fa-user-slash"></i> ${tabibiT('dd_mark_noshow','Absent')}</button>`:""}
         ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${esc(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> ${tabibiT('dd_call','Appeler')}</a>`:""}
         <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${r.id}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>
@@ -739,10 +756,10 @@ function renderAgenda(){
   document.getElementById("day-lbl").textContent = tabibiT('dd_agenda_daylabel','RDV du {d} ({n})').replace('{d}',dlb).replace('{n}',dayRdvs.length);
   if(!dayRdvs.length){document.getElementById("day-rdv-list").innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">${tabibiT('dd_no_rdv_day','Aucun RDV ce jour')}</div>`;return;}
   document.getElementById("day-rdv-list").innerHTML = dayRdvs.map(r=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:10px;margin-bottom:8px;border-left:3px solid ${r.status==='Confirmed'?'var(--blue)':r.status==='Pending'?'#f59e0b':'var(--green)'}">
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:10px;margin-bottom:8px;border-left:3px solid ${({confirmed:'var(--blue)',pending:'#f59e0b',completed:'var(--green)',cancelled:'var(--red)',no_show:'#6b7280'})[window.tabibiStatutRdv.decrire(r.status).cle]||'#9ca3af'}">
       <div style="font-size:16px;font-weight:800;color:var(--blue);width:54px">${r.time}</div>
       <div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(r.patientName)}</div><div style="font-size:11px;color:var(--text3)">${esc(r.motif)}</div></div>
-      <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}" style="font-size:10px">${r.status==='Confirmed'?'OK':r.status==='Pending'?'?':'✓'}</span>
+      <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}" style="font-size:10px">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
     </div>`).join("");
 }
 function selDay(iso){currentDay=iso;renderAgenda();}
@@ -753,7 +770,7 @@ function filtMRdv(f,btn){
   let list = getDocRdvs();
   const today = new Date().toISOString().split("T")[0];
   if(f==="today") list = list.filter(r=>r.date===today);
-  else if(f!=="all") list = list.filter(r=>r.status===f);
+  else if(f!=="all") list = list.filter(r=>window.tabibiStatutRdv.decrire(r.status).cle===f);
   if(!list.length){document.getElementById("rdv-full-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-calendar-xmark" style="font-size:48px;opacity:.3;margin-bottom:14px;display:block"></i>${tabibiT('dd_no_rdv','Aucun rendez-vous')}</div>`;return;}
   document.getElementById("rdv-full-list").innerHTML = list.sort((a,b)=>(b.date+b.time).localeCompare(a.date+a.time)).map(r=>{
     const dlb = (window.tabibiFormatDate ? window.tabibiFormatDate(new Date(r.date), {weekday:"short",day:"numeric",month:"short"}) : new Date(r.date).toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short"}));
@@ -761,7 +778,7 @@ function filtMRdv(f,btn){
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div><div style="font-weight:700;font-size:14px">${esc(r.patientName)}</div>
           <div style="font-size:11px;color:var(--text3)">${dlb} · ${r.time} · ${r.duree||30} ${tabibiT('label_min_unit','min')}</div></div>
-        <span class="badge ${r.status==='Confirmed'?'badge-blue':r.status==='Pending'?'badge-amber':'badge-green'}">${tabibiT('dd_status_'+String(r.status).toLowerCase(), r.status)}</span>
+        <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
       </div>
       <div style="font-size:12px;color:var(--text2)">"${esc(r.motif)}"</div>
     </div>`;
@@ -825,7 +842,7 @@ async function confRdv(id){
   if(i<0) return;
   const ok = await updateRdvStatusInSupabase(r[i].sbId,'confirmed');
   if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
-  r[i].status="Confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
+  r[i].status="confirmed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_confirmed',"RDV confirmé"),"success");renderToday();
 }
 async function cancRdv(id){
@@ -834,7 +851,7 @@ async function cancRdv(id){
   if(i<0) return;
   const ok = await updateRdvStatusInSupabase(r[i].sbId,'cancelled');
   if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
-  r[i].status="Cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
+  r[i].status="cancelled";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_refused',"RDV refusé"),"info");renderToday();
 }
 // [NO_SHOW 2026-08-05] Le statut no_show EXISTE DÉJÀ dans l'enum
@@ -856,7 +873,7 @@ async function markNoShow(id){
   if(i<0) return;
   const ok = await updateRdvStatusInSupabase(r[i].sbId,'no_show');
   if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
-  r[i].status="NoShow";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
+  r[i].status="no_show";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_noshow',"Patient marqué absent"),"info");renderToday();
 }
 async function markDone(id){
@@ -864,7 +881,7 @@ async function markDone(id){
   if(i<0) return;
   const ok = await updateRdvStatusInSupabase(r[i].sbId,'completed');
   if(!ok){ toastM(tabibiT('toast_rdv_status_failed',"Échec — statut non enregistré, réessayez."),"error"); return; }
-  r[i].status="Completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
+  r[i].status="completed";localStorage.setItem("tabibi_doc_rdv",JSON.stringify(r));
   toastM(tabibiT('toast_rdv_completed',"RDV terminé"),"success");renderToday();
 }
 

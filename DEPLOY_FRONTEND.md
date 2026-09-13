@@ -24,6 +24,11 @@
 > Depuis ce jour, `v2/`, `src/` et les configurations d'outillage sont en `export-ignore` :
 > ils ne partent dans aucun des deux chemins.
 
+> **Etape 0 obligatoire, avant le build** — l'enum des statuts de rendez-vous :
+> `SUPABASE_ACCESS_TOKEN=$(security find-generic-password -s "Supabase CLI" -w) node scripts/verifier-statuts.mjs --base`
+> Si elle echoue, le deploiement ne part pas. Detail et raison dans
+> `docs/VERIFICATION_DEPLOIEMENT_PORTE_FERMEE.md`. Le jeton reste local ; aucun secret n'entre en CI.
+
 ## La procédure (à jour 2026-08-04)
 
 ```bash

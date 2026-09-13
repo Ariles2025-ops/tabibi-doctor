@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <script src="js/tabibi-prelang.js"></script><script src="js/tabibi-security.js"></script>
 <script src="js/tabibi-avatar.js"></script>
+<script src="js/tabibi-statut-rdv.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <!-- SEO -->
 <meta name="description" content="Espace patient privé Tabibi.">
@@ -159,8 +160,8 @@
     <div style="display:flex;gap:8px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none">
       <button class="chip active" data-f="all" onclick="filtRdv('all',this)">Tous (<span id="cnt-all">0</span>)</button>
       <button class="chip" data-f="upcoming" onclick="filtRdv('upcoming',this)">À venir (<span id="cnt-up">0</span>)</button>
-      <button class="chip" data-f="Completed" onclick="filtRdv('Completed',this)">Terminés (<span id="cnt-c">0</span>)</button>
-      <button class="chip" data-f="Cancelled" onclick="filtRdv('Cancelled',this)">Annulés (<span id="cnt-x">0</span>)</button>
+      <button class="chip" data-f="completed" onclick="filtRdv('completed',this)">Terminés (<span id="cnt-c">0</span>)</button>
+      <button class="chip" data-f="cancelled" onclick="filtRdv('cancelled',this)">Annulés (<span id="cnt-x">0</span>)</button>
     </div>
     <div id="rdv-list"></div>
   </div>
@@ -485,7 +486,7 @@ async function fetchTakenSlots(doctorId, dateIso){
     const rows = await res.json();
     if (!Array.isArray(rows)) return _bookedSlotsCache[cacheKey];
     const taken = rows
-      .filter(r => r.status !== 'cancelled' && r.status !== 'Cancelled')
+      .filter(r => window.tabibiStatutRdv.decrire(r.status).cle !== 'cancelled')
       .map(r => {
         const d = new Date(r.scheduled_at);
         return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
@@ -616,7 +617,7 @@ function payMethodsDisponibles(){
 function renderPayMethods(){document.getElementById("pay-wrap").innerHTML=payMethodsDisponibles().map(m=>`<label class="pay-method ${bookingPay===m.id?'selected':''}" data-method="${m.id}" style="display:flex;align-items:center;gap:10px;padding:12px;border:2px solid ${bookingPay===m.id?m.color:'var(--border)'};border-radius:12px;background:${bookingPay===m.id?m.color+'11':'#fff'};margin-bottom:6px;cursor:pointer"><input type="radio" name="pay" value="${m.id}" ${bookingPay===m.id?'checked':''} onchange="bookingPay='${m.id}';renderPayMethods()" style="margin:0"><div style="width:36px;height:36px;border-radius:8px;background:${m.color}22;color:${m.color};display:flex;align-items:center;justify-content:center"><i class="fa ${m.icon}"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">${m.name}</div><div style="font-size:11px;color:var(--text3)">${m.sub}</div></div></label>`).join("");}
 function selDate(iso){bookingDate=iso;bookingTime=null;showBookingStep(1);}
 function selTime(t){bookingTime=t;showBookingStep(1);}
-async function confirmBooking(){const reason=document.getElementById("bk-reason")?.value.trim();if(!reason){toastM(tabibiT('toast_reason_required',"Veuillez saisir le motif de consultation"),"error");return;}const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");const appt={id:"r"+Date.now(),doctorId:bookingDoc.id,doctorName:bookingDoc.fr,spec:bookingDoc.spec,addr:bookingDoc.addr||bookingDoc.ville,ville:bookingDoc.ville,date:bookingDate,time:bookingTime,slot:bookingTime,reason,consultType:document.getElementById("bk-type").value,forWhom:document.getElementById("bk-for").value,payMethod:bookingPay,prix:bookingDoc.prix,status:"Confirmed",patientName:u.name||"",patientPhone:u.phone||"",createdAt:new Date().toISOString()};const all=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");all.unshift(appt);localStorage.setItem("tabibi_rdv",JSON.stringify(all));
+async function confirmBooking(){const reason=document.getElementById("bk-reason")?.value.trim();if(!reason){toastM(tabibiT('toast_reason_required',"Veuillez saisir le motif de consultation"),"error");return;}const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");const appt={id:"r"+Date.now(),doctorId:bookingDoc.id,doctorName:bookingDoc.fr,spec:bookingDoc.spec,addr:bookingDoc.addr||bookingDoc.ville,ville:bookingDoc.ville,date:bookingDate,time:bookingTime,slot:bookingTime,reason,consultType:document.getElementById("bk-type").value,forWhom:document.getElementById("bk-for").value,payMethod:bookingPay,prix:bookingDoc.prix,status:"confirmed",patientName:u.name||"",patientPhone:u.phone||"",createdAt:new Date().toISOString()};const all=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");all.unshift(appt);localStorage.setItem("tabibi_rdv",JSON.stringify(all));
   // Sauvegarder dans Supabase
   try{
     const SB_URL=(window.TABIBI_CONFIG && window.TABIBI_CONFIG.SUPABASE_URL) || 'https://pudugodhiofqrctcdwfl.supabase.co'; /* [FIX-AUDIT-2026-05] #5 */
@@ -665,7 +666,6 @@ async function fetchMyAppointmentsFromSupabase(){
     if (!Array.isArray(rows)) return null;
 
     // Convertir en format attendu par la liste
-    const STATUS_MAP = { pending: 'Pending', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled' };
 
     // [Phase 16.5] Batch fetch des médecins liés aux RDV (1 requête max)
     // Remplace DOCTORS.find() qui nécessitait le full table scan de 84 Mo
@@ -700,7 +700,9 @@ async function fetchMyAppointmentsFromSupabase(){
         consultType: r.consult_type || 'premiere',
         payMethod: r.pay_method || 'cash',
         prix: r.prix || 0,
-        status: STATUS_MAP[String(r.status||'').toLowerCase()] || 'Pending',
+        // [13/09/2026] Vocabulaire de la base. L'ancien STATUS_MAP ignorait
+        // meme no_show et repliait tout inconnu sur 'Pending'.
+        status: String(r.status||'').trim().toLowerCase(),
         createdAt: r.created_at || r.scheduled_at,
         reviewed: !!r.reviewed
       };
@@ -737,20 +739,21 @@ function filtRdv(f,btn){
 function doFiltRdvRender(f){
   const all=getAllRdvs();
   const elAll=document.getElementById("cnt-all");if(elAll)elAll.textContent=all.length;
-  const elUp=document.getElementById("cnt-up");if(elUp)elUp.textContent=all.filter(r=>r.status==="Confirmed"||r.status==="Pending").length;
-  const elC=document.getElementById("cnt-c");if(elC)elC.textContent=all.filter(r=>r.status==="Completed").length;
-  const elX=document.getElementById("cnt-x");if(elX)elX.textContent=all.filter(r=>r.status==="Cancelled").length;
+  var _S=window.tabibiStatutRdv;
+  var _aVenir=function(r){var c=_S.decrire(r.status).cle;return c==="confirmed"||c==="pending";};
+  const elUp=document.getElementById("cnt-up");if(elUp)elUp.textContent=all.filter(_aVenir).length;
+  const elC=document.getElementById("cnt-c");if(elC)elC.textContent=_S.compter(all).consultations;
+  const elX=document.getElementById("cnt-x");if(elX)elX.textContent=all.filter(function(r){return _S.decrire(r.status).cle==="cancelled";}).length;
   let list=all;
-  if(f==="upcoming") list=all.filter(r=>r.status==="Confirmed"||r.status==="Pending");
+  if(f==="upcoming") list=all.filter(_aVenir);
   else if(f!=="all") list=all.filter(r=>r.status===f);
-  const STC={Confirmed:"badge-blue",Completed:"badge-green",Cancelled:"badge-red",Pending:"badge-amber"};
-  const STL={Confirmed:"Confirmé",Completed:"Terminé",Cancelled:"Annulé",Pending:"En attente"};
-  const cls={Confirmed:"",Completed:"completed",Cancelled:"cancelled",Pending:"pending"};
+  // [13/09/2026] STC/STL/cls retires : un statut absent de ces objets rendait
+  // class="badge undefined" et le libelle brut. Source unique : tabibiStatutRdv.
   if(!list.length){document.getElementById("rdv-list").innerHTML=`<div style="text-align:center;padding:40px 20px"><i class="fa fa-calendar-xmark" style="font-size:48px;color:var(--text4);margin-bottom:14px;display:block"></i><div style="font-weight:700;color:var(--text2);margin-bottom:6px">Aucun rendez-vous</div><div style="font-size:13px;color:var(--text3);margin-bottom:16px">Réservez votre premier RDV maintenant</div><button class="btn btn-primary btn-lg" onclick="location.href='index.html';return false"><i class="fa fa-search"></i> Trouver un médecin</button></div>`;return;}
-  document.getElementById("rdv-list").innerHTML=list.map(r=>{const dt=new Date(r.date);const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"short",day:"numeric",month:"short",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short",year:"numeric"}));return `<div class="rdv-card-full ${cls[r.status]||''}">
+  document.getElementById("rdv-list").innerHTML=list.map(r=>{const dt=new Date(r.date);const dateLbl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"short",day:"numeric",month:"short",year:"numeric"}) : dt.toLocaleDateString("fr-FR", {weekday:"short",day:"numeric",month:"short",year:"numeric"}));return `<div class="rdv-card-full ${window.tabibiStatutRdv.decrire(r.status).cle||''}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px">
         <div style="flex:1"><div style="font-weight:700;font-size:14px">${esc(r.doctorName)}</div><div style="font-size:12px;color:var(--text3)">${esc(r.spec||"")}</div></div>
-        <span class="badge ${STC[r.status]}">${STL[r.status]||r.status}</span>
+        <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:8px">
         <div><i class="fa fa-calendar fa-xs" style="color:var(--blue)"></i> ${dateLbl}</div>
@@ -760,9 +763,9 @@ function doFiltRdvRender(f){
       <div style="display:flex;justify-content:space-between;align-items:center;padding-top:8px;border-top:1px solid var(--bg2)">
         <div><div style="font-size:10px;color:var(--text3)">${r.payMethod==="cash"?"<i class='fa fa-money-bill-wave'></i> À payer sur place":"<i class='fa fa-check-circle' style='color:#2E8B57'></i> "+(PAY_LABELS[r.payMethod]||r.payMethod)}</div><div style="font-size:16px;font-weight:800;color:var(--blue)">${(r.prix||0).toLocaleString()} DA</div></div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${r.status==="Confirmed"||r.status==="Pending"?`<button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red-l)" onclick="cancelRdv('${r.id}')"><i class="fa fa-xmark"></i> Annuler</button>`:""}
-          ${r.status==="Completed"&&!r.reviewed?`<button class="btn btn-soft btn-sm" onclick="openReview('${r.id}')"><i class="fa fa-star"></i> Noter</button>`:""}
-          ${r.status==="Completed"?`<button class="btn btn-ghost btn-sm" onclick="downloadReceipt('${r.id}')"><i class="fa fa-download"></i> Reçu</button>`:""}
+          ${(function(c){return c==="confirmed"||c==="pending";})(window.tabibiStatutRdv.decrire(r.status).cle)?`<button class="btn btn-ghost btn-sm" style="color:var(--red);border-color:var(--red-l)" onclick="cancelRdv('${r.id}')"><i class="fa fa-xmark"></i> Annuler</button>`:""}
+          ${window.tabibiStatutRdv.decrire(r.status).cle==="completed"&&!r.reviewed?`<button class="btn btn-soft btn-sm" onclick="openReview('${r.id}')"><i class="fa fa-star"></i> Noter</button>`:""}
+          ${window.tabibiStatutRdv.decrire(r.status).cle==="completed"?`<button class="btn btn-ghost btn-sm" onclick="downloadReceipt('${r.id}')"><i class="fa fa-download"></i> Reçu</button>`:""}
         </div>
       </div>
     </div>`;}).join("");
@@ -774,7 +777,7 @@ async function cancelRdv(id){
   let sbId = null;
   if(idx>-1){
     sbId = all[idx].sbId || (all[idx]._sb ? all[idx].id : null);
-    all[idx].status="Cancelled";
+    all[idx].status="cancelled";
     localStorage.setItem("tabibi_rdv",JSON.stringify(all));
   }
   // Synchroniser dans Supabase si on a un sbId
@@ -826,7 +829,7 @@ function renderReview(){
     </div>`;
 }
 function setStars(n){reviewStars=n;renderReview();}
-function submitReview(){if(!reviewStars){toastM(tabibiT('toast_select_rating',"Sélectionnez une note"),"error");return;}const all=getAllRdvs();const i=all.findIndex(x=>x.id===reviewRdv.id);if(i>-1){all[i].reviewed=true;all[i].rating=reviewStars;all[i].reviewText=document.getElementById("rev-text").value;localStorage.setItem("tabibi_rdv",JSON.stringify(all));}toastM(tabibiT('toast_review_thanks',"Merci pour votre avis !"),"success");closeModal("review-modal");filtRdv("Completed",document.querySelector("[data-f='Completed']"));}
+function submitReview(){if(!reviewStars){toastM(tabibiT('toast_select_rating',"Sélectionnez une note"),"error");return;}const all=getAllRdvs();const i=all.findIndex(x=>x.id===reviewRdv.id);if(i>-1){all[i].reviewed=true;all[i].rating=reviewStars;all[i].reviewText=document.getElementById("rev-text").value;localStorage.setItem("tabibi_rdv",JSON.stringify(all));}toastM(tabibiT('toast_review_thanks',"Merci pour votre avis !"),"success");closeModal("review-modal");filtRdv("completed",document.querySelector("[data-f='completed']"));}
 
 /* ─── DOCUMENTS ─── */
 function getDocs(){
@@ -885,8 +888,9 @@ function renderOverview(){
     set("welcome-name", (u.name||"Bienvenue").split(" ")[0]);
     set("hdr-title", "Bonjour, "+(u.name||"").split(" ")[0]);
     const all=getAllRdvs();
-    const up=all.filter(r=>r.status==="Confirmed"||r.status==="Pending");
-    const co=all.filter(r=>r.status==="Completed");
+    const _S2=window.tabibiStatutRdv;
+    const up=all.filter(function(r){var c=_S2.decrire(r.status).cle;return c==="confirmed"||c==="pending";});
+    const co=all.filter(function(r){return _S2.decrire(r.status).compteConsultations;});
     const total=co.reduce((a,b)=>a+(b.prix||0),0);
     set("ov-up", up.length);
     set("ov-c", co.length);
@@ -1035,7 +1039,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   // Recharger après soumission
   document.addEventListener('tabibi:review-submitted', () => {
     if (typeof filtRdv === 'function') {
-      try { filtRdv('Completed', document.querySelector("[data-f='Completed']")); } catch(e) {}
+      try { filtRdv('completed', document.querySelector("[data-f='completed']")); } catch(e) {}
     }
   });
 

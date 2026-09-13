@@ -1289,3 +1289,17 @@ a:focus-visible,
 .v2-bg-accent    { background: var(--color-accent);  color: var(--color-accent-on); }
 
 /* Fin de components-v2.css */
+
+/* [13/09/2026] Etat NEUTRE d'un statut de rendez-vous inconnu.
+   Regle : le vert est une autorisation, jamais un defaut. Un statut que
+   js/tabibi-statut-rdv.js ne connait pas doit se VOIR comme anormal — gris,
+   hachure, sans action. Voir scripts/verifier-statuts.mjs. */
+.is-statut-inconnu{
+  background:repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 4px,#e5e7eb 4px,#e5e7eb 8px);
+  color:#4b5563; border:1px dashed #9ca3af; font-style:italic;
+}
+.ag-appt.inconnu{
+  background:repeating-linear-gradient(45deg,#f3f4f6,#f3f4f6 4px,#e5e7eb 4px,#e5e7eb 8px);
+  border-inline-start-color:#9ca3af; color:#4b5563; font-style:italic;
+}
+.status-pill.inconnu{ background:#e5e7eb; color:#4b5563; font-style:italic; }

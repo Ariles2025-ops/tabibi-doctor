@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-statut-rdv.js"></script><script src="js/tabibi-platform.js"></script><script src="js/tabibi-desktop-nav.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="tabibi-page-key" content="title_analytics">
 <title>Analytics — Tabibi Médecin</title>
@@ -294,7 +294,10 @@ function aggregate(rows, now, days) {
   const cut = now.getTime() - days * 86400000;
   const cur = [], prev = [];
   rows.forEach(a => {
-    if ((a.status || '').toLowerCase() === 'cancelled') return;
+    // [13/09/2026] N'excluait QUE les annules : les no_show et les statuts
+    // inconnus etaient comptes comme des consultations. La regle vivait ici,
+    // elle vit desormais dans tabibiStatutRdv (option A, tranchee le 13/09).
+    if (!window.tabibiStatutRdv.decrire(a.status).compteConsultations) return;
     (new Date(a.starts_at).getTime() >= cut ? cur : prev).push(a);
   });
   const uniq = list => new Set(list.map(a => a.patient_id).filter(Boolean)).size;

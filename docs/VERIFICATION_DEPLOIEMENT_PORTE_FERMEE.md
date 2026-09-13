@@ -5,6 +5,37 @@ mesurable, pas une impression. Si une seule échoue : **retour arrière immédia
 
 Toutes les requêtes portent un cache-bust (`?cb=$RANDOM`).
 
+## Etape obligatoire AVANT le build — l'enum des statuts
+
+**Si elle echoue, le deploiement ne part pas.** C'est tout.
+
+```bash
+SUPABASE_ACCESS_TOKEN=$(security find-generic-password -s "Supabase CLI" -w) \
+  node scripts/verifier-statuts.mjs --base
+```
+
+Attendu : `Statuts alignes.`, sortie 0, les cinq valeurs de `appointment_status`.
+
+**Pourquoi ici et pas en CI.** L'etage structurel (`npm run verifier:statuts`, sans secret) tourne dans
+`verification.yml` avec les autres portes, mais il ne voit **pas** un `ALTER TYPE ... ADD VALUE` fait en
+base : le depot reste coherent avec lui-meme, et faux. Seul `--base` l'attrape.
+
+Et il n'a pas sa place dans `.github/workflows/deploiement.yml` : ce job est verrouille par
+`if: vars.DEPLOIEMENT_AUTO == 'oui'` et deux secrets Cloudflare absents — il est reste « skipped » aux
+quatre fusions du 13/09/2026. **Une garde qui ne se declenche jamais est pire que pas de garde : elle
+rassure.** Le deploiement reel est la commande `wrangler` lancee a la main ; la garde vit donc dans
+cette procedure-la.
+
+Le jeton reste **local**, lu au trousseau au moment de l'appel. Le script ne lit rien du trousseau
+lui-meme : il attend `SUPABASE_ACCESS_TOKEN` dans l'environnement. **Aucun secret Supabase n'est
+ajoute au depot ni a la CI** — on y reviendra le jour ou le deploiement automatique sera reellement
+branche.
+
+Si la commande signale un statut inconnu : declarer la valeur dans `js/tabibi-statut-rdv.js`
+(`TABLE` + `VALEURS`), ajouter ses libelles aux trois dictionnaires, mettre a jour
+`supabase/enums/appointment_status.txt`. Sans quoi tous les ecrans afficheront « Statut inconnu » —
+repli sur, mais pas un etat acceptable.
+
 ## Avant : l'état de référence
 
 | Mesure | Valeur d'aujourd'hui, production = commit `f06aa3d` |

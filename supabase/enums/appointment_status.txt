@@ -1,0 +1,5 @@
+pending
+confirmed
+completed
+cancelled
+no_show
