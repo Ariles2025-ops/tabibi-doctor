@@ -850,7 +850,7 @@ function filtDoc(f,btn){
     box.innerHTML=list.map(d=>{const ic=ICS[d.type]||["fa-file","#6b7280","#f3f4f6"];return `<div class="doc-file-card">
     <div class="ic" style="background:${ic[2]};color:${ic[1]}"><i class="fa ${ic[0]}"></i></div>
     <div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.name}</div><div style="font-size:11px;color:var(--text3)">${d.doctor} · ${d.date} · ${d.size}</div></div>
-    <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" onclick="alert(tabibiT('alert_download_prefix','Téléchargement de ')+'${d.name}')" aria-label="Télécharger ${d.name}"><i class="fa fa-download"></i></button>
+    <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" disabled aria-disabled="true" style="opacity:.45;cursor:not-allowed" title="Téléchargement non disponible" aria-label="Télécharger ${d.name} — non disponible"><i class="fa fa-download"></i></button>
     <button type="button" class="btn btn-icon btn-icon-sm btn-ghost" style="color:var(--red)" onclick="rmDoc(${d.id})" aria-label="Supprimer ce document"><i class="fa fa-trash"></i></button>
   </div>`;}).join("");
   } catch(e) { console.warn('[patient-dashboard] filtDoc:', e); }

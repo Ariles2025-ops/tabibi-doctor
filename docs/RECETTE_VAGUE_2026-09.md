@@ -150,6 +150,60 @@ Effets de bord à vérifier :
 
 ---
 
+## Parcours permanent — aucun bouton n'annonce ce qu'il ne fait pas
+
+**A derouler a chaque vague, avant le deploiement.** Ce controle manquait a la liste de verification
+et l'a laissee passer **deux fois** : une console propre ne detecte pas un bouton qui ment. Le bouton
+s'execute sans erreur — c'est precisement le probleme. Il affiche une phrase, ne fait rien, et rien
+dans les journaux ne le signale.
+
+### La mesure
+
+Sur la sortie de build, pas sur les sources — c'est ce qui part en ligne qui compte :
+
+```bash
+npm run build
+grep -rnE 'onclick="[^"]*(alert|confirm)\(' dist-web/*.html dist-web/legal/*.html
+```
+
+### Le tri, bouton par bouton
+
+Chaque resultat tombe dans une des trois cases. Il n'y a pas de quatrieme case.
+
+| Case | Definition | Ce qu'on en fait |
+|---|---|---|
+| **Honnete** | affiche de vraies donnees, ou annonce franchement une absence (« Bientot disponible ») | rien |
+| **Menteur** | affirme une action accomplie ou en cours qui n'a pas lieu — surtout au **passe compose** (« Backup cree », « Demande envoyee ») | desactiver avec un libelle vrai, ou supprimer |
+| **Mort** | ne ment pas mais ne fait rien non plus (renvoie son propre libelle, popup vide) | supprimer |
+
+Trois questions qui tranchent vite :
+
+1. **Le verbe est-il au passe ?** « Cree », « envoyee », « copie » affirment un fait accompli. C'est
+   la formulation la plus dangereuse : l'utilisateur cesse de chercher.
+2. **Un droit legal est-il en jeu ?** Un faux « Demande envoyee — reponse sous 30 jours (RGPD) » fait
+   croire au patient qu'il a exerce un droit. Le delai ne court pas, personne n'est saisi.
+3. **Le repli est-il le cas normal ?** `navigator.share ? … : alert('Lien copie')` : sur ordinateur
+   `navigator.share` n'existe pas, donc le repli **est** le comportement par defaut, pas un cas rare.
+
+### Ce que la porte de sortie doit porter
+
+Un bouton desactive n'est une correction que s'il indique **ou aller**. Sinon on n'a pas corrige le
+defaut, on l'a rendu silencieux — et c'est pire. La note visible, sous le bouton et pas dans un
+attribut `title` (survol seulement, invisible au doigt), doit donner :
+
+- l'adresse de contact,
+- **le telephone en clair** — `mailto:` est reecrit par l'hebergeur, cf. `DEPLOY_FRONTEND.md`,
+  section « Reglages cote hebergeur qui reecrivent le HTML servi » ; sans JS le lecteur voit
+  `[email protected]`,
+- le renvoi vers `legal/rgpd-droits.html`, qui porte la procedure et les delais.
+
+### Verdict
+
+**No-go** s'il reste un seul bouton actif qui annonce une action accomplie. Le compte attendu, releve
+le 13/09/2026 : onze `onclick` `alert`/`confirm` au total, dont **zero menteur actif**.
+
+---
+
 ## Décision
 
 - **Go** si les parcours 1 et 3 sont « cohérent » de bout en bout, et si le parcours 2 se comporte comme l'état connu
