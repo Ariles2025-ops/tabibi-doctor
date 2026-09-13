@@ -119,3 +119,7 @@ tests/reports/
 # echouer verifier:cles. Jamais versionnee : ajoutee par erreur le 13/09, retiree.
 index-baseline.html
 index.html.avant-extraction
+.claude/PONT.md
+.claude/RETOUR.md
+.claude/.pont_vu
+.claude/pont-attendre.sh
