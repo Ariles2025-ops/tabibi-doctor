@@ -15,6 +15,7 @@ deployment*. Atomique, sans reconstruction.
 
 | # | Date (UTC) | Commit déployé | Déploiement Cloudflare | Porte | Retour arrière vers | Lancé par |
 |---|---|---|---|---|---|---|
+| 8 | 2026-09-13 ~11:36 | `47a4b39e10e7b77b220222f0ed7bb4179f3256cb` | `4e66ec32-…` | **fermée** | *aucun — on repare en avant* | Claude, sur go d'Aghiles |
 | 7 | 2026-09-13 ~11:02 | `088e166c1baef3d541a3d6b83c04ce55f3a0b4dd` | `42ef43df-…` | **fermée** | `66da5afc-a3af-484f-a02f-4ea96a018d75` | Claude, sur go d'Aghiles |
 | 6 | 2026-09-13 ~10:31 | `c37f4e0d8b1d10be6a2a60065523d06328cdd191` | `66da5afc-…` | **fermée** | `55c94431-82f8-48df-80fb-dd91a67637f2` | Claude, sur go d'Aghiles |
 | 5 | 2026-09-13 ~10:16 | `8c24384ccd511d4bac455ce1e70e5d1ea02dbd7f` | `55c94431-…` | **fermée** | `1c7f727a-b16f-428a-8add-48e064458a39` | Claude, sur go d'Aghiles |
@@ -416,4 +417,51 @@ lecture (`docs/RECETTE_VAGUE_2026-09.md`).
 Il ne touche pas a la base — rien a rattraper, la seule ligne existante est juste. Il ne corrige pas
 le fuseau code en dur dans les migrations SQL (`get_available_slots`, la garde de disponibilite, le
 trigger de notifications) : le jour ou le fuseau deviendra une colonne, il faudra les deux couches.
+
+---
+
+## Deploiement 8 — 13/09/2026, la grille d'agenda cassee
+
+**Deploiement correctif.** Le deploiement 7 a mis en ligne une regression que j'avais introduite :
+`${dt.getDate()}` laisse dans le gabarit de la grille de semaine, ou `dt` n'existait plus.
+
+**Pas de retour arriere.** Revenir a `66da5afc` aurait retabli la grille mais **re-expose l'ecriture
+fausse en base** corrigee au deploiement 7 — decision d'Aghiles : on repare en avant.
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| **grille d'agenda : cases affichees** | **0** | **7** | **7** |
+| `doctor-dashboard` : `${dt.getDate()}` | 1 | 0 | **0** |
+| `doctor-dashboard` : `function _todayLocalIso` | 1 | 0 | **0** |
+| `doctor-dashboard` : composantes d'horloge locale | 9 | 0 | **0** |
+| `patient-dashboard` : `getHours()` sur un creneau | 1 | 0 | **0** |
+| taille de `/` · porte | 5 004 o · `fermee` | inchangees | **inchangees** |
+
+Aucune divergence.
+
+### La mesure qui compte, EXERCEE sur le domaine reel
+
+```
+cases : 7
+jours : ["lun. 7","mar. 8","mer. 9","jeu. 10","ven. 11","sam. 12","dim. 13 1 RDV"]
+erreurs : AUCUNE
+```
+
+Capture : `docs/preuves/deploiement8-agenda.png`, regardee.
+
+**Avant ce deploiement, la meme mesure donnait `cases: 0` et `erreurs: AUCUNE`.** La console propre
+ne prouvait rien. La regle est desormais en tete de la fiche de recette — *une page qui charge n'est
+pas une page qui marche*.
+
+### Ce que ce deploiement a fait apparaitre
+
+L'inventaire des `try/catch` silencieux a trouve **un second defaut du meme type** :
+`submitReview()` de `patient-dashboard` appelait `filtRdv(...)`, supprimee le meme jour. Le chemin
+est atteignable — `openReview` retombe sur l'ancienne modale quand le `doctor_id` n'est pas un UUID
+— et « Publier mon avis » levait une `ReferenceError`. Corrige avant ce deploiement. Voir
+`docs/FICHE_CATCH_SILENCIEUX.md`.
+
+**L'inventaire a trouve un bug que les tests n'avaient pas trouve.**
 

@@ -13,6 +13,41 @@ produit. Un seul « l'écran ment » qui réapparaît = no-go.
 - **Comptes de test** : recréer trois comptes marqués `RECETTE-<date>` (médecin lié à une fiche, médecin sans fiche, patient),
   purgeables d'un coup par le marqueur (cf. `tests/manual/test-congres/`). Les supprimer après la recette.
 
+### Regle premiere — UNE PAGE QUI CHARGE N'EST PAS UNE PAGE QUI MARCHE
+
+Toute preuve d'ecran doit **EXERCER** l'ecran : ouvrir l'onglet, declencher le rendu, **compter ce
+qui s'affiche**. Jamais se contenter du chargement, jamais se contenter d'une console propre.
+
+Le 13/09/2026. Un refactor a laisse `${dt.getDate()}` dans le gabarit de la grille de semaine de
+l'agenda medecin, ou `dt` n'existait plus. Ce qui s'est passe ensuite :
+
+1. La `ReferenceError` a ete **avalee par le `try/catch` de `sw()`**.
+2. La grille est sortie **VIDE**.
+3. La console est restee **PROPRE**.
+4. **Deux verifications sont passees a cote** : le test e2e ne chargeait que la page, et la
+   verification manuelle sur le domaine reel comptait des motifs dans le HTML servi — or le HTML
+   etait parfaitement correct, c'est son EXECUTION qui echouait.
+5. Le defaut est parti en production et y est reste jusqu'a ce qu'on ouvre l'onglet.
+
+Le HTML servi ne dit rien de ce que la page fait. Un `grep` sur la reponse ne voit ni les erreurs
+d'execution, ni les rendus vides, ni les gestionnaires qui ne se declenchent pas.
+
+**Ce qu'une preuve d'ecran doit faire :**
+
+```js
+await page.goto('/doctor-dashboard.html');
+await page.evaluate(() => window.sw('agenda', /* … */));   // DECLENCHER le rendu
+const cases = await page.locator('#cal-week .cal-day').count();
+expect(cases).toBe(7);                                      // COMPTER ce qui s'affiche
+expect(err).toEqual([]);                                    // et seulement ENSUITE, la console
+```
+
+Le compte est la vraie assertion. `expect(err).toEqual([])` ne vient qu'apres, et ne suffit jamais
+seul : dans ce cas precis il etait vert pendant que l'ecran etait vide.
+
+C'est la meme famille que les trois autres regles de cette section — le badge vert par defaut, le
+`|| 'Pending'`, le bouton qui annonce sans agir : **un defaut qui se presente comme un etat normal.**
+
 ### Regle de fusion — « auto-merging » ne veut pas dire « coherent »
 
 `Auto-merging <fichier>` signifie exactement une chose : **git n'a pas trouve de conflit textuel.**
