@@ -15,6 +15,7 @@ deployment*. Atomique, sans reconstruction.
 
 | # | Date (UTC) | Commit déployé | Déploiement Cloudflare | Porte | Retour arrière vers | Lancé par |
 |---|---|---|---|---|---|---|
+| 7 | 2026-09-13 ~11:02 | `088e166c1baef3d541a3d6b83c04ce55f3a0b4dd` | `42ef43df-…` | **fermée** | `66da5afc-a3af-484f-a02f-4ea96a018d75` | Claude, sur go d'Aghiles |
 | 6 | 2026-09-13 ~10:31 | `c37f4e0d8b1d10be6a2a60065523d06328cdd191` | `66da5afc-…` | **fermée** | `55c94431-82f8-48df-80fb-dd91a67637f2` | Claude, sur go d'Aghiles |
 | 5 | 2026-09-13 ~10:16 | `8c24384ccd511d4bac455ce1e70e5d1ea02dbd7f` | `55c94431-…` | **fermée** | `1c7f727a-b16f-428a-8add-48e064458a39` | Claude, sur go d'Aghiles |
 | 4 | 2026-09-13 ~09:19 | `e94ca04263c9b621160111be9c16cd15fbb09881` | `1c7f727a-…` | **fermée** | `eeeeef33-65c9-4204-b2fe-b66735b6aa9c` | Claude, sur go d'Aghiles |
@@ -364,4 +365,55 @@ tous honnetes.
 Il ne touche pas a la base. Il ne comble pas le manque produit revele par la suppression de
 `#tab-stats` : ni les revenus par semaine, ni les types de consultation, ni les modes de paiement ne
 sont couverts par `doctor-analytics.html` — mesure du 13/09, carte produit ouverte a part.
+
+---
+
+## Deploiement 7 — 13/09/2026, le fuseau du cabinet
+
+**Ce qui est parti** : #101 (regle de fusion), #102 (journal 6) et #103 (le fuseau du cabinet).
+
+### Les mesures, annoncees avant, constatees apres
+
+| Mesure | Avant | Annonce | Constate |
+|---|---|---|---|
+| taille de `/` | 5 004 o | 5 004 o | **5 004 o** |
+| balise `tabibi-porte` | `fermee` | `fermee` | **`fermee`** |
+| `secretaire` : `new Date(date+'T'+time)` a l'ECRITURE | 1 | 0 | **0** |
+| `secretaire` : `instantDepuisJourEtHeure` | 0 | 1 | **1** |
+| `js/tabibi-temps.js` | 404 | 200 | **200, 8 223 o** |
+| `doctor-dashboard` : `toISOString().split('T')[0]` | 5 | 0 | **0** |
+| boutons menteurs actifs | 4 honnetes | 4 honnetes | **4 honnetes** |
+
+Aucune divergence.
+
+### La mesure du fuseau, sur le domaine reel
+
+Le rendez-vous **reel de la base** — `2026-09-14 08:00:00+00`, soit 09:00 pile heure cabinet — lu
+depuis trois navigateurs depayses, sur `https://tabibi.doctor` :
+
+```
+UTC              heure=09:00  | Dr. Reel lundi 14 septembre 2026 · 09:00 Cabinet Confirme
+Europe/Paris     heure=09:00  | Dr. Reel lundi 14 septembre 2026 · 09:00 Cabinet Confirme
+Africa/Algiers   heure=09:00  | Dr. Reel lundi 14 septembre 2026 · 09:00 Cabinet Confirme
+```
+
+Depuis UTC, cette page affichait **08:00** avant ce deploiement. Captures :
+`docs/preuves/deploiement7-*.png`, regardees.
+
+### L'ecriture, qui est le point le plus grave
+
+`secretaire-dashboard.html` ne sert plus `new Date(date + "T" + time + ":00").toISOString()`.
+Depuis Paris, un rendez-vous saisi a 09:00 partait a `07:00Z`, soit **08:00 heure cabinet** : pas un
+defaut d'affichage, une **donnee fausse**. Et un instant faux ecrit en base est indiscernable d'un
+instant juste — aucun audit posterieur ne peut le retrouver.
+
+La base ne contenait qu'une ligne, correcte. Avec six mois de rendez-vous, ce defaut aurait produit
+des degats irreparables et invisibles. C'est pourquoi la garde vit au point d'ecriture, pas a la
+lecture (`docs/RECETTE_VAGUE_2026-09.md`).
+
+### Ce que ce deploiement ne fait pas
+
+Il ne touche pas a la base — rien a rattraper, la seule ligne existante est juste. Il ne corrige pas
+le fuseau code en dur dans les migrations SQL (`get_available_slots`, la garde de disponibilite, le
+trigger de notifications) : le jour ou le fuseau deviendra une colonne, il faudra les deux couches.
 
