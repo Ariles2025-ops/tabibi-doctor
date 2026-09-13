@@ -55,7 +55,8 @@
     "globals": "^17.12.0",
     "typescript": "^6.0.3",
     "vite": "^8.2.2",
-    "vite-plugin-static-copy": "^4.1.1"
+    "vite-plugin-static-copy": "^4.1.1",
+    "wrangler": "^4.131.1"
   },
   "engines": {
     "node": ">=22 <23",
