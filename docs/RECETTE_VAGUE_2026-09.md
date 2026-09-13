@@ -184,6 +184,52 @@ de la meme facon : deplacer le code — un autre fuseau, un autre ordre de charg
 - Une valeur d'environnement se lit **au moment de s'en servir**, pas a l'evaluation du module.
 - Contre-epreuve : changer l'ambiance sans toucher au code. Si la sortie change, c'est un defaut.
 
+### LE FICHIER DIT CE QU'IL FAIT, PAS CE QUE LA BASE EN FAIT
+
+**Verifier le fichier n'est pas verifier l'etat. Un objet en base est le produit du script ET de
+tout ce que la plateforme y ajoute.**
+
+Le 13/09/2026, `20260913_audit_log_echecs.sql` a ete verifie ligne par ligne avant d'etre presente :
+aucune `REFERENCES`, aucun `CREATE TRIGGER`, aucune `CREATE POLICY`, **aucun
+`ENABLE ROW LEVEL SECURITY`** — controle par analyse du texte, pas par lecture rapide. Le fichier
+etait exactement ce qu'il annoncait.
+
+**La table creee a la RLS active.** Quelque chose, entre le `CREATE TABLE` et l'objet final, l'a
+allumee. Le fichier ne pouvait pas le dire, et aucune relecture du fichier ne l'aurait trouve.
+
+C'est la troisieme fois de la journee qu'une verification d'etat rattrape ce qu'une lecture de
+source ne pouvait pas voir :
+
+1. **Les corps de fonctions.** Quinze fonctions se sont creees sans un mot — Postgres ne valide pas
+   un corps plpgsql a la creation. Le fichier de migration etait valide ; les fonctions etaient
+   cassees. Il a fallu `plpgsql_check` sur la base, pas une relecture du depot.
+2. **La taille servie.** `accueil-public.html` annonce a 115 952 octets, sa taille construite ;
+   servi a 116 268, parce que Cloudflare reecrit les `mailto:` en sortie. Le fichier du depot etait
+   juste ; l'artefact servi etait autre.
+3. **La RLS de `audit_log_echecs`**, ci-dessus.
+
+Trois etages differents — la base, l'hebergeur, la plateforme — et le meme ecart : **entre ce qu'on
+ecrit et ce qui existe, il y a toujours un intermediaire qui ajoute quelque chose**, et cet
+intermediaire n'apparait dans aucun diff.
+
+C'est le pendant de `UN MESSAGE DE COMMIT EST UN RAPPORT, PAS UNE INTENTION`. La, le compte-rendu
+prenait l'intention pour le resultat ; ici, c'est la verification elle-meme. **Les deux se soignent
+en allant lire l'objet reel** — `git show` pour le commit, `pg_class` pour la table, l'en-tete HTTP
+pour la page servie.
+
+**En pratique :**
+- Une migration se verifie **sur la base apres application**, jamais sur son texte avant. Le controle
+  du texte sert a ne pas presenter une betise ; il ne prouve rien sur le resultat.
+- La verification interroge les **catalogues** (`pg_class`, `pg_policy`, `pg_constraint`,
+  `pg_trigger`, `information_schema`), pas le fichier qui vient d'etre lance.
+- Elle enonce les **valeurs attendues** avant d'etre lancee — sinon on lit le resultat comme une
+  confirmation. Ici, `rls_active = false` etait ecrit d'avance : c'est ce qui a rendu la divergence
+  visible au lieu de passer pour un detail.
+- Une propriete qu'on **deduit** (« le proprietaire contourne la RLS, donc ca doit passer ») se
+  mesure. « Sans doute » n'est pas une verification.
+- Ce qui vaut pour une table vaut pour le schema : si la plateforme ajoute quelque chose a une
+  table, elle l'ajoute probablement a toutes. On mesure l'ecart **systemique**, pas le cas isole.
+
 ### UN MESSAGE DE COMMIT EST UN RAPPORT, PAS UNE INTENTION
 
 **Il se redige apres avoir verifie ce qu'il rapporte, et se relit depuis `git show`, jamais depuis
