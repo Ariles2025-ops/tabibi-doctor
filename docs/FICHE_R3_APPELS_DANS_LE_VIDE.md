@@ -29,8 +29,41 @@ ni l'edge `generate-prescription-pdf` existent, le bouton deviendra un vrai faux
 | `verify-prescription` | `verify-prescription.html` | la page publique de vérification d'ordonnance ne peut rien vérifier. |
 | `request-account-deletion` | `legal/rgpd-droits.html` | la demande de suppression de compte (R4) n'arrive nulle part. |
 | `generate-prescription-pdf` | `medecin-ordonnance.html` | voir A. |
-| `create-video-room` | `teleconsultation.html` | la téléconsultation (Daily) ne peut pas ouvrir de salle ; page « bientôt disponible » en pratique. |
+| `create-video-room` | `teleconsultation.html` | la téléconsultation (Daily) ne peut pas ouvrir de salle ; page « bientôt disponible » en pratique. **Et le SDK client n'a jamais chargé non plus — voir C.** |
 | `contact-partner` | `api-docs.html` | le formulaire partenaires API n'envoie rien. |
+
+## C. La téléconsultation n'a jamais chargé son SDK — depuis le premier jour
+
+Ce point ne relève ni de A ni de B : ce n'est pas un appel qui échoue, c'est une bibliothèque qui n'est jamais arrivée.
+
+`teleconsultation.html` chargeait le SDK par cette balise, en place jusqu'au 13/09/2026 :
+
+    <script src="https://unpkg.com/@daily-co/daily-js@0.66.1/dist/daily-iframe.js"
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+**La version `0.66.1` n'a jamais été publiée.** Mesuré le 13/09/2026 sur le registre npm : 175 versions publiées, la
+branche 0.66 s'arrête à `0.66.0`, et `0.66.1` est absente jusque de l'historique de publication (champ `time`, qui
+conserve les versions dépubliées). unpkg répondait **HTTP 404**, corps de 52 octets :
+`Package version not found: @daily-co/daily-js@0.66.1`.
+
+Conséquence : `window.DailyIframe` n'a **jamais** été défini, sur aucun déploiement, depuis le jour où la balise a été
+écrite. **Ce n'est pas une régression à corriger, c'est une fonctionnalité qui n'a jamais existé.**
+
+Pourquoi personne ne l'a vu : le drapeau `video: false` court-circuite la page avant tout usage de `DailyIframe`. Sans
+lui, la page aurait planté au premier chargement et le 404 aurait été découvert le jour même. Le drapeau n'a pas
+protégé l'utilisateur d'un bug — il a **masqué** l'absence de la fonctionnalité pendant toute la durée de vie de la page.
+
+Deux défaillances indépendantes se cumulaient donc sur la même fonctionnalité : la salle ne pouvait pas être créée
+(`create-video-room` non déployée, section B) **et** le client qui l'aurait affichée n'était pas chargé. Corriger l'une
+seule n'aurait rien produit de visible — ce qui explique qu'aucune des deux n'ait jamais été remontée par un test.
+
+État au 13/09/2026 : le SDK est vendorisé en `0.92.2` (`assets/vendor/daily/`, servi par `'self'`) et `unpkg.com` est
+retiré de `script-src`. La balise charge désormais un fichier qui existe ; la téléconsultation reste non fonctionnelle
+tant que `create-video-room` n'est pas déployée. La vendorisation lève un blocage sur deux.
+
+Leçon, du même ordre que celle de la porte : **un drapeau à `false` n'est pas une preuve que ce qu'il masque
+fonctionne.** Tant qu'une fonctionnalité n'a jamais tourné drapeau levé, elle est à considérer comme inexistante, pas
+comme désactivée.
 
 ## Ce que R3 demande
 
