@@ -63,6 +63,16 @@ const PAGES = [
   ['404.html', 'la page introuvable'],
 ];
 
+// Les pages du PARCOURS exigent un compte et redirigent sinon. On leur pose une
+// session, sans quoi axe auditerait un ecran de connexion en croyant auditer un
+// tableau de bord — un vert qui ne dit rien.
+const PAGES_PARCOURS = [
+  ['reservation.html', 'la prise de rendez-vous — le coeur du produit'],
+  ['mes-rdv.html', 'les rendez-vous du patient'],
+  ['patient-dashboard.html', "l'espace patient"],
+  ['patient-profile.html', 'le profil patient'],
+];
+
 test.beforeEach(async ({ page }) => {
   await hermetiser(page);
   await neutraliserCaptcha(page);
@@ -103,6 +113,57 @@ for (const [chemin, role] of PAGES) {
       console.log(`[a11y] ${chemin} : ${n} element(s) dont axe n'a PAS su resoudre le fond `
         + `(degrade, transparences). Non tranches, donc non comptes — et c'est la ou se `
         + `cachent les contrastes qu'on croit verts.`);
+    }
+
+    expect(resultat.violations.length,
+      `\n${chemin} — ${resultat.violations.length} violation(s) :\n${lisible(resultat.violations)}\n`)
+      .toBe(0);
+  });
+}
+
+
+// =====================================================================
+// LE PARCOURS PRINCIPAL — derriere la connexion
+// =====================================================================
+// Les pages publiques ne sont que la porte. **Un patient passe l'essentiel de
+// son temps derriere la connexion** : choisir un creneau, relire ses rendez-vous,
+// corriger son profil. Une etiquette manquante y coute plus cher qu'en vitrine,
+// parce qu'on y agit au lieu d'y lire.
+//
+// Elles redirigent sans session : on en pose une. Sans ca, axe auditerait un
+// ecran de connexion en croyant auditer un tableau de bord — un vert qui ne dit
+// rien, et le pire genre de test.
+for (const [chemin, role] of PAGES_PARCOURS) {
+  test(`${chemin} (${role}) : aucune violation WCAG A/AA detectable`, async ({ page }) => {
+    const demain = Math.floor(Date.now() / 1000) + 3600;
+    await page.addInitScript((exp) => {
+      localStorage.setItem('sb-pudugodhiofqrctcdwfl-auth-token', JSON.stringify({
+        access_token: 'jeton-de-test', token_type: 'bearer', expires_at: exp,
+        refresh_token: 'r', user: { id: '00000000-0000-4000-8000-000000000001', email: 'p@example.test' },
+      }));
+      localStorage.setItem('tabibi_user', JSON.stringify({ id: '00000000-0000-4000-8000-000000000001', role: 'patient' }));
+      localStorage.setItem('tabibi_role', 'patient');
+    }, demain);
+    await page.route('**/auth/v1/user**', (route) => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ id: '00000000-0000-4000-8000-000000000001', email: 'p@example.test' }),
+    }));
+
+    await page.goto(`/${chemin}`, ATTENDRE);
+    await page.waitForTimeout(900);
+
+    // Si la page a quand meme redirige, on le DIT au lieu d'auditer autre chose.
+    expect(page.url(), `${chemin} a redirige : l'audit porterait sur la mauvaise page`)
+      .toContain(chemin);
+
+    const resultat = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    const indecis = resultat.incomplete.filter((v) => v.id === 'color-contrast');
+    if (indecis.length) {
+      const n = indecis.reduce((t, v) => t + v.nodes.length, 0);
+      console.log(`[a11y] ${chemin} : ${n} element(s) dont axe n'a PAS su resoudre le fond.`);
     }
 
     expect(resultat.violations.length,
