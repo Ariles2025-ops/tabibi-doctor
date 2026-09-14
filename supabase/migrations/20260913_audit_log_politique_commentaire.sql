@@ -1,0 +1,89 @@
+-- =====================================================================
+-- 20260913_audit_log_politique_commentaire.sql
+-- La politique « Only admins read audit » dit ce qu'elle est
+-- =====================================================================
+-- ETAT : APPLIQUEE le 13/09/2026. Lancee par le stratege, texte exact.
+--
+-- VERIFICATION RELEVEE APRES APPLICATION :
+--   politique "Only admins read audit" : commentee = true
+--   public.audit_log : 2 politiques, INCHANGEES
+--   beneficiaires : postgres, service_role — INCHANGES
+--   Aucun droit n'a bouge, ce qui etait le seul effet attendu : aucun.
+-- UN SEUL COMMENT. Aucune politique creee, modifiee ni supprimee. Aucun GRANT.
+-- Aucun droit ne change : ce fichier n'a STRICTEMENT aucun effet sur qui peut
+-- lire quoi.
+--
+-- ---------------------------------------------------------------------
+-- LE CONSTAT, ET LA DECISION
+-- ---------------------------------------------------------------------
+-- `public.audit_log` porte une politique RLS nommee « Only admins read audit » :
+--
+--   (SELECT users.role FROM users WHERE users.id = auth.uid()) = 'admin'
+--
+-- **Elle ne s'applique jamais.** Mesure du 13/09/2026 sur
+-- `information_schema.role_table_grants` : les seuls beneficiaires de
+-- `public.audit_log` sont `postgres` et `service_role`. Ni `anon` ni
+-- `authenticated` n'ont le moindre droit dessus.
+--
+-- Or la RLS ne s'evalue qu'APRES le controle de privilege. Sans `GRANT SELECT`,
+-- PostgREST ne peut pas lire la table, quel que soit l'appelant — **y compris
+-- un administrateur**. La politique decrit donc une intention, pas un chemin.
+--
+-- TRANCHE le 13/09/2026 : ON LA GARDE. Elle documente ce qu'on voudra si un
+-- jour on ouvre la lecture, et la supprimer ferait perdre cette intention.
+-- Mais une politique qu'on garde sans qu'elle s'applique DOIT LE DIRE — sinon
+-- le prochain qui la lit conclura que les admins lisent le journal depuis
+-- l'application. C'est precisement la famille de defauts de la journee : **un
+-- dispositif present qui ne fait pas ce que son nom annonce.**
+--
+-- Ici le defaut est du bon cote (la lecture est FERMEE, pas ouverte par
+-- erreur). Ce qu'on corrige n'est pas un acces, c'est un MALENTENDU.
+--
+-- =====================================================================
+-- CE QU'IL FAUT FAIRE
+-- =====================================================================
+
+COMMENT ON POLICY "Only admins read audit" ON public.audit_log IS
+  'INATTEIGNABLE AUJOURD''HUI, ET C''EST VOULU (13/09/2026). Aucun chemin client ne lit public.audit_log en direct : ni anon ni authenticated n''ont de GRANT sur cette table (seuls postgres et service_role en ont). La RLS ne s''evaluant qu''APRES le controle de privilege, cette politique ne se declenche jamais — pas meme pour un administrateur. Elle est CONSERVEE pour documenter l''intention : si la lecture du journal est ouverte un jour, voila la regle qu''on veut. Avant d''ouvrir (GRANT SELECT TO authenticated), peser que before_data et after_data contiennent des donnees de sante : decision a prendre avec le juriste, pas en passant. Le journal se lit aujourd''hui en base, par une personne qui en a les droits.';
+
+-- =====================================================================
+-- VERIFICATION — a lancer APRES, dans un passage separe
+-- =====================================================================
+-- 1. LE COMMENTAIRE EST POSE. Attendu : une ligne, le texte ci-dessus.
+--
+-- select pol.polname,
+--        obj_description(pol.oid, 'pg_policy') as commentaire
+--   from pg_policy pol
+--   join pg_class c on c.oid = pol.polrelid
+--   join pg_namespace n on n.oid = c.relnamespace
+--  where n.nspname = 'public' and c.relname = 'audit_log'
+--  order by 1;
+--
+-- 2. RIEN D'AUTRE N'A BOUGE — c'est la verification qui compte.
+--    Attendu, identique a avant : 2 politiques sur audit_log, et les seuls
+--    beneficiaires restent postgres et service_role.
+--
+-- select (select count(*) from pg_policies where tablename='audit_log') as n_politiques,
+--        (select string_agg(distinct grantee, ', ')
+--           from information_schema.role_table_grants
+--          where table_schema='public' and table_name='audit_log') as beneficiaires;
+--
+--    Attendu : 2 | postgres, service_role
+--
+-- =====================================================================
+-- RETOUR ARRIERE
+-- =====================================================================
+-- COMMENT ON POLICY "Only admins read audit" ON public.audit_log IS NULL;
+--
+-- Sans consequence : on perd la mise en garde, pas un droit.
+--
+-- =====================================================================
+-- POURQUOI CE FICHIER EST DANS LE DEPOT
+-- =====================================================================
+-- Il a d'abord ete ecrit hors depot, en /tmp, pour etre applique vite. Il a
+-- donc existe quelques heures UNIQUEMENT en production.
+--
+-- **Un artefact qui vit en production et nulle part ailleurs est une bombe a
+-- retardement.** C'est la lecon de 20260913_ensure_rls_constate.sql : un
+-- declencheur actif en base, absent du depot ET de l'historique git, origine
+-- inconnue. Verse ici le 14/09/2026 pour que ca n'arrive pas deux fois.

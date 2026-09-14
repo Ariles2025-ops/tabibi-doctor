@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-rpc.js"></script><script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-rpc.js"></script><script src="js/tabibi-temps.js"></script><script src="js/tabibi-security.js"></script>
 <script src="js/tabibi-avatar.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <!-- SEO -->
@@ -64,6 +64,25 @@
       <div style="font-size:12px;opacity:.85;margin-top:4px">Plateforme Tabibi — Algérie</div>
     </div>
     <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px" id="adm-kpi"></div>
+
+    <!-- [14/09/2026] LE REBUT D'AUDIT. Sans compteur, `audit_log_echecs` est un
+         tiroir : une table ou tombent les ecritures d'audit perdues, que
+         personne n'ouvre. Un tiroir ferme ne vaut pas mieux qu'un
+         `EXCEPTION WHEN OTHERS THEN NULL` — il deplace le silence.
+         TROIS etats, et le troisieme est le plus important : sur ERREUR
+         d'appel, on n'affiche PAS 0. Un compteur qui dit « aucun echec »
+         parce qu'il n'a pas pu compter est exactement la classe du catch mort. -->
+    <div style="padding:0 16px;margin-bottom:14px">
+      <div class="card" id="rebut-carte" style="padding:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-size:13px;font-weight:700">
+            <i class="fa fa-inbox" style="color:var(--text3)"></i> Échecs d'audit (rebut)
+          </div>
+          <div id="rebut-valeur" style="font-size:13px;color:var(--text3)">…</div>
+        </div>
+        <div id="rebut-detail" style="margin-top:10px;display:none"></div>
+      </div>
+    </div>
     <div style="padding:0 16px">
       <div style="font-size:14px;font-weight:700;margin-bottom:10px"><i class="fa fa-bolt" style="color:#f59e0b"></i> Activité récente</div>
       <div class="card"><div id="recent-act"></div></div>
@@ -200,6 +219,110 @@ function renderOverview(){
   var _k=document.getElementById("adm-kpi"); if(_k) _k.innerHTML=_e;
   var _a=document.getElementById("recent-act"); if(_a) _a.innerHTML="";
   var _c=document.getElementById("city-bars"); if(_c) _c.innerHTML="";
+  chargerRebut();
+}
+
+// ── LE REBUT D'AUDIT ────────────────────────────────────────────────────
+// [14/09/2026] `public.audit_log_echecs` recueille les ecritures d'audit qui
+// ont echoue sur les sept RPC classees PREUVE (20260913_regime_audit_log.sql).
+// Sans cet ecran, la table est un tiroir que personne n'ouvre.
+//
+// TOUJOURS par la passerelle : `window.tabibiRpc` lit les DEUX moities de la
+// reponse PostgREST (transport et metier) et rend { ok, data, erreur } avec
+// data:null des que ok est faux. Un `supabase.rpc` direct ici ferait remonter
+// le plafond de `verifier:rpc`, qui ne remonte jamais.
+var _rebutOuvert = false;
+
+function _rebutEsc(s){
+  var f = (window.tabibiSec && window.tabibiSec.escapeHtml) || window.esc;
+  if (f) return f(s == null ? '' : String(s));
+  return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){
+    return {'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+
+// Le fuseau du CABINET, jamais celui du navigateur. Si tabibi-temps.js n'est
+// pas la, on le DIT au lieu d'afficher une heure fausse.
+function _rebutInstant(v){
+  if (window.tabibiTemps && typeof window.tabibiTemps.instant === 'function') {
+    return window.tabibiTemps.instant(v);
+  }
+  return '(heure indisponible)';
+}
+
+async function chargerRebut(){
+  var val = document.getElementById('rebut-valeur');
+  var det = document.getElementById('rebut-detail');
+  if (!val || !det) return;
+  val.textContent = '…';
+  det.style.display = 'none';
+  det.innerHTML = '';
+
+  if (typeof window.tabibiRpc !== 'function') {
+    _rebutErreur(val, det, 'passerelle absente (js/tabibi-rpc.js non chargé)');
+    return;
+  }
+
+  var r = await window.tabibiRpc('admin_audit_rebut_count');
+
+  // ÉTAT 3 — ERREUR. En premier, parce que c'est celui qu'on rate :
+  // afficher 0 ici ferait dire « aucun échec » à un écran qui n'a rien pu lire.
+  if (!r.ok) { _rebutErreur(val, det, r.erreur); return; }
+
+  var n = Number(r.data);
+  if (!isFinite(n)) { _rebutErreur(val, det, 'réponse illisible : ' + JSON.stringify(r.data)); return; }
+
+  if (n === 0) {
+    // ÉTAT 1 — zéro, et on l'a VRAIMENT compté.
+    val.innerHTML = '<span style="color:#059669;font-weight:700">'
+      + '<i class="fa fa-check-circle"></i> aucun échec</span>';
+    return;
+  }
+
+  // ÉTAT 2 — n > 0. Le nombre, et la liste dépliable.
+  val.innerHTML = '<button type="button" id="rebut-bouton" '
+    + 'style="background:none;border:none;padding:0;cursor:pointer;font:inherit;color:#dc2626;font-weight:700">'
+    + '<i class="fa fa-triangle-exclamation"></i> ' + _rebutEsc(String(n))
+    + (n > 1 ? ' échecs' : ' échec') + ' <i class="fa fa-chevron-down" style="font-size:10px"></i></button>';
+  var b = document.getElementById('rebut-bouton');
+  if (b) b.addEventListener('click', function(){ _rebutBasculer(det); });
+}
+
+function _rebutErreur(val, det, cause){
+  val.innerHTML = '<span style="color:var(--text3)">'
+    + '<i class="fa fa-circle-question"></i> rebut illisible</span>';
+  det.style.display = 'block';
+  det.innerHTML = '<div style="font-size:12px;color:var(--text3);line-height:1.5">'
+    + _rebutEsc(String(cause || 'cause inconnue'))
+    + '<br><em>Le nombre d\'échecs d\'audit est INCONNU, pas nul.</em></div>';
+}
+
+async function _rebutBasculer(det){
+  if (_rebutOuvert) { det.style.display = 'none'; _rebutOuvert = false; return; }
+  _rebutOuvert = true;
+  det.style.display = 'block';
+  det.innerHTML = '<div style="font-size:12px;color:var(--text3)">Lecture…</div>';
+
+  var r = await window.tabibiRpc('admin_audit_rebut_list', { p_limit: 20 });
+  if (!r.ok) {
+    det.innerHTML = '<div style="font-size:12px;color:var(--text3)">'
+      + 'liste illisible : ' + _rebutEsc(String(r.erreur)) + '</div>';
+    return;
+  }
+  var lignes = Array.isArray(r.data) ? r.data : [];
+  if (!lignes.length) {
+    det.innerHTML = '<div style="font-size:12px;color:var(--text3)">Aucune ligne rendue.</div>';
+    return;
+  }
+  det.innerHTML = lignes.map(function(l){
+    return '<div class="tx-row" style="align-items:flex-start;gap:10px">'
+      + '<div style="min-width:0"><div style="font-weight:600">' + _rebutEsc(l.fonction) + '</div>'
+      + '<div style="font-size:11px;color:var(--text3)">' + _rebutEsc(l.action) + '</div></div>'
+      + '<div style="text-align:right;white-space:nowrap">'
+      + '<div style="font-size:11px;color:#dc2626">' + _rebutEsc(l.sqlstate) + '</div>'
+      + '<div style="font-size:11px;color:var(--text3)">' + _rebutEsc(_rebutInstant(l.survenu_le)) + '</div>'
+      + '</div></div>';
+  }).join('');
 }
 
 function filtU(r,btn){currentRoleFilt=r;document.querySelectorAll("[data-r]").forEach(b=>b.classList.remove("active"));if(btn) btn.classList.add("active");renderU();}

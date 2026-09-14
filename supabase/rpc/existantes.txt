@@ -2,7 +2,16 @@
 # Reference versionnee, comparee au code par scripts/verifier-rpc.mjs (etage
 # structurel) et a pg_proc par le meme script en --base.
 # Regeneree par : node scripts/verifier-rpc.mjs --base --ecrire
+#
+# [14/09/2026] CETTE generation-ci n'a PAS ete faite par cette commande :
+# elle exige SUPABASE_ACCESS_TOKEN, et les scripts a secret sont lances par
+# Aghiles. La liste de pg_proc a ete lue par le MCP Supabase en LECTURE, et
+# l'intersection calculee avec la meme logique, mot pour mot. A confirmer
+# par un vrai `--base --ecrire` au prochain passage : si le fichier ne bouge
+# pas, la reproduction etait fidele.
 accept_cabinet_invitation
+admin_audit_rebut_count
+admin_audit_rebut_list
 admin_doctor_doc_paths
 admin_validate_doctor
 admin_validation_counts
@@ -36,7 +45,6 @@ praticiens_par_ids
 remove_cabinet_member
 revoke_api_key
 rotate_api_key
-seo_couples
 set_video_recording_consent
 stats_publiques
 update_my_doctor_profile
