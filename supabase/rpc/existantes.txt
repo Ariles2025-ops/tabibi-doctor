@@ -9,6 +9,19 @@
 # l'intersection calculee avec la meme logique, mot pour mot. A confirmer
 # par un vrai `--base --ecrire` au prochain passage : si le fichier ne bouge
 # pas, la reproduction etait fidele.
+#
+# [14/09/2026, second passage] `waiting_list_count` ajoutee A LA MAIN, seule.
+# Le jeton de `--base --ecrire` a ete REVOQUE (securite) : la regeneration
+# complete attend qu'Aghiles en pose un nouveau. Verifie par le MCP en lecture :
+# la fonction existe, STABLE, SECURITY DEFINER, search_path fige, GRANT a anon.
+#
+# ⚠️  CE QUI N'EST DELIBEREMENT PAS FAIT : les quatre RPC d'ordonnance
+# (create/update_prescription_draft, request_prescription_signature,
+# mark_prescription_delivered) EXISTENT desormais en base, mais restent dans
+# ABSENCES_CONNUES et hors de cette reference. Les y porter demande le meme
+# passage `--base --ecrire`, et le stratege a demande de NE PAS le forcer.
+# Les avoir dans les deux listes serait sans effet sur le controle, mais ce
+# fichier dirait alors une chose que personne n'a mesuree avec l'outil prevu.
 accept_cabinet_invitation
 admin_audit_rebut_count
 admin_audit_rebut_list
@@ -50,3 +63,4 @@ set_video_recording_consent
 stats_publiques
 update_my_doctor_profile
 upsert_patient_medical_data
+waiting_list_count
