@@ -121,7 +121,7 @@
 
     # Permissions Policy : bloque toutes les APIs sensibles par défaut
     # (caméra/micro/géo activés uniquement quand le code en a besoin sur tabibi.doctor)
-    Permissions-Policy = "geolocation=(self), camera=(self), microphone=(self), payment=(self), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()"
+    Permissions-Policy = "geolocation=(self), camera=(self "https://VOTRE-DOMAINE.daily.co"), microphone=(self "https://VOTRE-DOMAINE.daily.co"), display-capture=(self "https://VOTRE-DOMAINE.daily.co"), payment=(self), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()"
 
     # Cross-Origin Embedder/Opener/Resource — anti Spectre + isolement
     Cross-Origin-Opener-Policy = "same-origin"
@@ -147,7 +147,7 @@
     # Un déploiement manuel via `git archive` n'était pas touché — netlify.toml
     # est en export-ignore, donc `_headers` (complet) reprenait la main.
     # Toute évolution de CSP se fait DANS LES DEUX FICHIERS, en même temps.
-    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.tile.openstreetmap.org https://pudugodhiofqrctcdwfl.supabase.co https://api.qrserver.com https://images.unsplash.com https://www.facebook.com https://facebook.com; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://api.openrouteservice.org https://plausible.io https://o4511831260987392.ingest.de.sentry.io https://www.facebook.com https://facebook.com; worker-src 'self' blob:; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
+    Content-Security-Policy = "default-src 'self'; script-src 'self' 'unsafe-inline' blob: https://plausible.io https://challenges.cloudflare.com https://browser.sentry-cdn.com https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.daily.co https://*.tile.openstreetmap.org https://pudugodhiofqrctcdwfl.supabase.co https://api.qrserver.com https://images.unsplash.com https://www.facebook.com https://facebook.com; connect-src 'self' https://challenges.cloudflare.com https://*.supabase.co wss://*.supabase.co https://*.daily.co wss://*.daily.co https://api.openrouteservice.org https://plausible.io https://o4511831260987392.ingest.de.sentry.io https://www.facebook.com https://facebook.com; worker-src 'self' blob:; media-src 'self' blob: https://*.daily.co; frame-src 'self' https://challenges.cloudflare.com https://www.google.com https://maps.google.com https://*.daily.co; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'; upgrade-insecure-requests"
 
 # ────────────────────────────────────────────────────────────────────────
 # HTML — pas de cache (mises à jour immédiates)
