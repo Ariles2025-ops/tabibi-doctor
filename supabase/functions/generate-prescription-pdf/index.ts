@@ -78,29 +78,49 @@
 // - **Elle n'imprime pas ce qu'elle ne sait pas rendre.** Voir ci-dessous.
 //
 // ---------------------------------------------------------------------
-// ⚠️  LIMITE CONNUE ET ASSUMEE : L'ECRITURE ARABE
+// L'ECRITURE ARABE — ET LA CONCLUSION QUE J'AVAIS TIREE TROP VITE
 // ---------------------------------------------------------------------
-// Les 14 polices standard du format PDF (ici Helvetica) sont limitees au
-// codage WinAnsi — **latin uniquement**. Un nom de medicament, un diagnostic
-// ou un nom de medecin en arabe n'y a aucun glyphe.
+// Il y avait ici, le 14/09, une limite « connue et assumee » : l'arabe etait
+// REFUSE a la signature (`unsupported_characters`), au motif que les 14
+// polices standard du PDF n'ont aucun glyphe arabe — vrai — et qu'ouvrir
+// l'arabe demanderait « un moteur de faconnage, un lot a soi » — FAUX.
 //
-// Deux conduites possibles. Celle que je n'ai PAS prise : remplacer les
-// caracteres inconnus par `?`. Sur une ordonnance, mutiler un nom de
-// medicament en silence est un defaut de securite du patient, pas un defaut
-// d'affichage.
+// Mesure du 15/09 :
 //
-// Celle que j'ai prise : **refuser la signature** avec
-// `unsupported_characters`, en nommant le champ fautif. Le medecin voit
-// pourquoi, et rien de faux n'est produit.
+//     fontkit.layout('طبيبي')                      ->  9 glyphes contextuels
+//     mapping naif, un glyphe par point de code    ->  5 formes isolees
+//     pdf-lib apres embarquement de la police      ->  NEUF indices encodes
 //
-// **C'est une limite produit reelle en Algerie, et elle se decide** :
-// embarquer une police Unicode (Noto Naskh Arabic, licence OFL, ~300 Ko dans
-// le depot) avec `@pdf-lib/fontkit`, plus le rendu droite-a-gauche. C'est un
-// lot a soi. Porte dans `docs/A_FAIRE_AGHILES.md`.
+// **pdf-lib faconne**, parce que son `CustomFontEmbedder` passe par
+// `font.layout()` de fontkit. Ce qui manquait n'etait pas un moteur : c'etait
+// une police contenant l'arabe. Elle est desormais embarquee
+// (`_partage/police-arabe.ts`, Noto Naskh Arabic, OFL, 87 Ko), et
+// `tests/pdf-arabe.test.mjs` verifie les neuf glyphes a chaque passage — cinq
+// signifierait des lettres detachees, c'est-a-dire de l'arabe qui RESSEMBLE a
+// de l'arabe pour qui ne le lit pas. C'etait le defaut que le refus evitait ;
+// c'est maintenant le test qui l'empeche.
+//
+// CE QUI RESTE VRAI, ET QU'ON N'INVENTE PAS :
+//   - la police arabe n'est embarquee QUE si un champ en contient. Un PDF
+//     francais ne grossit pas de 87 Ko pour rien ;
+//   - si un champ contient de l'arabe et que la police n'a pas pu etre
+//     chargee, on REFUSE — jamais de repli sur la latine, qui donnerait des
+//     carres vides ou leverait au milieu de la generation ;
+//   - **pas de bidi complet.** Une ligne qui melange une phrase arabe et une
+//     phrase latine peut voir ses morceaux ordonnes autrement qu'un moteur
+//     bidi ne le ferait. Sur une ordonnance les champs sont d'une seule
+//     langue en pratique ; la limite est ecrite pour ne pas etre decouverte
+//     sur un document imprime.
+//
+// ⚠️ ET UN HUMAIN DOIT REGARDER UN PDF ARABE AVANT LE CONGRES. Le faconnage
+// est prouve au glyphe pres ; la mise en page, elle, se juge a l'oeil.
 // =====================================================================
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 import { PDFDocument, StandardFonts, rgb } from 'https://esm.sh/pdf-lib@1.17.1';
+import fontkit from 'https://esm.sh/@pdf-lib/fontkit@1.1.1';
+import { policeArabe } from '../_partage/police-arabe.ts';
+import { contientArabe, numeroter, policePour, sensDe, xPour } from '../_partage/texte-arabe.ts';
 import {
   CleIndisponible,
   empreinteContenu,
@@ -156,6 +176,10 @@ function caracteresNonRendables(texte: string): string[] {
     if (p === 0x0a || p === 0x0d || p === 0x09) continue;
     if (p >= 0x20 && p <= 0xff) continue;
     if (TYPOGRAPHIQUES.has(p)) continue;
+    // [15/09] L'arabe n'est plus « non rendable » : Noto Naskh est embarquee et
+    // pdf-lib la faconne. Il reste refuse UNIQUEMENT si la police n'a pas pu
+    // etre chargee — et c'est alors un refus franc, pas un caractere mange.
+    if (contientArabe(c)) continue;
     trouves.add(c);
   }
   return [...trouves];
@@ -246,9 +270,45 @@ async function fabriquerPdf(d: DonneesPdf): Promise<Uint8Array> {
   const italique = await doc.embedFont(StandardFonts.HelveticaOblique);
   const largeur = A4.largeur - 2 * MARGE;
 
+  // La police arabe n'est embarquee QUE si le document en a besoin : un PDF
+  // francais ne grossit pas de 87 Ko pour rien. `subset: true` ne garde que
+  // les glyphes reellement employes.
+  const besoinArabe = [
+    d.numero, d.medecin, d.specialite, d.patient, d.diagnostic, d.notes,
+    ...d.medicaments.flatMap((m) => [m.name, m.dosage, m.frequency, m.duration, m.notes]),
+  ].some(contientArabe);
+
+  let arabe: unknown;
+  if (besoinArabe) {
+    doc.registerFontkit(fontkit);
+    arabe = await doc.embedFont(policeArabe(), { subset: true });
+  }
+
+  /**
+   * La police d'un texte. **Leve si l'arabe est necessaire et absent** :
+   * se rabattre sur Helvetica donnerait des carres vides, ou leverait plus
+   * loin, au milieu du document. On echoue tot et clairement.
+   */
+  const pol = (t: string, defaut: unknown) => {
+    const choisie = policePour(t, { latine: defaut, arabe });
+    if (!choisie) {
+      const e = new Error('police arabe indisponible');
+      e.name = 'PoliceArabeAbsente';
+      throw e;
+    }
+    return choisie;
+  };
+
   let y = A4.hauteur - MARGE;
+  // Chaque ligne choisit sa police et son cote. Une ligne arabe se pose a
+  // DROITE du cadre — sinon elle se lit a l'envers de son alignement.
   const ecrire = (t: string, taille: number, police = normale, couleur = NOIR, decalage = 0) => {
-    page.drawText(t, { x: MARGE + decalage, y, size: taille, font: police, color: couleur });
+    const f = pol(t, police) as { widthOfTextAtSize(s: string, n: number): number };
+    const sens = sensDe(t);
+    const x = sens === 'rtl'
+      ? xPour('rtl', MARGE, largeur - decalage, f.widthOfTextAtSize(t, taille))
+      : MARGE + decalage;
+    page.drawText(t, { x, y, size: taille, font: f as never, color: couleur });
     y -= taille + 4;
   };
   const trait = () => {
@@ -271,24 +331,31 @@ async function fabriquerPdf(d: DonneesPdf): Promise<Uint8Array> {
 
   if (d.diagnostic) {
     ecrire('Diagnostic', 11, grasse, GRIS);
-    for (const l of enLignes(d.diagnostic, normale, 10, largeur)) ecrire(l, 10);
+    // Mesurer avec Helvetica un texte qui sera rendu en Noto donnerait des
+    // lignes trop longues ou trop courtes : on decoupe avec la police reelle.
+    const pDiag = pol(d.diagnostic, normale) as never;
+    for (const l of enLignes(d.diagnostic, pDiag, 10, largeur)) ecrire(l, 10);
     y -= 6;
   }
 
   ecrire('Traitement', 11, grasse, GRIS);
   y -= 2;
   d.medicaments.forEach((m, i) => {
-    ecrire(`${i + 1}. ${m.name}`, 11, grasse, NOIR);
+    ecrire(numeroter(i + 1, m.name), 11, grasse, NOIR);
     const details = [m.dosage, m.frequency, m.duration].filter(Boolean).join(' — ');
     if (details) ecrire(details, 10, normale, GRIS, 14);
-    if (m.notes) for (const l of enLignes(m.notes, italique, 9, largeur - 14)) ecrire(l, 9, italique, GRIS, 14);
+    if (m.notes) {
+      const pNote = pol(m.notes, italique) as never;
+      for (const l of enLignes(m.notes, pNote, 9, largeur - 14)) ecrire(l, 9, italique, GRIS, 14);
+    }
     y -= 4;
   });
 
   if (d.notes) {
     y -= 4;
     ecrire('Remarques', 11, grasse, GRIS);
-    for (const l of enLignes(d.notes, normale, 10, largeur)) ecrire(l, 10);
+    const pRem = pol(d.notes, normale) as never;
+    for (const l of enLignes(d.notes, pRem, 10, largeur)) ecrire(l, 10);
   }
 
   // Pied : ce que le document est, et ce qu'il n'est pas. L'URL porte la
@@ -467,6 +534,11 @@ Deno.serve(async (req) => {
   try {
     octets = await fabriquerPdf(donnees);
   } catch (e) {
+    if (e instanceof Error && e.name === 'PoliceArabeAbsente') {
+      // On ne mutile pas : on refuse, et on dit pourquoi.
+      console.error('[generate-prescription-pdf] police arabe indisponible');
+      return echec(req, 500, 'arabic_font_unavailable');
+    }
     console.error('[generate-prescription-pdf] fabrication du PDF :', e instanceof Error ? e.message : String(e));
     return echec(req, 500, 'pdf_generation_failed');
   }
