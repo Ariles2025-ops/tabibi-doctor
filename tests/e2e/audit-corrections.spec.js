@@ -12,9 +12,39 @@
 // =====================================================================
 const { test, expect } = require('@playwright/test');
 
+// [14/09/2026] CE FICHIER A FAIT ROUGIR LA CI ALORS QU'IL ETAIT VERT EN LOCAL.
+//
+// Cause mesuree : mes `page.goto()` n'avaient pas de `waitUntil`, donc Playwright
+// attendait l'evenement `load` — **qui inclut le widget Cloudflare Turnstile**,
+// charge par `forgot-password.html` ET `waiting-list.html`. Sur un runner qui
+// atteint mal challenges.cloudflare.com, chaque navigation attend le reseau.
+//
+// Mesure, avec un Cloudflare simule a 20 s de latence :
+//     waitUntil:'load'              -> 20,1 s par navigation
+//     waitUntil:'domcontentloaded'  ->  0,1 s
+// 12 navigations (6 tests x 2 profils) ~ 240 s d'attente, timeout de 30 s par
+// test : la porte e2e sortait en 1 apres ~173 s. En local, Cloudflare repond en
+// quelques dizaines de millisecondes et rien ne se voit.
+//
+// DEUX CORRECTIONS, et les deux sont de principe :
+//   1. `waitUntil: 'domcontentloaded'` — c'est ce que fait TOUTE la suite
+//      existante (parcours-critiques.spec.js). Je m'etais ecarte du patron sans
+//      le savoir.
+//   2. Turnstile neutralise au niveau RESEAU pour TOUS les tests de ce fichier,
+//      pas seulement ceux de B-2. **Un test e2e ne doit dependre d'aucun tiers** :
+//      sinon il mesure la latence de Cloudflare, pas notre code.
 test.beforeEach(async ({ page }) => {
+  await page.route('**/js/tabibi-turnstile.js', (route) => route.fulfill({
+    status: 200, contentType: 'application/javascript',
+    body: `window.tabibiTurnstile = { getCaptchaToken: async () => 'jeton-de-test',
+                                      isEnabled: () => false, verifyToken: async () => true };`
+  }));
+  await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
   await page.addInitScript(() => localStorage.setItem('tabibi_lang', 'fr'));
 });
+
+// Toute la suite navigue ainsi. Voir l'explication ci-dessus.
+const ATTENDRE = { waitUntil: 'domcontentloaded' };
 
 // ─────────────────────────────────────────────────────────────────────
 // B-2 — mot de passe oublie
@@ -23,17 +53,10 @@ test.describe('B-2 — « mot de passe oublie » ne ment plus', () => {
 
   // Le SEUL appel qui compte est celui de l'API d'authentification. On le
   // bouchonne au niveau reseau pour exercer le vrai code de la page.
+  // Turnstile est deja neutralise par le `beforeEach` global : un
+  // `addInitScript` ne suffirait pas, `js/tabibi-turnstile.js` se charge apres
+  // et l'ecrase. Ici on ne bouchonne que l'appel qui est le SUJET du test.
   async function poser(page, reponse) {
-    // Le captcha n'est pas le sujet de ce test. Un `addInitScript` ne suffit PAS :
-    // `js/tabibi-turnstile.js` se charge APRES et ecrase le bouchon, puis le vrai
-    // widget Cloudflare s'execute et l'appel n'atteint jamais l'API. On remplace
-    // donc le SCRIPT, comme les autres specs le font pour `js/auth.js`.
-    await page.route('**/js/tabibi-turnstile.js', (route) => route.fulfill({
-      status: 200, contentType: 'application/javascript',
-      body: `window.tabibiTurnstile = { getCaptchaToken: async () => 'jeton-de-test',
-                                        isEnabled: () => false, verifyToken: async () => true };`
-    }));
-    await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
     await page.route('**/auth/v1/recover**', (route) => route.fulfill(reponse));
   }
 
@@ -42,7 +65,7 @@ test.describe('B-2 — « mot de passe oublie » ne ment plus', () => {
       status: 429, contentType: 'application/json',
       body: JSON.stringify({ code: 'over_email_send_rate_limit', message: 'email rate limit exceeded' })
     });
-    await page.goto('/forgot-password.html');
+    await page.goto('/forgot-password.html', ATTENDRE);
     await page.fill('#f_email', 'temoin@example.test');
     await page.click('#submit-btn');
 
@@ -57,7 +80,7 @@ test.describe('B-2 — « mot de passe oublie » ne ment plus', () => {
 
   test('SUCCES : le message reste le MEME — l anti-enumeration est gardee', async ({ page }) => {
     await poser(page, { status: 200, contentType: 'application/json', body: '{}' });
-    await page.goto('/forgot-password.html');
+    await page.goto('/forgot-password.html', ATTENDRE);
     await page.fill('#f_email', 'temoin@example.test');
     await page.click('#submit-btn');
 
@@ -82,7 +105,7 @@ test.describe('B-1 — la liste d attente n invente plus de chiffre', () => {
       status: 404, contentType: 'application/json',
       body: JSON.stringify({ code: 'PGRST205', message: 'relation does not exist' })
     }));
-    await page.goto('/waiting-list.html');
+    await page.goto('/waiting-list.html', ATTENDRE);
 
     const stat = page.locator('#stat-total');
     await expect(stat).toHaveText('—');
@@ -109,7 +132,7 @@ test.describe('B-1 — la liste d attente n invente plus de chiffre', () => {
       status: 200, contentType: 'application/json',
       body: JSON.stringify({ total_count: 3 })
     }));
-    await page.goto('/waiting-list.html');
+    await page.goto('/waiting-list.html', ATTENDRE);
     await expect(page.locator('#stat-total')).toHaveText('3');
   });
 
@@ -118,7 +141,7 @@ test.describe('B-1 — la liste d attente n invente plus de chiffre', () => {
       status: 200, contentType: 'application/json',
       body: JSON.stringify({ total_count: 0 })
     }));
-    await page.goto('/waiting-list.html');
+    await page.goto('/waiting-list.html', ATTENDRE);
     await expect(page.locator('#stat-total')).toHaveText('0');
   });
 });

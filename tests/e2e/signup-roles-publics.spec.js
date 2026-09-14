@@ -24,6 +24,23 @@
 // =====================================================================
 const { test, expect } = require('@playwright/test');
 
+// [14/09/2026] `signup.html` charge le widget Cloudflare Turnstile. Sans les deux
+// lignes ci-dessous, chaque `page.goto` attend l'evenement `load`, donc le
+// reseau vers challenges.cloudflare.com — mesure : 20,1 s par navigation quand
+// ce CDN repond mal, contre 0,1 s en `domcontentloaded`. C'est ce qui a fait
+// rougir la CI le 14/09 alors que le local etait vert.
+// **Un test e2e ne doit dependre d'aucun tiers.**
+const ATTENDRE = { waitUntil: 'domcontentloaded' };
+const NEUTRALISER_CAPTCHA = async (page) => {
+  await page.route('**/js/tabibi-turnstile.js', (route) => route.fulfill({
+    status: 200, contentType: 'application/javascript',
+    body: `window.tabibiTurnstile = { getCaptchaToken: async () => 'jeton-de-test',
+                                      isEnabled: () => false, verifyToken: async () => true };`
+  }));
+  await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
+};
+
+
 // Les libelles sont traduits a l'execution : sans langue posee, la page suit le
 // navigateur et rend « Doctor » au lieu de « Medecin ». On pose donc `fr` comme
 // les autres specs — et on assertionne sur la CLE i18n, qui ne bouge pas d'une
@@ -36,7 +53,8 @@ test.beforeEach(async ({ page }) => {
 test.describe('inscription publique — les roles proposes', () => {
 
   test('les deux roles qui aboutissent sont proposes', async ({ page }) => {
-    await page.goto('/signup.html');
+    await NEUTRALISER_CAPTCHA(page);
+    await page.goto('/signup.html', ATTENDRE);
     const roles = page.locator('[role="radiogroup"] button[role="radio"]');
     await expect(roles).toHaveCount(2);
     await expect(roles.nth(0).locator('[data-i18n]')).toHaveAttribute('data-i18n', 'role_patient');
@@ -44,7 +62,8 @@ test.describe('inscription publique — les roles proposes', () => {
   });
 
   test('« Secretariat » N EST PAS proposable — il ne peut pas aboutir', async ({ page }) => {
-    await page.goto('/signup.html');
+    await NEUTRALISER_CAPTCHA(page);
+    await page.goto('/signup.html', ATTENDRE);
 
     // Aucun bouton de role ne le propose.
     const roles = page.locator('[role="radiogroup"] button[role="radio"]');

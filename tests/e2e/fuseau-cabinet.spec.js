@@ -21,6 +21,16 @@
 // `test-results/` est deja dans .gitignore. Pour FIGER une preuve, on la copie a la main
 // dans `docs/preuves/` — c'est un geste delibere, avec une date et une raison.
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] `waitUntil: 'domcontentloaded'` PARTOUT, et ce n'est pas cosmetique.
+// Sans lui, Playwright attend l'evenement `load`, qui inclut les CDN TIERS :
+// `js/tabibi-sentry.js` charge le SDK depuis browser.sentry-cdn.com sur CHAQUE
+// page, et les pages d'authentification chargent en plus Cloudflare Turnstile.
+// Mesure du 14/09, CDN simule a 20 s de latence : 20,1 s par navigation contre
+// 0,1 s en `domcontentloaded`. C'est ce qui a fait rougir la CI (~173 s) alors
+// que le local etait vert — un CDN rapide chez moi, lent sur le runner.
+// **Un test e2e ne mesure pas la latence d'un tiers.**
+const ATTENDRE = { waitUntil: 'domcontentloaded' };
+
 
 const FUSEAUX = ['Africa/Algiers', 'Europe/Paris', 'UTC'];
 const RDV_MINUIT = '2026-09-15T23:30:00Z';   // 00h30 le 16 septembre, heure cabinet
@@ -32,7 +42,7 @@ async function charger(page) {
   await page.route('**/js/auth.js', (r) => r.fulfill({ status: 200, contentType: 'application/javascript',
     body: `window.tabibi=window.tabibi||{};window.tabibi.auth={requireAuth:async()=>({id:'fx',role:'patient'}),getUser:async()=>null,logout:async()=>{}};` }));
   await page.route('**/*.supabase.co/**', (r) => r.abort());
-  await page.goto('/mes-rdv.html');
+  await page.goto('/mes-rdv.html', ATTENDRE);
   await page.waitForFunction(() => typeof window.tabibiTemps === 'object', null, { timeout: 5000 });
 }
 
@@ -111,7 +121,7 @@ test.describe('capture aux trois fuseaux', () => {
         { id: 'a', status: 'confirmed', scheduled_at: RDV_MINUIT, doctor_name: 'Dr Minuit' },
         { id: 'b', status: 'confirmed', scheduled_at: RDV_MATIN,  doctor_name: 'Dr Matin' }
       ]);
-      await page.goto('/mes-rdv.html');
+      await page.goto('/mes-rdv.html', ATTENDRE);
       await page.waitForTimeout(1500);
       const textes = await page.evaluate(() => Array.from(document.querySelectorAll('#section-upcoming .rdv-card, #section-past .rdv-card'))
         .map((e) => e.innerText.replace(/\s+/g, ' ').trim().slice(0, 90)));
@@ -144,7 +154,7 @@ test.describe('agenda medecin', () => {
       localStorage.setItem('tabibi_user', JSON.stringify({ id: 'fx', role: 'medecin', name: 'Fx' }));
       localStorage.setItem('tabibi_lang', 'fr');
     });
-    await page.goto('/doctor-dashboard.html');
+    await page.goto('/doctor-dashboard.html', ATTENDRE);
     await page.waitForTimeout(1200);
     await page.evaluate(() => window.sw('agenda', document.querySelector("[onclick*=\"sw('agenda'\"]")));
     await page.waitForTimeout(1200);

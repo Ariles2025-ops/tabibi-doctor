@@ -27,6 +27,23 @@
 // =====================================================================
 const { test, expect } = require('@playwright/test');
 
+// [14/09/2026] `signup.html` charge le widget Cloudflare Turnstile. Sans les deux
+// lignes ci-dessous, chaque `page.goto` attend l'evenement `load`, donc le
+// reseau vers challenges.cloudflare.com — mesure : 20,1 s par navigation quand
+// ce CDN repond mal, contre 0,1 s en `domcontentloaded`. C'est ce qui a fait
+// rougir la CI le 14/09 alors que le local etait vert.
+// **Un test e2e ne doit dependre d'aucun tiers.**
+const ATTENDRE = { waitUntil: 'domcontentloaded' };
+const NEUTRALISER_CAPTCHA = async (page) => {
+  await page.route('**/js/tabibi-turnstile.js', (route) => route.fulfill({
+    status: 200, contentType: 'application/javascript',
+    body: `window.tabibiTurnstile = { getCaptchaToken: async () => 'jeton-de-test',
+                                      isEnabled: () => false, verifyToken: async () => true };`
+  }));
+  await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
+};
+
+
 // Un compte qui vient d'etre cree cote Supabase, sans aucun reseau reel.
 const UID = '00000000-0000-0000-0000-0000000000aa';
 
@@ -78,7 +95,8 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('patient : quatre scopes, et ceux que la table accepte', async ({ page }) => {
     const appels = await poser(page, { role: 'patient', marketing: true });
-    await page.goto('/signup.html');
+    await NEUTRALISER_CAPTCHA(page);
+    await page.goto('/signup.html', ATTENDRE);
     await journaliser(page);
 
     expect(appels.map((a) => a.p_scope)).toEqual([
@@ -100,7 +118,8 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('UN REFUS S ECRIT : marketing decoche part avec granted=false', async ({ page }) => {
     const appels = await poser(page, { role: 'patient', marketing: false });
-    await page.goto('/signup.html');
+    await NEUTRALISER_CAPTCHA(page);
+    await page.goto('/signup.html', ATTENDRE);
     await journaliser(page);
 
     const mk = appels.find((a) => a.p_scope === 'marketing_email');
@@ -110,7 +129,8 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('medecin : trois scopes, pas de donnees de sante', async ({ page }) => {
     const appels = await poser(page, { role: 'medecin', marketing: false });
-    await page.goto('/signup.html');
+    await NEUTRALISER_CAPTCHA(page);
+    await page.goto('/signup.html', ATTENDRE);
     await journaliser(page);
 
     expect(appels.map((a) => a.p_scope)).toEqual(['cgu', 'privacy', 'marketing_email']);
@@ -119,7 +139,8 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('un echec ne bloque pas l inscription, mais ne se tait pas', async ({ page }) => {
     const appels = await poser(page, { role: 'patient', marketing: true, echecScope: 'privacy' });
-    await page.goto('/signup.html');
+    await NEUTRALISER_CAPTCHA(page);
+    await page.goto('/signup.html', ATTENDRE);
     const toasts = await journaliser(page);
 
     // Les quatre partent quand meme : un echec n'interrompt pas la boucle.
