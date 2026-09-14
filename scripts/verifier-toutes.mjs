@@ -38,7 +38,13 @@ const PORTES = [
   ['passerelle','npm', ['run', '--silent', 'verifier:passerelle']],
   ['proprete', 'npm',  ['run', '--silent', 'verifier:proprete']],
   ['catch',    'npm',  ['run', '--silent', 'verifier:catch']],
-  ['signature','npm',  ['run', '--silent', 'verifier:signature']],
+  // [14/09/2026] Cette porte s'appelait `signature` et ne lancait qu'un fichier.
+  // Renommee `unites` et elargie a `tests/*.test.mjs` : les modules de
+  // `supabase/functions/_partage/` sont du code Deno qu'on execute sous Node
+  // (voir l'en-tete de chaque fichier d'essai). Une porte par module aurait
+  // fait grossir cette liste d'une ligne a chaque fois — et la ligne qu'on
+  // OUBLIE d'ajouter est une porte qui n'existe pas.
+  ['unites',   'npm',  ['run', '--silent', 'verifier:unites']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
 ];
@@ -57,7 +63,7 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
-  'verifier:catch', 'verifier:signature', 'build', 'test:e2e',
+  'verifier:catch', 'verifier:unites', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
