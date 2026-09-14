@@ -42,10 +42,17 @@ test('le drapeau prescriptions est OUVERT', async ({ page }) => {
   expect(drapeaux.prescriptions, 'le drapeau ordonnances devrait etre ouvert').toBe(true);
 
   // Ce qui n'ouvre PAS au passage. Ouvrir un drapeau ne doit jamais en ouvrir
-  // un autre par inadvertance : `video` attend un fournisseur reel, `reviews`
-  // attend une recette.
-  expect(drapeaux.video, 'video ne doit pas s ouvrir avec les ordonnances').toBe(false);
+  // un autre par inadvertance.
+  //
+  // [14/09, nuit] `video` SORT de cette liste : il a ete ouvert depuis, par sa
+  // propre PR (#123) et pour ses propres raisons — salle Daily reelle, edge
+  // function deployee, CSP qui delegue la camera. Le laisser ici ferait
+  // echouer ce test pour une raison qui n'a RIEN a voir avec les ordonnances.
+  // Son etat ouvert est garde par `teleconsultation-salle.spec.js`, qui sait
+  // pourquoi il l'est ; ici on ne garde que ce que CE lot ne doit pas toucher.
   expect(drapeaux.reviews, 'reviews ne doit pas s ouvrir avec les ordonnances').toBe(false);
+  expect(drapeaux.payments, 'payments ne doit pas s ouvrir avec les ordonnances').toBe(false);
+  expect(drapeaux.messaging, 'messaging ne doit pas s ouvrir avec les ordonnances').toBe(false);
 });
 
 test('les boutons Enregistrer et Signer sont VISIBLES', async ({ page }) => {
