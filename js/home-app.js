@@ -2044,6 +2044,6 @@ function _updateDocCounterUI() {
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
 window.filterBySpec=filterBySpec; window.onLangChange=onLangChange;
 window.selectProfileSlot=selectProfileSlot; window.confirmFromProfile=confirmFromProfile;
-window.finalBooking=finalBooking;
+window.finalBooking=finalBooking;window.openMapOverlay=openMapOverlay;window.closeMapOverlay=closeMapOverlay;window._tbOpenDoc=_tbOpenDoc;
 window.showPatientDashboardModal=showPatientDashboardModal;
 window.showDoctorDashboardModal=showDoctorDashboardModal;
