@@ -46,14 +46,31 @@
     //   le 14/09). Quelqu'un qui lisait ces lignes et vérifiait en base
     //   concluait qu'on pouvait ouvrir le drapeau.
     //
-    //   LA VRAIE RAISON, elle, tient toujours :
-    //   - le SDK Daily n'a JAMAIS chargé : la balise pointait sur
-    //     @daily-co/daily-js@0.66.1, une version jamais publiée. Vendorisé
-    //     depuis en 0.92.2, mais le flux n'a jamais tourné de bout en bout.
-    //   - `video_sessions.daily_room_url` est une URL PLACEHOLDER
-    //     (`https://placeholder.daily.co/…`, cf. create_video_session) : il n'y
-    //     a pas de fournisseur vidéo réel, pas de clé, pas de salle.
-    //   → Reste OFF jusqu'à une séance dédiée avec le fournisseur réel.
+    //   ~~LA VRAIE RAISON~~ — elle a tenu jusqu'au 14/09/2026 au soir :
+    //   - ~~le SDK Daily n'a JAMAIS chargé~~ : la balise pointait sur
+    //     @daily-co/daily-js@0.66.1, une version jamais publiée. **Vendorisé
+    //     en 0.92.2** (assets/vendor/daily/).
+    //   - ~~`daily_room_url` est une URL PLACEHOLDER~~ : `create_video_session`
+    //     écrit **NULL** depuis `20260914_video_daily.sql` (appliquée), et la
+    //     colonne a perdu son NOT NULL. Une URL fabriquée qui avait la forme
+    //     d'une vraie a disparu ; NULL se lit « je ne sais pas encore ».
+    //
+    //   CE QUI OUVRE LE DRAPEAU (PR #123), et rien d'autre :
+    //   1. l'edge function `create-video-room` est **déployée** : elle crée la
+    //      salle Daily côté serveur, avec expiration, et ne rend qu'UN jeton —
+    //      celui de l'appelant. `DAILY_API_KEY` ne quitte jamais la fonction.
+    //   2. la CSP **autorise** l'iframe : `frame-src` + `connect-src`
+    //      (https et wss) sur `*.daily.co`, et la Permissions-Policy délègue
+    //      caméra / micro / partage d'écran à `tabibidz.daily.co` — une origine
+    //      EXACTE, ce champ n'accepte aucun joker. Gardé par
+    //      `npm run verifier:video`.
+    //
+    //   ⚠️ CE QUI N'A TOUJOURS PAS EU LIEU : **un appel réel entre deux
+    //   navigateurs.** C'était la condition annoncée jusqu'ici, et elle n'est
+    //   pas remplie — l'ouverture est une décision prise sans elle, pas une
+    //   conséquence de sa réussite. Si le flux casse en séance, ce drapeau se
+    //   referme : la carte « bientôt disponible » est restée dans
+    //   `teleconsultation.html` exprès, et un test la garde.
     video: true,
 
     // Paiements (Phase 8) :

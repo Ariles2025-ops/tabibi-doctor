@@ -9,7 +9,9 @@
 // Ce que ce fichier garde, c'est **tout ce qui echouerait AVANT que le
 // fournisseur soit en cause** :
 //
-//   1. le drapeau ferme se comporte comme ferme (redirection, pas de SDK) ;
+//   1. le drapeau OUVERT se comporte comme ouvert : l'ecran « bientot
+//      disponible » a disparu, et la vraie coquille repond correctement a un
+//      lien sans session ;
 //   2. la CSP et la Permissions-Policy autorisent l'iframe — mesure du 14/09 :
 //      elles ne contenaient AUCUNE mention de daily.co, et l'appel aurait
 //      echoue sans que le fournisseur y soit pour quoi que ce soit ;
@@ -19,6 +21,15 @@
 //
 // Le point 4 est le seul qui serait grave s'il lachait : une cle Daily dans
 // une page publique ouvre la creation de salles sur tout le compte.
+//
+// ---------------------------------------------------------------------
+// [14/09, nuit] LE DRAPEAU EST PASSE A `true` (PR #123)
+// ---------------------------------------------------------------------
+// Ce fichier verifiait l'etat FERME. Il verifie maintenant l'etat OUVERT —
+// **sans perdre de couverture** : chaque assertion « c'est ferme » est
+// remplacee par une assertion sur le comportement reel une fois ouvert, pas
+// supprimee. Un test qu'on vide pour faire passer la CI est pire qu'un test
+// rouge : il reste vert quoi qu'il arrive.
 // =====================================================================
 const { test, expect } = require('@playwright/test');
 const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
@@ -31,27 +42,83 @@ test.beforeEach(async ({ page }) => {
 });
 
 // ─────────────────────────────────────────────────────────────────────
-test.describe('le drapeau video est ferme, et se comporte comme tel', () => {
+test.describe('le drapeau video est OUVERT, et se comporte comme tel', () => {
 
-  test('video reste FERME — il ne s ouvre pas avec les ordonnances', async ({ page }) => {
-    // `waiting-list.html` ne charge pas tabibi-features.js : on lit le drapeau
-    // sur une page qui s'en sert vraiment. Elle redirige faute de session, on
-    // neutralise donc la cible pour qu'un runner lent ne fasse pas echouer une
-    // lecture de drapeau sur une navigation.
-    await page.route('**/login.html*', (route) => route.fulfill({
-      status: 200, contentType: 'text/html', body: '<html><body>login</body></html>',
-    }));
-    await page.goto('/medecin-ordonnance.html', ATTENDRE);
+  // La page redirige vers /login.html des qu'un lien porte une session sans
+  // compte connecte. On sert une page de substitution pour pouvoir observer la
+  // redirection sans dependre du vrai ecran de connexion.
+  const bouchonLogin = (page) => page.route('**/login.html*', (route) => route.fulfill({
+    status: 200, contentType: 'text/html', body: '<html><body data-faux-login>login</body></html>',
+  }));
+
+  test('video est OUVERT — et n a ouvert aucun autre drapeau', async ({ page }) => {
+    await bouchonLogin(page);
+    await page.goto('/teleconsultation.html', ATTENDRE);
     const drapeaux = await page.evaluate(() => window.TABIBI_FEATURES);
-    expect(drapeaux.video, "`video` ne s'ouvre qu'apres un appel reel").toBe(false);
+    expect(drapeaux.video, '`video` devrait etre ouvert depuis la PR #123').toBe(true);
+    // Ouvrir un drapeau ne doit jamais en ouvrir un autre par inadvertance.
+    expect(drapeaux.payments, 'payments ne s ouvre pas avec la video').toBe(false);
+    expect(drapeaux.reviews, 'reviews ne s ouvre pas avec la video').toBe(false);
+    expect(drapeaux.messaging, 'messaging ne s ouvre pas avec la video').toBe(false);
   });
 
-  test('la page de teleconsultation ne charge pas le SDK quand le drapeau est ferme', async ({ page }) => {
-    // Elle redirige avant. Le point n'est pas la redirection en soi : c'est
-    // qu'aucune permission camera ne soit demandee pour une fonction fermee.
+  test("L ECRAN « bientot disponible » A DISPARU — c est la seule chose qu'on voit changer", async ({ page }) => {
+    // C'est la consequence observable du drapeau, et la raison d'etre de la PR.
+    // Tant qu'il etait ferme, `.tc-shell` etait remplace en entier par une carte
+    // « Teleconsultation bientot disponible ».
+    await bouchonLogin(page);
+    await page.goto('/teleconsultation.html', ATTENDRE);
+    await page.waitForTimeout(500);
+
+    const texte = await page.locator('body').innerText();
+    expect(texte, "l'ecran coming-soon s'affiche encore").not.toContain('bientot disponible');
+    expect(texte).not.toContain('bientôt disponible');
+    // Et la vraie coquille est bien la, pas une page vide.
+    await expect(page.locator('.tc-shell')).toHaveCount(1);
+  });
+
+  test('SANS session_id : « Lien invalide », pas un ecran blanc ni un coming-soon', async ({ page }) => {
+    // `parseSessionId()` rend null -> `showError('Lien invalide. …')`. C'est le
+    // chemin qu'un visiteur prend s'il ouvre la page a la main.
+    await bouchonLogin(page);
+    await page.goto('/teleconsultation.html', ATTENDRE);
+    await page.waitForTimeout(500);
+
+    await expect(page.locator('#tc-error')).toBeVisible();
+    await expect(page.locator('#tc-error-msg')).toContainText('Lien invalide');
+    await expect(page.locator('#tc-error')).toContainText(/Impossible de d[eé]marrer la consultation/);
+    // Les autres ecrans restent caches : on ne montre pas une salle d'attente
+    // pour une consultation qui n'existe pas.
+    for (const id of ['#tc-prejoin', '#tc-incall', '#tc-ended']) {
+      await expect(page.locator(id)).toBeHidden();
+    }
+  });
+
+  test('AVEC un session_id valide mais SANS compte : redirection vers la connexion', async ({ page }) => {
+    // `requireAuth()` n'est atteinte qu'avec un identifiant bien forme. Elle
+    // redirige en conservant l'URL de retour — sinon le patient perdrait son
+    // lien de consultation en se connectant.
+    await bouchonLogin(page);
+    const sid = '11111111-2222-3333-4444-555555555555';
+    await page.goto(`/teleconsultation.html?session_id=${sid}`, ATTENDRE);
+    await page.waitForURL(/\/login\.html\?redirect=/, { timeout: 8000 });
+
+    const url = new URL(page.url());
+    expect(url.pathname).toBe('/login.html');
+    const retour = decodeURIComponent(url.searchParams.get('redirect') || '');
+    expect(retour, "le lien de consultation doit survivre a la connexion").toContain('teleconsultation.html');
+    expect(retour).toContain(sid);
+  });
+
+  test('LA SORTIE ANTICIPEE RESTE DANS LE CODE — le drapeau doit savoir se refermer', async ({ page }) => {
+    // Le drapeau est ouvert ; la branche « bientot disponible » n'est donc plus
+    // empruntee. La tentation est de la supprimer comme du code mort.
+    // **Un drapeau qui ne sait plus se refermer n'est pas un drapeau** : si le
+    // fournisseur tombe, on doit pouvoir repasser a false et retrouver un ecran
+    // honnete au lieu d'une page qui echoue.
     const src = await page.request.get('/teleconsultation.html').then((r) => r.text());
-    expect(src).toContain('TABIBI_FEATURES');
-    expect(src, 'la page doit garder sa sortie anticipee').toMatch(/video/);
+    expect(src).toContain('TABIBI_FEATURES.video === false');
+    expect(src, 'la carte coming-soon doit rester joignable').toMatch(/bient[oô]t disponible/i);
   });
 });
 
@@ -112,10 +179,30 @@ test.describe('le contrat de create-video-room', () => {
     // Une cle Daily dans une page publique ouvre la creation de salles sur
     // tout le compte. Elle ne doit vivre que dans l'environnement de la
     // fonction, jamais dans le depot servi.
+    //
+    // [14/09, nuit] ON RETIRE LES COMMENTAIRES AVANT DE CHERCHER. Ce test a
+    // rougi sur un COMMENTAIRE de `tabibi-features.js` qui explique que
+    // `DAILY_API_KEY` ne quitte jamais l'edge function — c'est-a-dire sur une
+    // phrase qui dit exactement ce que le test veut garantir. Un test qui
+    // interdit de NOMMER le risque pousse a ne plus l'ecrire nulle part.
+    // Ce qu'on protege, c'est une VALEUR servie au navigateur, pas un mot.
+    const sansCommentaires = (src) => src
+      .replace(/<!--[\s\S]*?-->/g, ' ')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+
     for (const chemin of ['/teleconsultation.html', '/js/config.js', '/js/tabibi-features.js']) {
-      const src = await page.request.get(chemin).then((r) => r.text());
-      expect(src, `${chemin} cite api.daily.co`).not.toContain('api.daily.co');
-      expect(src, `${chemin} contient DAILY_API_KEY`).not.toContain('DAILY_API_KEY');
+      const brut = await page.request.get(chemin).then((r) => r.text());
+      const src = sansCommentaires(brut);
+      expect(src, `${chemin} appelle api.daily.co depuis le navigateur`).not.toContain('api.daily.co');
+      expect(src, `${chemin} contient DAILY_API_KEY hors commentaire`).not.toContain('DAILY_API_KEY');
+      // Et la vraie chose a interdire : une valeur qui A LA FORME d'une cle
+      // Daily (32 hexadecimaux ou plus). Le nom d'une variable ne fuit rien ;
+      // une chaine de cette forme, si.
+      const suspects = (src.match(/['"`][0-9a-f]{32,}['"`]/gi) || [])
+        .filter((v) => !/^['"`]0+['"`]$/.test(v));
+      expect(suspects, `${chemin} contient une chaine en forme de cle : ${suspects.join(', ')}`)
+        .toEqual([]);
     }
   });
 });
