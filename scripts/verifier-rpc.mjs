@@ -43,11 +43,19 @@ const REF = 'supabase/rpc/existantes.txt';
 // font pas echouer le controle — mais toute NOUVELLE absence, si.
 // Retirer une ligne d'ici quand la fonction est deployee, ou quand l'appel est
 // supprime du front. La liste doit MAIGRIR, jamais grossir.
+// [14/09/2026] LES QUATRE MOTIFS CI-DESSOUS ETAIENT PERIMES. Ils disaient
+// « drapeau prescriptions:false » ; le drapeau est OUVERT depuis ce soir, et
+// les quatre fonctions EXISTENT en base (SECURITY DEFINER, executables par
+// `authenticated`, mesurees par le MCP en lecture). Elles restent ici non
+// parce qu'elles manquent, mais parce que la REFERENCE ne peut pas etre
+// regeneree : `--base --ecrire` exige un jeton, et il est REVOQUE. Le
+// stratege a demande de ne pas forcer. Un motif faux est pire qu'une entree
+// en trop : il fait conclure au lecteur que l'appel est mort.
 const ABSENCES_CONNUES = {
-  create_prescription_draft: 'ordonnances, drapeau prescriptions:false — R3 section A',
-  update_prescription_draft: 'ordonnances, drapeau prescriptions:false — R3 section A',
-  request_prescription_signature: 'ordonnances, drapeau prescriptions:false — R3 section A',
-  mark_prescription_delivered: 'tracage de delivrance, catch muet — R3 section A',
+  create_prescription_draft: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
+  update_prescription_draft: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
+  request_prescription_signature: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
+  mark_prescription_delivered: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
 };
 
 const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',

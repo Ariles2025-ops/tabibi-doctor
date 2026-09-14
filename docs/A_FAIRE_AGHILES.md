@@ -143,9 +143,32 @@ conditionnelle, sinon elle se rendra avec un trou.
 
 ## 🤝 SÉANCES COMMUNES — à faire ensemble
 
-### 10. Fournisseur vidéo Daily : compte, clés, salle réelle
-Aujourd'hui l'URL de salle est un **remplaçant** (`https://placeholder.daily.co/…`). Le
-drapeau `video` restera fermé tant qu'il n'y a pas de fournisseur réel.
+### 10. Fournisseur vidéo Daily — **il ne manque plus que le nom du domaine**
+
+Les clés `DAILY_API_KEY` et `DAILY_DOMAIN` sont **déjà posées** côté Supabase (vu le
+14/09), et l'edge function `create-video-room` est écrite. Deux choses restent, et l'une
+est à toi :
+
+**a) Me donner la valeur de `DAILY_DOMAIN`** (quelque chose comme `tabibi.daily.co`).
+Ce n'est pas un secret — il apparaît dans chaque URL de salle — mais **je ne peux pas
+l'inventer**, et il doit figurer *en clair* dans deux fichiers d'en-têtes.
+
+Pourquoi : `Permissions-Policy: camera=(self)` **refuse de déléguer la caméra à une iframe
+d'une autre origine**, et ce champ n'accepte **aucun joker** — il faut l'origine exacte.
+`_headers` et `netlify.toml` portent donc aujourd'hui `VOTRE-DOMAINE.daily.co`, un espace
+réservé.
+
+> ⚠️ Cet espace réservé n'est pas laissé à la bonne volonté de qui passera :
+> **`npm run verifier:video` échoue** si le drapeau `video` s'ouvre alors qu'il est encore
+> là. C'est la leçon du cron des rappels, qui a envoyé `TA_CLE` pendant 47 jours.
+
+**b) La séance d'essai réel**, à deux navigateurs, avec un vrai rendez-vous confirmé. Le
+drapeau `video` reste `false` jusque-là — et tant qu'il est fermé, aucune de ces pièces
+n'est visible d'un patient.
+
+*(L'URL de salle « remplaçante » `https://placeholder.daily.co/…` disparaît au passage :
+la migration `20260914_video_daily.sql` fait écrire `NULL` — « je ne sais pas encore » —
+au lieu d'une adresse qui avait la forme d'une vraie.)*
 
 ### 11. Brancher le SMS / OTP réel
 Compte BudgetSMS audité ; le branchement de bout en bout reste à faire ensemble.

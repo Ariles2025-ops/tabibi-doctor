@@ -44,7 +44,13 @@ const PORTES = [
   // (voir l'en-tete de chaque fichier d'essai). Une porte par module aurait
   // fait grossir cette liste d'une ligne a chaque fois — et la ligne qu'on
   // OUBLIE d'ajouter est une porte qui n'existe pas.
+  //
+  // [14/09, fusion avec main] `signature` ne reapparait PAS a cote : `unites`
+  // lance STRICTEMENT PLUS de fichiers qu'elle (elle inclut
+  // signature-ordonnance.test.mjs). Les garder toutes les deux ferait tourner
+  // le meme essai sous deux noms — du bruit qui ressemble a de la couverture.
   ['unites',   'npm',  ['run', '--silent', 'verifier:unites']],
+  ['video',    'npm',  ['run', '--silent', 'verifier:video']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
 ];
@@ -63,7 +69,7 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
-  'verifier:catch', 'verifier:unites', 'build', 'test:e2e',
+  'verifier:catch', 'verifier:unites', 'verifier:video', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
