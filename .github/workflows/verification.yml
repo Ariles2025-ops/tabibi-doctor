@@ -45,7 +45,7 @@ jobs:
         # (AUDIT_RESTANT_2026-07-29). Ce pas bloque toute PR qui en ajouterait un.
         # Le depot est PRIVE (verifie le 09/09/2026) : la regle vaut quand meme, un
         # depot prive se partage, se clone, et peut redevenir public.
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_ENABLE_COMMENTS: 'false'   # commenter la PR exigerait pull-requests: write ; le resume du job suffit
