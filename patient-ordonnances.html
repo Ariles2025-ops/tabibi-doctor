@@ -229,18 +229,36 @@
     return '<span class="status draft">' + escapeHtml(T('po_status_draft', 'Brouillon')) + '</span>';
   }
 
-  // [FLAG prescriptions] Traçage de délivrance : la RPC
-  // mark_prescription_delivered est absente de la prod (docs/RPC_INVENTORY.md).
-  // On l'ignore quand la feature est OFF — le téléchargement et le partage,
-  // eux, fonctionnent (storage + URL signée) et ne doivent pas être bloqués.
-  // Appel best-effort : une erreur de traçage ne doit jamais faire échouer
-  // l'action réelle de l'utilisateur.
+  // Traçage de délivrance — `mark_prescription_delivered`.
+  //
+  // [14/09/2026] LE COMMENTAIRE QUI ÉTAIT ICI DISAIT FAUX : « la RPC est
+  // absente de la prod ». **Elle existe** — SECURITY DEFINER, exécutable par
+  // `authenticated`, mesurée le 14/09. Elle l'était déjà quand le drapeau
+  // s'est ouvert.
+  //
+  // ET LE CODE, LUI, ÉTAIT UN CATCH MORT. `supa.rpc()` de supabase-js 2.116
+  // **ne rejette jamais** sans `.throwOnError()` : même une panne réseau
+  // devient une valeur résolue. Le `try/catch` ne pouvait donc rien attraper,
+  // et l'erreur — qui vit dans `res.error` — n'était lue nulle part.
+  // Résultat : le traçage pouvait échouer à chaque fois sans que personne ne
+  // l'apprenne. Tant que la RPC n'existait pas, c'était sans conséquence.
+  // **Le drapeau ouvert, ça devient un `delivered_at` qui ne se pose jamais.**
+  //
+  // Reste best-effort — un échec de traçage ne doit pas casser un
+  // téléchargement qui, lui, a réussi — mais best-effort n'est pas muet.
   async function trackDelivery(prescriptionId, channel) {
     if (window.TABIBI_FEATURES && !window.TABIBI_FEATURES.prescriptions) return;
-    try {
-      await window.tabibi.supabase.rpc('mark_prescription_delivered',
-        { p_prescription_id: prescriptionId, p_channel: channel });
-    } catch (e) { /* traçage non bloquant */ }
+    if (typeof window.tabibiRpc !== 'function') {
+      console.warn('[ordonnances] passerelle RPC absente : delivrance non tracee');
+      return;
+    }
+    var r = await window.tabibiRpc('mark_prescription_delivered',
+      { p_prescription_id: prescriptionId, p_channel: channel });
+    if (!r.ok) {
+      console.warn('[ordonnances] delivrance non tracee (' + channel + ') :', r.erreur);
+      (window.tabibiErreur || function () {})(
+        new Error('mark_prescription_delivered: ' + r.erreur), 'patient-ordonnances:trackDelivery');
+    }
   }
 
   async function downloadPdf(prescriptionId) {
