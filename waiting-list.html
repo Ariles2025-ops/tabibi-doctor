@@ -2,7 +2,7 @@
 <html lang="fr" dir="ltr">
 <head>
 <meta charset="UTF-8">
-<script src="js/tabibi-prelang.js"></script>
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-rpc.js"></script>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=5">
 <meta name="theme-color" content="#0F7560">
 <meta name="tabibi-page-key" content="title_waiting_list_long">
@@ -820,34 +820,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 // REGLE POSEE ICI : on affiche le nombre qu'on a mesure, ou on n'affiche pas de
 // nombre. Jamais un nombre qu'on n'a pas mesure.
 //
-// ⚠️  L'APPEL N'EST PAS ENCORE BRANCHE SUR LA RPC. `public.waiting_list_count()`
-// est ecrite en brouillon (supabase/migrations/20260914_waiting_list_count.sql)
-// et pas encore appliquee. Tant qu'elle n'existe pas, `verifier:rpc` refuserait
-// un appel a une RPC absente — et l'inscrire en « absence connue » ferait
-// GROSSIR une liste qui doit maigrir. Le cablage vient au lot suivant, une fois
-// la migration appliquee. **D'ici la, la page n'affiche plus aucun chiffre.**
+// [14/09/2026, second temps] BRANCHE SUR LA RPC. Au lot precedent, l'appel
+// visait `.from('waiting_list_count')` — un objet qui n'existait pas, d'ou le
+// 404 a chaque chargement. `public.waiting_list_count()` est desormais posee en
+// base : STABLE, SECURITY DEFINER, `search_path` fige, GRANT a `anon`, et elle
+// rend UN ENTIER — jamais une ligne de la table, qui contient des e-mails.
+//
+// Par la passerelle, jamais `supabase.rpc` en direct : `tabibiRpc` lit les DEUX
+// moities de la reponse PostgREST et rend `{ ok, data, erreur }` avec `data`
+// nul des que `ok` est faux. Ignorer `ok` casse alors VISIBLEMENT, au lieu de
+// continuer sur un mensonge — ce qui est exactement le defaut qu'on corrige ici.
 var _wlCompteReel = null;   // le seul nombre qu'on ait le droit d'afficher
 
 async function loadStats() {
   var el = document.getElementById('stat-total');
   if (!el) return;
-  try {
-    if (!window.tabibi || !window.tabibi.supabase) { _wlSansChiffre(el); return; }
-    const { data, error } = await window.tabibi.supabase
-      .from('waiting_list_count')
-      .select('total_count')
-      .single();
-    if (error || !data || data.total_count == null) {
-      console.warn('[waiting-list] compteur indisponible', error || '(aucune donnee)');
-      _wlSansChiffre(el);
-      return;
-    }
-    _wlCompteReel = Number(data.total_count);
-    el.textContent = formatNumber(_wlCompteReel);
-  } catch (e) {
-    console.warn('[waiting-list] compteur indisponible', e);
+  if (typeof window.tabibiRpc !== 'function') {
+    console.warn('[waiting-list] passerelle absente (js/tabibi-rpc.js non charge)');
     _wlSansChiffre(el);
+    return;
   }
+  var r = await window.tabibiRpc('waiting_list_count');
+  if (!r.ok) {
+    console.warn('[waiting-list] compteur indisponible :', r.erreur);
+    _wlSansChiffre(el);
+    return;
+  }
+  var n = Number(r.data);
+  if (!isFinite(n)) {
+    console.warn('[waiting-list] compteur illisible :', JSON.stringify(r.data));
+    _wlSansChiffre(el);
+    return;
+  }
+  _wlCompteReel = n;
+  el.textContent = formatNumber(n);
+  el.removeAttribute('title');
 }
 
 // Etat honnete : la carte garde son libelle « Inscrits », et la valeur devient
