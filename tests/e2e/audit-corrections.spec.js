@@ -109,9 +109,11 @@ test.describe('B-1 — la liste d attente n invente plus de chiffre', () => {
 
   test('COMPTEUR INDISPONIBLE : aucun nombre affiche, surtout pas « 500+ »', async ({ page }) => {
     // Le cas REEL d'aujourd'hui : l'objet n'existe pas, PostgREST rend 404.
-    await page.route('**/rest/v1/waiting_list_count**', (route) => route.fulfill({
-      status: 404, contentType: 'application/json',
-      body: JSON.stringify({ code: 'PGRST205', message: 'relation does not exist' })
+    // [14/09, second temps] la page appelle desormais la RPC par la passerelle.
+    // On simule un refus : PostgREST rend 401 avec le code SQL.
+    await page.route('**/rest/v1/rpc/waiting_list_count', (route) => route.fulfill({
+      status: 401, contentType: 'application/json',
+      body: JSON.stringify({ code: '42501', message: 'permission denied for function' })
     }));
     await page.goto('/waiting-list.html', ATTENDRE);
 
@@ -136,18 +138,26 @@ test.describe('B-1 — la liste d attente n invente plus de chiffre', () => {
 
   test('COMPTEUR DISPONIBLE : le vrai nombre s affiche, meme petit', async ({ page }) => {
     // 3 inscrits doivent s'afficher « 3 » — l'ancien formateur rendait « 50+ ».
-    await page.route('**/rest/v1/waiting_list_count**', (route) => route.fulfill({
-      status: 200, contentType: 'application/json',
-      body: JSON.stringify({ total_count: 3 })
+    await page.route('**/rest/v1/rpc/waiting_list_count', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: '3'
     }));
     await page.goto('/waiting-list.html', ATTENDRE);
     await expect(page.locator('#stat-total')).toHaveText('3');
   });
 
+  test('PASSERELLE ABSENTE : toujours aucun chiffre invente', async ({ page }) => {
+    // Si js/tabibi-rpc.js ne charge pas, `window.tabibiRpc` n'existe pas. Le pire
+    // serait que la page retombe sur un nombre : elle doit dire qu'elle ne sait pas.
+    await page.route('**/js/tabibi-rpc.js', (route) => route.fulfill({
+      status: 200, contentType: 'application/javascript', body: '/* non charge */'
+    }));
+    await page.goto('/waiting-list.html', ATTENDRE);
+    await expect(page.locator('#stat-total')).toHaveText('—');
+  });
+
   test('ZERO s affiche ZERO — c est la reponse juste aujourd hui', async ({ page }) => {
-    await page.route('**/rest/v1/waiting_list_count**', (route) => route.fulfill({
-      status: 200, contentType: 'application/json',
-      body: JSON.stringify({ total_count: 0 })
+    await page.route('**/rest/v1/rpc/waiting_list_count', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: '0'
     }));
     await page.goto('/waiting-list.html', ATTENDRE);
     await expect(page.locator('#stat-total')).toHaveText('0');
