@@ -60,13 +60,27 @@ for (const fichier of ENTETES) {
     continue;
   }
 
+  // [14/09, soir] ON NE LIT QUE LES LIGNES D'EN-TETE, jamais les commentaires.
+  //
+  // Ces deux fichiers sont largement commentes, et les commentaires CITENT les
+  // directives qu'ils expliquent — « camera=(self) refuse de deleguer… »,
+  // « VOTRE-DOMAINE.daily.co est un espace reserve ». Une porte qui cherche ces
+  // chaines au fil du fichier **se lit elle-meme** : elle finit par valider un
+  // commentaire et par accuser un en-tete correct.
+  //
+  // Ce n'est pas theorique : le domaine reel une fois pose, le commentaire qui
+  // raconte l'ancien espace reserve aurait suffi a faire echouer cette porte le
+  // jour de l'ouverture du drapeau. Une porte qui crie a tort est une porte
+  // qu'on desactive.
+  const enTetesSeuls = contenu.split('\n').filter((l) => {
+    const t = l.trim();
+    return t && !t.startsWith('#') && !t.startsWith('//');
+  });
+
   // La CSP et la Permissions-Policy vivent en double (Cloudflare + Netlify).
   // Une correction faite dans un seul fichier est une correction a moitie
   // faite — et c'est le fichier oublie qui sert en production ce jour-la.
-  // On lit la CSP REELLE — la ligne d'en-tete — puis on la decoupe en
-  // directives. Chercher « frame-src » au fil du fichier attraperait le
-  // commentaire d'a cote, et une porte qui se lit elle-meme ne prouve rien.
-  const ligneCsp = contenu.split('\n').find((l) => l.includes('Content-Security-Policy'));
+  const ligneCsp = enTetesSeuls.find((l) => l.includes('Content-Security-Policy'));
   if (!ligneCsp) {
     fautes.push(`${fichier} : aucune Content-Security-Policy`);
   } else {
@@ -89,7 +103,7 @@ for (const fichier of ENTETES) {
   // Permissions-Policy : camera et micro doivent nommer une origine EXACTE.
   // `(self)` seul refuse de deleguer a une iframe d'une autre origine, et ce
   // champ n'accepte aucun joker.
-  const pp = contenu.split('\n').find((l) => l.includes('Permissions-Policy'));
+  const pp = enTetesSeuls.find((l) => l.includes('Permissions-Policy'));
   if (!pp) {
     fautes.push(`${fichier} : aucune Permissions-Policy`);
   } else {
@@ -100,7 +114,7 @@ for (const fichier of ENTETES) {
     }
   }
 
-  if (contenu.includes(RESERVE)) {
+  if (enTetesSeuls.some((l) => l.includes(RESERVE))) {
     (ouvert ? fautes : remarques).push(
       `${fichier} : « ${RESERVE} » est encore un espace reserve — a remplacer par la valeur de DAILY_DOMAIN`);
   }

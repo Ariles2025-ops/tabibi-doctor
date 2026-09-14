@@ -121,7 +121,7 @@
 
     # Permissions Policy : bloque toutes les APIs sensibles par défaut
     # (caméra/micro/géo activés uniquement quand le code en a besoin sur tabibi.doctor)
-    Permissions-Policy = "geolocation=(self), camera=(self "https://VOTRE-DOMAINE.daily.co"), microphone=(self "https://VOTRE-DOMAINE.daily.co"), display-capture=(self "https://VOTRE-DOMAINE.daily.co"), payment=(self), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()"
+    Permissions-Policy = "geolocation=(self), camera=(self "https://tabibidz.daily.co"), microphone=(self "https://tabibidz.daily.co"), display-capture=(self "https://tabibidz.daily.co"), payment=(self), usb=(), bluetooth=(), magnetometer=(), gyroscope=(), accelerometer=()"
 
     # Cross-Origin Embedder/Opener/Resource — anti Spectre + isolement
     Cross-Origin-Opener-Policy = "same-origin"
