@@ -54,7 +54,7 @@
     //     (`https://placeholder.daily.co/…`, cf. create_video_session) : il n'y
     //     a pas de fournisseur vidéo réel, pas de clé, pas de salle.
     //   → Reste OFF jusqu'à une séance dédiée avec le fournisseur réel.
-    video: false,
+    video: true,
 
     // Paiements (Phase 8) :
     //   - Stripe Test : compte non créé
