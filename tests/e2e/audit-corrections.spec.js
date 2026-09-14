@@ -11,6 +11,15 @@
 // Aucun compte cree, aucun reseau reel : tout est bouchonne par des routes.
 // =====================================================================
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
 
 // [14/09/2026] CE FICHIER A FAIT ROUGIR LA CI ALORS QU'IL ETAIT VERT EN LOCAL.
 //
@@ -44,7 +53,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 // Toute la suite navigue ainsi. Voir l'explication ci-dessus.
-const ATTENDRE = { waitUntil: 'domcontentloaded' };
 
 // ─────────────────────────────────────────────────────────────────────
 // B-2 — mot de passe oublie

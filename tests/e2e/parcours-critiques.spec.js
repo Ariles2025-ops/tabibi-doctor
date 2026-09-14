@@ -14,6 +14,15 @@
 // =====================================================================
 
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
 
 const BASE = process.env.TABIBI_BASE || 'http://localhost:8899';
 

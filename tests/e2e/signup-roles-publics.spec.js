@@ -23,6 +23,15 @@
 // alors un geste delibere, pas un oubli.
 // =====================================================================
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
 
 // [14/09/2026] `signup.html` charge le widget Cloudflare Turnstile. Sans les deux
 // lignes ci-dessous, chaque `page.goto` attend l'evenement `load`, donc le
@@ -30,15 +39,6 @@ const { test, expect } = require('@playwright/test');
 // ce CDN repond mal, contre 0,1 s en `domcontentloaded`. C'est ce qui a fait
 // rougir la CI le 14/09 alors que le local etait vert.
 // **Un test e2e ne doit dependre d'aucun tiers.**
-const ATTENDRE = { waitUntil: 'domcontentloaded' };
-const NEUTRALISER_CAPTCHA = async (page) => {
-  await page.route('**/js/tabibi-turnstile.js', (route) => route.fulfill({
-    status: 200, contentType: 'application/javascript',
-    body: `window.tabibiTurnstile = { getCaptchaToken: async () => 'jeton-de-test',
-                                      isEnabled: () => false, verifyToken: async () => true };`
-  }));
-  await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
-};
 
 
 // Les libelles sont traduits a l'execution : sans langue posee, la page suit le
@@ -53,7 +53,6 @@ test.beforeEach(async ({ page }) => {
 test.describe('inscription publique — les roles proposes', () => {
 
   test('les deux roles qui aboutissent sont proposes', async ({ page }) => {
-    await NEUTRALISER_CAPTCHA(page);
     await page.goto('/signup.html', ATTENDRE);
     const roles = page.locator('[role="radiogroup"] button[role="radio"]');
     await expect(roles).toHaveCount(2);
@@ -62,7 +61,6 @@ test.describe('inscription publique — les roles proposes', () => {
   });
 
   test('« Secretariat » N EST PAS proposable — il ne peut pas aboutir', async ({ page }) => {
-    await NEUTRALISER_CAPTCHA(page);
     await page.goto('/signup.html', ATTENDRE);
 
     // Aucun bouton de role ne le propose.

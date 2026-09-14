@@ -26,6 +26,15 @@
 // jouee), ni que la ligne atterrit dans `consents_log`.
 // =====================================================================
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
 
 // [14/09/2026] `signup.html` charge le widget Cloudflare Turnstile. Sans les deux
 // lignes ci-dessous, chaque `page.goto` attend l'evenement `load`, donc le
@@ -33,15 +42,6 @@ const { test, expect } = require('@playwright/test');
 // ce CDN repond mal, contre 0,1 s en `domcontentloaded`. C'est ce qui a fait
 // rougir la CI le 14/09 alors que le local etait vert.
 // **Un test e2e ne doit dependre d'aucun tiers.**
-const ATTENDRE = { waitUntil: 'domcontentloaded' };
-const NEUTRALISER_CAPTCHA = async (page) => {
-  await page.route('**/js/tabibi-turnstile.js', (route) => route.fulfill({
-    status: 200, contentType: 'application/javascript',
-    body: `window.tabibiTurnstile = { getCaptchaToken: async () => 'jeton-de-test',
-                                      isEnabled: () => false, verifyToken: async () => true };`
-  }));
-  await page.route('**/challenges.cloudflare.com/**', (route) => route.abort());
-};
 
 
 // Un compte qui vient d'etre cree cote Supabase, sans aucun reseau reel.
@@ -95,7 +95,6 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('patient : quatre scopes, et ceux que la table accepte', async ({ page }) => {
     const appels = await poser(page, { role: 'patient', marketing: true });
-    await NEUTRALISER_CAPTCHA(page);
     await page.goto('/signup.html', ATTENDRE);
     await journaliser(page);
 
@@ -118,7 +117,6 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('UN REFUS S ECRIT : marketing decoche part avec granted=false', async ({ page }) => {
     const appels = await poser(page, { role: 'patient', marketing: false });
-    await NEUTRALISER_CAPTCHA(page);
     await page.goto('/signup.html', ATTENDRE);
     await journaliser(page);
 
@@ -129,7 +127,6 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('medecin : trois scopes, pas de donnees de sante', async ({ page }) => {
     const appels = await poser(page, { role: 'medecin', marketing: false });
-    await NEUTRALISER_CAPTCHA(page);
     await page.goto('/signup.html', ATTENDRE);
     await journaliser(page);
 
@@ -139,7 +136,6 @@ test.describe('inscription — le registre de consentement', () => {
 
   test('un echec ne bloque pas l inscription, mais ne se tait pas', async ({ page }) => {
     const appels = await poser(page, { role: 'patient', marketing: true, echecScope: 'privacy' });
-    await NEUTRALISER_CAPTCHA(page);
     await page.goto('/signup.html', ATTENDRE);
     const toasts = await journaliser(page);
 

@@ -30,6 +30,15 @@
 // Ce test garde le COMPORTEMENT DE L'ECRAN face a un refus. Pas le refus.
 // =====================================================================
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
 // [14/09/2026] `waitUntil: 'domcontentloaded'` PARTOUT, et ce n'est pas cosmetique.
 // Sans lui, Playwright attend l'evenement `load`, qui inclut les CDN TIERS :
 // `js/tabibi-sentry.js` charge le SDK depuis browser.sentry-cdn.com sur CHAQUE
@@ -38,7 +47,6 @@ const { test, expect } = require('@playwright/test');
 // 0,1 s en `domcontentloaded`. C'est ce qui a fait rougir la CI (~173 s) alors
 // que le local etait vert — un CDN rapide chez moi, lent sur le runner.
 // **Un test e2e ne mesure pas la latence d'un tiers.**
-const ATTENDRE = { waitUntil: 'domcontentloaded' };
 
 
 // Pose un admin cote CLIENT uniquement : bouchon a la place de js/auth.js,
