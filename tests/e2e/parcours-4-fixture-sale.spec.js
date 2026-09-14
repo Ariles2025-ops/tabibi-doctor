@@ -21,6 +21,24 @@
 // `test-results/` est deja dans .gitignore. Pour FIGER une preuve, on la copie a la main
 // dans `docs/preuves/` — c'est un geste delibere, avec une date et une raison.
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
+// [14/09/2026] `waitUntil: 'domcontentloaded'` PARTOUT, et ce n'est pas cosmetique.
+// Sans lui, Playwright attend l'evenement `load`, qui inclut les CDN TIERS :
+// `js/tabibi-sentry.js` charge le SDK depuis browser.sentry-cdn.com sur CHAQUE
+// page, et les pages d'authentification chargent en plus Cloudflare Turnstile.
+// Mesure du 14/09, CDN simule a 20 s de latence : 20,1 s par navigation contre
+// 0,1 s en `domcontentloaded`. C'est ce qui a fait rougir la CI (~173 s) alors
+// que le local etait vert — un CDN rapide chez moi, lent sur le runner.
+// **Un test e2e ne mesure pas la latence d'un tiers.**
+
 
 const AUJ = new Date().toISOString().split('T')[0];
 const MOIS = AUJ.slice(0, 7);
@@ -77,7 +95,7 @@ async function poser(page, cles, role) {
 test.describe('parcours 4 — fixture sale', () => {
   test('l utilitaire ne rend jamais un inconnu comme valide', async ({ page }) => {
     await poser(page, {}, 'patient');
-    await page.goto('/mes-rdv.html');
+    await page.goto('/mes-rdv.html', ATTENDRE);
     await page.waitForTimeout(600);
     const r = await page.evaluate(() => {
       const S = window.tabibiStatutRdv;
@@ -123,7 +141,7 @@ test.describe('parcours 4 — fixture sale', () => {
 
   test('tableau de bord medecin : 1 consultation, 1 absent, rien de vert en trop', async ({ page }) => {
     await poser(page, { tabibi_doc_rdv: SALE_MEDECIN }, 'medecin');
-    await page.goto('/doctor-dashboard.html');
+    await page.goto('/doctor-dashboard.html', ATTENDRE);
     await page.waitForTimeout(1200);
 
     await expect(page.locator('#kpi-month')).toHaveText('1');
@@ -163,7 +181,7 @@ test.describe('parcours 4 — fixture sale', () => {
       });
     }, SALE_MESRDV);
 
-    await page.goto('/mes-rdv.html');
+    await page.goto('/mes-rdv.html', ATTENDRE);
     await page.waitForTimeout(1200);
 
     const totaux = await page.evaluate(() => ({

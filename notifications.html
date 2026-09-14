@@ -63,9 +63,13 @@
 // ========================================================================
 // [Phase 9.1] notifications.html — placeholder M0 in-app only
 // ------------------------------------------------------------------------
-// État M0 : feature flag notifications=false → affiche disclaimer +
-// empty state. Quand backend prêt (TODO-SQL-010 : table notifications +
-// triggers), passer flag à true → la liste se popule depuis Supabase.
+// [14/09/2026] CE COMMENTAIRE DECRIVAIT UN ETAT DEPASSE, et disait l'inverse de
+// la realite. Il annoncait « flag notifications=false » et « quand backend
+// pret » : le drapeau est a TRUE depuis l'etape 1 (js/tabibi-features.js), la
+// table `public.notifications` EXISTE et les declencheurs
+// `tg_notify_appointment` sont actifs (mesure du 14/09).
+// Etat reel : les notifications sont ACTIVES et se peuplent depuis Supabase.
+// Ce qui reste a venir, c'est l'etape 2 — le rappel de la veille par pg_cron.
 // ========================================================================
 
 // [CONFORMITE 2026] i18n dynamique : tabibiT (dico partagé, préfixe ntf_*).

@@ -167,8 +167,17 @@
       return data;
     },
     async getMyReviewableAppointments() {
-      // [console-noise] Vue `my_reviewable_appointments` pas encore créée en prod (cf SQL_TODO-011).
-      // Court-circuit pour éviter le 404 + console.error à chaque load. Réactiver le corps quand la vue existe.
+      // [14/09/2026] LE MOTIF ECRIT ICI ETAIT FAUX : « vue pas encore créée en
+      // prod ». **`public.my_reviewable_appointments` EXISTE** (mesuré le 14/09).
+      // Le court-circuit avait ete pose pour eviter un 404 qui ne se produit
+      // plus.
+      //
+      // ⚠️  CE N'EST PAS QU'UN COMMENTAIRE : le `return []` ci-dessous est
+      // TOUJOURS ACTIF. Cette fonction rend donc une liste vide quoi qu'il
+      // arrive — un second verrou, cache, en plus du drapeau `reviews: false`.
+      // Qui ouvrira le drapeau ne verra toujours rien tant que ces trois lignes
+      // sont la. **A retirer en meme temps que le drapeau, pas avant** : le
+      // parcours d'avis n'a jamais ete exerce de bout en bout.
       return [];
       // const { data, error } = await sb.from('my_reviewable_appointments').select('*');
       // if (error) { console.error('[reviews] reviewable', error); return []; }

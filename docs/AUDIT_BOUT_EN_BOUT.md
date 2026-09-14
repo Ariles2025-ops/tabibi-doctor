@@ -1,5 +1,22 @@
 # Audit bout en bout — 14/09/2026
 
+> ## ⚠️ DEUX DE MES PROPRES CONSTATS ETAIENT FAUX — corriges le 14/09 au lot suivant
+>
+> En **corrigeant** M-1 et M-2, je les ai mesures de plus pres et **les deux tombent**.
+> Les entrees d'origine sont conservees telles quelles plus bas, avec leur correction.
+>
+> | | |
+> |---|---|
+> | **M-1** | La pagination n'est pas « cassee » : `buildDocPagination()` **n'est APPELEE NULLE PART** et la page n'a **aucun conteneur de pagination**. C'est du **code mort portant une reference pendante**, pas une fonctionnalite en panne. → **MINEUR**, et le code mort a ete retire. |
+> | **M-2** | `doctor-dashboard.html` **n'est pas « la seule page pro sans barre laterale »** : elle a **la sienne**. A partir de 1024 px, son CSS transforme `.dash-tabs` en colonne fixe a gauche (`position:fixed; left:0; width:230px`) avec `main.page{margin-left:230px}`. `agenda-cabinet.html` fait pareil et le documente. → **PAS UN DEFAUT.** |
+>
+> **Et c'est M-2 qui explique BUG-1.** En ajoutant la barre partagee pour « corriger »,
+> j'ai mesure ce qui se passe : deux colonnes fixes se superposent a `x=0`, la barre
+> partagee (z-index 150) **recouvre les onglets**, et
+> `document.elementFromPoint(centre du bouton « Profil »)` rend **`DIV.sb-spacer`**.
+> **Les onglets deviennent incliquables** — l'onglet actif ne change pas, le contenu non
+> plus. **L'ajout a ete annule.** Voir le §BUG-1 corrige en bas.
+
 **INVENTAIRE. Aucune correction dans ce lot.** Chaque entree porte sa preuve mesuree :
 une sortie de console, une reponse HTTP, une requete en base, ou `fichier:ligne`.
 **Quand je n'ai pas pu reproduire, je l'ecris** — je n'invente pas de cause.
@@ -131,7 +148,25 @@ reponse pour un e-mail inconnu** — montrer une erreur systeme ne revele donc r
 
 # MAJEUR
 
-## M-1 — La pagination de la recherche de medecins est morte
+## M-1 — ~~La pagination de la recherche de medecins est morte~~ → **du code mort**
+
+> **CORRIGE LE 14/09.** `buildDocPagination()` **n'est appelee nulle part** (recherche
+> par nom sur tout le perimetre : une seule occurrence, sa definition) et
+> `patient-dashboard.html` **n'a aucun conteneur de pagination**. `#docs-list` est
+> l'onglet **Documents**, rendu par `filtDoc()` — pas une liste de medecins.
+> `docPage`, `DOC_PER_PAGE` et `currentSpec` etaient egalement declarees et jamais
+> utilisees.
+>
+> **Aucun utilisateur ne pouvait cliquer ce bouton : il n'etait jamais rendu.**
+> Gravite reelle : **MINEUR**. Le code mort a ete retire, avec la preuve de la
+> recherche par nom. La pagination qui MARCHE est celle de `js/home-app.js`
+> (`goPage`/`buildPagination`), utilisee par `accueil-public.html`.
+>
+> **La lecon m'appartient** : j'ai deduit « bouton mort » de « fonction absente »,
+> sans verifier que le bouton etait rendu. Le constat technique etait juste ; la
+> consequence annoncee ne l'etait pas.
+
+### Le constat d'origine, conserve
 
 | | |
 |---|---|
@@ -167,7 +202,24 @@ ne fait rien.**
 
 ---
 
-## M-2 — `doctor-dashboard.html` est la seule page pro sans barre laterale
+## M-2 — ~~la seule page pro sans barre laterale~~ → **elle a la sienne**
+
+> **RETIRE LE 14/09. Ce n'etait pas un defaut.**
+>
+> `doctor-dashboard.html:56-78` : a partir de 1024 px, `.dash-tabs` devient
+> `position:fixed; left:0; width:230px; flex-direction:column` — **sa propre
+> navigation de gauche** — et `main.page` prend `margin-left:230px`. Le commentaire
+> du fichier explique meme pourquoi (PR #12). `agenda-cabinet.html` fait de meme et
+> le dit a sa ligne 170.
+>
+> **Sept pages chargent la barre partagee ; deux ont la leur.** Ce n'est pas une
+> page oubliee, c'est deux dispositifs differents — une incoherence VISUELLE, au
+> plus MINEURE, pas une navigation manquante.
+>
+> **Ce que j'ai omis de verifier** : si la page avait un equivalent. J'ai cherche la
+> balise, pas la fonction.
+
+### Le constat d'origine, conserve
 
 | | |
 |---|---|
@@ -281,7 +333,33 @@ En local, `index.html` **est** la porte fermee depuis l'inversion du 13/09. En p
 `https://tabibi.doctor/` sert bien la porte, et l'application vit sur les autres chemins.
 **Comportement attendu.** Pour tester le public en local : `accueil-public.html`.
 
-## N-3 — BUG-1 (onglet « Profil » desynchronise) : **NON REPRODUIT**
+## N-3 — BUG-1 : non reproduit d'abord, **PUIS REPRODUIT ET EXPLIQUE**
+
+> **RESOLU LE 14/09.** Il ne se reproduisait pas parce qu'il ne se produit pas dans
+> l'etat actuel du depot — **il se produit des qu'on met DEUX navigations de gauche
+> sur la meme page.**
+>
+> Mesure, en ajoutant la barre partagee a `doctor-dashboard.html` (1400 px) :
+>
+> ```
+> sidebar        : fixed, x=0,  w=224, z-index 150
+> .dash-tabs     : fixed, x=0,  w=230   ← la navigation PROPRE de la page
+> bouton Profil  : x=12, y=360, w=205
+> elementFromPoint(centre du bouton Profil)  ->  DIV.sb-spacer
+> ```
+>
+> **La barre partagee recouvre les onglets. Le clic ne les atteint jamais** :
+> l'onglet actif reste « Aujourd'hui », le contenu aussi. **L'ajout a ete annule**
+> et la raison est ecrite dans `doctor-dashboard.html`, a l'endroit ou quelqu'un
+> aura envie de refaire la meme chose.
+>
+> **Et l'hypothese des « deux Profil » se confirme, autrement** : dans l'espace
+> medecin, le menu de gauche du tableau de bord porte **« Profil » = un onglet en
+> page**, tandis que le menu de gauche des sept autres pages porte **« Mon profil »
+> = un lien vers `medecin-profile.html`**. Deux menus qui se ressemblent, deux
+> comportements. **C'est une incoherence de conception, pas un defaut de code.**
+
+### Ce qui avait ete mesure d'abord
 
 **Je l'ecris comme tel plutot que d'inventer une cause.**
 

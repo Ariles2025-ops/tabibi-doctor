@@ -30,6 +30,24 @@
 // Ce test garde le COMPORTEMENT DE L'ECRAN face a un refus. Pas le refus.
 // =====================================================================
 const { test, expect } = require('@playwright/test');
+// [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
+// la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
+// Turnstile sur les pages d'authentification) que le local ne voyait pas.
+const { hermetiser, neutraliserCaptcha, ATTENDRE } = require('./_hermetique');
+
+test.beforeEach(async ({ page }) => {
+  await hermetiser(page);
+  await neutraliserCaptcha(page);
+});
+// [14/09/2026] `waitUntil: 'domcontentloaded'` PARTOUT, et ce n'est pas cosmetique.
+// Sans lui, Playwright attend l'evenement `load`, qui inclut les CDN TIERS :
+// `js/tabibi-sentry.js` charge le SDK depuis browser.sentry-cdn.com sur CHAQUE
+// page, et les pages d'authentification chargent en plus Cloudflare Turnstile.
+// Mesure du 14/09, CDN simule a 20 s de latence : 20,1 s par navigation contre
+// 0,1 s en `domcontentloaded`. C'est ce qui a fait rougir la CI (~173 s) alors
+// que le local etait vert — un CDN rapide chez moi, lent sur le runner.
+// **Un test e2e ne mesure pas la latence d'un tiers.**
+
 
 // Pose un admin cote CLIENT uniquement : bouchon a la place de js/auth.js,
 // comme parcours-4-fixture-sale. Aucun compte, aucune ecriture, aucun reseau.
@@ -73,7 +91,7 @@ test.describe('rebut d audit — la tuile admin', () => {
   test('la tuile existe sur la vue d ensemble', async ({ page }) => {
     await poserAdmin(page);
     await repondreRpc(page, 'admin_audit_rebut_count', 200, 0);
-    await page.goto('/admin-dashboard.html');
+    await page.goto('/admin-dashboard.html', ATTENDRE);
     await expect(page.locator('#rebut-carte')).toBeVisible();
     await expect(page.locator('#rebut-carte')).toContainText("Échecs d'audit");
   });
@@ -84,7 +102,7 @@ test.describe('rebut d audit — la tuile admin', () => {
     await repondreRpc(page, 'admin_audit_rebut_count', 401, {
       code: '42501', message: 'not_admin', details: null, hint: null
     });
-    await page.goto('/admin-dashboard.html');
+    await page.goto('/admin-dashboard.html', ATTENDRE);
 
     const valeur = page.locator(VALEUR);
     await expect(valeur).toContainText('rebut illisible');
@@ -103,7 +121,7 @@ test.describe('rebut d audit — la tuile admin', () => {
   test('a zero, la tuile est verte et l a VRAIMENT compte', async ({ page }) => {
     await poserAdmin(page);
     await repondreRpc(page, 'admin_audit_rebut_count', 200, 0);
-    await page.goto('/admin-dashboard.html');
+    await page.goto('/admin-dashboard.html', ATTENDRE);
 
     const valeur = page.locator(VALEUR);
     await expect(valeur).toContainText('aucun échec');
@@ -126,7 +144,7 @@ test.describe('rebut d audit — la tuile admin', () => {
           sqlstate: '53100', sqlerrm: 'disk full', action: 'cabinet_member:invite', table_name: 'cabinet_member' }
       ])
     }));
-    await page.goto('/admin-dashboard.html');
+    await page.goto('/admin-dashboard.html', ATTENDRE);
 
     const bouton = page.locator('#rebut-bouton');
     await expect(bouton).toContainText('2 échecs');
