@@ -787,6 +787,18 @@ qui attend quelqu'un, pas une tâche technique.
   n'existe pas, la contrainte de la table n'admet que `signup`, `settings`, `popup`, `api`,
   `admin`, `migration`.*
 
+- **14/09/2026 — L'inscription « secrétariat » demandait un code qui n'existe pas.**
+  Le formulaire demandait un « code d'invitation cabinet » au format `cab_…`. **Aucun
+  écran, aucune fonction ne produit un tel code** : le champ attend en réalité
+  l'identifiant technique du cabinet, que rien ne communique à la secrétaire. Celle qui
+  tapait ce que le champ lui montrait recevait « Code cabinet invalide ou expiré » — et
+  croyait s'être trompée, alors que le code n'existe pas. Le parcours ne pouvait pas
+  aboutir tel qu'il était écrit.
+  **Décision : le rôle est retiré du parcours public au déploiement 17.** À rouvrir avec
+  le mécanisme d'invitation (une fonction qui émet un code + un écran d'administration qui
+  l'affiche), dans le lot cabinet. **Tout le code est conservé** : la réouverture sera un
+  geste d'interface, pas une réécriture.
+
 ## Règles nées d'un défaut
 
 Une règle n'entre ici que le jour où quelque chose a cassé faute d'elle. Chacune porte l'incident.
