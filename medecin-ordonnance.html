@@ -541,6 +541,37 @@
     }
   }
 
+  // ── Le refus de la fonction, dit en francais ────────────────────────
+  // [14/09/2026] `generate-prescription-pdf` rend un code machine. Un code
+  // machine affiche a un medecin n'est pas un message : c'est un aveu que
+  // personne n'a prevu le cas. Chaque ligne ci-dessous dit ce qui s'est passe
+  // ET ce qu'il faut faire.
+  var _SIGN_ECHECS = {
+    not_authenticated:     ['mo_err_auth',        'Session expiree. Reconnectez-vous.'],
+    not_owner:             ['mo_err_owner',       'Cette ordonnance n appartient pas a votre compte.'],
+    already_signed:        ['mo_err_signed',      'Cette ordonnance est deja signee.'],
+    not_signable:          ['mo_err_state',       'Cette ordonnance ne peut plus etre signee (annulee ou deja remise).'],
+    not_found:             ['mo_err_notfound',    'Ordonnance introuvable. Enregistrez le brouillon puis reessayez.'],
+    invalid_medications:   ['mo_err_meds',        'Ajoutez au moins un medicament avant de signer.'],
+    doctor_not_verified:   ['mo_err_unverified',  'Votre compte medecin n est pas encore verifie : la signature est bloquee.'],
+    not_a_doctor:          ['mo_err_notdoctor',   'Seul un compte medecin peut signer une ordonnance.'],
+    unsupported_characters:['mo_err_charset',     'Le PDF ne sait pas encore imprimer l ecriture arabe. Saisissez ce champ en caracteres latins.'],
+    signing_key_missing:   ['mo_err_key',         'La signature electronique n est pas configuree sur le serveur. Rien n a ete signe — prevenez le support.'],
+    pdf_generation_failed: ['mo_err_pdf',         'Le PDF n a pas pu etre produit. Rien n a ete signe.'],
+    pdf_upload_failed:     ['mo_err_upload',      'Le PDF n a pas pu etre enregistre. Rien n a ete signe.'],
+    sign_failed:           ['mo_err_sign',        'La signature a echoue. Rien n a ete modifie.'],
+    server_misconfigured:  ['mo_err_config',      'Service de signature indisponible. Prevenez le support.'],
+  };
+
+  function _signEchecTexte(code, detail) {
+    var e = _SIGN_ECHECS[code];
+    // Pas de code connu : on n'invente pas un diagnostic. Message generique,
+    // et le code brut reste en console (voir l'appelant).
+    var base = e ? T(e[0], e[1]) : T('mo_pdf_error', 'Erreur lors de la signature');
+    // `detail` n'existe que pour unsupported_characters : il nomme le champ.
+    return (code === 'unsupported_characters' && detail) ? (base + ' — ' + detail) : base;
+  }
+
   // ── Sign (calls Edge Function) ──────────────────────────────────────
   async function signPrescription() {
     const supa = window.tabibi && window.tabibi.supabase;
@@ -576,11 +607,25 @@
       });
       const payload = await resp.json();
       if (!resp.ok || !payload.success) {
-        throw new Error(payload.error || T('mo_pdf_error', 'Erreur generation PDF'));
+        // [14/09/2026] La fonction rend un CODE (`doctor_not_verified`,
+        // `unsupported_characters`, …). L'afficher tel quel donnait un mot
+        // anglais a un medecin. On traduit ici, et le code reste dans la
+        // console pour le diagnostic.
+        console.error('[sign] refus de la fonction :', payload.error, payload.detail || '');
+        throw new Error(_signEchecTexte(payload.error, payload.detail));
       }
 
       $('#signed-number').textContent = T('mo_number', 'Numero') + ' : ' + payload.prescription_number;
-      $('#signed-download').href = payload.pdf_url_signed_24h;
+      // Le lien peut manquer alors que la signature a REUSSI (creation du lien
+      // signe en echec). On ne pose pas un href « null » : on desactive.
+      if (payload.pdf_url_signed_24h) {
+        $('#signed-download').href = payload.pdf_url_signed_24h;
+        $('#signed-download').style.display = '';
+      } else {
+        $('#signed-download').removeAttribute('href');
+        $('#signed-download').style.display = 'none';
+        showToast(T('mo_pdf_link_missing', 'Ordonnance signee, mais le lien de telechargement n a pas pu etre cree. Rouvrez la fiche pour reessayer.'), 'err');
+      }
       $('#signed-verify').href = payload.verify_url;
       $('#signed-hash').textContent = payload.pdf_sha256;
       $('#signed-result').style.display = '';
