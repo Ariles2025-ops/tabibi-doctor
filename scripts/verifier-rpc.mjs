@@ -74,14 +74,30 @@ function appelsDuDepot() {
   // de passage faisait croire a une RPC nommee « nom ». Un nom de RPC est
   // toujours un litteral ; une variable n'est pas verifiable ici, c'est le role
   // de verifier-rpc-passage de garantir qu'elle vient du point de passage.
-  const re = /(?:\.rpc\(\s*(['"])|rest\/v1\/rpc\/)([a-z_][a-z0-9_]*)/gi;
+  //
+  // [14/09/2026] IL MANQUAIT `tabibiRpc(` — ET CETTE GARDE DEVENAIT AVEUGLE A
+  // MESURE QU'ON FAISAIT BIEN. Le motif ne connaissait que `.rpc(`. Or migrer un
+  // site vers la passerelle REMPLACE `sb.rpc('x')` par `tabibiRpc('x')` : la RPC
+  // disparaissait donc de la detection, et la regeneration de la reference
+  // l'aurait RETIREE — sans que rien ne devienne rouge.
+  //
+  // Constate en regenerant apres le lot « rebut visible » : la reference passait
+  // de 39 a 34, en retirant `admin_validate_doctor`, `dawini_expire_old`,
+  // `mark_video_session_started` et `mark_video_session_ended` — QUATRE RPC
+  // TOUJOURS APPELEES, migrees vers la passerelle aux lots 1 et 2. La garde
+  // aurait cesse de les proteger precisement parce qu'on avait bien travaille.
+  // (La cinquieme, `seo_couples`, n'est vraiment plus appelee : elle sort.)
+  //
+  // Le plafond de `verifier-rpc-passage` descend quand on migre ; la couverture
+  // de CE controle-ci ne doit PAS descendre avec lui. Les deux motifs cohabitent.
+  const re = /(?:\.rpc\(\s*(['"])|\btabibiRpc\s*\(\s*(['"])|rest\/v1\/rpc\/)([a-z_][a-z0-9_]*)/gi;
   const par = new Map();
   for (const f of fichiers()) {
     let code = readFileSync(f, 'utf8');
     code = code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
     let m;
     while ((m = re.exec(code)) !== null) {
-      const nom = m[2];
+      const nom = m[3];
       if (!par.has(nom)) par.set(nom, new Set());
       par.get(nom).add(f);
     }
