@@ -48,7 +48,6 @@ const ABSENCES_CONNUES = {
   update_prescription_draft: 'ordonnances, drapeau prescriptions:false — R3 section A',
   request_prescription_signature: 'ordonnances, drapeau prescriptions:false — R3 section A',
   mark_prescription_delivered: 'tracage de delivrance, catch muet — R3 section A',
-  validate_cabinet_invitation: 'inscription secretaire, catch muet — R3 section A',
 };
 
 const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',

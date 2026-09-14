@@ -505,15 +505,18 @@ async function verifyOtpAndCreateProfile(e){
     // Secrétariat : rattachement cabinet via RPC (session active requise).
     if(P.role === "secretaire"){
       try{
-        // [14/09/2026] Les deux appels passent par la passerelle. `tabibiRpc` lit
-        // les DEUX moities de la reponse — transport ET metier — et rend
-        // { ok, data, erreur } avec data:null des que ok est faux.
-        // `validate_cabinet_invitation` N'EXISTE PAS en base (absence connue,
-        // R3 section A) : son `catch(_v){}` etait doublement mort — supabase-js
-        // ne rejette pas, et rien ne lisait le retour. Desormais le 404 se voit
-        // dans la console au lieu de disparaitre.
-        const rValide = await window.tabibiRpc("validate_cabinet_invitation", { p_code: P.cabinetCode });
-        if(!rValide.ok) console.warn("[signup] validate_cabinet_invitation:", rValide.erreur);
+        // [14/09/2026] L'APPEL A `validate_cabinet_invitation` A ETE SUPPRIME.
+        // La fonction N'EXISTE PAS en base — verifie par `verifier:rpc --base`
+        // le 14/09. L'appel etait :
+        //     try{ await …supabase.rpc("validate_cabinet_invitation", {p_code:…}); } catch(_v){}
+        // et son `catch` etait DOUBLEMENT mort : `supabase-js` ne rejette pas, et
+        // rien ne lisait le retour. PostgREST rendait un 404 que personne ne voyait.
+        // Il ne faisait donc RIEN depuis toujours : le supprimer ne retire aucun
+        // comportement. Le migrer vers la passerelle avec lecture du retour aurait
+        // au contraire fait echouer VISIBLEMENT chaque inscription secretaire, pour
+        // une fonction qui n'a jamais existe. On retire l'appel mort.
+        // La ligne correspondante sort de docs/FICHE_R3_APPELS_DANS_LE_VIDE.md et
+        // de ABSENCES_CONNUES : cette liste doit MAIGRIR.
 
         // [13/09/2026] Ce code ne lisait que `acceptRes.error`, l'erreur de TRANSPORT
         // du client PostgREST. La fonction rend son refus DANS la reponse :
