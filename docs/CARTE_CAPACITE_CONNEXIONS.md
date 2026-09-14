@@ -38,15 +38,90 @@ de l'incident de capacité. C'est la seule panne de la journée qui se referme s
 D'où une exigence qui sort de cette carte : **des connexions réservées à l'exploitation**, et
 l'interdiction de laisser traîner des sessions d'administration ouvertes.
 
+## LA MESURE EST FAITE — 13/09/2026, et elle déplace la question
+
+`supabase/mesures/20260913_capacite_connexions.sql`, blocs 1-5 et 7 (le 6 omis, sans effet sur la
+conclusion). Lancée par le stratège.
+
+| | |
+|---|---|
+| `max_connections` | **60** · `superuser_reserved` 3 · `reserved` 0 |
+| ouvertes, toutes bases | **13** · cette base 7 · **marge 47** |
+| états | interne 8 · active 1 · idle 4 |
+| qui | PostgREST 2 · mgmt-api 1 · pg_net 1 · supabase_admin 2 · pg_cron 1 · exporter 1 |
+| Supavisor | **0** · adresses clientes distinctes 2 |
+| transactions restées ouvertes | **aucune** |
+
+### La conclusion, et ce n'est pas celle qu'on attendait
+
+> **La limite n'est pas les connexions. C'est le gabarit de calcul, et l'absence de pooler.**
+
+47 places libres au calme, aucune transaction pendante, un pool PostgREST de **2** à vide. Le
+chiffre qui compte n'est pas l'occupation, c'est **`max_connections = 60`** : c'est la valeur du
+plus petit gabarit Supabase — **Micro**. Et `Supavisor 0` avec deux adresses clientes distinctes
+dit que **personne ne passe par le pooler**.
+
+**Deux réglages de console. Zéro ligne de code.** Ce qui limite ce projet en décembre ne se corrige
+pas dans le dépôt — et c'est la première fois de la journée qu'on peut le dire.
+
+### Deux choses que la mesure ne dit pas, et qu'il ne faut pas lui faire dire
+
+1. **Elle ne dit rien du congrès.** Elle est prise au calme, sur une base dont presque toutes les
+   tables métier sont vides (`cabinets`, `video_sessions`, `consents_log`, `dawini_requests` : zéro
+   ligne). Un chiffre au repos ne prédit pas une charge.
+2. **Elle n'explique pas l'incident du matin** — et c'est normal : elle est prise **après** la
+   fermeture des onglets. Elle montre l'état sain, pas l'état saturé. Elle confirme le mécanisme
+   (60 places, une dizaine d'onglets plus 13 connexions de service) sans le reproduire.
+
+## La ligne ouverte : `idle_in_transaction_session_timeout = 0`
+
+Elle signifie qu'**une transaction bloquée n'est jamais tuée**. Elle tient sa connexion *et* ses
+verrous, et elle empêche `VACUUM` de nettoyer — indéfiniment.
+
+**Mais il faut dire d'abord ce qu'elle n'est pas :**
+
+> ⚠️ **Ce réglage n'aurait PAS empêché l'incident du matin.** Il ne coupe que les sessions
+> `idle in transaction`. Le relevé en compte **zéro**. Les onglets qui ont saturé le pool étaient
+> `idle` tout court — un état que ce réglage ne regarde pas.
+>
+> Le réglage qui mord sur cet incident-là s'appelle **`idle_session_timeout`**. Mesuré le 13/09 :
+> **lui aussi vaut 0.** Il n'était dans aucune de nos listes.
+
+### Ce qu'on propose, par rôle et pas globalement
+
+Les deux réglages ont `context = user` : ils se posent **par rôle**, ce qui permet de protéger
+l'application sans gêner l'opérateur. Un réglage global ferait les deux mal.
+
+| Réglage | Rôle | Valeur proposée | Ce que ça peut casser |
+|---|---|---|---|
+| `idle_in_transaction_session_timeout` | `authenticator` (PostgREST) | **60 s** | Rien de connu. PostgREST fait une transaction par requête, déjà bornée par `statement_timeout` = 120 s ; une transaction *inactive* 60 s n'existe pas dans ce mode. |
+| `idle_in_transaction_session_timeout` | `postgres` (nous) | **15 min, pas 60 s** | **60 s tuerait une migration interactive** : `BEGIN;` puis lecture d'une sortie avant `COMMIT`. C'est exactement le geste du stratège. La transaction serait annulée en silence, et l'écran dirait « déconnecté », pas « j'ai annulé votre transaction ». |
+| `idle_session_timeout` | `postgres` **seulement** | **30 min** | Ferme les onglets oubliés — **le seul des trois qui aurait empêché l'incident**. Perte de l'état de session : tables temporaires, `SET` locaux, requêtes préparées. Négligeable pour notre usage. |
+
+**À ne pas faire** : poser `idle_session_timeout` sur `authenticator`. Couper les connexions
+oisives du pool PostgREST le forcerait à se reconnecter en boucle — on paierait de la latence pour
+récupérer des places dont on a 47 de libres.
+
+**À vérifier avant d'appliquer, et je ne le tranche pas** : les connexions `pg_cron scheduler` et
+`postgres_exporter` apparaissent sous `postgres` dans `pg_stat_activity`. Si le délai s'applique à
+elles, le poser sur le rôle `postgres` les ferait tourner en reconnexion permanente. À lire dans la
+documentation de la version exacte, ou à mesurer sur une base de test — **pas à supposer.**
+
 ## Ce qu'on ne sait pas
 
-Aucune de ces questions n'a de réponse aujourd'hui :
+Trois des cinq ont maintenant une réponse. Les deux qui restent sont les deux qui comptent.
 
-1. `max_connections` de ce projet — jamais lu.
-2. Combien de connexions sont ouvertes en régime normal, et par qui.
-3. Si **Supavisor** (le pooler Supabase) est actif, et dans quel mode — transaction ou session.
-4. Combien de connexions PostgREST, Auth, Realtime et Storage consomment chacun.
-5. Ce que la charge du congrès implique réellement.
+1. ~~`max_connections` de ce projet — jamais lu.~~ **60 (gabarit Micro).** Mesuré le 13/09.
+2. ~~Combien de connexions sont ouvertes en régime normal, et par qui.~~ **13, détail au tableau
+   ci-dessus.** Mesuré le 13/09 — **au calme uniquement.**
+3. ~~Si **Supavisor** est actif, et dans quel mode.~~ **Zéro connexion par Supavisor**, deux adresses
+   clientes distinctes : personne ne passe par le pooler. Reste à lire en console *si* il est
+   activé et avec quelle taille — l'absence de trafic ne prouve pas l'absence de service.
+4. **Combien de connexions PostgREST, Auth, Realtime et Storage consomment chacun.** PostgREST tient
+   **2** à vide ; sa taille de pool maximale (`db-pool`) n'est **pas** lue, et c'est elle qui
+   plafonne sous charge. Auth, Realtime et Storage ne sont pas identifiables dans le relevé.
+5. **Ce que la charge du congrès implique réellement.** Aucune mesure sous charge. Le relevé est
+   pris sur une base dont les tables métier sont vides.
 
 ## La mesure
 
@@ -93,10 +168,20 @@ regard. La requête donne les chiffres ; on conclut après.
 
 ## Suites à instruire une fois la mesure faite
 
-- [ ] Lire `max_connections` et l'occupation en régime calme, puis en régime de travail.
-- [ ] Établir si Supavisor est actif, en quel mode, avec quelle taille de pool.
+- [x] ~~Lire `max_connections` et l'occupation en régime calme~~ — **60 et 13, le 13/09.** Le régime
+      de travail reste à mesurer.
+- [ ] Établir si Supavisor est **activé** en console, en quel mode, avec quelle taille de pool.
+      *(Mesuré : zéro connexion l'emprunte. Ce n'est pas la même question.)*
 - [ ] Lire la taille du pool PostgREST (`db-pool`) et la comparer au plafond Postgres.
-- [ ] Décider d'un `idle_in_transaction_session_timeout` non nul si ce n'est pas déjà le cas.
+      **C'est devenu la question n° 1** : 2 connexions à vide ne disent rien du plafond sous charge.
+- [x] ~~Décider d'un `idle_in_transaction_session_timeout` non nul~~ — **proposition écrite
+      ci-dessus, par rôle.** Décision au stratège.
+- [ ] **`idle_session_timeout` vaut 0 lui aussi** — il n'était dans aucune liste, et c'est le seul
+      des deux qui aurait empêché l'incident du matin. Proposition écrite ; décision au stratège.
+- [ ] Vérifier si un délai posé sur le rôle `postgres` s'applique aux connexions `pg_cron scheduler`
+      et `postgres_exporter`. **À lire ou à mesurer, pas à supposer.**
+- [ ] **Monter le gabarit de calcul** (Micro → au-dessus) avant décembre, ou établir que Micro
+      suffit. C'est la conclusion de la mesure, et c'est un réglage de console.
 - [ ] Règle d'exploitation : **un onglet d'éditeur SQL se ferme après usage.** Aujourd'hui,
       une dizaine d'onglets a suffi à bloquer une migration.
 - [ ] Réserver de la marge pour l'exploitation, pour que l'incident n'emporte pas son diagnostic.

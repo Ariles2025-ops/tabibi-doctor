@@ -13,6 +13,13 @@
 // localement pour representer un jour, et une chaine 'jour T heure' parsee en
 // local). Ils doivent rester justes aux trois fuseaux.
 // =====================================================================
+// [13/09/2026] LES CAPTURES VONT DANS `test-results/`, JAMAIS DANS `docs/preuves/`.
+// Avant, ce test reecrivait `docs/preuves/parcours4-*.png` — des fichiers SUIVIS par
+// git. Consequence : **chaque passage de portes salissait trois preuves**, `git status`
+// n'etait jamais propre apres une verification, et un `git add -A` les emportait (c'est
+// arrive le 13/09). Une preuve ne se regenere pas par accident.
+// `test-results/` est deja dans .gitignore. Pour FIGER une preuve, on la copie a la main
+// dans `docs/preuves/` — c'est un geste delibere, avec une date et une raison.
 const { test, expect } = require('@playwright/test');
 
 const FUSEAUX = ['Africa/Algiers', 'Europe/Paris', 'UTC'];
@@ -109,7 +116,7 @@ test.describe('capture aux trois fuseaux', () => {
       const textes = await page.evaluate(() => Array.from(document.querySelectorAll('#section-upcoming .rdv-card, #section-past .rdv-card'))
         .map((e) => e.innerText.replace(/\s+/g, ' ').trim().slice(0, 90)));
       console.log('   ' + tz.padEnd(16) + ' -> ' + JSON.stringify(textes));
-      await page.screenshot({ path: 'docs/preuves/fuseau-' + tz.replace(/\W/g, '-') + '.png', fullPage: true });
+      await page.screenshot({ path: 'test-results/fuseau-' + tz.replace(/\W/g, '-') + '.png', fullPage: true });
       await ctx.close();
     });
   }
