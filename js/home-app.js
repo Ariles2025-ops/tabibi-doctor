@@ -347,7 +347,24 @@ function generateSlots() {
 /* ══ LANGUAGE ════════════════════════════════════════════════ */
 let lang = localStorage.getItem("tabibi_lang") || "fr";
 
-function T(k) { return TR[lang]?.[k] || TR.fr?.[k] || k; }
+// [I18N 2026-09-14] CETTE FONCTION ET SON APPELANT ONT CASSE L'ACCUEIL EN PROD.
+//
+// `TR` ci-dessus est le dictionnaire PRIVE de ce fichier : 207 cles. Le
+// dictionnaire du produit, `window.TABIBI_TR`, en a 1509 et vit dans
+// `js/i18n/<langue>.js`. Les cles `bc_*`, `v4_*`, `dwh_*` de l'accueil sont
+// dans le second, **pas dans le premier**.
+//
+// Mesure du 14/09 : 80 des 106 elements [data-i18n] d'accueil-public.html
+// affichaient leur CLE BRUTE (« bc_confirm », « v4_pay »…) au lieu du texte.
+//
+// On consulte donc le dictionnaire local D'ABORD — pour ne rien changer aux
+// 207 cles qui marchaient — puis le dictionnaire partage.
+function T(k) {
+  const partage = window.TABIBI_TR || {};
+  return TR[lang]?.[k] || TR.fr?.[k]
+      || partage[lang]?.[k] || partage.fr?.[k]
+      || k;
+}
 
 function setLang(l) {
   lang = l;
@@ -383,8 +400,24 @@ function setLang(l) {
     b.style.color      = active ? "#fff" : "var(--text3)";
   });
   // translate all [data-i18n] elements
+  //
+  // [I18N 2026-09-14] **C'EST ICI QUE LA CLE BRUTE S'ECRIVAIT A L'ECRAN.**
+  // `T()` retombe sur la cle quand elle est introuvable — c'est son contrat.
+  // Mais l'affectation etait INCONDITIONNELLE : elle remplacait le texte
+  // francais present dans le HTML par « bc_confirm ».
+  //
+  // Sans cette ligne, une cle manquante n'aurait RIEN casse : le visiteur
+  // aurait lu le texte d'origine. Le defaut n'est pas l'absence de traduction,
+  // c'est d'avoir DETRUIT une valeur juste pour y mettre un identifiant.
+  // Meme famille que le « 500+ » et le « e-mail envoye » : un repli qui
+  // fabrique une valeur fausse au lieu de laisser la vraie.
+  //
+  // `tabibi-i18n.js` tenait deja cette regle (`if (tr && tr !== key)`). Ce
+  // fichier ne la tenait pas.
   document.querySelectorAll("[data-i18n]").forEach(el => {
-    const v = T(el.dataset.i18n);
+    const cle = el.dataset.i18n;
+    const v = T(cle);
+    if (!v || v === cle) return;   // rien de mieux a mettre : on ne touche pas
     if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") el.placeholder = v;
     else el.textContent = v;
   });
