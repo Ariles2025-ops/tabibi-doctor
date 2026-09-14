@@ -42,10 +42,17 @@ test('le drapeau prescriptions est OUVERT', async ({ page }) => {
   expect(drapeaux.prescriptions, 'le drapeau ordonnances devrait etre ouvert').toBe(true);
 
   // Ce qui n'ouvre PAS au passage. Ouvrir un drapeau ne doit jamais en ouvrir
-  // un autre par inadvertance : `video` attend un fournisseur reel, `reviews`
-  // attend une recette.
-  expect(drapeaux.video, 'video ne doit pas s ouvrir avec les ordonnances').toBe(false);
-  expect(drapeaux.reviews, 'reviews ne doit pas s ouvrir avec les ordonnances').toBe(false);
+  // un autre par inadvertance.
+  //
+  // [14/09, nuit] `reviews` SORT de cette liste : il a ete ouvert depuis, par
+  // son propre lot et pour ses propres raisons (court-circuit retire, drapeau
+  // enfin lu par le module, 12 cas e2e). Le laisser ici ferait echouer le lot
+  // ordonnances pour une raison qui n'a RIEN a voir avec les ordonnances.
+  // Son etat est garde par `avis-patients.spec.js`, qui sait pourquoi.
+  // (`video` avait deja quitte cette liste pour la meme raison, sur
+  // `lot/activer-video-teleconsultation`.)
+  expect(drapeaux.payments, 'payments ne doit pas s ouvrir avec les ordonnances').toBe(false);
+  expect(drapeaux.messaging, 'messaging ne doit pas s ouvrir avec les ordonnances').toBe(false);
 });
 
 test('les boutons Enregistrer et Signer sont VISIBLES', async ({ page }) => {
