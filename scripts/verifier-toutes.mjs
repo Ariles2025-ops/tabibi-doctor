@@ -39,6 +39,7 @@ const PORTES = [
   ['proprete', 'npm',  ['run', '--silent', 'verifier:proprete']],
   ['catch',    'npm',  ['run', '--silent', 'verifier:catch']],
   ['signature','npm',  ['run', '--silent', 'verifier:signature']],
+  ['video',    'npm',  ['run', '--silent', 'verifier:video']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
 ];
@@ -57,7 +58,7 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
-  'verifier:catch', 'verifier:signature', 'build', 'test:e2e',
+  'verifier:catch', 'verifier:signature', 'verifier:video', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
