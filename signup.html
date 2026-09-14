@@ -492,11 +492,32 @@ async function verifyOtpAndCreateProfile(e){
       toastM(tabibiT('signup_err_profile', "Compte créé, mais l'enregistrement de votre profil a échoué. Vous pourrez le compléter depuis votre espace."), "error");
     }
 
+    // [14/09/2026] LE REGISTRE DE CONSENTEMENT. Les quatre horodatages ci-dessus
+    // restent ecrits exactement comme avant — aucune regression. Ils disent QUAND.
+    // Ils ne disent ni la VERSION acceptee, ni la SOURCE, ni le navigateur, et ils
+    // ne savent pas enregistrer un REFUS ni une REVOCATION. `consents_log` le sait.
+    //
+    // Il existait, il etait vide : `record_consent` n'etait appelee nulle part.
+    // On l'appelle ici, APRES l'upsert et QUE LE PROFIL AIT ECHOUE OU NON — le
+    // compte existe, le consentement a ete donne, il se journalise.
+    await journaliserConsentements(P);
+
     // Secrétariat : rattachement cabinet via RPC (session active requise).
     if(P.role === "secretaire"){
       try{
-        try{ await window.tabibi.supabase.rpc("validate_cabinet_invitation", { p_code: P.cabinetCode }); } catch(_v){}
-        const acceptRes = await window.tabibi.supabase.rpc("accept_cabinet_invitation", { p_cabinet_id: P.cabinetCode });
+        // [14/09/2026] L'APPEL A `validate_cabinet_invitation` A ETE SUPPRIME.
+        // La fonction N'EXISTE PAS en base — verifie par `verifier:rpc --base`
+        // le 14/09. L'appel etait :
+        //     try{ await …supabase.rpc("validate_cabinet_invitation", {p_code:…}); } catch(_v){}
+        // et son `catch` etait DOUBLEMENT mort : `supabase-js` ne rejette pas, et
+        // rien ne lisait le retour. PostgREST rendait un 404 que personne ne voyait.
+        // Il ne faisait donc RIEN depuis toujours : le supprimer ne retire aucun
+        // comportement. Le migrer vers la passerelle avec lecture du retour aurait
+        // au contraire fait echouer VISIBLEMENT chaque inscription secretaire, pour
+        // une fonction qui n'a jamais existe. On retire l'appel mort.
+        // La ligne correspondante sort de docs/FICHE_R3_APPELS_DANS_LE_VIDE.md et
+        // de ABSENCES_CONNUES : cette liste doit MAIGRIR.
+
         // [13/09/2026] Ce code ne lisait que `acceptRes.error`, l'erreur de TRANSPORT
         // du client PostgREST. La fonction rend son refus DANS la reponse :
         // {"error":"no_pending_invitation"} quand l'UPDATE ne touche aucune ligne,
@@ -504,11 +525,11 @@ async function verifyOtpAndCreateProfile(e){
         // renvoyant une erreur metier a acceptRes.error === null : on enchainait donc
         // sur « Compte cree avec succes ! », role secretaire actif et redirection,
         // SANS AUCUNE ADHESION AU CABINET.
-        const acceptErr = (acceptRes && acceptRes.error && acceptRes.error.message)
-                       || (acceptRes && acceptRes.data && acceptRes.data.error)
-                       || (acceptRes && acceptRes.data && acceptRes.data.ok === false ? 'refus' : null);
-        if(acceptErr){
-          console.warn("[signup] accept_cabinet_invitation:", acceptErr);
+        // [14/09/2026] Les trois lectures a la main sont remplacees par la
+        // passerelle, qui couvre les trois cas au meme endroit et pour tout le monde.
+        const rAccept = await window.tabibiRpc("accept_cabinet_invitation", { p_cabinet_id: P.cabinetCode });
+        if(!rAccept.ok){
+          console.warn("[signup] accept_cabinet_invitation:", rAccept.erreur);
           toastM(tabibiT('toast_cabinet_code_invalid',"Code cabinet invalide ou expiré"),"error");
           if(btn){ btn.disabled=false; btn.innerHTML=origText; } return;
         }
@@ -571,6 +592,85 @@ async function verifyOtpAndCreateProfile(e){
 }
 
 // localStorage user + role (réutilisé patient / secrétariat).
+// ── LE REGISTRE DE CONSENTEMENT ────────────────────────────────────────
+// [14/09/2026] `public.consents_log` existait depuis des mois et etait VIDE :
+// `record_consent` n'etait appelee nulle part. Les consentements vivaient
+// uniquement comme quatre horodatages sur `public.users` — QUAND, et rien
+// d'autre : ni version, ni source, ni refus, ni revocation.
+//
+// LES SCOPES SONT CEUX QUE LA TABLE ACCEPTE, pas ceux qu'on aurait choisis.
+// Contrainte lue en base le 14/09/2026 :
+//   consents_log_consent_scope_check CHECK (consent_scope = ANY (ARRAY[
+//     'cgu','privacy','cookies','marketing_email','marketing_sms',
+//     'marketing_whatsapp','health_data_processing','telemedicine',
+//     'data_export','data_deletion','third_party_sharing']))
+// Donc 'cgu' et NON 'terms' ; et 'marketing_email' et NON 'marketing' —
+// la case de la page dit « par email » (signup.html:173), c'est elle qui tranche.
+//   consents_log_source_check      : 'signup' (celui-ci), 'settings', 'popup',
+//                                    'api', 'admin', 'migration'
+//   consents_log_locale_check      : 'fr', 'ar', 'en' — rien d'autre
+//   consents_log_user_agent_check  : 300 caracteres au plus
+//
+// UN REFUS EST AUSSI UN ENREGISTREMENT : marketing part avec granted=false
+// quand la case est decochee. Ne rien ecrire ne prouverait pas le refus.
+var SCOPES_MARKETING = 'marketing_email';   // cf. le libelle de la case
+
+function _consentLocale(){
+  var l = null;
+  try { l = localStorage.getItem('tabibi_lang'); } catch (e) { l = null; }
+  if (!l) l = (document.documentElement && document.documentElement.lang) || '';
+  l = String(l).slice(0, 2).toLowerCase();
+  return (l === 'ar' || l === 'en') ? l : 'fr';   // la contrainte n'en admet pas d'autre
+}
+
+async function journaliserConsentements(P){
+  if (typeof window.tabibiRpc !== 'function') {
+    console.warn("[signup] consentements : passerelle absente, rien journalise");
+    toastM(tabibiT('signup_consent_log_failed',
+      "Compte créé ; la journalisation de vos consentements a échoué, elle sera régularisée."), "error");
+    return;
+  }
+
+  var locale = _consentLocale();
+  // On n'a PAS l'IP cote client. On ne l'invente pas : p_ip reste null, et
+  // `record_consent` laisse alors `ip_hash` a NULL. Une IP fausse serait pire
+  // qu'une IP absente sur une piece qui sert de preuve.
+  var ua = String(navigator.userAgent || '').slice(0, 300);   // la contrainte borne a 300
+
+  var aEcrire = [
+    { scope: 'cgu',     granted: true },
+    { scope: 'privacy', granted: true }
+  ];
+  if (P.role === 'patient') aEcrire.push({ scope: 'health_data_processing', granted: true });
+  aEcrire.push({ scope: SCOPES_MARKETING, granted: !!P.marketingConsent });
+
+  var echecs = [];
+  for (var i = 0; i < aEcrire.length; i++) {
+    var c = aEcrire[i];
+    var r = await window.tabibiRpc('record_consent', {
+      p_scope:      c.scope,
+      p_version:    '1.0',
+      p_granted:    c.granted,
+      p_source:     'signup',
+      p_locale:     locale,
+      p_ip:         null,
+      p_user_agent: ua
+    });
+    if (!r.ok) {
+      console.warn("[signup] record_consent " + c.scope + " :", r.erreur);
+      echecs.push(c.scope);
+    }
+  }
+
+  // Un echec de journalisation NE BLOQUE PAS l'inscription — le compte existe et
+  // les horodatages sur `users` sont ecrits. Mais il NE SE TAIT PAS non plus :
+  // un registre incomplet dont personne n'est averti est un registre faux.
+  if (echecs.length) {
+    toastM(tabibiT('signup_consent_log_failed',
+      "Compte créé ; la journalisation de vos consentements a échoué, elle sera régularisée."), "error");
+  }
+}
+
 function _persistAndGo(id, role, status, P, consents){
   try{
     localStorage.setItem("tabibi_user", JSON.stringify({

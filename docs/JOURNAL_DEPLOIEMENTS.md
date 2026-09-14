@@ -773,12 +773,19 @@ qui attend quelqu'un, pas une tâche technique.
   L'export « mes données » ne contient ni les favoris enregistrés côté serveur ni l'historique des
   consentements ; périmètre à trancher avec l'avocat avant le lancement.
 
-- **13/09/2026 — Les consentements des comptes antérieurs au 18 juillet.**
-  34 des 40 comptes réels n'ont aucun consentement enregistré, dont la totalité des patients :
-  ils ont été créés avant que l'enregistrement existe. Le mécanisme fonctionne depuis — les
-  6 comptes avec consentement sont tous postérieurs au 18 juillet. **Régularisation à définir
-  avec le juriste** : re-demander, ou considérer l'inscription comme valant consentement.
-  Aucune migration de données n'est faite en attendant.
+- **13/09/2026, corrigé le 14/09 — Les comptes antérieurs n'ont pas de *ligne de registre*.**
+  La formulation précédente disait « sans consentement enregistré ». C'était plus alarmant que
+  vrai. Mesuré : les consentements **sont** enregistrés, comme quatre horodatages sur la fiche
+  utilisateur (conditions, confidentialité, données de santé, marketing), depuis le 18 juillet.
+  Ce qui manque, c'est la **ligne dans le registre versionné** — celle qui dit *quelle version*
+  a été acceptée, *par quel canal*, et qui sait enregistrer un refus ou une révocation.
+  34 des 40 comptes réels n'ont pas cette ligne, parce que le registre n'était appelé nulle part.
+  **Depuis le déploiement 16, chaque inscription l'écrit.** Le stock antérieur reste à
+  régulariser **avec le juriste** : recopier les horodatages existants dans le registre, ou
+  re-demander. **Aucune migration de données n'est faite en attendant.**
+  *Note technique pour qui fera la reprise : la source à utiliser est `migration` — `backfill`
+  n'existe pas, la contrainte de la table n'admet que `signup`, `settings`, `popup`, `api`,
+  `admin`, `migration`.*
 
 ## Règles nées d'un défaut
 

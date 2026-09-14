@@ -42,6 +42,7 @@ mark_video_session_ended
 mark_video_session_started
 praticien
 praticiens_par_ids
+record_consent
 remove_cabinet_member
 revoke_api_key
 rotate_api_key

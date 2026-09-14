@@ -48,7 +48,6 @@ const ABSENCES_CONNUES = {
   update_prescription_draft: 'ordonnances, drapeau prescriptions:false — R3 section A',
   request_prescription_signature: 'ordonnances, drapeau prescriptions:false — R3 section A',
   mark_prescription_delivered: 'tracage de delivrance, catch muet — R3 section A',
-  validate_cabinet_invitation: 'inscription secretaire, catch muet — R3 section A',
 };
 
 const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',
@@ -152,7 +151,12 @@ async function pgProc() {
 // seuls sites ou une ecriture refusee ne laissait AUCUNE trace — ni dans
 // `error` de transport (la RPC refuse par un jsonb {"error":…} sans lever), ni
 // dans un rejet (supabase-js resout, le `.catch` etait mort).
-const PLAFOND_RPC_DIRECT = 53;
+// 53 -> 51 le 14/09/2026, lot « consentements journalises » : les deux appels
+// du bloc secretaire de signup.html (validate_cabinet_invitation,
+// accept_cabinet_invitation) passent par la passerelle. Le second est le site
+// du defaut d'origine — celui qui creait un compte secretaire « avec succes »
+// sans aucune adhesion au cabinet.
+const PLAFOND_RPC_DIRECT = 51;
 
 function appelsDirects() {
   const par = {};

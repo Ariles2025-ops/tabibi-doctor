@@ -4,11 +4,18 @@ Le front appelle des fonctions qui n'existent pas côté serveur. Chaque appel �
 dépend de la façon dont l'appelant avale l'erreur. Relevé par comparaison entre `grep rpc(` / `functions/v1/` dans le code et
 `pg_proc` / la liste des edge functions déployées (`send-sms` v17, `verify-turnstile` v7, `appointment-reminders` v7, `sms-dlr` v4).
 
-## A. Cinq RPC appelées par le front et absentes de la base
+## A. ~~Cinq~~ **Quatre** RPC appelées par le front et absentes de la base
+
+> **14/09/2026 — la liste a MAIGRI, pour la première fois.** `validate_cabinet_invitation`
+> en sort : l'appel a été **supprimé** de `signup.html`. Il ne faisait rien depuis toujours
+> (son `catch` était doublement mort : `supabase-js` ne rejette pas, et personne ne lisait
+> le retour), donc le retirer n'ôte aucun comportement. Le *migrer* vers la passerelle avec
+> lecture du retour aurait au contraire fait échouer **visiblement** chaque inscription
+> secrétaire, pour une fonction qui n'a jamais existé. **Cette liste doit maigrir, jamais
+> grossir** — c'est la première ligne qui en sort.
 
 | RPC | Appelant | Drapeau | Ce que vit l'utilisateur |
 |---|---|---|---|
-| `validate_cabinet_invitation` | `signup.html:498` (inscription secrétaire, avant `accept_cabinet_invitation`) | aucun | appel enveloppé dans un `try{}catch(_v){}` vide : erreur 404 avalée, l'inscription continue avec `accept_cabinet_invitation` (qui existe). Appel mort, sans effet visible. |
 | `mark_prescription_delivered` | `patient-ordonnances.html:241` (`trackDelivery`, best-effort) | `prescriptions: false` | jamais atteint tant que le drapeau est à false ; sinon erreur avalée en silence (« traçage non bloquant »). |
 | `create_prescription_draft` | `medecin-ordonnance.html:524` (bouton « Enregistrer le brouillon », nouvelle ordonnance) | `prescriptions: false` | si la page est ouverte malgré le drapeau (lien direct `doctor-dashboard.html:207` « Ordonnance » dans le bandeau vert, `tabibi-pro-sidebar.js:38`), l'erreur est levée → `throw` → toast d'erreur. Le brouillon n'est jamais créé. |
 | `update_prescription_draft` | `medecin-ordonnance.html:514` (même bouton, brouillon existant) | `prescriptions: false` | idem : toast d'erreur, rien d'écrit. |
