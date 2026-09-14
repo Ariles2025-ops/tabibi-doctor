@@ -806,28 +806,63 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('waiting-form').addEventListener('submit', handleSubmit);
 });
 
+// [14/09/2026] CETTE PAGE ANNONCAIT « 500+ INSCRITS ». IL Y EN AVAIT ZERO.
+//
+// Ce que faisait le code : il lisait `waiting_list_count`, qui N'EXISTE PAS en
+// base (404 a chaque chargement), et affichait alors `'500+'` EN DUR. Ce n'etait
+// pas un repli : il se declenchait TOUJOURS. Et il n'affichait pas « — » mais un
+// nombre plausible — le defaut ne ressemblait pas a un defaut.
+//
+// `formatNumber` fabriquait aussi : `if (n < 100) return '50+'`. Un vrai compte
+// de 3 se serait affiche « 50+ ». Meme avec la source reparee, l'ecran aurait
+// menti sur les petits nombres — et c'est precisement la phase ou on est.
+//
+// REGLE POSEE ICI : on affiche le nombre qu'on a mesure, ou on n'affiche pas de
+// nombre. Jamais un nombre qu'on n'a pas mesure.
+//
+// ⚠️  L'APPEL N'EST PAS ENCORE BRANCHE SUR LA RPC. `public.waiting_list_count()`
+// est ecrite en brouillon (supabase/migrations/20260914_waiting_list_count.sql)
+// et pas encore appliquee. Tant qu'elle n'existe pas, `verifier:rpc` refuserait
+// un appel a une RPC absente — et l'inscrire en « absence connue » ferait
+// GROSSIR une liste qui doit maigrir. Le cablage vient au lot suivant, une fois
+// la migration appliquee. **D'ici la, la page n'affiche plus aucun chiffre.**
+var _wlCompteReel = null;   // le seul nombre qu'on ait le droit d'afficher
+
 async function loadStats() {
+  var el = document.getElementById('stat-total');
+  if (!el) return;
   try {
-    if (!window.tabibi || !window.tabibi.supabase) {
-      document.getElementById('stat-total').textContent = '500+';
-      return;
-    }
-    const { data } = await window.tabibi.supabase
+    if (!window.tabibi || !window.tabibi.supabase) { _wlSansChiffre(el); return; }
+    const { data, error } = await window.tabibi.supabase
       .from('waiting_list_count')
       .select('total_count')
       .single();
-    if (data && data.total_count != null) {
-      document.getElementById('stat-total').textContent = formatNumber(data.total_count);
-    } else {
-      document.getElementById('stat-total').textContent = '500+';
+    if (error || !data || data.total_count == null) {
+      console.warn('[waiting-list] compteur indisponible', error || '(aucune donnee)');
+      _wlSansChiffre(el);
+      return;
     }
+    _wlCompteReel = Number(data.total_count);
+    el.textContent = formatNumber(_wlCompteReel);
   } catch (e) {
-    document.getElementById('stat-total').textContent = '500+';
+    console.warn('[waiting-list] compteur indisponible', e);
+    _wlSansChiffre(el);
   }
 }
 
+// Etat honnete : la carte garde son libelle « Inscrits », et la valeur devient
+// un tiret. On ne cache pas la carte — la masquer donnerait l'impression que la
+// page est cassee ; un tiret dit « on ne sait pas », ce qui est la verite.
+function _wlSansChiffre(el) {
+  el.textContent = '—';
+  el.setAttribute('title', 'Compteur momentanement indisponible');
+}
+
+// Arrondi vers le BAS, jamais vers le haut : « 1 200+ » pour 1 234 est vrai,
+// « 50+ » pour 3 ne l'est pas. En dessous de 100, on donne le nombre exact.
 function formatNumber(n) {
-  if (n < 100) return '50+';
+  n = Number(n) || 0;
+  if (n < 100) return String(n);
   if (n < 1000) return Math.floor(n / 100) * 100 + '+';
   return (n / 1000).toFixed(1).replace('.0', '') + 'k+';
 }
@@ -917,10 +952,17 @@ async function handleSubmit(e) {
     // Email Brevo (best effort)
     if (window.tabibiBrevo) {
       try {
-        await window.tabibiBrevo.sendEmail('waiting_list_welcome', email, {
-          count: formatNumber(500),
-          lang: currentLang
-        });
+        // [14/09/2026] `count: formatNumber(500)` ENVOYAIT « 500+ » PAR E-MAIL,
+        // a une personne reelle, alors que la liste etait vide. Un chiffre
+        // fabrique sur une page est deja mauvais ; expedie, il devient une
+        // affirmation qu'on ne peut plus retirer.
+        // On n'envoie desormais le compte QUE si on l'a mesure.
+        // ⚠️  LE GABARIT BREVO DOIT SUIVRE : sa phrase « rejoignez les {count}
+        // personnes… » doit devenir conditionnelle, sinon elle se rendra avec un
+        // trou. C'est une action hors depot — voir docs/A_FAIRE_AGHILES.md.
+        var _params = { lang: currentLang };
+        if (_wlCompteReel != null) _params.count = formatNumber(_wlCompteReel);
+        await window.tabibiBrevo.sendEmail('waiting_list_welcome', email, _params);
         // [FIX 2026-07-04] update {email_sent, email_sent_at} retiré : colonnes
         // inexistantes en prod et aucune policy UPDATE anon → PATCH voué à
         // l'échec à chaque inscription. Suivi des envois = dashboard Brevo.
