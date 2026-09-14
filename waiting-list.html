@@ -43,7 +43,10 @@
   --red: #D21010;
   --text: #0f172a;
   --text2: #334155;   /* AMÉLIORÉ : était #475569, meilleur contraste */
-  --text3: #64748b;   /* AMÉLIORÉ : était #94a3b8, accessibilité WCAG AA */
+  /* [A11Y 2026-09-14] Deuxieme passe : #64748b suffisait sur blanc mais pas
+     sur le beige #f4eee2 de l'en-tete (4,11:1). #556070 — le gris neutre de
+     marque — donne 5,52:1. */
+  --text3: #556070;   /* était #94a3b8 puis #64748b, accessibilité WCAG AA */
   --border: #e2e8f0;
   --bg: #f8fafc;
   --r12: 12px;
@@ -122,7 +125,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .hero { text-align: center; padding: 24px 0 32px; }
 .badge {
   display: inline-block; padding: 8px 16px;
-  background: rgba(46, 139, 87, 0.12); color: var(--green);
+  /* [A11Y 2026-09-14] `var(--green)` (#2E8B57) donnait 3,50:1 sur ce fond —
+     et seulement DANS LA SORTIE DE BUILD (voir tests/e2e/accessibilite.spec.js,
+     « ce qu'axe ne dit pas »). Le vert fonce de la marque tient sur les deux :
+     6,72:1 sur le beige composite, 8,15:1 sur blanc. */
+  background: rgba(46, 139, 87, 0.12); color: #0B5A4A;
   border-radius: 100px; font-size: 13px; font-weight: 700;
   letter-spacing: .3px; margin-bottom: 18px;
   border: 1px solid rgba(46, 139, 87, 0.25);

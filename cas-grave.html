@@ -52,7 +52,9 @@ p{margin:8px 0;color:#556070}
 .field input:focus,.field textarea:focus{outline:none;border-color:#d4a437;box-shadow:0 0 0 3px rgba(212,164,55,.15)}
 .field textarea{resize:vertical;min-height:120px}
 .req{color:#d92d20}
-.btn-send{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#d4a437;color:#fff;font-family:inherit;font-size:15px;font-weight:800;border:none;border-radius:12px;padding:15px;cursor:pointer;transition:filter .15s,transform .15s}
+/* [A11Y 2026-09-14] Blanc sur or = 2,29:1 sur LE bouton de la page d'urgence.
+   Le fond reste l'or de marque, le texte passe en encre sombre : 7,60:1. */
+.btn-send{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:#d4a437;color:#1A1A1A;font-family:inherit;font-size:15px;font-weight:800;border:none;border-radius:12px;padding:15px;cursor:pointer;transition:filter .15s,transform .15s}
 .btn-send:hover{filter:brightness(.95);transform:translateY(-1px)}
 .btn-send i{font-size:18px}
 .after-note{text-align:center;font-size:12.5px;color:#556070;margin-top:12px;display:flex;gap:7px;align-items:center;justify-content:center}

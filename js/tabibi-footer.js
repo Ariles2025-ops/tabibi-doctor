@@ -54,7 +54,10 @@
       '<a href="' + pre + 'legal/rgpd-droits.html" style="color:#0F7560;text-decoration:none">' + L.rgpd + '</a>' +
       '<a href="' + pre + 'legal/dpa.html" style="color:#0F7560;text-decoration:none">' + L.dpa + '</a>' +
     '</div>' +
-    '<div style="margin-top:10px;color:#94a3b8">' + L.copy + ' — Loi DZ 18-07 / RGPD UE 2016/679</div>';
+    // [A11Y 2026-09-14] #94a3b8 sur le fond #f8faff de ce pied = 2,45:1. C'est la
+    // ligne qui porte la mention « Loi DZ 18-07 / RGPD » : une mention legale
+    // illisible n'informe personne. #5d6b7d = 5,20:1.
+    '<div style="margin-top:10px;color:#5d6b7d">' + L.copy + ' — Loi DZ 18-07 / RGPD UE 2016/679</div>';
 
   function inject() {
     // Inject avant </body>, ou append au body si pas trouvé

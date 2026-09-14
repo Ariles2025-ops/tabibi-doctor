@@ -93,10 +93,24 @@
 
   --text:    #0f172a;   /* texte principal (canon) — titres héro de marque = --ink */
   --text2:   #475569;   /* texte courant */
-  --text3:   #64748b;   /* métadonnées */
+  /* [A11Y 2026-09-14] #64748b -> #556070, le gris neutre DE MARQUE (CLAUDE.md).
+     Mesure axe : #64748b sur le beige #f4eee2 de l'en-tete = 4,11:1, sous le
+     seuil AA de 4,5. #556070 donne 5,52 sur ce beige et 6,38 sur blanc.
+     Ce n'est pas un compromis esthetique : c'est la couleur que la charte
+     nommait deja, et elle est plus lisible. */
+  --text3:   #556070;   /* métadonnées */
   --text4:   #94a3b8;   /* placeholders, désactivé */
   --text-on-primary: #ffffff;
   --text-on-accent:  #1A1A1A;
+  /* [A11Y 2026-09-14] L'OR DE MARQUE NE PEUT PAS ETRE DU TEXTE SUR BLANC.
+     #d4a437 sur #ffffff = 2,29:1 — trois fois moins que le seuil AA, et rien
+     ne le sauve : c'est une propriete de la couleur, pas un reglage.
+     **On ne touche donc PAS a #d4a437** (charte : accent principal). On lui
+     ajoute une variante TEXTE, pour les petits libelles sur fond clair :
+     #7D5E18 = 6,02 sur blanc, 5,31 sur le beige dore #f8f0df.
+     L'or de marque reste pour les fonds, bordures, icones et le logo — avec
+     --text-on-accent par-dessus. */
+  --accent-texte:    #7D5E18;
 
   --bg:      #f8fafc;   /* fond d'application */
   --bg2:     #f1f5f9;   /* séparateurs, fonds doux */
