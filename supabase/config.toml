@@ -428,6 +428,29 @@ verify_jwt = false
 [functions.sms-dlr]
 verify_jwt = false
 
+# [14/09/2026] appointment-reminders : verify_jwt = FAUX, et il faut l'ECRIRE.
+#
+# Le cron pg_net appelle cette fonction avec un seul en-tete de securite,
+# `x-reminders-secret`. Il n'envoie AUCUN `Authorization`. Si la passerelle
+# exigeait un JWT, elle refuserait avant meme que la fonction s'execute — et
+# le rappel ne partirait jamais.
+#
+# Cette entree n'existait pas. La fonction est pourtant deployee en
+# verify_jwt=false : on le sait parce que les 401 observes portent
+# `{"error":"unauthorized"}`, qui est le corps ecrit par LA FONCTION ; un refus
+# de la passerelle en aurait un autre. **Donc l'etat de la prod ne tenait qu'a
+# un reglage pose a la main un jour, que ce fichier ne disait pas.**
+#
+# Un `supabase functions deploy appointment-reminders` sans `--no-verify-jwt`
+# aurait donc remis verify_jwt a vrai — et casse les rappels une seconde fois,
+# par une voie differente. On l'ecrit pour que le deploiement ne depende plus
+# de qui se souvient du drapeau.
+#
+# Sa vraie garde reste le secret partage, pas la passerelle : cf. l'en-tete de
+# supabase/functions/appointment-reminders/index.ts.
+[functions.appointment-reminders]
+verify_jwt = false
+
 # ⚠️ CHANTIER PRÉPARATOIRE — canal WhatsApp, non déployé.
 # Procédure d'activation : docs/WHATSAPP_ACTIVATION.md
 #

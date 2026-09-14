@@ -67,6 +67,41 @@ Retirer une ancienne clé rend invalides les ordonnances qu'elle a signées.
 *(Facultatif : `PUBLIC_SITE_URL` si l'URL imprimée sur le PDF doit être autre chose que
 `https://tabibi.doctor`.)*
 
+### 3 ter. Poser le secret du cron des rappels dans le Vault
+
+**Les rappels de RDV n'ont jamais fonctionné.** Mesuré le 14/09 : le cron tire toutes les
+15 minutes depuis le **29 juillet**, et **chaque appel est refusé en 401** — la commande
+du cron envoie `'TA_CLE'`, un espace réservé jamais remplacé. `cron.job_run_details`
+affichait pourtant 4 531 exécutions « succeeded » : `pg_net` est asynchrone, il note que
+la requête est *partie*, pas ce qu'on lui a répondu.
+
+*(À décharge : il n'y a qu'un RDV en base, annulé. Aucun patient n'a été privé de rappel —
+mais le jour du congrès, si.)*
+
+Le correctif ne remplace pas l'espace réservé par la vraie valeur — ce serait **un secret
+en clair dans `cron.job`**. Le cron ira le lire dans le Vault. **Une fois**, en console
+SQL :
+
+```sql
+select vault.create_secret('<la valeur de REMINDERS_CRON_SECRET>',
+                           'reminders_cron_secret',
+                           'Secret du cron appointment-reminders');
+```
+
+La valeur est celle du secret `REMINDERS_CRON_SECRET` déjà posé côté *Edge Functions* —
+**la même, exactement**, sinon le 401 revient.
+
+> ⚠️ **Je ne pose ni ne lis ce secret** (règles 4 et 6). Tant qu'il n'est pas dans le
+> Vault, la migration `20260914_rappels_sms_reels.sql` **refuse de s'appliquer** : elle ne
+> sait pas recréer le silence qu'elle corrige.
+
+Ensuite, la vérification qui compte — pas le journal du cron, **la réponse** :
+
+```sql
+select status_code, created from net._http_response order by created desc limit 5;
+-- attendu : 200.  Avant : 401, 24 fois sur 24.
+```
+
 ---
 
 ## 🔑 SÉCURITÉ DU COMPTE
