@@ -40,10 +40,20 @@
   // Activer feature par feature en Phase 13 après validation backend.
   var defaults = {
     // Téléconsultation Daily.co (Phase 7) :
-    //   - Frontend teleconsultation.html : ✅ câblé
-    //   - RPC get_video_session : ❌ inexistante en DB (TODO-SQL-008)
-    //   - RPC set_video_recording_consent : ❌ inexistante en DB (TODO-SQL-008)
-    //   → Bloquer côté UI (boutons "Téléconsulter" masqués)
+    //   [14/09/2026] LE MOTIF ECRIT ICI ETAIT FAUX. Il disait « RPC
+    //   get_video_session ❌ inexistante en DB » et idem pour
+    //   set_video_recording_consent. **Les deux EXISTENT** (mesuré sur pg_proc
+    //   le 14/09). Quelqu'un qui lisait ces lignes et vérifiait en base
+    //   concluait qu'on pouvait ouvrir le drapeau.
+    //
+    //   LA VRAIE RAISON, elle, tient toujours :
+    //   - le SDK Daily n'a JAMAIS chargé : la balise pointait sur
+    //     @daily-co/daily-js@0.66.1, une version jamais publiée. Vendorisé
+    //     depuis en 0.92.2, mais le flux n'a jamais tourné de bout en bout.
+    //   - `video_sessions.daily_room_url` est une URL PLACEHOLDER
+    //     (`https://placeholder.daily.co/…`, cf. create_video_session) : il n'y
+    //     a pas de fournisseur vidéo réel, pas de clé, pas de salle.
+    //   → Reste OFF jusqu'à une séance dédiée avec le fournisseur réel.
     video: false,
 
     // Paiements (Phase 8) :
@@ -66,20 +76,34 @@
     messaging: false,
 
     // Avis (Phase 9) :
-    //   - Table reviews : non créée (TODO-SQL-011)
-    //   - RLS post-completed : non créée (TODO-SQL-012)
+    //   [14/09/2026] LE MOTIF ECRIT ICI ETAIT FAUX. Il disait « Table reviews :
+    //   non créée ». **Elle existe**, ainsi que la vue
+    //   `my_reviewable_appointments` (mesuré le 14/09). Elles contiennent
+    //   0 ligne — ce qui est normal avant lancement, mais n'est pas « non créée ».
+    //   LA RAISON QUI RESTE : le parcours d'avis n'a jamais été exercé de bout
+    //   en bout, et `fn_verify_review` / `validate_review_eligibility` n'ont
+    //   jamais tourné sur des données. C'est un manque de RECETTE, pas de schéma.
     reviews: false,
 
     // Ordonnances numériques :
     //   - Front : medecin-ordonnance.html (rédaction/signature) +
     //     patient-ordonnances.html (consultation/téléchargement)
-    //   - DB prod : les 4 RPC sont ABSENTES (vérifié le 2026-07-29 contre
-    //     pg_proc) → create_prescription_draft, update_prescription_draft,
-    //     request_prescription_signature, mark_prescription_delivered.
-    //     Détail : docs/RPC_INVENTORY.md
-    //   → OFF : sans ce flag, chaque action renvoyait un PGRST202 en
-    //     erreur générique (échec silencieux côté produit).
-    //   ⚠️ Repasser à true UNIQUEMENT après création des 4 RPC en prod.
+    //   [14/09/2026] LE MOTIF ECRIT ICI ETAIT FAUX. Il disait « les 4 RPC sont
+    //   ABSENTES (vérifié le 2026-07-29) ». **Elles existent depuis le
+    //   14/09/2026** (20260914_ordonnances_rpc.sql, appliquée, plpgsql_check à
+    //   0 défaut). L'ancienne mesure était vraie le 29/07 ; elle ne l'est plus.
+    //
+    //   DEUX VERROUS RESTENT, et ce sont eux qui tiennent le drapeau fermé :
+    //   1. les edge functions `generate-prescription-pdf` et
+    //      `verify-prescription` NE SONT PAS DEPLOYEES (mesuré le 14/09 : 4 edge
+    //      functions en tout). Sans la première, AUCUNE ordonnance ne peut
+    //      passer à `signed` — le CHECK presc_signed_has_pdf exige trois champs
+    //      de PDF. Sans la seconde, la vérification publique ne vérifie rien.
+    //   2. la RLS de `prescriptions` s'annule elle-même (les politiques `rx_*`
+    //      permissives effacent les `presc_*` strictes). Voir
+    //      supabase/mesures/PROPOSITION_rls_prescriptions.md.
+    //   ⚠️ Ouvrir ce drapeau AVANT (1) ferait annoncer une signature qui
+    //      n'arrive pas : un bouton qui promet ce qu'il ne fait pas.
     prescriptions: false,
 
     // Analytics Plausible (Phase 10) :

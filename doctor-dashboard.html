@@ -1420,6 +1420,17 @@ async function deleteUnavail(id) {
 <!-- [i18n] sélecteur de langue + synchro bouton actif factorisés -->
 <script src="js/tabibi-langbar.js"></script>
 <script src="js/tabibi-sentry.js"></script>
+<!-- [14/09/2026] PAS de js/tabibi-pro-sidebar.js ICI, ET C'EST VOLONTAIRE.
+     L'audit l'avait signale comme « la seule page pro sans barre laterale ».
+     C'ETAIT FAUX : cette page A DEJA la sienne. A partir de 1024px, le CSS
+     de l'en-tete transforme `.dash-tabs` en colonne fixe a gauche
+     (`position:fixed; left:0; width:230px`), avec `main.page{margin-left:230px}`.
+     Charger la barre partagee EN PLUS a ete essaye et MESURE le 14/09 :
+     deux colonnes fixes se superposent a x=0, la barre partagee (z-index 150)
+     recouvre les onglets — `document.elementFromPoint` au centre du bouton
+     « Profil » rend `DIV.sb-spacer` — et les onglets deviennent INCLIQUABLES.
+     Les deux marges se cumulent en plus (224px + 230px).
+     Voir docs/AUDIT_BOUT_EN_BOUT.md, M-2 corrige. -->
 <!-- Push : déclenché au chargement du dashboard (contexte stable post-login, natif only) -->
 <script>
 (function () {
