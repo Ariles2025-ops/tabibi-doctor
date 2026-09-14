@@ -93,18 +93,36 @@
     //   14/09/2026** (20260914_ordonnances_rpc.sql, appliquée, plpgsql_check à
     //   0 défaut). L'ancienne mesure était vraie le 29/07 ; elle ne l'est plus.
     //
-    //   DEUX VERROUS RESTENT, et ce sont eux qui tiennent le drapeau fermé :
-    //   1. les edge functions `generate-prescription-pdf` et
-    //      `verify-prescription` NE SONT PAS DEPLOYEES (mesuré le 14/09 : 4 edge
-    //      functions en tout). Sans la première, AUCUNE ordonnance ne peut
-    //      passer à `signed` — le CHECK presc_signed_has_pdf exige trois champs
-    //      de PDF. Sans la seconde, la vérification publique ne vérifie rien.
-    //   2. la RLS de `prescriptions` s'annule elle-même (les politiques `rx_*`
-    //      permissives effacent les `presc_*` strictes). Voir
-    //      supabase/mesures/PROPOSITION_rls_prescriptions.md.
-    //   ⚠️ Ouvrir ce drapeau AVANT (1) ferait annoncer une signature qui
-    //      n'arrive pas : un bouton qui promet ce qu'il ne fait pas.
-    prescriptions: false,
+    //   DEUX VERROUS TENAIENT CE DRAPEAU FERMÉ. **Les deux sont levés le
+    //   14/09/2026 au soir**, et c'est pour ça — et seulement ça — qu'il ouvre.
+    //
+    //   1. ~~les edge functions ne sont pas déployées~~ → **DÉPLOYÉES** :
+    //      `generate-prescription-pdf` (verify_jwt=true) et
+    //      `verify-prescription` (verify_jwt=false). **Essai de bout en bout
+    //      passé** : médecin de test → génération → `signed` → vérification
+    //      publique « valid », signature `v1`, PDF au bucket privé, et AUCUN
+    //      médicament dans la réponse publique (initiales patient seulement).
+    //      Semis de test nettoyé derrière.
+    //   2. ~~la RLS s'annule elle-même~~ → **corrigée** par
+    //      `20260914_rls_prescriptions.sql` (#118) : une seule politique par
+    //      commande d'écriture. Relevé le 14/09 après application —
+    //      INSERT 1 · SELECT 2 · UPDATE 1, et `authenticated` n'a toujours que
+    //      `SELECT` sur la table.
+    //
+    //   CE QUI FAIT QUE LE BOUTON NE MENT PAS, mesuré avant d'ouvrir :
+    //     bucket `prescriptions` : privé, 10 Mo, `application/pdf` seul
+    //     une seule politique de stockage, en lecture (`presc_pdf_select`)
+    //     `create_prescription_draft` / `update_prescription_draft` /
+    //     `request_prescription_signature` / `mark_prescription_delivered` :
+    //     toutes SECURITY DEFINER et exécutables par `authenticated`.
+    //   Le brouillon passe donc par RPC, pas par la table — ce qui compte,
+    //   puisque `authenticated` n'a aucun droit d'écriture dessus.
+    //
+    //   ⚠️ CE QUI RESTE VRAI ET QU'IL NE FAUT PAS OUBLIER : le PDF ne sait
+    //   imprimer que du latin. Une ordonnance saisie en arabe est REFUSÉE à la
+    //   signature (`unsupported_characters`) — elle n'est pas mutilée en
+    //   silence. Voir docs/A_FAIRE_AGHILES.md.
+    prescriptions: true,
 
     // Analytics Plausible (Phase 10) :
     //   - Compte Plausible non créé
