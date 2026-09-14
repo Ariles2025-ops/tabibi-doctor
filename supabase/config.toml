@@ -447,6 +447,25 @@ verify_jwt = false
 [functions.whatsapp-webhook]
 verify_jwt = false
 
+# ⚠️ CHANTIER ORDONNANCES — écrites le 14/09/2026, NON DÉPLOYÉES.
+# Le drapeau `prescriptions` reste à false tant que generate-prescription-pdf
+# n'est pas déployée ET essayée, sinon le bouton « Signer » ment.
+#
+# generate-prescription-pdf : appelée par un médecin connecté depuis
+# medecin-ordonnance.html. verify_jwt reste à true (défaut) — aucune entrée
+# n'est nécessaire ici, et on ne lui en écrit pas : une ligne
+# `verify_jwt = true` laisserait croire qu'on a hésité.
+#
+# verify-prescription : PUBLIQUE par nécessité. Un pharmacien qui reçoit une
+# ordonnance n'a pas de compte Tabibi et ne doit pas en créer un pour vérifier
+# un papier. C'est le seul endpoint du produit ouvert à un inconnu.
+# Ce qui le rend acceptable n'est PAS une garde à l'entrée, c'est ce qu'il
+# refuse de dire : ni médicament, ni diagnostic, ni note clinique, ni nom de
+# patient (des initiales). La règle est gardée deux fois dans la fonction —
+# réponse construite champ par champ, puis relue avant l'envoi.
+[functions.verify-prescription]
+verify_jwt = false
+
 [auth.hook.send_sms]
 enabled = true
 uri = "https://pudugodhiofqrctcdwfl.supabase.co/functions/v1/send-sms"

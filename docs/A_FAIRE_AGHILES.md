@@ -42,6 +42,31 @@ l'utilisateur ne reçoit rien d'exploitable.
 
 *(Le code, lui, est corrigé : l'écran n'annonce plus « envoyé » quand l'envoi échoue.)*
 
+### 3 bis. Poser la clé de signature des ordonnances
+
+**Bloque le lot ordonnances.** Le code des deux edge functions est écrit ; il ne peut
+être déployé utilement sans ces deux secrets.
+
+*Supabase → Edge Functions → Secrets.*
+
+| Nom **exact** | Valeur |
+|---|---|
+| `PRESCRIPTION_SIGNING_KEY_V1` | une clé aléatoire d'**au moins 32 caractères** — par ex. la sortie de `openssl rand -base64 48` |
+| `PRESCRIPTION_SIGNING_KEY_CURRENT` | exactement `v1` |
+
+> ⚠️ **Je ne pose ni ne lis cette clé, et elle n'apparaîtra jamais dans un rapport,
+> un journal ou une réponse HTTP** (règles 4 et 6). La fonction refuse de signer si
+> elle est absente : elle ne fabrique **jamais** une signature de repli — une
+> signature sans clé aurait l'air valide.
+
+**Ce qui se passe si tu la changes plus tard** : les ordonnances déjà signées restent
+vérifiables **tant que la `V1` reste posée**. Une rotation consiste à *ajouter*
+`PRESCRIPTION_SIGNING_KEY_V2` et à passer `..._CURRENT` à `v2` — jamais à écraser la V1.
+Retirer une ancienne clé rend invalides les ordonnances qu'elle a signées.
+
+*(Facultatif : `PUBLIC_SITE_URL` si l'URL imprimée sur le PDF doit être autre chose que
+`https://tabibi.doctor`.)*
+
 ---
 
 ## 🔑 SÉCURITÉ DU COMPTE
@@ -114,3 +139,5 @@ Ce ne sont pas des tâches à exécuter mais des **arbitrages** — ils bloquent
 | **Périmètre de l'export RGPD** | L'export « mes données » ne contient ni les favoris côté serveur ni l'historique des consentements. **À trancher avec l'avocat avant le lancement.** |
 | **Inscription secrétaire** | Rôle retiré du parcours public (il demandait un code qui n'existe pas). À rouvrir avec un vrai mécanisme d'invitation — **c'est un lot cabinet entier.** |
 | **Lecture du journal d'audit** | La politique « Only admins read audit » est inatteignable : pas de `GRANT`. L'assumer (lecture en base seulement) ou l'ouvrir ? **Le journal contient des données de santé.** |
+| **Ordonnances en arabe** | Le PDF ne sait imprimer que du latin : les 14 polices standard du format n'ont aucun glyphe arabe. La fonction **refuse de signer** plutôt que de remplacer les caractères par `?` — mutiler un nom de médicament en silence est un risque pour le patient. Ouvrir l'arabe = embarquer une police Unicode (Noto Naskh, OFL, ~300 Ko dans le dépôt) + le rendu droite-à-gauche : **c'est un lot à soi.** À trancher : combien de médecins prescriront en arabe au congrès ? |
+| **QR code sur l'ordonnance** | Le PDF imprime l'URL de vérification **en texte**. Un pharmacien doit donc la recopier. Un QR la rendrait scannable — une dépendance de plus, et un lot court. À dire si ça compte pour décembre. |
