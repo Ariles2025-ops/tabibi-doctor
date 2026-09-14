@@ -100,8 +100,32 @@
         <i class="fa fa-user" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_patient">Patient</span></button>
       <button type="button" role="radio" aria-checked="false" class="role-btn" onclick="selRole('medecin',this)" style="padding:14px;border:2px solid var(--border);border-radius:12px;background:#fff;color:var(--text2);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
         <i class="fa fa-user-doctor" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_doctor">Médecin</span></button>
+      <!-- [14/09/2026] LE ROLE « SECRETARIAT » EST RETIRE DU PARCOURS PUBLIC.
+           Ce n'est pas un defaut de code : c'est un chemin qui NE PEUT PAS ABOUTIR.
+
+           Le formulaire demandait un « code d'invitation cabinet » au format
+           `cab_xxxxxxxx-xxxx-xxxx`. Mesure du 14/09 : **rien, nulle part, ne
+           genere un tel code** — la chaine `cab_` n'apparaissait qu'a un seul
+           endroit du depot, ce placeholder. Et `accept_cabinet_invitation`
+           n'attend pas un code : elle attend `p_cabinet_id uuid`, l'identifiant
+           du cabinet, que rien ne communique a la secretaire.
+           Consequence : une secretaire qui tapait ce que le champ lui montrait
+           recevait « Code cabinet invalide ou expire » — et croyait s'etre
+           trompee, alors que le code n'existe pas.
+
+           DECISION DU 14/09 : on ne lance pas un chemin qui ne peut pas aboutir.
+           Le bouton est retire du DOM (commente, pas supprime) : il ne peut donc
+           pas etre selectionne. **Tout le reste du code secretaire est CONSERVE
+           tel quel** — le champ `#scab`, `selRole('secretaire')`, la validation,
+           et le bloc de rattachement `accept_cabinet_invitation` plus bas.
+           Rien n'est a reecrire le jour ou le mecanisme existera.
+
+           A ROUVRIR avec le lot cabinet, quand il y aura : une RPC qui EMET un
+           code d'invitation, et un ecran admin qui l'affiche. Voir la ligne
+           « inscription secretaire » dans docs/JOURNAL_DEPLOIEMENTS.md.
       <button type="button" role="radio" aria-checked="false" class="role-btn" onclick="selRole('secretaire',this)" style="padding:14px;border:2px solid var(--border);border-radius:12px;background:#fff;color:var(--text2);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
         <i class="fa fa-headset" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_secretaire">Secrétariat</span></button>
+      -->
     </div>
   </div>
   <div class="card" style="max-width:480px;margin:0 auto">
@@ -503,6 +527,18 @@ async function verifyOtpAndCreateProfile(e){
     await journaliserConsentements(P);
 
     // Secrétariat : rattachement cabinet via RPC (session active requise).
+    //
+    // [14/09/2026] CE BLOC EST DESORMAIS INATTEIGNABLE PAR L'INTERFACE : le
+    // bouton « Secrétariat » du sélecteur de rôle est retiré du DOM (voir le
+    // commentaire près de la ligne 103, qui dit pourquoi). Il est CONSERVE,
+    // volontairement et sans le modifier, pour que la réouverture du rôle soit
+    // un geste d'interface et non une réécriture.
+    //
+    // ⚠️  Le garde de la ligne ~358 accepte toujours 'secretaire' : ce chemin
+    // reste donc atteignable par quelqu'un qui manipule la page. Ce n'est pas un
+    // oubli — le durcir figerait la décision, et elle est explicitement
+    // réversible. Un compte ainsi créé se retrouverait simplement sans
+    // rattachement, comme aujourd'hui.
     if(P.role === "secretaire"){
       try{
         // [14/09/2026] L'APPEL A `validate_cabinet_invitation` A ETE SUPPRIME.
