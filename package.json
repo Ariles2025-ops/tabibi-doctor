@@ -33,7 +33,7 @@
     "verifier:toutes": "node scripts/verifier-toutes.mjs",
     "verifier:catch": "node scripts/verifier-catch.mjs",
     "verifier:video": "node scripts/verifier-video.mjs",
-    "verifier:signature": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/signature-ordonnance.test.mjs",
+    "verifier:unites": "node --disable-warning=ExperimentalWarning --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --experimental-strip-types --test tests/*.test.mjs",
     "porte:fermee": "node scripts/porte.mjs fermee",
     "porte:ouverte": "node scripts/porte.mjs ouverte",
     "build:porte-fermee": "npm run build && npm run porte:fermee",

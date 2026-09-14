@@ -38,7 +38,13 @@ const PORTES = [
   ['passerelle','npm', ['run', '--silent', 'verifier:passerelle']],
   ['proprete', 'npm',  ['run', '--silent', 'verifier:proprete']],
   ['catch',    'npm',  ['run', '--silent', 'verifier:catch']],
-  ['signature','npm',  ['run', '--silent', 'verifier:signature']],
+  // [14/09] Cette porte s'appelait `signature` et ne lancait qu'UN fichier.
+  // Elargie a `tests/*.test.mjs` : le jour ou un lot ajoute un essai unitaire
+  // sans penser a declarer sa porte, l'essai serait ecrit et jamais lance —
+  // une absence deguisee en normalite. (Meme changement sur
+  // `lot/rappels-sms-reel` : en cas de conflit, garder l'un des deux, ils sont
+  // identiques.)
+  ['unites',   'npm',  ['run', '--silent', 'verifier:unites']],
   ['video',    'npm',  ['run', '--silent', 'verifier:video']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
@@ -58,7 +64,7 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
-  'verifier:catch', 'verifier:signature', 'verifier:video', 'build', 'test:e2e',
+  'verifier:catch', 'verifier:unites', 'verifier:video', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
