@@ -154,6 +154,42 @@ assemblé dans une variable — le compteur ne suit pas une variable) · `val`, 
 > script depuis le premier jour ; ça reste vrai.
 
 
+---
+
+## Perf RLS
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-39 | `auth.uid()` écrit nu dans **69 politiques** sur **29 tables** : `STABLE`, donc **rappelé pour chaque ligne examinée** — 75 035 appels pour une lecture de `users`. Et **21 lignes** d'advisor où plusieurs politiques permissives couvrent la même (table, action, rôle) | `pg_policies` : 94 politiques `public`, 70 citent `auth.*()` dont **69 à nu** ; 21 groupes multiples, dont **10 homogènes** (même commande, mêmes rôles) | `20260915_perf_rls.sql` — `( SELECT auth.uid() )` partout, et les 10 groupes homogènes fusionnés en un `OR` exact | **advisors `auth_rls_initplan` et `multiple_permissive_policies` en baisse** après application + six lectures au navigateur | **proposé, NON appliqué** |
+
+### Ce qui rend ce lot sûr — et ce qui ne l'est pas
+
+**La migration ne recopie aucune politique.** Elle lit la définition *courante* dans
+`pg_policies` et n'y applique qu'une réécriture mécanique : la sémantique est préservée **par
+construction**, pas par relecture. Recopier 70 expressions, ce serait 70 occasions de se
+tromper d'un caractère — et une faute de frappe dans un `WHERE` de politique n'est pas
+visible : elle ouvre ou ferme un accès en silence.
+
+Le point qu'il fallait vérifier avant de fusionner quoi que ce soit : **PostgreSQL n'apparie
+pas** le `USING` d'une politique avec le `WITH CHECK` de la même politique — il OU-e tous les
+`USING` d'un côté, tous les `WITH CHECK` de l'autre. Le OU séparé est donc **exact**, pas
+approché.
+
+⚠️ **8 lignes d'advisor restent, et c'est délibéré** : six situations où un membre est
+`FOR ALL` (fusionner obligerait à réécrire la logique) et deux où les membres ne visent pas
+les mêmes rôles (la fusion soumettrait `anon` à une condition qu'il ne voyait pas — nulle
+« en pratique », mais *« en pratique »* n'est pas *« par construction »*).
+
+⚠️ **10 politiques de `storage.objects`** portent le même défaut. Elles sont hors du fichier :
+la table appartient à `supabase_storage_admin`, la migration s'applique en `postgres`, et un
+refus au milieu d'une migration annule tout le reste. **Garde manquante** tant que le
+stratège n'a pas tranché.
+
+⚠️ **Un advisor vert ne prouve pas qu'un accès n'a pas bougé.** Il dit qu'une requête coûte
+moins cher, pas qu'elle rend les mêmes lignes. Les six lectures au navigateur font partie de
+la garde, et elles ne sont pas faites.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
