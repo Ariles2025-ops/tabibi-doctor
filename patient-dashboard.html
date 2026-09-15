@@ -268,8 +268,19 @@ function getNotifs(){
 function renderNotifs(){
   const n=getNotifs();
   const unread=n.filter(x=>x.unread).length;
-  document.getElementById("notif-count").textContent=unread;
-  document.getElementById("notif-count").style.display=unread>0?"flex":"none";
+  // [15/09/2026] ⚠️ `#notif-count` N'EST PAS DANS CETTE PAGE : il est injecte
+  // a l'execution par `js/tabibi-header.js`. Si l'en-tete n'est pas encore
+  // pose, ces deux lignes levaient « Cannot read properties of null » — et
+  // **tout le script s'arretait la**, sans message. Les branchements declares
+  // plus bas n'etaient jamais faits : la page restait a moitie vivante.
+  //
+  // Le cout du filet : deux lignes. Le cout de son absence : une page figee
+  // dont personne ne sait pourquoi.
+  const badge = document.getElementById("notif-count");
+  if (badge) {
+    badge.textContent = unread;
+    badge.style.display = unread > 0 ? "flex" : "none";
+  }
   // [WAVE4-XSS] Sanitize user-controlled fields before injecting into DOM.
   const _esc = (window.tabibiSec && window.tabibiSec.escapeHtml) || (window.esc) || (s => String(s==null?'':s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])));
   // [15/09/2026] Renommees `sanitize*` : ce sont des LISTES BLANCHES, pas des
@@ -632,7 +643,11 @@ document.addEventListener("DOMContentLoaded", async ()=>{
              firstName:fn, lastName:ln, phone:a.phone||'', photo_url:a.photo_url||'' };
   })(authed);
 
-  document.getElementById("user-init").textContent = u.initials || (u.email||'?')[0].toUpperCase();
+  // Meme raison : `#user-init` vient de l'en-tete injecte. Deux lignes plus
+  // bas, le meme fichier prend deja cette precaution pour `#user-pill` — ici
+  // elle manquait.
+  const init = document.getElementById("user-init");
+  if (init) init.textContent = u.initials || (u.email||'?')[0].toUpperCase();
   // Si l'utilisateur a une photo de profil, l'afficher dans le bouton header (par-dessus les initiales)
   if (u.photo_url) {
     const pill = document.getElementById("user-pill");
