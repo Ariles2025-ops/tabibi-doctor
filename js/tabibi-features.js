@@ -95,12 +95,36 @@
     // Avis (Phase 9) :
     //   [14/09/2026] LE MOTIF ECRIT ICI ETAIT FAUX. Il disait « Table reviews :
     //   non créée ». **Elle existe**, ainsi que la vue
-    //   `my_reviewable_appointments` (mesuré le 14/09). Elles contiennent
-    //   0 ligne — ce qui est normal avant lancement, mais n'est pas « non créée ».
-    //   LA RAISON QUI RESTE : le parcours d'avis n'a jamais été exercé de bout
-    //   en bout, et `fn_verify_review` / `validate_review_eligibility` n'ont
-    //   jamais tourné sur des données. C'est un manque de RECETTE, pas de schéma.
-    reviews: false,
+    //   `my_reviewable_appointments` (mesuré le 14/09).
+    //
+    //   [14/09, nuit] ⚠️ ET CE DRAPEAU N'ÉTAIT LU PAR PERSONNE.
+    //   Zéro occurrence de `TABIBI_FEATURES.reviews` dans tout le produit, hors
+    //   la ligne ci-dessus qui le déclare. Il ne fermait donc RIEN : il donnait
+    //   l'impression qu'une fonction était désactivée. (Le même constat est
+    //   écrit plus bas pour `sentry`, depuis le 08/09 — deux fois le même
+    //   défaut dans le même fichier.)
+    //
+    //   Ce qui fermait vraiment les avis était ailleurs : un `return []`
+    //   INCONDITIONNEL au milieu de `getMyReviewableAppointments()`
+    //   (js/tabibi-reviews.js). **Un verrou invisible depuis ce fichier-ci.**
+    //
+    //   CE QUI OUVRE, et rien d'autre :
+    //   - le court-circuit est retiré, et la vue réellement interrogée ;
+    //   - `js/tabibi-reviews.js` LIT désormais ce drapeau : fermé, il refuse
+    //     l'écriture (`feature_disabled`) et ne touche pas la base. Masquer un
+    //     bouton ne protège pas d'un appel programmatique ;
+    //   - la lecture des avis publics reste ouverte même drapeau fermé : ils
+    //     sont déjà publiés, les masquer ne protégerait personne ;
+    //   - 6 cas e2e (`tests/e2e/avis-patients.spec.js`) le prouvent dans les
+    //     deux positions du drapeau.
+    //
+    //   ⚠️ CE QUI N'A TOUJOURS PAS EU LIEU : un parcours sur DONNÉES RÉELLES.
+    //   `fn_verify_review` et `validate_review_eligibility` n'ont jamais tourné
+    //   sur une ligne ; la table contient 0 avis. L'e2e prouve ce que le
+    //   navigateur fait de chaque réponse, pas que la base accepte. La recette
+    //   reste à faire — et si elle échoue, ce drapeau se referme, ce qui est
+    //   maintenant possible.
+    reviews: true,
 
     // Ordonnances numériques :
     //   - Front : medecin-ordonnance.html (rédaction/signature) +
