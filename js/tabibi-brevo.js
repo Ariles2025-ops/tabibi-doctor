@@ -610,23 +610,33 @@ ${isRTL ? '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;6
       return { success: false, error: 'Template inconnu : ' + templateName };
     }
 
-    const tpl = templates[templateName](data);
-
+    // [15/09/2026] ON N'ENVOIE PLUS DE HTML AU SERVEUR.
+    //
+    // Cette fonction composait le message ici et le passait a `send-email`.
+    // Ecrire la fonction sur ce contrat aurait produit **un relais ouvert** :
+    // n'importe quel compte connecte aurait pu faire partir n'importe quel
+    // HTML, vers n'importe quelle adresse, signe `contact@tabibi.doctor`.
+    //
+    // Le serveur accepte desormais **un nom de modele et des parametres**, et
+    // compose lui-meme (`_partage/modeles-courriel.ts`). Les modeles restent
+    // ici pour la previsualisation et les essais ; ce ne sont plus eux qui
+    // partent.
     try {
       if (!window.tabibi || !window.tabibi.supabase) {
         throw new Error('Supabase client non disponible');
       }
       const { data: result, error } = await window.tabibi.supabase.functions.invoke('send-email', {
-        body: {
-          to: toEmail,
-          subject: tpl.subject,
-          html: tpl.html,
-          from: { email: TABIBI_CONFIG.fromEmail, name: TABIBI_CONFIG.fromName },
-          replyTo: TABIBI_CONFIG.replyTo
-        }
+        body: { template: templateName, to: toEmail, params: data }
       });
       if (error) throw error;
-      return { success: true, messageId: result && result.messageId };
+      // ⚠️ `functions.invoke` ne REJETTE pas sur un 4xx : il rend `error`. Et
+      // une reponse sans `error` n'est pas une reponse d'envoi. On exige donc
+      // `ok === true` — c'est la lecon du « e-mail envoye » (P-28) : ne jamais
+      // annoncer un succes qu'on n'a pas constate.
+      if (!result || result.ok !== true) {
+        return { success: false, error: (result && result.error) || 'envoi non confirme' };
+      }
+      return { success: true, messageId: result.messageId || null };
     } catch (err) {
       return { success: false, error: (err && err.message) || 'Erreur d\'envoi' };
     }
