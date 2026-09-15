@@ -240,7 +240,7 @@ async function _dcFetchResults(opts){
 
 function _renderSkeleton(){
   var sk = '<div class="dc-skeleton"><div class="sk-ava"></div><div class="sk-lines"><div class="sk-line"></div><div class="sk-line sm"></div><div class="sk-line xs"></div></div></div>';
-  document.getElementById('dc-list').innerHTML = sk + sk;
+  document.getElementById('dc-list').innerHTML = sk.repeat(2);
   document.getElementById('dc-count-line').textContent = _t('claim_searching', 'Recherche…');
 }
 

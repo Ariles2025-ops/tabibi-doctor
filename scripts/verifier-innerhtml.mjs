@@ -57,9 +57,17 @@ const PLAFOND = 'scripts/innerhtml-plafond.json';
 // porte crie sur ce qui va bien, donc finit desactivee. C'est arrive deux fois
 // en ecrivant cette porte : `_esc` puis `_escapeHtml`.
 const ECHAPPEUR = /\b(_?esc|_?escA|_?escAttr|_?escUrl|_?escape(?:Html|HTML|Attr|Url|JsString)|hEsc|sanitize\w*|tabibiSec\.\w+)\s*\(/;
-// Un libelle de dictionnaire : c'est NOUS qui l'ecrivons. Les noms reellement
-// utilises ici sont `T`, `t`, `_t`, `tt`, `tr` — releves, pas devines.
-const LIBELLE = /^\s*(_?T|_?t|tt|tr)\s*[(.]/;
+// Un libelle de dictionnaire : c'est NOUS qui l'ecrivons. Les noms sont
+// RELEVES, pas devines :
+//   git grep -ohE "(function |const |var |let |window\.)(tabibiT|_?T|_?t|tt|tr)\s*[=(]"
+// -> _t (14), T (7+3+1), tabibiT (5), t (5+3).
+//
+// [15/09/2026] `tabibiT` manquait, et c'est la MEME faute que pour les
+// echappeurs : un nom oublie fait compter comme dangereux du code qui ne
+// l'est pas. `doctor-dashboard.html` avait quatre gabarits 100 % litteraux
+// accuses pour ce seul motif. **Une porte qui crie sur du code correct finit
+// desactivee.**
+const LIBELLE = /^\s*(tabibiT|_?T|_?t|tt|tr)\s*[(.]/;
 // Un litteral pur (chaine, nombre, booleen, operateurs).
 const LITTERAL = /^[\s'"`0-9+\-*/.,:;!?()[\]{}<>=&|%#@$_a-zA-Z\\À-ɏ؀-ۿ]*$/;
 
@@ -83,15 +91,59 @@ function expressionApres(src, i) {
   return src.slice(i, fin);
 }
 
+/**
+ * Retire le CONTENU des chaines, en gardant les `${…}` visibles.
+ *
+ * [15/09/2026] QUATRIEME ERREUR DE CE COMPTEUR, et la plus bete : il cherchait
+ * `+ quelqueChose` dans le TEXTE BRUT de l'expression. Un `+` ecrit dans une
+ * phrase francaise etait donc lu comme une concatenation :
+ *
+ *   wrap.innerHTML = `<div>Aucune cle. Cliquez sur "+ Nouvelle cle".</div>`;
+ *                                                   ^^^^^^^^^^^^
+ *   -> operande « Nouvelle », donc « donnee non constante », donc dangereux.
+ *
+ * C'etait un gabarit 100 % litteral. **On ne regarde une expression que la ou
+ * il y a une expression** : dans les `${…}` et entre les chaines, jamais
+ * dedans. Le squelette rendu ici garde les guillemets et les `${…}`, et
+ * remplace tout le reste par des blancs — les positions ne bougent pas.
+ */
+function squelette(expr) {
+  let out = '';
+  let i = 0;
+  let quote = null;          // ' " ou `
+  let profondeurInterp = 0;  // nombre de ${ ouverts dans un backtick
+  while (i < expr.length) {
+    const c = expr[i];
+    if (quote) {
+      if (c === '\\') { out += '  '; i += 2; continue; }
+      if (quote === '`' && c === '$' && expr[i + 1] === '{') {
+        profondeurInterp++; out += '${'; i += 2; continue;
+      }
+      if (profondeurInterp > 0) {
+        // Dans une interpolation : c'est du code, on le garde tel quel.
+        if (c === '}') profondeurInterp--;
+        out += c; i++; continue;
+      }
+      if (c === quote) { quote = null; out += c; i++; continue; }
+      out += (c === '\n' ? '\n' : ' ');   // contenu de chaine : efface
+      i++; continue;
+    }
+    if (c === '\'' || c === '"' || c === '`') { quote = c; out += c; i++; continue; }
+    out += c; i++;
+  }
+  return out;
+}
+
 /** Les morceaux « dynamiques » d'une expression : interpolations et operandes. */
 function morceauxDynamiques(expr) {
   const out = [];
-  for (const m of expr.matchAll(/\$\{([\s\S]*?)\}/g)) out.push(m[1]);
+  const sq = squelette(expr);
+  for (const m of sq.matchAll(/\$\{([\s\S]*?)\}/g)) out.push(m[1]);
   // Concatenations : `... + quelqueChose`. On garde la parenthese ouvrante
   // quand il y en a une : sans elle, `+ _esc(x)` donnait le fragment `_esc`,
   // que le detecteur d'echappeur ne reconnaissait pas — et 15 sites echappes
   // de `dawini.html` etaient comptes comme dangereux.
-  for (const m of expr.matchAll(/\+\s*([A-Za-z_$][\w$.\[\]'"]*\s*\(?)/g)) out.push(m[1]);
+  for (const m of sq.matchAll(/\+\s*([A-Za-z_$][\w$.\[\]'"]*\s*\(?)/g)) out.push(m[1]);
   return out;
 }
 

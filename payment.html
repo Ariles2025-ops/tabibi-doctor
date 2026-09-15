@@ -151,7 +151,14 @@ if(typeof window.toast !== 'function'){
     var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
     var t = document.createElement('div');
     t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
-    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    // [15/09/2026] `msg` peut venir d'un message d'erreur du serveur. Concatene
+    // dans `innerHTML`, il s'executait — meme defaut que sur la reservation
+    // (P-17). L'icone est un noeud, le message est du TEXTE.
+    var ico = document.createElement('i');
+    ico.className = 'fa ' + (icons[type] || icons.info);
+    ico.setAttribute('aria-hidden', 'true');
+    t.appendChild(ico);
+    t.appendChild(document.createTextNode(msg == null ? '' : String(msg)));
     c.appendChild(t);
     setTimeout(function(){ t.style.transition='all .28s'; t.style.opacity='0'; t.style.transform='translateY(-6px)'; setTimeout(function(){ t.remove(); }, 300); }, ms);
   };
