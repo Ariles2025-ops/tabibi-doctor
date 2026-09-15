@@ -1236,10 +1236,20 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <div class="v4-tele">
     <span class="ti"><i class="fa fa-video" aria-hidden="true"></i></span>
     <div>
-      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-live" data-i18n="v4_tes">Disponible</span></h3>
+      <!-- ⚠️ [16/09/2026] LES CLES ONT ETE RENOMMEES, et ce n'est pas cosmetique.
+           Constate en direct : la page servait « Disponible » dans son HTML et
+           le bouton affichait quand meme « Etre prevenu ». Le HTML est en
+           `no-cache` ; `js/i18n/*.js` ne l'est pas partout (netlify.toml :
+           max-age=3600). Un dictionnaire PERIME reecrivait le bouton par
+           dessus le HTML a jour.
+           Avec une cle NEUVE, un dictionnaire perime ne la connait pas — et
+           `setLang` n'ecrit jamais quand la valeur vaut la cle (P-03). Le texte
+           du HTML reste donc en place. **Une cle neuve ne peut pas etre
+           servie perimee.** -->
+      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-live" data-i18n="v4_tes_live">Disponible</span></h3>
       <p data-i18n="v4_tep">Consultez à distance un praticien vérifié, où que vous soyez en Algérie. Choisissez un médecin qui propose la téléconsultation et réservez votre créneau.</p>
     </div>
-    <a class="btn btn-primary cta" href="#sec-docs" onclick="scrollTo$('sec-docs')" data-i18n="v4_tec">Prendre rendez-vous</a>
+    <a class="btn btn-primary cta" href="#sec-docs" onclick="scrollTo$('sec-docs')" data-i18n="v4_tec_book">Réserver une téléconsultation</a>
   </div>
 
   <!-- HOW IT WORKS -->
