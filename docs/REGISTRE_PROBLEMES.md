@@ -248,6 +248,53 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 
 ---
 
+## P-29 — résolu : l'import qui disparaissait au build
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-29 | **Aucun bouton de langue** sur l'accueil en ligne. Ouvert depuis le 14/09, « mécanisme non élucidé » | mesuré le 15/09 : `accueil-public.html` **construit** charge 3 morceaux — **pas** `tabibi-langbar-*.js`. Le placeholder `[data-langbar]`, posé par `tabibi-header.js` à l'exécution, n'était **jamais rempli** | le module pose `window.tabibiLangbar` **au premier niveau** (effet de bord que le bundler ne peut plus ignorer) et les trois entrées appellent `init()` explicitement | `tests/e2e/selecteur-langue.spec.js` — **3 boutons, sur les sources ET sur `dist-web`** ; `tests/langbar-non-elidable.test.mjs` — le mécanisme | **réglé** |
+| P-56 | Le switcher **flottant** était masqué **sans condition** — y compris quand aucun pill n'avait pu être injecté | sur l'accueil construit, le pill ne venait jamais **et** le flottant était caché : **aucun sélecteur de langue, nulle part** | il n'est masqué **qu'après** avoir constaté un pill | même essai : `cas-grave.html`, qui n'a pas de barre, **garde son flottant visible** | **réglé** |
+
+### Le mécanisme, enfin
+
+```
+src/entries/index.js :  import '../../js/tabibi-langbar.js';
+```
+
+Un import à **effet de bord seul**. Le module n'exporte rien : Rollup ne voyait aucune valeur
+consommée et **éliminait l'import**. Le morceau était bien construit — vingt-six pages le
+chargent par `<script src>` — mais l'accueil construit ne le chargeait plus.
+
+```
+avant : accueil-public.html charge 3 morceaux, pas le langbar
+après : il en charge 4, dont tabibi-langbar-*.js
+```
+
+⚠️ **Ma première mesure était trop étroite** et m'a fait conclure trop vite : j'ai cherché la
+chaîne dans `accueil-public-*.js` seulement, et j'ai lu « le module a disparu ». Il n'avait
+pas disparu — **c'est le lien vers lui qui avait disparu**, pour cette page. La différence
+change le correctif.
+
+### ⚠️ Pourquoi `export` était le bon réflexe et la mauvaise réponse
+
+La correction naturelle — exporter une fonction et l'appeler — aurait cassé **vingt-six
+pages** qui chargent ce fichier en `<script>` classique : `Unexpected token 'export'`.
+
+> Réparer trois pages construites en cassant vingt-six pages servies, c'est le genre de
+> correctif dont le diff a l'air impeccable. **Un test l'interdit désormais** : le fichier
+> doit rester chargeable en script classique.
+
+### P-56 était plus grave que P-29
+
+`syncLangBtns()` masquait le flottant **sans condition**. Le flottant est le **filet** : on
+ne retire un filet qu'après avoir constaté que l'autre chemin fonctionne. Ici, **le filet
+était retiré avant que le trapèze arrive**.
+
+### Et le timing
+
+Le placeholder est posé **à l'exécution** par l'en-tête : `inject()` pouvait arriver avant
+lui, ne rien trouver, et ne jamais repasser. Un `MutationObserver` rattrape — **borné à 8 s,
+parce qu'une attente sans fin est une fuite, pas un filet**.
 ## 69 wilayas — et deux divergences trouvées en chemin
 
 | ID | symptôme | preuve mesurée | correctif | garde | statut |
@@ -360,7 +407,6 @@ passer.
 |---|---|---|---|---|---|
 | P-27 | `accueil-public.html` affiche **4 fiches de médecins écrites en dur** — « ✓ Vérifié · ★ 4,9 » | ces médecins n'existent pas ; `reviews` contient 0 ligne | — | **garde manquante** | **ouvert** |
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
-| P-29 | Le sélecteur de langue **disparaît** de l'accueil construit quand un tiers est injoignable | sources hermétique : 3 boutons · `dist-web` hermétique : **0** · `dist-web` serveur nu : 3 | — (mécanisme non élucidé) | **garde manquante** | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---
