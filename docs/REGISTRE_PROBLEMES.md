@@ -295,6 +295,36 @@ testé.
 > fois est une dette qu'on oublie.
 
 
+---
+
+## P-43 — le flake de P-33, attrapé en local, **nommé par la porte de P-33**
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-43 | `accessibilite.spec.js:137` (`reservation.html`) tombait au hasard : `page.evaluate: Execution context was destroyed, most likely because of a navigation` | un `waitForTimeout(900)` fixe : 900 ms suffisent au repos ; **sous charge**, la redirection de la page part *après* le contrôle d'URL et *pendant* l'injection d'axe | on attend la **stabilité** (même URL trois relevés de suite + `readyState === 'complete'`, borné à 8 s) au lieu d'une durée | le test lui-même, et la porte qui le nomme | **réglé** |
+
+### C'est la démonstration de P-33, pas une coïncidence
+
+Le 15/09 au matin, la porte `e2e` sortait en 1 **sans dire quel test**, et j'ai passé le lot à
+rendre l'échec lisible plutôt qu'à deviner. Le même après-midi, au premier rouge réel, la
+porte a écrit :
+
+```
+✘ 182 [desktop] › accessibilite.spec.js:137:3 › reservation.html : aucune violation WCAG A/AA
+  Error: page.evaluate: Execution context was destroyed, most likely because of a navigation
+  Sortie complete : test-results/porte-e2e.log  (385 lignes utiles sur 6 320)
+```
+
+**Nom, fichier, ligne, cause.** Le correctif a pris cinq minutes. Sans P-33, c'était une
+relance et un haussement d'épaules — et la même surprise la semaine suivante.
+
+> **Attendre la stabilité n'est pas attendre plus longtemps : c'est attendre la bonne chose.**
+> Sur une machine rapide, la nouvelle attente rend la main *plus tôt* que les 900 ms fixes ;
+> sur une machine lente, elle attend ce qu'il faut. Les 27 autres `waitForTimeout` du dossier
+> `tests/e2e/` sont du même bois — P-33 les nommait déjà comme le suspect le plus probable du
+> rouge CI.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

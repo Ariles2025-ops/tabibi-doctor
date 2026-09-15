@@ -122,6 +122,51 @@ for (const [chemin, role] of PAGES) {
 }
 
 
+/**
+ * Attend que la page soit STABILISEE : meme URL trois relevés de suite, et
+ * document pret. Bornee a `max` ms.
+ *
+ * [15/09/2026] Remplace un `waitForTimeout(900)` fixe, qui a produit
+ * exactement le defaut que la porte de SEQ 38 devait rendre lisible :
+ *
+ *     ✘ reservation.html : aucune violation WCAG A/AA detectable
+ *       Error: page.evaluate: Execution context was destroyed,
+ *              most likely because of a navigation
+ *
+ * 900 ms suffisaient sur une machine au repos. Sous charge, la redirection de
+ * la page partait APRES le controle d'URL et PENDANT l'injection d'axe : le
+ * contexte disparaissait sous les pieds de l'analyse. Rouge une fois sur dix,
+ * vert au rejeu — le portrait d'un essai qu'on finit par relancer sans lire.
+ *
+ * ⚠️ Attendre la STABILITE n'est pas attendre plus longtemps : c'est attendre
+ * la bonne chose. Sur une machine rapide, ce helper rend la main plus tot
+ * qu'avant ; sur une machine lente, il attend ce qu'il faut.
+ */
+async function attendreStable(page, max = 8000) {
+  const debut = Date.now();
+  let precedente = null;
+  let identiques = 0;
+  while (Date.now() - debut < max) {
+    let url = null;
+    let pret = false;
+    try {
+      url = page.url();
+      pret = await page.evaluate(() => document.readyState === 'complete');
+    } catch {
+      // Une navigation en cours detruit le contexte : c'est precisement ce
+      // qu'on attend de voir se terminer. On recompte a zero.
+      identiques = 0;
+      precedente = null;
+      await page.waitForTimeout(150);
+      continue;
+    }
+    identiques = (pret && url === precedente) ? identiques + 1 : 0;
+    precedente = url;
+    if (identiques >= 3) return;
+    await page.waitForTimeout(150);
+  }
+}
+
 // =====================================================================
 // LE PARCOURS PRINCIPAL — derriere la connexion
 // =====================================================================
@@ -150,7 +195,7 @@ for (const [chemin, role] of PAGES_PARCOURS) {
     }));
 
     await page.goto(`/${chemin}`, ATTENDRE);
-    await page.waitForTimeout(900);
+    await attendreStable(page);
 
     // Si la page a quand meme redirige, on le DIT au lieu d'auditer autre chose.
     expect(page.url(), `${chemin} a redirige : l'audit porterait sur la mauvaise page`)
