@@ -246,6 +246,36 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## Lot C — le blog annonçait six articles qui n'existaient pas
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-47 | `blog/index.html` annonçait **six articles** — titres, dates, temps de lecture — dont **aucun fichier n'existait**. Six liens sur six vers un 404 | `blog/index.html:77,87,97,107,117,127` ; les six articles réels sont dans `blog/articles/`, sous d'autres noms et sur d'autres sujets | les six cartes sont **réécrites sur les articles réels** : titres et descriptions repris des fichiers, temps de lecture repris des articles | `tests/liens-internes.test.mjs` — **tout** lien interne doit mener à un fichier qui existe | **réglé** |
+| P-48 | Deux liens légaux du même pied de page (`../cgu.html`, `../confidentialite.html`) : les fichiers sont dans `legal/` | deux 404 sur des **mentions légales** | `../legal/cgu.html`, `../legal/confidentialite.html` | même test | **réglé** |
+
+### ⚠️ Ce n'était pas un problème de liens
+
+Les six cartes décrivaient des articles **inventés** : « Comment bien choisir son médecin à
+Alger en 2026 », « 12 mai 2026 », « 5 min ». Rien de tout ça n'existait.
+
+**Même famille que les « 4 médecins vérifiés · ★ 4,9 » de l'accueil (P-27)** : du contenu
+fabriqué, présenté comme réel, sur une page publique et indexée.
+
+C'est pour ça que le correctif ne se contente pas de rebrancher les `href` :
+
+- **les dates ont disparu.** Les articles n'en portent aucune ; en réafficher une serait
+  recommencer la même chose, en plus discret. **Un test l'interdit désormais.**
+- **trois catégories ont disparu** — « Maladies chroniques », « Pédiatrie », « Santé
+  mentale » n'ont aucun article. Elles annonçaient des rubriques vides, comme les cartes
+  annonçaient des articles absents. **Un test exige que chaque catégorie affichée ait au
+  moins un article.**
+
+⚠️ **Ce qui reste, et qui n'est pas corrigé ici** : les chips de catégorie sont des
+`href="#"` — elles ne filtrent rien. Défaut séparé, cosmétique, signalé dans le code.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
