@@ -354,11 +354,50 @@ envoyé une requête sans critère à chaque chargement de l'accueil, et personn
 passer.
 
 
+---
+
+## L'accueil montre enfin de vrais médecins
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-57 | L'accueil **annonçait « 75 000+ médecins » et n'en montrait aucun** : la liste affichait « Choisissez une wilaya ou une spécialité » | le court-circuit `if(!ville && !spec && !search)` datait du durcissement C1 : sans filtre, **aucune requête n'était envoyée** | `praticiens_vitrine(page, limite)` par défaut — de vrais praticiens, paginés ; dès qu'un filtre ou du texte arrive, on repasse à `chercher_praticiens` | `tests/e2e/accueil-vitrine.spec.js` — 8 parcours × 2 profils : cartes au chargement, **zéro état vide**, pagination qui avance, retour à la recherche | **réglé** |
+| P-27 | La carte du héros montrait **« Dr. Amine · 09:30 »** — un médecin **inventé**, affiché comme un rendez-vous réel | même famille que les six articles de blog qui n'existaient pas (P-47) | l'identité inventée est retirée ; le reste de la carte est une illustration d'interface, pas une affirmation sur quelqu'un | même essai : aucun « Dr. Amine » dans le héros | **réglé** |
+| P-58 | La bande **téléconsultation** disait « Bientôt » et renvoyait vers la **liste d'attente** — alors que le drapeau `video` est **ouvert en production** | P-12 et P-13 : la salle est en service, la CSP laisse passer | « Disponible », et le bouton mène à la réservation | même essai : le badge dit « disponible », **aucun lien vers `waiting-list`** | **réglé** |
+
+### ⚠️ Ce qu'on ne promet toujours pas
+
+**La vitrine ne compte pas.** `praticiens_vitrine` ne rend aucun total : compter 75 000 lignes
+à chaque chargement d'accueil se paie. La pagination est donc « précédent / suivant », et
+**« suivant » n'existe que si la page reçue était pleine**.
+
+> On n'affiche pas « page 3 sur 3 750 » : ce serait un chiffre qu'on n'a pas mesuré. Le
+> compteur dit **ce qu'on montre**, pas ce qu'on suppose. C'est la leçon du « 500+ inscrits »,
+> appliquée là où elle coûte quelque chose.
+
+⚠️ Et pour la téléconsultation : la bande annonce ce qui est **livré**, pas ce qui est
+**éprouvé**. **Un appel réel entre deux navigateurs n'a toujours pas eu lieu** — c'est P-31,
+qui reste ouvert.
+
+### Une garde a changé de forme le jour même
+
+L'essai de P-51 vérifiait la ligne exacte `if(!opts.ville && !opts.spec && !opts.search){ … }`.
+Ce lot **supprime ce court-circuit entièrement** — la vitrine va plus loin que ce que la garde
+protégeait.
+
+> La vérifier telle quelle aurait fait échouer un lot qui améliore la chose. La supprimer
+> aurait laissé un trou. **C'est l'intention qu'on garde** : un terme seul doit atteindre le
+> serveur, et aucun retour anticipé ne doit s'intercaler avant la requête.
+
+Et elle lit désormais **le code sans ses commentaires** : le commentaire qui *explique* la
+suppression de `_renderChooseFilter` contenait son nom, et le test a conclu que la fonction
+était revenue. **C'est la cinquième fois** qu'une garde de ce dépôt se fait avoir par sa
+propre documentation.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
 |---|---|---|---|---|---|
-| P-27 | `accueil-public.html` affiche **4 fiches de médecins écrites en dur** — « ✓ Vérifié · ★ 4,9 » | ces médecins n'existent pas ; `reviews` contient 0 ligne | — | **garde manquante** | **ouvert** |
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
 | P-29 | Le sélecteur de langue **disparaît** de l'accueil construit quand un tiers est injoignable | sources hermétique : 3 boutons · `dist-web` hermétique : **0** · `dist-web` serveur nu : 3 | — (mécanisme non élucidé) | **garde manquante** | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |

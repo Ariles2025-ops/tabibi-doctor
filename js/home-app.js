@@ -24,7 +24,7 @@ const TR = {
     conn_req:"Connectez-vous pour réserver",reset_ok:"Filtres réinitialisés",
     docs_choose_filter:"Choisissez une wilaya ou une spécialité",docs_choose_filter_sub:"La liste s'affiche dès qu'un de ces deux filtres est renseigné.",no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",docs_load_err:"Impossible de charger les médecins",docs_load_err_sub:"Vérifiez votre connexion.",retry:"Réessayer",
     cert:"Certifié",urgent:"Urgences",available:"Disponible",rdv:"Prendre RDV",
-    found:"médecin(s) trouvé(s)",avis_word:"avis",consult_word:"consult.",
+    found:"médecin(s) trouvé(s)",shown_here:"médecins affichés",avis_word:"avis",consult_word:"consult.",
     nav_home:"Accueil",nav_spec:"Spécialités",nav_docs:"Médecins",nav_rdv:"Mes RDV",nav_profile:"Profil",nav_map:"Carte",greeting:"Bonjour",
     login:"Connexion",signup:"Inscription",my_account:"Mon compte",logout:"Déconnexion",
     hero_badge:"Médecins en Algérie",
@@ -97,7 +97,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     conn_req:"سجّل دخولك للحجز",reset_ok:"تمت إعادة التعيين",
     docs_choose_filter:"اختر ولاية أو تخصصًا",docs_choose_filter_sub:"تظهر القائمة بمجرد تحديد أحد هذين الفلترين.",no_docs:"لا يوجد طبيب مطابق",try_other:"حاول تغيير المعايير",
     cert:"معتمد",urgent:"طوارئ",available:"متاح",rdv:"حجز موعد",
-    found:"طبيب(ة) وُجد(ت)",avis_word:"تقييم",consult_word:"استشارة",
+    found:"طبيب(ة) وُجد(ت)",shown_here:"طبيب معروض",avis_word:"تقييم",consult_word:"استشارة",
     nav_home:"الرئيسية",nav_spec:"التخصصات",nav_docs:"الأطباء",nav_rdv:"مواعيدي",nav_profile:"حسابي",nav_map:"الخريطة",greeting:"مرحبا",
     login:"دخول",signup:"تسجيل",my_account:"حسابي",logout:"خروج",
     hero_badge:"أطباء في الجزائر",
@@ -170,7 +170,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     conn_req:"Sign in to book",reset_ok:"Filters reset",
     docs_choose_filter:"Pick a wilaya or a specialty",docs_choose_filter_sub:"The list appears as soon as one of these two filters is set.",no_docs:"No doctors found",try_other:"Try different criteria",
     cert:"Certified",urgent:"Urgent",available:"Available",rdv:"Book",
-    found:"doctor(s) found",avis_word:"reviews",consult_word:"consult.",
+    found:"doctor(s) found",shown_here:"doctors shown",avis_word:"reviews",consult_word:"consult.",
     nav_home:"Home",nav_spec:"Specialties",nav_docs:"Doctors",nav_rdv:"My Appts",nav_profile:"Profile",nav_map:"Map",greeting:"Hello",
     login:"Sign in",signup:"Sign up",my_account:"My account",logout:"Log out",
     hero_badge:"Doctors across Algeria",
@@ -1105,14 +1105,43 @@ function renderDocs(){
     box.innerHTML=`<div class="empty-state"><div class="empty-icon"><i class='fa fa-magnifying-glass'></i></div><div class="empty-title">${T("no_docs")}</div><p class="empty-sub">${T("try_other")}</p></div>`;
     document.getElementById("pag").innerHTML=""; return;
   }
-  // Pagination SERVEUR : le batch EST déjà la page ; nb pages = total serveur / PER
-  const pages=Math.ceil(_lastDoctorTotal/PER);
   box.innerHTML=filtered.map(d=>docCard(d)).join("");
   const pag=document.getElementById("pag");
-  pag.innerHTML = pages>1 ? buildPagination(curPage, pages) : "";
+  // ⚠️ UNE SEULE ECRITURE, a dessein : deux `innerHTML` au lieu d'un font
+  // monter le compteur de `lint:dette`, et une dette qui monte sans raison
+  // finit par etre acceptee comme normale.
+  //
+  // Vitrine : aucun total mesure, donc pas de nombre de pages — seulement
+  // « precedent » / « suivant », et « suivant » uniquement si la page recue
+  // etait pleine. Recherche : le batch EST la page, nb pages = total / PER.
+  const pages = _modeVitrine ? 0 : Math.ceil(_lastDoctorTotal/PER);
+  pag.innerHTML = _modeVitrine
+    ? buildPaginationVitrine(curPage, _vitrinePagePleine)
+    : (pages>1 ? buildPagination(curPage, pages) : "");
 }
 
 function goPage(p){loadDoctorCards(_lastFilterOpts, p);scrollTo$("sec-docs");}
+
+/**
+ * Pagination de la vitrine : precedent / suivant, sans nombre de pages.
+ *
+ * ⚠️ On ne SAIT PAS combien il y a de pages — la RPC ne compte pas, a dessein.
+ * Afficher « page 3 sur 3 750 » demanderait un comptage sur 75 000 lignes a
+ * chaque chargement d'accueil. **On n'affiche pas un chiffre qu'on n'a pas
+ * mesure** : c'est la lecon du « 500+ inscrits ».
+ */
+function buildPaginationVitrine(cur, pagePleine){
+  function b(p, label, off){
+    return '<button style="min-width:34px;height:34px;padding:0 12px;border-radius:var(--r8);'
+      + 'border:1.5px solid var(--border);background:#fff;color:var(--text3);font-size:13px;'
+      + 'font-weight:600;cursor:' + (off ? 'not-allowed' : 'pointer') + ';opacity:' + (off ? '.4' : '1') + '" '
+      + (off ? 'disabled' : 'onclick="goPage(' + p + ')"') + '>' + hEsc(label) + '</button>';
+  }
+  return b(Math.max(1, cur - 1), '‹', cur === 1)
+    + '<span style="min-width:24px;text-align:center;color:var(--text3);font-weight:700;padding:0 6px">'
+    + hEsc(String(cur)) + '</span>'
+    + b(cur + 1, '›', !pagePleine);
+}
 
 function buildPagination(cur, total){
   // Style Google : 1 ... cur-2 cur-1 cur cur+1 cur+2 ... total
@@ -1747,6 +1776,11 @@ function animateCounters(total){if(!total)return;const targets=[document.getElem
 let _loadDocsAbort = null;
 let _loadDocsSeq = 0;
 let _lastDoctorTotal = 0;
+// Vitrine : pas de total serveur, donc pas de nombre de pages. On ne garde que
+// ce qu'on sait — « la page recue etait pleine, il y en a donc au moins une
+// autre ».
+let _modeVitrine = false;
+let _vitrinePagePleine = false;
 let _lastFilterOpts = {};
 
 // [Phase 5.6 fix BUG #1 v2] Fetch DISTINCT values des colonnes que filtre la
@@ -1929,24 +1963,20 @@ function _buildDoctorCardsArgs(opts, page){
     p_limite:     Math.min(50, PER)
   };
 }
-// [C1] Sans wilaya ni spécialité, la RPC refuse (400 filtre_obligatoire) :
-// on affiche l'invite et on n'appelle pas le serveur.
-function _renderChooseFilter(){
-  const rc = document.getElementById('res-count'); if(rc) rc.textContent = '';
-  const box = document.getElementById('docs-list');
-  if(box){
-    // Construit l'état vide par l'API DOM (aucun innerHTML : texte i18n → textContent).
-    const wrap = document.createElement('div'); wrap.className = 'empty-state';
-    const ico = document.createElement('div'); ico.className = 'empty-icon';
-    const i = document.createElement('i'); i.className = 'fa fa-location-dot'; ico.appendChild(i);
-    const titre = document.createElement('div'); titre.className = 'empty-title'; titre.textContent = T('docs_choose_filter');
-    const sous = document.createElement('p'); sous.textContent = T('docs_choose_filter_sub');
-    wrap.append(ico, titre, sous);
-    box.replaceChildren(wrap);
-  }
-  const pag = document.getElementById('pag'); if(pag) pag.replaceChildren();
-  DOCTORS.length = 0; _lastDoctorTotal = 0;
-}
+// [15/09/2026] `_renderChooseFilter()` A ETE SUPPRIMEE.
+//
+// Elle affichait « Choisissez une wilaya ou une specialite » quand aucun filtre
+// n'etait pose, et n'appelait pas le serveur — c'etait juste le 09/09, quand la
+// RPC refusait une recherche sans filtre.
+//
+// Depuis `praticiens_vitrine`, ce cas a une meilleure reponse : de VRAIS
+// medecins. La fonction n'avait plus aucun appelant.
+//
+// ⚠️ On ne la garde pas « au cas ou » : une fonction morte finit par etre
+// rappelee par erreur, et elle reafficherait un ecran vide la ou il y a
+// desormais quelque chose a montrer. Les cles `docs_choose_filter*` restent
+// dans les dictionnaires — elles ne genent personne et l'alignement des trois
+// langues est verifie par une porte.
 
 async function loadDoctorCards(opts, page){
   opts = opts || {};
@@ -1963,15 +1993,28 @@ async function loadDoctorCards(opts, page){
   const rc = document.getElementById('res-count');
   if(rc) rc.textContent = '...';
 
-  // [15/09/2026] `!opts.search` AJOUTE. Sans lui, taper « cardiologue » sans
-  // toucher aux menus affichait « Choisissez une wilaya ou une specialite » et
-  // **n'appelait pas le serveur** : la barre de recherche ne cherchait plus.
-  // La RPC accepte `p_q` seul depuis aujourd'hui ; le front doit la laisser
-  // faire son travail.
-  if(!opts.ville && !opts.spec && !opts.search){ _renderChooseFilter(); return; }
+  // =====================================================================
+  // [15/09/2026] SANS FILTRE, ON MONTRE DE VRAIS MEDECINS
+  // =====================================================================
+  // L'accueil ANNONCAIT « 75 000+ medecins » et n'en MONTRAIT aucun : la liste
+  // affichait « Choisissez une wilaya ou une specialite ». Un chiffre sans une
+  // seule fiche derriere, c'est la famille du « 500+ inscrits ».
+  //
+  // `praticiens_vitrine(page, limite)` rend une PAGE de vrais praticiens, sans
+  // filtre obligatoire et sans comptage couteux. On l'appelle par defaut ; des
+  // que l'utilisateur tape ou choisit un filtre, on repasse a
+  // `chercher_praticiens` — le parsing du texte libre reste celui de P-51.
+  //
+  // ⚠️ ELLE NE REND AUCUN TOTAL, et c'est voulu : compter 75 000 lignes a
+  // chaque chargement d'accueil se paie. La pagination devient donc
+  // « precedent / suivant », et « suivant » n'existe que si la page recue est
+  // PLEINE. On ne promet pas un nombre de pages qu'on n'a pas mesure.
+  const vitrine = !opts.ville && !opts.spec && !opts.search;
 
   try {
-    const res = await _tbRpc('chercher_praticiens', _buildDoctorCardsArgs(opts, page), signal);
+    const res = vitrine
+      ? await _tbRpc('praticiens_vitrine', { p_page: Math.max(1, page), p_limite: PER }, signal)
+      : await _tbRpc('chercher_praticiens', _buildDoctorCardsArgs(opts, page), signal);
     if(mySeq !== _loadDocsSeq) return;  // une requête plus récente a démarré
     if(!res.ok){
       console.warn('[Tabibi] loadDoctorCards HTTP', res.status);
@@ -1985,12 +2028,19 @@ async function loadDoctorCards(opts, page){
         + '<a onclick="doFilter(true)" style="font-size:12.5px;font-weight:700;color:#0E5F46;border-bottom:1px dashed #0F7560;cursor:pointer">' + T('retry') + '</a></div>';
       return;
     }
-    // [C1] La RPC renvoie { total, page, limite, lignes }
+    // Deux formes, une seule suite : `chercher_praticiens` rend
+    // { total, page, limite, lignes } ; `praticiens_vitrine` rend un TABLEAU.
     const corps = await res.json();
     if(mySeq !== _loadDocsSeq) return;
-    const total = (corps && corps.total) || 0;
-    _lastDoctorTotal = total;
-    const batch = (corps && corps.lignes) || [];
+    const batch = vitrine
+      ? (Array.isArray(corps) ? corps : [])
+      : ((corps && corps.lignes) || []);
+    _modeVitrine = vitrine;
+    // En vitrine le total est inconnu : « suivant » n'existe que si la page
+    // recue est pleine. C'est la seule chose qu'on sache, et on n'en dit pas
+    // plus.
+    _vitrinePagePleine = vitrine ? (batch.length >= PER) : false;
+    _lastDoctorTotal = vitrine ? 0 : ((corps && corps.total) || 0);
 
     // Hydrate DOCTORS
     DOCTORS.length = 0;
@@ -2065,7 +2115,7 @@ async function loadDoctorCards(opts, page){
 
     filtered = res2; curPage = page;
     renderDocs();
-    _updateResCount(total, res2.length, opts);
+    _updateResCount(_lastDoctorTotal, res2.length, opts, vitrine);
   } catch(e) {
     if(e && e.name === 'AbortError') return;
     console.warn('[Tabibi] loadDoctorCards exception:', e && e.message);
@@ -2080,9 +2130,21 @@ async function loadDoctorCards(opts, page){
 }
 
 // Affiche un compteur + message UX selon contexte
-function _updateResCount(serverTotal, shownLocal, opts){
+function _updateResCount(serverTotal, shownLocal, opts, vitrine){
   const rc = document.getElementById('res-count');
   if(!rc) return;
+
+  // ⚠️ EN VITRINE, ON NE CONNAIT PAS LE TOTAL — la RPC ne compte pas, a
+  // dessein (75 000 lignes a chaque chargement d'accueil). On dit donc ce
+  // qu'on sait : combien on montre. Ecrire « 0 medecin trouve » parce que le
+  // total vaut 0 serait faux ; ecrire un total invente serait pire.
+  if(vitrine){
+    rc.textContent = shownLocal > 0
+      ? shownLocal + ' ' + (T('shown_here') || 'médecins affichés')
+      : (T('no_docs') || 'Aucun médecin à afficher');
+    return;
+  }
+
   if(serverTotal === 0){
     const filtersActive = !!(opts.ville || opts.spec || opts.search
                           || opts.maxPrice != null || opts.minRating > 0
