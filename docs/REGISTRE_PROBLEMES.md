@@ -246,6 +246,31 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## Lot A — l'accès pilote, de la session au tableau de bord
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-44 | Le médecin entrait par son numéro, la session s'ouvrait… et le tableau de bord affichait **« Dr. -- »** | mesuré en live le 15/09 : le tableau de bord ne lit **pas** la session, il lit `tabibi_user` dans `localStorage` — et l'entrée par numéro ne le remplissait pas | après `setSession` et **avant** la redirection : `get_my_doctor_profile()`, et `tabibi_user` écrit **dans la forme exacte de `login.html`** | `tests/e2e/acces-pilote.spec.js` — `name`, `initials`, `role`, `specialty`, `ville`, `doctor_profile_id` non vides | **réglé** |
+| P-45 | À l'expiration, un compte pilote était renvoyé vers `login.html` — **où il n'a rien à taper** | un compte pilote n'a **pas de mot de passe** : sa porte est `medecin-pilote.html` | marqueur `tabibi_pilote` posé à l'entrée, lu par `js/auth.js` **avant** la purge, et purgé avec le reste (y compris au `signOut`) | `tests/e2e/acces-pilote.spec.js` — pilote → `medecin-pilote.html`, **et la contre-épreuve** : compte ordinaire → `login.html` | **réglé** |
+
+### Ce que P-44 apprend, au-delà du correctif
+
+> **Une session valide ne suffit pas.** Il faut aussi ce que la page attend, à l'endroit où
+> elle l'attend. La session était bonne, la RLS laissait passer, la RPC répondait — et
+> l'écran disait « Dr. -- », parce que personne n'avait rempli la case que le tableau de bord
+> regarde.
+
+C'est pour ça que la forme de `tabibi_user` est **copiée** de `login.html` plutôt que
+réinventée : une forme voisine aurait marché à moitié, longtemps, et par endroits.
+
+⚠️ **Et on n'invente pas de nom.** Si la fiche ne revient pas, on écrit le minimum
+(identifiant, rôle, lien vers la fiche) et le tableau de bord dit ce qu'il sait. Un nom
+fabriqué donnerait le change et masquerait le défaut — c'est la famille du « 500+ inscrits »
+et du « e-mail envoyé ». C'est testé, avec son propre cas.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

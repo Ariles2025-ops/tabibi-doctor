@@ -33,6 +33,9 @@
       try {
         localStorage.removeItem('tabibi_user');
         localStorage.removeItem('tabibi_role');
+        // Le marqueur pilote part avec le reste : laisse en place, il
+        // renverrait le prochain compte vers la mauvaise porte.
+        localStorage.removeItem('tabibi_pilote');
       } catch (e) { (window.tabibiErreur || console.warn)(e, 'auth.js:36'); }
       window.location.href = cfg.REDIRECTS.afterLogout;
     },
@@ -74,9 +77,31 @@
         return list.map(normRole).indexOf(normRole(role)) !== -1;
       };
       const cachedUser = () => { try { return JSON.parse(localStorage.getItem('tabibi_user')||'null'); } catch(e){ return null; } };
+      // [15/09/2026] UN COMPTE PILOTE N'A PAS DE MOT DE PASSE.
+      //
+      // L'envoyer sur `login.html` a l'expiration, c'est l'envoyer dans un
+      // mur : il n'a rien a y taper. Sa porte d'entree est `medecin-pilote.html`
+      // — son numero, et rien d'autre.
+      //
+      // Le marqueur est pose par `medecin-pilote.html` au moment de l'entree.
+      // Il est lu AVANT la purge, et purge avec le reste : un marqueur qui
+      // survit a la session renverrait un compte ordinaire vers la mauvaise
+      // porte.
+      const porteDeSortie = () => {
+        let pilote = false;
+        // `localStorage` peut lever (navigation privee, stockage bloque) : on
+        // retombe sur la porte ordinaire, qui est le cas le plus frequent.
+        try { pilote = localStorage.getItem('tabibi_pilote') === '1'; } catch { pilote = false; }
+        return pilote ? 'medecin-pilote.html' : loginUrl;
+      };
       const purgeAndLogin = () => {
-        try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch (e) { (window.tabibiErreur || console.warn)(e, 'auth.js:78'); }
-        window.location.href = loginUrl; return null;
+        const cible = porteDeSortie();
+        try {
+          localStorage.removeItem('tabibi_user');
+          localStorage.removeItem('tabibi_role');
+          localStorage.removeItem('tabibi_pilote');
+        } catch (e) { (window.tabibiErreur || console.warn)(e, 'auth.js:78'); }
+        window.location.href = cible; return null;
       };
       // (e) classification fine, pas de catch générique
       const isAuthRejection = (err) => {
