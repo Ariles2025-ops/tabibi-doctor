@@ -246,6 +246,57 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## 🔴 P-51 — la barre de recherche ne cherchait plus, depuis six jours
+
+| | |
+|---|---|
+| **symptôme** | taper « cardiologue », « cardiologue béjaïa » ou un nom dans `#name-search` **sans choisir de menu** affichait « Choisissez une wilaya ou une spécialité » — et **n'appelait même pas le serveur** |
+| **signalé par** | Aghiles, 15/09. **Six jours** après la régression |
+| **cause** | durcissement C1 (`b878ff8`, 09/09) : `js/home-app.js` court-circuitait sur `if(!opts.ville && !opts.spec)`. Avant, le front filtrait le texte en mémoire |
+| **côté base** | déjà corrigé en prod par le stratège : `chercher_praticiens` accepte `p_q` seul (index GIN). Mesuré en direct : `p_q='cardiologue'` → 1 526, `'cardiologue béjaïa'` → 14, `'benali'` → 131 ; menus inchangés → 23 |
+| **correctif front** | `!opts.search` ajouté au court-circuit, **et** une analyse du texte libre qui pose `p_wilaya`/`p_specialite` quand un jeton correspond franchement à une valeur de la base |
+| **garde** | `tests/recherche-texte-libre.test.mjs` (10 essais sur la fonction réelle, extraite du fichier) **et** `tests/e2e/recherche-texte-libre.spec.js` (5 parcours × 2 profils, qui **lisent ce qui part sur le réseau**) | 
+| **statut** | **réglé** |
+
+### ⚠️ Ce que cette régression apprend — et ce n'est pas « il manquait un `&&` »
+
+> **Le garde-fou avait RAISON le 09/09.** La RPC refusait alors une recherche sans filtre :
+> court-circuiter évitait un 400 garanti. Il a eu **tort** à la seconde où la RPC a accepté
+> `p_q` seul.
+>
+> **Une garde correcte devient fausse quand ce qu'elle protège change, et rien ne le lui
+> dit.** Ici, la contrainte vivait à deux endroits — une condition dans le front, une
+> exigence dans la RPC — et seule la seconde a été mise à jour.
+
+C'est le même motif que P-50 (une référence périmée) et P-41 (un captcha vérifié au mauvais
+moment) : **ce n'était pas le *quoi* qui était faux, c'était le *quand*.** Trois fois en deux
+jours.
+
+### Pourquoi une analyse du texte, et pas seulement `p_q`
+
+Le `&&` seul suffisait à réparer la panne. L'analyse ajoute que « cardiologue bejaia » — **sans
+accent, comme on tape** — retrouve `Cardiologue` + `Béjaïa` au lieu de chercher les deux mots
+en texte brut. La normalisation (minuscules, accents retirés) sert les deux côtés de la
+comparaison.
+
+⚠️ **Elle ne devine jamais à moitié** : un jeton doit correspondre **exactement** à une valeur
+de la base. Un préfixe suffirait à faire d'un nom de médecin une spécialité — « Dr Cardin »
+deviendrait « Cardiologue », et la recherche rendrait 1 500 fiches au lieu d'une. **C'est
+testé, dans les deux sens.**
+
+Et un menu choisi **prime toujours** : si l'utilisateur a rempli `f-ville` ou `f-spec`, rien
+n'est deviné contre lui.
+
+### La contre-épreuve qui manquait au correctif d'origine
+
+Le cinquième essai de bout en bout vérifie qu'un **champ vide** ne déclenche **aucune**
+recherche. Sans lui, supprimer le court-circuit — la correction la plus directe — aurait
+envoyé une requête sans critère à chaque chargement de l'accueil, et personne ne l'aurait vu
+passer.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

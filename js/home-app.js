@@ -1779,13 +1779,108 @@ function _inferEntityType(slug){
   return null;   // défaut médecin → préfixe "Dr."
 }
 
+// =====================================================================
+// [15/09/2026] « cardiologue bejaia » doit trouver, sans menu et sans accent
+// =====================================================================
+// LE DEFAUT : depuis le durcissement C1 (b878ff8, 09/09), taper un terme dans
+// la barre SANS choisir de menu affichait « Choisissez une wilaya ou une
+// specialite » — et n'appelait meme pas le serveur. La barre de recherche
+// **avait cesse de chercher** pendant six jours.
+//
+// La RPC accepte desormais `p_q` seul (corrige en base par le stratege). Le
+// garde-fou du front, lui, ne laissait toujours pas passer le texte.
+//
+// ---------------------------------------------------------------------
+// CE QUE FAIT CETTE FONCTION, ET POURQUOI ELLE EST SEPAREE
+// ---------------------------------------------------------------------
+// Elle lit le texte libre et en extrait ce qu'elle RECONNAIT franchement :
+// une wilaya, une specialite. Le reste part en `p_q`.
+//
+// « cardiologue bejaia »  ->  p_specialite='Cardiologue', p_wilaya='Béjaïa'
+// « benali »              ->  p_q='benali'   (aucun jeton reconnu)
+// « cardiologue benali »  ->  p_specialite='Cardiologue', p_q='benali'
+//
+// ⚠️ ELLE NE REMPLACE JAMAIS UN MENU. Si `f-ville` ou `f-spec` est rempli,
+// l'utilisateur a choisi : son choix prime, et rien n'est devine.
+//
+// ⚠️ ET ELLE NE DEVINE PAS A MOITIE. Un jeton doit correspondre **exactement**
+// (apres normalisation) a une valeur de la base. Un prefixe suffirait a faire
+// d'un nom de medecin une specialite — « Dr Cardin » deviendrait
+// « Cardiologue », et la recherche rendrait 1 500 fiches au lieu d'une.
+//
+// La normalisation (minuscules + sans accents) sert LES DEUX COTES : c'est
+// elle qui fait que « bejaia » trouve « Béjaïa ».
+// ---------------------------------------------------------------------
+function _normaliserRecherche(s){
+  return String(s == null ? '' : s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function _analyserTexteLibre(texte, wilayas, specialites){
+  const vide = { wilaya: null, spec: null, reste: null };
+  const brut = String(texte == null ? '' : texte).trim();
+  if(!brut) return vide;
+
+  const W = Array.isArray(wilayas) ? wilayas : [];
+  const S = Array.isArray(specialites) ? specialites : [];
+  // Index normalise -> valeur EXACTE de la base. C'est cette valeur-la qu'on
+  // renvoie : la RPC compare a la base, pas a ce que l'utilisateur a tape.
+  const index = (liste) => {
+    const m = new Map();
+    for(const v of liste){ const n = _normaliserRecherche(v); if(n) m.set(n, v); }
+    return m;
+  };
+  const iW = index(W);
+  const iS = index(S);
+
+  const jetons = _normaliserRecherche(brut).split(' ').filter(Boolean);
+  if(!jetons.length) return vide;
+
+  let wilaya = null, spec = null;
+  const reste = [];
+  for(let i = 0; i < jetons.length; i++){
+    // Les valeurs a deux mots d'abord (« bordj bou arreridj », « medecin
+    // generaliste ») : sans ca, « bordj » seul ne correspondrait a rien et on
+    // perdrait la wilaya.
+    let pris = false;
+    for(let n = Math.min(3, jetons.length - i); n >= 1 && !pris; n--){
+      const groupe = jetons.slice(i, i + n).join(' ');
+      if(!wilaya && iW.has(groupe)){ wilaya = iW.get(groupe); i += n - 1; pris = true; break; }
+      if(!spec   && iS.has(groupe)){ spec   = iS.get(groupe); i += n - 1; pris = true; break; }
+    }
+    if(!pris) reste.push(jetons[i]);
+  }
+
+  return {
+    wilaya,
+    spec,
+    // Le reste part tel quel en texte libre. S'il ne reste rien, `p_q` est
+    // nul : la recherche porte alors uniquement sur les deux filtres, ce qui
+    // est exactement ce que les menus auraient fait.
+    reste: reste.length ? reste.join(' ') : null,
+  };
+}
+
 // [C1] Arguments de la RPC chercher_praticiens. Le texte libre est passé tel
 // quel : c'est la RPC qui neutralise les jokers ilike et borne à 60 caractères.
 function _buildDoctorCardsArgs(opts, page){
+  let wilaya = opts.ville || null;
+  let spec   = opts.spec  || null;
+  let q      = opts.search ? String(opts.search).trim() || null : null;
+
+  // Le texte n'est analyse QUE si l'utilisateur n'a choisi aucun menu. Un choix
+  // explicite prime toujours sur une devinette.
+  if(!wilaya && !spec && q){
+    const lu = _analyserTexteLibre(q, window._DB_WILAYAS, window._DB_SPECIALTIES);
+    if(lu.wilaya || lu.spec){ wilaya = lu.wilaya; spec = lu.spec; q = lu.reste; }
+  }
+
   return {
-    p_wilaya:     opts.ville  || null,
-    p_specialite: opts.spec   || null,
-    p_q:          opts.search ? String(opts.search).trim() || null : null,
+    p_wilaya:     wilaya,
+    p_specialite: spec,
+    p_q:          q,
     p_type:       null,
     p_page:       Math.min(100, Math.max(1, page || 1)),
     p_limite:     Math.min(50, PER)
@@ -1825,7 +1920,12 @@ async function loadDoctorCards(opts, page){
   const rc = document.getElementById('res-count');
   if(rc) rc.textContent = '...';
 
-  if(!opts.ville && !opts.spec){ _renderChooseFilter(); return; }
+  // [15/09/2026] `!opts.search` AJOUTE. Sans lui, taper « cardiologue » sans
+  // toucher aux menus affichait « Choisissez une wilaya ou une specialite » et
+  // **n'appelait pas le serveur** : la barre de recherche ne cherchait plus.
+  // La RPC accepte `p_q` seul depuis aujourd'hui ; le front doit la laisser
+  // faire son travail.
+  if(!opts.ville && !opts.spec && !opts.search){ _renderChooseFilter(); return; }
 
   try {
     const res = await _tbRpc('chercher_praticiens', _buildDoctorCardsArgs(opts, page), signal);
