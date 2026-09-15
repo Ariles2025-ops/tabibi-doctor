@@ -203,6 +203,49 @@ gabarits** dont une interpolation n'est pas prouvée. Les opaques dominent : `or
 pas une garde.**
 
 
+---
+
+## ⚠️ Dette de sécurité assumée — à lever avant le premier vrai patient
+
+| ID | ce que c'est | pourquoi c'est une dette | ce qui la tient | garde | statut |
+|---|---|---|---|---|---|
+| P-40 | **Accès médecin par numéro de téléphone** : le médecin tape son numéro, il est dans l'app. Pas de mot de passe, pas de code SMS, pas de lien | **Un numéro de téléphone n'est pas un secret.** Il est sur une plaque, une ordonnance, un annuaire, une page Facebook. Quiconque connaît le numéro d'un médecin de la liste peut ouvrir **sa** session | (1) liste blanche remplie à la main par un admin · (2) interrupteur `ACCES_PILOTE_NUMERO_ENABLED`, **absent = fermé** · (3) Turnstile obligatoire, vérifié **avant** le numéro · (4) 5 tentatives/minute par IP **et** par numéro | `tests/acces-pilote.test.mjs` (16 essais : les 4 gardes, l'énumération, le secret) + `tests/e2e/acces-pilote.spec.js` (9 parcours × 2 profils) | **dette assumée — pilote fermé uniquement** |
+
+### Les trois conditions sous lesquelles ce code a été écrit
+
+1. **Liste blanche.** Aucune inscription libre : un administrateur ajoute les numéros un par un
+   (`admin_ajouter_medecin_pilote`).
+2. **Interrupteur.** `ACCES_PILOTE_NUMERO_ENABLED` doit rester à `false` en production.
+   Le code lit `!== 'true'` : une variable absente, vide ou mal orthographiée **ferme**.
+3. **Données de test.** Les fiches de la liste doivent être des comptes de démonstration.
+   ⚠️ **Un médecin de la liste qui aurait de vrais patients expose ces patients.**
+
+### À lever comment
+
+Par un **code SMS (OTP)** — la brique d'envoi existe déjà (`send-sms`, `_partage/sms-rappels.ts`)
+et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est un chantier
+**pas fait**.
+
+### Ce qui a quand même été fait correctement
+
+- **Aucune énumération** : un seul code de refus, quelle que soit la raison (inconnu, mal formé,
+  révoqué), et un **plancher de durée** — sinon l'horloge dirait ce que le message tait.
+- **Le mot de passe éphémère ne sort pas.** La session est mintée en posant un mot de passe
+  aléatoire de 32 octets, en s'en servant côté serveur, puis **en le remplaçant par un autre —
+  que la connexion réussisse ou non**. Il n'est ni journalisé ni renvoyé.
+- **Le compteur de tentatives ne stocke ni numéro ni IP**, seulement leur SHA-256. Ce qu'on ne
+  stocke pas ne fuit pas.
+- **`verify_jwt = false` est déclaré dans `config.toml`** — la leçon de P-05, où le réglage non
+  écrit a fait taire le cron des rappels 47 jours.
+- **La page n'est liée depuis nulle part** et porte `noindex`. Ce n'est pas une protection ;
+  c'est une façon de ne pas mettre l'échelle contre le mur.
+
+> **Aucun de ces soins ne rend le modèle sûr.** Ils réduisent ce qui est réductible autour d'un
+> choix qui, lui, reste un raccourci. C'est écrit dans la fonction, dans la migration, dans
+> `config.toml`, dans les essais, et ici — cinq fois, parce qu'une dette qu'on ne relit qu'une
+> fois est une dette qu'on oublie.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

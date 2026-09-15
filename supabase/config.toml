@@ -493,3 +493,21 @@ verify_jwt = false
 enabled = true
 uri = "https://pudugodhiofqrctcdwfl.supabase.co/functions/v1/send-sms"
 secrets = "env(SEND_SMS_HOOK_SECRETS)"
+
+# ⚠️ [15/09/2026] acces-pilote : verify_jwt = FAUX, et ce n'est pas un oubli.
+#
+# Cette fonction ouvre une session a un medecin QUI N'EN A PAS ENCORE : elle
+# est appelee sans `Authorization`. Si la passerelle exigeait un JWT, elle
+# refuserait avant meme que la fonction s'execute — exactement le defaut P-05
+# qui a fait taire le cron des rappels pendant 47 jours.
+#
+# ⚠️ CE QUI LA GARDE N'EST PAS LA PASSERELLE, ce sont quatre choses, dans cet
+# ordre : l'interrupteur `ACCES_PILOTE_NUMERO_ENABLED` (absent = ferme), la
+# liste blanche, Turnstile, et la limitation a 5 tentatives par minute.
+#
+# ⚠️ DETTE DE SECURITE ASSUMEE — registre P-40. Un numero de telephone n'est
+# pas un secret. Ce mode est reserve au pilote ferme, sur donnees de test, et
+# doit etre remplace par un code SMS avant qu'un vrai patient n'existe.
+# L'interrupteur DOIT rester a `false` en production tant que c'est le cas.
+[functions.acces-pilote]
+verify_jwt = false

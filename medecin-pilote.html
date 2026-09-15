@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script><script src="js/tabibi-rpc.js"></script>
+<script src="js/tabibi-security.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
+<meta name="description" content="Accès médecin — pilote Tabibi.">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#0F7560">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="images/icon-192.png">
+<title>Accès médecin — pilote | Tabibi</title>
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
+<link rel="stylesheet" href="styles/tokens-v2.css">
+<link rel="stylesheet" href="styles/components-v2.css">
+<link rel="stylesheet" href="css/tabibi-ui.css">
+<style>
+  body { margin:0; background: var(--bg); color: var(--text); font-family: var(--font-family); }
+  .pil-shell { max-width: 480px; margin: 0 auto; padding: 48px 20px; }
+  .pil-card  { background: var(--card); border: 1px solid var(--border); border-radius: var(--r16);
+               padding: 32px 26px; box-shadow: var(--s1); }
+  .pil-ico   { width: 76px; height: 76px; margin: 0 auto 20px; border-radius: 50%;
+               display: flex; align-items: center; justify-content: center; font-size: 34px;
+               background: var(--bg2); color: var(--color-primary); }
+  .pil-titre { font-size: 21px; font-weight: 800; margin: 0 0 8px; text-align: center; }
+  .pil-sous  { font-size: 14px; color: var(--text2); line-height: 1.6; margin: 0 0 24px; text-align: center; }
+  .pil-label { display: block; font-size: 13px; font-weight: 700; margin: 0 0 6px; }
+  .pil-input { width: 100%; padding: 14px 14px; font-size: 17px; font-family: inherit;
+               border: 1px solid var(--border-strong); border-radius: var(--r8);
+               background: var(--bg); color: var(--text); box-sizing: border-box; }
+  .pil-input:focus { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+  .pil-aide  { font-size: 12.5px; color: var(--text3); margin: 6px 0 18px; }
+  .pil-btn   { width: 100%; padding: 15px; border: 0; border-radius: var(--r8); cursor: pointer;
+               font-family: inherit; font-size: 16px; font-weight: 800;
+               background: var(--color-primary); color: #fff; }
+  .pil-btn[disabled] { opacity: .55; cursor: not-allowed; }
+  .pil-msg   { margin-top: 16px; font-size: 14px; line-height: 1.55; border-radius: var(--r8);
+               padding: 12px 14px; display: none; }
+  .pil-msg.err { display: block; background: var(--color-danger-light); color: var(--color-danger); }
+  .pil-msg.ok  { display: block; background: var(--color-success-light); color: var(--color-success-hover); }
+  .pil-note  { margin-top: 22px; font-size: 12px; color: var(--text3); line-height: 1.6; text-align: center; }
+  #pil-captcha { margin: 4px 0 16px; min-height: 0; }
+</style>
+</head>
+<body>
+
+<div class="pil-shell">
+  <div class="pil-card">
+    <div class="pil-ico"><i class="fa-solid fa-user-doctor" aria-hidden="true"></i></div>
+    <h1 class="pil-titre" data-i18n="pil_titre">Accès médecin — pilote</h1>
+    <p class="pil-sous" data-i18n="pil_sous">Entrez le numéro de téléphone que vous nous avez communiqué.</p>
+
+    <form id="pil-form" novalidate>
+      <label class="pil-label" for="pil-phone" data-i18n="pil_label">Numéro de téléphone</label>
+      <input class="pil-input" id="pil-phone" name="phone" type="tel" inputmode="tel"
+             autocomplete="tel" placeholder="0555 12 34 56" maxlength="20"
+             aria-describedby="pil-aide" required>
+      <p class="pil-aide" id="pil-aide" data-i18n="pil_aide">Mobile algérien, au format 05/06/07 ou +213.</p>
+
+      <div id="pil-captcha"></div>
+
+      <button class="pil-btn" id="pil-btn" type="submit" data-i18n="pil_btn">Entrer</button>
+    </form>
+
+    <div class="pil-msg" id="pil-msg" role="alert" aria-live="polite"></div>
+
+    <p class="pil-note" data-i18n="pil_note">
+      Accès réservé aux médecins du pilote. Si votre numéro n'est pas reconnu, contactez-nous.
+    </p>
+  </div>
+</div>
+
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-turnstile.js"></script>
+
+<script>
+/* =====================================================================
+ * Acces medecin du pilote — le numero, et rien d'autre
+ * =====================================================================
+ * ⚠️ CETTE PAGE N'AUTHENTIFIE PERSONNE. Elle transmet un numero a la fonction
+ * `acces-pilote`, qui decide. Le numero n'est pas un secret : c'est la LISTE
+ * BLANCHE cote serveur qui fait tout le travail, plus l'interrupteur, Turnstile
+ * et la limitation. Voir P-40 au registre.
+ *
+ * ⚠️ ELLE NE PROMET RIEN QU'ELLE N'AIT VU. Il n'existe pas d'ecran de succes
+ * atteignable sans `access_token` dans la reponse. C'est la lecon du « e-mail
+ * envoye » et du « 500+ inscrits » : une page qui affiche un succes qu'elle n'a
+ * pas constate ment a l'utilisateur, et le defaut reste invisible.
+ *
+ * ⚠️ ET ELLE NE DIT JAMAIS POURQUOI C'EST REFUSE. Le serveur rend un refus
+ * unique ; distinguer « numero inconnu » de « numero revoque » ferait de cette
+ * page un annuaire des medecins testeurs.
+ * ===================================================================== */
+(function () {
+  'use strict';
+
+  function $(id) { return document.getElementById(id); }
+  function T(k, f) { return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+
+  var form = $('pil-form');
+  var champ = $('pil-phone');
+  var bouton = $('pil-btn');
+  var zone = $('pil-msg');
+
+  function message(etat, texte) {
+    zone.className = 'pil-msg ' + etat;
+    // textContent, pas innerHTML : ce texte peut venir d'une reponse serveur.
+    zone.textContent = texte;
+  }
+
+  /**
+   * Meme normalisation que le serveur (`normaliserNumero`, `normaliser_numero_dz`).
+   * Elle n'est ici que pour eviter un aller-retour inutile : la seule
+   * normalisation qui COMPTE est celle du serveur.
+   */
+  function normaliser(v) {
+    var p = String(v || '').replace(/[\s\-().+]/g, '');
+    if (p.indexOf('00') === 0) p = p.slice(2);
+    if (p.indexOf('0') === 0) p = '213' + p.slice(1);
+    if (p.indexOf('213') !== 0) {
+      if (/^[567]\d{8}$/.test(p)) p = '213' + p;
+      else return null;
+    }
+    return /^213[567]\d{8}$/.test(p) ? p : null;
+  }
+
+  // Le widget est rendu s'il est configure. S'il ne l'est pas, on ne bloque
+  // pas la page ici : c'est le SERVEUR qui refusera, et c'est la bonne place —
+  // une garde cote navigateur se contourne avec la console.
+  if (window.tabibiTurnstile && typeof window.tabibiTurnstile.renderWidget === 'function') {
+    try { window.tabibiTurnstile.renderWidget('pil-captcha', {}); } catch (e) {
+      console.warn('[pilote] widget captcha :', e && e.message);
+    }
+  }
+
+  form.addEventListener('submit', async function (ev) {
+    ev.preventDefault();
+    message('', '');
+
+    var phone = normaliser(champ.value);
+    if (!phone) {
+      message('err', T('pil_err_format', 'Ce numéro ne ressemble pas à un mobile algérien.'));
+      champ.focus();
+      return;
+    }
+
+    bouton.disabled = true;
+    var libelle = bouton.textContent;
+    bouton.textContent = T('pil_btn_wait', 'Vérification…');
+
+    try {
+      var jeton = null;
+      if (window.tabibiTurnstile && typeof window.tabibiTurnstile.getCaptchaToken === 'function') {
+        jeton = await window.tabibiTurnstile.getCaptchaToken();
+      }
+      // Pas de jeton : on envoie quand meme. Le serveur refusera, et c'est lui
+      // qui doit refuser — on ne fabrique pas ici une garde qu'on ne tient pas.
+
+      var reponse = await window.tabibi.supabase.functions.invoke('acces-pilote', {
+        body: { phone: phone, turnstile_token: jeton || '' }
+      });
+
+      var data = reponse && reponse.data;
+      // ⚠️ `functions.invoke` ne REJETTE pas sur un 4xx : il rend `error`.
+      // Tester la seule presence de `data` laisserait passer un refus.
+      if (!data || !data.access_token || !data.refresh_token) {
+        message('err', T('pil_err_refus', "Accès non autorisé pour ce numéro."));
+        return;
+      }
+
+      var pose = await window.tabibi.supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token
+      });
+      if (pose && pose.error) {
+        // Au journal, la raison ; a l'ecran, un message utile. Sans cette
+        // trace, « la session n'a pas pu etre ouverte » ne se diagnostique pas.
+        console.warn('[pilote] setSession :', pose.error && pose.error.message);
+        message('err', T('pil_err_session', "La session n'a pas pu être ouverte. Réessayez."));
+        return;
+      }
+
+      message('ok', T('pil_ok', 'Bienvenue. Ouverture de votre espace…'));
+      window.location.href = 'doctor-dashboard.html';
+    } catch (e) {
+      console.warn('[pilote] acces :', e && e.message);
+      message('err', T('pil_err_reseau', "Connexion impossible. Vérifiez votre réseau et réessayez."));
+    } finally {
+      bouton.disabled = false;
+      bouton.textContent = libelle;
+    }
+  });
+})();
+</script>
+</body>
+</html>
