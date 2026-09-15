@@ -51,24 +51,23 @@ const REF = 'supabase/rpc/existantes.txt';
 // regeneree : `--base --ecrire` exige un jeton, et il est REVOQUE. Le
 // stratege a demande de ne pas forcer. Un motif faux est pire qu'une entree
 // en trop : il fait conclure au lecteur que l'appel est mort.
+// [15/09/2026] CETTE LISTE EST VIDE, ET C'EST UN RESULTAT.
+//
+// Elle portait cinq entrees, toutes avec le meme motif : « EXISTE en base,
+// hors reference — jeton --base revoque ». Le motif etait PERIME : le MCP
+// Supabase lit `pg_proc` en LECTURE, sans jeton d'ecriture. Les cinq ont ete
+// verifiees une par une le 15/09 et portees dans la reference.
+//
+// ⚠️ UNE LISTE D'EXCEPTIONS QUI RESTE PLEINE FINIT PAR ETRE LUE COMME LA
+// NORME. Celle-ci a mis un jour a se vider parce que personne n'avait relu
+// son motif — pas parce que les fonctions manquaient.
+//
+// Regle inchangee : une NOUVELLE absence ne fait pas echouer le controle, mais
+// elle doit etre ecrite ici avec sa raison. La liste doit MAIGRIR, jamais
+// grossir — et elle est a zero.
 const ABSENCES_CONNUES = {
-  create_prescription_draft: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
-  update_prescription_draft: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
-  request_prescription_signature: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
-  mark_prescription_delivered: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
-  // [14/09, lot invitation] Celle-ci N'EXISTE PAS ENCORE en base : sa migration
-  // (20260915_invitations_medecin.sql) est ecrite et **non appliquee**.
-  //
-  // Je ne l'ai PAS ajoutee a `supabase/rpc/existantes.txt` : ce fichier affirme
-  // « appelees par le front QUI EXISTENT en base ». L'y mettre serait ecrire
-  // une chose fausse dans la reference meme qui sert a detecter le faux.
-  // `ABSENCES_CONNUES` dit exactement la verite du moment : le front l'appelle,
-  // la base ne l'a pas.
-  //
-  // ⚠️ A RETIRER le jour ou le stratege applique la migration — et ce jour-la
-  // la liste MAIGRIT, ce qui est son sens.
-  accepter_invitation_medecin: 'migration 20260915_invitations_medecin.sql ECRITE, NON APPLIQUEE',
 };
+
 
 const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',
   'desktop', 'v2', 'seo', '.git', 'tests', 'blog', 'docs', 'supabase', 'migrations',
@@ -176,7 +175,7 @@ async function pgProc() {
 // accept_cabinet_invitation) passent par la passerelle. Le second est le site
 // du defaut d'origine — celui qui creait un compte secretaire « avec succes »
 // sans aucune adhesion au cabinet.
-const PLAFOND_RPC_DIRECT = 51;
+const PLAFOND_RPC_DIRECT = 50;   // [15/09/2026] 51 -> 50 : un site de moins, le cliquet descend.
 
 function appelsDirects() {
   const par = {};
