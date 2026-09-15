@@ -220,6 +220,102 @@ test.describe('acces pilote par numero', () => {
     expect(Object.keys(appels[0])).toContain('turnstile_token');
   });
 
+  test('apres l entree, `tabibi_user` est REMPLI — sinon le bord affiche « Dr. -- »', async ({ page }) => {
+    // ⚠️ Mesure en live le 15/09 : une session valide ne suffisait pas. Le
+    // tableau de bord ne lit pas la session, il lit `tabibi_user` dans
+    // `localStorage` — et l'entree par numero ne le remplissait pas.
+    await bouchonnerSession(page);
+    await bouchonnerTableauDeBord(page);
+    await page.route('**/rest/v1/rpc/get_my_doctor_profile', (route) => route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({
+        id: '00000000-0000-4000-8000-000000000007',
+        full_name: 'Dr Amina Benali', specialty_raw: 'Cardiologie', city: 'Alger',
+        phone: '213555123456', email: 'a.benali@example.test', photo_url: '',
+        validation_status: 'approved',
+      }),
+    }));
+    await bouchonner(page, {
+      ok: true, access_token: jetonDeTest(), refresh_token: 'r', expires_in: 3600,
+      doctor_profile_id: '00000000-0000-4000-8000-000000000007',
+    });
+
+    await page.goto(PAGE, ATTENDRE);
+    await saisirEtEnvoyer(page, NUMERO_OK);
+    await page.waitForURL(/doctor-dashboard\.html/, { timeout: 10000 });
+
+    const u = await page.evaluate(() => JSON.parse(localStorage.getItem('tabibi_user') || 'null'));
+    expect(u, 'tabibi_user absent : le tableau de bord affichera « Dr. -- »').not.toBeNull();
+    expect(u.name).toBe('Dr Amina Benali');
+    expect(u.initials).toBe('AB');
+    expect(u.role).toBe('medecin');
+    expect(u.specialty).toBe('Cardiologie');
+    expect(u.ville).toBe('Alger');
+    expect(u.doctor_profile_id).toBe('00000000-0000-4000-8000-000000000007');
+    // Le marqueur de sortie : un pilote n'a pas de mot de passe.
+    expect(await page.evaluate(() => localStorage.getItem('tabibi_pilote'))).toBe('1');
+    expect(await page.evaluate(() => localStorage.getItem('tabibi_role'))).toBe('medecin');
+  });
+
+  test('si la fiche ne revient pas, on n INVENTE pas de nom', async ({ page }) => {
+    // Un nom fabrique donnerait le change et masquerait le defaut. On ecrit le
+    // minimum, et le tableau de bord dira ce qu'il sait.
+    await bouchonnerSession(page);
+    await bouchonnerTableauDeBord(page);
+    await page.route('**/rest/v1/rpc/get_my_doctor_profile', (route) => route.fulfill({
+      status: 200, contentType: 'application/json', body: 'null',
+    }));
+    await bouchonner(page, {
+      ok: true, access_token: jetonDeTest(), refresh_token: 'r', expires_in: 3600,
+      doctor_profile_id: '00000000-0000-4000-8000-000000000007',
+    });
+
+    await page.goto(PAGE, ATTENDRE);
+    await saisirEtEnvoyer(page, NUMERO_OK);
+    await page.waitForURL(/doctor-dashboard\.html/, { timeout: 10000 });
+
+    const u = await page.evaluate(() => JSON.parse(localStorage.getItem('tabibi_user') || 'null'));
+    expect(u.role).toBe('medecin');
+    expect(u.name === undefined || u.name === '').toBeTruthy();
+    // Le lien vers la fiche est conserve : il vient de la liste blanche, pas d'elle.
+    expect(u.doctor_profile_id).toBe('00000000-0000-4000-8000-000000000007');
+  });
+
+  // ───────────────────────────────────────────────────────────────────
+  // LA SORTIE — un pilote n'a pas de mot de passe
+  // ───────────────────────────────────────────────────────────────────
+  async function bouchonnerLesDeuxPortes(page) {
+    await page.route('**/medecin-pilote.html*', (route) => route.fulfill({
+      status: 200, contentType: 'text/html; charset=utf-8',
+      body: '<!DOCTYPE html><title>porte pilote (bouchon)</title><h1 id="porte">pilote</h1>',
+    }));
+    await page.route('**/login.html*', (route) => route.fulfill({
+      status: 200, contentType: 'text/html; charset=utf-8',
+      body: '<!DOCTYPE html><title>login (bouchon)</title><h1 id="porte">login</h1>',
+    }));
+  }
+
+  test('session expiree, compte PILOTE : on repart vers medecin-pilote.html', async ({ page }) => {
+    // ⚠️ `login.html` serait un mur : il n'a pas de mot de passe a y taper.
+    await bouchonnerLesDeuxPortes(page);
+    // ⚠️ PAS `addInitScript` : il rejoue a CHAQUE navigation, donc aussi sur la
+    // page d'arrivee — le marqueur etait repose juste apres avoir ete purge, et
+    // le test accusait le code d'un nettoyage qu'il avait bien fait.
+    await page.goto('/medecin-pilote.html', ATTENDRE);
+    await page.evaluate(() => localStorage.setItem('tabibi_pilote', '1'));
+    await page.goto('/doctor-dashboard.html', ATTENDRE);
+    await page.waitForURL(/medecin-pilote\.html/, { timeout: 10000 });
+    // Et le marqueur part avec la purge : il ne doit pas survivre a la session.
+    expect(await page.evaluate(() => localStorage.getItem('tabibi_pilote'))).toBeNull();
+  });
+
+  test('session expiree, compte ORDINAIRE : on repart vers login.html', async ({ page }) => {
+    // La contre-epreuve du test precedent : sans le marqueur, rien ne change.
+    await bouchonnerLesDeuxPortes(page);
+    await page.goto('/doctor-dashboard.html', ATTENDRE);
+    await page.waitForURL(/login\.html/, { timeout: 10000 });
+  });
+
   test('la page n affiche aucun champ de mot de passe', async ({ page }) => {
     await page.goto(PAGE, ATTENDRE);
     expect(await page.locator('input[type="password"]').count()).toBe(0);

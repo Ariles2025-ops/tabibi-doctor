@@ -136,6 +136,78 @@
     }
   }
 
+  /** Deux initiales, comme le tableau de bord les calcule pour ses patients. */
+  function initialesDe(nom) {
+    var mots = String(nom || '').trim().split(/\s+/).filter(Boolean);
+    if (!mots.length) return 'DR';
+    return mots.slice(-2).map(function (m) { return m[0] || ''; }).join('').toUpperCase() || 'DR';
+  }
+
+  /**
+   * Remplit `tabibi_user` dans la MEME forme que la connexion ordinaire.
+   *
+   * La forme est copiee de `login.html` (« CONNEXION REUSSIE ») : c'est elle
+   * que `js/auth.js` fusionne et que les tableaux de bord lisent. Inventer une
+   * forme voisine serait pire que ne rien ecrire — ca marcherait a moitie,
+   * longtemps, et par endroits.
+   *
+   * Les champs viennent de `doctor_profiles` (via `get_my_doctor_profile`), qui
+   * ne porte pas les memes noms que la vue utilisee a la connexion :
+   *   full_name -> name · specialty_raw -> specialty · city -> ville
+   *
+   * ⚠️ On n'invente RIEN. Si la RPC ne rend pas de fiche, on ecrit le minimum
+   * (identifiant, role) et on laisse le tableau de bord dire ce qu'il sait —
+   * plutot qu'un nom fabrique qui donnerait le change.
+   */
+  async function poserProfilMedecin(profileId) {
+    var base = { role: 'medecin', pilote: true, fromSupabase: true };
+    try {
+      var u = await window.tabibi.supabase.auth.getUser();
+      var compte = u && u.data && u.data.user;
+      if (compte) { base.id = compte.id; base.email = compte.email || ''; base.phone = compte.phone || ''; }
+
+      // ⚠️ Par la PASSERELLE, pas par `.rpc()` directement. `supabase-js` ne
+      // REJETTE pas sur une reponse metier : une fonction qui rend
+      // `{"error":"..."}` a « reussi » au sens du transport. `tabibiRpc`
+      // normalise en `{ ok, data, erreur }` et met `data` a null des que `ok`
+      // est faux. C'est la porte `verifier:rpc-passage` qui l'exige, et elle a
+      // raison : lire seulement `res.error`, c'est ignorer la moitie metier.
+      var r = await window.tabibiRpc('get_my_doctor_profile');
+      if (r && !r.ok) console.warn('[pilote] get_my_doctor_profile :', r.erreur);
+      // PostgREST rend soit la ligne, soit un tableau d'une ligne, soit null.
+      var f = (r && r.ok) ? r.data : null;
+      if (Array.isArray(f)) f = f[0] || null;
+
+      if (f) {
+        base.name = f.full_name || '';
+        base.initials = initialesDe(f.full_name);
+        base.specialty = f.specialty_raw || '';
+        base.ville = f.city || '';
+        base.phone = f.phone || base.phone || '';
+        base.email = f.email || base.email || '';
+        base.photo_url = f.photo_url || '';
+        base.status = f.validation_status || '';
+        base.doctor_profile_id = f.id;
+      } else if (profileId) {
+        // La fiche existe (l'acces vient de la liste blanche) mais la RPC n'a
+        // rien rendu : on garde le lien, sans pretendre connaitre le nom.
+        base.doctor_profile_id = profileId;
+      }
+    } catch (e) {
+      console.warn('[pilote] profil :', e && e.message);
+    }
+    try {
+      localStorage.setItem('tabibi_user', JSON.stringify(base));
+      localStorage.setItem('tabibi_role', 'medecin');
+      // ⚠️ Marqueur lu par `js/auth.js` : un compte pilote n'a PAS de mot de
+      // passe. A l'expiration, l'envoyer sur `login.html` serait l'envoyer
+      // dans un mur.
+      localStorage.setItem('tabibi_pilote', '1');
+    } catch (e) {
+      console.warn('[pilote] localStorage :', e && e.message);
+    }
+  }
+
   form.addEventListener('submit', async function (ev) {
     ev.preventDefault();
     message('', '');
@@ -182,6 +254,14 @@
         message('err', T('pil_err_session', "La session n'a pas pu être ouverte. Réessayez."));
         return;
       }
+
+      // ── LE PROFIL, AVANT LA REDIRECTION ───────────────────────────
+      // ⚠️ Mesure en live le 15/09 : sans ce pas, le tableau de bord affichait
+      // « Dr. -- ». Il ne lit pas la session, il lit `tabibi_user` dans
+      // `localStorage` — et la connexion par numero ne le remplissait pas.
+      // **Une session valide ne suffit pas : il faut aussi ce que la page
+      // attend a l'endroit ou elle l'attend.**
+      await poserProfilMedecin(data.doctor_profile_id);
 
       message('ok', T('pil_ok', 'Bienvenue. Ouverture de votre espace…'));
       window.location.href = 'doctor-dashboard.html';
