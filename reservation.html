@@ -245,7 +245,23 @@ if(typeof window.toast !== 'function'){
     var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
     var t = document.createElement('div');
     t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
-    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    // [XSS 15/09/2026] `msg` etait injecte en HTML. Le meme puits existait dans
+    // `js/home-app.js`, ou il ETAIT atteignable : un message d'erreur du serveur
+    // y etait concatene et rendu comme du balisage.
+    //
+    // Ici, `msg` vient de `tabibiBooking.errorMessage(code)`, qui ne rend que
+    // des libelles figes : **le trou n'est pas ouvert aujourd'hui.** On le
+    // bouche quand meme, parce qu'il suffirait d'un `toast(e.message)` ajoute un
+    // jour sur cette page — la page de RESERVATION — pour qu'il le devienne.
+    //
+    // L'icone est construite a part, depuis la table interne `icons`, jamais
+    // depuis une entree. Le message est du TEXTE : on ne l'assainit pas, on
+    // cesse de l'interpreter.
+    var ico = document.createElement('i');
+    ico.className = 'fa ' + (icons[type] || icons.info);
+    ico.setAttribute('aria-hidden', 'true');
+    t.appendChild(ico);
+    t.appendChild(document.createTextNode(msg == null ? '' : String(msg)));
     c.appendChild(t);
     setTimeout(function(){
       t.style.transition = 'all .28s'; t.style.opacity = '0'; t.style.transform = 'translateY(-6px)';

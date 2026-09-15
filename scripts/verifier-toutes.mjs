@@ -56,6 +56,10 @@ const PORTES = [
   // ressemble a de la couverture.
   ['unites',   'npm',  ['run', '--silent', 'verifier:unites']],
   ['video',    'npm',  ['run', '--silent', 'verifier:video']],
+  // [15/09/2026] Le compteur d'innerHTML recevant une donnee NON constante.
+  // Meme contrat que `dette` : il ne doit que BAISSER. Les reecrire tous d'un
+  // coup produirait un diff que personne ne relit.
+  ['innerhtml','npm',  ['run', '--silent', 'verifier:innerhtml']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
 ];
@@ -74,7 +78,7 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
-  'verifier:catch', 'verifier:unites', 'verifier:video', 'build', 'test:e2e',
+  'verifier:catch', 'verifier:unites', 'verifier:video', 'verifier:innerhtml', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.

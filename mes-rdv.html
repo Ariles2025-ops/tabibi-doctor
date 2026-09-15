@@ -502,7 +502,14 @@ if(typeof window.toast !== 'function'){
     var icons = { success:'fa-check-circle', error:'fa-circle-xmark', info:'fa-circle-info' };
     var t = document.createElement('div');
     t.className = 'toast toast-' + type; t.setAttribute('role', 'alert');
-    t.innerHTML = "<i class='fa " + (icons[type] || icons.info) + "'></i>" + msg;
+    // [XSS 15/09/2026] Troisieme page portant ce meme puits (apres `home-app.js`
+    // — ou il etait atteignable — et `reservation.html`). L'icone se construit a
+    // part, depuis la table interne ; le message est du TEXTE.
+    var _ico = document.createElement('i');
+    _ico.className = 'fa ' + (icons[type] || icons.info);
+    _ico.setAttribute('aria-hidden', 'true');
+    t.appendChild(_ico);
+    t.appendChild(document.createTextNode(msg == null ? '' : String(msg)));
     c.appendChild(t);
     setTimeout(function(){
       t.style.transition = 'all .28s'; t.style.opacity = '0'; t.style.transform = 'translateY(-6px)';
