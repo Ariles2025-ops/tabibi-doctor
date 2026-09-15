@@ -63,74 +63,87 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc
   </div>
 
   <div class="cats">
+    <!-- [15/09/2026] Trois categories retirees : « Maladies chroniques »,
+         « Pediatrie » et « Sante mentale » n'ont AUCUN article. Elles
+         annoncaient des rubriques vides, comme les cartes annoncaient des
+         articles absents. Les trois restantes correspondent a ce qui existe.
+         ⚠️ Ces liens ne filtrent toujours rien (`href="#"`) : c'est un defaut
+         separe, cosmetique, qui n'est pas corrige ici. -->
     <a href="#" class="cat active">Tous</a>
     <a href="#" class="cat">Prévention</a>
-    <a href="#" class="cat">Maladies chroniques</a>
-    <a href="#" class="cat">Pédiatrie</a>
-    <a href="#" class="cat">Santé mentale</a>
     <a href="#" class="cat">Système de santé DZ</a>
     <a href="#" class="cat">Médecine du quotidien</a>
   </div>
 
   <div class="posts">
 
-    <a href="comment-choisir-medecin-alger.html" class="post">
+    <!-- [15/09/2026] LES SIX CARTES SONT REECRITES SUR LES ARTICLES REELS.
+         Elles annoncaient six titres, six dates et six temps de lecture pour
+         des articles QUI N'EXISTENT PAS — six liens sur six menaient a un 404,
+         sur la page publique dont la seule fonction est de mener quelque part.
+         Meme famille que les « 4 medecins verifies » de l'accueil (P-27) :
+         du contenu invente presente comme reel.
+         Titres, descriptions et temps de lecture sont DESORMAIS repris des
+         fichiers de `blog/articles/`. Les dates ont disparu : les articles
+         n'en portent aucune, et en inventer une serait recommencer. -->
+
+    <a href="articles/bien-preparer-rendez-vous-medecin-algerie.html" class="post">
       <div class="post-img"><i class="fa fa-user-doctor"></i></div>
       <div class="post-body">
-        <div class="post-cat">Système de santé DZ</div>
-        <h3>Comment bien choisir son médecin à Alger en 2026</h3>
-        <p>Les critères essentiels pour choisir un médecin de confiance dans la capitale.</p>
-        <div class="post-meta"><span><i class="fa fa-clock"></i> 5 min</span><span><i class="fa fa-calendar"></i> 12 mai 2026</span></div>
+        <div class="post-cat">Médecine du quotidien</div>
+        <h3>Comment bien préparer son rendez-vous chez le médecin en Algérie</h3>
+        <p>Papiers, ordonnances, questions à poser : le guide pratique pour arriver prêt en consultation.</p>
+        <div class="post-meta"><span><i class="fa fa-clock"></i> 6 min</span></div>
       </div>
     </a>
 
-    <a href="hypertension-algerie.html" class="post">
-      <div class="post-img" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626"><i class="fa fa-heart-pulse"></i></div>
-      <div class="post-body">
-        <div class="post-cat">Maladies chroniques</div>
-        <h3>L'hypertension en Algérie : prévention et suivi</h3>
-        <p>1 Algérien sur 3 souffre d'hypertension. Comment la détecter et la traiter ?</p>
-        <div class="post-meta"><span><i class="fa fa-clock"></i> 7 min</span><span><i class="fa fa-calendar"></i> 10 mai 2026</span></div>
-      </div>
-    </a>
-
-    <a href="vaccins-enfants-algerie.html" class="post">
-      <div class="post-img" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669"><i class="fa fa-syringe"></i></div>
-      <div class="post-body">
-        <div class="post-cat">Pédiatrie</div>
-        <h3>Calendrier vaccinal algérien complet 2026</h3>
-        <p>Tous les vaccins obligatoires et recommandés pour votre enfant.</p>
-        <div class="post-meta"><span><i class="fa fa-clock"></i> 6 min</span><span><i class="fa fa-calendar"></i> 8 mai 2026</span></div>
-      </div>
-    </a>
-
-    <a href="cnas-casnos-tiers-payant.html" class="post">
+    <a href="articles/carte-chifa-tiers-payant-ce-quil-faut-savoir.html" class="post">
       <div class="post-img" style="background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e"><i class="fa fa-file-medical"></i></div>
       <div class="post-body">
         <div class="post-cat">Système de santé DZ</div>
-        <h3>CNAS et CASNOS : guide pratique du tiers payant</h3>
-        <p>Comment être remboursé de vos consultations et médicaments en Algérie.</p>
-        <div class="post-meta"><span><i class="fa fa-clock"></i> 8 min</span><span><i class="fa fa-calendar"></i> 5 mai 2026</span></div>
+        <h3>Carte Chifa et tiers payant : ce qu'il faut vraiment savoir avant son RDV</h3>
+        <p>Comment fonctionne la carte Chifa, quels médecins acceptent le tiers payant, et comment éviter les mauvaises surprises.</p>
+        <div class="post-meta"><span><i class="fa fa-clock"></i> 6 min</span></div>
       </div>
     </a>
 
-    <a href="ramadan-sante.html" class="post">
-      <div class="post-img" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#4338ca"><i class="fa fa-moon"></i></div>
+    <a href="articles/teleconsultation-algerie-ou-en-est-on-2026.html" class="post">
+      <div class="post-img" style="background:linear-gradient(135deg,#e0e7ff,#c7d2fe);color:#4338ca"><i class="fa fa-video"></i></div>
+      <div class="post-body">
+        <div class="post-cat">Système de santé DZ</div>
+        <h3>Téléconsultation en Algérie : où en est-on en 2026 ?</h3>
+        <p>État des lieux honnête : cadre légal, pratiques actuelles, perspectives.</p>
+        <div class="post-meta"><span><i class="fa fa-clock"></i> 7 min</span></div>
+      </div>
+    </a>
+
+    <a href="articles/5-specialites-medicales-prise-rdv-en-ligne-algerie.html" class="post">
+      <div class="post-img" style="background:linear-gradient(135deg,#d1fae5,#a7f3d0);color:#059669"><i class="fa fa-stethoscope"></i></div>
+      <div class="post-body">
+        <div class="post-cat">Médecine du quotidien</div>
+        <h3>5 spécialités médicales où la prise de RDV en ligne change tout</h3>
+        <p>Gynécologie, pédiatrie, dermatologie, ophtalmologie, dentisterie : pourquoi ça change la donne.</p>
+        <div class="post-meta"><span><i class="fa fa-clock"></i> 6 min</span></div>
+      </div>
+    </a>
+
+    <a href="articles/ramadan-sante-gerer-rendez-vous-medicaux.html" class="post">
+      <div class="post-img" style="background:linear-gradient(135deg,#ede9fe,#ddd6fe);color:#6d28d9"><i class="fa fa-moon"></i></div>
       <div class="post-body">
         <div class="post-cat">Prévention</div>
-        <h3>Ramadan et santé : conseils des médecins</h3>
-        <p>Jeûne, diabète, hypertension : précautions essentielles pendant le Ramadan.</p>
-        <div class="post-meta"><span><i class="fa fa-clock"></i> 6 min</span><span><i class="fa fa-calendar"></i> 1 mai 2026</span></div>
+        <h3>Ramadan et santé : comment bien gérer ses RDV médicaux pendant le mois</h3>
+        <p>Prendre rendez-vous pendant le Ramadan demande un peu d'organisation. Nos conseils pratiques.</p>
+        <div class="post-meta"><span><i class="fa fa-clock"></i> 6 min</span></div>
       </div>
     </a>
 
-    <a href="sante-mentale-algerie.html" class="post">
-      <div class="post-img" style="background:linear-gradient(135deg,#f3e8ff,#e9d5ff);color:#7c3aed"><i class="fa fa-brain"></i></div>
+    <a href="articles/medecin-liberal-algerie-digitaliser-cabinet-2026.html" class="post">
+      <div class="post-img" style="background:linear-gradient(135deg,#fee2e2,#fecaca);color:#dc2626"><i class="fa fa-laptop-medical"></i></div>
       <div class="post-body">
-        <div class="post-cat">Santé mentale</div>
-        <h3>Briser le tabou : santé mentale en Algérie</h3>
-        <p>Reconnaître les signes, oser consulter, ressources disponibles.</p>
-        <div class="post-meta"><span><i class="fa fa-clock"></i> 9 min</span><span><i class="fa fa-calendar"></i> 28 avr 2026</span></div>
+        <div class="post-cat">Système de santé DZ</div>
+        <h3>Médecin libéral en Algérie : pourquoi digitaliser son cabinet en 2026</h3>
+        <p>Agenda en ligne, rappels SMS, dossier patient : les bénéfices concrets pour un cabinet.</p>
+        <div class="post-meta"><span><i class="fa fa-clock"></i> 7 min</span></div>
       </div>
     </a>
 
@@ -143,8 +156,8 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:#f8fafc
   <div class="footer-nav">
     <a href="../index.html"><i class="fa fa-house"></i> Accueil</a>
     <a href="../about.html">À propos</a>
-    <a href="../cgu.html">CGU</a>
-    <a href="../confidentialite.html">Confidentialité</a>
+    <a href="../legal/cgu.html">CGU</a>
+    <a href="../legal/confidentialite.html">Confidentialité</a>
     <a href="mailto:contact@tabibi.doctor">Contact</a>
   </div>
 
