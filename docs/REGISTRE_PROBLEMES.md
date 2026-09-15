@@ -246,6 +246,41 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## Lot B — l'e-mail fantôme, quatre mois après
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-28 | `functions.invoke('send-email')` depuis **le 20/05** — la fonction **n'a jamais existé**. L'écran d'administration annonçait quand même que le médecin avait été prévenu | `js/tabibi-brevo.js:619` ; `supabase/functions/` contient 11 fonctions, pas celle-là. **Aucun médecin validé ou refusé n'a reçu son message en quatre mois** | `supabase/functions/send-email/` écrite (non déployée), `_partage/modeles-courriel.ts` pour les trois modèles réellement appelés | `tests/send-email.test.mjs` — **toute** fonction edge appelée par le front doit exister dans `supabase/functions/` | **réglé — reste à déployer** |
+| P-46 | Le contrat d'origine (`{to, subject, html}` envoyé par le navigateur) aurait fait un **relais ouvert** | n'importe quel compte connecté aurait pu faire partir **n'importe quel HTML**, vers **n'importe quelle adresse**, signé `contact@tabibi.doctor` | le serveur n'accepte **aucun HTML** : un **nom de modèle** et des paramètres, et il compose lui-même | le test refuse toute lecture de `corps.html` / `corps.subject`, côté serveur **et** côté front | **réglé** |
+
+### Ce que P-28 apprend, et ce n'est pas « il manquait un fichier »
+
+**Ce n'est pas un défaut d'écriture, c'est un défaut de mesure.** Rien ne comparait ce que le
+front appelle à ce qui existe. Quatre mois, quatre pages, un écran qui disait « prévenu ».
+
+C'est cette comparaison-là qui devient la garde : un test parcourt tout le produit, relève
+chaque `functions.invoke('x')`, et exige un répertoire du même nom. Il aurait crié le 20 mai.
+
+### Chaque modèle porte sa condition — le détail qui décide
+
+La fonction sert **deux publics**, et une passerelle unique ne sait pas les distinguer :
+
+| modèle | qui peut le déclencher |
+|---|---|
+| `medecin_validated`, `medecin_rejected` | une session **et** `is_admin()`, vérifié **avec le JWT de l'appelant** (avec la clé de service, `is_admin()` répondrait sur le compte de service : tout le monde serait administrateur) |
+| `waiting_list_welcome` | personne n'a besoin de session — la page est publique. **Mais le destinataire doit déjà être sur la liste d'attente**, vérifié en base. On ne peut écrire qu'à quelqu'un qui s'est inscrit lui-même |
+
+⚠️ **Ce que ça ne ferme pas** : qui connaît une adresse **inscrite** peut faire renvoyer
+l'accusé. Nuisance bornée — un seul modèle, aucun contenu choisi par l'appelant — pas une
+fuite. La vraie borne serait une limitation par IP, à poser le jour où la liste d'attente
+redevient publique.
+
+Et le refus, quand l'adresse n'est pas inscrite, est **générique** : dire « cette adresse
+n'est pas sur la liste » ferait de la fonction un testeur d'appartenance.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

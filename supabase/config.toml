@@ -511,3 +511,16 @@ secrets = "env(SEND_SMS_HOOK_SECRETS)"
 # L'interrupteur DOIT rester a `false` en production tant que c'est le cas.
 [functions.acces-pilote]
 verify_jwt = false
+
+# [15/09/2026] send-email : verify_jwt = FAUX, et ce n'est pas un relachement.
+#
+# Cette fonction sert DEUX publics : un administrateur connecte (validation
+# medecin) et un visiteur anonyme (accuse d'inscription a la liste d'attente).
+# Une passerelle unique ne sait pas distinguer les deux ; la fonction, si —
+# elle porte la condition de chaque modele, et la verifie avant tout envoi.
+#
+# ⚠️ Elle n'accepte AUCUN HTML de l'appelant : un nom de modele et des
+# parametres, rien d'autre. Accepter du HTML aurait fait un relais ouvert,
+# signe contact@tabibi.doctor.
+[functions.send-email]
+verify_jwt = false
