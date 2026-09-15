@@ -19,6 +19,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { readFileSync } from 'node:fs';
+import { execSync } from 'node:child_process';
 
 const HOME = readFileSync('js/home-app.js', 'utf8');
 const SIGNUP = readFileSync('signup.html', 'utf8');
@@ -158,4 +159,57 @@ test('les noms des chefs-lieux sont ceux de `_W`, code par code', async () => {
     if (C[code] && C[code].name !== nom) ecarts.push(`${code}: « ${C[code].name} » ≠ « ${nom} »`);
   }
   assert.deepEqual(ecarts, [], `nom(s) divergent(s) :\n  ${ecarts.join('\n  ')}`);
+});
+
+// ─────────────────────────────────────────────────────────────────────
+// 4. LE TEXTE VISIBLE — corriger la liste ne corrige pas la phrase
+// ─────────────────────────────────────────────────────────────────────
+//
+// ⚠️ SIGNALE PAR AGHILES SUR LA PAGE EN LIGNE, apres le lot precedent : les
+// quatre listes etaient a 69, et le titre disait toujours « 58 wilayas ». Le
+// bloc de statistiques affichait « 58 ».
+//
+// **Une donnee corrigee et une phrase qui la contredit, c'est pire qu'avant :**
+// la page se contredit elle-meme, et le lecteur croit la phrase.
+const PRODUIT = execSync('git ls-files "*.html" "*.js" ":!:seo/**" ":!:dist*/**" ":!:www/**" ":!:tests/**" ":!:v2/**" ":!:node_modules/**"')
+  .toString().trim().split('\n').filter(Boolean);
+
+test('aucune phrase visible ne dit encore « 58 wilayas »', () => {
+  const restes = [];
+  for (const f of PRODUIT) {
+    const src = readFileSync(f, 'utf8');
+    // Les trois langues. L'arabe compte autant que le francais : c'est la
+    // meme promesse, faite a quelqu'un d'autre.
+    for (const m of src.matchAll(/(58 wilayas|58 Wilayas|les 58 wilayas|58 ولاية)/g)) {
+      restes.push(`${f}:${src.slice(0, m.index).split('\n').length} « ${m[1]} »`);
+    }
+  }
+  assert.deepEqual(restes, [],
+    `mention(s) de 58 wilayas encore visibles :\n  ${restes.join('\n  ')}`);
+});
+
+test('le compteur de wilayas est DERIVE de `_W`, pas recopie', () => {
+  // Il etait « 58 » en dur a deux endroits de `accueil-public.html`. Le
+  // decoupage a change DEUX fois (48 -> 58 en 2019, 58 -> 69 en 2026) et ce
+  // nombre est reste faux les deux fois. **Un chiffre recopie ne se met jamais
+  // a jour.**
+  assert.match(HOME, /const _nbW = String\(Object\.keys\(_W\)\.length\);/,
+    'le compteur n est plus derive de `_W`');
+  assert.match(HOME, /set\('stats-wilaya-n', _nbW\)/);
+  assert.match(HOME, /set\('hs-wilaya-n', _nbW\)/);
+  // Et les deux points d'affichage existent bien dans la page.
+  const accueil = readFileSync('accueil-public.html', 'utf8');
+  assert.match(accueil, /id="stats-wilaya-n"/);
+  assert.match(accueil, /id="hs-wilaya-n"/);
+});
+
+test('la valeur ecrite dans le HTML vaut deja 69 — avant meme que le script tourne', () => {
+  // Le script la reecrit, mais la page doit etre juste des le premier rendu :
+  // un lecteur sans JavaScript, un robot d'indexation, une capture d'ecran.
+  const accueil = readFileSync('accueil-public.html', 'utf8');
+  for (const id of ['stats-wilaya-n', 'hs-wilaya-n']) {
+    const m = accueil.match(new RegExp(`id="${id}"[^>]*>([^<]*)<`));
+    assert.ok(m, `${id} introuvable`);
+    assert.equal(m[1].trim(), '69', `${id} affiche « ${m[1]} » dans le HTML servi`);
+  }
 });

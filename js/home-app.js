@@ -29,7 +29,7 @@ const TR = {
     login:"Connexion",signup:"Inscription",my_account:"Mon compte",logout:"Déconnexion",
     hero_badge:"Médecins en Algérie",
     hero_title:"Trouvez votre",hero_title_em:"médecin en ligne",hero_title2:"en Algérie",
-    hero_sub:"Prenez rendez-vous avec un médecin partout en Algérie — 58 wilayas, 24h/24.",
+    hero_sub:"Prenez rendez-vous avec un médecin partout en Algérie — 69 wilayas, 24h/24.",
     s_ph:"Dr. Benali, Cardiologie, Alger...",
     all_cities:"Toutes les wilayas",all_specs:"Toutes les spécialités",
     chip_urg:"Urgences",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
@@ -102,7 +102,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     login:"دخول",signup:"تسجيل",my_account:"حسابي",logout:"خروج",
     hero_badge:"أطباء في الجزائر",
     hero_title:"ابحث عن",hero_title_em:"طبيبك",hero_title2:"في كل أنحاء الجزائر",
-    hero_sub:"احجز موعدًا مع طبيب في كل أنحاء الجزائر — 58 ولاية، 24/24.",
+    hero_sub:"احجز موعدًا مع طبيب في كل أنحاء الجزائر — 69 ولاية، 24/24.",
     s_ph:"د. بن علي، قلب، الجزائر...",
     all_cities:"كل الولايات",all_specs:"كل التخصصات",
     chip_urg:"طوارئ",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
@@ -175,7 +175,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     login:"Sign in",signup:"Sign up",my_account:"My account",logout:"Log out",
     hero_badge:"Doctors across Algeria",
     hero_title:"Find your",hero_title_em:"doctor",hero_title2:"across Algeria",
-    hero_sub:"Book an appointment with a doctor anywhere in Algeria — 58 wilayas, 24/7.",
+    hero_sub:"Book an appointment with a doctor anywhere in Algeria — 69 wilayas, 24/7.",
     s_ph:"Dr. Benali, Cardiology, Algiers...",
     all_cities:"All cities",all_specs:"All specialties",
     chip_urg:"Urgent",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
@@ -1585,6 +1585,22 @@ function onLangChange(){
   // Stats
   set('stats-doc-lbl', tr.sb1 || 'Médecins référencés');
   set('stats-wilaya-lbl', tr.sb2 || 'Wilayas');
+  // [15/09/2026] LE NOMBRE DE WILAYAS EST DERIVE, PLUS ECRIT A LA MAIN.
+  //
+  // Il etait « 58 » en dur, a DEUX endroits de `accueil-public.html`. Le
+  // decoupage a change deux fois (48 -> 58 en 2019, 58 -> 69 en 2026) et ce
+  // nombre est reste faux les deux fois, sur la page d'accueil, a cote d'une
+  // liste deja corrigee. **Un chiffre recopie ne se met jamais a jour.**
+  //
+  // Il vient desormais de `_W`, la meme source que la liste. Le prochain
+  // decoupage ne demandera qu'un endroit.
+  //
+  // ⚠️ C'est le total OFFICIEL des wilayas d'Algerie, pas le nombre de wilayas
+  // ou l'on a des medecins. Les deux different, et c'est bien le premier qu'on
+  // annonce : « Tabibi couvre les 69 wilayas ».
+  const _nbW = String(Object.keys(_W).length);
+  set('stats-wilaya-n', _nbW);
+  set('hs-wilaya-n', _nbW);
   // [I18N-RES] hero stats sans data-i18n (id only)
   set('hs2', tr.hs2 || 'Wilayas');
   set('hs4', tr.hero_booking || 'Réservation');
@@ -2093,10 +2109,10 @@ function _updateDocCounterUI() {
   }
   var _fdEl = document.getElementById('foot-desc');
   if (_fdEl) _fdEl.textContent = lang === 'ar'
-    ? 'أول منصة طبية جزائرية. ' + _fi + ' طبيب مُدرج في 58 ولاية. احجز عبر الإنترنت 24/24.'
+    ? 'أول منصة طبية جزائرية. ' + _fi + ' طبيب مُدرج في 69 ولاية. احجز عبر الإنترنت 24/24.'
     : lang === 'en'
-    ? '1st Algerian medical platform. ' + _fi + ' referenced doctors across 58 wilayas. Book online 24/7.'
-    : 'La 1ère plateforme médicale algérienne. ' + _fi + ' médecins référencés dans 58 wilayas. Réservez en ligne 24h/24.';
+    ? '1st Algerian medical platform. ' + _fi + ' referenced doctors across 69 wilayas. Book online 24/7.'
+    : 'La 1ère plateforme médicale algérienne. ' + _fi + ' médecins référencés dans 69 wilayas. Réservez en ligne 24h/24.';
 }
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
 window.filterBySpec=filterBySpec; window.onLangChange=onLangChange;

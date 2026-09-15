@@ -256,6 +256,33 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 | P-53 | **`WILAYA_I18N` s'arrêtait à 48.** Les dix wilayas de 2019 n'avaient **ni arabe ni anglais** | `El M'Ghair`, `El Meniaa`, `Ouled Djellal`, `Bordj Baji Mokhtar`, `Béni Abbès`, `Timimoun`, `Touggourt`, `Djanet`, `In Salah`, `In Guezzam` — `dcity()` retombait sur le français **sans rien signaler** | les dix ajoutées | même test : **chaque** wilaya doit avoir un libellé, et le libellé « arabe » doit contenir des caractères arabes | **réglé** |
 | P-54 | `signup.html` écrivait **« Bordj Badji Mokhtar »**, `_W` et la base **« Bordj Baji Mokhtar »** | **une lettre**. Un médecin qui choisissait cette wilaya à l'inscription posait une valeur que la recherche ne retrouvait pas | menu régénéré **à partir de `_W`** | même test : `signup.html` doit dire **exactement** les noms de `_W` | **réglé** |
 
+| P-55 | **La liste était à 69, la phrase disait toujours « 58 wilayas ».** Et le bloc de statistiques affichait **58** | signalé par Aghiles **sur la page en ligne**, après le lot précédent : 14 mentions dans 7 fichiers (FR, EN, **et AR**), plus deux nombres écrits en dur | les 14 phrases corrigées ; le compteur **dérivé de `_W`** au lieu d'être recopié | même test : **aucune** phrase visible ne dit « 58 wilayas », le compteur est dérivé, **et le HTML servi vaut déjà 69** | **réglé** |
+
+### ⚠️ Corriger la donnée ne corrige pas la phrase
+
+Le lot précédent a mis les quatre **listes** à 69. Le titre de l'accueil disait toujours
+« … partout en Algérie — 58 wilayas ».
+
+> **Une donnée corrigée et une phrase qui la contredit, c'est pire qu'avant :** la page se
+> contredit elle-même, et le lecteur croit la phrase. Aghiles l'a vu en une seconde sur la
+> page en ligne — aucune de nos portes ne regardait le texte.
+
+Quatorze mentions, sept fichiers, **trois langues** — l'arabe compte autant que le français :
+c'est la même promesse, faite à quelqu'un d'autre.
+
+### Le compteur est maintenant DÉRIVÉ, et c'est le vrai correctif
+
+Le « 58 » du bloc de statistiques était **écrit en dur**, à deux endroits de
+`accueil-public.html`. Le découpage a changé **deux fois** — 48 → 58 en 2019, 58 → 69 en
+2026 — et ce nombre est resté faux **les deux fois**, sur la page d'accueil, à côté d'une
+liste déjà corrigée.
+
+> **Un chiffre recopié ne se met jamais à jour.** Il vient désormais de `Object.keys(_W)`,
+> la même source que la liste : le prochain découpage ne demandera qu'un endroit.
+
+Le HTML servi porte quand même `69` en dur **avant** que le script tourne — pour le lecteur
+sans JavaScript, le robot d'indexation et la capture d'écran. **C'est testé aussi.**
+
 ### ⚠️ Quatre copies d'une même liste, c'est quatre occasions de diverger
 
 Les deux défauts ci-dessus **existaient déjà**. Personne ne les cherchait : ils ont été
