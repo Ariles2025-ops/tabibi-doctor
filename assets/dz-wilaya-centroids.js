@@ -1,4 +1,5 @@
-/* Tabibi — coordonnées des 58 chefs-lieux de wilaya (Algérie).
+/* Tabibi — coordonnées des 69 chefs-lieux de wilaya (Algérie).
+ * [15/09/2026] 58 -> 69 : décret présidentiel 26-206 du 25/05/2026.
  * Point FIXE du chef-lieu administratif, jamais dérivé d'adresses de médecins.
  * Noms strictement alignés sur _W (index.html) pour le join wilaya_code.
  * lat ∈ ~[19;37], lng ∈ ~[-9;12]. */
@@ -60,5 +61,20 @@ window.DZ_WILAYAS = {
   55: { name:"Touggourt",          lat:33.1000, lng: 6.0667 },
   56: { name:"Djanet",             lat:24.5542, lng: 9.4847 },
   57: { name:"In Salah",           lat:27.1958, lng: 2.4800 },
-  58: { name:"In Guezzam",         lat:19.5686, lng: 5.7722 }
+  58: { name:"In Guezzam",         lat:19.5686, lng: 5.7722 },
+  /* ── 59-69 : décret présidentiel 26-206 du 25/05/2026 ──────────────
+   * Coordonnées du chef-lieu, approximatives : elles servent au CENTRAGE
+   * de la carte, pas à un calcul de distance. Une approximation assumée
+   * vaut mieux qu'une précision inventée. */
+  59: { name:"Aflou",                 lat:34.1119, lng: 2.1017 },
+  60: { name:"Barika",                lat:35.3897, lng: 5.3628 },
+  61: { name:"El Kantara",            lat:35.2214, lng: 5.7069 },
+  62: { name:"Bir El Ater",           lat:34.7442, lng: 8.0606 },
+  63: { name:"El Aricha",             lat:34.2158, lng:-1.3603 },
+  64: { name:"Ksar Chellala",         lat:35.2136, lng: 2.3183 },
+  65: { name:"Aïn Ouessara",          lat:35.4514, lng: 2.9083 },
+  66: { name:"Messaad",               lat:34.1547, lng: 3.5028 },
+  67: { name:"Ksar El Boukhari",      lat:35.8869, lng: 2.7522 },
+  68: { name:"Bou Saâda",             lat:35.2119, lng: 4.1836 },
+  69: { name:"El Abiodh Sidi Cheikh", lat:32.9033, lng: 0.5464 }
 };

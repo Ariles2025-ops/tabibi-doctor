@@ -29,7 +29,7 @@ const TR = {
     login:"Connexion",signup:"Inscription",my_account:"Mon compte",logout:"Déconnexion",
     hero_badge:"Médecins en Algérie",
     hero_title:"Trouvez votre",hero_title_em:"médecin en ligne",hero_title2:"en Algérie",
-    hero_sub:"Prenez rendez-vous avec un médecin partout en Algérie — 58 wilayas, 24h/24.",
+    hero_sub:"Prenez rendez-vous avec un médecin partout en Algérie — 69 wilayas, 24h/24.",
     s_ph:"Dr. Benali, Cardiologie, Alger...",
     all_cities:"Toutes les wilayas",all_specs:"Toutes les spécialités",
     chip_urg:"Urgences",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> et plus",chip_cheap:"Moins de 2000 DA",chip_fem:"Femmes",
@@ -102,7 +102,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     login:"دخول",signup:"تسجيل",my_account:"حسابي",logout:"خروج",
     hero_badge:"أطباء في الجزائر",
     hero_title:"ابحث عن",hero_title_em:"طبيبك",hero_title2:"في كل أنحاء الجزائر",
-    hero_sub:"احجز موعدًا مع طبيب في كل أنحاء الجزائر — 58 ولاية، 24/24.",
+    hero_sub:"احجز موعدًا مع طبيب في كل أنحاء الجزائر — 69 ولاية، 24/24.",
     s_ph:"د. بن علي، قلب، الجزائر...",
     all_cities:"كل الولايات",all_specs:"كل التخصصات",
     chip_urg:"طوارئ",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> فأكثر",chip_cheap:"أقل من 2000 دج",chip_fem:"نساء",
@@ -175,7 +175,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     login:"Sign in",signup:"Sign up",my_account:"My account",logout:"Log out",
     hero_badge:"Doctors across Algeria",
     hero_title:"Find your",hero_title_em:"doctor",hero_title2:"across Algeria",
-    hero_sub:"Book an appointment with a doctor anywhere in Algeria — 58 wilayas, 24/7.",
+    hero_sub:"Book an appointment with a doctor anywhere in Algeria — 69 wilayas, 24/7.",
     s_ph:"Dr. Benali, Cardiology, Algiers...",
     all_cities:"All cities",all_specs:"All specialties",
     chip_urg:"Urgent",chip_4:"4 <i class='fa fa-star' style='font-size:.8em;color:#f59e0b'></i> and above",chip_cheap:"Under 2000 DA",chip_fem:"Female",
@@ -610,7 +610,34 @@ const WILAYA_I18N = {
   'Tipaza':{ar:'تيبازة',en:'Tipaza'},'Mila':{ar:'ميلة',en:'Mila'},
   'Aïn Defla':{ar:'عين الدفلى',en:'Ain Defla'},'Naâma':{ar:'النعامة',en:'Naama'},
   'Aïn Témouchent':{ar:'عين تموشنت',en:'Ain Temouchent'},
-  'Ghardaïa':{ar:'غرداية',en:'Ghardaia'},'Relizane':{ar:'غليزان',en:'Relizane'}
+  'Ghardaïa':{ar:'غرداية',en:'Ghardaia'},'Relizane':{ar:'غليزان',en:'Relizane'},
+  // ── Wilayas 49-58 (decoupage de 2019) ──────────────────────────────
+  // ⚠️ ELLES MANQUAIENT DEPUIS LE DEBUT. Ce dictionnaire s'arretait a 48 :
+  // dix wilayas existantes n'avaient ni libelle arabe ni libelle anglais, et
+  // `dcity()` retombait sur le francais sans que rien ne le signale. Trouve en
+  // ajoutant les onze de 2026 — on ne cherchait pas ce trou, on l'a heurte.
+  "El M'Ghair":{ar:'المغير',en:"El M'Ghair"},
+  'El Meniaa':{ar:'المنيعة',en:'El Meniaa'},
+  'Ouled Djellal':{ar:'أولاد جلال',en:'Ouled Djellal'},
+  'Bordj Baji Mokhtar':{ar:'برج باجي مختار',en:'Bordj Baji Mokhtar'},
+  'Béni Abbès':{ar:'بني عباس',en:'Beni Abbes'},
+  'Timimoun':{ar:'تيميمون',en:'Timimoun'},
+  'Touggourt':{ar:'تقرت',en:'Touggourt'},
+  'Djanet':{ar:'جانت',en:'Djanet'},
+  'In Salah':{ar:'عين صالح',en:'In Salah'},
+  'In Guezzam':{ar:'عين قزام',en:'In Guezzam'},
+  // ── Wilayas 59-69 (decret presidentiel 26-206 du 25/05/2026) ───────
+  'Aflou':{ar:'أفلو',en:'Aflou'},
+  'Barika':{ar:'بريكة',en:'Barika'},
+  'El Kantara':{ar:'القنطرة',en:'El Kantara'},
+  'Bir El Ater':{ar:'بئر العاتر',en:'Bir El Ater'},
+  'El Aricha':{ar:'العريشة',en:'El Aricha'},
+  'Ksar Chellala':{ar:'قصر الشلالة',en:'Ksar Chellala'},
+  'Aïn Ouessara':{ar:'عين وسارة',en:'Ain Ouessara'},
+  'Messaad':{ar:'مسعد',en:'Messaad'},
+  'Ksar El Boukhari':{ar:'قصر البخاري',en:'Ksar El Boukhari'},
+  'Bou Saâda':{ar:'بوسعادة',en:'Bou Saada'},
+  'El Abiodh Sidi Cheikh':{ar:'الأبيض سيدي الشيخ',en:'El Abiodh Sidi Cheikh'}
 };
 function dspec(d){
   const fr = d.spec || '';
@@ -1558,6 +1585,22 @@ function onLangChange(){
   // Stats
   set('stats-doc-lbl', tr.sb1 || 'Médecins référencés');
   set('stats-wilaya-lbl', tr.sb2 || 'Wilayas');
+  // [15/09/2026] LE NOMBRE DE WILAYAS EST DERIVE, PLUS ECRIT A LA MAIN.
+  //
+  // Il etait « 58 » en dur, a DEUX endroits de `accueil-public.html`. Le
+  // decoupage a change deux fois (48 -> 58 en 2019, 58 -> 69 en 2026) et ce
+  // nombre est reste faux les deux fois, sur la page d'accueil, a cote d'une
+  // liste deja corrigee. **Un chiffre recopie ne se met jamais a jour.**
+  //
+  // Il vient desormais de `_W`, la meme source que la liste. Le prochain
+  // decoupage ne demandera qu'un endroit.
+  //
+  // ⚠️ C'est le total OFFICIEL des wilayas d'Algerie, pas le nombre de wilayas
+  // ou l'on a des medecins. Les deux different, et c'est bien le premier qu'on
+  // annonce : « Tabibi couvre les 69 wilayas ».
+  const _nbW = String(Object.keys(_W).length);
+  set('stats-wilaya-n', _nbW);
+  set('hs-wilaya-n', _nbW);
   // [I18N-RES] hero stats sans data-i18n (id only)
   set('hs2', tr.hs2 || 'Wilayas');
   set('hs4', tr.hero_booking || 'Réservation');
@@ -1633,7 +1676,7 @@ const _COLORS = [
 ];
 
 /* Wilayas algériennes */
-const _W={1:'Adrar',2:'Chlef',3:'Laghouat',4:'Oum El Bouaghi',5:'Batna',6:'Béjaïa',7:'Biskra',8:'Béchar',9:'Blida',10:'Bouira',11:'Tamanrasset',12:'Tébessa',13:'Tlemcen',14:'Tiaret',15:'Tizi Ouzou',16:'Alger',17:'Djelfa',18:'Jijel',19:'Sétif',20:'Saïda',21:'Skikda',22:'Sidi Bel Abbès',23:'Annaba',24:'Guelma',25:'Constantine',26:'Médéa',27:'Mostaganem',28:"M'Sila",29:'Mascara',30:'Ouargla',31:'Oran',32:'El Bayadh',33:'Illizi',34:'Bordj Bou Arréridj',35:'Boumerdès',36:'El Tarf',37:'Tindouf',38:'Tissemsilt',39:'El Oued',40:'Khenchela',41:'Souk Ahras',42:'Tipaza',43:'Mila',44:'Aïn Defla',45:'Naâma',46:'Aïn Témouchent',47:'Ghardaïa',48:'Relizane',49:"El M'Ghair",50:'El Meniaa',51:'Ouled Djellal',52:'Bordj Baji Mokhtar',53:'Béni Abbès',54:'Timimoun',55:'Touggourt',56:'Djanet',57:'In Salah',58:'In Guezzam'};
+const _W={1:'Adrar',2:'Chlef',3:'Laghouat',4:'Oum El Bouaghi',5:'Batna',6:'Béjaïa',7:'Biskra',8:'Béchar',9:'Blida',10:'Bouira',11:'Tamanrasset',12:'Tébessa',13:'Tlemcen',14:'Tiaret',15:'Tizi Ouzou',16:'Alger',17:'Djelfa',18:'Jijel',19:'Sétif',20:'Saïda',21:'Skikda',22:'Sidi Bel Abbès',23:'Annaba',24:'Guelma',25:'Constantine',26:'Médéa',27:'Mostaganem',28:"M'Sila",29:'Mascara',30:'Ouargla',31:'Oran',32:'El Bayadh',33:'Illizi',34:'Bordj Bou Arréridj',35:'Boumerdès',36:'El Tarf',37:'Tindouf',38:'Tissemsilt',39:'El Oued',40:'Khenchela',41:'Souk Ahras',42:'Tipaza',43:'Mila',44:'Aïn Defla',45:'Naâma',46:'Aïn Témouchent',47:'Ghardaïa',48:'Relizane',49:"El M'Ghair",50:'El Meniaa',51:'Ouled Djellal',52:'Bordj Baji Mokhtar',53:'Béni Abbès',54:'Timimoun',55:'Touggourt',56:'Djanet',57:'In Salah',58:'In Guezzam',59:'Aflou',60:'Barika',61:'El Kantara',62:'Bir El Ater',63:'El Aricha',64:'Ksar Chellala',65:'Aïn Ouessara',66:'Messaad',67:'Ksar El Boukhari',68:'Bou Saâda',69:'El Abiodh Sidi Cheikh'};
 /* Spécialités normalisées */
 const _S={'medecine-generale':'Médecine Gén.','generaliste':'Médecine Gén.','medecin-generaliste':'Médecine Gén.','cardiologie':'Cardiologie','cardiologue':'Cardiologie','pediatrie':'Pédiatrie','pédiatrie':'Pédiatrie','dentiste':'Dentiste','chirurgie-dentaire':'Dentiste','stomatologie':'Dentiste','stomatologiste':'Dentiste','gynecologie':'Gynécologie','gynécologie':'Gynécologie','dermatologie':'Dermatologie','dermatologue':'Dermatologie','ophtalmologie':'Ophtalmologie','orl':'ORL','psychiatrie':'Psychiatrie','neurologie':'Neurologie','radiologie':'Radiologie','chirurgie':'Chirurgie','orthopedie':'Orthopédie','orthopédie':'Orthopédie','urologie':'Urologie','pneumologie':'Pneumologie','rhumatologie':'Rhumatologie','endocrinologie':'Endocrinologie','gastro-enterologie':'Gastro-entérologie','nephrologie':'Néphrologie','kinesitherapie':'Kinésithérapie','kinesithérapeute':'Kinésithérapie','kinesitherapeute':'Kinésithérapie','medecine-du-travail':'Méd. du travail','biologie':'Biologie médicale','autre':'Médecine Gén.'};
 function _norm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');}
@@ -1779,13 +1822,108 @@ function _inferEntityType(slug){
   return null;   // défaut médecin → préfixe "Dr."
 }
 
+// =====================================================================
+// [15/09/2026] « cardiologue bejaia » doit trouver, sans menu et sans accent
+// =====================================================================
+// LE DEFAUT : depuis le durcissement C1 (b878ff8, 09/09), taper un terme dans
+// la barre SANS choisir de menu affichait « Choisissez une wilaya ou une
+// specialite » — et n'appelait meme pas le serveur. La barre de recherche
+// **avait cesse de chercher** pendant six jours.
+//
+// La RPC accepte desormais `p_q` seul (corrige en base par le stratege). Le
+// garde-fou du front, lui, ne laissait toujours pas passer le texte.
+//
+// ---------------------------------------------------------------------
+// CE QUE FAIT CETTE FONCTION, ET POURQUOI ELLE EST SEPAREE
+// ---------------------------------------------------------------------
+// Elle lit le texte libre et en extrait ce qu'elle RECONNAIT franchement :
+// une wilaya, une specialite. Le reste part en `p_q`.
+//
+// « cardiologue bejaia »  ->  p_specialite='Cardiologue', p_wilaya='Béjaïa'
+// « benali »              ->  p_q='benali'   (aucun jeton reconnu)
+// « cardiologue benali »  ->  p_specialite='Cardiologue', p_q='benali'
+//
+// ⚠️ ELLE NE REMPLACE JAMAIS UN MENU. Si `f-ville` ou `f-spec` est rempli,
+// l'utilisateur a choisi : son choix prime, et rien n'est devine.
+//
+// ⚠️ ET ELLE NE DEVINE PAS A MOITIE. Un jeton doit correspondre **exactement**
+// (apres normalisation) a une valeur de la base. Un prefixe suffirait a faire
+// d'un nom de medecin une specialite — « Dr Cardin » deviendrait
+// « Cardiologue », et la recherche rendrait 1 500 fiches au lieu d'une.
+//
+// La normalisation (minuscules + sans accents) sert LES DEUX COTES : c'est
+// elle qui fait que « bejaia » trouve « Béjaïa ».
+// ---------------------------------------------------------------------
+function _normaliserRecherche(s){
+  return String(s == null ? '' : s).toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function _analyserTexteLibre(texte, wilayas, specialites){
+  const vide = { wilaya: null, spec: null, reste: null };
+  const brut = String(texte == null ? '' : texte).trim();
+  if(!brut) return vide;
+
+  const W = Array.isArray(wilayas) ? wilayas : [];
+  const S = Array.isArray(specialites) ? specialites : [];
+  // Index normalise -> valeur EXACTE de la base. C'est cette valeur-la qu'on
+  // renvoie : la RPC compare a la base, pas a ce que l'utilisateur a tape.
+  const index = (liste) => {
+    const m = new Map();
+    for(const v of liste){ const n = _normaliserRecherche(v); if(n) m.set(n, v); }
+    return m;
+  };
+  const iW = index(W);
+  const iS = index(S);
+
+  const jetons = _normaliserRecherche(brut).split(' ').filter(Boolean);
+  if(!jetons.length) return vide;
+
+  let wilaya = null, spec = null;
+  const reste = [];
+  for(let i = 0; i < jetons.length; i++){
+    // Les valeurs a deux mots d'abord (« bordj bou arreridj », « medecin
+    // generaliste ») : sans ca, « bordj » seul ne correspondrait a rien et on
+    // perdrait la wilaya.
+    let pris = false;
+    for(let n = Math.min(3, jetons.length - i); n >= 1 && !pris; n--){
+      const groupe = jetons.slice(i, i + n).join(' ');
+      if(!wilaya && iW.has(groupe)){ wilaya = iW.get(groupe); i += n - 1; pris = true; break; }
+      if(!spec   && iS.has(groupe)){ spec   = iS.get(groupe); i += n - 1; pris = true; break; }
+    }
+    if(!pris) reste.push(jetons[i]);
+  }
+
+  return {
+    wilaya,
+    spec,
+    // Le reste part tel quel en texte libre. S'il ne reste rien, `p_q` est
+    // nul : la recherche porte alors uniquement sur les deux filtres, ce qui
+    // est exactement ce que les menus auraient fait.
+    reste: reste.length ? reste.join(' ') : null,
+  };
+}
+
 // [C1] Arguments de la RPC chercher_praticiens. Le texte libre est passé tel
 // quel : c'est la RPC qui neutralise les jokers ilike et borne à 60 caractères.
 function _buildDoctorCardsArgs(opts, page){
+  let wilaya = opts.ville || null;
+  let spec   = opts.spec  || null;
+  let q      = opts.search ? String(opts.search).trim() || null : null;
+
+  // Le texte n'est analyse QUE si l'utilisateur n'a choisi aucun menu. Un choix
+  // explicite prime toujours sur une devinette.
+  if(!wilaya && !spec && q){
+    const lu = _analyserTexteLibre(q, window._DB_WILAYAS, window._DB_SPECIALTIES);
+    if(lu.wilaya || lu.spec){ wilaya = lu.wilaya; spec = lu.spec; q = lu.reste; }
+  }
+
   return {
-    p_wilaya:     opts.ville  || null,
-    p_specialite: opts.spec   || null,
-    p_q:          opts.search ? String(opts.search).trim() || null : null,
+    p_wilaya:     wilaya,
+    p_specialite: spec,
+    p_q:          q,
     p_type:       null,
     p_page:       Math.min(100, Math.max(1, page || 1)),
     p_limite:     Math.min(50, PER)
@@ -1825,7 +1963,12 @@ async function loadDoctorCards(opts, page){
   const rc = document.getElementById('res-count');
   if(rc) rc.textContent = '...';
 
-  if(!opts.ville && !opts.spec){ _renderChooseFilter(); return; }
+  // [15/09/2026] `!opts.search` AJOUTE. Sans lui, taper « cardiologue » sans
+  // toucher aux menus affichait « Choisissez une wilaya ou une specialite » et
+  // **n'appelait pas le serveur** : la barre de recherche ne cherchait plus.
+  // La RPC accepte `p_q` seul depuis aujourd'hui ; le front doit la laisser
+  // faire son travail.
+  if(!opts.ville && !opts.spec && !opts.search){ _renderChooseFilter(); return; }
 
   try {
     const res = await _tbRpc('chercher_praticiens', _buildDoctorCardsArgs(opts, page), signal);
@@ -2066,10 +2209,10 @@ function _updateDocCounterUI() {
   }
   var _fdEl = document.getElementById('foot-desc');
   if (_fdEl) _fdEl.textContent = lang === 'ar'
-    ? 'أول منصة طبية جزائرية. ' + _fi + ' طبيب مُدرج في 58 ولاية. احجز عبر الإنترنت 24/24.'
+    ? 'أول منصة طبية جزائرية. ' + _fi + ' طبيب مُدرج في 69 ولاية. احجز عبر الإنترنت 24/24.'
     : lang === 'en'
-    ? '1st Algerian medical platform. ' + _fi + ' referenced doctors across 58 wilayas. Book online 24/7.'
-    : 'La 1ère plateforme médicale algérienne. ' + _fi + ' médecins référencés dans 58 wilayas. Réservez en ligne 24h/24.';
+    ? '1st Algerian medical platform. ' + _fi + ' referenced doctors across 69 wilayas. Book online 24/7.'
+    : 'La 1ère plateforme médicale algérienne. ' + _fi + ' médecins référencés dans 69 wilayas. Réservez en ligne 24h/24.';
 }
 window.doFilter=doFilter; window.goPage=goPage; window.goDoc=goDoc; window.bookDoc=bookDoc;
 window.filterBySpec=filterBySpec; window.onLangChange=onLangChange;

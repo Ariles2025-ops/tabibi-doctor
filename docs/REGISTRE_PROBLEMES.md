@@ -295,6 +295,110 @@ ne retire un filet qu'après avoir constaté que l'autre chemin fonctionne. Ici,
 Le placeholder est posé **à l'exécution** par l'en-tête : `inject()` pouvait arriver avant
 lui, ne rien trouver, et ne jamais repasser. Un `MutationObserver` rattrape — **borné à 8 s,
 parce qu'une attente sans fin est une fuite, pas un filet**.
+## 69 wilayas — et deux divergences trouvées en chemin
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-52 | Décret présidentiel 26-206 du 25/05/2026 : **58 → 69 wilayas**. La liste vivait **en dur dans le front**, à **quatre endroits** | `_W`, `WILAYA_I18N`, `assets/dz-wilaya-centroids.js`, `<select id="sw">` de `signup.html` | les onze ajoutées aux quatre endroits, avec libellés AR/EN et chef-lieu | `tests/wilayas-69.test.mjs` — les quatre listes comptent 69, **et disent la même chose** | **réglé** |
+| P-53 | **`WILAYA_I18N` s'arrêtait à 48.** Les dix wilayas de 2019 n'avaient **ni arabe ni anglais** | `El M'Ghair`, `El Meniaa`, `Ouled Djellal`, `Bordj Baji Mokhtar`, `Béni Abbès`, `Timimoun`, `Touggourt`, `Djanet`, `In Salah`, `In Guezzam` — `dcity()` retombait sur le français **sans rien signaler** | les dix ajoutées | même test : **chaque** wilaya doit avoir un libellé, et le libellé « arabe » doit contenir des caractères arabes | **réglé** |
+| P-54 | `signup.html` écrivait **« Bordj Badji Mokhtar »**, `_W` et la base **« Bordj Baji Mokhtar »** | **une lettre**. Un médecin qui choisissait cette wilaya à l'inscription posait une valeur que la recherche ne retrouvait pas | menu régénéré **à partir de `_W`** | même test : `signup.html` doit dire **exactement** les noms de `_W` | **réglé** |
+
+| P-55 | **La liste était à 69, la phrase disait toujours « 58 wilayas ».** Et le bloc de statistiques affichait **58** | signalé par Aghiles **sur la page en ligne**, après le lot précédent : 14 mentions dans 7 fichiers (FR, EN, **et AR**), plus deux nombres écrits en dur | les 14 phrases corrigées ; le compteur **dérivé de `_W`** au lieu d'être recopié | même test : **aucune** phrase visible ne dit « 58 wilayas », le compteur est dérivé, **et le HTML servi vaut déjà 69** | **réglé** |
+
+### ⚠️ Corriger la donnée ne corrige pas la phrase
+
+Le lot précédent a mis les quatre **listes** à 69. Le titre de l'accueil disait toujours
+« … partout en Algérie — 58 wilayas ».
+
+> **Une donnée corrigée et une phrase qui la contredit, c'est pire qu'avant :** la page se
+> contredit elle-même, et le lecteur croit la phrase. Aghiles l'a vu en une seconde sur la
+> page en ligne — aucune de nos portes ne regardait le texte.
+
+Quatorze mentions, sept fichiers, **trois langues** — l'arabe compte autant que le français :
+c'est la même promesse, faite à quelqu'un d'autre.
+
+### Le compteur est maintenant DÉRIVÉ, et c'est le vrai correctif
+
+Le « 58 » du bloc de statistiques était **écrit en dur**, à deux endroits de
+`accueil-public.html`. Le découpage a changé **deux fois** — 48 → 58 en 2019, 58 → 69 en
+2026 — et ce nombre est resté faux **les deux fois**, sur la page d'accueil, à côté d'une
+liste déjà corrigée.
+
+> **Un chiffre recopié ne se met jamais à jour.** Il vient désormais de `Object.keys(_W)`,
+> la même source que la liste : le prochain découpage ne demandera qu'un endroit.
+
+Le HTML servi porte quand même `69` en dur **avant** que le script tourne — pour le lecteur
+sans JavaScript, le robot d'indexation et la capture d'écran. **C'est testé aussi.**
+
+### ⚠️ Quatre copies d'une même liste, c'est quatre occasions de diverger
+
+Les deux défauts ci-dessus **existaient déjà**. Personne ne les cherchait : ils ont été
+heurtés en ajoutant les onze nouvelles.
+
+> **Une relecture n'attrape pas « Badji » contre « Baji ». Une comparaison l'attrape
+> toujours.** C'est pour ça que la garde ne vérifie pas seulement le *compte* — elle exige
+> que les quatre listes disent **la même chose**, nom par nom, code par code.
+
+### Le grep de contrôle — ce qui a été cherché, et ce qui a été trouvé
+
+| | |
+|---|---|
+| listes complètes de wilayas | **trois** : `_W` + `WILAYA_I18N` (`js/home-app.js`), `assets/dz-wilaya-centroids.js`, `signup.html`. **Les trois sont à 69.** |
+| `patient-waitinglist.html` | **13 wilayas + « Autre wilaya »** — une liste courte *délibérée*, pas une liste tronquée. **Non touchée** |
+| `scripts/generate-seo-pages.mjs` | aucune liste en dur : les couples viennent de la RPC `seo_couples()` |
+| `seo/` (576 pages) | générées, hors périmètre ; elles suivront la prochaine génération |
+
+⚠️ **Ce que ce lot ne fait pas** : le **re-routage des fiches médecins** vers les nouveaux
+codes. C'est l'étape du stratège, après validation d'Aghiles. Tant qu'elle n'a pas eu lieu,
+**les onze nouvelles wilayas sont sélectionnables et ne rendront aucun médecin** — c'est
+attendu, et ce n'est pas un bug.
+## 🔴 P-51 — la barre de recherche ne cherchait plus, depuis six jours
+
+| | |
+|---|---|
+| **symptôme** | taper « cardiologue », « cardiologue béjaïa » ou un nom dans `#name-search` **sans choisir de menu** affichait « Choisissez une wilaya ou une spécialité » — et **n'appelait même pas le serveur** |
+| **signalé par** | Aghiles, 15/09. **Six jours** après la régression |
+| **cause** | durcissement C1 (`b878ff8`, 09/09) : `js/home-app.js` court-circuitait sur `if(!opts.ville && !opts.spec)`. Avant, le front filtrait le texte en mémoire |
+| **côté base** | déjà corrigé en prod par le stratège : `chercher_praticiens` accepte `p_q` seul (index GIN). Mesuré en direct : `p_q='cardiologue'` → 1 526, `'cardiologue béjaïa'` → 14, `'benali'` → 131 ; menus inchangés → 23 |
+| **correctif front** | `!opts.search` ajouté au court-circuit, **et** une analyse du texte libre qui pose `p_wilaya`/`p_specialite` quand un jeton correspond franchement à une valeur de la base |
+| **garde** | `tests/recherche-texte-libre.test.mjs` (10 essais sur la fonction réelle, extraite du fichier) **et** `tests/e2e/recherche-texte-libre.spec.js` (5 parcours × 2 profils, qui **lisent ce qui part sur le réseau**) | 
+| **statut** | **réglé** |
+
+### ⚠️ Ce que cette régression apprend — et ce n'est pas « il manquait un `&&` »
+
+> **Le garde-fou avait RAISON le 09/09.** La RPC refusait alors une recherche sans filtre :
+> court-circuiter évitait un 400 garanti. Il a eu **tort** à la seconde où la RPC a accepté
+> `p_q` seul.
+>
+> **Une garde correcte devient fausse quand ce qu'elle protège change, et rien ne le lui
+> dit.** Ici, la contrainte vivait à deux endroits — une condition dans le front, une
+> exigence dans la RPC — et seule la seconde a été mise à jour.
+
+C'est le même motif que P-50 (une référence périmée) et P-41 (un captcha vérifié au mauvais
+moment) : **ce n'était pas le *quoi* qui était faux, c'était le *quand*.** Trois fois en deux
+jours.
+
+### Pourquoi une analyse du texte, et pas seulement `p_q`
+
+Le `&&` seul suffisait à réparer la panne. L'analyse ajoute que « cardiologue bejaia » — **sans
+accent, comme on tape** — retrouve `Cardiologue` + `Béjaïa` au lieu de chercher les deux mots
+en texte brut. La normalisation (minuscules, accents retirés) sert les deux côtés de la
+comparaison.
+
+⚠️ **Elle ne devine jamais à moitié** : un jeton doit correspondre **exactement** à une valeur
+de la base. Un préfixe suffirait à faire d'un nom de médecin une spécialité — « Dr Cardin »
+deviendrait « Cardiologue », et la recherche rendrait 1 500 fiches au lieu d'une. **C'est
+testé, dans les deux sens.**
+
+Et un menu choisi **prime toujours** : si l'utilisateur a rempli `f-ville` ou `f-spec`, rien
+n'est deviné contre lui.
+
+### La contre-épreuve qui manquait au correctif d'origine
+
+Le cinquième essai de bout en bout vérifie qu'un **champ vide** ne déclenche **aucune**
+recherche. Sans lui, supprimer le court-circuit — la correction la plus directe — aurait
+envoyé une requête sans critère à chaque chargement de l'accueil, et personne ne l'aurait vu
+passer.
 
 
 ## Ouverts — aucune garde, et c'est le sujet
