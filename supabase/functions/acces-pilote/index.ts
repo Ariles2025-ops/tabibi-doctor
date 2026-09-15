@@ -82,10 +82,24 @@
 // Le mot de passe (c) :
 //   - est tire de 32 octets aleatoires cryptographiques ;
 //   - ne sort JAMAIS de cette fonction — ni dans la reponse, ni dans un
-//     journal (regles 4 et 6) ;
-//   - est **remplace par un autre, tout aussi aleatoire, juste apres usage**.
-//     Il n'est donc utilisable qu'une fois, pendant quelques millisecondes,
-//     et seulement par le code qui vient de le poser.
+//     journal (regles 4 et 6), ni nulle part ailleurs ;
+//   - est pose **une seule fois**, et laisse tel quel.
+//
+// ⚠️ IL N'EST PAS REBROUILLE APRES USAGE, ET C'EST VOULU. La v3 le faisait —
+// l'intention etait bonne, l'effet non : **changer le mot de passe REVOQUE les
+// sessions de l'utilisateur**, y compris celle qu'on venait de creer. La page
+// recevait des jetons deja morts (`Auth session missing`). Le meilleur des
+// soins, applique une ligne trop tard.
+//
+// Ce que ca laisse derriere : un compte dont le mot de passe est **32 octets
+// que personne n'a jamais vus**. Il n'a ete ni affiche, ni journalise, ni
+// stocke, et il sera reecrit a la prochaine entree. Un secret que personne ne
+// connait ne s'utilise pas.
+//
+// ⚠️ Corollaire a savoir : poser le mot de passe revoque aussi les sessions
+// PRECEDENTES de ce medecin. Deux appareils a la fois, ca ne marche pas — le
+// second fait tomber le premier. Pour un pilote, c'est acceptable ; il faut
+// juste ne pas le decouvrir en recette.
 //
 // La reponse ne contient que `access_token` et `refresh_token` — ce qu'un
 // navigateur obtiendrait d'une connexion ordinaire.
@@ -256,11 +270,22 @@ Deno.serve(async (req) => {
   // `createUser` d'abord : s'il existe deja, l'erreur nous le dit, et on le
   // retrouve. C'est un aller-retour de moins que « lister puis creer », et
   // surtout ca ne laisse pas de fenetre entre les deux.
+  //
+  // ⚠️ LE RATTACHEMENT A LA FICHE SE FAIT ICI, PAS APRES LA SESSION. Toute
+  // ecriture sur le compte doit passer AVANT `signInWithPassword` : apres, on
+  // touche a un utilisateur dont une session vient d'etre delivree, et
+  // certaines ecritures la revoquent (c'est ce qui a casse la v3).
+  const metadonnees = {
+    role: 'medecin',
+    pilote: true,
+    doctor_profile_id: ligne.doctor_profile_id,
+  };
+
   let userId = '';
   const { data: cree, error: errCreate } = await admin.auth.admin.createUser({
     phone,
     phone_confirm: true,
-    user_metadata: { role: 'medecin', pilote: true },
+    user_metadata: metadonnees,
   });
   if (cree?.user?.id) {
     userId = cree.user.id;
@@ -277,11 +302,17 @@ Deno.serve(async (req) => {
       return panne(req, 'server_error');
     }
     userId = trouve.id;
+    // Compte deja connu : on remet le lien vers la fiche a jour — avant la
+    // session, comme tout le reste.
+    const { error: errMeta } = await admin.auth.admin.updateUserById(userId, {
+      user_metadata: metadonnees,
+    });
+    if (errMeta) console.error('[acces-pilote] rattachement fiche :', errMeta.message);
   }
 
   // ── 5. La session — c'est ICI que le captcha est verifie ────────────
-  // Voir « COMMENT LA SESSION EST MINTEE » en tete. Le mot de passe est pose,
-  // consomme, puis remplace. Il ne sort pas d'ici.
+  // Voir « COMMENT LA SESSION EST MINTEE » en tete. Le mot de passe est pose
+  // UNE fois, consomme, et laisse tel quel. Il ne sort pas d'ici.
   const passe = motDePasseEphemere();
   const { error: errPasse } = await admin.auth.admin.updateUserById(userId, { password: passe });
   if (errPasse) {
@@ -301,16 +332,19 @@ Deno.serve(async (req) => {
       phone, password: passe, options: { captchaToken: jetonCaptcha },
     });
 
-  // ⚠️ QU'ON REUSSISSE OU NON, on rebrouille le mot de passe. Un echec de
-  // connexion laisserait sinon un compte ouvert avec un mot de passe que le
-  // processus vient d'ecrire — et qui pourrait finir dans une trace.
-  const { error: errRotation } =
-    await admin.auth.admin.updateUserById(userId, { password: motDePasseEphemere() });
-  if (errRotation) {
-    // On le DIT. Un mot de passe ephemere qui survit n'est plus ephemere.
-    console.error('[acces-pilote] ROTATION DU MOT DE PASSE ECHOUEE pour', userId, ':', errRotation.message);
-  }
-
+  // ⚠️⚠️ NE RIEN ECRIRE SUR LE COMPTE APRES CETTE LIGNE. ⚠️⚠️
+  //
+  // La v3 rebrouillait le mot de passe juste ici, pour qu'il ne survive pas.
+  // L'intention etait bonne ; l'effet, non : **changer le mot de passe REVOQUE
+  // les sessions de l'utilisateur**, y compris celle qu'on venait de creer. La
+  // page recevait des jetons deja morts et `setSession` echouait en
+  // « Auth session missing ». Le meilleur des soins, applique une ligne trop
+  // tard.
+  //
+  // Le mot de passe ephemere reste donc en place jusqu'a la prochaine entree,
+  // qui le reecrit. **Personne ne le connait** : 32 octets tires de
+  // `crypto.getRandomValues`, jamais renvoyes, jamais journalises, jamais
+  // stockes. Un secret que personne n'a vu ne s'utilise pas.
   if (errSession || !session?.session?.access_token) {
     // ⚠️ UN REFUS, PAS UNE PANNE. La cause la plus frequente est un captcha
     // invalide ou expire — c'est-a-dire l'appelant, pas nous. Et repondre 500
@@ -321,14 +355,8 @@ Deno.serve(async (req) => {
     return refus(req, debut);
   }
 
-  // ── 6. Le rattachement a la fiche, et la trace ──────────────────────
-  // On pose le lien dans les metadonnees pour que le front sache quelle fiche
-  // ouvrir. Ce n'est PAS un droit : la RLS ne lit pas les metadonnees.
-  const { error: errMeta } = await admin.auth.admin.updateUserById(userId, {
-    user_metadata: { role: 'medecin', pilote: true, doctor_profile_id: ligne.doctor_profile_id },
-  });
-  if (errMeta) console.error('[acces-pilote] rattachement fiche :', errMeta.message);
-
+  // ── 6. La trace ─────────────────────────────────────────────────────
+  // Une RPC, pas une ecriture sur le compte : elle ne touche pas la session.
   const { error: errTrace } = await admin.rpc('pilote_noter_entree', { p_phone: phone });
   if (errTrace) console.error('[acces-pilote] trace d entree :', errTrace.message);
 

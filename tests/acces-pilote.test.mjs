@@ -165,16 +165,35 @@ test('le mot de passe ephemere n est ni renvoye ni journalise', () => {
   assert.match(succes, /refresh_token/);
 });
 
-test('il est remplace APRES usage, que la connexion reussisse ou non', () => {
-  // Deux appels a updateUserById avec un mot de passe : la pose, et la rotation.
+test('le mot de passe est pose UNE fois — le rebrouiller tuait la session', () => {
+  // [15/09/2026] LA v3 FAISAIT EXACTEMENT LE CONTRAIRE, et ce test aussi.
+  //
+  // Elle rebrouillait le mot de passe apres usage pour qu'il ne survive pas.
+  // L'intention etait bonne ; l'effet, non : **changer le mot de passe REVOQUE
+  // les sessions de l'utilisateur**, y compris celle qu'on venait de creer. La
+  // page recevait des jetons deja morts — « Auth session missing ».
   const poses = [...CODE.matchAll(/updateUserById\([^)]*\{\s*password:/g)];
-  assert.equal(poses.length, 2,
-    'il faut exactement deux ecritures de mot de passe : la pose et la rotation');
-  // La rotation doit venir AVANT le test de reussite de la connexion.
-  const iRotation = CODE.indexOf('motDePasseEphemere()', CODE.indexOf('signInWithPassword'));
-  const iTestSession = CODE.indexOf('if (errSession');
-  assert.ok(iRotation > -1 && iRotation < iTestSession,
-    'un echec de connexion laisserait sinon un compte ouvert avec un mot de passe ecrit');
+  assert.equal(poses.length, 1,
+    'une seule ecriture de mot de passe : une seconde revoquerait la session delivree');
+});
+
+test('AUCUNE ecriture sur le compte apres signInWithPassword', () => {
+  // La regle est plus large que « pas de rotation » : toute ecriture sur
+  // l'utilisateur apres la delivrance de la session est suspecte. On verifie
+  // donc qu'il n'en reste AUCUNE apres l'appel.
+  const apres = CODE.slice(CODE.indexOf('signInWithPassword'));
+  assert.doesNotMatch(apres, /updateUserById/,
+    'le rattachement et le mot de passe doivent etre poses AVANT la session');
+  assert.doesNotMatch(apres, /createUser/);
+});
+
+test('la fiche est rattachee AVANT la session, pour le compte neuf comme pour l ancien', () => {
+  const avant = CODE.slice(0, CODE.indexOf('signInWithPassword'));
+  assert.match(avant, /doctor_profile_id:\s*ligne\.doctor_profile_id/,
+    'sans ce lien, le front ne sait pas quelle fiche ouvrir');
+  // Deux chemins : creation et compte deja connu. Les deux doivent poser le lien.
+  assert.match(avant, /createUser\(\{[\s\S]{0,200}user_metadata: metadonnees/);
+  assert.match(avant, /updateUserById\([^)]*\{[\s\S]{0,80}user_metadata: metadonnees/);
 });
 
 test('aucune cle en clair dans le code, ni dans la page', () => {

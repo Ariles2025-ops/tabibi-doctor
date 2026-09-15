@@ -237,6 +237,32 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 | **garde** | `tests/acces-pilote.test.mjs` — `captchaToken: jetonCaptcha` doit être dans l'appel, et `siteverify` / `turnstileValide` **ne doivent plus exister** (deux consommations d'un jeton à usage unique, c'est une de trop) |
 | **statut** | **réglé** |
 
+### P-42 — rebrouiller le mot de passe éphémère **révoquait la session qu'on venait de créer**
+
+| | |
+|---|---|
+| **symptôme** | v3 : la fonction rendait `200` **avec** des jetons, et la page échouait quand même — `setSession` : « Auth session missing ». Des jetons bien formés, et déjà morts |
+| **cause** | par souci de propreté, la fonction remplaçait le mot de passe éphémère juste après s'en être servie. Or **changer le mot de passe révoque les sessions de l'utilisateur** — y compris celle qui venait d'être délivrée. **Le meilleur des soins, appliqué une ligne trop tard** |
+| **correctif** | le mot de passe est posé **une seule fois** et laissé tel quel ; le rattachement à la fiche passe **avant** `signInWithPassword`, pour les comptes neufs comme pour les anciens. Déployé **v4**, flux complet vérifié en prod |
+| **garde** | `tests/acces-pilote.test.mjs` — exactement **une** écriture de mot de passe, et **aucune** écriture sur le compte après `signInWithPassword` (la règle est plus large que « pas de rotation ») |
+| **statut** | **réglé** |
+
+#### Ce que ça laisse derrière, dit franchement
+
+Un compte dont le mot de passe est **32 octets que personne n'a jamais vus** : ni affichés,
+ni journalisés, ni stockés, et réécrits à l'entrée suivante. **Un secret que personne ne
+connaît ne s'utilise pas.** C'est moins propre que la rotation ; c'est la seule version qui
+marche.
+
+⚠️ **Corollaire à connaître avant la recette** : poser le mot de passe révoque aussi les
+sessions *précédentes* de ce médecin. Deux appareils à la fois, ça ne marche pas — le second
+fait tomber le premier. Acceptable pour un pilote, à condition de ne pas le découvrir en
+séance.
+
+> **Deux bugs en deux versions, et la même forme les deux fois** : une précaution correcte,
+> posée au mauvais endroit de la séquence. Le captcha vérifié trop tôt (P-41), le mot de passe
+> rebrouillé trop tard (P-42). Ce n'est pas le *quoi* qui était faux, c'est le *quand*.
+
 #### ⚠️ Ce que ce déplacement coûte, et ce qu'il fallait faire pour le compenser
 
 Le captcha n'est **plus la première porte**. Un appelant sans jeton valide atteint désormais
