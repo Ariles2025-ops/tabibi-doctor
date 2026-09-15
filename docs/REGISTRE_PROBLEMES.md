@@ -154,6 +154,55 @@ assemblé dans une variable — le compteur ne suit pas une variable) · `val`, 
 > script depuis le premier jour ; ça reste vrai.
 
 
+---
+
+## Le compteur XSS v2 — voir ce qu'on ne voyait pas
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-38 | Le compteur **ne voyait pas** `el.innerHTML = html` quand `html` est assemblé ailleurs. Un puits réel passait pour sûr : `admin-api-keys.html` posait du HTML construit depuis la base | v1 comptait **12** sites ; v2 en compte **135** — **123 valeurs opaques** que la v1 déclarait sûres sans rien savoir d'elles | la question est **retournée** : chaque valeur écrite doit être *prouvablement* sûre (littéral, gabarit dont toutes les interpolations le sont, échappeur, libellé, nombre). Tout le reste est compté | **contre-épreuve à 17 cas**, 8 doivent compter, 9 non — dont `el.innerHTML = html`, qui DOIT compter | **réglé** |
+
+### ⚠️ 12 → 135 ne veut pas dire que le code a empiré
+
+**Les deux chiffres ne mesurent pas la même chose.** La v1 regardait ce qui *avait l'air*
+dangereux dans l'expression écrite sur place. La v2 exige une preuve pour chaque valeur.
+Douze était un plancher de ce qu'on savait voir — c'était déjà écrit au registre la veille
+(P-34). Le plafond `v2` est marqué comme tel dans `innerhtml-plafond.json` : personne ne
+doit comparer les deux.
+
+### Ce qui a été corrigé, pas seulement compté
+
+- **`admin-api-keys.html`** — le puits connu. Nom et e-mail du partenaire, `key_id`,
+  environnement, scopes, compteurs, date : **tout est échappé** morceau par morceau. Les
+  trois `onclick` reçoivent du **JS échappé**, pas du HTML échappé : `&#39;` y redeviendrait
+  une quote, et refermerait la chaîne du handler.
+- **`dawini.html`** — les compteurs du radar (`sans_dispo`, `demandes`, `taux`) passent par
+  `_esc` / `Number`.
+
+### Deux angles morts levés au passage
+
+- `M.esc(…)`, `window.tabibiSec.escapeHtml(…)` : un **préfixe d'objet** faisait échouer la
+  reconnaissance. `conversation.html` échappe chaque message par `M.esc()` — la page des
+  messages entière passait pour non protégée.
+- `ECHAPPEUR` n'était **pas ancré** : il suffisait qu'un `esc(` apparaisse *quelque part*
+  pour que toute l'expression soit déclarée sûre. Ce qui compte est l'appel **du dessus**.
+
+### Les 135 restants — ce qu'ils sont
+
+**123 valeurs opaques** (une variable, un appel dont on ne voit pas l'intérieur) et **12
+gabarits** dont une interpolation n'est pas prouvée. Les opaques dominent : `origText` de
+`login.html` (16 fois — le libellé d'un bouton sauvegardé puis restauré), `errHtml`,
+`loading`, `opts.join('')`…
+
+> **Compter une valeur opaque n'est pas l'accuser.** C'est refuser de la déclarer sûre sans
+> preuve. Le travail restant est de les rendre lisibles une par une — pas de croire le
+> chiffre.
+
+⚠️ Reste au moins un point de conception à trancher : `js/home-app.js:544`, le toast avec
+`{html:true}`, réservé par commentaire aux libellés du dictionnaire. **Un commentaire n'est
+pas une garde.**
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

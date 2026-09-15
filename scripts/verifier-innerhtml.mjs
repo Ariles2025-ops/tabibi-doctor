@@ -14,10 +14,31 @@
 // d'URL. Un gabarit 100 % litteral ne peut rien injecter : le compter
 // gonflerait le chiffre et noierait les vrais.
 //
-// Un site est donc classe DANGEREUX quand son expression contient une
-// interpolation ou une concatenation dont l'operande n'est ni un litteral, ni
-// un appel a un echappeur connu (`esc`, `hEsc`, `escapeHtml`, `sanitize`), ni
-// un libelle de dictionnaire (`T(...)`, `t(...)`).
+// [15/09/2026 — v2] LA QUESTION EST RETOURNEE.
+//
+// La v1 cherchait ce qui AVAIT L'AIR dangereux dans l'expression : un `${…}`,
+// un `+ variable`. Elle ne voyait donc rien quand l'expression est une simple
+// variable — et c'est le cas le plus frequent :
+//
+//     let html = '';
+//     data.forEach(k => { html += `<td>${k.partner_name}</td>`; });
+//     wrap.innerHTML = html;        // <- aucun ${…}, aucun `+` : INVISIBLE
+//
+// Cas reel, `admin-api-keys.html` : du HTML assemble depuis la base, pose en
+// une affectation que la porte declarait sure. **Le trou n'etait pas dans le
+// code surveille, il etait dans la surveillance.**
+//
+// La v2 exige l'inverse : CHAQUE valeur ecrite doit etre PROUVABLEMENT sure —
+// un litteral, un gabarit dont toutes les interpolations sont sures, un appel
+// d'echappeur, un libelle de dictionnaire, un nombre. Tout le reste est
+// compte, y compris une variable dont on ne sait rien.
+//
+// ⚠️ LE CHIFFRE DE LA v2 NE SE COMPARE PAS A CELUI DE LA v1. 12 -> 135 ne dit
+// pas que le code a empire : il dit que la mesure voit 125 endroits de plus.
+// Douze etait un plancher de ce qu'on savait voir ; on le disait deja.
+//
+// Compter une valeur opaque n'est pas l'accuser. C'est refuser de la declarer
+// sure sans preuve — ce qui est tout le contrat de ce depot.
 //
 // ⚠️ CE N'EST PAS UNE PREUVE D'INNOCUITE. Un echappeur mal utilise reste un
 // trou ; une variable qui ne contient qu'une constante est comptee a tort.
@@ -150,16 +171,59 @@ function squelette(expr) {
   return out;
 }
 
-/** Les morceaux « dynamiques » d'une expression : interpolations et operandes. */
-function morceauxDynamiques(expr) {
-  const out = [];
+/**
+ * Les OPERANDES de premier niveau d'une concatenation.
+ *
+ * [15/09/2026 — COMPTEUR v2] LE TROU QUE CE DECOUPAGE FERME.
+ *
+ * La v1 cherchait des `${…}` et des `+ quelqueChose` DANS l'expression. Elle
+ * ne voyait donc rien du tout quand l'expression est une simple variable :
+ *
+ *     let html = '';
+ *     data.forEach(k => { html += `<td>${k.partner_name}</td>`; });
+ *     wrap.innerHTML = html;          // <- aucun ${…}, aucun `+` : INVISIBLE
+ *
+ * C'est le cas reel de `admin-api-keys.html` : du HTML assemble a partir de la
+ * base, pose en une affectation que la porte comptait comme sure. **Le trou
+ * n'etait pas dans le code surveille, il etait dans la surveillance.**
+ *
+ * La v2 renverse la question. Au lieu de chercher ce qui a l'air dangereux
+ * dans l'expression, elle exige que CHAQUE operande soit sur : un litteral,
+ * un gabarit dont toutes les interpolations sont sures, un appel d'echappeur,
+ * un libelle de dictionnaire. Tout le reste — une variable, un appel
+ * quelconque, une propriete — est compte.
+ *
+ * Plus severe, et c'est le but : un compteur qui ne voit pas une variable
+ * rassure sur ce qu'il ignore.
+ */
+function operandes(expr) {
   const sq = squelette(expr);
+  const bouts = [];
+  let prof = 0, debut = 0, quote = null;
+  for (let i = 0; i < sq.length; i++) {
+    const c = sq[i];
+    if (quote) {
+      if (c === '\\') { i++; continue; }
+      if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '\'' || c === '"' || c === '`') { quote = c; continue; }
+    if (c === '(' || c === '[' || c === '{') { prof++; continue; }
+    if (c === ')' || c === ']' || c === '}') { prof--; continue; }
+    // Un `+` de premier niveau, et pas un `++` ni un `+=`.
+    if (prof === 0 && c === '+' && sq[i - 1] !== '+' && sq[i + 1] !== '+' && sq[i + 1] !== '=') {
+      bouts.push(sq.slice(debut, i));
+      debut = i + 1;
+    }
+  }
+  bouts.push(sq.slice(debut));
+  return bouts.map((b) => b.trim()).filter(Boolean);
+}
+
+/** Les interpolations `${…}` d'un gabarit. */
+function interpolations(sq) {
+  const out = [];
   for (const m of sq.matchAll(/\$\{([\s\S]*?)\}/g)) out.push(m[1]);
-  // Concatenations : `... + quelqueChose`. On garde la parenthese ouvrante
-  // quand il y en a une : sans elle, `+ _esc(x)` donnait le fragment `_esc`,
-  // que le detecteur d'echappeur ne reconnaissait pas — et 15 sites echappes
-  // de `dawini.html` etaient comptes comme dangereux.
-  for (const m of sq.matchAll(/\+\s*([A-Za-z_$][\w$.\[\]'"]*\s*\(?)/g)) out.push(m[1]);
   return out;
 }
 
@@ -174,11 +238,27 @@ function morceauxDynamiques(expr) {
 /** Vrai si CE fragment, pris tel quel, rend du texte deja sur. */
 function fragmentSur(t) {
   if (!t) return true;
-  if (ECHAPPEUR.test(t)) return true;
+  // ⚠️ ANCRE AU DEBUT. Avant, `ECHAPPEUR.test()` cherchait n'importe ou : il
+  // suffisait qu'un `esc(` apparaisse QUELQUE PART dans l'expression pour que
+  // le tout soit declare sur. `rows.map(r => esc(r.n)).concat(brut)` passait.
+  // Ce qui compte est ce que rend l'expression, donc l'appel du DESSUS.
+  // Le prefixe d'objet est admis : `M.esc(…)`, `window.tabibiSec.escapeHtml(…)`.
+  // Releve, pas devine — `conversation.html` echappe CHAQUE message par
+  // `M.esc()`, et sans ce prefixe la page des messages entiers passait pour
+  // non protegee.
+  if (new RegExp('^\\s*([A-Za-z_$][\\w$]*\\.)*' + ECHAPPEUR.source.replace(/^\\b/, '')).test(t)) return true;
   if (LIBELLE.test(t)) return true;
-  if (/^['"`]/.test(t) && LITTERAL.test(t)) return true;   // litteral
+  // Un litteral — mais un gabarit qui porte une `${…}` n'en est pas un. La
+  // classe de caracteres de LITTERAL accepte `$`, `{` et `}` : sans cette
+  // garde, `` `<b>${row.nom}</b>` `` passait pour une constante.
+  if (/^['"`]/.test(t) && LITTERAL.test(t) && !/\$\{/.test(t)) return true;
   if (/^[0-9\s'"`+.*/-]+$/.test(t)) return true;           // nombre / litteral simple
   return false;
+}
+
+/** Le fragment construit-il du HTML sur place (chaine ou gabarit ecrit dedans) ? */
+function contientLitteral(t) {
+  return /['"`]/.test(squelette(t));
 }
 
 /**
@@ -238,15 +318,63 @@ function branches(t) {
  */
 function valeurSure(t, profondeur = 0) {
   if (fragmentSur(t)) return true;
-  if (profondeur >= 3) return false;
+  if (profondeur >= 6) return false;
+  const suivant = (x) => valeurSure(x.trim(), profondeur + 1);
+  // Des parentheses qui enveloppent TOUT : on les retire, sinon le ternaire
+  // qu'elles contiennent n'est plus vu au premier niveau. C'est ce qui faisait
+  // passer `${a ? (b ? row.x : 'y') : 'z'}` — attrape par la contre-epreuve.
+  if (t.startsWith('(') && enveloppeTout(t)) return suivant(t.slice(1, -1));
+  // Un gabarit : sur si CHACUNE de ses interpolations l'est.
+  if (t.startsWith('`')) return interpolations(t).every(suivant);
+  // Une concatenation, entre parentheses ou non.
+  const ops = operandes(t);
+  if (ops.length > 1) return ops.every(suivant);
+  // Un ternaire : sur si CHAQUE branche l'est (la condition ne va pas au DOM).
   const br = branches(t);
-  if (!br || !br.length) return false;
-  return br.every((b) => valeurSure(b, profondeur + 1));
+  if (br && br.length) return br.every(suivant);
+  // ---------------------------------------------------------------------
+  // LE POINT DE LA v2.
+  //
+  // Reste une expression d'un seul tenant : `html`, `rows`, `sk.repeat(2)`,
+  // `list.map(r => `<li>${esc(r.n)}</li>`).join('')`.
+  //
+  // - Si elle CONSTRUIT du HTML sur place (une chaine ou un gabarit est ecrit
+  //   dedans), on peut la juger : ses interpolations doivent etre sures.
+  // - Si elle n'en construit aucun, elle est OPAQUE : son contenu a ete
+  //   assemble ailleurs, et rien ici ne dit quoi. **C'est exactement le trou
+  //   de la v1**, qui declarait `wrap.innerHTML = html` inoffensif.
+  //
+  // Une valeur opaque est comptee. Pas parce qu'elle est dangereuse : parce
+  // qu'on ne sait pas.
+  // ---------------------------------------------------------------------
+  // ⚠️ `interpolations(t)` peut etre VIDE, et `[].every(...)` vaut `true`.
+  // On exige donc qu'il y en ait au moins une : « aucune interpolation » ne
+  // veut pas dire « toutes sures », ca veut dire qu'on n'a rien juge.
+  const interp = interpolations(squelette(t));
+  if (contientLitteral(t) && interp.length) return interp.every(suivant);
+  return false;
+}
+
+/** Les parentheses ouvrantes en tete enveloppent-elles toute l'expression ? */
+function enveloppeTout(t) {
+  let prof = 0, quote = null;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (quote) {
+      if (c === '\\') { i++; continue; }
+      if (c === quote) quote = null;
+      continue;
+    }
+    if (c === '\'' || c === '"' || c === '`') { quote = c; continue; }
+    if (c === '(') prof++;
+    else if (c === ')') { prof--; if (prof === 0) return i === t.length - 1; }
+  }
+  return false;
 }
 
 function fragmentsDangereux(expr) {
   const mauvais = [];
-  for (const d of morceauxDynamiques(expr)) {
+  for (const d of operandes(expr)) {
     const t = d.trim();
     if (valeurSure(t)) continue;
     mauvais.push(t);
@@ -314,8 +442,14 @@ if (process.argv.includes('--ecrire')) {
   writeFileSync(PLAFOND, JSON.stringify({
     plafond: dangereux.length,
     total_innerhtml: total,
-    note: 'Nombre d\'innerHTML recevant une donnee NON constante. Ne doit que BAISSER. '
-        + 'Regenere par : node scripts/verifier-innerhtml.mjs --ecrire',
+    mesure: 'v2',
+    note: 'Nombre d\'innerHTML dont la valeur n\'est pas PROUVABLEMENT sure. Ne doit que '
+        + 'BAISSER. Regenere par : node scripts/verifier-innerhtml.mjs --ecrire',
+    attention: 'v2 ne se compare PAS a v1. La v1 (plafond 12) ne regardait que les '
+        + 'gabarits et les concatenations ecrits sur place ; elle ne voyait pas '
+        + '`el.innerHTML = html`, ou `html` est assemble ailleurs. La v2 compte aussi '
+        + 'ces valeurs OPAQUES. Le chiffre monte parce que la mesure voit plus loin, '
+        + 'pas parce que le code a empire.',
     mis_a_jour: new Date().toISOString().slice(0, 10),
   }, null, 2) + '\n');
   console.log(`plafond ecrit : ${dangereux.length} (sur ${total} innerHTML au total)`);

@@ -394,10 +394,10 @@
 
     data.forEach(k => {
       const envBadge = k.active
-        ? `<span class="badge badge-${k.environment}">${k.environment}</span>`
+        ? `<span class="badge badge-${escapeHtml(k.environment)}">${escapeHtml(k.environment)}</span>`
         : `<span class="badge badge-revoked">révoquée</span>`;
-      const scopes = (k.scopes || []).map(s => `<span class="badge badge-scope">${s}</span>`).join("");
-      const last   = k.last_used_at ? new Date(k.last_used_at).toLocaleString("fr-FR") : "—";
+      const scopes = (k.scopes || []).map(s => `<span class="badge badge-scope">${escapeHtml(s)}</span>`).join("");
+      const last   = k.last_used_at ? escapeHtml(new Date(k.last_used_at).toLocaleString("fr-FR")) : "—";
 
       html += `
         <tr>
@@ -405,19 +405,25 @@
           <td class="key-id">${escapeHtml(k.key_id)}</td>
           <td>${envBadge}</td>
           <td>${scopes}</td>
-          <td>${k.rate_limit_per_minute}</td>
-          <td>${(k.calls_last_24h || 0).toLocaleString("fr-FR")}</td>
-          <td>${(k.errors_last_24h || 0).toLocaleString("fr-FR")}</td>
+          <td>${escapeHtml(k.rate_limit_per_minute)}</td>
+          <td>${escapeHtml((k.calls_last_24h || 0).toLocaleString("fr-FR"))}</td>
+          <td>${escapeHtml((k.errors_last_24h || 0).toLocaleString("fr-FR"))}</td>
           <td>${last}</td>
           <td>
-            <button class="btn btn-sm btn-secondary" onclick="openDetail('${k.id}','${escapeHtml(k.partner_name)}')">Détails</button>
+            <button class="btn btn-sm btn-secondary" onclick="openDetail('${encodeURIComponent(k.id)}','${_eJsKeys(k.partner_name)}')">Détails</button>
             ${k.active ? `
-              <button class="btn btn-sm btn-secondary" onclick="rotateKey('${escapeHtml(k.key_id)}')">Rotate</button>
-              <button class="btn btn-sm btn-danger"    onclick="revokeKey('${escapeHtml(k.key_id)}')">Révoquer</button>` : ""}
+              <button class="btn btn-sm btn-secondary" onclick="rotateKey('${_eJsKeys(k.key_id)}')">Rotate</button>
+              <button class="btn btn-sm btn-danger"    onclick="revokeKey('${_eJsKeys(k.key_id)}')">Révoquer</button>` : ""}
           </td>
         </tr>`;
     });
     html += "</tbody></table>";
+    // [15/09/2026] `wrap.innerHTML = html` : c'est CE puits que le compteur v1
+    // ne voyait pas. Le HTML est assemble plus haut a partir de la base ; il
+    // est desormais echappe morceau par morceau (nom, email, key_id,
+    // environnement, scopes, compteurs, date), et les handlers `onclick`
+    // recoivent du JS echappe, pas du HTML echappe — `&#39;` y redeviendrait
+    // une quote.
     wrap.innerHTML = html;
   }
 
@@ -548,6 +554,14 @@
     );
     loadKeys();
   };
+
+  // Echappement pour une chaine JS dans un attribut `onclick="…"` : `escapeHtml`
+  // n'y suffit pas, le parseur HTML decode `&#39;` avant que le JS ne soit lu.
+  function _eJsKeys(s) {
+    return String(s == null ? '' : s)
+      .replace(/\\/g, '\\\\').replace(/'/g, "\\'")
+      .replace(/"/g, '&quot;').replace(/</g, '\\x3C').replace(/\r?\n/g, '\\n');
+  }
 
   function escapeHtml(s) {
     if (s == null) return "";

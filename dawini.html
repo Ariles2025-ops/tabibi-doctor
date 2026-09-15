@@ -743,9 +743,9 @@ function _renderRadar(rT, rW, wilaya){
         var pct = Math.round((row.taux || 0) * 100);
         return '<div class="dw-rad-row">' +
           '<span class="dw-rad-name" style="flex:0 0 34%">' + _esc(_wilayaName(row.wilaya_code)) + '</span>' +
-          '<span class="dw-rad-bar"><i style="width:' + pct + '%"></i></span>' +
-          '<span class="dw-rad-pct">' + pct + '%</span>' +
-          '<span class="dw-rad-n">' + row.sans_dispo + '/' + row.demandes + '</span>' +
+          '<span class="dw-rad-bar"><i style="width:' + Number(pct) + '%"></i></span>' +
+          '<span class="dw-rad-pct">' + Number(pct) + '%</span>' +
+          '<span class="dw-rad-n">' + _esc(row.sans_dispo) + '/' + _esc(row.demandes) + '</span>' +
         '</div>';
       }).join('');
     }
