@@ -1,9 +1,14 @@
 # Audit — les RPC exécutables par `anon`
 
 **15/09/2026.** Relevé sur la base de production, en lecture seule (MCP).
-**Aucun `GRANT`/`REVOKE` n'a été exécuté.** Le fichier
-`supabase/migrations/20260915_revoke_rpc_anon.sql` propose les révocations ; le stratège
-relit et applique.
+
+**ÉTAT : APPLIQUÉ EN PROD le 15/09 par le stratège**, après une correction sans laquelle
+l'audit n'aurait servi à rien — voir « ⚠️ LEÇON » plus bas : `REVOKE ... FROM anon` seul
+ne révoque rien tant que **PUBLIC** détient `EXECUTE`.
+
+Vérifié en lisant la base après coup : **57 → 10**, et ce sont exactement les 10 du
+parcours public. `supabase/migrations/20260915_revoke_rpc_anon.sql` porte désormais le SQL
+réellement exécuté.
 
 ---
 
@@ -58,7 +63,7 @@ il aurait fallu les laisser.
 
 ---
 
-## LÉGITIMES — 10
+## CONSERVÉES — 10  *(vérifié en base après application)*
 
 Le parcours public réel : chercher un médecin, voir sa fiche et ses créneaux, consulter
 Dawini, s'inscrire à la liste d'attente.
@@ -85,7 +90,7 @@ Dawini, s'inscrire à la liste d'attente.
 
 ---
 
-## À RÉVOQUER — 30 appelables par PostgREST
+## RÉVOQUÉES — 30 appelables par PostgREST  *(29 noms, `claim_my_doctor_profile` en a deux)*
 
 Aucune n'a d'usage anonyme. La plupart sont déjà **closes en pratique** — elles lisent
 `auth.uid()`, qui vaut NULL sans session — mais un droit qui ne sert à rien est un droit
@@ -133,7 +138,7 @@ sensible de la liste, et elle figure dans les droits d'`anon` sans raison.
 
 ---
 
-## À RÉVOQUER — 17 fonctions de déclencheur
+## RÉVOQUÉES — 17 fonctions de déclencheur
 
 Elles rendent `trigger` : **PostgREST refuse de les exposer**, et un appel direct échouerait
 faute de contexte de déclencheur. Les révoquer ne change donc rien au comportement.
@@ -173,19 +178,93 @@ video_sessions_protect_columns()
   autre sujet.
 - **Les vues `SECURITY DEFINER` ne sont pas dans le périmètre** — elles sont voulues et
   analysées ailleurs.
+---
 
-## Après application
+## ⚠️ LEÇON — `REVOKE ... FROM anon` ne suffit pas quand PUBLIC détient `EXECUTE`
 
-Vérification, sans rien exécuter d'autre :
+**La première version de la migration ne révoquait rien.**
+
+Dans PostgreSQL, une fonction naît avec `EXECUTE` accordé à **PUBLIC**. `anon` est dans
+PUBLIC comme tout le monde : lui retirer un droit **nominatif** qu'il n'a jamais eu ne lui
+enlève rien. L'ordre passe, la base répond `REVOKE`, et le compte ne bouge pas.
+
+Mesuré après coup : après un `REVOKE ... FROM anon` seul, il restait **~47** des 57
+fonctions `SECURITY DEFINER` toujours exécutables par `anon`. Objectif : 10.
+
+**C'est exactement le piège du cron des rappels** (P-04) : la commande dit « succeeded »,
+l'effet n'existe pas. Un `REVOKE` qui réussit n'est pas un `REVOKE` qui révoque.
+
+### La version corrigée, appliquée en prod le 15/09
+
+```
+1. REVOKE EXECUTE ... FROM PUBLIC          <- celui qui manquait
+2. REVOKE EXECUTE ... FROM anon            <- au cas où un grant nominatif existe aussi
+3. GRANT EXECUTE ... TO authenticated, service_role   (non-déclencheurs seulement)
+```
+
+Le point 3 n'est pas un confort : le point 1 retire le droit **à tout le monde**, y compris
+aux connectés. Sans lui, `get_my_doctor_profile` serait tombée pour chaque médecin.
+
+Elle est écrite en boucle sur `pg_proc` plutôt qu'en 47 lignes, parce que
+`claim_my_doctor_profile` a **deux surcharges** : 29 noms de non-déclencheurs donnent
+**30** fonctions traitées. Une liste de signatures écrite à la main en aurait oublié une.
+
+### Ce que cette leçon coûte à l'avenir
+
+La garde n'est pas « la migration s'applique ». C'est **la requête de comptage**, relancée
+après coup. Elle est au registre (P-26) et en pied de la migration.
+
+---
+
+## Après application — mesuré en base le 15/09
+
+Relevé moi-même, en lecture seule, **après** l'application par le stratège :
 
 ```sql
 select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
  where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
    and has_function_privilege('anon', p.oid, 'EXECUTE');
--- attendu : 10  (contre 57 avant)
 ```
 
-⚠️ **Et une lecture au navigateur, en navigation privée** : l'accueil affiche des médecins,
-une fiche s'ouvre, les créneaux d'un médecin s'affichent, Dawini montre ses statistiques,
-la liste d'attente montre son compteur. C'est ce qui prouve qu'aucune révocation n'a mordu
-sur le parcours public — pas le compte ci-dessus.
+| mesure | avant | après |
+|---|---|---|
+| `SECURITY DEFINER` exécutables par `anon` | **57** | **10** |
+
+**Et ce sont exactement les 10 voulues** — liste relue une par une :
+
+```
+chercher_praticiens        praticien                praticiens_carte
+praticiens_par_ids         stats_publiques          waiting_list_count
+get_available_slots        dawini_zone_active       dawini_shortage_by_wilaya
+dawini_top_missing
+```
+
+Les 30 non-déclencheurs (29 noms, une surcharge) :
+
+| rôle | résultat |
+|---|---|
+| `authenticated` | **30/30 conservées**, 0 perdue |
+| `service_role` | **30/30 conservées** |
+| `anon` | **0/30** |
+
+Les 17 déclencheurs : `anon` **0/17**, PUBLIC **0/17**.
+
+### Une chose que la mesure a montrée et que la migration ne dit pas
+
+`authenticated` garde `EXECUTE` sur les **17 fonctions de déclencheur** — par un `GRANT`
+antérieur que cette migration ne révoque pas (elle ne retire qu'à PUBLIC et à `anon`).
+
+Sans effet connu : une fonction qui rend `trigger` n'est pas exposée par PostgREST et un
+appel direct est refusé par PostgreSQL. **Je ne l'ai pas prouvé par un appel** — la
+tentative a été bloquée par le classifieur de sécurité et, par la règle 7, je n'ai pas
+reformulé. C'est donc un point **documenté, non mesuré**, à reprendre le jour où l'on
+repasse sur les droits.
+
+### Ce qui reste à faire, et que rien ici ne remplace
+
+⚠️ **Une lecture au navigateur, en navigation privée, avec cache-bust** : l'accueil affiche
+des médecins, une fiche s'ouvre, la carte se remplit, les créneaux d'un médecin
+s'affichent, Dawini montre ses statistiques, la liste d'attente montre son compteur.
+
+C'est ce qui prouve qu'aucune révocation n'a mordu sur le parcours public — **pas le compte
+ci-dessus**. Six lectures, six pages. Elles n'ont pas encore été faites.

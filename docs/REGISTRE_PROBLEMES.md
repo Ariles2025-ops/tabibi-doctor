@@ -64,13 +64,33 @@ information, pas un oubli de rédaction.
 
 ---
 
-## Proposé, pas appliqué
+## Appliqués et vérifiés après coup
 
-| ID | symptôme | preuve | correctif proposé | garde | statut |
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
 |---|---|---|---|---|---|
-| P-26 | 57 RPC `SECURITY DEFINER` exécutables par `anon` | `has_function_privilege('anon', …)` ; 319 au total, dont 262 `SECURITY INVOKER` sans effet | `20260915_revoke_rpc_anon.sql` — **47 `REVOKE`, 10 conservées** | revue du stratège + advisor Supabase ; vérification au navigateur en navigation privée (6 lectures publiques) | **proposé** |
+| P-26 | 57 RPC `SECURITY DEFINER` exécutables par `anon` | `has_function_privilege('anon', …)` ; 319 au total, dont 262 `SECURITY INVOKER` sans effet | `20260915_revoke_rpc_anon.sql` — `REVOKE … FROM PUBLIC` **et** `FROM anon`, puis `GRANT` aux connectés. Appliqué en prod le 15/09 | **requête de comptage** (ci-dessous) + advisor Supabase — *en base*, **aucune porte CI** | **réglé — vérifié 57 → 10** |
+| P-30 | `presc_can_read_pdf` restait exécutable par `anon` | ACL relue après application : `{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}` — **`anon` n'y est plus** | réglé par P-26 | même requête de comptage — *en base* | **réglé** |
+| P-32 | `REVOKE … FROM anon` **ne révoquait rien** : PUBLIC détenait `EXECUTE` | après le `REVOKE FROM anon` seul, **~47** des 57 fonctions restaient exécutables par `anon` — le compte n'avait pas bougé | `REVOKE … FROM PUBLIC` ajouté, plus `GRANT authenticated, service_role` pour ne pas fermer aux connectés | **la même requête de comptage** — c'est elle qui a attrapé le piège | **réglé** |
 
----
+### La requête de garde, celle qui a attrapé P-32
+
+Une migration qui s'applique ne prouve rien. **C'est ce compte qui le prouve** — à
+relancer après toute migration qui crée une fonction :
+
+```sql
+select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+ where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
+   and has_function_privilege('anon', p.oid, 'EXECUTE');
+-- attendu : 10.  Au-dessus : une fonction est née avec EXECUTE accordé à PUBLIC.
+```
+
+Relu en base le 15/09 après application : **10**, et ce sont exactement les dix du
+parcours public. `authenticated` et `service_role` : **30/30 conservées, 0 perdue**.
+
+> **P-32 est la vraie leçon de ce lot.** Un `REVOKE` qui réussit n'est pas un `REVOKE` qui
+> révoque — comme le cron des rappels (P-04) disait « succeeded » en envoyant le mot
+> `TA_CLE`. Deux fois le même piège : **la commande passe, l'effet n'existe pas.** Ce qui
+> les a attrapés tous les deux, c'est d'être allé relire l'état après coup.
 
 ## Ouverts — aucune garde, et c'est le sujet
 
@@ -79,7 +99,6 @@ information, pas un oubli de rédaction.
 | P-27 | `accueil-public.html` affiche **4 fiches de médecins écrites en dur** — « ✓ Vérifié · ★ 4,9 » | ces médecins n'existent pas ; `reviews` contient 0 ligne | — | **garde manquante** | **ouvert** |
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
 | P-29 | Le sélecteur de langue **disparaît** de l'accueil construit quand un tiers est injoignable | sources hermétique : 3 boutons · `dist-web` hermétique : **0** · `dist-web` serveur nu : 3 | — (mécanisme non élucidé) | **garde manquante** | **ouvert** |
-| P-30 | `presc_can_read_pdf` reste exécutable par `anon` | ACL : `anon=X/postgres` — `REVOKE … FROM PUBLIC` ne retire pas un grant nominatif | — (sans fuite : `auth.uid()` NULL ⇒ toujours `false`) | couvert par P-26 s'il est appliqué | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---

@@ -1,32 +1,49 @@
 -- =====================================================================
 -- 20260915_revoke_rpc_anon.sql — retirer a `anon` ce dont il n'a pas besoin
 -- =====================================================================
--- ⚠️  ETAT : PROPOSITION. **ECRITE ET NON APPLIQUEE.** Ne compte pas comme
--- migree. Le stratege relit, puis applique par MCP. Deux paires d'yeux.
+-- ETAT : **APPLIQUE EN PROD LE 15/09/2026** par le stratege (MCP), sous le nom
+-- `revoke_rpc_anon_via_public`. Ce fichier a ete REECRIT pour porter le SQL
+-- reellement execute — le depot doit dire la meme chose que la base.
+--
+-- Verifie APRES application, en lisant la base :
+--
+--   fonctions SECURITY DEFINER executables par `anon` :  57  ->  10
+--   ce sont exactement les 10 du parcours public
+--   `authenticated` et `service_role` : 30/30 conservees, 0 perdue
 --
 -- Analyse complete : docs/AUDIT_RPC_ANON_2026-09-15.md
 --
--- ---------------------------------------------------------------------
--- CE QUE CE FICHIER FAIT, ET CE QU'IL NE FAIT PAS
--- ---------------------------------------------------------------------
--- **Uniquement des REVOKE.** Aucun DROP, aucun GRANT, aucune modification de
--- corps de fonction, aucune politique touchee. Le retour arriere tient en un
--- GRANT par ligne, et il est ecrit en pied.
+-- =====================================================================
+-- ⚠️ LA LECON — POURQUOI LA PREMIERE VERSION DE CE FICHIER ETAIT INUTILE
+-- =====================================================================
+-- La version d'origine ne faisait que `REVOKE ... FROM anon`. Elle ne
+-- retirait **rien** : dans PostgreSQL, une fonction est creee avec
+-- `EXECUTE` accorde a **PUBLIC** par defaut. Tant que PUBLIC le detient,
+-- `anon` — qui est dans PUBLIC comme tout le monde — continue d'executer.
 --
--- Sur 319 fonctions executables par `anon`, seules **57 sont SECURITY DEFINER**
--- — les seules qui franchissent la RLS. Les 262 autres s'executent avec les
--- droits de l'appelant : elles ne peuvent rien lire de plus que ce que la RLS
--- laisse deja passer. On n'y touche pas.
+-- Mesure faite apres coup : `REVOKE ... FROM anon` seul laissait **~47** des
+-- 57 fonctions toujours executables par `anon`. Le compte n'avait pas bouge.
 --
--- Sur ces 57 : **10 restent** (le parcours public reel), **47 sont revoquees**.
+-- Un `REVOKE` peut donc reussir sans rien revoquer. C'est le meme piege que
+-- le cron des rappels : la commande dit « succeeded », l'effet n'existe pas.
+-- **Ce qui compte n'est pas que l'ordre passe, c'est que le compte baisse.**
 --
--- ---------------------------------------------------------------------
--- ⚠️ LE RISQUE QUI A ETE VERIFIE AVANT D'ECRIRE CE FICHIER
--- ---------------------------------------------------------------------
+-- La version appliquee ci-dessous :
+--   1. `REVOKE ... FROM PUBLIC`   <- celui qui manquait
+--   2. `REVOKE ... FROM anon`     <- au cas ou un grant nominatif existe aussi
+--   3. `GRANT ... TO authenticated, service_role` pour les NON-declencheurs
+--      — parce que le point 1 vient de retirer aussi le droit des connectes,
+--      et qu'un profil medecin doit continuer a se charger.
+--
+-- Sans le point 3, `get_my_doctor_profile` serait tombee pour tout le monde.
+--
+-- =====================================================================
+-- ⚠️ LE RISQUE VERIFIE AVANT D'ECRIRE CE FICHIER
+-- =====================================================================
 -- Une politique RLS s'evalue avec les droits du role qui interroge. Revoquer
--- `EXECUTE` a `anon` sur une fonction CITEE dans une politique qui vise `anon`
--- casserait la lecture publique — silencieusement, par une erreur de
--- permission au milieu d'un SELECT.
+-- `EXECUTE` sur une fonction CITEE dans une politique visant `anon` casserait
+-- la lecture publique — silencieusement, par une erreur de permission au
+-- milieu d'un SELECT.
 --
 -- Huit des fonctions ci-dessous sont citees dans des politiques. Les 29
 -- politiques concernees visent **toutes** `authenticated`, aucune ne vise
@@ -39,154 +56,127 @@
 -- **Sans cette verification, ce fichier n'aurait pas du etre ecrit.**
 --
 -- =====================================================================
--- 1. APPELABLES PAR POSTGREST — aucune n'a d'usage anonyme
+-- SQL APPLIQUE — verbatim
 -- =====================================================================
+do $$
+declare
+  r record;
+  triggers text[] := array['appointments_secretaire_limit','appointments_set_cabinet_from_doctor','dawini_alerts_on_available','doctor_schedule_protect','enforce_appointment_availability','fn_audit_changes','fn_handle_review_report','fn_update_doctor_rating','fn_verify_review','handle_new_auth_user','lock_doctor_protected_columns','notifications_protect','refresh_doctor_rating','tg_appointment_confirmed_outbox','tg_message_after_insert','tg_notify_appointment','video_sessions_protect_columns'];
+  nontriggers text[] := array['_api_is_admin_safe','admin_doctor_doc_paths','admin_validate_doctor','admin_validation_counts','admin_validation_list','admin_validation_total','is_admin','current_user_role','current_doctor_profile_id','dawini_can_view_object','presc_can_read_pdf','dawini_my_pharmacy_id','dawini_my_pharmacy_wilaya','is_doctor_bookable','appointment_slot_is_available','can_review_doctor','claim_my_doctor_profile','get_my_doctor_profile','update_my_doctor_profile','get_patient_medical_data','upsert_patient_medical_data','dawini_create_request','dawini_create_alert','dawini_cancel_alert','dawini_respond','dawini_get_patient_contact','dawini_pharmacy_stats','check_doctor_account_exists','seo_couples'];
+begin
+  for r in select p.oid, p.proname, pg_get_function_identity_arguments(p.oid) as args from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.prokind='f' and (p.proname = any(triggers) or p.proname = any(nontriggers)) loop
+    execute format('revoke execute on function public.%I(%s) from public', r.proname, r.args);
+    execute format('revoke execute on function public.%I(%s) from anon', r.proname, r.args);
+    if r.proname = any(nontriggers) then
+      execute format('grant execute on function public.%I(%s) to authenticated, service_role', r.proname, r.args);
+    end if;
+  end loop;
+end $$;
 
--- ---------------------------------------------------------------------
--- Administration — `is_admin()` les refuse deja a `anon`, mais un droit
--- qui ne sert a rien est un droit qui traine.
--- ---------------------------------------------------------------------
--- Aucun appelant front. Reservee a l'administration.
-REVOKE EXECUTE ON FUNCTION public._api_is_admin_safe() FROM anon;
--- Rend les CHEMINS des pieces d'identite d'un medecin. Appelee depuis `admin-doctor-validation.html`, derriere connexion.
-REVOKE EXECUTE ON FUNCTION public.admin_doctor_doc_paths(p_doctor_id uuid) FROM anon;
--- Valide ou refuse un medecin. Ecriture d'administration.
-REVOKE EXECUTE ON FUNCTION public.admin_validate_doctor(p_doctor_id uuid, p_action text, p_notes text) FROM anon;
--- Compteurs du tableau de validation.
-REVOKE EXECUTE ON FUNCTION public.admin_validation_counts() FROM anon;
--- Rend `SETOF doctor_profiles` — la TABLE, pas la vue publique. `anon` n'a aucune raison d'y toucher.
-REVOKE EXECUTE ON FUNCTION public.admin_validation_list(p_tab text, p_search text, p_wilaya text, p_limit integer, p_offset integer) FROM anon;
--- Total du meme tableau.
-REVOKE EXECUTE ON FUNCTION public.admin_validation_total(p_tab text, p_search text, p_wilaya text) FROM anon;
+-- =====================================================================
+-- POURQUOI UNE BOUCLE ET PAS 47 LIGNES
+-- =====================================================================
+-- `claim_my_doctor_profile` a deux surcharges. Une liste de signatures
+-- ecrites a la main en oublie une — la boucle prend la fonction par son NOM
+-- et retire le droit sur **chaque** surcharge, avec sa signature exacte lue
+-- dans `pg_proc`. Mesure : 29 noms de non-declencheurs -> **30** fonctions
+-- traitees.
+--
+-- Le prix de la boucle : le diff ne montre plus quelle fonction est retiree
+-- ni pourquoi. C'est ce que documente la liste ci-dessous — elle n'est pas
+-- decorative, c'est la seule trace du raisonnement.
 
--- ---------------------------------------------------------------------
+-- =====================================================================
+-- 1. LES 29 NOMS NON-DECLENCHEURS, ET LA RAISON DE CHACUN
+-- =====================================================================
+-- Administration — `is_admin()` les refuse deja a `anon`, mais un droit qui
+-- ne sert a rien est un droit qui traine.
+--   _api_is_admin_safe          Aucun appelant front. Reservee a l'administration.
+--   admin_doctor_doc_paths      Rend les CHEMINS des pieces d'identite d'un medecin.
+--   admin_validate_doctor       Valide ou refuse un medecin. Ecriture d'administration.
+--   admin_validation_counts     Compteurs du tableau de validation.
+--   admin_validation_list       Rend `SETOF doctor_profiles` — la TABLE, pas la vue publique.
+--   admin_validation_total      Total du meme tableau.
+--
 -- Gardes internes — citees par des politiques RLS visant `authenticated`,
 -- jamais appelees depuis le front.
--- ---------------------------------------------------------------------
--- Garde citee par 17 politiques RLS, toutes sur `authenticated` — verifie : AUCUNE ne vise `anon` ni `public`. La revoquer ne casse donc aucune lecture anonyme.
-REVOKE EXECUTE ON FUNCTION public.is_admin() FROM anon;
--- Lit le role de l'appelant. Sans session : NULL. Aucun appelant front.
-REVOKE EXECUTE ON FUNCTION public.current_user_role() FROM anon;
--- Citee par 3 politiques (`medical_records`, `payments`), toutes sur `authenticated`.
-REVOKE EXECUTE ON FUNCTION public.current_doctor_profile_id() FROM anon;
--- Citee par une politique de `storage.objects` visant `authenticated`.
-REVOKE EXECUTE ON FUNCTION public.dawini_can_view_object(p_name text) FROM anon;
--- Citee par `presc_pdf_select`, sur `authenticated`. Pour `anon`, `auth.uid()` est NULL : elle ne peut rendre que `false` — mais la posseder n'a aucun sens.
-REVOKE EXECUTE ON FUNCTION public.presc_can_read_pdf(p_name text) FROM anon;
--- Identifie la pharmacie de l'appelant. NULL sans session.
-REVOKE EXECUTE ON FUNCTION public.dawini_my_pharmacy_id() FROM anon;
--- Idem, pour la wilaya.
-REVOKE EXECUTE ON FUNCTION public.dawini_my_pharmacy_wilaya() FROM anon;
--- Citee par une politique de `appointments` sur `authenticated`. Aucun appelant front.
-REVOKE EXECUTE ON FUNCTION public.is_doctor_bookable(p_doctor_id uuid) FROM anon;
--- Aucun appelant front : le parcours public passe par `get_available_slots`.
-REVOKE EXECUTE ON FUNCTION public.appointment_slot_is_available(p_doctor_id uuid, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone) FROM anon;
-
--- ---------------------------------------------------------------------
--- Exigent une session — elles lisent `auth.uid()`, qui vaut NULL sans
--- compte. Closes en pratique, ouvertes sur le papier.
--- ---------------------------------------------------------------------
--- Dit si l'appelant peut noter ce medecin. Lit `auth.uid()` : sans session, la reponse est toujours non.
-REVOKE EXECUTE ON FUNCTION public.can_review_doctor(p_doctor_id uuid) FROM anon;
--- Revendication de fiche. Le code le dit lui-meme : « l'auto-claim post-signup (RPC ..., authentifie) » — elle est appelee APRES creation du compte.
-REVOKE EXECUTE ON FUNCTION public.claim_my_doctor_profile() FROM anon;
--- Meme fonction, surcharge par identifiant historique.
-REVOKE EXECUTE ON FUNCTION public.claim_my_doctor_profile(legacy_id_input integer) FROM anon;
--- Profil du medecin CONNECTE. Appelee depuis `signup.html` une fois la session ouverte — le commentaire du code precise « scope auth.uid() ».
-REVOKE EXECUTE ON FUNCTION public.get_my_doctor_profile() FROM anon;
--- Ecriture sur son propre profil.
-REVOKE EXECUTE ON FUNCTION public.update_my_doctor_profile(p_bio text, p_languages text[], p_consultation_fee integer, p_accepts_chifa boolean, p_accepts_card boolean, p_accepts_cash boolean, p_working_hours jsonb, p_telehealth_enabled boolean, p_telehealth_fee integer, p_photo_url text, p_phone text, p_address text) FROM anon;
--- Donnees medicales du patient connecte — groupe sanguin, allergies, antecedents.
-REVOKE EXECUTE ON FUNCTION public.get_patient_medical_data() FROM anon;
--- Ecriture des memes donnees.
-REVOKE EXECUTE ON FUNCTION public.upsert_patient_medical_data(p_blood_type text, p_height_cm integer, p_weight_kg numeric, p_allergies text, p_medical_history text, p_current_medications text, p_family_history text, p_vaccinations text, p_smoker boolean, p_drinker boolean, p_insurance text, p_mutual text, p_matricule text, p_chifa_card text, p_emergency_name text, p_emergency_relation text, p_emergency_phone text) FROM anon;
--- Depose une demande Dawini. Lit `auth.uid()` : echoue sans session.
-REVOKE EXECUTE ON FUNCTION public.dawini_create_request(p_medicaments text[], p_wilaya integer, p_image_path text, p_note text, p_lat double precision, p_lng double precision) FROM anon;
--- Cree une alerte de disponibilite. Idem.
-REVOKE EXECUTE ON FUNCTION public.dawini_create_alert(p_medication text, p_wilaya integer) FROM anon;
--- Annule sa propre alerte. Idem.
-REVOKE EXECUTE ON FUNCTION public.dawini_cancel_alert(p_alert_id uuid) FROM anon;
--- Reponse d'une PHARMACIE a une demande.
-REVOKE EXECUTE ON FUNCTION public.dawini_respond(p_request_id uuid, p_status text, p_disponible boolean, p_generique boolean, p_meds_dispo text[], p_commentaire text) FROM anon;
--- ATTENTION : Rend le NOM et le TELEPHONE d'un patient. Gardee par `dawini_my_pharmacy_id()` (NULL sans session -> `not_a_pharmacy`), donc close aujourd'hui. Mais c'est la fonction la plus sensible de la liste : elle n'a rien a faire dans les droits d'`anon`.
-REVOKE EXECUTE ON FUNCTION public.dawini_get_patient_contact(p_request_id uuid) FROM anon;
--- Statistiques de LA pharmacie connectee.
-REVOKE EXECUTE ON FUNCTION public.dawini_pharmacy_stats() FROM anon;
-
--- ---------------------------------------------------------------------
+--   is_admin                    Citee par 17 politiques, toutes sur `authenticated`.
+--   current_user_role           Lit le role de l'appelant. Sans session : NULL.
+--   current_doctor_profile_id   Citee par 3 politiques (`medical_records`, `payments`).
+--   dawini_can_view_object      Citee par une politique de `storage.objects`.
+--   presc_can_read_pdf          Citee par `presc_pdf_select`. Pour `anon`, `auth.uid()`
+--                               est NULL : elle ne peut rendre que `false`.
+--   dawini_my_pharmacy_id       Identifie la pharmacie de l'appelant. NULL sans session.
+--   dawini_my_pharmacy_wilaya   Idem, pour la wilaya.
+--   is_doctor_bookable          Citee par une politique de `appointments`.
+--   appointment_slot_is_available  Le parcours public passe par `get_available_slots`.
+--
+-- Exigent une session — elles lisent `auth.uid()`, NULL sans compte. Closes
+-- en pratique, ouvertes sur le papier.
+--   can_review_doctor           Sans session, la reponse est toujours non.
+--   claim_my_doctor_profile     Appelee APRES creation du compte (2 surcharges).
+--   get_my_doctor_profile       Profil du medecin CONNECTE (« scope auth.uid() »).
+--   update_my_doctor_profile    Ecriture sur son propre profil.
+--   get_patient_medical_data    Groupe sanguin, allergies, antecedents.
+--   upsert_patient_medical_data Ecriture des memes donnees.
+--   dawini_create_request       Depose une demande Dawini.
+--   dawini_create_alert         Cree une alerte de disponibilite.
+--   dawini_cancel_alert         Annule sa propre alerte.
+--   dawini_respond              Reponse d'une PHARMACIE a une demande.
+--   dawini_get_patient_contact  ⚠️ Rend le NOM et le TELEPHONE d'un patient.
+--                               Gardee par `dawini_my_pharmacy_id()`, donc close
+--                               aujourd'hui — mais c'est la plus sensible de la liste.
+--   dawini_pharmacy_stats       Statistiques de LA pharmacie connectee.
+--
 -- Oracle sans contrepartie.
--- ---------------------------------------------------------------------
--- Rend vrai/faux sur « ce medecin a-t-il deja un compte ? ». **Aucun appelant front.** Pour `anon`, c'est un oracle d'enumeration sur 75 035 fiches, sans contrepartie.
-REVOKE EXECUTE ON FUNCTION public.check_doctor_account_exists(p_legacy_id integer) FROM anon;
-
--- ---------------------------------------------------------------------
+--   check_doctor_account_exists « ce medecin a-t-il deja un compte ? ». Aucun
+--                               appelant front. Pour `anon`, c'est un oracle
+--                               d'enumeration sur 75 035 fiches.
+--
 -- Aucun appelant, ni front ni script.
--- ---------------------------------------------------------------------
--- Couples specialite/wilaya pour les pages SEO. Aucun appelant front ni script : les 490 pages sont generees hors ligne.
-REVOKE EXECUTE ON FUNCTION public.seo_couples() FROM anon;
+--   seo_couples                 Les 490 pages SEO sont generees hors ligne.
 
 -- =====================================================================
--- 2. FONCTIONS DE DECLENCHEUR — 17
+-- 2. LES 17 FONCTIONS DE DECLENCHEUR
 -- =====================================================================
--- Elles rendent `trigger` : **PostgREST refuse de les exposer**, et un appel
--- direct echouerait faute de contexte. Les revoquer ne change RIEN au
--- comportement — c'est de l'hygiene.
+-- Elles rendent `trigger` : PostgREST refuse de les exposer, et un appel
+-- direct echoue faute de contexte. Les revoquer ne change RIEN au
+-- comportement — c'est de l'hygiene : la prochaine personne qui listera les
+-- droits d'`anon` ne perdra pas son temps sur dix-sept fausses pistes.
 --
--- Sa valeur : la prochaine personne qui listera les droits d'`anon` ne perdra
--- pas son temps sur dix-sept fausses pistes.
-REVOKE EXECUTE ON FUNCTION public.appointments_secretaire_limit() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.appointments_set_cabinet_from_doctor() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.dawini_alerts_on_available() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.doctor_schedule_protect() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.enforce_appointment_availability() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.fn_audit_changes() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.fn_handle_review_report() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.fn_update_doctor_rating() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.fn_verify_review() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.handle_new_auth_user() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.lock_doctor_protected_columns() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.notifications_protect() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.refresh_doctor_rating() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.tg_appointment_confirmed_outbox() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.tg_message_after_insert() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.tg_notify_appointment() FROM anon;
-REVOKE EXECUTE ON FUNCTION public.video_sessions_protect_columns() FROM anon;
+-- Elles ne recoivent PAS le `GRANT` du point 3 : rien n'a besoin de les
+-- appeler. Mesure apres application : `anon` 0/17, PUBLIC 0/17 — mais
+-- `authenticated` **17/17**, par un GRANT anterieur que cette migration ne
+-- revoque pas. Sans effet (une fonction `trigger` ne s'appelle pas), a
+-- corriger le jour ou l'on repasse sur les droits.
 
 -- =====================================================================
--- CE QUI RESTE VOLONTAIREMENT A `anon` — 10
+-- CE QUI RESTE VOLONTAIREMENT A `anon` — 10, verifie en base
 -- =====================================================================
--- Le parcours public reel. **Ne pas les revoquer** : chercher un medecin, voir
--- sa fiche et ses creneaux, consulter Dawini, s'inscrire a la liste d'attente.
---
---   chercher_praticiens                Recherche de l'annuaire.
---   praticien                          Fiche d'un praticien.
---   praticiens_carte                   Points de la carte publique.
---   praticiens_par_ids                 Fiches par lot (favoris, resultats).
---   stats_publiques                    Compteurs affiches sur l'accueil public.
---   waiting_list_count                 Nombre d'inscrits, affiche sur `waiting-list.
---   get_available_slots                Creneaux libres d'un medecin.
---   dawini_zone_active                 Dit si Dawini est ouvert dans une wilaya.
---   dawini_shortage_by_wilaya          Statistiques publiques de penurie, affichees sur `dawini.
---   dawini_top_missing                 Medicaments les plus demandes — meme page publique.
+--   chercher_praticiens         Recherche de l'annuaire.
+--   praticien                   Fiche d'un praticien.
+--   praticiens_carte            Points de la carte publique.
+--   praticiens_par_ids          Fiches par lot (favoris, resultats).
+--   stats_publiques             Compteurs affiches sur l'accueil public.
+--   waiting_list_count          Nombre d'inscrits, affiche sur `waiting-list`.
+--   get_available_slots         Creneaux libres d'un medecin.
+--   dawini_zone_active          Dit si Dawini est ouvert dans une wilaya.
+--   dawini_shortage_by_wilaya   Statistiques publiques de penurie.
+--   dawini_top_missing          Medicaments les plus demandes — meme page publique.
 
 -- =====================================================================
--- VERIFICATION — a lancer APRES, dans un passage separe
+-- VERIFICATION — LA REQUETE DE GARDE
 -- =====================================================================
--- 1. Le compte.
+-- C'est elle, et pas le fait que la migration passe, qui dit que le travail
+-- est fait. A relancer apres toute migration qui cree une fonction :
 --
--- select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
---  where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
---    and has_function_privilege('anon', p.oid, 'EXECUTE');
---   Attendu : 10   (57 avant)
+--   select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+--    where n.nspname = 'public' and p.prokind = 'f' and p.prosecdef
+--      and has_function_privilege('anon', p.oid, 'EXECUTE');
+--   -- Attendu : 10.  Au-dessus : une fonction est nee avec EXECUTE a PUBLIC.
 --
--- 2. Ce sont bien LES DIX qu'on voulait garder.
---
--- select p.proname from pg_proc p join pg_namespace n on n.oid = p.pronamespace
---  where n.nspname='public' and p.prokind='f' and p.prosecdef
---    and has_function_privilege('anon', p.oid, 'EXECUTE') order by 1;
---
--- 3. ⚠️ ET LA SEULE VERIFICATION QUI COMPTE VRAIMENT, au navigateur, en
---    navigation privee, avec cache-bust :
+-- Et la seule verification qui compte vraiment, au navigateur, en navigation
+-- privee, avec cache-bust :
 --      - l'accueil affiche des medecins          (chercher_praticiens)
 --      - une fiche s'ouvre                        (praticien)
 --      - la carte se remplit                      (praticiens_carte)
@@ -194,17 +184,12 @@ REVOKE EXECUTE ON FUNCTION public.video_sessions_protect_columns() FROM anon;
 --      - Dawini montre ses statistiques           (dawini_top_missing, ...)
 --      - la liste d'attente montre son compteur   (waiting_list_count)
 --
---    Un compte de fonctions ne prouve pas qu'une page marche. Si l'une de ces
---    six lectures casse, c'est une revocation de trop — et le retour arriere
---    ci-dessous la rend en une ligne.
+-- Un compte de fonctions ne prouve pas qu'une page marche.
 --
 -- =====================================================================
 -- RETOUR ARRIERE
 -- =====================================================================
--- Un GRANT par fonction revoquee, meme signature :
---
---   GRANT EXECUTE ON FUNCTION public.<signature> TO anon;
---
--- Rien d'autre n'a ete touche : ni corps de fonction, ni politique, ni GRANT
--- a `authenticated` ou `service_role`. Le retour arriere est donc total et
--- sans effet de bord.
+-- Rendre l'etat d'avant, c'est rendre `EXECUTE` a PUBLIC sur les memes
+-- fonctions — la boucle ci-dessus avec `grant execute ... to public` a la
+-- place des deux `revoke`. Aucun corps de fonction, aucune politique n'a ete
+-- touche : le retour arriere est total et sans effet de bord.
