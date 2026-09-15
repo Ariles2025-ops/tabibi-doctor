@@ -509,12 +509,46 @@ jour UTC pour prouver la divergence. L'exemption est **nominative**, un seul fic
 toutes lettres : une règle large (« ignorer les fichiers qui parlent de fuseau ») aurait
 rouvert le trou pour tous les autres. La contre-épreuve l'a attrapée ; la relecture, non.
 
+## P-62 — ce qu'on demande ne s'affichait pas là où on l'a demandé
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-62 | Aghiles tape « ben » dans la barre du héros : les fiches trouvées sortent **tout en bas** de l'accueil, derrière cinq blocs de présentation | écart mesuré entre le bas du champ et le haut de `#sec-docs` : **2 921 px** sur mobile, **2 332 px** sur ordinateur — trois écrans de défilement pour voir ce qu'on vient de demander | les blocs qui s'intercalent portent `data-replier-recherche` et se replient tant qu'un filtre est actif. Après : **372 px** (mobile), **322 px** (ordinateur) | `tests/e2e/resultats-sous-la-barre.spec.js`, 7 essais × 2 profils. Contre-épreuve : sans la bascule, **4 essais sur 7 échouent** | **réglé** |
+
+### On replie, on ne déplace pas
+
+Remonter `#sec-docs` dans le DOM aurait corrigé la position **en cassant tout ce qui la vise** :
+`scrollTo$('sec-docs')`, « Voir tout », la pagination — et un lecteur d'écran suit l'ordre du
+DOM, pas l'ordre à l'écran. Un essai garde explicitement cet ordre (`compareDocumentPosition`).
+
+Et on ne replie que la **présentation** : la barre, les deux menus, le tri, le curseur et les
+puces restent à l'écran. Un utilisateur doit pouvoir corriger son terme sans remonter chercher
+le champ.
+
+### Deux notions de « est-ce qu'on cherche ? », dont une fausse
+
+En posant la bascule, il en fallait une deuxième — `_updateResCount` en avait déjà une, écrite
+à la main, pour choisir le message « Aucun médecin avec ces filtres ». **On l'a extraite
+(`_filtresActifs`) au lieu de la recopier** : deux réponses à la même question finissent
+toujours par diverger.
+
+Et l'ancienne était **fausse** : elle lisait `opts.maxPrice != null`, or le curseur de prix
+**démarre à 5 000 DA**. Elle répondait donc « oui, il filtre » dès le premier rendu, avant que
+personne n'ait rien touché — la page se repliait toute seule au chargement. Le commentaire
+d'origine disait pourtant l'intention, mot pour mot : « null si user n'a pas bougé le slider ».
+La condition ne la tenait pas. `prixModifie` compare désormais à `defaultValue`.
+
+> **C'est l'essai qui l'a trouvé, pas la relecture** — il mesurait un écart de 372 px là où il
+> en attendait 2 900.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
 |---|---|---|---|---|---|
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
 | P-60 | La carte annonce **« Téléconsultation · Disponible »** et **aucun médecin ne la propose** | mesuré en base le 16/09 : `count(*) filter (where telehealth_enabled)` = **0** sur **75 035** `doctor_profiles` (et 1 seul `is_verified`) | aucun — c'est une décision produit, pas un correctif de code : ouvrir le drapeau sur de vrais médecins, ou retirer l'annonce | **garde manquante par nature** : un essai hermétique ne voit pas la base. La mesure est à refaire avant chaque annonce | **ouvert** |
+| P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
+| P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---

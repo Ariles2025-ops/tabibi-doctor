@@ -1070,8 +1070,16 @@ let _doFilterDebounce = null;
 function _readFilterUI(){
   const chipEls = [...document.querySelectorAll(".chip.active")];
   const chips = chipEls.map(c=>c.dataset.cv).filter(Boolean);
-  const maxP = parseInt(document.getElementById("f-price")?.value || 10000);
+  const prixEl = document.getElementById("f-price");
+  const maxP = parseInt(prixEl?.value || 10000);
+  // ⚠️ « Le curseur a-t-il ete BOUGE ? » n'est pas « une valeur est-elle
+  // posee ? ». Le curseur DEMARRE a 5 000 DA : `maxP < 10000` est donc vrai
+  // des le premier rendu, avant que personne n'ait touche a quoi que ce soit.
+  // On compare a `defaultValue` — la valeur ecrite dans le HTML — qui est la
+  // seule facon de distinguer « pose » de « choisi ».
+  const prixModifie = !!(prixEl && String(prixEl.value) !== String(prixEl.defaultValue));
   return {
+    prixModifie: prixModifie,
     search:    (document.getElementById("name-search")?.value||"").trim(),
     ville:     document.getElementById("f-ville")?.value || "",
     spec:      document.getElementById("f-spec")?.value || "",
@@ -1081,6 +1089,37 @@ function _readFilterUI(){
     chips:     chips
   };
 }
+/**
+ * L'utilisateur cherche-t-il quelque chose ? UNE seule reponse, un seul endroit.
+ *
+ * ⚠️ Cette notion existait DEJA, ecrite a la main dans `_updateResCount` sous le
+ * nom `filtersActive`, pour decider du message « Aucun medecin avec ces
+ * filtres ». En ajoutant le repli des blocs de presentation il en fallait une
+ * seconde — et deux facons de repondre a la meme question finissent toujours
+ * par diverger. On l'extrait plutot que de la recopier.
+ *
+ * Elle est plus large que `vitrine` (dans `loadDoctorCards`), et les deux
+ * repondent a des questions DIFFERENTES :
+ *   `vitrine`      : quelle RPC appeler — seuls ville/specialite/texte la changent.
+ *   `_filtresActifs` : l'utilisateur a-t-il demande quelque chose — les puces et
+ *                    le curseur de prix comptent, meme s'ils filtrent le lot
+ *                    deja recu, cote navigateur.
+ *
+ * ⚠️ Et pour le prix, elle lit `prixModifie`, PAS `maxPrice != null`. Le
+ * curseur demarre a 5 000 DA : `maxPrice` vaut donc 5 000 des le premier
+ * rendu, sans que personne n'ait rien demande. L'ancienne notion ecrite a la
+ * main dans `_updateResCount` faisait cette lecture-la, et rendait
+ * « Aucun medecin avec ces filtres » sur une page ou aucun filtre n'avait ete
+ * pose. Le commentaire d'origine disait deja l'intention — « null si user n'a
+ * pas bouge le slider » — mais la condition ne la tenait pas.
+ */
+function _filtresActifs(opts){
+  if(!opts) return false;
+  return !!(opts.ville || opts.spec || opts.search
+         || opts.prixModifie || opts.minRating > 0
+         || (opts.chips && opts.chips.length));
+}
+
 function doFilter(immediate){
   if(_doFilterDebounce){ clearTimeout(_doFilterDebounce); _doFilterDebounce = null; }
   const fire = () => loadDoctorCards(_readFilterUI());
@@ -2011,6 +2050,26 @@ async function loadDoctorCards(opts, page){
   // PLEINE. On ne promet pas un nombre de pages qu'on n'a pas mesure.
   const vitrine = !opts.ville && !opts.spec && !opts.search;
 
+  // [16/09/2026] LES RESULTATS REMONTENT SOUS LA BARRE, le temps de la
+  // recherche. Signale par Aghiles : en tapant « ben », les fiches sortaient
+  // tout en bas de l'accueil, derriere cinq blocs de presentation.
+  //
+  // On ne deplace rien dans le DOM — les ancres (`scrollTo$('sec-docs')`, la
+  // pagination, « Voir tout ») et l'ordre de lecture d'un lecteur d'ecran en
+  // dependent. On REPLIE ce qui s'intercale, via `[data-replier-recherche]`.
+  //
+  // ⚠️ La bascule suit `_filtresActifs()` et NON `vitrine` : une puce ou le
+  // curseur de prix ne changent pas la RPC appelee (ils filtrent le lot recu,
+  // cote navigateur) mais l'utilisateur a bel et bien demande quelque chose,
+  // et il doit voir le resultat. Les deux notions repondent a deux questions
+  // differentes — c'est ecrit au-dessus de `_filtresActifs`.
+  //
+  // Posee AVANT la requete : l'ecran se reorganise tout de suite, et reste
+  // juste meme si la requete echoue.
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.classList.toggle('recherche-active', _filtresActifs(opts));
+  }
+
   try {
     const res = vitrine
       ? await _tbRpc('praticiens_vitrine', { p_page: Math.max(1, page), p_limite: PER }, signal)
@@ -2146,10 +2205,7 @@ function _updateResCount(serverTotal, shownLocal, opts, vitrine){
   }
 
   if(serverTotal === 0){
-    const filtersActive = !!(opts.ville || opts.spec || opts.search
-                          || opts.maxPrice != null || opts.minRating > 0
-                          || (opts.chips && opts.chips.length));
-    if(filtersActive){
+    if(_filtresActifs(opts)){
       rc.innerHTML = '<span style="color:var(--text2)">Aucun médecin avec ces filtres.</span> '
                    + '<button type="button" onclick="resetFilters()" '
                    + 'style="background:none;border:none;color:var(--blue);font-weight:600;cursor:pointer;text-decoration:underline;font-size:inherit;font-family:inherit;padding:0">'
