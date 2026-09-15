@@ -177,7 +177,7 @@ test.describe('l ecran de signature ne montre plus de code machine', () => {
     for (const code of [
       'not_authenticated', 'not_owner', 'already_signed', 'not_signable',
       'not_found', 'invalid_medications', 'doctor_not_verified', 'not_a_doctor',
-      'unsupported_characters', 'signing_key_missing', 'pdf_generation_failed',
+      'unsupported_characters', 'arabic_font_unavailable', 'signing_key_missing', 'pdf_generation_failed',
       'pdf_upload_failed', 'sign_failed', 'server_misconfigured',
     ]) {
       expect(src, `le refus « ${code} » n'a pas de message`).toContain(`${code}:`);

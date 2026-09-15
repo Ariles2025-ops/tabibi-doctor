@@ -118,10 +118,31 @@
   function t() { return T[getLang()] || T.fr; }
 
   // ──────────────────────────────────────────────────────────────────────
+  // LE DRAPEAU, ENFIN LU
+  // ──────────────────────────────────────────────────────────────────────
+  // [14/09/2026, nuit] `TABIBI_FEATURES.reviews` n'etait lu PAR PERSONNE —
+  // zero occurrence dans tout le produit, hors la ligne qui le declare. Un
+  // drapeau que rien ne lit ne ferme rien : il donne seulement l'impression
+  // qu'une fonction est desactivee. (Le fichier des drapeaux note exactement
+  // ca pour `sentry`, depuis le 08/09.)
+  //
+  // Ce qui fermait vraiment les avis, c'etait un `return []` cache dans
+  // `getMyReviewableAppointments`. En retirant ce verrou, il faut en poser un
+  // VRAI — sinon on echange un verrou invisible contre rien du tout.
+  //
+  // Desormais : le drapeau ferme coupe l'ECRITURE et la liste des RDV a noter.
+  // La LECTURE des avis publics reste ouverte — ils sont deja publies, les
+  // masquer ne protegerait personne et casserait les fiches medecins.
+  function ouvert() {
+    return !(window.TABIBI_FEATURES && window.TABIBI_FEATURES.reviews === false);
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
   // API
   // ──────────────────────────────────────────────────────────────────────
   const api = {
     async canReview(doctorId) {
+      if (!ouvert()) return { can_review: false, reason: 'feature_disabled' };
       const { data, error } = await sb.rpc('can_review_doctor', { p_doctor_id: doctorId });
       if (error) { console.error('[reviews] canReview', error); return { can_review: false, reason: 'error' }; }
       return data;
@@ -146,6 +167,9 @@
       return data;
     },
     async submitReview({ doctorId, appointmentId = null, ratingOverall, ratingPunctuality, ratingListening, ratingExpertise, comment = null }) {
+      // Garde dure : masquer un bouton ne protege pas d'un appel programmatique,
+      // et c'est ici que la ligne part en base.
+      if (!ouvert()) throw new Error('feature_disabled');
       const session = await window.tabibi.auth.getSession();
       if (!session) throw new Error('not_authenticated');
 
@@ -167,21 +191,22 @@
       return data;
     },
     async getMyReviewableAppointments() {
-      // [14/09/2026] LE MOTIF ECRIT ICI ETAIT FAUX : « vue pas encore créée en
-      // prod ». **`public.my_reviewable_appointments` EXISTE** (mesuré le 14/09).
-      // Le court-circuit avait ete pose pour eviter un 404 qui ne se produit
-      // plus.
+      // [14/09/2026, nuit] LE COURT-CIRCUIT EST RETIRE.
       //
-      // ⚠️  CE N'EST PAS QU'UN COMMENTAIRE : le `return []` ci-dessous est
-      // TOUJOURS ACTIF. Cette fonction rend donc une liste vide quoi qu'il
-      // arrive — un second verrou, cache, en plus du drapeau `reviews: false`.
-      // Qui ouvrira le drapeau ne verra toujours rien tant que ces trois lignes
-      // sont la. **A retirer en meme temps que le drapeau, pas avant** : le
-      // parcours d'avis n'a jamais ete exerce de bout en bout.
-      return [];
-      // const { data, error } = await sb.from('my_reviewable_appointments').select('*');
-      // if (error) { console.error('[reviews] reviewable', error); return []; }
-      // return data || [];
+      // Il y avait ici un `return []` INCONDITIONNEL, place a l'epoque pour
+      // eviter un 404 sur une vue « pas encore creee ». La vue
+      // `public.my_reviewable_appointments` existe (mesuree le 14/09), et le
+      // `return []` a survecu a sa raison d'etre : **un second verrou, cache,
+      // en plus du drapeau**. Qui aurait ouvert le drapeau n'aurait toujours
+      // rien vu, et aurait cherche le defaut ailleurs.
+      //
+      // C'etait ecrit dans le commentaire d'a cote — et un commentaire qui
+      // decrit un verrou ne le retire pas. Il part avec le drapeau, comme
+      // annonce.
+      if (!ouvert()) return [];
+      const { data, error } = await sb.from('my_reviewable_appointments').select('*');
+      if (error) { console.error('[reviews] reviewable', error); return []; }
+      return data || [];
     },
     async getMyReviews() {
       const session = await window.tabibi.auth.getSession();

@@ -56,6 +56,18 @@ const ABSENCES_CONNUES = {
   update_prescription_draft: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
   request_prescription_signature: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
   mark_prescription_delivered: 'EXISTE en base (14/09) — hors reference : jeton --base revoque',
+  // [14/09, lot invitation] Celle-ci N'EXISTE PAS ENCORE en base : sa migration
+  // (20260915_invitations_medecin.sql) est ecrite et **non appliquee**.
+  //
+  // Je ne l'ai PAS ajoutee a `supabase/rpc/existantes.txt` : ce fichier affirme
+  // « appelees par le front QUI EXISTENT en base ». L'y mettre serait ecrire
+  // une chose fausse dans la reference meme qui sert a detecter le faux.
+  // `ABSENCES_CONNUES` dit exactement la verite du moment : le front l'appelle,
+  // la base ne l'a pas.
+  //
+  // ⚠️ A RETIRER le jour ou le stratege applique la migration — et ce jour-la
+  // la liste MAIGRIT, ce qui est son sens.
+  accepter_invitation_medecin: 'migration 20260915_invitations_medecin.sql ECRITE, NON APPLIQUEE',
 };
 
 const IGNORE = new Set(['node_modules', 'dist', 'dist-web', 'www', 'ios', 'android',

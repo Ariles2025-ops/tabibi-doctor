@@ -46,10 +46,19 @@
      hors design system). Même langage que les modals espace patient/médecin :
      feuille ivoire, arrondis, pastille sable, CTA "garder" primaire émeraude,
      action destructive SECONDAIRE sobre. Bottom-sheet mobile, centré desktop. */
+  /* [A11Y 15/09/2026] `visibility:hidden` quand la modale est fermee.
+     `opacity:0` + `pointer-events:none` la rendait invisible A LA SOURIS, mais
+     ses boutons restaient DANS L'ORDRE DE TABULATION : un utilisateur au
+     clavier entrait dans une boite de dialogue qu'il ne voyait pas, et dont il
+     ne pouvait pas sortir du regard. axe le signalait comme
+     `aria-hidden-focus` — un element `aria-hidden` ne doit contenir aucun
+     element focusable, sinon le lecteur d'ecran et le clavier se contredisent.
+     `visibility` retire les descendants du parcours clavier, et se transitionne
+     comme l'opacite : le fondu est conserve. */
   .cxl-back { position:fixed;inset:0;background:rgba(5,39,29,.45);backdrop-filter:blur(4px);
     z-index:1200;display:flex;align-items:flex-end;justify-content:center;
-    opacity:0;pointer-events:none;transition:opacity .2s; }
-  .cxl-back.open { opacity:1;pointer-events:auto; }
+    opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s, visibility .2s; }
+  .cxl-back.open { opacity:1;visibility:visible;pointer-events:auto; }
   .cxl-card { background:var(--bg,#FBF9F4);border:1px solid var(--border);
     border-radius:24px 24px 0 0;width:100%;max-width:420px;
     padding:26px 22px calc(20px + env(safe-area-inset-bottom));text-align:center;

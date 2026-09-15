@@ -44,13 +44,19 @@ test('le drapeau prescriptions est OUVERT', async ({ page }) => {
   // Ce qui n'ouvre PAS au passage. Ouvrir un drapeau ne doit jamais en ouvrir
   // un autre par inadvertance.
   //
-  // [14/09, nuit] `video` SORT de cette liste : il a ete ouvert depuis, par sa
-  // propre PR (#123) et pour ses propres raisons — salle Daily reelle, edge
-  // function deployee, CSP qui delegue la camera. Le laisser ici ferait
-  // echouer ce test pour une raison qui n'a RIEN a voir avec les ordonnances.
-  // Son etat ouvert est garde par `teleconsultation-salle.spec.js`, qui sait
-  // pourquoi il l'est ; ici on ne garde que ce que CE lot ne doit pas toucher.
-  expect(drapeaux.reviews, 'reviews ne doit pas s ouvrir avec les ordonnances').toBe(false);
+  // [14/09, nuit] `video` ET `reviews` SORTENT de cette liste — union des deux
+  // retraits, faits separement par leurs lots respectifs :
+  //
+  //   `video`   ouvert par sa propre PR (#123) : salle Daily reelle, edge
+  //             function deployee, CSP qui delegue la camera. Garde par
+  //             `teleconsultation-salle.spec.js`.
+  //   `reviews` ouvert par son propre lot : court-circuit retire, drapeau enfin
+  //             lu par le module, 12 cas e2e. Garde par `avis-patients.spec.js`.
+  //
+  // Les laisser ici ferait echouer le lot ORDONNANCES pour une raison qui n'a
+  // rien a voir avec les ordonnances. Chaque drapeau est garde par le fichier
+  // qui sait POURQUOI il est ouvert ; ici on ne garde que ce que CE lot ne doit
+  // pas toucher.
   expect(drapeaux.payments, 'payments ne doit pas s ouvrir avec les ordonnances').toBe(false);
   expect(drapeaux.messaging, 'messaging ne doit pas s ouvrir avec les ordonnances').toBe(false);
 });

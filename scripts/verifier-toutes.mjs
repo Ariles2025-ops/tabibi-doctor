@@ -38,17 +38,22 @@ const PORTES = [
   ['passerelle','npm', ['run', '--silent', 'verifier:passerelle']],
   ['proprete', 'npm',  ['run', '--silent', 'verifier:proprete']],
   ['catch',    'npm',  ['run', '--silent', 'verifier:catch']],
-  // [14/09/2026] Cette porte s'appelait `signature` et ne lancait qu'un fichier.
-  // Renommee `unites` et elargie a `tests/*.test.mjs` : les modules de
-  // `supabase/functions/_partage/` sont du code Deno qu'on execute sous Node
-  // (voir l'en-tete de chaque fichier d'essai). Une porte par module aurait
-  // fait grossir cette liste d'une ligne a chaque fois — et la ligne qu'on
-  // OUBLIE d'ajouter est une porte qui n'existe pas.
+  // [14/09/2026] Cette porte s'appelait `signature` et ne lancait qu'UN fichier.
+  // Renommee `unites` et elargie a `tests/*.test.mjs`, pour deux raisons qui
+  // se completent :
   //
-  // [14/09, fusion avec main] `signature` ne reapparait PAS a cote : `unites`
-  // lance STRICTEMENT PLUS de fichiers qu'elle (elle inclut
-  // signature-ordonnance.test.mjs). Les garder toutes les deux ferait tourner
-  // le meme essai sous deux noms — du bruit qui ressemble a de la couverture.
+  //   - les modules de `supabase/functions/_partage/` sont du code Deno qu'on
+  //     execute sous Node (voir l'en-tete de chaque fichier d'essai) ; une
+  //     porte par module aurait fait grossir cette liste d'une ligne a chaque
+  //     fois, et la ligne qu'on OUBLIE d'ajouter est une porte qui n'existe pas ;
+  //   - le jour ou un lot ajoute un essai unitaire sans penser a declarer sa
+  //     porte, cet essai serait ecrit et lance par PERSONNE — une absence
+  //     deguisee en normalite.
+  //
+  // `signature` ne reapparait pas a cote : `unites` lance STRICTEMENT PLUS de
+  // fichiers qu'elle (elle inclut `signature-ordonnance.test.mjs`). Les garder
+  // toutes les deux ferait tourner le meme essai sous deux noms — du bruit qui
+  // ressemble a de la couverture.
   ['unites',   'npm',  ['run', '--silent', 'verifier:unites']],
   ['video',    'npm',  ['run', '--silent', 'verifier:video']],
   ['build',    'npm',  ['run', '--silent', 'build']],
