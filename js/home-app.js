@@ -508,13 +508,43 @@ function renderUserUI() {
 function goDash(){const r=user?.role;window.location.href=r==="medecin"?"doctor-dashboard.html":r==="admin"?"admin-dashboard.html":"patient-dashboard.html";}
 
 /* ══ TOAST ════════════════════════════════════════════════════ */
-function toast(msg,type="info",ms=3500){
+// [XSS 2026-09-14] `msg` ETAIT INJECTE EN HTML, et il n'est pas toujours a nous.
+//
+// L'appel le plus parlant etait celui de l'echec de reservation :
+//
+//     var _bkMsg = _bkServerError ? (" (" + String(_bkServerError).slice(0,160) + ")") : "";
+//     toast("<i …></i> Echec de la reservation…" + _bkMsg, "error", 8000);
+//
+// `_bkServerError` est un message d'erreur **du serveur**. Une erreur Postgres
+// cite volontiers la valeur qui l'a provoquee — c'est-a-dire une saisie de
+// l'utilisateur, renvoyee telle quelle et rendue comme du HTML. Le chemin
+// complet d'un XSS reflechi, sur la page de reservation.
+//
+// Desormais : **le message est du TEXTE** (`textContent`), et l'icone est
+// construite a part, a partir de la table interne `icons` — jamais d'une
+// entree. Le seul moyen d'y mettre du HTML est de le demander explicitement,
+// pour les trois libelles du dictionnaire qui en contiennent volontairement.
+//
+// On ne « nettoie » pas le message : on cesse de l'interpreter. Un assainisseur
+// est une liste de ce qu'on a pense a interdire ; `textContent` n'interprete
+// rien, et il n'y a rien a oublier.
+function toast(msg,type="info",ms=3500,opts){
   let c=document.getElementById("toast-wrap");
   if(!c){c=document.createElement("div");c.id="toast-wrap";c.className="toast-wrap";document.body.appendChild(c);}
   const icons={success:"fa-check-circle",error:"fa-circle-xmark",info:"fa-circle-info"};
   const t=document.createElement("div");
   t.className=`toast toast-${type}`;t.setAttribute("role","alert");
-  t.innerHTML=`<i class='fa ${icons[type]||icons.info}'></i>${msg}`;
+  const ico=document.createElement("i");
+  ico.className="fa "+(icons[type]||icons.info);
+  ico.setAttribute("aria-hidden","true");
+  t.appendChild(ico);
+  if(opts&&opts.html===true){
+    // Reserve aux libelles de NOTRE dictionnaire (fav_add, fav_rm, sms_ok) qui
+    // portent une icone. Jamais pour une donnee qui vient d'ailleurs.
+    const span=document.createElement("span");span.innerHTML=String(msg==null?"":msg);t.appendChild(span);
+  }else{
+    t.appendChild(document.createTextNode(String(msg==null?"":msg)));
+  }
   c.appendChild(t);
   setTimeout(()=>{t.style.transition="all .28s";t.style.opacity="0";t.style.transform="translateY(-6px)";setTimeout(()=>t.remove(),300);},ms);
 }
@@ -622,7 +652,7 @@ function getFavs(){try{return JSON.parse(localStorage.getItem("tabibi_favs")||"[
 function isFav(id){return getFavs().includes(id);}
 function toggleFav(id,btn){
   const f=getFavs(),i=f.indexOf(id);
-  if(i>-1){f.splice(i,1);toast(T("fav_rm"),"info");}else{f.push(id);toast(T("fav_add"),"success");}
+  if(i>-1){f.splice(i,1);toast(T("fav_rm"),"info",3500,{html:true});}else{f.push(id);toast(T("fav_add"),"success",3500,{html:true});}
   localStorage.setItem("tabibi_favs",JSON.stringify(f));
   const act=f.includes(id);
   document.querySelectorAll(`[data-fid="${id}"]`).forEach(b=>{b.classList.toggle("is-fav",act);b.querySelector("i").className=act?"fa fa-heart":"far fa-heart";});
@@ -1291,7 +1321,7 @@ async function finalBooking(docId,slot,docName,prix){
     }
   } catch (e) { (window.tabibiErreur || console.warn)(e, 'home-app.js:1262'); }
   if (!_patientId) {
-    toast("<i class='fa fa-triangle-exclamation'></i> Connectez-vous pour réserver un rendez-vous.", "error", 5000);
+    toast("Connectez-vous pour réserver un rendez-vous.", "error", 5000);
     return;
   }
 
@@ -1375,13 +1405,13 @@ async function finalBooking(docId,slot,docName,prix){
   // [FIX P17] Gating strict : AUCUN toast de succès si l'écriture en base a échoué.
   if (!supabaseOk) {
     var _bkMsg = _bkServerError ? (" (" + String(_bkServerError).slice(0, 160) + ")") : "";
-    toast("<i class='fa fa-triangle-exclamation'></i> Échec de la réservation — le rendez-vous n'a PAS été enregistré." + _bkMsg, "error", 8000);
+    toast("Échec de la réservation — le rendez-vous n'a PAS été enregistré." + _bkMsg, "error", 8000);
     return;
   }
   toast(T("rdv_ok"), "success", 4000);
   setTimeout(()=>{
-    toast("<i class='fa fa-bell'></i> Le médecin a été notifié", "info", 3500);
-    toast("<i class='fa fa-calendar-days'></i> RDV confirmé pour le " + dateLbl + " à " + slot, "success", 5000);
+    toast("Le médecin a été notifié", "info", 3500);
+    toast("RDV confirmé pour le " + dateLbl + " à " + slot, "success", 5000);
   }, 800);
 }
 
