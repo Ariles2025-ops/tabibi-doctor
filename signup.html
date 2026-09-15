@@ -720,6 +720,18 @@ function _persistAndGo(id, role, status, P, consents){
   } catch(e){}
 }
 
+// [15/09/2026] `(window.esc||String)(…)` : quand `window.esc` n'est pas
+// charge, le repli est `String`, qui n'echappe RIEN. Le prenom et le telephone
+// viennent du formulaire d'inscription : ils allaient dans `innerHTML` bruts
+// des que `tabibi-security.js` manquait a l'appel. Repli LOCAL qui echappe.
+function _esc(s){
+  var f = (window.tabibiSec && window.tabibiSec.escapeHtml) || window.esc;
+  if (f) return f(s);
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
+
 function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId = id fiche claimée → uploader in-app
   const modal = document.createElement('div');
   modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
@@ -762,13 +774,13 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
       <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#0a4d3e,#0E5F46);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
         <i class="fa fa-user-doctor" style="font-size:36px;color:#fff"></i>
       </div>
-      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">${tabibiT('welcome_doctor','Bienvenue Dr')} ${(window.esc||String)(prenom)} !</h2>
+      <h2 style="font-size:22px;font-weight:800;color:#0f172a;margin-bottom:8px">${tabibiT('welcome_doctor','Bienvenue Dr')} ${_esc(prenom)} !</h2>
       <p style="font-size:14px;color:#475569;line-height:1.6;margin-bottom:20px">
         ${tabibiT('signup_recorded','Votre inscription a bien été enregistrée.')}
         <br><br>
         ${tabibiT('med_pending_verify',"Notre équipe va vérifier vos qualifications (diplôme + Conseil de l'Ordre) sous <strong>48h ouvrées maximum</strong>.")}
         <br><br>
-        Nous vous notifierons au <strong>${phone}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
+        Nous vous notifierons au <strong>${_esc(phone)}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
       </p>
       ${docsBlock}
       ${footerCta}
@@ -879,7 +891,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       if (form) {
         var info = document.createElement('div');
         info.style.cssText = 'background:#e7f3ef;border:1px solid #2563eb;color:#1e3a8a;padding:12px 16px;border-radius:10px;margin:0 0 16px;font-size:13px;display:flex;align-items:center;gap:10px';
-        info.innerHTML = '<i class="fa fa-circle-info"></i> <span>Vous réclamez la fiche médecin <strong>#' + claimLegacyId + '</strong>. Créez votre compte médecin : la fiche vous sera automatiquement attribuée après validation.</span>';
+        info.innerHTML = '<i class="fa fa-circle-info"></i> <span>Vous réclamez la fiche médecin <strong>#' + Number(claimLegacyId) + '</strong>. Créez votre compte médecin : la fiche vous sera automatiquement attribuée après validation.</span>';
         form.insertBefore(info, form.firstChild);
       }
     }

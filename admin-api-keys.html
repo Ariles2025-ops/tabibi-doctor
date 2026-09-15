@@ -351,7 +351,10 @@
       .order("partner_name", { ascending: true });
 
     const wrap = document.getElementById("keys-table-wrap");
-    if (error) { wrap.innerHTML = `<div class="empty">Erreur : ${(window.esc||String)(error.message)}</div>`; return; }
+    // [15/09/2026] `window.esc||String` : si `window.esc` n'est pas charge, le
+    // repli est `String`, qui n'echappe RIEN — un message d'erreur du serveur
+    // rendu en HTML. Le fichier a son propre `escapeHtml`, qui, lui, est la.
+    if (error) { wrap.innerHTML = `<div class="empty">Erreur : ${escapeHtml(error.message)}</div>`; return; }
     if (!data || data.length === 0) {
       wrap.innerHTML = `<div class="empty">Aucune clé. Cliquez sur "+ Nouvelle clé" pour en créer.</div>`;
       return;

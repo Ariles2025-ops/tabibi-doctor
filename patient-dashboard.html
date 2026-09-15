@@ -272,11 +272,14 @@ function renderNotifs(){
   document.getElementById("notif-count").style.display=unread>0?"flex":"none";
   // [WAVE4-XSS] Sanitize user-controlled fields before injecting into DOM.
   const _esc = (window.tabibiSec && window.tabibiSec.escapeHtml) || (window.esc) || (s => String(s==null?'':s).replace(/[<>&"']/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'}[c])));
-  const _color = c => (typeof c==='string' && /^[#a-zA-Z0-9_(),.\s%-]+$/.test(c)) ? c : 'var(--blue)';
-  const _icon  = i => (typeof i==='string' && /^[a-zA-Z0-9 _-]+$/.test(i)) ? i : 'fa-bell';
+  // [15/09/2026] Renommees `sanitize*` : ce sont des LISTES BLANCHES, pas des
+  // getters. `_color` / `_icon` laissaient croire a de simples accesseurs, et
+  // rien dans le nom ne disait qu'une valeur refusee retombe sur un defaut.
+  const sanitizeColor = c => (typeof c==='string' && /^[#a-zA-Z0-9_(),.\s%-]+$/.test(c)) ? c : 'var(--blue)';
+  const sanitizeIcon  = i => (typeof i==='string' && /^[a-zA-Z0-9 _-]+$/.test(i)) ? i : 'fa-bell';
   document.getElementById("notif-list").innerHTML=n.length?n.map(x=>`
     <div class="notif-item ${x.unread?'unread':''}" onclick="readNotif(${Number(x.id)||0})">
-      <div class="notif-icon" style="background:${_color(x.color)}22;color:${_color(x.color)}"><i class="fa ${_icon(x.icon)}" aria-hidden="true"></i></div>
+      <div class="notif-icon" style="background:${sanitizeColor(x.color)}22;color:${sanitizeColor(x.color)}"><i class="fa ${sanitizeIcon(x.icon)}" aria-hidden="true"></i></div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700;font-size:12px;margin-bottom:2px">${_esc(x.title)}</div>
         <div style="font-size:11px;color:var(--text3);line-height:1.3">${_esc(x.msg)}</div>
@@ -498,11 +501,11 @@ function renderReview(){
     <div class="modal-hdr"><div class="modal-title"><i class="fa fa-star" style="color:#f59e0b"></i> Noter votre RDV</div><button class="modal-close" onclick="closeModal('review-modal')">×</button></div>
     <div class="modal-body" style="padding-bottom:24px;text-align:center">
       <div style="font-size:13px;color:var(--text3);margin-bottom:6px">${esc(r.doctorName)}</div>
-      <div style="font-size:11px;color:var(--text4);margin-bottom:20px">${r.date} à ${r.time}</div>
+      <div style="font-size:11px;color:var(--text4);margin-bottom:20px">${esc(r.date)} à ${esc(r.time)}</div>
       <div style="margin-bottom:20px">
-        ${[1,2,3,4,5].map(n=>`<span class="star-rate ${n<=reviewStars?'filled':''}" onclick="setStars(${n})">★</span>`).join("")}
+        ${[1,2,3,4,5].map(n=>`<span class="star-rate ${n<=reviewStars?'filled':''}" onclick="setStars(${esc(n)})">★</span>`).join("")}
       </div>
-      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;font-weight:700">${["","Très insatisfait","Insatisfait","Correct","Satisfait","Excellent"][reviewStars]||"Sélectionnez une note"}</div>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:14px;font-weight:700">${esc(["","Très insatisfait","Insatisfait","Correct","Satisfait","Excellent"][reviewStars]||"Sélectionnez une note")}</div>
       <div class="form-group" style="text-align:left"><label class="form-label">Votre commentaire (optionnel)</label><textarea class="form-control" id="rev-text" rows="4" placeholder="Partagez votre expérience..." data-i18n-placeholder="ph_review_share"></textarea></div>
       <button class="btn btn-primary btn-full btn-xl" onclick="submitReview()"><i class="fa fa-check"></i> Publier mon avis</button>
     </div>`;
@@ -553,7 +556,7 @@ async function renderFavs(){
   if(!window.tabibiDoctors){ setTimeout(renderFavs, 300); return; }
   const { data, error } = await window.tabibiDoctors.getByIds(ids);
   if(error || !data || !data.length){ if(box) box.innerHTML=EMPTY; return; }
-  if(box) box.innerHTML=data.map(d=>`<div class="doc-search-card" onclick="openBooking('${d.id}')"><div class="row1"><div class="ava" style="background:${d.bg};color:${d.tc}">${d.in}</div><div class="info"><div class="nm">${esc(d.fr)}</div><div class="sp">${esc(d.spec)} · ${esc(d.ville)}</div></div><button class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="event.stopPropagation();toggFav('${d.id}')" aria-label="Favori"><i class="fa fa-heart" aria-hidden="true"></i></button></div><div class="row3"><div class="price">${d.prix.toLocaleString()} <small>DA</small></div><button class="btn btn-primary btn-md"><i class="fa fa-calendar-plus"></i> Réserver</button></div></div>`).join("");
+  if(box) box.innerHTML=data.map(d=>`<div class="doc-search-card" onclick="openBooking('${encodeURIComponent(d.id)}')"><div class="row1"><div class="ava" style="background:${esc(d.bg)};color:${esc(d.tc)}">${esc(d.in)}</div><div class="info"><div class="nm">${esc(d.fr)}</div><div class="sp">${esc(d.spec)} · ${esc(d.ville)}</div></div><button class="btn btn-icon btn-icon-sm" style="background:var(--red-l);color:var(--red)" onclick="event.stopPropagation();toggFav('${encodeURIComponent(d.id)}')" aria-label="Favori"><i class="fa fa-heart" aria-hidden="true"></i></button></div><div class="row3"><div class="price">${esc(d.prix.toLocaleString())} <small>DA</small></div><button class="btn btn-primary btn-md"><i class="fa fa-calendar-plus"></i> Réserver</button></div></div>`).join("");
 }
 
 /* ─── VUE ─── */
@@ -583,7 +586,7 @@ function renderOverview(){
         const dt=new Date(next.date);
         const dl=(window.tabibiFormatDate ? window.tabibiFormatDate(dt, {weekday:"long",day:"numeric",month:"long"}) : dt.toLocaleDateString("fr-FR", {weekday:"long",day:"numeric",month:"long"}));
         const days=Math.ceil((dt-new Date())/(1000*60*60*24));
-        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+days+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${(window.esc||String)(next.doctorName)}</div><div style="font-size:12px;color:var(--text2)">${(window.esc||String)(next.spec)} · ${dl} à ${next.time}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${(next.prix||0).toLocaleString()} DA</div></div></div>`;
+        nextEl.innerHTML=`<div class="card" style="padding:14px;background:linear-gradient(135deg,#e7f3ef,#a7f3d0)"><div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px"><div><div style="font-size:11px;color:var(--green-d);font-weight:700;text-transform:uppercase">${days>0?'Dans '+_esc(days)+' jour'+(days>1?'s':''):'Aujourd&#39;hui'}</div><div style="font-size:15px;font-weight:800;margin-top:4px">${_esc(next.doctorName)}</div><div style="font-size:12px;color:var(--text2)">${_esc(next.spec)} · ${_esc(dl)} à ${_esc(next.time)}</div></div><div style="font-size:18px;font-weight:800;color:var(--blue)">${_esc((next.prix||0).toLocaleString())} DA</div></div></div>`;
       } else {
         nextEl.innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3)" data-i18n="no_rdv">Aucun RDV prévu</div>`;
       }

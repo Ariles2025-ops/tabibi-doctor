@@ -129,6 +129,31 @@ les ai **pas** réécrits à l'aveugle — 28 modifications sans reproduction, c
 casse plus qu'il ne répare.
 
 
+---
+
+## Le plafond XSS, cran par cran
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-34 | **17 puits `innerHTML` réels** recevaient une donnée non constante : saisie (`prompt`), profil (`localStorage`), réponse RPC, paramètre d'URL | `npm run verifier:innerhtml` — 46 → 34 → **12** | échappement au point d'écriture (`esc` / `_esc` / `hEsc` / `escapeHtml`), nœuds DOM quand le gabarit n'apportait rien, `new Option()` pour les `<option>` | **plafond abaissé à 12** — la porte interdit toute remontée | **réglé** |
+| P-35 | `(window.esc || String)(…)` sur **trois** pages : quand `tabibi-security.js` n'est pas chargé, le repli est `String`, **qui n'échappe rien** | `admin-api-keys.html:354`, `patient-dashboard.html:586`, `signup.html:760` | repli **local** qui échappe vraiment, dans chaque fichier | même porte | **réglé** |
+| P-36 | `esc()` employé pour une **chaîne JS dans `onclick="…"`** : le parseur HTML décode `&#39;` **avant** que le JS ne soit lu — la quote revient et ferme la chaîne | `doctor-dashboard.html:703`, nom de patient et motif passés à `alert(…)` | `_eJs()` (quote échappée pour JS, `"` en `&quot;`) remonté au niveau du fichier ; `encodeURIComponent` pour les identifiants | même porte | **réglé** |
+| P-37 | Le compteur se trompait **encore trois fois** : un `+` écrit dans une phrase, `tabibiT` absent de la liste des dictionnaires, une chaîne écrite **dans** une interpolation | `<div>Cliquez sur "+ Nouvelle clé"</div>` comptait ; `${tabibiT('x',"diplôme + Conseil de l'Ordre")}` comptait | on ne lit une expression **que là où il y en a une** : squelette à pile, et les branches d'un ternaire évaluées une à une | **contre-épreuve** : 9 cas, 4 doivent compter, 5 non — dont `${ok ? row.nom : 'rien'}`, qui DOIT compter | **réglé** |
+
+### Les 12 restants — revus un par un, aucun n'est un puits
+
+`activeSection` · `rows` · `reasons` · `docsBlock` · `footerCta` (du HTML déjà échappé,
+assemblé dans une variable — le compteur ne suit pas une variable) · `val`, `i`, `b.time`,
+`a.time` (des nombres, ou le comparateur d'un `sort` qui ne va jamais dans le DOM) ·
+`S.doctors.map(…)`, `[1,2,3,4,5].map(…)` (échappés à l'intérieur) · les dictionnaires de
+`tabibi-lang.js` et `tabibi-reviews.js`.
+
+> ⚠️ **Le compteur ne voit pas une variable.** `wrap.innerHTML = html`, où `html` a été
+> assemblé plus haut, n'est **pas** compté — et peut très bien être un puits. Douze est un
+> plancher de ce qu'on sait voir, pas une preuve d'innocuité. C'est écrit en tête du
+> script depuis le premier jour ; ça reste vrai.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

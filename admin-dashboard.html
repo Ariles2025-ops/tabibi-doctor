@@ -388,7 +388,7 @@ function renderD(){
   const active = meds.filter(d => d.s === 'active');
   const rejected = meds.filter(d => d.s === 'rejected');
 
-  document.getElementById("pend-count").innerHTML = `<i class="fa fa-clock"></i> ${pend.length} en attente`;
+  document.getElementById("pend-count").innerHTML = `<i class="fa fa-clock"></i> ${_esc(pend.length)} en attente`;
 
   // Section TOP : médecins en attente (prioritaires)
   const pendingSection = pend.length > 0 ? `
@@ -433,7 +433,7 @@ function doctorCard(d, isPending) {
 
   return `<div class="card" style="padding:14px;margin-bottom:10px;${isPending?'border-left:3px solid #f59e0b':''}">
     <div style="display:flex;align-items:center;gap:12px">
-      <div style="width:48px;height:48px;border-radius:12px;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-weight:700">${initials}</div>
+      <div style="width:48px;height:48px;border-radius:12px;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-weight:700">${esc(initials)}</div>
       <div style="flex:1;min-width:0">
         <div style="font-weight:700">${esc(d.n)}</div>
         <div style="font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
@@ -597,8 +597,8 @@ function renderPay(){
   let list=PAYS;
   if(currentPayFilt!=="all") list=PAYS.filter(p=>p.m===currentPayFilt);
   document.getElementById("pay-list").innerHTML=list.map(p=>`<div class="tx-row">
-    <div><div style="font-weight:600">${p.ref} · ${p.u}</div><div style="font-size:11px;color:var(--text3)">${p.doc} · ${p.m} · ${p.d}</div></div>
-    <div style="text-align:right"><div style="font-weight:700">${p.amt.toLocaleString()} DA</div><span class="badge ${p.s==='success'?'badge-green':p.s==='pending'?'badge-amber':'badge-red'}" style="font-size:9px">${p.s}</span></div>
+    <div><div style="font-weight:600">${_esc(p.ref)} · ${_esc(p.u)}</div><div style="font-size:11px;color:var(--text3)">${_esc(p.doc)} · ${_esc(p.m)} · ${_esc(p.d)}</div></div>
+    <div style="text-align:right"><div style="font-weight:700">${_esc(p.amt.toLocaleString())} DA</div><span class="badge ${p.s==='success'?'badge-green':p.s==='pending'?'badge-amber':'badge-red'}" style="font-size:9px">${_esc(p.s)}</span></div>
   </div>`).join("");
 }
 

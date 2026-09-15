@@ -317,9 +317,9 @@ function renderPg(el,tot){
   if(tot<=PS){el.innerHTML='';return;}
   const tp=Math.ceil(tot/PS),cur=_page+1;
   el.innerHTML=`<div class="dv-pg">
-    <button class="dv-pg-btn" onclick="goPage(${_page-1})" ${_page===0?'disabled':''}><i class="fa fa-chevron-left"></i> Précédent</button>
-    <span style="font-size:13px;color:var(--text2)">Page ${cur} / ${tp}</span>
-    <button class="dv-pg-btn" onclick="goPage(${_page+1})" ${cur>=tp?'disabled':''}>Suivant <i class="fa fa-chevron-right"></i></button>
+    <button class="dv-pg-btn" onclick="goPage(${Number(_page-1)})" ${_page===0?'disabled':''}><i class="fa fa-chevron-left"></i> Précédent</button>
+    <span style="font-size:13px;color:var(--text2)">Page ${Number(cur)} / ${Number(tp)}</span>
+    <button class="dv-pg-btn" onclick="goPage(${Number(_page+1)})" ${cur>=tp?'disabled':''}>Suivant <i class="fa fa-chevron-right"></i></button>
   </div>`;
 }
 function goPage(p){_page=p;loadList();window.scrollTo(0,0);}

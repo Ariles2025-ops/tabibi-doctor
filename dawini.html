@@ -410,7 +410,7 @@ function addMed(){
 function removeMed(i){ state.meds.splice(i, 1); renderChips(); }
 function renderChips(){
   document.getElementById('dw-chips').innerHTML = state.meds.map(function(m, i){
-    return '<span class="dw-chip">' + _esc(m) + '<button type="button" onclick="removeMed(' + i + ')" aria-label="Retirer">×</button></span>';
+    return '<span class="dw-chip">' + _esc(m) + '<button type="button" onclick="removeMed(' + Number(i) + ')" aria-label="Retirer">×</button></span>';
   }).join('');
 }
 document.addEventListener('DOMContentLoaded', function(){
@@ -433,7 +433,7 @@ async function onPhoto(input){
   }
   state.imagePath = r.data;
   var url = URL.createObjectURL(f);
-  zone.innerHTML = '<img src="' + url + '" alt="Ordonnance"><button class="btn btn-ghost" type="button" onclick="clearPhoto(event)" style="font-size:12px"><i class="fa fa-trash"></i> ' + _esc(_t('dw_photo_rm','Retirer')) + '</button>';
+  zone.innerHTML = '<img src="' + encodeURI(url) + '" alt="Ordonnance"><button class="btn btn-ghost" type="button" onclick="clearPhoto(event)" style="font-size:12px"><i class="fa fa-trash"></i> ' + _esc(_t('dw_photo_rm','Retirer')) + '</button>';
 }
 function clearPhoto(e){
   e.stopPropagation();
@@ -725,10 +725,10 @@ function _renderRadar(rT, rW, wilaya){
   } else {
     boxT.innerHTML = rT.data.map(function(row, i){
       return '<div class="dw-rad-row">' +
-        '<span class="dw-rad-rank">' + (i + 1) + '</span>' +
+        '<span class="dw-rad-rank">' + Number(i + 1) + '</span>' +
         '<span class="dw-rad-name">' + _esc(row.medication) + '</span>' +
-        '<span class="dw-rad-n">' + row.demandes + ' ' + _esc(_t('dw_rad_reqs','demandes')) +
-          (wilaya == null && row.wilayas_touchees > 1 ? ' · ' + row.wilayas_touchees + ' ' + _esc(_t('dw_rad_wilayas','wilayas')) : '') +
+        '<span class="dw-rad-n">' + _esc(row.demandes) + ' ' + _esc(_t('dw_rad_reqs','demandes')) +
+          (wilaya == null && row.wilayas_touchees > 1 ? ' · ' + _esc(row.wilayas_touchees) + ' ' + _esc(_t('dw_rad_wilayas','wilayas')) : '') +
         '</span></div>';
     }).join('');
   }

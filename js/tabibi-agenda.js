@@ -458,7 +458,7 @@
       '<div class="ag-card">' +
         '<div class="ag-card-top">' +
           '<span class="status-pill ' + esc(statusClass(a.status)) + '">' + esc(statusLabel(a.status)) + '</span>' +
-          '<span class="ag-card-when"><bdi>' + fmtHM(sMin) + '</bdi> · ' + a.durMin + ' ' + t('ag_min') + '</span>' +
+          '<span class="ag-card-when"><bdi>' + esc(fmtHM(sMin)) + '</bdi> · ' + esc(a.durMin) + ' ' + t('ag_min') + '</span>' +
         '</div>' +
         '<div class="ag-card-name">' + esc(a.patient) + '</div>' +
         '<div style="font-size:12px;color:var(--text3)">' + esc(fmtD.format(a.start)) + '</div>' +

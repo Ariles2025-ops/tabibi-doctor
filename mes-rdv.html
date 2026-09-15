@@ -450,7 +450,7 @@ function _renderSkeleton(){
   var sk = '<div class="rdv-skeleton"><div class="sk-ava"></div><div class="sk-lines">'
          + '<div class="sk-line"></div><div class="sk-line sm"></div><div class="sk-line xs"></div>'
          + '</div></div>';
-  document.getElementById('list-upcoming').innerHTML = sk + sk + sk;
+  document.getElementById('list-upcoming').innerHTML = sk.repeat(3);
 }
 
 // ── Tabs ────────────────────────────────────────────────────────────────
