@@ -610,7 +610,34 @@ const WILAYA_I18N = {
   'Tipaza':{ar:'تيبازة',en:'Tipaza'},'Mila':{ar:'ميلة',en:'Mila'},
   'Aïn Defla':{ar:'عين الدفلى',en:'Ain Defla'},'Naâma':{ar:'النعامة',en:'Naama'},
   'Aïn Témouchent':{ar:'عين تموشنت',en:'Ain Temouchent'},
-  'Ghardaïa':{ar:'غرداية',en:'Ghardaia'},'Relizane':{ar:'غليزان',en:'Relizane'}
+  'Ghardaïa':{ar:'غرداية',en:'Ghardaia'},'Relizane':{ar:'غليزان',en:'Relizane'},
+  // ── Wilayas 49-58 (decoupage de 2019) ──────────────────────────────
+  // ⚠️ ELLES MANQUAIENT DEPUIS LE DEBUT. Ce dictionnaire s'arretait a 48 :
+  // dix wilayas existantes n'avaient ni libelle arabe ni libelle anglais, et
+  // `dcity()` retombait sur le francais sans que rien ne le signale. Trouve en
+  // ajoutant les onze de 2026 — on ne cherchait pas ce trou, on l'a heurte.
+  "El M'Ghair":{ar:'المغير',en:"El M'Ghair"},
+  'El Meniaa':{ar:'المنيعة',en:'El Meniaa'},
+  'Ouled Djellal':{ar:'أولاد جلال',en:'Ouled Djellal'},
+  'Bordj Baji Mokhtar':{ar:'برج باجي مختار',en:'Bordj Baji Mokhtar'},
+  'Béni Abbès':{ar:'بني عباس',en:'Beni Abbes'},
+  'Timimoun':{ar:'تيميمون',en:'Timimoun'},
+  'Touggourt':{ar:'تقرت',en:'Touggourt'},
+  'Djanet':{ar:'جانت',en:'Djanet'},
+  'In Salah':{ar:'عين صالح',en:'In Salah'},
+  'In Guezzam':{ar:'عين قزام',en:'In Guezzam'},
+  // ── Wilayas 59-69 (decret presidentiel 26-206 du 25/05/2026) ───────
+  'Aflou':{ar:'أفلو',en:'Aflou'},
+  'Barika':{ar:'بريكة',en:'Barika'},
+  'El Kantara':{ar:'القنطرة',en:'El Kantara'},
+  'Bir El Ater':{ar:'بئر العاتر',en:'Bir El Ater'},
+  'El Aricha':{ar:'العريشة',en:'El Aricha'},
+  'Ksar Chellala':{ar:'قصر الشلالة',en:'Ksar Chellala'},
+  'Aïn Ouessara':{ar:'عين وسارة',en:'Ain Ouessara'},
+  'Messaad':{ar:'مسعد',en:'Messaad'},
+  'Ksar El Boukhari':{ar:'قصر البخاري',en:'Ksar El Boukhari'},
+  'Bou Saâda':{ar:'بوسعادة',en:'Bou Saada'},
+  'El Abiodh Sidi Cheikh':{ar:'الأبيض سيدي الشيخ',en:'El Abiodh Sidi Cheikh'}
 };
 function dspec(d){
   const fr = d.spec || '';
@@ -1633,7 +1660,7 @@ const _COLORS = [
 ];
 
 /* Wilayas algériennes */
-const _W={1:'Adrar',2:'Chlef',3:'Laghouat',4:'Oum El Bouaghi',5:'Batna',6:'Béjaïa',7:'Biskra',8:'Béchar',9:'Blida',10:'Bouira',11:'Tamanrasset',12:'Tébessa',13:'Tlemcen',14:'Tiaret',15:'Tizi Ouzou',16:'Alger',17:'Djelfa',18:'Jijel',19:'Sétif',20:'Saïda',21:'Skikda',22:'Sidi Bel Abbès',23:'Annaba',24:'Guelma',25:'Constantine',26:'Médéa',27:'Mostaganem',28:"M'Sila",29:'Mascara',30:'Ouargla',31:'Oran',32:'El Bayadh',33:'Illizi',34:'Bordj Bou Arréridj',35:'Boumerdès',36:'El Tarf',37:'Tindouf',38:'Tissemsilt',39:'El Oued',40:'Khenchela',41:'Souk Ahras',42:'Tipaza',43:'Mila',44:'Aïn Defla',45:'Naâma',46:'Aïn Témouchent',47:'Ghardaïa',48:'Relizane',49:"El M'Ghair",50:'El Meniaa',51:'Ouled Djellal',52:'Bordj Baji Mokhtar',53:'Béni Abbès',54:'Timimoun',55:'Touggourt',56:'Djanet',57:'In Salah',58:'In Guezzam'};
+const _W={1:'Adrar',2:'Chlef',3:'Laghouat',4:'Oum El Bouaghi',5:'Batna',6:'Béjaïa',7:'Biskra',8:'Béchar',9:'Blida',10:'Bouira',11:'Tamanrasset',12:'Tébessa',13:'Tlemcen',14:'Tiaret',15:'Tizi Ouzou',16:'Alger',17:'Djelfa',18:'Jijel',19:'Sétif',20:'Saïda',21:'Skikda',22:'Sidi Bel Abbès',23:'Annaba',24:'Guelma',25:'Constantine',26:'Médéa',27:'Mostaganem',28:"M'Sila",29:'Mascara',30:'Ouargla',31:'Oran',32:'El Bayadh',33:'Illizi',34:'Bordj Bou Arréridj',35:'Boumerdès',36:'El Tarf',37:'Tindouf',38:'Tissemsilt',39:'El Oued',40:'Khenchela',41:'Souk Ahras',42:'Tipaza',43:'Mila',44:'Aïn Defla',45:'Naâma',46:'Aïn Témouchent',47:'Ghardaïa',48:'Relizane',49:"El M'Ghair",50:'El Meniaa',51:'Ouled Djellal',52:'Bordj Baji Mokhtar',53:'Béni Abbès',54:'Timimoun',55:'Touggourt',56:'Djanet',57:'In Salah',58:'In Guezzam',59:'Aflou',60:'Barika',61:'El Kantara',62:'Bir El Ater',63:'El Aricha',64:'Ksar Chellala',65:'Aïn Ouessara',66:'Messaad',67:'Ksar El Boukhari',68:'Bou Saâda',69:'El Abiodh Sidi Cheikh'};
 /* Spécialités normalisées */
 const _S={'medecine-generale':'Médecine Gén.','generaliste':'Médecine Gén.','medecin-generaliste':'Médecine Gén.','cardiologie':'Cardiologie','cardiologue':'Cardiologie','pediatrie':'Pédiatrie','pédiatrie':'Pédiatrie','dentiste':'Dentiste','chirurgie-dentaire':'Dentiste','stomatologie':'Dentiste','stomatologiste':'Dentiste','gynecologie':'Gynécologie','gynécologie':'Gynécologie','dermatologie':'Dermatologie','dermatologue':'Dermatologie','ophtalmologie':'Ophtalmologie','orl':'ORL','psychiatrie':'Psychiatrie','neurologie':'Neurologie','radiologie':'Radiologie','chirurgie':'Chirurgie','orthopedie':'Orthopédie','orthopédie':'Orthopédie','urologie':'Urologie','pneumologie':'Pneumologie','rhumatologie':'Rhumatologie','endocrinologie':'Endocrinologie','gastro-enterologie':'Gastro-entérologie','nephrologie':'Néphrologie','kinesitherapie':'Kinésithérapie','kinesithérapeute':'Kinésithérapie','kinesitherapeute':'Kinésithérapie','medecine-du-travail':'Méd. du travail','biologie':'Biologie médicale','autre':'Médecine Gén.'};
 function _norm(s){return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'');}

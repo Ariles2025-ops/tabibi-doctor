@@ -246,6 +246,40 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## 69 wilayas — et deux divergences trouvées en chemin
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-52 | Décret présidentiel 26-206 du 25/05/2026 : **58 → 69 wilayas**. La liste vivait **en dur dans le front**, à **quatre endroits** | `_W`, `WILAYA_I18N`, `assets/dz-wilaya-centroids.js`, `<select id="sw">` de `signup.html` | les onze ajoutées aux quatre endroits, avec libellés AR/EN et chef-lieu | `tests/wilayas-69.test.mjs` — les quatre listes comptent 69, **et disent la même chose** | **réglé** |
+| P-53 | **`WILAYA_I18N` s'arrêtait à 48.** Les dix wilayas de 2019 n'avaient **ni arabe ni anglais** | `El M'Ghair`, `El Meniaa`, `Ouled Djellal`, `Bordj Baji Mokhtar`, `Béni Abbès`, `Timimoun`, `Touggourt`, `Djanet`, `In Salah`, `In Guezzam` — `dcity()` retombait sur le français **sans rien signaler** | les dix ajoutées | même test : **chaque** wilaya doit avoir un libellé, et le libellé « arabe » doit contenir des caractères arabes | **réglé** |
+| P-54 | `signup.html` écrivait **« Bordj Badji Mokhtar »**, `_W` et la base **« Bordj Baji Mokhtar »** | **une lettre**. Un médecin qui choisissait cette wilaya à l'inscription posait une valeur que la recherche ne retrouvait pas | menu régénéré **à partir de `_W`** | même test : `signup.html` doit dire **exactement** les noms de `_W` | **réglé** |
+
+### ⚠️ Quatre copies d'une même liste, c'est quatre occasions de diverger
+
+Les deux défauts ci-dessus **existaient déjà**. Personne ne les cherchait : ils ont été
+heurtés en ajoutant les onze nouvelles.
+
+> **Une relecture n'attrape pas « Badji » contre « Baji ». Une comparaison l'attrape
+> toujours.** C'est pour ça que la garde ne vérifie pas seulement le *compte* — elle exige
+> que les quatre listes disent **la même chose**, nom par nom, code par code.
+
+### Le grep de contrôle — ce qui a été cherché, et ce qui a été trouvé
+
+| | |
+|---|---|
+| listes complètes de wilayas | **trois** : `_W` + `WILAYA_I18N` (`js/home-app.js`), `assets/dz-wilaya-centroids.js`, `signup.html`. **Les trois sont à 69.** |
+| `patient-waitinglist.html` | **13 wilayas + « Autre wilaya »** — une liste courte *délibérée*, pas une liste tronquée. **Non touchée** |
+| `scripts/generate-seo-pages.mjs` | aucune liste en dur : les couples viennent de la RPC `seo_couples()` |
+| `seo/` (576 pages) | générées, hors périmètre ; elles suivront la prochaine génération |
+
+⚠️ **Ce que ce lot ne fait pas** : le **re-routage des fiches médecins** vers les nouveaux
+codes. C'est l'étape du stratège, après validation d'Aghiles. Tant qu'elle n'a pas eu lieu,
+**les onze nouvelles wilayas sont sélectionnables et ne rendront aucun médecin** — c'est
+attendu, et ce n'est pas un bug.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
