@@ -122,20 +122,20 @@
       <div class="sec-title-bar"><i style="background:var(--blue-l);color:var(--blue)"><i class="fa fa-id-card"></i></i>
         <div><div class="lbl" data-i18n="pp_perso_title">Informations personnelles</div><div class="desc" data-i18n="pp_perso_sub">Identité, contact, adresse</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="pp_first_name">Prénom</label><input class="form-control" id="f_first"></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_last_name">Nom</label><input class="form-control" id="f_last"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_first_name" for="f_first">Prénom</label><input class="form-control" id="f_first"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_last_name" for="f_last">Nom</label><input class="form-control" id="f_last"></div>
       </div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_email">Email</label><input class="form-control" id="f_email" type="email" disabled></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_email" for="f_email">Email</label><input class="form-control" id="f_email" type="email" disabled></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="pp_phone">Téléphone</label><input class="form-control" id="f_phone" type="tel" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" aria-label="0555 123 456"></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_birthdate">Date de naissance</label><input class="form-control" id="f_bd" type="date"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_phone" for="f_phone">Téléphone</label><input class="form-control" id="f_phone" type="tel" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" aria-label="0555 123 456"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_birthdate" for="f_bd">Date de naissance</label><input class="form-control" id="f_bd" type="date"></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="pp_gender">Genre</label><select class="form-control" id="f_gender"><option data-i18n="pp_gender_m">Homme</option><option data-i18n="pp_gender_f">Femme</option><option data-i18n="pp_gender_na">Préfère ne pas dire</option></select></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_wilaya">Wilaya</label>
+        <div class="form-group"><label class="form-label" data-i18n="pp_gender" for="f_gender">Genre</label><select class="form-control" id="f_gender"><option data-i18n="pp_gender_m">Homme</option><option data-i18n="pp_gender_f">Femme</option><option data-i18n="pp_gender_na">Préfère ne pas dire</option></select></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_wilaya" for="f_city">Wilaya</label>
           <select class="form-control" id="f_city"><option>Alger</option><option>Oran</option><option>Constantine</option><option>Annaba</option><option>Blida</option><option>Sétif</option><option>Tlemcen</option><option>Béjaïa</option><option>Batna</option><option>Tizi Ouzou</option></select></div>
       </div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_address">Adresse</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, code postal..." data-i18n-placeholder="ph_address_full"></textarea></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_address" for="f_addr">Adresse</label><textarea class="form-control" id="f_addr" rows="2" placeholder="Rue, quartier, code postal..." data-i18n-placeholder="ph_address_full"></textarea></div>
     </div>
 
     <!-- 2. DOSSIER MÉDICAL -->
@@ -143,16 +143,16 @@
       <div class="sec-title-bar"><i style="background:var(--red-l);color:var(--red)"><i class="fa fa-heart-pulse"></i></i>
         <div><div class="lbl" data-i18n="pp_med_title">Dossier médical</div><div class="desc" data-i18n="pp_med_sub">Informations vitales accessibles aux médecins</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="pp_bloodtype">Groupe sanguin</label><select class="form-control" id="f_blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_height">Taille (cm)</label><input class="form-control" id="f_height" type="number"></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_weight">Poids (kg)</label><input class="form-control" id="f_weight" type="number"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_bloodtype" for="f_blood">Groupe sanguin</label><select class="form-control" id="f_blood"><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option><option>O+</option><option>O-</option></select></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_height" for="f_height">Taille (cm)</label><input class="form-control" id="f_height" type="number"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_weight" for="f_weight">Poids (kg)</label><input class="form-control" id="f_weight" type="number"></div>
       </div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_allergies_label">Allergies connues</label><textarea class="form-control" rows="2" id="f_allergy" placeholder="Pénicilline, arachides, lactose..." data-i18n-placeholder="ph_allergies"></textarea></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_medhist_label">Antécédents médicaux</label><textarea class="form-control" rows="3" id="f_history" placeholder="Hypertension, diabète, opérations chirurgicales..." data-i18n-placeholder="ph_medical_history"></textarea></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_meds_label">Médicaments en cours</label><textarea class="form-control" rows="2" id="f_meds" placeholder="Aspirine 100mg/j, Metformine 500mg..." data-i18n-placeholder="ph_current_meds"></textarea></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_famhist_label">Antécédents familiaux</label><textarea class="form-control" rows="2" id="f_family_hist" placeholder="Diabète (père), cancer (mère)..." data-i18n-placeholder="ph_family_history"></textarea></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_vacc_label">Vaccinations</label><textarea class="form-control" rows="2" id="f_vacc" placeholder="COVID-19 (rappel 2024), Tétanos (2022)..." data-i18n-placeholder="ph_vaccinations"></textarea></div>
-      <label style="display:flex;gap:8px;font-size:13px;align-items:center"><input type="checkbox" id="f_smoker"> <span data-i18n="pp_smoker">Je fume / ai fumé régulièrement</span></label>
+      <div class="form-group"><label class="form-label" data-i18n="pp_allergies_label" for="f_allergy">Allergies connues</label><textarea class="form-control" rows="2" id="f_allergy" placeholder="Pénicilline, arachides, lactose..." data-i18n-placeholder="ph_allergies"></textarea></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_medhist_label" for="f_history">Antécédents médicaux</label><textarea class="form-control" rows="3" id="f_history" placeholder="Hypertension, diabète, opérations chirurgicales..." data-i18n-placeholder="ph_medical_history"></textarea></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_meds_label" for="f_meds">Médicaments en cours</label><textarea class="form-control" rows="2" id="f_meds" placeholder="Aspirine 100mg/j, Metformine 500mg..." data-i18n-placeholder="ph_current_meds"></textarea></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_famhist_label" for="f_family_hist">Antécédents familiaux</label><textarea class="form-control" rows="2" id="f_family_hist" placeholder="Diabète (père), cancer (mère)..." data-i18n-placeholder="ph_family_history"></textarea></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_vacc_label" for="f_vacc">Vaccinations</label><textarea class="form-control" rows="2" id="f_vacc" placeholder="COVID-19 (rappel 2024), Tétanos (2022)..." data-i18n-placeholder="ph_vaccinations"></textarea></div>
+      <label style="display:flex;gap:8px;font-size:13px;align-items:center" for="f_ins"><input type="checkbox" id="f_smoker"> <span data-i18n="pp_smoker">Je fume / ai fumé régulièrement</span></label>
       <label style="display:flex;gap:8px;font-size:13px;align-items:center;margin-top:8px"><input type="checkbox" id="f_drinker"> <span data-i18n="pp_drinker">Consommation d'alcool régulière</span></label>
     </div>
 
@@ -162,9 +162,9 @@
         <div><div class="lbl" data-i18n="pp_ins_title">Assurance & Sécurité Sociale</div><div class="desc" data-i18n="pp_ins_sub">Tiers payant et remboursements</div></div></div>
       <div class="form-group"><label class="form-label" data-i18n="pp_ins_type">Type d'assurance</label>
         <select class="form-control" id="f_ins"><option>CNAS (Salariés)</option><option>CASNOS (Indépendants)</option><option data-i18n="pp_ins_private">Mutuelle privée</option><option data-i18n="pp_ins_none">Aucune</option></select></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_matricule">N° matricule</label><input class="form-control" id="f_matricule" placeholder="XX-XXXX-XXXXXXX" aria-label="XX-XXXX-XXXXXXX"></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_chifa_label">N° carte CHIFA</label><input class="form-control" id="f_chifa" placeholder="Numéro de carte CHIFA" data-i18n-placeholder="ph_chifa_card" aria-label="Numéro de carte CHIFA"></div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_mutual_label">Mutuelle complémentaire (optionnel)</label><input class="form-control" id="f_mutual" placeholder="Nom de la mutuelle" data-i18n-placeholder="ph_mutual_name" aria-label="Nom de la mutuelle"></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_matricule" for="f_matricule">N° matricule</label><input class="form-control" id="f_matricule" placeholder="XX-XXXX-XXXXXXX" aria-label="XX-XXXX-XXXXXXX"></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_chifa_label" for="f_chifa">N° carte CHIFA</label><input class="form-control" id="f_chifa" placeholder="Numéro de carte CHIFA" data-i18n-placeholder="ph_chifa_card" aria-label="Numéro de carte CHIFA"></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_mutual_label" for="f_mutual">Mutuelle complémentaire (optionnel)</label><input class="form-control" id="f_mutual" placeholder="Nom de la mutuelle" data-i18n-placeholder="ph_mutual_name" aria-label="Nom de la mutuelle"></div>
     </div>
 
     <!-- 4. CONTACT D'URGENCE -->
@@ -172,11 +172,11 @@
       <div class="sec-title-bar"><i style="background:#fff0f0;color:#dc2626"><i class="fa fa-truck-medical"></i></i>
         <div><div class="lbl" data-i18n="pp_urg_title">Contact d'urgence</div><div class="desc" data-i18n="pp_urg_sub">Personne à prévenir en cas d'urgence</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="pp_fullname">Nom complet</label><input class="form-control" id="f_emerg_name"></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_relation">Lien de parenté</label>
+        <div class="form-group"><label class="form-label" data-i18n="pp_fullname" for="f_emerg_name">Nom complet</label><input class="form-control" id="f_emerg_name"></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_relation" for="f_emerg_rel">Lien de parenté</label>
           <select class="form-control" id="f_emerg_rel"><option data-i18n="pp_rel_spouse">Conjoint(e)</option><option data-i18n="pp_rel_parent">Parent</option><option data-i18n="pp_rel_child">Enfant</option><option data-i18n="pp_rel_sibling">Frère/Sœur</option><option data-i18n="pp_rel_friend">Ami(e)</option><option data-i18n="pp_rel_other">Autre</option></select></div>
       </div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_phone">Téléphone</label><input class="form-control" id="f_emerg_phone" type="tel"></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_phone" for="f_emerg_phone">Téléphone</label><input class="form-control" id="f_emerg_phone" type="tel"></div>
     </div>
 
     <!-- 5. FAMILLE -->
@@ -222,10 +222,10 @@
       <div class="sec-title-bar"><i style="background:#ccfbf1;color:#0f766e"><i class="fa fa-globe"></i></i>
         <div><div class="lbl" data-i18n="pp_lang_title">Langue & Région</div><div class="desc" data-i18n="pp_lang_sub">Affichage et fuseau</div></div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group"><label class="form-label" data-i18n="pp_lang_label">Langue</label><select class="form-control" id="f_lang"><option value="fr">🇫🇷 Français</option><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option></select></div>
-        <div class="form-group"><label class="form-label" data-i18n="pp_currency_label">Devise</label><select class="form-control" id="f_currency"><option>DA (Dinar)</option><option>EUR</option></select></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_lang_label" for="f_lang">Langue</label><select class="form-control" id="f_lang"><option value="fr">🇫🇷 Français</option><option value="ar">🇩🇿 العربية</option><option value="en">🇬🇧 English</option></select></div>
+        <div class="form-group"><label class="form-label" data-i18n="pp_currency_label" for="f_currency">Devise</label><select class="form-control" id="f_currency"><option>DA (Dinar)</option><option>EUR</option></select></div>
       </div>
-      <div class="form-group"><label class="form-label" data-i18n="pp_timezone">Fuseau horaire</label><select class="form-control" id="f_tz"><option>Africa/Algiers (UTC+1)</option></select></div>
+      <div class="form-group"><label class="form-label" data-i18n="pp_timezone" for="f_tz">Fuseau horaire</label><select class="form-control" id="f_tz"><option>Africa/Algiers (UTC+1)</option></select></div>
     </div>
 
     <!-- 10. MOYENS DE PAIEMENT -->
@@ -234,7 +234,7 @@
         <div><div class="lbl" data-i18n="pp_pay_title">Moyens de paiement</div><div class="desc" data-i18n="pp_pay_sub">Cartes enregistrées et préférences</div></div></div>
       <div id="pay-cards" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
       <button class="btn btn-soft btn-full" onclick="addCard()"><i class="fa fa-plus"></i> <span data-i18n="pp_add_card">Ajouter une carte</span></button>
-      <div class="form-group" style="margin-top:14px"><label class="form-label" data-i18n="pp_default_pay">Mode de paiement par défaut</label>
+      <div class="form-group" style="margin-top:14px"><label class="form-label" data-i18n="pp_default_pay" for="f_default_pay">Mode de paiement par défaut</label>
         <select class="form-control" id="f_default_pay"><option value="cash" data-i18n="pp_pay_cash">Espèces au cabinet</option><option value="edahabia">Edahabia</option><option value="cib">CIB</option><option value="paymee">Paymee</option><option value="cnas">CNAS / CASNOS</option></select></div>
     </div>
 
