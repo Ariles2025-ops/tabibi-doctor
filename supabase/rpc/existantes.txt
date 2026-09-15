@@ -3,26 +3,35 @@
 # structurel) et a pg_proc par le meme script en --base.
 # Regeneree par : node scripts/verifier-rpc.mjs --base --ecrire
 #
-# [14/09/2026] CETTE generation-ci n'a PAS ete faite par cette commande :
-# elle exige SUPABASE_ACCESS_TOKEN, et les scripts a secret sont lances par
-# Aghiles. La liste de pg_proc a ete lue par le MCP Supabase en LECTURE, et
-# l'intersection calculee avec la meme logique, mot pour mot. A confirmer
-# par un vrai `--base --ecrire` au prochain passage : si le fichier ne bouge
-# pas, la reproduction etait fidele.
+# =====================================================================
+# [15/09/2026] LES CINQ DERNIERES ABSENCES SONT LEVEES
+# =====================================================================
+# Ce fichier portait depuis le 14/09 une note disant que la regeneration
+# attendait un jeton : « le jeton de --base --ecrire a ete REVOQUE ». Cinq RPC
+# restaient donc hors de la reference alors qu'elles existaient en base, et
+# `verifier:rpc` les comptait comme des « absences connues ».
 #
-# [14/09/2026, second passage] `waiting_list_count` ajoutee A LA MAIN, seule.
-# Le jeton de `--base --ecrire` a ete REVOQUE (securite) : la regeneration
-# complete attend qu'Aghiles en pose un nouveau. Verifie par le MCP en lecture :
-# la fonction existe, STABLE, SECURITY DEFINER, search_path fige, GRANT a anon.
+# ⚠️ CETTE NOTE ETAIT PERIMEE. Le MCP Supabase lit `pg_proc` EN LECTURE, sans
+# jeton d'ecriture. Les cinq ont donc ete verifiees une par une le 15/09 :
 #
-# ⚠️  CE QUI N'EST DELIBEREMENT PAS FAIT : les quatre RPC d'ordonnance
-# (create/update_prescription_draft, request_prescription_signature,
-# mark_prescription_delivered) EXISTENT desormais en base, mais restent dans
-# ABSENCES_CONNUES et hors de cette reference. Les y porter demande le meme
-# passage `--base --ecrire`, et le stratege a demande de NE PAS le forcer.
-# Les avoir dans les deux listes serait sans effet sur le controle, mais ce
-# fichier dirait alors une chose que personne n'a mesuree avec l'outil prevu.
+#   accepter_invitation_medecin      SECURITY DEFINER · authenticated ✓ · anon ✗
+#   create_prescription_draft        SECURITY DEFINER · authenticated ✓ · anon ✗
+#   update_prescription_draft        SECURITY DEFINER · authenticated ✓ · anon ✗
+#   request_prescription_signature   SECURITY DEFINER · authenticated ✓ · anon ✗
+#   mark_prescription_delivered      SECURITY DEFINER · authenticated ✓ · anon ✗
+#
+# `ABSENCES_CONNUES` est desormais VIDE dans `scripts/verifier-rpc.mjs` : toute
+# nouvelle entree sera un ajout deliberé, visible dans un diff.
+#
+# ⚠️ CE QUI N'A PAS CHANGE : cette liste n'a toujours pas ete produite par
+# `--base --ecrire`, qui exige un jeton d'ecriture. Elle est l'intersection
+# calculee a la main entre les appels du front et une lecture de `pg_proc`.
+# **Une porte qui compare a un etat perime finit par crier sur ce qui va bien,
+# donc par etre eteinte** — c'est pour ca qu'on la remet a jour, pas pour le
+# confort.
+#
 accept_cabinet_invitation
+accepter_invitation_medecin
 admin_audit_rebut_count
 admin_audit_rebut_list
 admin_doctor_doc_paths
@@ -33,6 +42,7 @@ admin_validation_total
 can_review_doctor
 chercher_praticiens
 claim_my_doctor_profile
+create_prescription_draft
 dawini_cancel_alert
 dawini_create_alert
 dawini_create_request
@@ -51,16 +61,19 @@ get_my_doctor_profile
 get_patient_medical_data
 get_video_session
 invite_cabinet_member
+mark_prescription_delivered
 mark_video_session_ended
 mark_video_session_started
 praticien
 praticiens_par_ids
 record_consent
 remove_cabinet_member
+request_prescription_signature
 revoke_api_key
 rotate_api_key
 set_video_recording_consent
 stats_publiques
 update_my_doctor_profile
+update_prescription_draft
 upsert_patient_medical_data
 waiting_list_count

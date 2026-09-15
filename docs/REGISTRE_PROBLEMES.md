@@ -246,6 +246,41 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## Lot E — une porte qui comparait à un état périmé
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-50 | `verifier:rpc` comptait **cinq RPC comme « absentes »** alors qu'elles existent en base. Le motif inscrit : « jeton `--base --ecrire` révoqué » | les cinq vérifiées une par une le 15/09 : `accepter_invitation_medecin`, `create_prescription_draft`, `update_prescription_draft`, `request_prescription_signature`, `mark_prescription_delivered` — **toutes `SECURITY DEFINER`, exécutables par `authenticated`, fermées à `anon`** | les cinq portées dans `supabase/rpc/existantes.txt` ; **`ABSENCES_CONNUES` est vide** | `tests/reference-rpc.test.mjs` — les cinq restent dans la référence, la liste d'exceptions reste vide, la référence reste triée et sans doublon | **réglé** |
+
+### ⚠️ Le piège n'était pas l'oubli, c'était le motif périmé
+
+Le motif disait vrai le 14/09 : régénérer le fichier demande un jeton d'**écriture**, et il
+avait été révoqué. Mais **le MCP Supabase lit `pg_proc` en lecture, sans jeton** — et cette
+lecture-là suffisait.
+
+> **Une porte qui compare à un état périmé finit par crier sur ce qui va bien, donc par être
+> éteinte.** Cette liste a mis un jour à se vider parce que personne n'avait relu son motif,
+> pas parce que les fonctions manquaient. **Une liste d'exceptions qui reste pleine finit
+> par être lue comme la norme.**
+
+Au passage, le plafond d'appels `.rpc(` directs descend de **51 à 50** — le cliquet ne
+remonte jamais.
+
+### ⚠️ Et une correction de MON audit : `v2/index.html` n'était pas cassé
+
+L'audit 360 classait 🟠-4 : *« `v2/index.html` charge `src/main.tsx`, qui n'existe pas. »*
+
+**C'est faux.** `v2/` est un projet Vite **enraciné dans `v2/`** : `/src/main.tsx` s'y résout
+en `v2/src/main.tsx`, **qui existe**. Mon outil résolvait le chemin depuis la racine du
+dépôt.
+
+C'est la cinquième erreur de cet outil, et elle a la même forme que les quatre autres : *il
+mesurait depuis le mauvais point de vue*. Rien à corriger dans `v2/` ; c'est le rapport qui
+est corrigé.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
