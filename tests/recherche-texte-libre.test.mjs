@@ -30,6 +30,19 @@ import { readFileSync } from 'node:fs';
 
 const SRC = readFileSync('js/home-app.js', 'utf8');
 
+/**
+ * Le code, sans ses commentaires.
+ *
+ * ⚠️ Ce depot s'est fait avoir QUATRE fois par des gardes qui lisaient leur
+ * propre documentation (le compteur d'innerHTML, `verifier-video`, l'essai
+ * « aucune cle Daily »). La cinquieme, c'est celle-ci : le commentaire qui
+ * EXPLIQUE la suppression de `_renderChooseFilter` contient son nom, et le
+ * test a conclu que la fonction etait revenue.
+ */
+const CODE = SRC
+  .replace(/\/\*[\s\S]*?\*\//g, ' ')
+  .replace(/(^|[^:'"`\\])\/\/[^\n]*/g, '$1 ');
+
 /** Extrait le texte d'une fonction déclarée, accolades comptées. */
 function fonction(nom) {
   const debut = SRC.indexOf(`function ${nom}(`);
@@ -128,10 +141,26 @@ test('une entrée vide ne fabrique pas de filtre', () => {
 // ─────────────────────────────────────────────────────────────────────
 // 3. LE GARDE-FOU, LA OU IL EST ECRIT
 // ─────────────────────────────────────────────────────────────────────
-test('le court-circuit laisse passer le texte libre', () => {
-  // La ligne exacte qui a fait taire la recherche pendant six jours.
-  assert.match(SRC, /if\(!opts\.ville && !opts\.spec && !opts\.search\)\{ _renderChooseFilter\(\); return; \}/,
-    "sans `!opts.search`, un terme seul n'atteint jamais le serveur");
+test('plus AUCUN court-circuit : tout atteint le serveur', () => {
+  // ⚠️ CETTE GARDE A CHANGE DE FORME LE MEME JOUR, et c'est voulu.
+  //
+  // Elle verifiait la ligne exacte qui avait fait taire la recherche pendant
+  // six jours : `if(!opts.ville && !opts.spec && !opts.search){ … return; }`.
+  // Depuis la vitrine, ce court-circuit n'existe plus DU TOUT — sans filtre,
+  // l'accueil montre de vrais medecins au lieu d'une invite.
+  //
+  // La verifier telle quelle aurait fait echouer un lot qui va PLUS LOIN que
+  // ce qu'elle protegeait. Mais la supprimer aurait laisse un trou : c'est
+  // l'INTENTION qu'on garde — un terme seul doit atteindre le serveur.
+  assert.doesNotMatch(CODE, /_renderChooseFilter/,
+    "le court-circuit est revenu : un terme seul n'atteindrait plus le serveur");
+  assert.match(CODE, /const vitrine = !opts\.ville && !opts\.spec && !opts\.search;/,
+    'sans filtre, la vitrine doit prendre le relais — pas un ecran vide');
+  // Et aucun `return` ne doit s'intercaler avant l'appel au serveur.
+  const i = CODE.indexOf('async function loadDoctorCards');
+  const avantAppel = CODE.slice(i, CODE.indexOf('await _tbRpc(', i));
+  assert.doesNotMatch(avantAppel, /\n\s*(if\s*\([^)]*\)\s*\{[^}]*)?return;/,
+    'un retour anticipe avant la requete : la recherche se tairait a nouveau');
 });
 
 test('un menu choisi PRIME sur le texte : on ne devine pas contre l\'utilisateur', () => {

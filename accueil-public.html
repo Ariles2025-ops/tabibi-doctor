@@ -222,6 +222,9 @@
    .8 donne 5,54:1, et l'etat reste lisible : le suffixe « • Bientot »,
    `pointer-events:none` et le gris le disent deja. */
 .link-disabled { opacity:.8; pointer-events:none; cursor:not-allowed; filter:grayscale(.5); }
+.v4-live { font-size:.72em; font-weight:800; text-transform:uppercase; letter-spacing:.04em;
+           background:var(--color-success-light, #e3f3e6); color:var(--color-success-hover, #1d6b3a);
+           border-radius:var(--rfull, 999px); padding:2px 8px; vertical-align:middle; }
 .link-disabled::after { content:"  •  Bientôt"; font-size:.75em; color:#556070; font-style:italic; font-weight:400; } /* [FIX-DESIGN-2026-05-19] WCAG AA contrast */
 .social-disabled { opacity:.4; pointer-events:none; cursor:not-allowed; filter:grayscale(.5); }
 .appstore-disabled { opacity:.5; pointer-events:none; cursor:not-allowed; filter:grayscale(.5); }
@@ -1063,7 +1066,13 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
           <div class="bc-btn"><i class="fa fa-check"></i> <span data-i18n="bc_confirm">Confirmer le RDV</span> · <span dir="ltr">10:30</span></div>
           <div class="bc-note"><span data-i18n="bc_note1">Rappel SMS automatique</span> · <span data-i18n="bc_note2">Paiement au cabinet</span></div>
         </div>
-        <div class="badge-float bf1"><span class="dot" style="background:var(--blue)"><i class="fa fa-check"></i></span><span><b data-i18n="bc_bf1">RDV confirmé</b><small>Dr. Amine · 09:30</small></span></div>
+        <!-- [15/09/2026] « Dr. Amine · 09:30 » RETIRE. C'etait un medecin INVENTE,
+             affiche comme un rendez-vous reel — meme famille que les six articles
+             de blog qui n'existaient pas (P-47) et que les « 4 medecins verifies
+             · ★ 4,9 » (P-27). Le reste de la carte est une illustration de
+             l'interface, pas une affirmation sur quelqu'un : elle reste. Les vrais
+             medecins, eux, sont maintenant DANS LA LISTE, plus bas. -->
+        <div class="badge-float bf1"><span class="dot" style="background:var(--blue)"><i class="fa fa-check"></i></span><span><b data-i18n="bc_bf1">RDV confirmé</b><small><span data-i18n="bc_bf1b">Rappel SMS envoyé</span></small></span></div>
         <div class="badge-float bf2"><span class="dot" style="background:#D4A437"><i class="fa fa-star"></i></span><span><b data-i18n="bc_bf2">Médecin vérifié</b><small data-i18n="bc_bf2b">Identité contrôlée</small></span></div>
       </div>
     </div>
@@ -1217,14 +1226,20 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
     </div>
   </section>
 
-  <!-- [V4B 2026-07-08] Bande téléconsultation (design v4, « Bientôt ») -->
+  <!-- [15/09/2026] TELECONSULTATION : « Bientot » -> DISPONIBLE.
+       Le drapeau `video` est ouvert en production et la salle est en service
+       (P-12, P-13). La bande disait encore « Bientot » et renvoyait vers la
+       liste d'attente : elle envoyait attendre une chose qui marche.
+       ⚠️ Ce qui n'a PAS eu lieu, et qui reste au registre (P-31) : un appel
+       reel entre deux navigateurs. La bande annonce donc ce qui est LIVRE,
+       pas ce qui est eprouve. -->
   <div class="v4-tele">
     <span class="ti"><i class="fa fa-video" aria-hidden="true"></i></span>
     <div>
-      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-soon" data-i18n="v4_tes">Bientôt</span></h3>
-      <p data-i18n="v4_tep">Consultez à distance un praticien vérifié, où que vous soyez en Algérie — après validation du flux vidéo avec nos médecins partenaires.</p>
+      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-live" data-i18n="v4_tes">Disponible</span></h3>
+      <p data-i18n="v4_tep">Consultez à distance un praticien vérifié, où que vous soyez en Algérie. Choisissez un médecin qui propose la téléconsultation et réservez votre créneau.</p>
     </div>
-    <a class="btn btn-primary cta" href="waiting-list.html" data-i18n="v4_tec">Être prévenu</a>
+    <a class="btn btn-primary cta" href="#sec-docs" onclick="scrollTo$('sec-docs')" data-i18n="v4_tec">Prendre rendez-vous</a>
   </div>
 
   <!-- HOW IT WORKS -->
