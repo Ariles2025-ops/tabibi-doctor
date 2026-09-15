@@ -1186,7 +1186,7 @@ function showDoctorModal(d){
       <div style="position:relative">
         <div style="background:var(--grad-brand);padding:20px 20px 50px;margin-bottom:-36px;position:relative">
           <div style="position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:#fff;border:none" onclick="this.closest('.modal-bg').remove();document.body.style.overflow=''">×</div>
-          <div style="width:64px;height:64px;border-radius:16px;background:${hEsc(d.bg)};color:${hEsc(d.tc)};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;border:3px solid rgba(255,255,255,.3);margin-bottom:10px">${d.in}</div>
+          <div style="width:64px;height:64px;border-radius:16px;background:${hEsc(d.bg)};color:${hEsc(d.tc)};display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;border:3px solid rgba(255,255,255,.3);margin-bottom:10px">${hEsc(d.in)}</div>
           <div style="font-size:18px;font-weight:800;color:#fff">${hEsc(n)}</div>
           <div style="font-size:13px;color:rgba(255,255,255,.75)">${hEsc(s)} · ${hEsc(c)}</div>
           <div style="display:flex;align-items:center;gap:6px;margin-top:8px">

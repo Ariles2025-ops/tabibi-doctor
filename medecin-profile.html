@@ -598,16 +598,27 @@ async function onPhotoSelected(event) {
 const DAYS=["Lundi","Mardi","Mercredi","Jeudi","Vendredi","Samedi","Dimanche"];
 // [CONFORMITE 2026] libellés jours localisés (clés data conservées FR)
 const DAY_KEYS={Lundi:"day_monday",Mardi:"day_tuesday",Mercredi:"day_wednesday",Jeudi:"day_thursday",Vendredi:"day_friday",Samedi:"day_saturday",Dimanche:"day_sunday"};
+// [15/09/2026] Les horaires et les diplomes viennent de `localStorage`, et
+// les diplomes d'un `prompt()`. Rendus tels quels en HTML, ils pouvaient
+// porter du balisage. Repli LOCAL qui echappe vraiment si `tabibi-security`
+// n'est pas la — `String` ne fait rien, ce n'est pas un repli.
+function _esc(s){
+  var f = (window.tabibiSec && window.tabibiSec.escapeHtml) || window.esc;
+  if (f) return f(s);
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
 function renderSchedule(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   const sched=u.schedule||{Lundi:["09:00","17:00",true],Mardi:["09:00","17:00",true],Mercredi:["09:00","17:00",true],Jeudi:["09:00","17:00",true],Vendredi:["09:00","13:00",true],Samedi:["09:00","13:00",false],Dimanche:["","",false]};
   document.getElementById("schedule-rows").innerHTML=DAYS.map(d=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bg2)">
       <label style="display:flex;align-items:center;gap:6px;width:120px;font-size:13px;font-weight:600">
-        <input type="checkbox" data-day="${d}" data-fld="enabled" ${sched[d][2]?"checked":""}> ${tabibiT(DAY_KEYS[d]||"", d)}</label>
-      <input type="time" class="form-control" aria-label="Heure de début" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="start" value="${sched[d][0]}">
+        <input type="checkbox" data-day="${_esc(d)}" data-fld="enabled" ${sched[d][2]?"checked":""}> ${tabibiT(DAY_KEYS[d]||"", d)}</label>
+      <input type="time" class="form-control" aria-label="Heure de début" style="flex:1;padding:8px;font-size:12px" data-day="${_esc(d)}" data-fld="start" value="${_esc(sched[d][0])}">
       <span style="font-size:12px;color:var(--text3)">→</span>
-      <input type="time" class="form-control" aria-label="Heure de fin" style="flex:1;padding:8px;font-size:12px" data-day="${d}" data-fld="end" value="${sched[d][1]}">
+      <input type="time" class="form-control" aria-label="Heure de fin" style="flex:1;padding:8px;font-size:12px" data-day="${_esc(d)}" data-fld="end" value="${_esc(sched[d][1])}">
     </div>`).join("");
 }
 
@@ -618,8 +629,8 @@ function renderDiplomas(){
   if(!d.length){d=["Doctorat en Médecine — Université d'Alger (2008)","Spécialisation Cardiologie — CHU Mustapha (2013)"];setDiplomas(d);}
   document.getElementById("diploma-list").innerHTML=d.map((v,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px">
     <i class="fa fa-certificate" style="color:#f59e0b"></i>
-    <div style="flex:1;font-size:13px">${v}</div>
-    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="rmDiploma(${i})" aria-label="${tabibiT('mp_remove_diploma','Supprimer ce diplôme')}"><i class="fa fa-trash"></i></button>
+    <div style="flex:1;font-size:13px">${_esc(v)}</div>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="rmDiploma(${Number(i)})" aria-label="${tabibiT('mp_remove_diploma','Supprimer ce diplôme')}"><i class="fa fa-trash"></i></button>
   </div>`).join("");
 }
 function addDiploma(){const v=prompt(tabibiT('prompt_diploma_input',"Diplôme (ex: Doctorat en Médecine — Université d'Alger (2008))"));if(!v)return;const d=getDiplomas();d.push(v);setDiplomas(d);renderDiplomas();toastM(tabibiT('toast_diploma_added',"Diplôme ajouté"),"success");}

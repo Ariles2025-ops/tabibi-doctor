@@ -379,7 +379,7 @@ function renderChart(elBars, elLabels, data, labels) {
     const h = (v / max) * 100;
     return `<div class="bar" style="height:${h}%"><span class="val">${v}</span></div>`;
   }).join('');
-  elLabels.innerHTML = labels.map(l => `<span>${l}</span>`).join('');
+  elLabels.innerHTML = labels.map(l => `<span>${esc(l)}</span>`).join('');
 }
 
 function esc(x) { return String(x == null ? '' : x).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]); }
@@ -395,7 +395,7 @@ function renderMotifs(motifs) {
   el.innerHTML = motifs.map(([name, val]) => `
     <div class="spec-row">
       <div class="lbl">${esc(name)}</div>
-      <div class="bar-c"><div class="fill" style="width:${(val/max)*100}%"></div></div>
+      <div class="bar-c"><div class="fill" style="width:${Number((val/max)*100)}%"></div></div>
       <div class="val">${val}%</div>
     </div>
   `).join('');

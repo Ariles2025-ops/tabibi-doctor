@@ -701,22 +701,22 @@ function renderToday(){
     return;
   }
   document.getElementById("today-list").innerHTML = todays.map(r=>`
-    <div class="appt-card ${r.urgent?'urgent':(window.tabibiStatutRdv.decrire(r.status).cle||'')}">
+    <div class="appt-card ${esc(r.urgent?'urgent':(window.tabibiStatutRdv.decrire(r.status).cle||''))}">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px">
-        <div style="flex:1"><div style="font-size:18px;font-weight:800;color:var(--blue)">${r.time}</div>
+        <div style="flex:1"><div style="font-size:18px;font-weight:800;color:var(--blue)">${esc(r.time)}</div>
           <div style="font-weight:700;font-size:14px;margin-top:4px">${esc(r.patientName)} ${r.urgent?'<span class="badge badge-red" style="font-size:9px"><i class="fa fa-bolt" style="color:#f59e0b"></i> '+tabibiT('dd_urgent','URGENT')+'</span>':''}</div>
           <div style="font-size:12px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${esc(r.patientPhone||"")}</div></div>
-        <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
+        <span class="badge ${esc(window.tabibiStatutRdv.decrire(r.status).classe)}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
       </div>
       <div style="font-size:12px;font-style:italic;color:var(--text2);padding:6px 8px;background:rgba(255,255,255,.5);border-radius:6px;margin-bottom:8px">"${esc(r.motif)}"</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${window.tabibiStatutRdv.decrire(r.status).peut("confirmer")?`<button class="btn btn-success btn-sm" onclick="confRdv('${r.id}')"><i class="fa fa-check"></i> ${tabibiT('dd_confirm','Confirmer')}</button>
-          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${r.id}')"><i class="fa fa-xmark"></i> ${tabibiT('dd_refuse','Refuser')}</button>`:""}
-        ${window.tabibiStatutRdv.decrire(r.status).peut("marquerTermine")?`<button class="btn btn-soft btn-sm" onclick="markDone('${r.id}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>
-            <button class="btn btn-ghost btn-sm" style="color:var(--text2)" onclick="markNoShow('${r.id}')"><i class="fa fa-user-slash"></i> ${tabibiT('dd_mark_noshow','Absent')}</button>`:""}
-        ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${esc(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> ${tabibiT('dd_call','Appeler')}</a>`:""}
-        <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${r.id}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>
-        <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${esc(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${esc(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${r.duree||30} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> ${tabibiT('dd_details','Détails')}</button>
+        ${window.tabibiStatutRdv.decrire(r.status).peut("confirmer")?`<button class="btn btn-success btn-sm" onclick="confRdv('${_eJs(r.id)}')"><i class="fa fa-check"></i> ${tabibiT('dd_confirm','Confirmer')}</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--red)" onclick="cancRdv('${_eJs(r.id)}')"><i class="fa fa-xmark"></i> ${tabibiT('dd_refuse','Refuser')}</button>`:""}
+        ${window.tabibiStatutRdv.decrire(r.status).peut("marquerTermine")?`<button class="btn btn-soft btn-sm" onclick="markDone('${_eJs(r.id)}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>
+            <button class="btn btn-ghost btn-sm" style="color:var(--text2)" onclick="markNoShow('${_eJs(r.id)}')"><i class="fa fa-user-slash"></i> ${tabibiT('dd_mark_noshow','Absent')}</button>`:""}
+        ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${encodeURIComponent(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> ${tabibiT('dd_call','Appeler')}</a>`:""}
+        <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${_eJs(r.id)}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>
+        <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${_eJs(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${_eJs(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${_eJs(r.duree||30)} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> ${tabibiT('dd_details','Détails')}</button>
       </div>
     </div>`).join("");
 }
@@ -747,9 +747,9 @@ function renderAgenda(){
   if(!dayRdvs.length){document.getElementById("day-rdv-list").innerHTML=`<div style="text-align:center;padding:24px;color:var(--text3);font-size:13px">${tabibiT('dd_no_rdv_day','Aucun RDV ce jour')}</div>`;return;}
   document.getElementById("day-rdv-list").innerHTML = dayRdvs.map(r=>`
     <div style="display:flex;align-items:center;gap:12px;padding:12px;background:#fff;border-radius:10px;margin-bottom:8px;border-left:3px solid ${({confirmed:'var(--blue)',pending:'#f59e0b',completed:'var(--green)',cancelled:'var(--red)',no_show:'#6b7280'})[window.tabibiStatutRdv.decrire(r.status).cle]||'#9ca3af'}">
-      <div style="font-size:16px;font-weight:800;color:var(--blue);width:54px">${r.time}</div>
+      <div style="font-size:16px;font-weight:800;color:var(--blue);width:54px">${esc(r.time)}</div>
       <div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(r.patientName)}</div><div style="font-size:11px;color:var(--text3)">${esc(r.motif)}</div></div>
-      <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}" style="font-size:10px">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
+      <span class="badge ${esc(window.tabibiStatutRdv.decrire(r.status).classe)}" style="font-size:10px">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
     </div>`).join("");
 }
 function selDay(iso){currentDay=iso;renderAgenda();}
@@ -767,8 +767,8 @@ function filtMRdv(f,btn){
     return `<div class="appt-card ${r.urgent?'urgent':''}">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
         <div><div style="font-weight:700;font-size:14px">${esc(r.patientName)}</div>
-          <div style="font-size:11px;color:var(--text3)">${dlb} · ${r.time} · ${r.duree||30} ${tabibiT('label_min_unit','min')}</div></div>
-        <span class="badge ${window.tabibiStatutRdv.decrire(r.status).classe}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
+          <div style="font-size:11px;color:var(--text3)">${esc(dlb)} · ${esc(r.time)} · ${esc(r.duree||30)} ${tabibiT('label_min_unit','min')}</div></div>
+        <span class="badge ${esc(window.tabibiStatutRdv.decrire(r.status).classe)}">${esc(window.tabibiStatutRdv.decrire(r.status).libelle)}</span>
       </div>
       <div style="font-size:12px;color:var(--text2)">"${esc(r.motif)}"</div>
     </div>`;
@@ -888,11 +888,10 @@ function renderPatients(){
   if(!list.length){document.getElementById("patients-list").innerHTML=`<div style="text-align:center;padding:30px;color:var(--text3)"><i class="fa fa-users" style="font-size:42px;opacity:.3;margin-bottom:12px;display:block"></i>${tabibiT('dd_no_patient','Aucun patient')}</div>`;return;}
   // [SEC 2026-07-09] XSS : esc() (tabibi-security) pour le HTML, eJs pour
   // les valeurs injectées dans le handler inline (quotes/backslash/<).
-  const eJs=s=>String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/</g,'\\x3C');
-  document.getElementById("patients-list").innerHTML = list.map(p=>`
-    <div class="patient-row" onclick="alert(tabibiT('label_patient_file_colon','Dossier patient : ')+'${eJs(p.name)}\\n${p.visits} '+tabibiT('label_consultations','consultation(s)')+'\\n'+tabibiT('label_last_colon','Dernière : ')+'${eJs(p.lastDate)}')">
+    document.getElementById("patients-list").innerHTML = list.map(p=>`
+    <div class="patient-row" onclick="alert(tabibiT('label_patient_file_colon','Dossier patient : ')+'${_eJs(p.name)}\\n${_eJs(p.visits)} '+tabibiT('label_consultations','consultation(s)')+'\\n'+tabibiT('label_last_colon','Dernière : ')+'${_eJs(p.lastDate)}')">
       <div style="width:42px;height:42px;border-radius:50%;background:#e7f3ef;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700">${esc(p.name.split(" ").map(x=>x[0]).slice(0,2).join(""))}</div>
-      <div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(p.name)}</div><div style="font-size:11px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${esc(p.phone||"--")} · ${p.visits} ${tabibiT('label_consultations','consultation(s)')}</div></div>
+      <div style="flex:1"><div style="font-weight:700;font-size:13px">${esc(p.name)}</div><div style="font-size:11px;color:var(--text3)"><i class="fa fa-phone fa-xs"></i> ${esc(p.phone||"--")} · ${esc(p.visits)} ${tabibiT('label_consultations','consultation(s)')}</div></div>
       <div style="font-size:10px;color:var(--text3)">${tabibiT('label_last_colon','Dernière : ')}${esc(p.lastDate)}</div>
       <i class="fa fa-chevron-right" style="color:var(--text4)"></i>
     </div>`).join("");
@@ -1200,6 +1199,27 @@ function _esc(str) {
   return String(str || '').replace(/[&<>"']/g, function (c) {
     return ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c];
   });
+}
+
+// [15/09/2026] ECHAPPEMENT POUR UNE CHAINE JS DANS UN ATTRIBUT `onclick="…"`.
+//
+// `esc()` NE SUFFIT PAS la : il rend `'` sous la forme `&#39;`, et le parseur
+// HTML decode les entites d'un attribut AVANT que le JS ne soit lu. Le `'`
+// revient donc, et il ferme la chaine du handler. Un nom de patient valait
+// execution.
+//
+// `window.escJs` ne convient pas non plus ici : il transforme `"` en `\"`,
+// qui ferme l'attribut lui-meme, delimite par des guillemets doubles. D'ou
+// `&quot;` pour le guillemet et un echappement JS pour le reste.
+// (Cette fonction existait deja, en local, dans `renderPatients` — elle est
+// remontee ici pour servir aux deux endroits qui en ont besoin.)
+function _eJs(s) {
+  return String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '\\x3C')
+    .replace(/\r?\n/g, '\\n');
 }
 
 // [Phase 4.B.3-fix2] Construit une Date LOCALE à partir des composants YYYY-MM-DD + HH:MM

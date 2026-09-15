@@ -512,6 +512,18 @@ async function logout(){
 }
 
 /* FAMILLE */
+// [15/09/2026] Les proches et les cartes viennent de `prompt()` puis de
+// `localStorage` : c'est de la saisie, rendue telle quelle en HTML. Un nom de
+// proche pouvait donc porter du balisage.
+// L'echappeur est pris chez `tabibi-security.js` s'il est la, avec un repli
+// LOCAL qui echappe vraiment — pas `String`, qui ne fait rien.
+function _esc(s){
+  var f = (window.tabibiSec && window.tabibiSec.escapeHtml) || window.esc;
+  if (f) return f(s);
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+  });
+}
 function getFamily(){return JSON.parse(localStorage.getItem("tabibi_family")||"[]");}
 function setFamily(f){localStorage.setItem("tabibi_family",JSON.stringify(f));}
 function renderFamily(){
@@ -519,9 +531,9 @@ function renderFamily(){
   const box=document.getElementById("family-list");
   if(!fam.length){box.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px">'+tabibiT('pp_no_family','Aucun membre ajouté')+'</div>';return;}
   box.innerHTML=fam.map((f,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg2);border-radius:10px">
-    <div style="width:36px;height:36px;border-radius:50%;background:#e7f3ef;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${(f.name||"?")[0]}</div>
-    <div style="flex:1"><div style="font-weight:600;font-size:13px">${f.name}</div><div style="font-size:11px;color:var(--text3)">${f.relation} · ${f.birthDate||""}</div></div>
-    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="removeFamily(${i})" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>
+    <div style="width:36px;height:36px;border-radius:50%;background:#e7f3ef;color:#0a4d3e;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px">${_esc((f.name||"?")[0])}</div>
+    <div style="flex:1"><div style="font-weight:600;font-size:13px">${_esc(f.name)}</div><div style="font-size:11px;color:var(--text3)">${_esc(f.relation)} · ${_esc(f.birthDate||"")}</div></div>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="color:var(--red);background:#fff0f0" onclick="removeFamily(${Number(i)})" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>
   </div>`).join("");
 }
 function addFamily(){
@@ -542,8 +554,8 @@ function renderCards(){
   if(!cards.length){box.innerHTML='<div style="font-size:12px;color:var(--text3);text-align:center;padding:10px">'+tabibiT('pp_no_cards','Aucune carte enregistrée')+'</div>';return;}
   box.innerHTML=cards.map((c,i)=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(135deg,#0a4d3e,#0F7560);color:#fff;border-radius:12px">
     <i class="fa fa-credit-card" style="font-size:20px"></i>
-    <div style="flex:1"><div style="font-weight:700;font-size:13px">${c.brand} •••• ${c.last4}</div><div style="font-size:11px;opacity:.8">Expire ${c.exp}</div></div>
-    <button type="button" class="btn btn-icon btn-icon-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="removeCard(${i})" aria-label="Supprimer cette carte"><i class="fa fa-trash"></i></button>
+    <div style="flex:1"><div style="font-weight:700;font-size:13px">${_esc(c.brand)} •••• ${_esc(c.last4)}</div><div style="font-size:11px;opacity:.8">Expire ${_esc(c.exp)}</div></div>
+    <button type="button" class="btn btn-icon btn-icon-sm" style="background:rgba(255,255,255,.2);color:#fff" onclick="removeCard(${Number(i)})" aria-label="Supprimer cette carte"><i class="fa fa-trash"></i></button>
   </div>`).join("");
 }
 function addCard(){
