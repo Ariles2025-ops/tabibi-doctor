@@ -57,8 +57,13 @@ test.describe('le drapeau video est OUVERT, et se comporte comme tel', () => {
     const drapeaux = await page.evaluate(() => window.TABIBI_FEATURES);
     expect(drapeaux.video, '`video` devrait etre ouvert depuis la PR #123').toBe(true);
     // Ouvrir un drapeau ne doit jamais en ouvrir un autre par inadvertance.
+    //
+    // [15/09, integration] `reviews` SORT de cette liste : il a ete ouvert
+    // depuis, par son propre lot (court-circuit retire, drapeau enfin lu par le
+    // module). Le laisser ici ferait echouer le lot VIDEO pour une raison qui
+    // n'a rien a voir avec la video. Son etat est garde par
+    // `avis-patients.spec.js`, qui sait pourquoi il est ouvert.
     expect(drapeaux.payments, 'payments ne s ouvre pas avec la video').toBe(false);
-    expect(drapeaux.reviews, 'reviews ne s ouvre pas avec la video').toBe(false);
     expect(drapeaux.messaging, 'messaging ne s ouvre pas avec la video').toBe(false);
   });
 
