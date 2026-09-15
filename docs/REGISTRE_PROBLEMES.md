@@ -246,6 +246,33 @@ et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est
 > fois est une dette qu'on oublie.
 
 
+---
+
+## Lot D — la page qui se fige à une ligne, sans rien dire
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-49 | `patient-dashboard.html:271, 272, 635` — `getElementById('notif-count').textContent`, `.style`, `getElementById('user-init').textContent`, **sur des ids que la page ne contient pas** | les deux ids sont **injectés à l'exécution par `js/tabibi-header.js`**. Si l'en-tête n'est pas encore posé, la ligne lève « Cannot read properties of null » et **tout le script s'arrête là** — les branchements déclarés plus bas ne sont jamais faits | `const el = …; if (el)` — la forme que le même fichier utilise déjà deux lignes plus bas pour `#user-pill` | `tests/robustesse-front.test.mjs` — aucun déréférencement direct sur un id absent, **prouvé rouge** puis vert | **réglé** |
+
+### ⚠️ La double soumission : la mesure a changé la conclusion
+
+L'audit 360 signalait : *« 7 fichiers posent un `submit`, 23 désactivent un bouton, les deux
+ensembles ne se recouvrent pas — donc des formulaires sont soumettables deux fois. »*
+
+**Vérification fichier par fichier : six des sept désactivent bien leur bouton.** Le
+septième, `cas-grave.html`, **n'écrit rien** — il ouvre un lien WhatsApp. Le soumettre deux
+fois ouvre deux onglets.
+
+> **Il n'y avait pas de défaut.** Le signal était une corrélation lue trop vite : « ces deux
+> ensembles ne se recouvrent pas » n'est pas « ces formulaires sont vulnérables ». Un audit
+> qui en resterait là ferait corriger ce qui marche.
+
+Ce qui manquait n'était donc pas le correctif, **c'était la surveillance** : la mesure
+devient une garde. Tout nouveau formulaire qui écrit devra désactiver son bouton, ou
+s'inscrire dans une liste d'exceptions **qui dit pourquoi** — et cette liste est elle-même
+plafonnée à deux entrées : *une liste d'exceptions qui grossit est une garde qui s'éteint.*
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
