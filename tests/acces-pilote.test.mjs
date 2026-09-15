@@ -77,16 +77,34 @@ test('GARDE 2 — la liste blanche, et elle exige actif = true', () => {
   assert.match(CODE, /\.eq\('actif',\s*true\)/, 'un numero revoque passerait');
 });
 
-test('GARDE 3 — Turnstile est verifie AVANT de regarder le numero', () => {
-  const iTurnstile = CODE.indexOf('turnstileValide(');
-  const iListe = CODE.indexOf("from('pilote_acces_numero')");
-  assert.ok(iTurnstile > -1, 'Turnstile n est plus verifie');
-  assert.ok(iListe > -1, 'la liste blanche n est plus consultee');
-  assert.ok(iTurnstile < iListe,
-    'verifier le numero avant le captcha permettrait de sonder la liste sans resoudre un seul defi');
-  // Fail-closed : pas de secret, pas d acces.
-  assert.match(CODE, /TURNSTILE_SECRET_KEY/);
-  assert.match(CODE, /captcha_not_configured/);
+test('GARDE 3 — le jeton captcha est TRANSMIS a signInWithPassword', () => {
+  // [15/09/2026] LE CAPTCHA A CHANGE DE MAIN, ET CE TEST AVEC LUI.
+  //
+  // La v1 faisait son propre `siteverify` puis appelait `signInWithPassword`
+  // SANS jeton. Elle ne pouvait pas marcher : le projet a le captcha active
+  // globalement, GoTrue refuse alors toute connexion sans `captchaToken`, et
+  // un jeton Turnstile est a USAGE UNIQUE — le consommer chez nous le rendait
+  // inutilisable chez lui. Chaque essai reel sortait en 500.
+  //
+  // La garde n'a pas disparu : elle a change de place. On verifie donc que le
+  // jeton arrive bien la ou il est consomme.
+  const i = CODE.indexOf('signInWithPassword');
+  assert.ok(i > -1, 'la connexion serveur a disparu');
+  const appel = CODE.slice(i, i + 260);
+  assert.match(appel, /captchaToken:\s*jetonCaptcha/,
+    'sans `options.captchaToken`, GoTrue refuse la connexion : la fonction rend 500 a chaque appel');
+
+  // Et l'edge ne doit PLUS faire sa propre verification : deux consommations
+  // du meme jeton a usage unique, c'est une de trop.
+  assert.doesNotMatch(CODE, /siteverify/i,
+    'le jeton serait consomme deux fois — la seconde echouerait toujours');
+  assert.doesNotMatch(CODE, /turnstileValide/,
+    'la verification maison a ete reintroduite');
+});
+
+test('le corps de la requete porte toujours le jeton — le contrat avec la page', () => {
+  assert.match(CODE, /jetonCaptcha\s*=\s*typeof corps\?\.turnstile_token === 'string'/,
+    'la page envoie `turnstile_token` : si la fonction cesse de le lire, le captcha ne sert plus a rien');
 });
 
 test('GARDE 4 — la limitation porte sur l IP ET sur le numero', () => {
@@ -110,6 +128,17 @@ test('un seul code de refus, quelle que soit la raison', () => {
     assert.doesNotMatch(CODE, new RegExp(bavard),
       `« ${bavard} » transforme la fonction en annuaire des medecins testeurs`);
   }
+});
+
+test('un echec de session sort en REFUS, pas en panne — sinon l enumeration rouvre', () => {
+  // Un numero HORS liste sort en 403 generique. Si un numero SUR la liste avec
+  // un captcha invalide sortait en 500, les deux reponses diraient lequel des
+  // deux est sur la liste. Le refus doit etre le MEME.
+  const i = CODE.indexOf('if (errSession');
+  assert.ok(i > -1, 'le controle de session a disparu');
+  const bloc = CODE.slice(i, i + 320);
+  assert.match(bloc, /return refus\(/, 'un 500 ici rouvre l enumeration par la bande');
+  assert.doesNotMatch(bloc, /panne\(req, 'server_error'\)/);
 });
 
 test('le refus a un plancher de duree — sinon l horloge dit ce que le message tait', () => {
@@ -155,7 +184,7 @@ test('aucune cle en clair dans le code, ni dans la page', () => {
   for (const [nom, src] of [['fonction', CODE], ['page', sansCommentaires(PAGE)]]) {
     for (const m of src.match(FORME_DE_SECRET) ?? []) {
       // Les seules longues chaines admises sont des noms de nos propres champs.
-      assert.ok(/^['"](acces_non_autorise|trop_de_tentatives|captcha_not_configured|server_misconfigured|ACCES_PILOTE_NUMERO_ENABLED|SUPABASE_SERVICE_ROLE_KEY|TURNSTILE_SECRET_KEY|SUPABASE_ANON_KEY|method_not_allowed|feature_disabled|pilote_compter_tentative|pilote_acces_numero|pilote_noter_entree|doctor_profile_id|x-client-info, apikey, content-type)['"]$/.test(m),
+      assert.ok(/^['"](acces_non_autorise|trop_de_tentatives|captcha_not_configured|server_misconfigured|ACCES_PILOTE_NUMERO_ENABLED|SUPABASE_SERVICE_ROLE_KEY|SUPABASE_ANON_KEY|method_not_allowed|feature_disabled|pilote_compter_tentative|pilote_acces_numero|pilote_noter_entree|doctor_profile_id|x-client-info, apikey, content-type)['"]$/.test(m),
         `${nom} : chaine en forme de secret — ${m.slice(0, 12)}…`);
     }
   }

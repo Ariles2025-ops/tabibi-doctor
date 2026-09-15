@@ -29,9 +29,35 @@
 //   1. `ACCES_PILOTE_NUMERO_ENABLED` — l'interrupteur. A `false`, rien ne
 //      passe. **Il doit rester a `false` en production.**
 //   2. La LISTE BLANCHE — un administrateur inscrit les numeros un par un.
-//   3. Turnstile — obligatoire. Sans jeton valide, on ne regarde meme pas le
-//      numero.
-//   4. La limitation — 5 tentatives par minute, par numero ET par IP.
+//   3. La limitation — 5 tentatives par minute, par numero ET par IP.
+//   4. Le captcha — **verifie par Supabase, pas par nous.** Voir ci-dessous.
+//
+// =====================================================================
+// ⚠️ LE CAPTCHA N'EST PLUS VERIFIE ICI — et ce n'est pas un relachement
+// =====================================================================
+// La v1 faisait son PROPRE `siteverify` Turnstile, puis appelait
+// `signInWithPassword` **sans** jeton. Elle ne pouvait pas marcher : le projet
+// a le captcha active globalement, et GoTrue refuse alors toute connexion sans
+// `options.captchaToken` — **meme depuis le serveur, meme avec le bon mot de
+// passe**. Chaque essai reel sortait en 500.
+//
+// Or un jeton Turnstile est **a usage unique** : le consommer une premiere
+// fois dans notre `siteverify` le rendait inutilisable pour GoTrue. Les deux
+// verifications ne pouvaient donc pas coexister ; il fallait en choisir une,
+// et c'est celle de GoTrue qui compte, puisque c'est elle qui delivre la
+// session.
+//
+// Le jeton est donc transmis tel quel a `signInWithPassword`. **Il est
+// toujours verifie** — par Cloudflare, via Supabase, au moment qui decide.
+//
+// ⚠️ CE QUE CE DEPLACEMENT COUTE : le captcha n'est plus la PREMIERE porte.
+// Un appelant sans jeton valide atteint desormais la liste blanche et, si son
+// numero y est, la creation du compte auth. Ce qui l'arrete avant : la
+// limitation (5/min par IP et par numero) et la liste blanche elle-meme.
+// **L'enumeration, elle, reste fermee** — a condition que l'echec de session
+// rende le MEME refus que le numero inconnu. C'est pour ca que le dernier
+// `errSession` sort en `refus()` et pas en `panne()` : deux reponses
+// differentes diraient lequel des deux numeros est sur la liste.
 //
 // ⚠️ **DETTE DE SECURITE ASSUMEE — registre P-40.** A remplacer par un code
 // SMS (OTP) avant qu'un seul vrai patient n'existe.
@@ -91,8 +117,6 @@ const ORIGINES_AUTORISEES = [
   'http://localhost:8080',
 ];
 
-const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-
 /** Duree plancher d'une reponse de refus. Voir « L'ENUMERATION ». */
 const PLANCHER_MS = 700;
 
@@ -145,24 +169,6 @@ function motDePasseEphemere(): string {
   return [...o].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 
-/** Turnstile. Fail-closed : secret absente ou Cloudflare injoignable -> false. */
-async function turnstileValide(secret: string, jeton: string, ip: string | null): Promise<boolean> {
-  if (!jeton) return false;
-  try {
-    const corps = new FormData();
-    corps.append('secret', secret);
-    corps.append('response', jeton);
-    if (ip) corps.append('remoteip', ip);
-    const r = await fetch(SITEVERIFY_URL, { method: 'POST', body: corps });
-    if (!r.ok) return false;
-    const j = await r.json();
-    return j?.success === true;
-  } catch (err) {
-    console.error('[acces-pilote] siteverify injoignable :', (err as Error).message);
-    return false;
-  }
-}
-
 // ─────────────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
   const debut = Date.now();
@@ -178,16 +184,10 @@ Deno.serve(async (req) => {
 
   const urlSupabase = Deno.env.get('SUPABASE_URL');
   const cleService = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const secretTurnstile = Deno.env.get('TURNSTILE_SECRET_KEY');
 
   if (!urlSupabase || !cleService) {
     console.error('[acces-pilote] configuration Supabase incomplete');
     return panne(req, 'server_misconfigured');
-  }
-  if (!secretTurnstile) {
-    // On NOMME la variable, jamais sa valeur (regles 4 et 6).
-    console.error('[acces-pilote] TURNSTILE_SECRET_KEY absente');
-    return panne(req, 'captcha_not_configured');
   }
 
   // ── 1. Ce qu'on nous envoie ─────────────────────────────────────────
@@ -203,13 +203,6 @@ Deno.serve(async (req) => {
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null;
 
-  // ── 2. Turnstile, AVANT de regarder le numero ───────────────────────
-  // L'ordre n'est pas un detail : verifier le numero d'abord permettrait de
-  // sonder la liste sans jamais resoudre un captcha.
-  if (!await turnstileValide(secretTurnstile, jetonCaptcha, ip)) {
-    return refus(req, debut);
-  }
-
   // ⚠️ Elle REFUSE plutot que de reparer. Un numero « repare » ouvrirait la
   // session de quelqu'un d'autre — c'est la meme regle que pour les rappels
   // SMS, et c'est la meme fonction.
@@ -217,7 +210,7 @@ Deno.serve(async (req) => {
 
   const admin = createClient(urlSupabase, cleService, { auth: { persistSession: false } });
 
-  // ── 3. La limitation — par IP, et par numero ────────────────────────
+  // ── 2. La limitation — par IP, et par numero ────────────────────────
   // Par IP seule, un attaquant change d'IP. Par numero seul, il essaie mille
   // numeros depuis la meme machine. Il faut les deux.
   //
@@ -245,7 +238,7 @@ Deno.serve(async (req) => {
 
   if (!phone) return refus(req, debut);
 
-  // ── 4. La liste blanche ─────────────────────────────────────────────
+  // ── 3. La liste blanche ─────────────────────────────────────────────
   const { data: ligne, error: errListe } = await admin
     .from('pilote_acces_numero')
     .select('phone, doctor_profile_id, actif')
@@ -259,7 +252,7 @@ Deno.serve(async (req) => {
   }
   if (!ligne) return refus(req, debut);
 
-  // ── 5. Le compte auth pour ce numero ────────────────────────────────
+  // ── 4. Le compte auth pour ce numero ────────────────────────────────
   // `createUser` d'abord : s'il existe deja, l'erreur nous le dit, et on le
   // retrouve. C'est un aller-retour de moins que « lister puis creer », et
   // surtout ca ne laisse pas de fenetre entre les deux.
@@ -286,7 +279,7 @@ Deno.serve(async (req) => {
     userId = trouve.id;
   }
 
-  // ── 6. La session ───────────────────────────────────────────────────
+  // ── 5. La session — c'est ICI que le captcha est verifie ────────────
   // Voir « COMMENT LA SESSION EST MINTEE » en tete. Le mot de passe est pose,
   // consomme, puis remplace. Il ne sort pas d'ici.
   const passe = motDePasseEphemere();
@@ -299,8 +292,14 @@ Deno.serve(async (req) => {
   const anonyme = createClient(urlSupabase, Deno.env.get('SUPABASE_ANON_KEY') ?? cleService, {
     auth: { persistSession: false },
   });
+  // ⚠️ `options.captchaToken` N'EST PAS FACULTATIF ICI. Le projet a le captcha
+  // active globalement : sans ce champ, GoTrue refuse la connexion — meme
+  // depuis le serveur, meme avec le bon mot de passe. C'est ce qui rendait la
+  // v1 inutilisable (500 `server_error` a chaque essai reel).
   const { data: session, error: errSession } =
-    await anonyme.auth.signInWithPassword({ phone, password: passe });
+    await anonyme.auth.signInWithPassword({
+      phone, password: passe, options: { captchaToken: jetonCaptcha },
+    });
 
   // ⚠️ QU'ON REUSSISSE OU NON, on rebrouille le mot de passe. Un echec de
   // connexion laisserait sinon un compte ouvert avec un mot de passe que le
@@ -313,11 +312,16 @@ Deno.serve(async (req) => {
   }
 
   if (errSession || !session?.session?.access_token) {
+    // ⚠️ UN REFUS, PAS UNE PANNE. La cause la plus frequente est un captcha
+    // invalide ou expire — c'est-a-dire l'appelant, pas nous. Et repondre 500
+    // ici rouvrirait l'enumeration par la bande : un numero HORS liste sort en
+    // 403 plus haut, un numero SUR la liste avec un captcha invalide sortirait
+    // en 500. Deux reponses differentes disent lequel est sur la liste.
     console.error('[acces-pilote] ouverture de session :', errSession?.message);
-    return panne(req, 'server_error');
+    return refus(req, debut);
   }
 
-  // ── 7. Le rattachement a la fiche, et la trace ──────────────────────
+  // ── 6. Le rattachement a la fiche, et la trace ──────────────────────
   // On pose le lien dans les metadonnees pour que le front sache quelle fiche
   // ouvrir. Ce n'est PAS un droit : la RLS ne lit pas les metadonnees.
   const { error: errMeta } = await admin.auth.admin.updateUserById(userId, {

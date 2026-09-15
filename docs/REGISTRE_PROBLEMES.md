@@ -226,6 +226,29 @@ Par un **code SMS (OTP)** — la brique d'envoi existe déjà (`send-sms`, `_par
 et les rappels s'en servent en production. Ce n'est pas un chantier neuf : c'est un chantier
 **pas fait**.
 
+### P-41 — `signInWithPassword` côté serveur exige `options.captchaToken`
+
+| | |
+|---|---|
+| **symptôme** | `acces-pilote` v1 rendait **500 `server_error`** à chaque essai réel. Vérifié en prod : la fonction était déployée, la liste blanche peuplée, l'interrupteur ouvert — et personne ne pouvait entrer |
+| **cause** | le projet a le **captcha activé globalement**. GoTrue refuse alors toute connexion sans `options.captchaToken` — **même depuis le serveur, même avec le bon mot de passe.** L'edge faisait son propre `siteverify` puis appelait `signInWithPassword` **sans** le jeton |
+| **ce qui le rendait insoluble en l'état** | un jeton Turnstile est à **usage unique**. Le consommer dans notre `siteverify` le rendait inutilisable pour GoTrue : les deux vérifications ne pouvaient pas coexister |
+| **correctif** | le `siteverify` maison est retiré ; le jeton part tel quel dans `signInWithPassword`. Il est **toujours vérifié** — par Cloudflare, via Supabase, au moment qui délivre la session. Déployé **v3** par le stratège, prouvé `200` + `access_token` |
+| **garde** | `tests/acces-pilote.test.mjs` — `captchaToken: jetonCaptcha` doit être dans l'appel, et `siteverify` / `turnstileValide` **ne doivent plus exister** (deux consommations d'un jeton à usage unique, c'est une de trop) |
+| **statut** | **réglé** |
+
+#### ⚠️ Ce que ce déplacement coûte, et ce qu'il fallait faire pour le compenser
+
+Le captcha n'est **plus la première porte**. Un appelant sans jeton valide atteint désormais
+la liste blanche et, si son numéro y figure, la création du compte auth. Ce qui l'arrête
+avant : la limitation (5/min par IP **et** par numéro) et la liste blanche elle-même.
+
+**L'énumération, elle, reste fermée — mais il a fallu une seconde correction pour ça.**
+Un numéro hors liste sort en 403 générique ; un numéro **sur** la liste avec un captcha
+invalide serait sorti en **500**. Deux réponses différentes disent lequel des deux est sur la
+liste. L'échec de session rend donc le **même** refus, avec le même plancher de durée. C'est
+testé.
+
 ### Ce qui a quand même été fait correctement
 
 - **Aucune énumération** : un seul code de refus, quelle que soit la raison (inconnu, mal formé,
