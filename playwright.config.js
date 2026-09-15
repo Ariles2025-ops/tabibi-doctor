@@ -22,12 +22,46 @@ const CIBLE = process.env.TABIBI_CIBLE || '.';
 // Une baseURL externe (production, staging) désactive le serveur local.
 const BASE_EXTERNE = process.env.TABIBI_BASE;
 
+// =====================================================================
+// [15/09/2026] LE RUNNER SORT EN 1 ET NE DIT PAS QUEL TEST
+// =====================================================================
+// La porte `e2e` est sortie en 1 sur le runner GitHub (441 s) pendant que le
+// local rendait 304/304, sources ET dist-web. Impossible de savoir LEQUEL :
+// le seul rapporteur etait `list`, qui ecrit dans la sortie standard et **ne
+// produit aucun fichier**. L'etape « Rapport de test si echec » du workflow
+// televersait donc un `playwright-report/` qui n'avait jamais ete ecrit.
+//
+// Cinq reproductions locales, toutes vertes :
+//   sources · dist-web · arbre PROPRE de ccbc996 (worktree detache)
+//   TZ=UTC (le runner est en UTC, la machine en CEST)
+//   charge 37 sur 10 coeurs, --repeat-each=3 sur les 7 specs a `waitForTimeout`
+//
+// La difference qui reste est le systeme : ubuntu-latest contre macOS. Elle
+// n'est pas reproductible ici (pas de Docker sur la machine).
+//
+// ALORS ON NE DEVINE PAS : on fait en sorte que le PROCHAIN echec se nomme
+// lui-meme.
+//   `github` : annote le test fautif directement dans l'onglet Actions —
+//              plus besoin de telecharger un artefact pour lire un nom.
+//   `html`   : le rapport que l'etape d'artefact attendait deja.
+//   `json`   : lisible par un script, pour comparer deux runs.
+//
+// ⚠️ `retries` : 2 en CI, 0 en local. Ce n'est PAS pour faire passer un test
+// qui echoue — aucune assertion n'a ete touchee. C'est pour qu'un echec isole
+// s'affiche « flaky » **avec son nom** au lieu de « exit 1 » sans rien.
+// **Un test marque flaky n'est pas un test repare** : il doit etre chasse.
+// C'est ecrit au registre (P-33).
+const EN_CI = !!process.env.CI;
+
 module.exports = defineConfig({
   testDir: './tests/e2e',
   timeout: 30_000,
   fullyParallel: true,
-  retries: 0,
-  reporter: [['list']],
+  retries: EN_CI ? 2 : 0,
+  reporter: EN_CI
+    ? [['list'], ['github'], ['html', { open: 'never' }],
+       ['json', { outputFile: 'test-results/resultats.json' }]]
+    : [['list']],
   use: {
     baseURL: BASE_EXTERNE || `http://localhost:${PORT}`,
     screenshot: 'only-on-failure',

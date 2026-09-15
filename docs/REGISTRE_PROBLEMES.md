@@ -92,6 +92,43 @@ parcours public. `authenticated` et `service_role` : **30/30 conservées, 0 perd
 > `TA_CLE`. Deux fois le même piège : **la commande passe, l'effet n'existe pas.** Ce qui
 > les a attrapés tous les deux, c'est d'être allé relire l'état après coup.
 
+---
+
+## Instrumenté — la cause n'est pas trouvée, mais le prochain échec se nommera
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-33 | La porte `e2e` sort en **1 sur le runner GitHub** (441 s) alors que le local rend **304/304**, sources ET `dist-web` — et **rien ne dit quel test** | 5 reproductions locales toutes vertes : sources · dist-web · arbre **propre** de `ccbc996` (worktree détaché) · `TZ=UTC` · charge 37 sur 10 cœurs avec `--repeat-each=3` sur les 7 specs à `waitForTimeout` | deux aveuglements levés : rapporteurs `github`+`html`+`json` en CI, et `verifier-toutes.mjs` ne coupe plus à la 25ᵉ ligne | **prouvées rouges toutes les deux** : un test volontairement instable sort `::error file=…,title=…,line=…` puis « 1 flaky » ; un test volontairement faux fait imprimer son **nom** par la porte | **instrumenté — cause inconnue** |
+
+**Ce qui a été corrigé n'est pas le flake : c'est l'aveuglement.** Il y en avait deux, et
+ils se cachaient l'un l'autre :
+
+1. **Aucun fichier de rapport.** Le seul rapporteur était `list`, qui écrit sur la sortie
+   standard et ne produit rien sur disque — l'étape « Rapport de test si échec » du workflow
+   téléversait un `playwright-report/` qui n'avait **jamais été écrit**.
+2. **La porte coupait le diagnostic.** `verifier-toutes.mjs` imprimait les **25 dernières
+   lignes** de la sortie. Playwright démarre un serveur statique dont chaque requête
+   s'imprime : mesuré sur un échec e2e réel, **22 de ces 25 lignes étaient des lignes
+   d'accès HTTP**, et aucune ne nommait le test tombé. Le diagnostic était là, à quatre
+   cents lignes de la fin.
+
+« Les 25 dernières lignes », c'est le `tail -1` de la boucle shell du 13/09 en un peu plus
+long : **on regarde une position, pas un contenu.** Désormais le bruit d'accès est retiré,
+les lignes qui parlent d'un échec passent devant, et la sortie complète part dans
+`test-results/porte-<nom>.log` dont le chemin est imprimé (mesure : **389 lignes utiles sur
+6 179**).
+
+⚠️ **`retries: 2` n'est pas un correctif, et un test marqué « flaky » n'est pas un test
+réparé.** Aucune assertion n'a été touchée. Le but est qu'un échec isolé ressorte **nommé**
+au lieu de « exit 1 ». Si le label flaky réapparaît, il faut chasser le test, pas s'habituer
+au label — c'est exactement comme ça qu'une porte meurt.
+
+La seule différence non reproduite ici : **ubuntu-latest contre macOS** (pas de Docker sur
+la machine). Les 28 `waitForTimeout` des 9 specs restent le suspect le plus probable ; je ne
+les ai **pas** réécrits à l'aveugle — 28 modifications sans reproduction, c'est du bruit qui
+casse plus qu'il ne répare.
+
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
