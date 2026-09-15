@@ -225,7 +225,16 @@ async function loadMyCabinets(){
   // si plus d'un cabinet, afficher selecteur
   if (data.length > 1) {
     const sel = document.getElementById("cab-selector");
-    sel.innerHTML = data.map(c => `<option value="${c.cabinet_id}">${c.name} (${c.role})</option>`).join("");
+    // [XSS 15/09/2026] `c.name` vient de la BASE et partait en HTML sans
+    // echappement : un nom de cabinet contenant `"` ou `<` sortait de son
+    // attribut. On construit les <option> en DOM — `textContent` n'interprete
+    // rien, et il n'y a pas de liste de caracteres a penser a interdire.
+    sel.replaceChildren(...data.map((c) => {
+      const o = document.createElement('option');
+      o.value = c.cabinet_id;
+      o.textContent = `${c.name} (${c.role})`;
+      return o;
+    }));
     document.getElementById("sec-selector").style.display = "block";
     CURRENT_CABINET_ID = data[0].cabinet_id;
     CURRENT_USER_ROLE_IN_CABINET = data[0].role;

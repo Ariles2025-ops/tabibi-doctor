@@ -23,6 +23,7 @@
 // Usage : npm run verifier:toutes
 // =====================================================================
 import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
 
 const PORTES = [
   ['eslint',   'npx',  ['eslint', 'js', 'src', 'scripts', '--quiet']],
@@ -56,6 +57,10 @@ const PORTES = [
   // ressemble a de la couverture.
   ['unites',   'npm',  ['run', '--silent', 'verifier:unites']],
   ['video',    'npm',  ['run', '--silent', 'verifier:video']],
+  // [15/09/2026] Le compteur d'innerHTML recevant une donnee NON constante.
+  // Meme contrat que `dette` : il ne doit que BAISSER. Les reecrire tous d'un
+  // coup produirait un diff que personne ne relit.
+  ['innerhtml','npm',  ['run', '--silent', 'verifier:innerhtml']],
   ['build',    'npm',  ['run', '--silent', 'build']],
   ['e2e',      'npm',  ['run', '--silent', 'test:e2e']],
 ];
@@ -74,7 +79,7 @@ const PORTES_OBLIGATOIRES = new Set([
   'lint:dette', 'i18n:verifier', 'verifier:cles', 'verifier:c1',
   'verifier:statuts', 'verifier:panneaux', 'verifier:fuseau',
   'verifier:rpc', 'verifier:rpc-passage', 'verifier:passerelle', 'verifier:proprete',
-  'verifier:catch', 'verifier:unites', 'verifier:video', 'build', 'test:e2e',
+  'verifier:catch', 'verifier:unites', 'verifier:video', 'verifier:innerhtml', 'build', 'test:e2e',
 ]);
 
 // LES PORTES ATTENDUES. Elles existent sur une branche non encore fusionnee.
@@ -92,6 +97,48 @@ const PORTES_A_VENIR = new Map([
 
 const ROUGE = (s) => `\x1b[31m${s}\x1b[0m`;
 const VERT = (s) => `\x1b[32m${s}\x1b[0m`;
+
+// =====================================================================
+// [15/09/2026] UNE PORTE ROUGE DOIT DIRE **QUOI**
+// =====================================================================
+// La porte `e2e` est sortie en 1 sur le runner — et personne n'a pu savoir
+// quel test. Ce script imprimait les 25 DERNIERES lignes de la sortie ; or
+// Playwright demarre un serveur statique dont CHAQUE requete s'imprime
+// (`[WebServer] "GET /js/… 200"`). Mesure du 15/09 : sur les 25 dernieres
+// lignes d'un echec e2e reel, **22 etaient des lignes d'acces HTTP** et
+// aucune ne nommait le test tombe. Le diagnostic etait dans la sortie, a
+// quatre cents lignes de la fin.
+//
+// « Les 25 dernieres lignes » est le meme raccourci que le `tail -1` de la
+// boucle shell du 13/09, en un peu plus long : **on regarde une position,
+// pas un contenu.**
+//
+// Desormais : le bruit d'acces HTTP est retire, les lignes qui PARLENT d'un
+// echec sont remontees en premier, et la sortie COMPLETE est ecrite dans un
+// fichier dont le chemin est imprime — parce qu'un extrait, aussi bien
+// choisi soit-il, reste un extrait.
+const BRUIT = /^\s*\[WebServer\]|^\s*$/;
+const PARLANT = /✘|✗|×|Error|error|FAIL|failed|failing|flaky|Expected|Received|expect\(|assert|Timeout|ECONNREFUSED|ENOENT|\bat .*\.(js|mjs|ts):\d+/;
+
+function extraire(nom, sortie) {
+  const lignes = sortie.split('\n').filter((l) => !BRUIT.test(l));
+  const parlantes = lignes.filter((l) => PARLANT.test(l));
+  // Ce qui parle d'abord ; a defaut, la fin, qui vaut mieux que rien.
+  const choix = (parlantes.length ? parlantes : lignes).slice(-30);
+
+  let chemin = null;
+  try {
+    mkdirSync('test-results', { recursive: true });
+    chemin = `test-results/porte-${nom}.log`;
+    writeFileSync(chemin, sortie + '\n');
+  } catch { /* un disque plein ne doit pas masquer l'echec qu'on rapporte */ }
+
+  const bloc = choix.map((l) => '  ' + l).join('\n');
+  return chemin
+    ? `${bloc}\n\n  ${ROUGE('Sortie complete :')} ${chemin}  (${lignes.length} lignes utiles`
+      + ` sur ${sortie.split('\n').length})`
+    : bloc;
+}
 
 // Certaines portes n'existent pas encore sur toutes les branches : une porte
 // absente du package.json n'est pas un echec, elle est SIGNALEE puis sautee.
@@ -133,7 +180,7 @@ for (const [nom, cmd, args] of PORTES) {
   console.error('');
   console.error(ROUGE(`✗ La porte « ${nom} » sort en ${code}. On s'arrete ici.`));
   const sortie = ((r.stdout || '') + (r.stderr || '')).trimEnd();
-  if (sortie) console.error(sortie.split('\n').slice(-25).map((l) => '  ' + l).join('\n'));
+  if (sortie) console.error(extraire(nom, sortie));
   echec = nom;
   break;
 }
