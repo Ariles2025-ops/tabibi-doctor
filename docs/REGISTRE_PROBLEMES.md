@@ -716,6 +716,34 @@ le jour où le curseur démarrera ailleurs, le reset suivra tout seul. Recopier 
 même faute que les « 58 wilayas » recopiées (P-50) — **un chiffre recopié ne se met jamais à
 jour**.
 
+## P-73 — un nom de membre allait brut dans la page qui peut retirer des membres
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-73 | `admin-cabinet.html` (liste des membres) et `secretaire-dashboard.html` (menu des médecins) injectaient `full_name`, `specialty_fr`, `role` et `user_id` **sans échappement** dans `innerHTML` | la donnée vient de `cabinet_members_directory_view`, donc de ce qu'un membre a saisi. Essai : un nom `<img src=x onerror=…>` **marquait `window.__xss`** sur les deux pages | échappement par `window.esc` / `window.escAttr` (`js/tabibi-security.js`, chargé ligne 5 des deux pages) | `tests/e2e/xss-membres-cabinet.spec.js` — 3 essais × 2 profils | **réglé** |
+
+### La protection existait à côté du trou
+
+`admin-cabinet.html` portait déjà un `_escAttr` **local** — une quatrième copie de l'échappeur
+du dépôt — qui protégeait les attributs `data-*` du bouton « retirer ». Pendant ce temps, le
+**texte** juste au-dessus partait brut. La copie locale est remplacée par `window.escAttr` : une
+copie de moins, et le texte protégé.
+
+### Pourquoi celui-ci compte plus que la moyenne
+
+La charge s'exécutait dans **la page d'administration du cabinet** — celle qui liste les membres
+et peut les retirer. Son lecteur est, par construction, celui qui a le plus de droits.
+
+### La garde ne cherche pas `&lt;`
+
+Chercher l'entité échappée dans le HTML serait garder une **orthographe**. La charge écrit une
+marque globale si elle s'exécute ; on regarde la marque. Et un troisième essai vérifie que
+**cette charge est bien exécutable** dans ce contexte — sans lui, les deux premiers seraient
+verts sur une page non protégée si `onerror` ne se déclenchait pas (CSP, image jamais chargée).
+
+Enfin, un contrôle que l'échappement n'a pas **effacé** le membre : un écran vide passerait le
+test de sécurité sans protéger personne.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
