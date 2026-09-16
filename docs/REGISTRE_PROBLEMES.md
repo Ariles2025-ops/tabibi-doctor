@@ -585,6 +585,37 @@ et **2 essais de source sur 3** échouent.
 Et la garde de source **lit le code sans ses commentaires** : le commentaire qui explique ce
 défaut cite `getSupabase`. **Huitième fois** que ce piège se présente dans ce dépôt.
 
+## P-66 — « Dr. -- » : le nom était là, à un champ de distance
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-66 | Le **médecin pilote** voyait **« Dr. -- »** sur son propre tableau de bord, à trois endroits (`med-name`, `prof-name`, `menu-name`) | le nom venait UNIQUEMENT de `users` : `(fn+' '+ln).trim() \|\| (a.email\|\|'').split('@')[0]`. Un pilote entre par son **numéro** — ni prénom, ni nom, **ni e-mail** : `''.split('@')[0]` vaut `''`. Essai e2e sur l'état d'avant : `Received string: "Dr. --"` | `completerDepuisLaFiche()` remplit `tabibi_user` depuis `doctor_profiles.full_name` **avant** les écritures DOM ; `js/tabibi-doctor-name.js` est enfin chargé par la page | `tests/e2e/nom-medecin-entete.spec.js` — 5 essais × 2 profils | **réglé** |
+
+### La donnée était déjà chargée
+
+`getMyProfile()` rend la **ligne entière** — `RETURNS doctor_profiles`, vérifié en base le
+16/09 — et la page l'appelait déjà. Elle n'en lisait que `working_hours`.
+
+> Ce n'était pas une donnée manquante, ni une requête à écrire : **c'était un champ qu'on
+> n'avait pas regardé dans un objet qu'on tenait en main.**
+
+### On corrige la SOURCE, pas les trois écrans
+
+Repeindre `med-name`, `prof-name` et `menu-name` après coup aurait marché — jusqu'au
+quatrième élément, ajouté un jour sans sa réparation. Et `renderProfile()` relit
+`localStorage`, donc l'aurait écrasé au rendu suivant. On complète `tabibi_user` **avant** la
+première écriture : tout ce qui lit `u.name` en hérite, y compris la salutation.
+
+### Trois refus explicites
+
+- **On ne prend pas la main sur un `users` qui a un nom.** Ce lot comble un trou ; il ne
+  renomme pas les comptes qui vont bien. Un essai le garde.
+- **On n'invente pas.** `tabibiDoctorName.format()` ne rend jamais vide : sans nom, il rend
+  « Praticien ». Utile sur une liste publique, ce serait ici **fabriquer une identité** pour
+  le médecin connecté et l'écrire dans son cache. On exige un `full_name` réel avant de
+  formater. Sans fiche réclamée, le tiret reste — c'est la réponse honnête (P-27, P-47).
+- **On ne redemande pas deux fois la même ligne.** L'agenda relit la fiche déjà chargée.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
