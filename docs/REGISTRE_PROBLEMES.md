@@ -652,6 +652,41 @@ qu'un contact (e-mail, téléphone, wilaya, spécialité) : y déverser une cand
 le n° d'ordre, l'adresse, le cabinet, les tarifs, le plan et les consentements horodatés.
 **Rien n'a été créé en base** — la proposition est dans le RETOUR de la SEQ 55.
 
+## Lot 360 — P-71 à P-79
+
+> ⚠️ **P-69 et P-70 sont absents de cette branche, et c'est voulu.** Ils appartiennent au lot
+> `lot/onboarding-rpc-favoris`, pas encore fusionné. Numéroter par-dessus aurait donné deux
+> problèmes différents sous le même identifiant le jour de la fusion.
+
+## P-71 — deux puces ne pouvaient rien trouver, jamais
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-71 | Les puces **« Urgences »** et **« Femmes »** rendaient **toujours zéro résultat**, et l'écran répondait « Aucun médecin avec ces filtres » | elles filtrent sur `d.urgent` et `d.g === 'F'`, deux champs **fabriqués à l'hydratation** : `urgent: false` et `g: 'H'`, en dur, pour les 75 035 praticiens. Lecture en base le 16/09 : **aucune colonne de genre ni d'urgence**, ni dans `doctor_profiles`, ni dans `public_doctors` | les deux puces ne sont plus rendues (`PUCES_SANS_DONNEE`) ; l'hydratation cesse d'affirmer une valeur qu'elle n'a pas (`!!d.is_urgent`, `d.gender \|\| null`) | `tests/e2e/puces-recherche.spec.js` — 3 essais × 2 profils | **réglé** |
+
+### Un message qui accuse la recherche
+
+« Aucun médecin avec ces filtres » invite à élargir sa recherche. Ici, aucun élargissement
+n'aurait marché : la faute n'était pas dans la demande, elle était dans la donnée. L'utilisateur
+ne pouvait pas le deviner, et rien ne le lui disait.
+
+### On masque, on ne supprime pas — et on garde les deux filtres
+
+Les deux branches de filtrage sont **justes** ; c'est la donnée qui manquait. Elles restent, et
+`PUCES_SANS_DONNEE` est la seule ligne à modifier le jour où la colonne arrive. Supprimer
+aurait obligé à tout réécrire, donc à réinventer le même filtre — et peut-être moins bien.
+
+### La garde ne compte pas les puces, elle les essaie
+
+Elle prend celles que la page **rend**, les clique une par une, et vérifie qu'aucune ne vide la
+liste alors que le lot reçu devrait passer. Une puce ajoutée demain sur une colonne absente
+échouera ici sans que personne n'ait à y penser.
+
+> ⚠️ **Et elle a d'abord été fausse.** Écrite sans attente, elle vérifiait « il y a 7 fiches »
+> juste après le clic — donc **avant** que `doFilter()` (débounce 300 ms) ait filtré. Elle était
+> vraie immédiatement, et **verte même avec les puces mortes remises**. La contre-épreuve l'a
+> montrée ; la relecture, non. On laisse passer la fenêtre, puis on mesure.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

@@ -1054,12 +1054,32 @@ function renderSpecs(){
   }).join("");
 }
 
+// ⚠️ [16/09/2026] DEUX PUCES NE POUVAIENT RIEN TROUVER, JAMAIS.
+//
+// « Urgences » filtrait sur `d.urgent` et « Femmes » sur `d.g === 'F'`. Or les
+// deux champs etaient FABRIQUES a l'hydratation : `urgent: false` et `g: 'H'`,
+// en dur, pour les 75 035 praticiens. Cliquer l'une ou l'autre rendait donc
+// toujours zero resultat, et l'ecran repondait « Aucun medecin avec ces
+// filtres » — un message qui accuse la recherche alors que la faute est dans
+// la donnee.
+//
+// Mesure en base le 16/09 : **aucune colonne de genre ni d'urgence** n'existe,
+// ni dans `doctor_profiles`, ni dans `public_doctors`. La donnee n'est pas
+// « pas encore branchee » : elle n'existe pas.
+//
+// On ne les rend donc plus. On ne les SUPPRIME pas non plus : le jour ou la
+// colonne arrive, on retire la ligne ci-dessous et la puce revient avec son
+// filtre. Une puce qui ne peut rien trouver est pire qu'une puce absente —
+// elle fait douter l'utilisateur de sa recherche.
+const PUCES_SANS_DONNEE = ['urg', 'fem'];
+
 function renderChips(){
   const prev={};
   document.querySelectorAll(".chip[data-cv]").forEach(c=>{prev[c.dataset.cv]=c.classList.contains("active");});
   document.getElementById("chips").innerHTML=[
     {k:"chip_urg",v:"urg"},{k:"chip_4",v:"4plus"},{k:"chip_cheap",v:"cheap"},{k:"chip_fem",v:"fem"}
-  ].map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
+  ].filter(c=>PUCES_SANS_DONNEE.indexOf(c.v)===-1)
+   .map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
 }
 
 // [Phase 5.5 fix BUG #1] doFilter() ne filtre plus en mémoire (qui ne contenait
@@ -2126,10 +2146,15 @@ async function loadDoctorCards(opts, page){
         // null si pas de donnée — docCard affiche "Tarif à confirmer" / "Pas encore noté"
         note: (d.rating != null) ? parseFloat(d.rating) : null,
         prix: (d.consultation_fee_dzd != null && d.consultation_fee_dzd > 0) ? parseInt(d.consultation_fee_dzd, 10) : null,
-        urgent: false,  // colonne is_urgent toujours pas dans la vue enrichie
+        // ⚠️ Plus de `false` en dur : la colonne n'existe pas, donc la valeur
+        // est INCONNUE, pas fausse. Lue de la ligne — elle s'allumera toute
+        // seule le jour ou la colonne arrivera.
+        urgent: !!d.is_urgent,
         cert: d.is_verified !== undefined ? !!d.is_verified : false,
         in: ini, bg: clr.bg, tc: clr.tc,
-        g: 'H',  // colonne gender toujours pas dans la vue enrichie
+        // ⚠️ Plus de `'H'` en dur : c'etait affirmer le genre de 75 035
+        // praticiens. Inconnu tant que la colonne n'existe pas.
+        g: d.gender || null,
         avis: parseInt(d.review_count || 0) || 0,
         langs: Array.isArray(d.languages) ? d.languages.map(l => l.toUpperCase()) : ['FR','AR'],
         desc: d.bio || '',
@@ -2162,6 +2187,11 @@ async function loadDoctorCards(opts, page){
     if(opts.minRating > 0){
       res2 = res2.filter(d => d.note != null && d.note >= opts.minRating);
     }
+    // ⚠️ Les filtres « fem » et « urg » sont CONSERVES, et c'est volontaire :
+    // ils sont justes. Ce qui manquait, c'est la donnee — voir
+    // `PUCES_SANS_DONNEE`. Tant que les puces ne sont pas rendues, ces deux
+    // branches ne sont pas atteintes ; le jour ou elles le seront, elles
+    // filtreront sur une vraie valeur au lieu d'un `'H'` fabrique.
     if(opts.chips && opts.chips.indexOf('fem') !== -1){
       res2 = res2.filter(d => d.g === 'F');
     }
