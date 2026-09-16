@@ -203,6 +203,56 @@ test('le compteur de wilayas est DERIVE de `_W`, pas recopie', () => {
   assert.match(accueil, /id="hs-wilaya-n"/);
 });
 
+// ─────────────────────────────────────────────────────────────────────
+// 5. LES DEUX COPIES QUI DORMAIENT AILLEURS — 16/09/2026
+// ─────────────────────────────────────────────────────────────────────
+//
+// ⚠️ Le lot de 2026 avait aligné les QUATRE listes et les phrases de l'accueil.
+// Deux nombres étaient restés dans des modules que personne n'avait ouverts :
+//
+//   js/tabibi-dawini.js   `wilaya > 58`   — une demande depuis une des ONZE
+//                                           nouvelles wilayas était REFUSÉE,
+//                                           silencieusement, par un contrôle
+//                                           de saisie.
+//   js/tabibi-brevo.js    « 48 wilayas »  — dans un e-mail de bienvenue. Une
+//                                           fois expédié, on ne le corrige plus.
+//
+// Le second ne dit plus de nombre du tout : le découpage a changé deux fois et
+// la copie est restée fausse les deux fois. **Une phrase sans chiffre ne se
+// périme pas.**
+
+/** Le code d'un fichier, commentaires retirés. */
+function codeNu(chemin) {
+  return readFileSync(chemin, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .split('\n').map((l) => l.replace(/(^|[^:"'`\\])\/\/.*$/, '$1')).join('\n');
+}
+
+test('la borne de Dawini suit `_W`, elle ne vit pas sa vie', () => {
+  // ⚠️ On ne vérifie pas « c'est 69 » : ce serait recopier le chiffre une
+  // cinquième fois, dans l'essai. On vérifie qu'il ÉGALE la liste de référence.
+  const src = codeNu('js/tabibi-dawini.js');
+  const m = src.match(/NB_WILAYAS\s*=\s*(\d+)/);
+  assert.ok(m, '`NB_WILAYAS` a disparu de js/tabibi-dawini.js');
+  assert.equal(Number(m[1]), wilayas().size,
+    `Dawini borne a ${m[1]} wilayas, \`_W\` en compte ${wilayas().size}`);
+  assert.match(src, /wilaya\s*>\s*NB_WILAYAS/,
+    'la borne de Dawini est redevenue un nombre en dur');
+});
+
+test('aucun module ne dit encore « 48 wilayas »', () => {
+  // ⚠️ Lu SANS les commentaires : celui qui explique ce défaut cite la phrase.
+  // Neuvième fois que ce piège se présente dans ce dépôt.
+  const restes = [];
+  for (const f of ['js/tabibi-brevo.js', 'js/tabibi-dawini.js']) {
+    const src = codeNu(f);
+    for (const m of src.matchAll(/(48 wilayas|48 Wilayas|48 ولاية|58 wilayas)/g)) {
+      restes.push(`${f}:${src.slice(0, m.index).split('\n').length} « ${m[1]} »`);
+    }
+  }
+  assert.deepEqual(restes, [], `mention(s) perimee(s) :\n  ${restes.join('\n  ')}`);
+});
+
 test('la valeur ecrite dans le HTML vaut deja 69 — avant meme que le script tourne', () => {
   // Le script la reecrit, mais la page doit etre juste des le premier rendu :
   // un lecteur sans JavaScript, un robot d'indexation, une capture d'ecran.

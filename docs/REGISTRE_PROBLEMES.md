@@ -845,6 +845,28 @@ La première version assemblait des chaînes : le cliquet `verifier:innerhtml` e
 aucune liste de caractères à penser à interdire. Un essai vérifie qu'un nom de vaccin piégé ne
 s'exécute pas.
 
+## P-77 — deux copies du nombre de wilayas dormaient ailleurs
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-77 | `js/tabibi-dawini.js` refusait toute demande venant d'une wilaya **au-dessus de 58** — les onze nouvelles étaient rejetées par un contrôle de saisie, **silencieusement**. `js/tabibi-brevo.js` promettait « **48 wilayas** » dans l'e-mail de bienvenue | le lot P-49/P-50 avait aligné les quatre listes et les phrases de l'accueil ; ces deux-là vivaient dans des modules que personne n'avait ouverts | Dawini : `NB_WILAYAS`, **comparé à `_W` par un essai**. Brevo : la phrase se passe du nombre | `tests/wilayas-69.test.mjs` (+2 essais, 13 au total) | **réglé** |
+
+### Le second ne dit plus de nombre du tout
+
+Le découpage a changé **deux fois** (48 → 58 en 2019, 58 → 69 en 2026) et cette copie est restée
+fausse les deux fois. Et elle part **par e-mail** : une fois expédié, on ne le corrige plus.
+Écrire 69 serait la troisième copie à périmer ; ce module n'a pas accès à la liste. **Une phrase
+sans chiffre ne se périme pas.**
+
+### Le premier garde son nombre, mais avec un témoin
+
+Dawini ne peut pas lire `_W`. Le nombre reste écrit — et un essai le **compare** à `_W` : le
+jour où l'un bouge sans l'autre, la porte rougit. L'essai ne vérifie pas « c'est 69 », ce serait
+recopier le chiffre une cinquième fois, dans la garde.
+
+> Un contrôle de saisie qui refuse sans rien dire est le pire endroit où laisser un nombre
+> périmé : personne ne voit d'erreur, la demande disparaît simplement.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
