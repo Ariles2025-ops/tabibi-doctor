@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<script src="js/tabibi-prelang.js"></script>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="tabibi-page-key" content="title_admin_candidatures">
+<title>Candidatures médecins | Tabibi Admin</title>
+<meta name="description" content="Liste des candidatures médecins déposées depuis l'inscription en ligne.">
+<meta name="robots" content="noindex,nofollow">
+<link vite-ignore rel="preload" as="style" href="assets/vendor/fontawesome/css/all.min.css" onload="this.onload=null;this.rel='stylesheet'"><noscript><link vite-ignore rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css"></noscript>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/tabibi-ui.css">
+<style>
+:root{--blue:#0E5F46;--blue-d:#0a4d3e;--text:#0f172a;--text2:#475569;--text3:#64748b;--border:#e2e8f0;--bg:#f8fafc;--card:#fff;--ok:#2E8B57;--ok-l:#f0fdf4;--warn:#f59e0b;--warn-l:#fef3c7;--danger:#D21010;--danger-l:#fff0f0}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased}
+.hdr{background:linear-gradient(135deg,#0a4d3e,#0E5F46);color:#fff;padding:24px 16px}
+.hdr-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.hdr h1{font-size:22px;font-weight:800;display:flex;align-items:center;gap:10px}
+.hdr a{color:rgba(255,255,255,.85);text-decoration:none;font-size:13px;font-weight:600}
+.container{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+.tabs{display:flex;gap:8px;margin-bottom:20px;border-bottom:1px solid var(--border);overflow-x:auto}
+.tab{padding:12px 18px;background:none;border:none;font-family:inherit;font-size:14px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
+.tab.active{color:var(--blue-d);border-bottom-color:var(--blue)}
+.cand-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.cand-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.cand-nom{font-size:16px;font-weight:800}
+.cand-meta{font-size:12px;color:var(--text3)}
+.status-badge{display:inline-block;padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;text-transform:uppercase}
+.st-pending_verification{background:var(--warn-l);color:#92400e}
+.st-contacted{background:#e0f2fe;color:#075985}
+.st-approved{background:var(--ok-l);color:#065f46}
+.st-rejected{background:#f1f5f9;color:#475569}
+.champs{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
+.champ .lbl{font-size:10px;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);font-weight:700}
+.champ .val{font-size:13.5px;color:#334155;word-break:break-word}
+.vide{text-align:center;padding:48px 16px;color:var(--text3)}
+.vide i{font-size:42px;opacity:.35;display:block;margin-bottom:12px}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-inner">
+    <h1><i class="fa fa-user-doctor"></i> <span data-i18n="ac_title">Candidatures médecins</span></h1>
+    <a href="admin-dashboard.html"><i class="fa fa-arrow-left"></i> <span data-i18n="ac_back">Tableau de bord</span></a>
+  </div>
+</header>
+
+<main class="container">
+  <!-- ⚠️ [16/09/2026] POURQUOI CETTE PAGE EXISTE (P-69).
+       L'inscription médecin en ligne enregistre depuis la veille : la RPC
+       `soumettre_candidature_medecin` dépose une ligne dans
+       `public.doctor_applications`, la RLS en réserve la lecture aux admins.
+       **Et aucun écran ne la lisait.** Une candidature partait dans une table
+       que personne n'ouvrait, pendant que l'écran de dépôt disait « Nous vous
+       écrirons ». C'est la forme douce du tableau de bord vert du cron des
+       rappels : le système marche, et personne ne regarde.
+
+       LECTURE SEULE, et c'est délibéré : changer un statut serait une écriture
+       en base, hors périmètre de ce lot. La page montre ce qui est arrivé ;
+       décider vient après. -->
+  <div class="tabs" id="filtres"></div>
+  <div id="liste"></div>
+</main>
+
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tabibi-security.js"></script>
+<script src="js/tabibi-lang.js"></script>
+<script src="js/tabibi-i18n.js"></script>
+
+<script>
+(function () {
+  'use strict';
+
+  function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
+
+  var STATUTS = ['pending_verification', 'contacted', 'approved', 'rejected'];
+  var LIBELLE = {
+    pending_verification: ['ac_st_pending', 'À vérifier'],
+    contacted:            ['ac_st_contacted', 'Contacté'],
+    approved:             ['ac_st_approved', 'Accepté'],
+    rejected:             ['ac_st_rejected', 'Refusé']
+  };
+
+  var TOUTES = [];
+  var FILTRE = 'pending_verification';
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    try { return window.tabibiTemps ? window.tabibiTemps.instant(d) : new Date(d).toISOString().replace('T', ' ').slice(0, 16); }
+    catch (e) { return String(d).slice(0, 16); }
+  }
+
+  /** Un champ « libellé / valeur ». Construit en DOM : rien à échapper. */
+  function champ(libelle, valeur) {
+    var box = document.createElement('div');
+    box.className = 'champ';
+    var l = document.createElement('div'); l.className = 'lbl'; l.textContent = libelle;
+    var v = document.createElement('div'); v.className = 'val';
+    // ⚠️ `textContent`, pas `innerHTML` : ces valeurs viennent d'un formulaire
+    // public, rempli par n'importe qui. C'est la leçon de P-73, appliquée
+    // avant d'avoir le défaut plutôt qu'après.
+    v.textContent = (valeur == null || valeur === '') ? '—' : String(valeur);
+    box.appendChild(l); box.appendChild(v);
+    return box;
+  }
+
+  function carte(c) {
+    var carteEl = document.createElement('div');
+    carteEl.className = 'cand-card';
+
+    var tete = document.createElement('div');
+    tete.className = 'cand-head';
+
+    var gauche = document.createElement('div');
+    var nom = document.createElement('div');
+    nom.className = 'cand-nom';
+    nom.textContent = [c.first_name, c.last_name].filter(Boolean).join(' ') || '—';
+    var meta = document.createElement('div');
+    meta.className = 'cand-meta';
+    meta.textContent = _t('ac_received', 'Reçue le') + ' ' + fmtDate(c.created_at);
+    gauche.appendChild(nom); gauche.appendChild(meta);
+
+    var badge = document.createElement('span');
+    var lib = LIBELLE[c.status] || ['ac_st_unknown', c.status || '—'];
+    badge.className = 'status-badge st-' + (STATUTS.indexOf(c.status) === -1 ? 'rejected' : c.status);
+    badge.textContent = _t(lib[0], lib[1]);
+
+    tete.appendChild(gauche); tete.appendChild(badge);
+    carteEl.appendChild(tete);
+
+    var grille = document.createElement('div');
+    grille.className = 'champs';
+    [
+      [_t('ac_f_ordre', 'N° Conseil de l’Ordre'), c.ordre_num],
+      [_t('ac_f_spec', 'Spécialité'), [c.specialty, c.subspecialty].filter(Boolean).join(' · ')],
+      [_t('ac_f_wilaya', 'Wilaya'), c.wilaya],
+      [_t('ac_f_email', 'E-mail'), c.email],
+      [_t('ac_f_phone', 'Téléphone'), c.phone],
+      [_t('ac_f_cabinet', 'Cabinet'), c.cabinet],
+      [_t('ac_f_addr', 'Adresse'), c.address],
+      [_t('ac_f_price', 'Tarif annoncé'), c.price_dzd == null ? '' : (c.price_dzd + ' DA')],
+      [_t('ac_f_start', 'Exercice depuis'), c.start_year],
+      [_t('ac_f_plan', 'Formule'), c.plan],
+      [_t('ac_f_ref', 'Référence'), c.id]
+    ].forEach(function (p) { grille.appendChild(champ(p[0], p[1])); });
+    carteEl.appendChild(grille);
+    return carteEl;
+  }
+
+  function vide(texte, icone) {
+    var d = document.createElement('div');
+    d.className = 'vide';
+    var i = document.createElement('i');
+    i.className = 'fa ' + (icone || 'fa-inbox');
+    var p = document.createElement('div');
+    p.textContent = texte;
+    d.appendChild(i); d.appendChild(p);
+    return d;
+  }
+
+  function rendre() {
+    var liste = document.getElementById('liste');
+    var vues = TOUTES.filter(function (c) { return FILTRE === 'all' || c.status === FILTRE; });
+    if (!vues.length) {
+      liste.replaceChildren(vide(_t('ac_empty', 'Aucune candidature dans cette vue.')));
+    } else {
+      liste.replaceChildren.apply(liste, vues.map(carte));
+    }
+    // Les compteurs des onglets suivent ce qui est chargé, jamais un chiffre écrit.
+    document.querySelectorAll('.tab[data-st]').forEach(function (b) {
+      var st = b.dataset.st;
+      var n = st === 'all' ? TOUTES.length : TOUTES.filter(function (c) { return c.status === st; }).length;
+      b.textContent = b.dataset.lib + ' (' + n + ')';
+      b.classList.toggle('active', st === FILTRE);
+    });
+  }
+
+  function poserFiltres() {
+    var box = document.getElementById('filtres');
+    var defs = STATUTS.map(function (st) { return [st, _t(LIBELLE[st][0], LIBELLE[st][1])]; });
+    defs.push(['all', _t('ac_st_all', 'Toutes')]);
+    box.replaceChildren.apply(box, defs.map(function (d) {
+      var b = document.createElement('button');
+      b.className = 'tab';
+      b.dataset.st = d[0];
+      b.dataset.lib = d[1];
+      b.textContent = d[1];
+      b.addEventListener('click', function () { FILTRE = d[0]; rendre(); });
+      return b;
+    }));
+  }
+
+  (async function () {
+    var user = await window.tabibi.auth.requireAuth(['admin']);
+    if (!user) return;   // requireAuth a déjà redirigé
+
+    poserFiltres();
+    var liste = document.getElementById('liste');
+
+    var sb = window.tabibi && window.tabibi.supabase;
+    if (!sb) {
+      liste.replaceChildren(vide(_t('ac_no_client', 'Service indisponible.'), 'fa-plug'));
+      return;
+    }
+
+    var r;
+    try {
+      r = await sb.from('doctor_applications').select('*').order('created_at', { ascending: false }).limit(200);
+    } catch (e) {
+      r = { error: e };
+    }
+    if (r.error) {
+      // ⚠️ On AFFICHE l'échec. Une liste vide sur une erreur de lecture se lit
+      // « aucune candidature » — et on conclurait que personne ne s'inscrit.
+      (window.tabibiErreur || console.warn)(r.error, 'admin-candidatures:lecture');
+      liste.replaceChildren(vide(_t('ac_load_err', 'Impossible de charger les candidatures.'), 'fa-triangle-exclamation'));
+      return;
+    }
+    TOUTES = r.data || [];
+    rendre();
+  })();
+})();
+</script>
+</body>
+</html>

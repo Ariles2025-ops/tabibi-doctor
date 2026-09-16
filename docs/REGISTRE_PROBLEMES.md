@@ -867,6 +867,41 @@ recopier le chiffre une cinquième fois, dans la garde.
 > Un contrôle de saisie qui refuse sans rien dire est le pire endroit où laisser un nombre
 > périmé : personne ne voit d'erreur, la demande disparaît simplement.
 
+## P-78 — une candidature persistait, et personne ne la lisait
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-78 | L'inscription médecin **enregistre** depuis la veille, et **aucun écran ne lisait** `doctor_applications`. L'écran de dépôt disait « Nous vous écrirons » | la table et la RPC sont en place ; la RLS réserve la lecture aux admins ; aucune page ne l'interrogeait. La candidature partait dans une table que personne n'ouvrait | `admin-candidatures.html` — liste **en lecture seule**, filtres par statut, construite en DOM, plus un bouton « Candidatures » au tableau de bord admin | `tests/e2e/admin-candidatures.spec.js` — 9 essais × 2 profils | **réglé** |
+
+### La forme douce du tableau de bord vert
+
+Le système marchait, et personne ne regardait. C'est exactement le cron des rappels qui
+affichait 4 531 exécutions « succeeded » en envoyant le mot `TA_CLE` — sauf qu'ici rien
+n'affichait de faux succès : il n'y avait **aucun écran du tout**, ce qui est la même
+information, en silence.
+
+### L'essai qui compte est celui qui parle d'une AUTRE page
+
+Une liste que personne ne sait ouvrir laisse le défaut intact. Un essai vérifie donc que le
+**tableau de bord admin mène à cette page** — sur la page **servie**, pas sur le fichier du
+dépôt, parce que la suite tourne aussi sur `dist-web` et que c'est le build que le visiteur
+reçoit (P-29). Sans ce lien, les huit autres essais gardent une page que personne n'atteint.
+
+### Une erreur de lecture doit SE VOIR
+
+Une liste vide sur une RLS qui refuse se lit « personne ne s'inscrit » — et on en conclurait
+que le formulaire est cassé, ou pire, qu'il n'intéresse personne. L'échec est affiché comme un
+échec ; un essai le garde.
+
+### Lecture seule, et construite en DOM
+
+Changer un statut serait une **écriture en base**, hors du périmètre de ce lot. La page montre
+ce qui est arrivé ; décider vient après (voir P-79 pour ce qui manque encore).
+
+Les champs viennent d'un formulaire **public** : la page est construite en nœuds DOM
+(`textContent`), il n'y a donc rien à échapper — donc rien à oublier d'échapper. C'est la leçon
+de P-73, appliquée **avant** d'avoir le défaut.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -876,6 +911,7 @@ recopier le chiffre une cinquième fois, dans la garde.
 | P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-68 | Une candidature de médecin **n'a aucun endroit où aller** : l'onboarding ne peut rien persister | mesuré le 16/09 : aucune table `doctor_applications`, aucune RPC ni fonction edge de candidature. `waiting_list` n'accepte qu'un contact — pas un dossier | à créer : table + RPC d'insert anon + policy, **validation d'Aghiles requise avant toute écriture en base** (règle 3) | **garde manquante par nature** tant que la destination n'existe pas ; l'essai actuel garde seulement qu'on ne ment plus | **ouvert** |
+| P-79 | Une candidature arrive, **personne n'est prévenu** — et personne ne peut changer son statut | la liste admin existe désormais (P-78) mais il faut y **penser** : aucune notification ne part à l'insertion, et la page est en lecture seule | à décider : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) et RPC admin de changement de statut. **Écritures en base : validation d'Aghiles requise** (règle 3) | **garde manquante par nature** : un essai ne peut pas vérifier qu'un humain ouvre une page | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---
