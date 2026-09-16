@@ -652,6 +652,57 @@ qu'un contact (e-mail, téléphone, wilaya, spécialité) : y déverser une cand
 le n° d'ordre, l'adresse, le cabinet, les tarifs, le plan et les consentements horodatés.
 **Rien n'a été créé en base** — la proposition est dans le RETOUR de la SEQ 55.
 
+## P-68 (b) — la candidature part enfin quelque part
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-68 b | Une candidature de médecin **n'avait aucun endroit où aller** : la page ne chargeait aucun client Supabase | la destination existe désormais — `public.soumettre_candidature_medecin(p jsonb) returns uuid`, lue en base le 16/09 : `security_definer = true`, `EXECUTE` pour `anon` et `authenticated`, et les 20 clés qu'elle extrait de `p` correspondent une à une au formulaire | la page charge le SDK + `config.js` + `supabase-client.js` + **`tabibi-rpc.js`**, et `submitAll()` appelle la RPC **par la passerelle**. L'écran de succès ne s'affiche que sur un **uuid rendu** | `tests/e2e/onboarding-medecin-honnete.spec.js` — 12 essais × 2 profils | **réglé (b1)** |
+
+### « Ça n'a pas levé » n'est pas « c'est enregistré »
+
+Le succès est conditionné à un **identifiant**, vérifié par forme, pas à l'absence d'erreur.
+Quatre façons de ne pas en avoir sont gardées une par une, parce que chacune a déjà été prise
+pour un succès quelque part dans ce dépôt :
+
+| la passerelle rend | ce qu'on affiche |
+|---|---|
+| `{ok:false, erreur:'rls_denied'}` | échec |
+| `{ok:true, data:null}` | échec |
+| `{ok:true, data:''}` | échec |
+| `{ok:true, data:'ok'}` | échec |
+| `{ok:true, data:'<uuid>'}` | **succès, avec la référence affichée** |
+
+### Ce que l'écran ne dit plus
+
+L'ancien promettait un rappel « **sous 48 heures ouvrées** ». Tenir un délai suppose que
+quelqu'un relise les dossiers ; rien ne le garantit encore (voir P-69). Le nouvel écran
+n'annonce **aucun délai** : il donne la référence, et un essai vérifie que « 48 heures » n'est
+pas revenu.
+
+### Deux choses ajoutées parce que l'envoi est devenu réel
+
+- **Un verrou d'envoi.** Tant que `submitAll()` n'écrivait que dans `localStorage`, un
+  double-clic était sans conséquence. Il déposerait maintenant **deux lignes** — et l'index
+  unique sur le n° d'ordre ferait échouer la seconde, donc afficher un échec **après** un
+  succès. Le second clic est rendu impossible, pas seulement inutile ; le bouton revient si
+  l'envoi échoue, sinon une coupure réseau condamnerait la page.
+- **Un message propre au refus de débit.** La RPC limite à 3 dépôts par heure. « Réessayez »
+  n'y est vrai qu'au bout d'une heure — c'est exactement la leçon de P-65, où un « réessayez »
+  invitait à recommencer une chose qui ne pouvait pas aboutir.
+
+### Le mot de passe, toujours pas
+
+Ni la table ni la RPC n'ont de champ pour lui : le compte se créera après vérification. Un
+essai vérifie qu'il n'apparaît **ni dans le payload, ni dans le stockage local**. Un mot de
+passe transporté « pour plus tard » est un mot de passe stocké quelque part.
+
+### ⚠️ Le bouchon ne prouve pas que la page charge la passerelle
+
+Onze des douze essais **remplacent** `tabibiRpc`. Si la page ne la chargeait pas, ils
+resteraient verts et la vraie page n'enverrait rien — c'est exactement ce qui est arrivé au
+sélecteur de langue (P-29), vert sur les sources et absent du build. Le douzième essai va donc
+lire `typeof window.tabibiRpc` et le client sur la page **réellement chargée**.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -660,7 +711,7 @@ le n° d'ordre, l'adresse, le cabinet, les tarifs, le plan et les consentements 
 | P-60 | La carte annonce **« Téléconsultation · Disponible »** et **aucun médecin ne la propose** | mesuré en base le 16/09 : `count(*) filter (where telehealth_enabled)` = **0** sur **75 035** `doctor_profiles` (et 1 seul `is_verified`) | aucun — c'est une décision produit, pas un correctif de code : ouvrir le drapeau sur de vrais médecins, ou retirer l'annonce | **garde manquante par nature** : un essai hermétique ne voit pas la base. La mesure est à refaire avant chaque annonce | **ouvert** |
 | P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
-| P-68 | Une candidature de médecin **n'a aucun endroit où aller** : l'onboarding ne peut rien persister | mesuré le 16/09 : aucune table `doctor_applications`, aucune RPC ni fonction edge de candidature. `waiting_list` n'accepte qu'un contact — pas un dossier | à créer : table + RPC d'insert anon + policy, **validation d'Aghiles requise avant toute écriture en base** (règle 3) | **garde manquante par nature** tant que la destination n'existe pas ; l'essai actuel garde seulement qu'on ne ment plus | **ouvert** |
+| P-69 | Une candidature **persiste, et personne n'est prévenu** : aucun écran n'affiche `doctor_applications`, aucune notification ne part à l'arrivée d'un dossier | la table et la RPC sont en place et gardées (P-68 b) ; la RLS autorise la lecture admin, mais **aucune page ne la lit**. L'écran de dépôt dit « Nous vous écrirons » — cette phrase repose aujourd'hui sur quelqu'un qui pense à interroger la table | à faire : une liste admin (le motif d'`admin-doctor-validation.html` demanderait des RPC `admin_*` qui n'existent pas pour cette table, ou un `.from()` direct sous la RLS admin), ou une notification à l'insertion | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---
