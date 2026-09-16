@@ -703,6 +703,48 @@ resteraient verts et la vraie page n'enverrait rien — c'est exactement ce qui 
 sélecteur de langue (P-29), vert sur les sources et absent du build. Le douzième essai va donc
 lire `typeof window.tabibiRpc` et le client sur la page **réellement chargée**.
 
+## P-70 — le cœur des favoris ne faisait rien à l'écran
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-70 | Le patient clique sur le **cœur** d'un favori : **rien ne bouge**. Il reclique, le favori revient. Il faut recharger pour voir l'état vrai | `toggFav()` appelait `renderDocs()`, définie **uniquement** dans `js/home-app.js`, que `patient-dashboard.html` ne charge pas. Mesuré au navigateur : `{"renderDocs":"undefined"}` et `APPEL toggFav -> LANCE: renderDocs is not defined` | l'appel devient optionnel — la forme déjà utilisée dans ce fichier pour `_legacyOpenReview` | `tests/e2e/favoris-patient.spec.js` — 4 essais × 2 profils | **réglé** |
+
+### L'ordre des instructions décidait de tout
+
+```js
+localStorage.setItem("tabibi_favs", …);   // passe
+renderDocs();                             // LÈVE
+renderFavs();                             // jamais atteint
+toastM(…);                                // jamais atteint
+```
+
+L'état changeait en mémoire, l'écran non. **Le défaut était donc invisible dans le stockage**
+— un essai qui aurait seulement vérifié `tabibi_favs` serait resté vert. C'est pourquoi la
+garde regarde aussi le **toast**, dernière instruction de la fonction, et les erreurs de page.
+
+Même famille que P-65 (`getSupabase` appelé sans exister) : un nom absent, une exception, une
+moitié de fonction qui ne s'exécute pas. Ici il n'y avait même pas de `catch` pour l'avaler —
+juste personne pour lire la console d'un patient.
+
+### La garde vérifie d'abord sa propre condition
+
+Le premier essai affirme que cette page **n'a pas** `renderDocs`. Sans lui, le jour où
+quelqu'un chargerait `js/home-app.js` ici, la suite passerait toute seule et les trois autres
+essais resteraient verts **sans rien prouver** : ils garderaient une page qui n'a plus le
+problème, pas un correctif.
+
+### Trouvé en construisant la garde d'un autre défaut
+
+Ce bug n'a été cherché par personne. Il est sorti d'un prototype de détection des fonctions
+appelées mais jamais définies, écrit pour P-65. Ce prototype rendait **105 noms non résolus**,
+presque tous faux (mots français dans des chaînes, `var(` de CSS, paramètres de callbacks) :
+trop bruyant pour devenir une porte. Les quatre pistes plausibles ont été vérifiées **une par
+une** — `loadUser`, `renderUserUI`, `hideLoading`, `tabibiT` sont tous protégés par
+`typeof X === 'function'`, appels optionnels délibérés. Une seule était réelle.
+
+> **Un outil trop bruyant pour être une porte peut rester un bon outil de fouille** — à
+> condition de vérifier chaque touche avant d'y croire.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
