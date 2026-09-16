@@ -264,14 +264,31 @@ textarea{min-height:80px;resize:vertical}
     </div>
   </section>
 
-  <!-- ═══════════ SUCCÈS ═══════════ -->
-  <section class="card" id="step-done" style="display:none">
-    <div class="success-box">
-      <i class="fa fa-circle-check"></i>
-      <h3 data-i18n="om_success_title">Demande envoyée !</h3>
-      <p><span data-i18n="om_success_thanks">Merci Dr.</span> <span id="success-name">—</span>.<br><span data-i18n-html="om_success_body">Notre équipe vérifie vos justificatifs et vous contactera <b>sous 48 heures ouvrées</b> par email à</span> <span id="success-email" style="color:var(--blue)">—</span>.</p>
-      <p style="font-size:12px;color:var(--text3)"><span data-i18n="om_success_question">En cas de question :</span> <a href="mailto:contact@tabibi.doctor" style="color:var(--blue)">contact@tabibi.doctor</a></p>
-      <a href="index.html" class="btn btn-primary" style="max-width:260px;margin:14px auto 0" data-i18n="om_back_home">Retour à l'accueil</a>
+  <!-- ═══════════ CE QUI EST VRAI ═══════════
+       ⚠️ [16/09/2026] ICI SE TROUVAIT UN ECRAN « Demande envoyée ! » qui
+       annonçait : « Notre équipe vérifie vos justificatifs et vous contactera
+       sous 48 heures ouvrées ». **Rien n'était envoyé à personne.**
+
+       `submitAll()` poussait le dossier dans `localStorage`, sous un commentaire
+       « TODO : envoyer à Supabase », et affichait le succès. La page ne charge
+       aucun client Supabase. Personne ne lit cette clé — mesuré : zéro lecteur
+       dans tout le dépôt. Un médecin qui remplissait ces cinq écrans attendait
+       48 heures un appel qui ne pouvait pas venir.
+
+       Même famille que « 500+ inscrits » (P-01) et « e-mail envoyé » (P-28) :
+       **un écran de succès sur une opération qui n'a pas eu lieu.**
+
+       L'écran de succès reviendra AVEC la persistance, pas avant. En attendant,
+       on dit ce qui s'est passé, et on donne le chemin qui, lui, enregistre
+       vraiment (`medecin-waitinglist.html` insère dans `waiting_list`). -->
+  <section class="card" id="step-nonenvoye" style="display:none">
+    <div class="success-box" style="background:#FDF6E7;border-color:#E6D3A3">
+      <i class="fa fa-circle-exclamation" style="color:#B49B62"></i>
+      <h3 data-i18n="om_notsent_title">Votre dossier n'a pas été envoyé</h3>
+      <p data-i18n="om_notsent_body">L'inscription médecin en ligne n'est pas encore ouverte : rien de ce que vous venez de saisir n'a été transmis ni conservé. Nous préférons vous le dire plutôt que vous faire attendre un appel qui ne viendrait pas.</p>
+      <p data-i18n="om_notsent_how">Pour être recontacté dès l'ouverture, inscrivez-vous sur la liste des médecins — celle-là est bien enregistrée.</p>
+      <a href="medecin-waitinglist.html" class="btn btn-primary" style="max-width:320px;margin:14px auto 0" data-i18n="om_notsent_cta">M'inscrire sur la liste des médecins</a>
+      <p style="font-size:12px;color:var(--text3);margin-top:12px"><span data-i18n="om_success_question">En cas de question :</span> <a href="mailto:contact@tabibi.doctor" style="color:var(--blue)">contact@tabibi.doctor</a></p>
     </div>
   </section>
 
@@ -356,7 +373,6 @@ async function submitAll() {
     email: document.getElementById('f-email').value.trim().toLowerCase(),
     phone: document.getElementById('f-phone').value.trim(),
     date_of_birth: document.getElementById('f-bd').value,
-    password: document.getElementById('f-pw').value,
     ordre_num: document.getElementById('f-ordre-num').value.trim(),
     specialty: document.getElementById('f-spec').value,
     subspecialty: document.getElementById('f-subspec').value.trim(),
@@ -382,19 +398,29 @@ async function submitAll() {
     status: 'pending_verification'
   };
 
-  // TODO : envoyer à Supabase (créer table `doctor_applications`)
-  // Pour l'instant : stockage localStorage + envoi email manuel
-  try {
-    const apps = JSON.parse(localStorage.getItem('tabibi_doctor_applications') || '[]');
-    apps.push(data);
-    localStorage.setItem('tabibi_doctor_applications', JSON.stringify(apps));
-  } catch(e) {}
+  // ⚠️ [16/09/2026] TROIS CHOSES ONT DISPARU D'ICI, ET CHACUNE MENTAIT.
+  //
+  // 1. `password: document.getElementById('f-pw').value` — le mot de passe
+  //    EN CLAIR dans l'objet, puis dans `localStorage`, sur la machine du
+  //    medecin, sans limite de duree, alors qu'AUCUN compte n'etait cree.
+  //    Un mot de passe qui ne sert a rien et qui traine est un mot de passe
+  //    qu'on a pris sans raison. Le champ reste : il servira quand il y aura
+  //    un compte a creer.
+  //
+  // 2. `localStorage.setItem('tabibi_doctor_applications', …)` — mesure dans
+  //    tout le depot : **zero lecteur**. Le dossier partait dans une cle que
+  //    personne n'ouvre jamais. On ne garde donc plus ces donnees : elles
+  //    n'avaient pas de destinataire, elles n'ont pas besoin de survivre.
+  //
+  // 3. L'ecran « Demande envoyee ! » et sa promesse de rappel sous 48 heures.
+  //
+  // `data` reste construit : c'est ce qu'il faudra envoyer quand le chemin
+  // serveur existera (table `doctor_applications` + RPC d'insert anon — decrit
+  // dans le RETOUR de la SEQ 55, a valider avant toute ecriture en base).
+  void data;
 
-  // Affichage succès
   document.getElementById('step-' + currentStep).style.display = 'none';
-  document.getElementById('step-done').style.display = 'block';
-  document.getElementById('success-name').textContent = data.firstname + ' ' + data.lastname;
-  document.getElementById('success-email').textContent = data.email;
+  document.getElementById('step-nonenvoye').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 // [CONFORMITE 2026] libellé d'étape localisé au chargement + re-rendu sur bascule langue.
