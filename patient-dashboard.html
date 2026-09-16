@@ -546,7 +546,30 @@ function rmDoc(id){if(!confirm(tabibiT('confirm_delete_document',"Supprimer ce d
 /* ─── FAVORIS ─── */
 function getFavs(){return JSON.parse(localStorage.getItem("tabibi_favs")||"[]");}
 function isFav(id){return getFavs().includes(id);}
-function toggFav(id){const f=getFavs();const i=f.indexOf(id);if(i>-1) f.splice(i,1);else f.push(id);localStorage.setItem("tabibi_favs",JSON.stringify(f));renderDocs();renderFavs();toastM(i>-1?tabibiT('toast_fav_removed',"Retiré des favoris"):tabibiT('toast_fav_added',"Ajouté aux favoris"),"success");}
+// ⚠️ [16/09/2026] LE COEUR DES FAVORIS NE FAISAIT RIEN A L'ECRAN.
+//
+// `toggFav()` appelait `renderDocs()`, qui n'est definie QUE dans
+// `js/home-app.js` — un fichier que cette page **ne charge pas** (23 scripts,
+// pas celui-la). Mesure au navigateur :
+//
+//     TYPES {"renderDocs":"undefined","toggFav":"function","renderFavs":"function"}
+//     APPEL toggFav -> LANCE: renderDocs is not defined
+//
+// L'ordre des instructions decidait de tout : `localStorage.setItem` PASSAIT,
+// puis la fonction s'arretait. `renderFavs()` et le toast ne s'executaient
+// jamais. Le patient cliquait sur le coeur, le favori changeait en memoire, et
+// **rien ne bougeait a l'ecran**. Il recliquait : le favori revenait. Il
+// fallait recharger la page pour voir l'etat vrai.
+//
+// Meme famille que P-65 (`getSupabase` appele sans exister) : un nom absent,
+// une exception, et une moitie de fonction qui ne s'execute pas. Ici il n'y
+// avait meme pas de `catch` pour l'avaler — juste personne pour lire la console.
+//
+// La forme retenue est celle deja utilisee plus bas dans ce fichier pour
+// `_legacyOpenReview` : l'appel est OPTIONNEL parce que la fonction appartient
+// a une autre page. On ne la charge pas ici pour si peu — `renderFavs()` suffit
+// a rafraichir ce que cette page affiche.
+function toggFav(id){const f=getFavs();const i=f.indexOf(id);if(i>-1) f.splice(i,1);else f.push(id);localStorage.setItem("tabibi_favs",JSON.stringify(f));if(typeof renderDocs === 'function') renderDocs();renderFavs();toastM(i>-1?tabibiT('toast_fav_removed',"Retiré des favoris"):tabibiT('toast_fav_added',"Ajouté aux favoris"),"success");}
 // [Phase 16.5] renderFavs() : batch fetch serveur via tabibiDoctors.getByIds()
 async function renderFavs(){
   const ids = getFavs();

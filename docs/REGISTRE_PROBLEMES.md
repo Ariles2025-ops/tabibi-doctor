@@ -652,11 +652,107 @@ qu'un contact (e-mail, téléphone, wilaya, spécialité) : y déverser une cand
 le n° d'ordre, l'adresse, le cabinet, les tarifs, le plan et les consentements horodatés.
 **Rien n'a été créé en base** — la proposition est dans le RETOUR de la SEQ 55.
 
-## Lot 360 — P-71 à P-79
+## P-68 (b) — la candidature part enfin quelque part
 
-> ⚠️ **P-69 et P-70 sont absents de cette branche, et c'est voulu.** Ils appartiennent au lot
-> `lot/onboarding-rpc-favoris`, pas encore fusionné. Numéroter par-dessus aurait donné deux
-> problèmes différents sous le même identifiant le jour de la fusion.
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-68 b | Une candidature de médecin **n'avait aucun endroit où aller** : la page ne chargeait aucun client Supabase | la destination existe désormais — `public.soumettre_candidature_medecin(p jsonb) returns uuid`, lue en base le 16/09 : `security_definer = true`, `EXECUTE` pour `anon` et `authenticated`, et les 20 clés qu'elle extrait de `p` correspondent une à une au formulaire | la page charge le SDK + `config.js` + `supabase-client.js` + **`tabibi-rpc.js`**, et `submitAll()` appelle la RPC **par la passerelle**. L'écran de succès ne s'affiche que sur un **uuid rendu** | `tests/e2e/onboarding-medecin-honnete.spec.js` — 12 essais × 2 profils | **réglé (b1)** |
+
+### « Ça n'a pas levé » n'est pas « c'est enregistré »
+
+Le succès est conditionné à un **identifiant**, vérifié par forme, pas à l'absence d'erreur.
+Quatre façons de ne pas en avoir sont gardées une par une, parce que chacune a déjà été prise
+pour un succès quelque part dans ce dépôt :
+
+| la passerelle rend | ce qu'on affiche |
+|---|---|
+| `{ok:false, erreur:'rls_denied'}` | échec |
+| `{ok:true, data:null}` | échec |
+| `{ok:true, data:''}` | échec |
+| `{ok:true, data:'ok'}` | échec |
+| `{ok:true, data:'<uuid>'}` | **succès, avec la référence affichée** |
+
+### Ce que l'écran ne dit plus
+
+L'ancien promettait un rappel « **sous 48 heures ouvrées** ». Tenir un délai suppose que
+quelqu'un relise les dossiers ; rien ne le garantit encore (voir P-69). Le nouvel écran
+n'annonce **aucun délai** : il donne la référence, et un essai vérifie que « 48 heures » n'est
+pas revenu.
+
+### Deux choses ajoutées parce que l'envoi est devenu réel
+
+- **Un verrou d'envoi.** Tant que `submitAll()` n'écrivait que dans `localStorage`, un
+  double-clic était sans conséquence. Il déposerait maintenant **deux lignes** — et l'index
+  unique sur le n° d'ordre ferait échouer la seconde, donc afficher un échec **après** un
+  succès. Le second clic est rendu impossible, pas seulement inutile ; le bouton revient si
+  l'envoi échoue, sinon une coupure réseau condamnerait la page.
+- **Un message propre au refus de débit.** La RPC limite à 3 dépôts par heure. « Réessayez »
+  n'y est vrai qu'au bout d'une heure — c'est exactement la leçon de P-65, où un « réessayez »
+  invitait à recommencer une chose qui ne pouvait pas aboutir.
+
+### Le mot de passe, toujours pas
+
+Ni la table ni la RPC n'ont de champ pour lui : le compte se créera après vérification. Un
+essai vérifie qu'il n'apparaît **ni dans le payload, ni dans le stockage local**. Un mot de
+passe transporté « pour plus tard » est un mot de passe stocké quelque part.
+
+### ⚠️ Le bouchon ne prouve pas que la page charge la passerelle
+
+Onze des douze essais **remplacent** `tabibiRpc`. Si la page ne la chargeait pas, ils
+resteraient verts et la vraie page n'enverrait rien — c'est exactement ce qui est arrivé au
+sélecteur de langue (P-29), vert sur les sources et absent du build. Le douzième essai va donc
+lire `typeof window.tabibiRpc` et le client sur la page **réellement chargée**.
+
+## P-70 — le cœur des favoris ne faisait rien à l'écran
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-70 | Le patient clique sur le **cœur** d'un favori : **rien ne bouge**. Il reclique, le favori revient. Il faut recharger pour voir l'état vrai | `toggFav()` appelait `renderDocs()`, définie **uniquement** dans `js/home-app.js`, que `patient-dashboard.html` ne charge pas. Mesuré au navigateur : `{"renderDocs":"undefined"}` et `APPEL toggFav -> LANCE: renderDocs is not defined` | l'appel devient optionnel — la forme déjà utilisée dans ce fichier pour `_legacyOpenReview` | `tests/e2e/favoris-patient.spec.js` — 4 essais × 2 profils | **réglé** |
+
+### L'ordre des instructions décidait de tout
+
+```js
+localStorage.setItem("tabibi_favs", …);   // passe
+renderDocs();                             // LÈVE
+renderFavs();                             // jamais atteint
+toastM(…);                                // jamais atteint
+```
+
+L'état changeait en mémoire, l'écran non. **Le défaut était donc invisible dans le stockage**
+— un essai qui aurait seulement vérifié `tabibi_favs` serait resté vert. C'est pourquoi la
+garde regarde aussi le **toast**, dernière instruction de la fonction, et les erreurs de page.
+
+Même famille que P-65 (`getSupabase` appelé sans exister) : un nom absent, une exception, une
+moitié de fonction qui ne s'exécute pas. Ici il n'y avait même pas de `catch` pour l'avaler —
+juste personne pour lire la console d'un patient.
+
+### La garde vérifie d'abord sa propre condition
+
+Le premier essai affirme que cette page **n'a pas** `renderDocs`. Sans lui, le jour où
+quelqu'un chargerait `js/home-app.js` ici, la suite passerait toute seule et les trois autres
+essais resteraient verts **sans rien prouver** : ils garderaient une page qui n'a plus le
+problème, pas un correctif.
+
+### Trouvé en construisant la garde d'un autre défaut
+
+Ce bug n'a été cherché par personne. Il est sorti d'un prototype de détection des fonctions
+appelées mais jamais définies, écrit pour P-65. Ce prototype rendait **105 noms non résolus**,
+presque tous faux (mots français dans des chaînes, `var(` de CSS, paramètres de callbacks) :
+trop bruyant pour devenir une porte. Les quatre pistes plausibles ont été vérifiées **une par
+une** — `loadUser`, `renderUserUI`, `hideLoading`, `tabibiT` sont tous protégés par
+`typeof X === 'function'`, appels optionnels délibérés. Une seule était réelle.
+
+> **Un outil trop bruyant pour être une porte peut rester un bon outil de fouille** — à
+> condition de vérifier chaque touche avant d'y croire.
+
+## Lot 360 — P-71 à P-81
+
+> ⚠️ **La numérotation saute volontairement de P-70 à P-71.** Pendant l'écriture de ce lot,
+> P-69 et P-70 vivaient sur `lot/onboarding-rpc-favoris`, pas encore fusionné : numéroter
+> par-dessus aurait donné **deux problèmes différents sous le même identifiant** le jour de la
+> fusion. Ce jour est arrivé (#144, 16/09) — les deux sections sont juste au-dessus, et rien
+> n'est entré en collision. Le saut était le prix à payer, et il valait moins cher que la
+> collision.
 
 ## P-71 — deux puces ne pouvaient rien trouver, jamais
 
@@ -869,6 +965,10 @@ recopier le chiffre une cinquième fois, dans la garde.
 
 ## P-78 — une candidature persistait, et personne ne la lisait
 
+> ⚠️ **Cette fiche ferme la moitié « aucun écran ne la lit » de P-69**, ouverte la veille par
+> le lot d'à côté. L'autre moitié — personne n'est prévenu à l'arrivée d'un dossier — reste
+> ouverte sous **P-79**.
+
 | ID | symptôme | preuve mesurée | correctif | garde | statut |
 |---|---|---|---|---|---|
 | P-78 | L'inscription médecin **enregistre** depuis la veille, et **aucun écran ne lisait** `doctor_applications`. L'écran de dépôt disait « Nous vous écrirons » | la table et la RPC sont en place ; la RLS réserve la lecture aux admins ; aucune page ne l'interrogeait. La candidature partait dans une table que personne n'ouvrait | `admin-candidatures.html` — liste **en lecture seule**, filtres par statut, construite en DOM, plus un bouton « Candidatures » au tableau de bord admin | `tests/e2e/admin-candidatures.spec.js` — 9 essais × 2 profils | **réglé** |
@@ -961,18 +1061,16 @@ ne pas avoir de nom : refus de lecture, ligne absente, ligne aux deux champs vid
 `verifier:rpc-passage` réclamait depuis un moment l'abaissement du plafond de
 `patient-ordonnances.html` (0 appel direct, plafond 1). Fait. **Un cliquet qu'on n'abaisse pas
 laisse revenir ce qu'il vient de faire disparaître.**
-
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
 |---|---|---|---|---|---|
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
 | P-60 | La carte annonce **« Téléconsultation · Disponible »** et **aucun médecin ne la propose** | mesuré en base le 16/09 : `count(*) filter (where telehealth_enabled)` = **0** sur **75 035** `doctor_profiles` (et 1 seul `is_verified`) | aucun — c'est une décision produit, pas un correctif de code : ouvrir le drapeau sur de vrais médecins, ou retirer l'annonce | **garde manquante par nature** : un essai hermétique ne voit pas la base. La mesure est à refaire avant chaque annonce | **ouvert** |
-| P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
+| ~~P-63~~ | Le curseur « Prix max » filtrait dès 5 000 DA sans que personne ne l'ait demandé | — | **réglé le 16/09 par [P-72](#p-72--un-filtre-que-personne-navait-posé-un-reset-qui-ne-remettait-rien)** : le post-filtre suit `prixModifie`, et le reset revient à `defaultValue` | `tests/e2e/filtre-prix.spec.js` | **réglé — ligne conservée pour qui cherche P-63** |
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
-| P-68 | Une candidature de médecin **n'a aucun endroit où aller** : l'onboarding ne peut rien persister | mesuré le 16/09 : aucune table `doctor_applications`, aucune RPC ni fonction edge de candidature. `waiting_list` n'accepte qu'un contact — pas un dossier | à créer : table + RPC d'insert anon + policy, **validation d'Aghiles requise avant toute écriture en base** (règle 3) | **garde manquante par nature** tant que la destination n'existe pas ; l'essai actuel garde seulement qu'on ne ment plus | **ouvert** |
-| P-79 | Une candidature arrive, **personne n'est prévenu** — et personne ne peut changer son statut | la liste admin existe désormais (P-78) mais il faut y **penser** : aucune notification ne part à l'insertion, et la page est en lecture seule | à décider : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) et RPC admin de changement de statut. **Écritures en base : validation d'Aghiles requise** (règle 3) | **garde manquante par nature** : un essai ne peut pas vérifier qu'un humain ouvre une page | **ouvert** |
-| P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
+| P-69 | Une candidature **persiste, et personne n'est prévenu** | la table et la RPC sont en place (P-68 b) ; la RLS autorise la lecture admin. **La moitié « aucun écran ne la lit » est fermée le 16/09 par P-78** — `admin-candidatures.html` existe et le tableau de bord admin y mène. Reste la moitié qui n'a pas d'écran : **rien ne prévient à l'arrivée d'un dossier** | voir **P-79** pour ce qu'il reste à décider | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **partiellement réglé** |
+| P-79 | **Ce qu'il reste à décider sur P-69**, et qui demande une écriture en base | rien ne prévient à l'arrivée d'un dossier, et la liste admin est en **lecture seule** — changer un statut serait une écriture | à trancher : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) **et** RPC admin de changement de statut. **Validation d'Aghiles requise** (règle 3) | **garde manquante par nature** | **ouvert** |
 
 ---
 
