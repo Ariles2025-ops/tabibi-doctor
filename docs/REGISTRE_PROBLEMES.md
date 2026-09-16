@@ -744,6 +744,44 @@ verts sur une page non protégée si `onerror` ne se déclenchait pas (CSP, imag
 Enfin, un contrôle que l'échappement n'a pas **effacé** le membre : un écran vide passerait le
 test de sécurité sans protéger personne.
 
+## P-74 — le filtre PII de Sentry était posé sur le seul champ que presque rien n'emprunte
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-74 | `beforeSend` n'anonymisait que `event.message`. Une exception **levée** — le cas courant — partait chez Sentry avec l'e-mail et le téléphone en clair | `event.message` n'est renseigné que par `captureMessage()`. Le texte d'une exception vit dans `event.exception.values[].value` ; le reste dans `event.breadcrumbs[].message` / `.data` et `event.request.url` | passe **récursive bornée** sur l'événement entier (profondeur 8, 400 nœuds, cycles coupés), plus une rédaction des query-strings **par nom de paramètre** | `tests/sentry-anonymisation.test.mjs` — 10 essais | **réglé** |
+
+### Le filtre existait, il regardait ailleurs
+
+Ce n'est pas un oubli de protection : c'est une protection posée au mauvais endroit. **Une garde
+qui couvre un cas rare et affiche vert rassure sur ce qu'elle ignore** — le motif du compteur
+`innerHTML` qui voyait 29 cas sur 134, et celui de `verifier:fuseau` qui ne lisait pas `tests/`.
+
+### La query-string se rédige par NOM, pas par motif
+
+`?token=…` n'a la forme ni d'un e-mail ni d'un numéro, et c'est pourtant ce qu'on veut le moins
+voir partir chez un tiers. On rédige donc par nom de paramètre (`token`, `key`, `secret`,
+`password`, `email`, `phone`…), puis on passe les motifs sur ce qui reste. Et **on ne détruit
+pas ce qui sert à déboguer** : le chemin et les paramètres anodins survivent — un essai le garde.
+
+### ⚠️ La garde a d'abord prouvé la mauvaise chose
+
+Écrite d'un trait, elle appelait la fonction de nettoyage **prise à part**. Contre-épreuve :
+`beforeSend` ramené à `event.message` — **les 8 essais sont restés verts**. Ils prouvaient qu'un
+nettoyeur juste existe, pas qu'il soit **branché**.
+
+> C'est le défaut réparé ici, reproduit dans sa propre garde : une fonction peut être juste et
+> n'être jamais appelée.
+
+Deux essais passent désormais par la configuration **réellement remise à `Sentry.init`** — le
+faux SDK est posé par `document.head.appendChild`, qui déclenche `onload`. La contre-épreuve
+les fait échouer.
+
+### Et une borne, pas par élégance
+
+Un `beforeSend` coûteux ralentit **chaque** erreur de la page, donc finit par être retiré — ce
+qui serait pire que pas de filtre. Un événement cyclique ferait geler l'onglet : les cycles sont
+coupés. Les deux cas ont leur essai.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
