@@ -260,39 +260,71 @@ textarea{min-height:80px;resize:vertical}
 
     <div class="actions">
       <button class="btn btn-secondary" onclick="goStep(3)"><i class="fa fa-arrow-left"></i> <span data-i18n="om_back">Retour</span></button>
-      <button class="btn btn-primary" onclick="submitAll()"><i class="fa fa-paper-plane"></i> <span data-i18n="om_submit">Envoyer ma demande</span></button>
+      <button class="btn btn-primary" id="om-submit" onclick="submitAll()"><i class="fa fa-paper-plane"></i> <span data-i18n="om_submit">Envoyer ma demande</span></button>
     </div>
   </section>
 
-  <!-- ═══════════ CE QUI EST VRAI ═══════════
-       ⚠️ [16/09/2026] ICI SE TROUVAIT UN ECRAN « Demande envoyée ! » qui
-       annonçait : « Notre équipe vérifie vos justificatifs et vous contactera
-       sous 48 heures ouvrées ». **Rien n'était envoyé à personne.**
+  <!-- ═══════════ ENREGISTRÉ ═══════════
+       ⚠️ [16/09/2026] CET ECRAN EST REVENU **AVEC** SA PERSISTANCE, PAS AVANT.
 
-       `submitAll()` poussait le dossier dans `localStorage`, sous un commentaire
-       « TODO : envoyer à Supabase », et affichait le succès. La page ne charge
-       aucun client Supabase. Personne ne lit cette clé — mesuré : zéro lecteur
-       dans tout le dépôt. Un médecin qui remplissait ces cinq écrans attendait
-       48 heures un appel qui ne pouvait pas venir.
+       Il a ete SUPPRIME la veille (P-67) : il annonçait « Demande envoyée !
+       … vous contactera sous 48 heures ouvrées » alors que `submitAll()`
+       poussait le dossier dans `localStorage` sous un « TODO : envoyer à
+       Supabase ». Rien ne partait, personne ne lisait.
 
-       Même famille que « 500+ inscrits » (P-01) et « e-mail envoyé » (P-28) :
-       **un écran de succès sur une opération qui n'a pas eu lieu.**
+       Il ne s'affiche desormais **que sur un identifiant rendu par la base** —
+       un uuid, verifie. Pas « la requete n'a pas leve » : un identifiant.
+       C'est la seule preuve qu'une ligne existe.
 
-       L'écran de succès reviendra AVEC la persistance, pas avant. En attendant,
-       on dit ce qui s'est passé, et on donne le chemin qui, lui, enregistre
-       vraiment (`medecin-waitinglist.html` insère dans `waiting_list`). -->
+       Et il n'annonce **aucun delai**. L'ancien en promettait un ; le tenir
+       supposait que quelqu'un relise les dossiers, ce que rien ne garantit
+       encore (P-68 b2 : la liste admin reste a faire). On dit ce qu'on sait :
+       c'est enregistre, voici la reference. -->
+  <section class="card" id="step-done" style="display:none">
+    <div class="success-box">
+      <i class="fa fa-circle-check"></i>
+      <h3 data-i18n="om_sent_title">Candidature enregistrée</h3>
+      <p><span data-i18n="om_sent_body">Votre dossier est enregistré sous la référence</span><br>
+         <strong id="sent-ref" style="font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px;color:var(--blue)">—</strong></p>
+      <p data-i18n="om_sent_keep">Conservez cette référence : c'est la preuve de votre dépôt.</p>
+      <p><span data-i18n="om_sent_mail">Nous vous écrirons à</span> <span id="sent-email" style="color:var(--blue)">—</span>.</p>
+      <p style="font-size:12px;color:var(--text3)"><span data-i18n="om_success_question">En cas de question :</span> <a href="mailto:contact@tabibi.doctor" style="color:var(--blue)">contact@tabibi.doctor</a></p>
+    </div>
+  </section>
+
+  <!-- ═══════════ PAS ENVOYÉ ═══════════
+       Le repli de P-67, conserve et REFORMULE : l'inscription EST ouverte
+       maintenant, donc dire « pas encore ouverte » serait devenu faux a son
+       tour. Ce qui reste vrai quand la RPC refuse : rien n'est parti, rien
+       n'est garde ici, et la liste des medecins, elle, enregistre. -->
   <section class="card" id="step-nonenvoye" style="display:none">
     <div class="success-box" style="background:#FDF6E7;border-color:#E6D3A3">
       <i class="fa fa-circle-exclamation" style="color:#B49B62"></i>
       <h3 data-i18n="om_notsent_title">Votre dossier n'a pas été envoyé</h3>
-      <p data-i18n="om_notsent_body">L'inscription médecin en ligne n'est pas encore ouverte : rien de ce que vous venez de saisir n'a été transmis ni conservé. Nous préférons vous le dire plutôt que vous faire attendre un appel qui ne viendrait pas.</p>
-      <p data-i18n="om_notsent_how">Pour être recontacté dès l'ouverture, inscrivez-vous sur la liste des médecins — celle-là est bien enregistrée.</p>
+      <p id="notsent-body" data-i18n="om_notsent_body">L'envoi a échoué et rien n'a été conservé sur cette page. Nous préférons vous le dire plutôt que vous faire attendre une réponse qui ne viendrait pas.</p>
+      <p data-i18n="om_notsent_how">Pour être recontacté, inscrivez-vous sur la liste des médecins — celle-là est bien enregistrée.</p>
       <a href="medecin-waitinglist.html" class="btn btn-primary" style="max-width:320px;margin:14px auto 0" data-i18n="om_notsent_cta">M'inscrire sur la liste des médecins</a>
-      <p style="font-size:12px;color:var(--text3);margin-top:12px"><span data-i18n="om_success_question">En cas de question :</span> <a href="mailto:contact@tabibi.doctor" style="color:var(--blue)">contact@tabibi.doctor</a></p>
+      <p style="font-size:12px;color:var(--text3);margin-top:12px"><span data-i18n="om_success_question">En cas de question :</span> <a href="mailto:contact@tabibi.doctor" style="color:var(--blue)">contact@tabibi.doctor</a> — <span data-i18n="om_notsent_code">code</span> <span id="notsent-code">—</span></p>
     </div>
   </section>
 
 </main>
+
+<!-- [16/09/2026] La page n'avait AUCUN client Supabase : c'est ca qui faisait
+     finir `submitAll()` dans `localStorage`. Meme ordre que les autres pages —
+     le SDK, la configuration, le client, puis la passerelle RPC.
+
+     ⚠️ ET **AVANT** LE SCRIPT EN LIGNE QUI LES CONSOMME. Les avoir mis en bas
+     de page passait tous les essais — `submitAll()` n'est appelee qu'au clic,
+     donc la passerelle etait la a temps. `verifier:passerelle` a refuse quand
+     meme, et il a raison : la garde protege l'ORDRE, pas mon cas particulier.
+     Le jour ou une ligne de ce script en ligne s'executera au chargement, elle
+     trouvera `tabibiRpc` indefinie — c'est exactement ce qui est arrive a
+     `dawini-pharmacie.html` le 13/09. -->
+<script src="assets/vendor/supabase/supabase-js-2.116.0.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/supabase-client.js"></script>
+<script src="js/tabibi-rpc.js"></script>
 
 <script>
 let currentStep = 1;
@@ -398,29 +430,83 @@ async function submitAll() {
     status: 'pending_verification'
   };
 
-  // ⚠️ [16/09/2026] TROIS CHOSES ONT DISPARU D'ICI, ET CHACUNE MENTAIT.
+  // ⚠️ [16/09/2026] CE QUI A DISPARU D'ICI LA VEILLE, ET CE QUI ARRIVE AUJOURD'HUI.
   //
-  // 1. `password: document.getElementById('f-pw').value` — le mot de passe
-  //    EN CLAIR dans l'objet, puis dans `localStorage`, sur la machine du
-  //    medecin, sans limite de duree, alors qu'AUCUN compte n'etait cree.
-  //    Un mot de passe qui ne sert a rien et qui traine est un mot de passe
-  //    qu'on a pris sans raison. Le champ reste : il servira quand il y aura
-  //    un compte a creer.
+  // Hier (P-67) : `password` en clair dans l'objet puis dans `localStorage`,
+  // une cle que **personne ne lisait** — mesure faite sur tout le depot — et un
+  // ecran « Demande envoyee ! » promettant un rappel sous 48 heures. Le mot de
+  // passe est parti, la cle aussi, l'ecran aussi.
   //
-  // 2. `localStorage.setItem('tabibi_doctor_applications', …)` — mesure dans
-  //    tout le depot : **zero lecteur**. Le dossier partait dans une cle que
-  //    personne n'ouvre jamais. On ne garde donc plus ces donnees : elles
-  //    n'avaient pas de destinataire, elles n'ont pas besoin de survivre.
+  // Aujourd'hui : le dossier part pour de vrai, vers
+  // `public.soumettre_candidature_medecin(p jsonb) returns uuid` — SECURITY
+  // DEFINER, executable par `anon`, limite a 3 depots par heure et par
+  // empreinte d'IP, table en RLS lecture admin seule.
   //
-  // 3. L'ecran « Demande envoyee ! » et sa promesse de rappel sous 48 heures.
+  // ⚠️ PAR LA PASSERELLE, jamais `supabase.rpc` en direct. Une reponse
+  // PostgREST a deux moities — le transport et le metier — et `tabibiRpc` lit
+  // les deux (`verifier:rpc-passage` l'exige).
   //
-  // `data` reste construit : c'est ce qu'il faudra envoyer quand le chemin
-  // serveur existera (table `doctor_applications` + RPC d'insert anon — decrit
-  // dans le RETOUR de la SEQ 55, a valider avant toute ecriture en base).
-  void data;
+  // ⚠️ LE MOT DE PASSE NE PART TOUJOURS PAS. La RPC n'a pas de champ pour lui,
+  // la table non plus : le compte se creera apres verification. Un mot de passe
+  // transporte « pour plus tard » est un mot de passe stocke quelque part.
+  // ⚠️ VERROU D'ENVOI. Tant que `submitAll()` n'ecrivait que dans
+  // `localStorage`, un double-clic etait sans consequence. Maintenant qu'il
+  // depose une ligne en base, deux clics font DEUX candidatures — et l'index
+  // unique sur le n° d'ordre ferait echouer la seconde, donc afficher un echec
+  // apres un succes. On rend le second clic impossible, pas seulement inutile.
+  const bouton = document.getElementById('om-submit');
+  if (bouton) { if (bouton.disabled) return; bouton.disabled = true; }
+
+  const p = {
+    firstname: data.firstname, lastname: data.lastname,
+    email: data.email, phone: data.phone,
+    date_of_birth: data.date_of_birth || null,
+    ordre_num: data.ordre_num, specialty: data.specialty,
+    subspecialty: data.subspecialty || null,
+    start_year: data.start_year || null,
+    wilaya: data.wilaya, address: data.address || null,
+    cabinet: data.cabinet || null, price: data.price || null,
+    languages: data.languages, plan: data.plan,
+    consents: data.consents,
+    lang: (window.tabibiLang && window.tabibiLang.get && window.tabibiLang.get())
+          || localStorage.getItem('tabibi_lang') || 'fr',
+    user_agent: String(navigator.userAgent || '').slice(0, 200)
+    // ip_hash : volontairement absent. Le navigateur ne connait pas son IP de
+    // facon fiable, et une valeur fabriquee ici serait une valeur fausse en
+    // base. La limite de debit reste au serveur, en meilleur effort.
+  };
+
+  const envoi = (typeof window.tabibiRpc === 'function')
+    ? await window.tabibiRpc('soumettre_candidature_medecin', { p: p })
+    : { ok: false, data: null, erreur: 'passerelle_absente' };
+
+  // ⚠️ ON N'AFFICHE PAS LE SUCCES PARCE QUE « ca n'a pas leve ». On l'affiche
+  // parce que la base a rendu un IDENTIFIANT — la seule preuve qu'une ligne
+  // existe. Tout le reste (ok sans donnee, chaine vide, objet) est un echec.
+  const ref = envoi.ok ? envoi.data : null;
+  const estIdentifiant = typeof ref === 'string'
+    && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref);
 
   document.getElementById('step-' + currentStep).style.display = 'none';
-  document.getElementById('step-nonenvoye').style.display = 'block';
+
+  if (estIdentifiant) {
+    document.getElementById('sent-ref').textContent = ref;
+    document.getElementById('sent-email').textContent = data.email;
+    document.getElementById('step-done').style.display = 'block';
+  } else {
+    const cause = String(envoi.erreur || 'inconnue');
+    // Le refus de debit a son propre message : « reessayez » n'y est vrai
+    // qu'au bout d'une heure, et le dire evite qu'on recommence tout de suite.
+    if (/rate_limited/i.test(cause)) {
+      document.getElementById('notsent-body').textContent =
+        tabibiT('om_notsent_rate', "Trop de candidatures ont été envoyées depuis cette connexion. Réessayez dans une heure.");
+    }
+    document.getElementById('notsent-code').textContent = cause.slice(0, 80);
+    document.getElementById('step-nonenvoye').style.display = 'block';
+    // Echec : on rend le bouton. Le verrou protege d'un double envoi, il ne
+    // doit pas condamner la page apres une coupure reseau.
+    if (bouton) bouton.disabled = false;
+  }
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 // [CONFORMITE 2026] libellé d'étape localisé au chargement + re-rendu sur bascule langue.

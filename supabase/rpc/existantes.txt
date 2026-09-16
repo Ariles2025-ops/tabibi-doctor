@@ -10,6 +10,12 @@
 # par un vrai `--base --ecrire` au prochain passage : si le fichier ne bouge
 # pas, la reproduction etait fidele.
 #
+# [16/09/2026] `soumettre_candidature_medecin` ajoutee A LA MAIN, seule, meme
+# discipline : le jeton de `--base --ecrire` est toujours revoque. Lue par le
+# MCP Supabase EN LECTURE sur `pg_proc` : elle existe, `p jsonb -> uuid`,
+# SECURITY DEFINER, EXECUTE pour anon et authenticated. La migration a ete
+# appliquee par le stratege ; je n'ai rien ecrit en base.
+#
 # [14/09/2026, second passage] `waiting_list_count` ajoutee A LA MAIN, seule.
 # Le jeton de `--base --ecrire` a ete REVOQUE (securite) : la regeneration
 # complete attend qu'Aghiles en pose un nouveau. Verifie par le MCP en lecture :
@@ -60,6 +66,7 @@ remove_cabinet_member
 revoke_api_key
 rotate_api_key
 set_video_recording_consent
+soumettre_candidature_medecin
 stats_publiques
 update_my_doctor_profile
 upsert_patient_medical_data
