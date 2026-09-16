@@ -541,6 +541,50 @@ La condition ne la tenait pas. `prixModifie` compare désormais à `defaultValue
 > **C'est l'essai qui l'a trouvé, pas la relecture** — il mesurait un écart de 372 px là où il
 > en attendait 2 900.
 
+## P-65 — un appel à une fonction qui n'existe pas, avalé par un `catch`
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-65 | **Le changement de mot de passe échouait à tous les coups**, et l'écran répondait « Échec du changement — **réessayez** » | `getSupabase()` n'est défini **ni dans la page, ni dans aucun script qu'elle charge**. Essai e2e sur l'état d'avant : `updateUser` appelé **0 fois** — « Expected length: 1, Received length: 0 ». La demande ne quittait jamais le navigateur | le client vient de `window.tabibi.supabase`, posé par `js/supabase-client.js` — ce que faisait déjà `saveAll()` dans le même fichier. Et client absent ⇒ « Service d'authentification indisponible », plus « réessayez » | `tests/client-supabase-defini.test.mjs` (3 essais de source) + `tests/e2e/changer-mot-de-passe.spec.js` (4 essais × 2 pages) | **réglé** |
+
+### La SEQ en signalait UNE page. Il y en avait DEUX.
+
+`patient-profile.html:474` **et** `medecin-profile.html:971` — le même bloc, copié. Le nom
+vient de `admin-cabinet.html` et `secretaire-dashboard.html`, où la fonction est bel et bien
+**définie**, page par page (l. 201 et 218). Elle a voyagé **sans sa définition**.
+
+> Chercher le défaut signalé et s'arrêter là aurait laissé la moitié du problème en place,
+> avec sa garde à côté qui dit « réglé ».
+
+### Ce que le `catch` a coûté
+
+```js
+}catch(e){
+  console.warn('[changePassword]', e);
+  toastM(tabibiT('toast_password_change_failed', "Échec du changement — réessayez."), "error");
+}
+```
+
+Un `ReferenceError` — une faute de programmation, pas un incident réseau — était traité comme
+un échec passager. Le message **invitait à recommencer une chose qui ne pouvait pas marcher**,
+et c'est précisément ce qui l'a rendu invisible : un utilisateur qui réessaie et échoue encore
+se croit fautif. Le `console.warn` disait la vérité ; personne ne lit la console d'un patient.
+
+C'est la famille du cron des rappels qui affichait 4 531 exécutions « succeeded » en envoyant
+le mot `TA_CLE` : **l'écran de contrôle disait autre chose que ce qui se passait.**
+
+### Pourquoi deux gardes et pas une
+
+La garde de **source** vérifie la référence : aucune page n'appelle `getSupabase()` sans la
+définir, et `changePassword` tient un client qui existe. Elle ne peut pas dire si la fonction
+**demande vraiment** le changement — une fonction peut être syntaxiquement juste et n'appeler
+personne. La garde **e2e** appelle la fonction avec un client bouchonné et lit ce qu'elle lui
+demande. Contre-épreuve faite dans les deux sens : sur l'état d'avant, **4 essais e2e sur 8**
+et **2 essais de source sur 3** échouent.
+
+Et la garde de source **lit le code sans ses commentaires** : le commentaire qui explique ce
+défaut cite `getSupabase`. **Huitième fois** que ce piège se présente dans ce dépôt.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
