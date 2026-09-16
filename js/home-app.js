@@ -2179,7 +2179,20 @@ async function loadDoctorCards(opts, page){
     // Post-filter client (colonnes absentes de la vue — skippe si filtre actif
     // sur des colonnes absent = retourne tout vu qu'on ne sait pas filtrer)
     let res2 = [...DOCTORS];
-    if(opts.maxPrice != null){
+    // ⚠️ [16/09/2026] CE FILTRE S'EXECUTAIT AU CHARGEMENT, SANS QUE PERSONNE
+    // NE L'AIT DEMANDE. Sa condition etait `opts.maxPrice != null`, et
+    // `maxPrice` vaut 5 000 des le premier rendu : le curseur DEMARRE la.
+    // Tout praticien affichant plus de 5 000 DA disparaissait donc de
+    // l'accueil, sans filtre pose et sans que rien ne le signale.
+    //
+    // Inoffensif au 16/09 — mesure : 75 035 / 75 035 fiches n'ont aucun tarif,
+    // et un tarif absent passe. Le premier medecin qui saisit 6 000 DA
+    // disparaissait. **Un defaut latent est un defaut : il attend une donnee.**
+    //
+    // La condition est desormais « le curseur a-t-il ete BOUGE » — `prixModifie`,
+    // compare a `defaultValue` — et non « une valeur est-elle posee ». C'est la
+    // meme distinction que pour `_filtresActifs`, au meme endroit du code.
+    if(opts.prixModifie && opts.maxPrice != null){
       // Ne filtre que les docs qui ONT un prix renseigné > maxPrice. Pas de
       // prix renseigné = laisse passer (sinon on cacherait toute la base).
       res2 = res2.filter(d => d.prix == null || d.prix <= opts.maxPrice);
@@ -2260,9 +2273,17 @@ function resetFilters(){
   const fs = document.getElementById('f-spec');     if(fs) fs.value = '';
   const fp = document.getElementById('f-price');
   if(fp){
-    fp.value = 10000;
+    // ⚠️ [16/09/2026] « Reinitialiser » posait 10 000 alors que le curseur
+    // DEMARRE a 5 000. Apres un reset, `prixModifie` valait donc `true` — le
+    // curseur avait bouge, de son point de vue — et la page restait repliee
+    // (`body.recherche-active`) alors que plus aucun filtre n'etait actif.
+    //
+    // Remettre a zero, c'est revenir a la valeur d'ORIGINE, pas a une valeur
+    // choisie. `defaultValue`, c'est exactement ce que le HTML declare : une
+    // seule source, et le jour ou l'attribut `value` change, le reset suit.
+    fp.value = fp.defaultValue;
     const pl = document.getElementById('price-lbl');
-    if(pl) pl.textContent = '10 000 DA';
+    if(pl) pl.textContent = parseInt(fp.value, 10).toLocaleString() + ' DA';
   }
   document.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
   doFilter(true);

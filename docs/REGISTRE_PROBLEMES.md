@@ -687,6 +687,35 @@ liste alors que le lot reçu devrait passer. Une puce ajoutée demain sur une co
 > vraie immédiatement, et **verte même avec les puces mortes remises**. La contre-épreuve l'a
 > montrée ; la relecture, non. On laisse passer la fenêtre, puis on mesure.
 
+## P-72 — un filtre que personne n'avait posé, un reset qui ne remettait rien
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-72 | Le post-filtre de **prix s'exécutait au chargement** : tout praticien à plus de 5 000 DA disparaissait de l'accueil sans qu'aucun filtre ait été posé. Et après **« réinitialiser »**, la page restait **repliée** | la condition était `opts.maxPrice != null`, or le curseur **démarre à 5 000**. Et `resetFilters()` posait **10 000** alors que la valeur d'origine est 5 000 : `prixModifie` valait donc `true` après un reset | le post-filtre suit `prixModifie` (le curseur a-t-il **bougé**), et le reset revient à `fp.defaultValue` — ce que le HTML déclare | `tests/e2e/filtre-prix.spec.js` — 5 essais × 2 profils. Contre-épreuve : les deux défauts remis, **5 sur 5** échouent | **réglé** |
+
+### Une seule cause, deux symptômes
+
+> **« Une valeur est posée » n'est pas « quelqu'un a choisi ».**
+
+C'est la même distinction que celle extraite la veille pour `_filtresActifs` (P-62), au même
+endroit du code, et elle avait été corrigée **là** sans l'être **ici** : la notion de « filtre
+actif » lisait déjà `prixModifie`, le post-filtre lisait encore `maxPrice != null`. Deux
+lectures du même curseur, dans le même fichier, qui ne disaient pas la même chose.
+
+### Latent n'est pas inoffensif
+
+Mesuré le 16/09 : **75 035 / 75 035** fiches n'ont aucun tarif, et un tarif absent passe le
+filtre. Personne ne disparaissait donc — **aujourd'hui**. Le premier médecin qui saisit 6 000 DA
+disparaissait de l'accueil sans explication. La garde fabrique exprès ce praticien : un essai
+sur des fiches sans tarif serait vert dans les deux sens et ne prouverait rien.
+
+### Le reset et la valeur d'origine
+
+`fp.defaultValue`, c'est exactement ce que l'attribut `value` du HTML déclare. Une seule source :
+le jour où le curseur démarrera ailleurs, le reset suivra tout seul. Recopier `10000` était la
+même faute que les « 58 wilayas » recopiées (P-50) — **un chiffre recopié ne se met jamais à
+jour**.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
