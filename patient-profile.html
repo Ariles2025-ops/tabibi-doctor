@@ -55,7 +55,11 @@
     </div>
     <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
     <p id="pemail" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
-    <span class="badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:inline-block"><i class="fa fa-user"></i> <span data-i18n="pp_member_since">Patient · membre depuis</span> <span id="member-since">2025</span></span>
+    <!-- ⚠️ « membre depuis 2025 » etait ECRIT EN DUR. On le remplit depuis
+         `users.created_at`, et on masque la pastille entiere si on ne l'a pas :
+         une annee inventee sur sa propre fiche, c'est une date de plus a ne pas
+         croire. -->
+    <span class="badge" id="member-badge" style="margin-top:10px;background:rgba(255,255,255,.2);color:#fff;display:none"><i class="fa fa-user"></i> <span data-i18n="pp_member_since">Patient · membre depuis</span> <span id="member-since">—</span></span>
   </div>
   <div style="padding:16px 16px 0">
     <div class="card" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center;padding:16px 8px">
@@ -99,15 +103,23 @@
       <button class="btn btn-soft btn-full btn-sm" onclick="alert(tabibiT('alert_module_measures_soon','Module mesures · Bientôt disponible'))"><i class="fa fa-plus"></i> <span data-i18n="pp_add_measure">Ajouter une mesure</span></button>
     </div>
 
-    <!-- VACCINATIONS VISUELLES -->
+    <!-- ⚠️ [16/09/2026] TROIS VACCINS ETAIENT ECRITS EN DUR, ET AFFICHES A
+         TOUS LES PATIENTS : « COVID-19 (rappel) · Pfizer · 12 mars 2024 »,
+         « Tetanos / Diphterie · 8 juin 2022 · Rappel dans 8 ans », « Grippe
+         saisonniere · Recommande avant novembre », avec des pastilles vertes
+         « A jour ».
+
+         Ce n'etait pas une illustration : c'etait **une affirmation medicale
+         sur quelqu'un**, sur la page de son propre dossier. Un patient pouvait
+         y lire qu'il etait a jour du tetanos sans l'avoir jamais ete.
+
+         Le vrai carnet existe pourtant : `patient_medical_data.vaccinations`,
+         charge quelques lignes plus bas dans `f_vacc`. On affiche CE
+         qu'il contient, ou rien. -->
     <div class="card section-card">
       <div class="sec-title-bar"><i style="background:#e7f3ef;color:#166534"><i class="fa fa-syringe"></i></i>
-        <div><div class="lbl" data-i18n="pp_vacc_title">Carnet de vaccinations</div><div class="desc" data-i18n="pp_vacc_sub">À jour</div></div></div>
-      <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#e7f3ef;border-radius:8px"><div style="width:32px;height:32px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fa fa-check"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">COVID-19 (rappel)</div><div style="font-size:11px;color:var(--text3)">Pfizer · 12 mars 2024</div></div><span class="badge badge-green" style="font-size:10px" data-i18n="pp_badge_uptodate">À jour</span></div>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#e7f3ef;border-radius:8px"><div style="width:32px;height:32px;border-radius:50%;background:#16a34a;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fa fa-check"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">Tétanos / Diphtérie</div><div style="font-size:11px;color:var(--text3)">8 juin 2022 · Rappel dans 8 ans</div></div><span class="badge badge-green" style="font-size:10px" data-i18n="pp_badge_uptodate">À jour</span></div>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#fef3c7;border-radius:8px"><div style="width:32px;height:32px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center"><i class="fa fa-clock"></i></div><div style="flex:1"><div style="font-weight:700;font-size:13px">Grippe saisonnière</div><div style="font-size:11px;color:var(--text3)">Recommandé avant novembre</div></div><span class="badge badge-amber" style="font-size:10px" data-i18n="pp_badge_todo">À faire</span></div>
-      </div>
+        <div><div class="lbl" data-i18n="pp_vacc_title">Carnet de vaccinations</div><div class="desc" id="vacc-sub" data-i18n="pp_vacc_sub_own">Ce que vous avez renseigné</div></div></div>
+      <div id="vacc-list" style="display:flex;flex-direction:column;gap:8px"></div>
     </div>
 
     <!-- TIMELINE VISITES -->
@@ -311,6 +323,20 @@ async function loadProfile(){
   f_chifa.value=u.chifa||""; f_mutual.value=u.mutual||"";
   f_emerg_name.value=u.emerg_name||""; f_emerg_rel.value=u.emerg_rel||"Conjoint(e)"; f_emerg_phone.value=u.emerg_phone||"";
 
+  // ⚠️ [16/09/2026] TROIS BLOCS DE CETTE PAGE AFFICHAIENT DES CHOSES FAUSSES
+  // SUR LE PATIENT LUI-MEME. Ce n'est pas du decor : c'est son dossier.
+  //
+  //   • le carnet de vaccinations : trois vaccins ECRITS EN DUR, pastilles
+  //     vertes « A jour » comprises, identiques pour tout le monde ;
+  //   • la carte sante (#hc-blood, #hc-imc, #hc-age, #hc-allergies) : jamais
+  //     remplie, quatre tirets alors que la donnee existe ;
+  //   • « membre depuis 2025 » : une annee ecrite en dur.
+  //
+  // Les trois sont desormais alimentes par ce que la base rend, et affichent
+  // « non renseigne » quand elle ne rend rien. **Un tiret est une reponse ;
+  // une valeur inventee n'en est pas une.**
+  peuplerFicheSante();
+
   // Surcharge avec Supabase (source de verite)
   if (window.tabibiPII && typeof window.tabibiPII.load === 'function') {
     window.tabibiPII.load().then(function (med) {
@@ -332,6 +358,8 @@ async function loadProfile(){
       if (med.emergency_name != null) f_emerg_name.value = med.emergency_name;
       if (med.emergency_relation) f_emerg_rel.value = med.emergency_relation;
       if (med.emergency_phone != null) f_emerg_phone.value = med.emergency_phone;
+      // Les vraies valeurs viennent d'arriver : on redessine ce qui en depend.
+      peuplerFicheSante();
     }).catch(function(e){ console.warn('[Tabibi] load PII failed', e); });
   }
   f_lang.value=u.lang||"fr"; f_currency.value=u.currency||"DA (Dinar)";
@@ -344,17 +372,117 @@ async function loadProfile(){
   });
 
   // Stats
-  const rdvs=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
-  const elRdv=document.getElementById("rdv-count");if(elRdv)elRdv.textContent=rdvs.length;
-  const elUp=document.getElementById("upcoming-count");if(elUp)elUp.textContent=rdvs.filter(r=>r.status==="Confirmed"||r.status==="Pending").length;
+  //
+  // ⚠️ `tabibi_rdv` n'est PAS une cle morte : `patient-dashboard.html` y ecrit
+  // ce qu'il a lu du serveur. Mais tant que le patient n'a pas ouvert son
+  // tableau de bord, elle n'existe pas — et « 0 RDV total » etait alors une
+  // AFFIRMATION, pas un compte. Un patient qui a trois rendez-vous lisait zero.
+  //
+  // « Aucune donnee » et « zero » sont deux reponses differentes. On les
+  // distingue : tiret tant qu'on n'a rien lu, chiffre des qu'on a lu.
+  const _brutRdv = localStorage.getItem("tabibi_rdv");
+  const rdvs = _brutRdv ? (JSON.parse(_brutRdv) || []) : null;
+  const _poser = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  _poser("rdv-count", rdvs ? rdvs.length : "—");
+  _poser("upcoming-count", rdvs ? rdvs.filter(r=>r.status==="Confirmed"||r.status==="Pending").length : "—");
+  _poser("rev-count", rdvs ? rdvs.filter(r=>r.reviewed).length : "—");
+  // Les favoris, eux, sont ecrits par la page elle-meme : absent = vraiment zero.
   const favs=JSON.parse(localStorage.getItem("tabibi_favs")||"[]");
-  const elFav=document.getElementById("fav-count");if(elFav)elFav.textContent=favs.length;
-  const elRev=document.getElementById("rev-count");if(elRev)elRev.textContent=rdvs.filter(r=>r.reviewed).length;
+  _poser("fav-count", favs.length);
 
   // Famille
   renderFamily();
   // Cartes
   renderCards();
+}
+
+/**
+ * Remplit le carnet de vaccinations, la carte sante et la pastille
+ * « membre depuis » — a partir de ce que le formulaire porte REELLEMENT.
+ *
+ * ⚠️ Elle ne calcule rien qu'elle ne puisse justifier. Pas de taille, pas
+ * d'IMC ; pas de date de naissance, pas d'age. Le tiret reste. C'est la seule
+ * facon de distinguer « on ne sait pas » de « rien a signaler » — et sur un
+ * dossier medical, les deux ne se valent pas.
+ */
+function peuplerFicheSante(){
+  var _poser = function(id, v){ var el = document.getElementById(id); if (el) el.textContent = v; };
+
+  // ── Carte sante ────────────────────────────────────────────────────
+  var sang = (document.getElementById('f_blood') || {}).value || '';
+  _poser('hc-blood', sang || '—');
+
+  var t = parseFloat((document.getElementById('f_height') || {}).value);
+  var kg = parseFloat((document.getElementById('f_weight') || {}).value);
+  // Bornes de plausibilite : une taille de 3 cm ou un poids de 900 kg sont des
+  // fautes de saisie, et un IMC calcule dessus serait un chiffre affirme faux.
+  var imc = (t > 50 && t < 260 && kg > 2 && kg < 400) ? (kg / Math.pow(t / 100, 2)) : null;
+  _poser('hc-imc', imc ? imc.toFixed(1) : '—');
+
+  var ne = (document.getElementById('f_bd') || {}).value || '';
+  var age = null;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(ne)) {
+    var d = new Date(ne + 'T00:00:00Z');
+    if (!isNaN(d.getTime())) {
+      var a = Math.floor((Date.now() - d.getTime()) / 31557600000);
+      if (a >= 0 && a < 130) age = a;
+    }
+  }
+  _poser('hc-age', age == null ? '—' : String(age));
+
+  var allergies = ((document.getElementById('f_allergy') || {}).value || '').trim();
+  var listeAll = allergies ? allergies.split(/[,;\n]+/).map(function(x){ return x.trim(); }).filter(Boolean) : [];
+  _poser('hc-allergies', listeAll.length === 0 ? '—'
+    : (listeAll.length === 1 ? listeAll[0] : (listeAll[0] + ' +' + (listeAll.length - 1))));
+
+  // ── Carnet de vaccinations ─────────────────────────────────────────
+  //
+  // ⚠️ CONSTRUIT EN DOM, pas en `innerHTML`. Ce n'est pas du zele : le cliquet
+  // `verifier:innerhtml` est monte de 135 a 136 a la premiere version, qui
+  // assemblait des chaines. Un nom de vaccin vient de ce que le patient a
+  // tape ; `textContent` n'interprete rien, et il n'y a aucune liste de
+  // caracteres a penser a interdire.
+  var boite = document.getElementById('vacc-list');
+  if (boite) {
+    var brut = ((document.getElementById('f_vacc') || {}).value || '').trim();
+    var lignes = brut ? brut.split(/[,;\n]+/).map(function(x){ return x.trim(); }).filter(Boolean) : [];
+    var sub = document.getElementById('vacc-sub');
+    if (!lignes.length) {
+      // ⚠️ Pas de pastille verte, pas de « A jour » : on ne sait rien.
+      var vide = document.createElement('div');
+      vide.style.cssText = 'padding:12px;background:var(--bg);border-radius:8px;font-size:13px;color:var(--text3)';
+      vide.textContent = tabibiT('pp_vacc_empty', "Aucune vaccination renseignée. Ajoutez-les dans « Informations médicales » ci-dessous.");
+      boite.replaceChildren(vide);
+      if (sub) sub.textContent = tabibiT('pp_vacc_sub_empty', 'Non renseigné');
+    } else {
+      boite.replaceChildren.apply(boite, lignes.map(function(v){
+        var ligne = document.createElement('div');
+        ligne.style.cssText = 'display:flex;align-items:center;gap:10px;padding:10px;background:#e7f3ef;border-radius:8px';
+        var rond = document.createElement('div');
+        rond.style.cssText = 'width:32px;height:32px;border-radius:50%;background:#0F7560;color:#fff;display:flex;align-items:center;justify-content:center';
+        var icone = document.createElement('i');
+        icone.className = 'fa fa-syringe';
+        rond.appendChild(icone);
+        var texte = document.createElement('div');
+        texte.style.cssText = 'flex:1;font-weight:700;font-size:13px';
+        texte.textContent = v;
+        ligne.appendChild(rond); ligne.appendChild(texte);
+        return ligne;
+      }));
+      if (sub) sub.textContent = tabibiT('pp_vacc_sub_own', 'Ce que vous avez renseigné');
+    }
+  }
+
+  // ── « Membre depuis » ──────────────────────────────────────────────
+  var badge = document.getElementById('member-badge');
+  if (badge) {
+    var u = {};
+    try { u = JSON.parse(localStorage.getItem('tabibi_user') || '{}'); } catch(e) { u = {}; }
+    var depuis = u.created_at || u.createdAt || '';
+    var an = String(depuis).slice(0, 4);
+    if (/^\d{4}$/.test(an)) { _poser('member-since', an); badge.style.display = 'inline-block'; }
+    else { badge.style.display = 'none'; }   // inconnu : on n'affiche pas une annee
+  }
 }
 
 function toggleSwitch(el){ el.classList.toggle("on"); }

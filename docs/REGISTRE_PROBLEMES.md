@@ -810,6 +810,41 @@ jour où quelqu'un branche l'envoi, le premier essai échoue avec le message
 « `success.html` PEUT et DOIT l'annoncer de nouveau ». **Une garde qui se périme toute seule
 est une garde qu'on désactive ; celle-ci change d'exigence au lieu de se périmer.**
 
+## P-76 — trois vaccins écrits en dur, affichés à tous les patients
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-76 | `patient-profile.html` affichait à **chaque** patient « COVID-19 (rappel) · Pfizer · 12 mars 2024 », « Tétanos / Diphtérie · 8 juin 2022 », « Grippe saisonnière », pastilles vertes **« À jour »** comprises | les trois blocs sont écrits en dur dans le HTML. À côté, la **carte santé** (`#hc-blood`, `#hc-imc`, `#hc-age`, `#hc-allergies`) n'était **jamais remplie**, et « membre depuis **2025** » était figé | tout est alimenté par `patient_medical_data` (déjà chargé dans le formulaire) ; « — » quand la base ne rend rien ; la pastille « membre depuis » disparaît faute de date | `tests/e2e/profil-patient-vraies-donnees.spec.js` — 9 essais × 2 profils. Contre-épreuve sur la page d'avant : **7 sur 9** échouent | **réglé** |
+
+### Ce n'était pas du décor
+
+Le reste de la page — la carte de réservation d'exemple, les portraits de la vitrine — est
+assumé comme vendeur. **Celui-ci était une affirmation médicale sur quelqu'un, sur la page de
+son propre dossier.** Un patient pouvait y lire qu'il était à jour du tétanos sans l'avoir
+jamais été, et le croire : c'est sa fiche, pas une brochure.
+
+### « On ne sait pas » et « zéro » ne se valent pas
+
+Les compteurs de rendez-vous lisaient `tabibi_rdv`. **Ce n'est pas une clé morte** — contrairement
+à ce que l'audit supposait : `patient-dashboard.html` y écrit ce qu'il a lu du serveur. Mais tant
+que le patient n'a pas ouvert son tableau de bord, elle n'existe pas, et « 0 RDV total » était
+alors une **affirmation**, pas un compte. Un patient qui a trois rendez-vous lisait zéro.
+
+Tiret tant qu'on n'a rien lu, chiffre dès qu'on a lu. Les favoris, eux, sont écrits par la page
+elle-même : absent y signifie vraiment zéro, et ils restent à `0`.
+
+### Un IMC ne se calcule pas sur une saisie aberrante
+
+3 cm et 900 kg sont des fautes de frappe. Un IMC calculé dessus serait un nombre **affirmé
+faux**, et pire qu'un tiret : il a l'air d'un calcul. Bornes de plausibilité, sinon « — ».
+
+### Construit en DOM, et c'est mesuré
+
+La première version assemblait des chaînes : le cliquet `verifier:innerhtml` est monté de **135
+à 136**. Réécrit en nœuds DOM (`textContent`) — le compteur est revenu à 135, et il n'y a plus
+aucune liste de caractères à penser à interdire. Un essai vérifie qu'un nom de vaccin piégé ne
+s'exécute pas.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
