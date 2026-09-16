@@ -902,6 +902,39 @@ Les champs viennent d'un formulaire **public** : la page est construite en nœud
 (`textContent`), il n'y a donc rien à échapper — donc rien à oublier d'échapper. C'est la leçon
 de P-73, appliquée **avant** d'avoir le défaut.
 
+## P-80 — une file qui pouvait doubler un rendez-vous et écrire un jeton sur le disque
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-80 | `tabibi_pending_writes` rejouait des `POST`/`PATCH` **sans idempotence**, et rangeait `opts` **tel quel** dans `localStorage` — en-têtes compris, donc `Authorization: Bearer …` | **latent** : mesuré le 16/09, `tabibiFetch` n'a **aucun appelant** dans le dépôt. Rien ne remplissait cette file | les identifiants ne sont jamais rangés ; une écriture n'entre en file que **déclarée rejouable et munie d'une clé d'idempotence**, renvoyée en en-tête `Idempotency-Key` | `tests/file-ecritures-hors-ligne.test.mjs` — 6 essais. Contre-épreuve : ancienne mise en file, **5 sur 6** échouent | **réglé côté client — serveur ouvert** |
+
+### Un `POST` qui expire n'a pas échoué
+
+Son résultat est **inconnu** : le serveur l'a peut-être enregistré avant que le délai tombe. Le
+rejouer, c'est risquer un second rendez-vous sur le même créneau — et le patient ne verrait
+qu'un message de succès.
+
+> **Perdre une écriture est réparable** — l'utilisateur recommence. **En créer deux ne l'est
+> pas** : personne ne sait qu'il y a un doublon.
+
+### Latent n'est pas acceptable
+
+L'absence d'appelant est ce qui rend la correction **sans risque**, pas ce qui rendait le défaut
+tolérable. Un défaut latent attend un appelant — c'est exactement l'histoire du curseur de prix
+(P-72), inoffensif tant qu'aucun tarif n'est saisi.
+
+Un essai garde ce constat : le jour où quelqu'un appelle `tabibiFetch`, il échoue en disant de
+relire cette fiche. Ce n'est pas une règle, c'est un **réveil**.
+
+### ⚠️ Ce qui reste, et pourquoi la file est de fait fermée
+
+**Aucun serveur ne lit `Idempotency-Key` aujourd'hui.** Tant que ce n'est pas le cas, aucune
+écriture ne devrait être déclarée rejouable — et aucune ne l'est. Mieux vaut une file vide
+qu'une file qui double des rendez-vous.
+
+À décider (écriture en base : validation requise) : une table `idempotence(cle, reponse,
+cree_le)` et un contrôle en tête des RPC d'écriture, ou l'équivalent dans une fonction edge.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
