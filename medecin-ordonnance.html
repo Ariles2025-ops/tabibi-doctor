@@ -473,16 +473,41 @@
     if (!pid) { $('#patient-display').style.display = 'none'; $('#pv-pat').textContent = '—'; return; }
     const supa = window.tabibi && window.tabibi.supabase;
     if (!supa) return;
-    const { data } = await supa.from('users').select('first_name, last_name').eq('id', pid).maybeSingle();
-    if (data) {
-      const name = `${data.first_name || ''} ${data.last_name || ''}`.trim() || pid.slice(0, 8) + '...';
-      $('#patient-name').textContent = name;
-      $('#patient-display').style.display = '';
-      $('#pv-pat').textContent = name;
-    } else {
-      $('#patient-display').style.display = 'none';
-      $('#pv-pat').textContent = pid.slice(0, 8) + '...';
+    // ⚠️ [16/09/2026] LE NOM DU PATIENT ETAIT LU DANS `public.users`, QUE LA
+    // RLS MASQUE AU MEDECIN. Elle scope par `auth.uid()` : un medecin n'y voit
+    // que sa PROPRE ligne. La requete ne levait pas — elle rendait simplement
+    // rien — et l'ordonnance affichait `3f2504e0...`, les huit premiers
+    // caracteres d'un identifiant technique, a la place du nom du patient.
+    //
+    // La vue `doctor_patients_directory` existe pour exactement ca : elle
+    // filtre par `auth.uid()` dans sa definition et ne rend que les patients
+    // ayant un rendez-vous avec ce medecin. Verifie en base le 16/09 :
+    // `authenticated: SELECT`, filtre par `auth.uid()`, passe par
+    // `appointments`. Meme perimetre, sans la RLS qui bloque.
+    //
+    // ⚠️ ET C'EST LA MEME CORRECTION QU'EN AOUT. `js/tabibi-messaging.js:71`
+    // porte le meme commentaire, date du 05/08/2026, pour le meme motif. Le
+    // correctif avait ete applique a un appelant et pas a l'autre — exactement
+    // la faute de P-65, ou `getSupabase` avait voyage sans sa definition.
+    const { data, error } = await supa.from('doctor_patients_directory')
+      .select('first_name, last_name').eq('id', pid).maybeSingle();
+    // ⚠️ `error` DOIT etre teste : PostgREST peut repondre 200 avec une erreur
+    // dans le corps, et ignorer ce cas le confond avec « patient inconnu ».
+    if (error) (window.tabibiErreur || console.warn)(error, 'medecin-ordonnance:refreshPatientDisplay');
+    if (!error && data) {
+      const name = `${data.first_name || ''} ${data.last_name || ''}`.trim();
+      if (name) {
+        $('#patient-name').textContent = name;
+        $('#patient-display').style.display = '';
+        $('#pv-pat').textContent = name;
+        return;
+      }
     }
+    // Pas de nom : on ne fabrique pas un libelle a partir d'un identifiant.
+    // Un « 3f2504e0... » sur une ordonnance ressemble a un nom tronque ; on
+    // dit plutot qu'on ne l'a pas.
+    $('#patient-display').style.display = 'none';
+    $('#pv-pat').textContent = T('mo_patient_inconnu', 'Patient non identifié');
   }
 
   // ── Save draft ──────────────────────────────────────────────────────

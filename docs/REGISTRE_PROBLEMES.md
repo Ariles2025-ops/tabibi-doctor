@@ -935,6 +935,33 @@ qu'une file qui double des rendez-vous.
 À décider (écriture en base : validation requise) : une table `idempotence(cle, reponse,
 cree_le)` et un contrôle en tête des RPC d'écriture, ou l'équivalent dans une fonction edge.
 
+## P-81 — une ordonnance au nom de « 3f2504e0... »
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-81 | `medecin-ordonnance.html` affichait **les huit premiers caractères d'un identifiant technique** à la place du nom du patient | le nom était lu dans `public.users`, dont la RLS **scope par `auth.uid()`** : un médecin n'y voit que sa propre ligne. La requête ne levait pas, elle rendait **rien**, et le code tombait dans son `else` : `pid.slice(0, 8) + '...'` | lecture par `doctor_patients_directory` — vérifié en base le 16/09 : `authenticated: SELECT`, filtre `auth.uid()`, passe par `appointments`. Même périmètre, sans la RLS qui bloque | `tests/e2e/ordonnance-nom-patient.spec.js` — 4 essais × 2 profils. Contre-épreuve : **4 sur 4** échouent, sur `"3f2504e0..."` | **réglé** |
+
+### La même correction avait déjà été faite, ailleurs
+
+`js/tabibi-messaging.js:71` porte **le même commentaire**, daté du **05/08/2026**, pour le même
+motif. Le correctif avait été appliqué à un appelant et pas à l'autre.
+
+> C'est la faute de P-65 — `getSupabase` copié sans sa définition — dans l'autre sens : une
+> **correction** qui n'a pas voyagé jusqu'à tous ses sites.
+
+### Un identifiant ne sert jamais de nom
+
+Sur un document médical, « 3f2504e0... » ressemble à un nom tronqué : le médecin ne se dit pas
+que c'est une panne. On préfère écrire « Patient non identifié » — un message est une
+information, un identifiant déguisé n'en est pas une. Trois essais couvrent les trois façons de
+ne pas avoir de nom : refus de lecture, ligne absente, ligne aux deux champs vides.
+
+### Au passage
+
+`verifier:rpc-passage` réclamait depuis un moment l'abaissement du plafond de
+`patient-ordonnances.html` (0 appel direct, plafond 1). Fait. **Un cliquet qu'on n'abaisse pas
+laisse revenir ce qu'il vient de faire disparaître.**
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
