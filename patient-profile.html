@@ -470,8 +470,27 @@ async function changePassword(){
   const nw=prompt(tabibiT('prompt_new_password_long',"Nouveau mot de passe (min. 8 car.) :")); if(!nw)return;
   if(nw.length<8){toastM(tabibiT('toast_too_short',"Trop court"),"error");return;}
   const conf=prompt(tabibiT('prompt_confirm_short',"Confirmer :")); if(nw!==conf){toastM(tabibiT('toast_passwords_mismatch',"Ne correspondent pas"),"error");return;}
+  // ⚠️ [16/09/2026] `getSupabase()` N'EXISTAIT PAS. Le changement de mot de
+  // passe echouait A TOUS LES COUPS, et personne ne pouvait le savoir : le
+  // `ReferenceError` tombait dans le `catch` juste en dessous, qui affichait
+  // « Echec du changement — reessayez ». Un message qui invite a recommencer
+  // une chose qui ne peut pas marcher.
+  //
+  // Le nom venait de `admin-cabinet.html` / `secretaire-dashboard.html`, ou la
+  // fonction est bien DEFINIE, page par page. Copiee ici et dans
+  // `medecin-profile.html` **sans sa definition**. Le client est expose par
+  // `js/supabase-client.js` sous `window.tabibi.supabase` — c'est d'ailleurs
+  // ce que fait `saveAll()` quelques lignes plus haut, dans ce meme fichier.
+  //
+  // ⚠️ Et on ne dit plus « reessayez » quand le client manque : reessayer n'y
+  // changerait rien.
+  const sb = window.tabibi && window.tabibi.supabase;
+  if(!sb){
+    console.warn('[changePassword] client Supabase absent');
+    toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."),"error");
+    return;
+  }
   try{
-    const sb = await getSupabase();
     const { error } = await sb.auth.updateUser({ password: nw });
     if (error) throw error;
     toastM(tabibiT('toast_password_changed',"Mot de passe changé !"),"success");
@@ -505,7 +524,7 @@ async function logout(){
   if(!confirm(tabibiT('confirm_logout',"Voulez-vous vous déconnecter ?"))) return;
   try {
     if (window.tabibi && window.tabibi.auth) { await window.tabibi.auth.signOut(); }
-    else { const sb = await getSupabase(); if (sb) await sb.auth.signOut(); }
+    else { const sb = window.tabibi && window.tabibi.supabase; if (sb) await sb.auth.signOut(); }
   } catch(e) { console.warn('[logout]', e); }
   localStorage.removeItem("tabibi_user");
   location.href="index.html";

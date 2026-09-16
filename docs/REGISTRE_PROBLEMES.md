@@ -541,6 +541,117 @@ La condition ne la tenait pas. `prixModifie` compare désormais à `defaultValue
 > **C'est l'essai qui l'a trouvé, pas la relecture** — il mesurait un écart de 372 px là où il
 > en attendait 2 900.
 
+## P-65 — un appel à une fonction qui n'existe pas, avalé par un `catch`
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-65 | **Le changement de mot de passe échouait à tous les coups**, et l'écran répondait « Échec du changement — **réessayez** » | `getSupabase()` n'est défini **ni dans la page, ni dans aucun script qu'elle charge**. Essai e2e sur l'état d'avant : `updateUser` appelé **0 fois** — « Expected length: 1, Received length: 0 ». La demande ne quittait jamais le navigateur | le client vient de `window.tabibi.supabase`, posé par `js/supabase-client.js` — ce que faisait déjà `saveAll()` dans le même fichier. Et client absent ⇒ « Service d'authentification indisponible », plus « réessayez » | `tests/client-supabase-defini.test.mjs` (3 essais de source) + `tests/e2e/changer-mot-de-passe.spec.js` (4 essais × 2 pages) | **réglé** |
+
+### La SEQ en signalait UNE page. Il y en avait DEUX.
+
+`patient-profile.html:474` **et** `medecin-profile.html:971` — le même bloc, copié. Le nom
+vient de `admin-cabinet.html` et `secretaire-dashboard.html`, où la fonction est bel et bien
+**définie**, page par page (l. 201 et 218). Elle a voyagé **sans sa définition**.
+
+> Chercher le défaut signalé et s'arrêter là aurait laissé la moitié du problème en place,
+> avec sa garde à côté qui dit « réglé ».
+
+### Ce que le `catch` a coûté
+
+```js
+}catch(e){
+  console.warn('[changePassword]', e);
+  toastM(tabibiT('toast_password_change_failed', "Échec du changement — réessayez."), "error");
+}
+```
+
+Un `ReferenceError` — une faute de programmation, pas un incident réseau — était traité comme
+un échec passager. Le message **invitait à recommencer une chose qui ne pouvait pas marcher**,
+et c'est précisément ce qui l'a rendu invisible : un utilisateur qui réessaie et échoue encore
+se croit fautif. Le `console.warn` disait la vérité ; personne ne lit la console d'un patient.
+
+C'est la famille du cron des rappels qui affichait 4 531 exécutions « succeeded » en envoyant
+le mot `TA_CLE` : **l'écran de contrôle disait autre chose que ce qui se passait.**
+
+### Pourquoi deux gardes et pas une
+
+La garde de **source** vérifie la référence : aucune page n'appelle `getSupabase()` sans la
+définir, et `changePassword` tient un client qui existe. Elle ne peut pas dire si la fonction
+**demande vraiment** le changement — une fonction peut être syntaxiquement juste et n'appeler
+personne. La garde **e2e** appelle la fonction avec un client bouchonné et lit ce qu'elle lui
+demande. Contre-épreuve faite dans les deux sens : sur l'état d'avant, **4 essais e2e sur 8**
+et **2 essais de source sur 3** échouent.
+
+Et la garde de source **lit le code sans ses commentaires** : le commentaire qui explique ce
+défaut cite `getSupabase`. **Huitième fois** que ce piège se présente dans ce dépôt.
+
+## P-66 — « Dr. -- » : le nom était là, à un champ de distance
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-66 | Le **médecin pilote** voyait **« Dr. -- »** sur son propre tableau de bord, à trois endroits (`med-name`, `prof-name`, `menu-name`) | le nom venait UNIQUEMENT de `users` : `(fn+' '+ln).trim() \|\| (a.email\|\|'').split('@')[0]`. Un pilote entre par son **numéro** — ni prénom, ni nom, **ni e-mail** : `''.split('@')[0]` vaut `''`. Essai e2e sur l'état d'avant : `Received string: "Dr. --"` | `completerDepuisLaFiche()` remplit `tabibi_user` depuis `doctor_profiles.full_name` **avant** les écritures DOM ; `js/tabibi-doctor-name.js` est enfin chargé par la page | `tests/e2e/nom-medecin-entete.spec.js` — 5 essais × 2 profils | **réglé** |
+
+### La donnée était déjà chargée
+
+`getMyProfile()` rend la **ligne entière** — `RETURNS doctor_profiles`, vérifié en base le
+16/09 — et la page l'appelait déjà. Elle n'en lisait que `working_hours`.
+
+> Ce n'était pas une donnée manquante, ni une requête à écrire : **c'était un champ qu'on
+> n'avait pas regardé dans un objet qu'on tenait en main.**
+
+### On corrige la SOURCE, pas les trois écrans
+
+Repeindre `med-name`, `prof-name` et `menu-name` après coup aurait marché — jusqu'au
+quatrième élément, ajouté un jour sans sa réparation. Et `renderProfile()` relit
+`localStorage`, donc l'aurait écrasé au rendu suivant. On complète `tabibi_user` **avant** la
+première écriture : tout ce qui lit `u.name` en hérite, y compris la salutation.
+
+### Trois refus explicites
+
+- **On ne prend pas la main sur un `users` qui a un nom.** Ce lot comble un trou ; il ne
+  renomme pas les comptes qui vont bien. Un essai le garde.
+- **On n'invente pas.** `tabibiDoctorName.format()` ne rend jamais vide : sans nom, il rend
+  « Praticien ». Utile sur une liste publique, ce serait ici **fabriquer une identité** pour
+  le médecin connecté et l'écrire dans son cache. On exige un `full_name` réel avant de
+  formater. Sans fiche réclamée, le tiret reste — c'est la réponse honnête (P-27, P-47).
+- **On ne redemande pas deux fois la même ligne.** L'agenda relit la fiche déjà chargée.
+
+## P-67 — « Demande envoyée ! » : elle ne l'était pas, et le mot de passe restait
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-67 | `onboarding-medecin.html` faisait remplir **cinq écrans** à un médecin puis affichait « Demande envoyée ! … vous contactera **sous 48 heures ouvrées** ». **Rien ne partait.** | `submitAll()` poussait le dossier dans `localStorage.tabibi_doctor_applications` sous un commentaire « TODO : envoyer à Supabase ». La page ne charge **aucun** client Supabase, et **aucun code du dépôt ne lit cette clé** (mesuré). Le dossier contenait `password` **en clair** | (a) le mot de passe ne quitte plus le champ ; la clé locale est supprimée ; l'écran de succès est **retiré**, remplacé par ce qui s'est réellement passé, avec le chemin qui enregistre vraiment (`medecin-waitinglist.html` → `waiting_list`) | `tests/e2e/onboarding-medecin-honnete.spec.js` — 5 essais × 2 profils. Contre-épreuve sur la page d'avant : **4 sur 5** échouent | **partiel — (b) ouvert** |
+
+### Ce défaut-là faisait ATTENDRE quelqu'un
+
+C'est la famille de « 500+ inscrits » (P-01) et de « e-mail envoyé » (P-28) : un écran de
+succès sur une opération qui n'a pas eu lieu. Celui-ci va plus loin — il donne un **délai**.
+Un médecin qui a saisi son n° au Conseil de l'Ordre, son cabinet et ses tarifs attendait
+48 heures un appel qui ne pouvait pas venir, et n'avait aucune raison de relancer.
+
+### Le mot de passe
+
+`password` était lu, mis dans l'objet, et écrit en clair dans `localStorage` — sur la machine
+du médecin, sans limite de durée — **alors qu'aucun compte n'était créé**. Un mot de passe qui
+ne sert à rien et qui traîne est un mot de passe qu'on a pris sans raison. Le champ reste : il
+servira quand il y aura un compte à créer.
+
+### Pourquoi l'écran de succès est SUPPRIMÉ, pas masqué
+
+Un bloc de succès qui dort dans le DOM est une invitation à le rebrancher sans sa persistance.
+Il reviendra **avec** elle. Un essai garde son absence.
+
+Et on ne remplace pas un mensonge par un cul-de-sac : après cinq formulaires, l'écran dit ce
+qui s'est passé **et** donne le seul chemin médecin qui persiste aujourd'hui.
+
+### (b) reste ouvert — voir la table des ouverts (P-68)
+
+Aucun chemin serveur n'existe pour une candidature : ni table `doctor_applications`, ni RPC,
+ni fonction edge. `waiting_list` existe et accepte `role='medecin'`, mais elle ne porte
+qu'un contact (e-mail, téléphone, wilaya, spécialité) : y déverser une candidature perdrait
+le n° d'ordre, l'adresse, le cabinet, les tarifs, le plan et les consentements horodatés.
+**Rien n'a été créé en base** — la proposition est dans le RETOUR de la SEQ 55.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -549,6 +660,7 @@ La condition ne la tenait pas. `prixModifie` compare désormais à `defaultValue
 | P-60 | La carte annonce **« Téléconsultation · Disponible »** et **aucun médecin ne la propose** | mesuré en base le 16/09 : `count(*) filter (where telehealth_enabled)` = **0** sur **75 035** `doctor_profiles` (et 1 seul `is_verified`) | aucun — c'est une décision produit, pas un correctif de code : ouvrir le drapeau sur de vrais médecins, ou retirer l'annonce | **garde manquante par nature** : un essai hermétique ne voit pas la base. La mesure est à refaire avant chaque annonce | **ouvert** |
 | P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
+| P-68 | Une candidature de médecin **n'a aucun endroit où aller** : l'onboarding ne peut rien persister | mesuré le 16/09 : aucune table `doctor_applications`, aucune RPC ni fonction edge de candidature. `waiting_list` n'accepte qu'un contact — pas un dossier | à créer : table + RPC d'insert anon + policy, **validation d'Aghiles requise avant toute écriture en base** (règle 3) | **garde manquante par nature** tant que la destination n'existe pas ; l'essai actuel garde seulement qu'on ne ment plus | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---

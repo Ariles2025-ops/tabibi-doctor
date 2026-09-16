@@ -455,11 +455,79 @@ function getDefaultSchedule(){
 function getDoctorSchedule(){
   return window._docSchedule || getDefaultSchedule();
 }
+// ⚠️ [16/09/2026] LE MEDECIN PILOTE S'AFFICHAIT « Dr. -- ».
+//
+// Le nom de l'entete venait UNIQUEMENT de la table `users` :
+//
+//     const name = (fn + ' ' + ln).trim() || (a.email||'').split('@')[0];
+//
+// Un medecin pilote entre par son NUMERO (`acces-pilote`) : pas de prenom, pas
+// de nom, **pas d'e-mail**. `''.split('@')[0]` vaut `''`, donc `u.name` est
+// vide, donc `u.name || "Dr. --"` affiche le tiret. Trois fois : `med-name`,
+// `prof-name`, `menu-name`.
+//
+// Son nom EXISTE pourtant, dans `doctor_profiles.full_name` — et la page
+// appelait deja `getMyProfile()`, qui rend la ligne entiere
+// (`RETURNS doctor_profiles`). Elle n'en lisait que `working_hours`.
+//
+// **La donnee etait la, a un champ de distance, dans un objet deja charge.**
+//
+// On complete `tabibi_user` AVANT les ecritures DOM : `renderProfile()` relit
+// le cache, et le corriger en un seul endroit vaut mieux que reparer trois
+// elements apres coup — un quatrieme apparaitrait un jour sans sa reparation.
+var _profilMedecin = null;   // la fiche, chargee une fois, relue par l'agenda
+
+/**
+ * Le nom professionnel d'une fiche, ou '' si elle n'en porte pas.
+ *
+ * ⚠️ `tabibiDoctorName.format()` ne rend JAMAIS vide : sans nom, il rend
+ * « Praticien ». Utile sur une liste publique — ici ce serait **inventer une
+ * identite** pour le medecin connecte, et l'ecrire dans son cache. On exige
+ * donc qu'un nom existe VRAIMENT dans la fiche avant de demander le formatage.
+ */
+function nomDeLaFiche(p){
+  if(!p) return '';
+  var brut = String(p.full_name || p.full_name_ar || '').trim();
+  if(!brut) return '';                 // fiche sans nom : on n'en fabrique pas
+  if(window.tabibiDoctorName && typeof window.tabibiDoctorName.format === 'function'){
+    var n = String(window.tabibiDoctorName.format(p) || '').trim();
+    if(n && n !== 'Praticien') return n;
+  }
+  return brut;
+}
+
+/**
+ * Complete l'objet d'affichage avec ce que `users` n'a pas.
+ *
+ * ⚠️ On ne PREND PAS la main sur un nom que `users` porte deja : ce lot repare
+ * un trou, il ne change pas la source de verite pour les comptes qui vont bien.
+ */
+async function completerDepuisLaFiche(u){
+  try{
+    if(!window.tabibiDoctor) return;
+    var p = await window.tabibiDoctor.getMyProfile();
+    if(!p || !p.id) return;          // pas de fiche reclamee : rien a completer
+    _profilMedecin = p;
+    var nom = nomDeLaFiche(p);
+    if(!nom) return;                 // fiche sans nom : on n'en invente pas un
+    u.name = nom;
+    if(!u.specialty) u.specialty = String(p.specialty_raw || '').trim();
+    if(!u.ville)     u.ville     = String(p.city || '').trim();
+    if(window.tabibiDoctorName && typeof window.tabibiDoctorName.initials === 'function'){
+      var i = window.tabibiDoctorName.initials(p);
+      if(i) u.initials = i;
+    }
+    try{ localStorage.setItem("tabibi_user", JSON.stringify(u)); }catch(e){}
+  }catch(e){ (window.tabibiErreur || console.warn)(e, 'doctor-dashboard.html:completerDepuisLaFiche'); }
+}
+
 async function loadDoctorScheduleFromDb(){
   try { localStorage.removeItem('tabibi_doctor_schedule'); localStorage.removeItem('tabibi_doc_slots'); } catch(e) {}
   try {
     if (!window.tabibiDoctor) return;
-    var p = await window.tabibiDoctor.getMyProfile();
+    // Deja chargee par `completerDepuisLaFiche()` au demarrage : on ne
+    // redemande pas la meme ligne au serveur pour la relire.
+    var p = _profilMedecin || await window.tabibiDoctor.getMyProfile();
     if (p && p.id) { window._docSchedule = window.tabibiDoctor.parseScheduleDays(p.working_hours); try { renderAgenda(); } catch(e) {} }
   } catch(e) { (window.tabibiErreur || console.warn)(e, 'doctor-dashboard.html:loadDoctorScheduleFromDb'); }
 }
@@ -1051,6 +1119,10 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     } catch (e) { console.warn('[dashboard] consumePending', e); }
   }
 
+  // ⚠️ AVANT les ecritures ci-dessous, pas apres : sinon on affiche « Dr. -- »
+  // puis on le remplace, et tout element ajoute plus tard reste au tiret.
+  if(!u.name) await completerDepuisLaFiche(u);
+
   document.getElementById("user-init").textContent = u.initials || "DR";
     // Photo de profil dans le pill header
     if (u.photo_url) {
@@ -1432,7 +1504,7 @@ async function deleteUnavail(id) {
 <script src="js/tabibi-features.js"></script>
 <script>(function(){var el=document.getElementById('med-msg-link');if(!el)return;if(window.TABIBI_FEATURES&&window.TABIBI_FEATURES.messaging){el.hidden=false;}else{el.remove();}})();</script>
 <script src="js/tabibi-claim.js"></script>
-<script src="js/tabibi-doctor-dashboard.js"></script>
+<script src="js/tabibi-doctor-name.js"></script><script src="js/tabibi-doctor-dashboard.js"></script>
 <script src="js/tabibi-network.js"></script>
 <script src="js/tabibi-beta.js"></script>
 <script src="js/tabibi-lang.js"></script>
