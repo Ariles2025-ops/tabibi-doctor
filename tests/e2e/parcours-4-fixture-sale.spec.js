@@ -40,7 +40,26 @@ test.beforeEach(async ({ page }) => {
 // **Un test e2e ne mesure pas la latence d'un tiers.**
 
 
-const AUJ = new Date().toISOString().split('T')[0];
+// ⚠️ [16/09/2026] CET ESSAI ROUGISSAIT UNE HEURE PAR NUIT, et il avait tort.
+//
+// Il datait sa fixture avec `new Date().toISOString().split('T')[0]` — le jour
+// **UTC**. La page, elle, demande `window.tabibiTemps.aujourdhui()`, qui rend
+// le jour **du cabinet** (Africa/Algiers, UTC+1). Entre 23 h et minuit UTC, les
+// deux repondent des jours DIFFERENTS : la fixture se posait la veille, et
+// `renderToday()` affichait — a juste titre — « Aucun RDV aujourd'hui ».
+//
+// Constate le 16/09 a 01 h 10 (Alger) : UTC disait 2026-09-15, le cabinet
+// 2026-09-16. Les KPI passaient (ils filtrent par MOIS, identique des deux
+// cotes) ; seule la liste du jour tombait. **La faute etait dans l'essai.**
+//
+// C'est exactement le remplacement que `js/tabibi-temps.js` documente dans sa
+// propre docstring : « Remplace `new Date().toISOString().split('T')[0]`, qui
+// rendait le jour UTC ». L'essai faisait la faute que le module existe pour
+// supprimer — et `verifier:fuseau` ne regarde pas `tests/`.
+const FUSEAU_CABINET = 'Africa/Algiers';   // meme valeur que js/tabibi-temps.js
+const AUJ = new Intl.DateTimeFormat('en-CA', {
+  timeZone: FUSEAU_CABINET, year: 'numeric', month: '2-digit', day: '2-digit',
+}).format(new Date());
 const MOIS = AUJ.slice(0, 7);
 
 const SALE_MEDECIN = [

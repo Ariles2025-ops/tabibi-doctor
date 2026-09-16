@@ -449,6 +449,27 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 [dir="rtl"] .hero-search{padding:16px 52px 16px 16px}
 [dir="rtl"] .hero-si{left:auto;right:19px}
 .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
+
+/* =====================================================================
+   [16/09/2026] QUAND ON CHERCHE, LES RESULTATS PASSENT DEVANT LA VITRINE
+   =====================================================================
+   ⚠️ SIGNALE PAR AGHILES, CAPTURES A L'APPUI : il tape « ben » dans la barre
+   du heros, et les fiches trouvees s'affichent **tout en bas** — apres le bloc
+   de statistiques, la carte d'exemple, Dawini, les specialites et les quatre
+   portraits de la vitrine. Il faut faire defiler longtemps pour voir ce qu'on
+   vient de demander.
+
+   On ne DEPLACE rien : deplacer #sec-docs dans le DOM casserait les ancres
+   (`scrollTo$('sec-docs')`, « Voir tout », la pagination) et le lecteur
+   d'ecran suivrait un ordre different de l'ordre visuel. On REPLIE ce qui
+   s'intercale, le temps de la recherche, et on le rouvre des que le champ est
+   vide. La barre, les filtres et les resultats restent ; tout le reste attend.
+
+   ⚠️ Le repli est pilote par la classe `recherche-active` posee sur <body> par
+   `loadDoctorCards()` — c'est-a-dire par le MODE REELLEMENT INTERROGE
+   (`chercher_praticiens`), pas par une lecture separee des champs. Deux
+   sources de verite pour « est-ce qu'on cherche ? » divergeraient un jour. */
+body.recherche-active [data-replier-recherche]{ display:none !important; }
 .hero-stat{background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:13px 6px;text-align:center;box-shadow:var(--s1);transition:transform var(--t1),box-shadow var(--t1)}
 .hero-stat:active{transform:translateY(-2px);box-shadow:var(--s2)}
 .hero-stat:first-child{position:relative}
@@ -1045,7 +1066,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       <!-- [V4C 2026-07-08] Note paiement (design v4) -->
       <div class="v4-paynote"><i class="fa fa-credit-card" aria-hidden="true"></i> <span data-i18n="v4_pay">Paiement au cabinet — espèces ou carte Chifa. Aucun prépaiement en ligne.</span></div>
       </div>
-      <div class="hero-stats">
+      <div class="hero-stats" data-replier-recherche>
         <div class="hero-stat"><div class="hs-n" id="hero-doc-count">75 000+</div><div class="hs-l" id="hs1" data-i18n="v4_hsl1">Médecins référencés</div></div>
         <div class="hero-stat"><div class="hs-n" id="hs-wilaya-n">69</div><div class="hs-l" id="hs2">Wilayas</div></div>
         <div class="hero-stat"><div class="hs-n">24/7</div><div class="hs-l" id="hs4">Réservation</div></div>
@@ -1053,7 +1074,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
       <!-- [V4 2026-07-08] Carte de réservation produit (design v4 « avec visages »).
            Décoratif (aria-hidden) : montre le produit, ne réserve rien.
            ⚠️ Photo Unsplash PLACEHOLDER — remplacer par une photo licenciée avant prod. -->
-      <div class="hero-visual" aria-hidden="true">
+      <div class="hero-visual" aria-hidden="true" data-replier-recherche>
         <div class="bookcard-ghost"></div>
         <div class="bookcard">
           <div class="bc-doc">
@@ -1082,7 +1103,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
         <a href="signup.html" class="btn btn-primary btn-lg" style="flex:1;min-width:140px;font-weight:700"><i class='fa fa-user-plus'></i> <span data-i18n="cta_signup">Créer un compte</span></a>
       </div>
       <!-- [V4C 2026-07-08] Téléchargement : Android · iOS (bientôt) · Web PC/Mac -->
-      <div class="v4-herostores">
+      <div class="v4-herostores" data-replier-recherche>
         <a class="v4-hstore" href="telecharger.html"><i class="fab fa-android" aria-hidden="true"></i><span><small data-i18n="v4_dl_direct">Téléchargement direct</small><b>Android (APK)</b></span></a>
         <a class="v4-hstore" href="telecharger.html"><i class="fab fa-apple" aria-hidden="true"></i><span><small data-i18n="v4_dl_soon">Bientôt sur</small><b>App Store</b></span></a>
         <a class="v4-hstore web" href="signup.html"><i class="fa fa-desktop" aria-hidden="true"></i><span><small data-i18n="v4_dl_webon">Version web</small><b>PC &amp; Mac</b></span></a>
@@ -1102,7 +1123,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 
   <!-- [DAWINI PREMIUM 2026-07-08] Fonctionnalité Dawini mise en avant (design v4).
        Masquée automatiquement si TABIBI_FEATURES.dawini = false (helper data-feature). -->
-  <section class="dwh" id="sec-dawini" data-feature="dawini">
+  <section class="dwh" id="sec-dawini" data-feature="dawini" data-replier-recherche>
     <div class="dwh-card">
       <div class="dwh-l">
         <span class="dwh-new"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i> <span data-i18n="dwh_new">Nouveau</span></span>
@@ -1133,7 +1154,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   </section>
 
   <!-- [V4B 2026-07-08] Bande confiance (design v4) -->
-  <div class="v4strip" aria-label="Garanties Tabibi">
+  <div class="v4strip" aria-label="Garanties Tabibi" data-replier-recherche>
     <div class="item"><i class="fa fa-shield-halved" aria-hidden="true"></i> <span data-i18n="v4_s1">Médecins vérifiés</span></div>
     <div class="item"><i class="fa fa-calendar-check" aria-hidden="true"></i> <span data-i18n="v4_s2">RDV en 30 secondes</span></div>
     <div class="item"><i class="fa fa-server" aria-hidden="true"></i> <span data-i18n="v4_s3">Vos données protégées aux normes européennes (RGPD)</span></div>
@@ -1141,7 +1162,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   </div>
 
   <!-- SPECIALTIES -->
-  <section class="section" id="sec-spec">
+  <section class="section" id="sec-spec" data-replier-recherche>
     <div class="sec-hdr">
       <h2 class="sec-title" id="st-spec" data-i18n="sec_specs">Spécialités médicales</h2>
       <span class="sec-link" id="see-all-btn" onclick="scrollTo$('sec-docs')">Voir tout →</span>
@@ -1152,7 +1173,7 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <!-- [V4B 2026-07-08] Vitrine praticiens (design v4).
        ⚠️ Photos Unsplash PLACEHOLDERS (casting validé fondateur) — remplacer par
        les portraits licenciés des praticiens réels avant prod. -->
-  <section class="section" id="sec-vitrine">
+  <section class="section" id="sec-vitrine" data-replier-recherche>
     <div class="v4-sechead">
       <span class="v4-eyebrow" data-i18n="v4_doce">Nos praticiens</span>
       <h2 data-i18n="v4_doch2">Des médecins de confiance, près de chez vous</h2>
@@ -1236,10 +1257,20 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
   <div class="v4-tele">
     <span class="ti"><i class="fa fa-video" aria-hidden="true"></i></span>
     <div>
-      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-live" data-i18n="v4_tes">Disponible</span></h3>
+      <!-- ⚠️ [16/09/2026] LES CLES ONT ETE RENOMMEES, et ce n'est pas cosmetique.
+           Constate en direct : la page servait « Disponible » dans son HTML et
+           le bouton affichait quand meme « Etre prevenu ». Le HTML est en
+           `no-cache` ; `js/i18n/*.js` ne l'est pas partout (netlify.toml :
+           max-age=3600). Un dictionnaire PERIME reecrivait le bouton par
+           dessus le HTML a jour.
+           Avec une cle NEUVE, un dictionnaire perime ne la connait pas — et
+           `setLang` n'ecrit jamais quand la valeur vaut la cle (P-03). Le texte
+           du HTML reste donc en place. **Une cle neuve ne peut pas etre
+           servie perimee.** -->
+      <h3><span data-i18n="v4_teh">Téléconsultation</span> <span class="v4-live" data-i18n="v4_tes_live">Disponible</span></h3>
       <p data-i18n="v4_tep">Consultez à distance un praticien vérifié, où que vous soyez en Algérie. Choisissez un médecin qui propose la téléconsultation et réservez votre créneau.</p>
     </div>
-    <a class="btn btn-primary cta" href="#sec-docs" onclick="scrollTo$('sec-docs')" data-i18n="v4_tec">Prendre rendez-vous</a>
+    <a class="btn btn-primary cta" href="#sec-docs" onclick="scrollTo$('sec-docs')" data-i18n="v4_tec_book">Réserver une téléconsultation</a>
   </div>
 
   <!-- HOW IT WORKS -->

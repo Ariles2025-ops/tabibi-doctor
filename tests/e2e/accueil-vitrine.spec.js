@@ -156,7 +156,31 @@ test.describe('accueil — ce qui est annonce', () => {
     await expect(bande.locator('.v4-live')).toHaveText(/disponible/i);
     // Elle ne doit plus envoyer attendre une chose qui marche.
     expect(await bande.locator('a[href*="waiting-list"]').count()).toBe(0);
-    await expect(bande.locator('a.cta')).toHaveText(/rendez-vous/i);
+
+    // ⚠️ LE BOUTON, APRES CE QU'AGHILES A VU EN LIGNE. Le HTML servait
+    // « Disponible » et le bouton disait « Etre prevenu » : ce n'etait pas le
+    // HTML qui avait tort, c'etait le DICTIONNAIRE, servi depuis un cache.
+    // On lit donc le bouton TEL QU'AFFICHE, apres passage de `setLang`.
+    const cta = bande.locator('a.cta');
+    await expect(cta).toHaveText(/r[ée]server/i);
+    await expect(cta).toHaveAttribute('href', '#sec-docs');
+    const texteBande = ((await bande.textContent()) || '');
+    expect(texteBande, 'un reste de « bientot »/« etre prevenu » dans la bande')
+      .not.toMatch(/bient[oô]t|pr[ée]venu|coming\s*soon|قريبا/i);
+  });
+
+  test('la bande dit la meme chose en AR et en EN — pas seulement en FR', async ({ page }) => {
+    // Les trois langues portent la meme promesse. Un bouton juste en francais
+    // et perime en arabe, c'est le defaut d'origine, deplace.
+    await bouchonnerVitrine(page);
+    for (const [lang, attendu] of [['ar', /حجز/], ['en', /book/i]]) {
+      await page.addInitScript((l) => localStorage.setItem('tabibi_lang', l), lang);
+      await page.goto(PAGE, ATTENDRE);
+      const bande = page.locator('.v4-tele');
+      await expect(bande.locator('a.cta')).toHaveText(attendu, { timeout: 8000 });
+      expect(((await bande.textContent()) || ''), `reste d'attente en ${lang}`)
+        .not.toMatch(/bient[oô]t|pr[ée]venu|coming\s*soon|قريبا/i);
+    }
   });
 
   test('plus aucun medecin INVENTE dans la carte du hero', async ({ page }) => {

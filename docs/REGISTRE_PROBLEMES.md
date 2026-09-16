@@ -441,11 +441,114 @@ suppression de `_renderChooseFilter` contenait son nom, et le test a conclu que 
 propre documentation.
 
 
+## P-59 — le HTML disait vrai, le dictionnaire disait faux
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-59 | Le badge affichait **« Disponible »** et, juste dessous, le bouton disait toujours **« Être prévenu »** — sur la même carte, en ligne | `git grep "Être prévenu"` ne rend **rien** dans le dépôt, et `accueil-public.html` sert « Disponible » + « Prendre rendez-vous » depuis `b49f916` (P-58, fusionné). Le HTML est en `no-cache` (`_headers`) ; **`js/i18n/*.js` ne l'est pas partout** — `netlify.toml` pose `/js/* max-age=3600` | clés **renommées** (`v4_tes`→`v4_tes_live`, `v4_tec`→`v4_tec_book`) et libellé « Réserver une téléconsultation » (FR/EN/AR) ; les deux clés orphelines sont retirées des trois dictionnaires | `tests/teleconsultation-annonce.test.mjs` (5 essais) + 2 essais e2e. Contre-épreuves faites : un dictionnaire FR périmé et un bouton revenu à « Être prévenu » font **échouer 2 essais chacun** | **réglé** |
+
+### Pourquoi les deux constats étaient vrais en même temps
+
+Aghiles voyait un bouton faux ; moi je voyais un dépôt juste. Ni l'un ni l'autre ne se
+trompait. `setLang()` **réécrit le HTML avec le dictionnaire** :
+
+```js
+const v = T(cle);
+if (!v || v === cle) return;     // rien de mieux a mettre : on ne touche pas
+el.textContent = v;              // js/home-app.js
+```
+
+Un vieux `v4_tec = "Être prévenu"`, servi depuis un cache d'une heure, gagnait contre un
+HTML neuf. **Ce n'était pas le *quoi* qui était faux, c'était le *quand*** — troisième fois
+en deux jours (P-41 captcha vérifié trop tôt, P-42 mot de passe changé trop tard, P-51 garde
+correcte le 09/09 et fausse le 15/09).
+
+### La parade, et pourquoi c'est un renommage et pas une correction de texte
+
+Corriger la valeur n'aurait rien réglé : le cache aurait continué à servir l'ancienne
+pendant une heure, et **la prochaine fois on ne l'aurait pas vue passer**. Une clé **neuve**,
+un dictionnaire périmé ne la connaît pas : `v === cle`, et la ligne ci-dessus **ne touche
+pas au HTML**. C'est la règle P-03 utilisée comme filet au lieu d'être subie.
+
+> **Une clé neuve ne peut pas être servie périmée.**
+
+La garde centrale, elle, ne vise pas le cache — elle vise l'**écart** : le texte écrit dans
+le HTML et la valeur FR du dictionnaire doivent dire la **même phrase**. Tant qu'ils sont
+d'accord, la version servie n'a plus d'importance. Le défaut n'était visible ni dans le HTML
+seul (juste), ni dans le dictionnaire seul (cohérent avec lui-même) : **il était entre les
+deux, et aucun des deux fichiers ne pouvait le voir.**
+
+Et le fichier d'essai **lit le code sans ses commentaires** : le commentaire qui explique ce
+problème cite « Être prévenu ». Sixième fois qu'une garde de ce dépôt manque de s'accuser
+elle-même.
+
+## P-61 — une porte qui rougissait une heure par nuit, et qui avait tort
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-61 | `verifier:toutes` ROUGE sur `parcours-4-fixture-sale` : le tableau de bord médecin affichait **« Aucun RDV aujourd'hui »** au lieu des quatre RDV de la fixture | l'essai datait sa fixture en **UTC** (`new Date().toISOString().split('T')[0]`), la page lit `window.tabibiTemps.aujourdhui()` — le jour du **cabinet**. Mesuré le 16/09 à 01 h 10 (Alger) : UTC `2026-09-15`, cabinet `2026-09-16` | la fixture se date dans le fuseau du cabinet, comme la page | `tests/fuseau-des-essais.test.mjs` — aucun essai ne fabrique un jour avec `toISOString()`, **plus la contre-épreuve** qui montre la divergence à 23 h 10 UTC et l'accord à midi | **réglé** |
+
+### Ce que ce défaut avait de méchant
+
+Il n'était faux **qu'une heure sur vingt-quatre**. Les KPI du même écran passaient — ils
+filtrent par **mois**, identique des deux côtés ; seule la liste du **jour** tombait. Vingt-trois
+heures par jour, la porte était verte et disait vrai.
+
+> **Une porte verte à 14 h ne dit rien de ce qu'elle vaut à 00 h 10.** C'est la quatrième fois
+> en deux jours que le défaut n'est pas dans le *quoi* mais dans le *quand* (P-41, P-42, P-51).
+
+Et l'essai faisait exactement la faute que `js/tabibi-temps.js` existe pour supprimer — sa
+docstring dit mot pour mot : « Remplace `new Date().toISOString().split('T')[0]`, qui rendait
+le jour UTC ». `scripts/verifier-fuseau.mjs` ne regarde pas `tests/` : **le module et sa porte
+couvraient le produit, pas ce qui le mesure.**
+
+### La garde s'est accusée elle-même — septième fois
+
+Au premier passage, elle échouait sur **sa propre contre-épreuve**, qui fabrique exprès un
+jour UTC pour prouver la divergence. L'exemption est **nominative**, un seul fichier écrit en
+toutes lettres : une règle large (« ignorer les fichiers qui parlent de fuseau ») aurait
+rouvert le trou pour tous les autres. La contre-épreuve l'a attrapée ; la relecture, non.
+
+## P-62 — ce qu'on demande ne s'affichait pas là où on l'a demandé
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-62 | Aghiles tape « ben » dans la barre du héros : les fiches trouvées sortent **tout en bas** de l'accueil, derrière cinq blocs de présentation | écart mesuré entre le bas du champ et le haut de `#sec-docs` : **2 921 px** sur mobile, **2 332 px** sur ordinateur — trois écrans de défilement pour voir ce qu'on vient de demander | les blocs qui s'intercalent portent `data-replier-recherche` et se replient tant qu'un filtre est actif. Après : **372 px** (mobile), **322 px** (ordinateur) | `tests/e2e/resultats-sous-la-barre.spec.js`, 7 essais × 2 profils. Contre-épreuve : sans la bascule, **4 essais sur 7 échouent** | **réglé** |
+
+### On replie, on ne déplace pas
+
+Remonter `#sec-docs` dans le DOM aurait corrigé la position **en cassant tout ce qui la vise** :
+`scrollTo$('sec-docs')`, « Voir tout », la pagination — et un lecteur d'écran suit l'ordre du
+DOM, pas l'ordre à l'écran. Un essai garde explicitement cet ordre (`compareDocumentPosition`).
+
+Et on ne replie que la **présentation** : la barre, les deux menus, le tri, le curseur et les
+puces restent à l'écran. Un utilisateur doit pouvoir corriger son terme sans remonter chercher
+le champ.
+
+### Deux notions de « est-ce qu'on cherche ? », dont une fausse
+
+En posant la bascule, il en fallait une deuxième — `_updateResCount` en avait déjà une, écrite
+à la main, pour choisir le message « Aucun médecin avec ces filtres ». **On l'a extraite
+(`_filtresActifs`) au lieu de la recopier** : deux réponses à la même question finissent
+toujours par diverger.
+
+Et l'ancienne était **fausse** : elle lisait `opts.maxPrice != null`, or le curseur de prix
+**démarre à 5 000 DA**. Elle répondait donc « oui, il filtre » dès le premier rendu, avant que
+personne n'ait rien touché — la page se repliait toute seule au chargement. Le commentaire
+d'origine disait pourtant l'intention, mot pour mot : « null si user n'a pas bougé le slider ».
+La condition ne la tenait pas. `prixModifie` compare désormais à `defaultValue`.
+
+> **C'est l'essai qui l'a trouvé, pas la relecture** — il mesurait un écart de 372 px là où il
+> en attendait 2 900.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
 |---|---|---|---|---|---|
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
+| P-60 | La carte annonce **« Téléconsultation · Disponible »** et **aucun médecin ne la propose** | mesuré en base le 16/09 : `count(*) filter (where telehealth_enabled)` = **0** sur **75 035** `doctor_profiles` (et 1 seul `is_verified`) | aucun — c'est une décision produit, pas un correctif de code : ouvrir le drapeau sur de vrais médecins, ou retirer l'annonce | **garde manquante par nature** : un essai hermétique ne voit pas la base. La mesure est à refaire avant chaque annonce | **ouvert** |
+| P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
+| P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
 
 ---
