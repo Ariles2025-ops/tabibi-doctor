@@ -782,6 +782,34 @@ Un `beforeSend` coûteux ralentit **chaque** erreur de la page, donc finit par �
 qui serait pire que pas de filtre. Un événement cyclique ferait geler l'onglet : les cycles sont
 coupés. Les deux cas ont leur essai.
 
+## P-75 — « Un SMS et un email de confirmation vous ont été envoyés »
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-75 | `success.html` annonçait, après **chaque** réservation, deux envois. **Aucun des deux n'existe** | SMS : `js/tabibi-sms.js` porte `enabled: false` et `window.tabibiSMS` **n'est appelé nulle part**. E-mail : ni `reservation.html` ni `js/tabibi-booking.js` n'appellent `sendEmail` — et la boîte d'envoi prévue en base, `appointment_notifications` (déclencheur `trg_appointment_confirmed_outbox`), contient **0 ligne dont 0 envoyée** au 16/09 | la phrase dit ce qui est vrai : le rendez-vous est enregistré et retrouvable. Une seconde ligne prévient qu'aucun SMS ni e-mail ne partira | `tests/canaux-annonces.test.mjs` — 5 essais | **réglé** |
+
+### Ce défaut-là fait ATTENDRE
+
+Le patient ne relance pas : on lui a dit que c'était parti. C'est la famille de P-28
+(« e-mail envoyé » sur trois parcours) et du cron des rappels qui affichait 4 531 exécutions
+« succeeded » en envoyant le mot `TA_CLE`.
+
+### Ce qui est vrai, et qui a été vérifié avant d'être écrit
+
+Le rendez-vous **est** enregistré, il apparaît dans « Mes rendez-vous », et la cloche de
+notification fonctionne — `public.notifications` : 17 lignes, 5 lues. On ne remplace pas une
+promesse par du vide : on dit où retrouver le rendez-vous, et on conseille de garder le
+récapitulatif imprimable qui existait déjà.
+
+### La garde ne interdit pas un mot, elle exige un émetteur
+
+Garder « la phrase ne doit pas dire SMS » aurait bloqué le jour où le SMS marchera. La règle
+est : **un canal ne s'annonce que s'il a un émetteur.** Le fichier mesure d'abord s'il en
+existe un — module activé **et** appelé — et n'exige le silence que dans le cas contraire. Le
+jour où quelqu'un branche l'envoi, le premier essai échoue avec le message
+« `success.html` PEUT et DOIT l'annoncer de nouveau ». **Une garde qui se périme toute seule
+est une garde qu'on désactive ; celle-ci change d'exigence au lieu de se périmer.**
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
