@@ -290,7 +290,6 @@ function _mapSupabaseDoctor(row){
     entityType:   row.entity_type || null,
     latitude:     row.latitude || null,
     longitude:    row.longitude || null,
-    rawName: row.full_name || '',  // nom brut sans préfixe (WhatsApp CTA)
     _claimable: !isClaimed,  // bandeau "Reclamer" SEULEMENT si pas encore revendiquee
     _isClaimed: isClaimed,
     _validationStatus: row.validation_status || null  // [Phase 16.4] null = unclaimed scraped
@@ -524,7 +523,7 @@ async function loadDoc(){
       // n'en ferme pas une.
       //
       // ⚠️ CONSTRUIT EN NŒUDS DOM. L'ancienne version assemblait des chaînes
-      // avec `d.legacy_id` et `d.rawName` dedans — `textContent` n'interprète
+      // avec `d.legacy_id` et le nom dedans — `textContent` n'interprète
       // rien, et le cliquet `innerhtml` ne bouge pas d'un cran.
       //
       // ⚠️ AUCUNE DONNÉE PRIVÉE : ni téléphone ni e-mail du médecin. Le
@@ -570,25 +569,27 @@ async function loadDoc(){
         lien.appendChild(icoL);
         lien.appendChild(document.createTextNode(' ' + _t('dp_claim_cta', 'Revendiquer ma fiche')));
 
-        // ── Second chemin : WhatsApp, qui marche deja ──────────────────
-        var _waText = _t('dp_claim_wa_msg', 'Bonjour, je souhaite revendiquer la fiche')
-          + ' #' + (d.legacy_id || '') + ' - ' + (d.rawName || d.fr || '');
-        var wa = document.createElement('a');
-        wa.id = 'claim-cta-wa';
-        wa.href = 'https://wa.me/213777169074?text=' + encodeURIComponent(_waText);
-        wa.target = '_blank'; wa.rel = 'noopener noreferrer nofollow';
-        wa.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:#fff;color:#166534;'
-          + 'border:1px solid #86efac;padding:9px 16px;border-radius:10px;font-weight:700;font-size:13px;'
-          + 'text-decoration:none;margin-inline-start:8px';
-        var icoW = document.createElement('i');
-        icoW.className = 'fa-brands fa-whatsapp'; icoW.style.fontSize = '16px';
-        icoW.setAttribute('aria-hidden', 'true');
-        wa.appendChild(icoW);
-        wa.appendChild(document.createTextNode(' ' + _t('dp_claim_wa', 'Par WhatsApp')));
-
+        // ══════════════════════════════════════════════════════════════
+        // [18/09/2026] LE SECOND CHEMIN WHATSAPP EST RETIRE — decision
+        // d'Aghiles, et elle revient sur la mienne
+        // ══════════════════════════════════════════════════════════════
+        // En posant ce bloc (P-90) j'avais garde WhatsApp a cote du tunnel, au
+        // motif qu'« on ajoute une porte, on n'en ferme pas une » : c'etait un
+        // chemin qui aboutit, avec un humain au bout.
+        //
+        // L'argument tenait cote parcours, et il rate ce qui compte ici :
+        // un medecin parti sur WhatsApp ne cree PAS de compte. Il ecrit a une
+        // equipe, quelqu'un lui repond a la main, et la plateforme n'a gagne
+        // ni utilisateur ni fiche revendiquee. **Le chemin le plus court pour
+        // la personne n'est pas toujours celui qui construit le produit** —
+        // et cet arbitrage-la appartient a Aghiles, pas a moi.
+        //
+        // Il ne reste donc qu'un appel : le tunnel. Les autres usages WhatsApp
+        // du depot (cas-grave, partage de liste d'attente) ne sont PAS touches :
+        // ils ne remplacent aucune inscription.
         var rangee = document.createElement('div');
         rangee.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px 0;align-items:center';
-        rangee.appendChild(lien); rangee.appendChild(wa);
+        rangee.appendChild(lien);
 
         carte.appendChild(titre); carte.appendChild(sous); carte.appendChild(rangee);
         claimBlock.appendChild(badge); claimBlock.appendChild(carte);

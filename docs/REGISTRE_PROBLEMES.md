@@ -1666,6 +1666,59 @@ pas une cible, c'est un **filet** : sur le bundle desktop, tout lien oublié ver
 renvoyé sur la page pro au lieu de mourir. Le retirer rendrait muets précisément les liens qu'on
 n'aurait pas vus.
 
+## P-101 — le second chemin WhatsApp de la revendication, retiré
+
+| ID | symptôme | décision | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-101 | Le bloc de revendication de `doctor-profile.html` proposait **deux** appels : « Revendiquer ma fiche » (le tunnel) **et** « Par WhatsApp » | **décision d'Aghiles, 18/09** : un médecin parti sur WhatsApp **ne crée pas de compte** — il écrit à une équipe, quelqu'un répond à la main, et la plateforme n'a gagné ni utilisateur ni fiche revendiquée | le chemin WhatsApp est retiré (`doctor-profile.html:573-588`), il ne reste que le tunnel | `tests/e2e/revendication-fiche.spec.js` — l'essai qui **exigeait** WhatsApp est **retourné** en essai qui l'interdit. Contre-épreuves : bouton remis → **2 rouges** ; WhatsApp des cas urgents coupé → **2 rouges** | **réglé** |
+
+### ⚠️ Cette décision revient sur la mienne, et elle a raison
+
+En posant ce bloc (**P-90**) j'avais gardé WhatsApp à côté du tunnel : *« on ajoute une porte, on
+n'en ferme pas une »* — c'est un chemin qui aboutit, avec un humain au bout.
+
+L'argument tenait **côté parcours** et ratait ce qui compte ici. **Le chemin le plus court pour la
+personne n'est pas toujours celui qui construit le produit**, et cet arbitrage-là appartient au
+propriétaire du produit, pas à moi.
+
+L'essai n'a pas été supprimé mais **retourné**, au même endroit, avec la raison écrite dedans : la
+trace de la décision reste lisible là où elle s'applique.
+
+### Ce qui n'a PAS été touché — et c'est gardé
+
+« Retirer WhatsApp » pris au pied de la lettre aurait coupé des canaux qui n'ont rien à voir avec
+l'inscription :
+
+| usage | pourquoi il reste |
+|---|---|
+| `cas-grave.html` | formulaire d'urgence → WhatsApp de l'équipe. Quelqu'un attend une réponse au bout |
+| `waiting-list.html` · `patient-waitinglist` · `medecin-waitinglist` | boutons de **partage** |
+| `patient-ordonnances.html` | partage d'une ordonnance par le patient |
+| `js/capacitor-bridge.js` | ouvre les liens `wa.me` nativement dans l'app mobile |
+
+Un essai les garde explicitement : ce qui est retiré, c'est le chemin qui **remplace une
+inscription**, pas la messagerie.
+
+### ⚠️ Ma contre-épreuve est passée au vert sur du code cassé
+
+En coupant pour de vrai le lien de `cas-grave.html`, l'essai est **resté vert** : il lisait le HTML
+brut, et **un commentaire du fichier contient « wa.me »**. La garde se rassurait sur sa propre
+documentation — **douzième fois** que ce dépôt paie cet ordre-là. Les commentaires sont désormais
+retirés avant comparaison, et la contre-épreuve sort **2 rouges**.
+
+### Deux essais rattrapés au passage
+
+- L'essai **XSS** lisait l'URL WhatsApp pour vérifier qu'un nom piégé ne se recolle pas en HTML.
+  Cette URL n'existe plus : le nom **n'entre plus du tout** dans le bloc. L'essai vise désormais
+  l'endroit où le nom est réellement rendu (`#d-name`) — et vérifie **aussi** qu'il s'affiche, car
+  un essai vert parce que la donnée a disparu ne prouve rien.
+- Il comparait au caractère près : la page applique un `text-transform: capitalize`, et `innerText`
+  rend le texte **transformé**. Comparaison rendue insensible à la casse — sinon l'essai accusait
+  une feuille de style.
+
+Les clés `dp_claim_wa` et `dp_claim_wa_msg` sont retirées des trois dictionnaires (parité tenue :
+**1580 clés par langue, 0 manquante**), et `rawName`, qui ne servait qu'au texte WhatsApp, avec.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
