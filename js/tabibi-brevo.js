@@ -604,11 +604,56 @@ ${isRTL ? '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;6
     }
   };
 
+  /**
+   * Envoie, et rend une phrase VRAIE sur ce qui s'est passe.
+   *
+   * ⚠️ [17/09/2026] P-28. Quatre pages appelaient `sendEmail()` et annonçaient
+   * « Email envoyé. » **sans jamais lire le résultat** — dans un `try/catch`
+   * qui ne servait a rien, puisque `sendEmail` ne leve pas : elle REND
+   * `{ success: false }`.
+   *
+   * Mesure du 17/09, fonctions edge deployees sur le projet : **`send-email`
+   * n'existe pas**. Treize fonctions en production, pas celle-la. Chaque appel
+   * part donc en 404 et rend `success: false` — pendant que l'ecran dit oui.
+   *
+   * Les deux moities du defaut comptent :
+   *   • l'e-mail ne part pas (rien a faire ici : la fonction n'est pas deployee,
+   *     c'est une action hors depot) ;
+   *   • **l'ecran affirme le contraire**, et c'est ca qu'on repare. Un admin qui
+   *     lit « Email envoyé » ne previent pas le medecin a la main.
+   *
+   * @returns {{ok: boolean, phrase: string, cause: string|null}}
+   */
+  async function envoyerEtDire(templateName, toEmail, data) {
+    var r;
+    try {
+      r = await sendEmail(templateName, toEmail, data);
+    } catch (e) {
+      r = { success: false, error: (e && e.message) || 'erreur inconnue' };
+    }
+    var dest = toEmail || 'le destinataire';
+    if (r && r.success) {
+      return { ok: true, phrase: 'E-mail envoyé à ' + dest + '.', cause: null };
+    }
+    var cause = (r && (r.error || (r.disabled ? 'envoi desactive' : ''))) || 'cause inconnue';
+    return {
+      ok: false,
+      cause: cause,
+      // On dit ce qui manque ET ce qu'il reste a faire : un message qui
+      // constate sans donner la suite laisse l'admin sans rien.
+      phrase: 'AUCUN e-mail envoyé (' + cause + ') — prévenez ' + dest + ' à la main.'
+    };
+  }
+
   async function sendEmail(templateName, toEmail, data) {
     data = data || {};
 
+    // ⚠️ [17/09/2026] CE `success: true` DISAIT « ENVOYE » QUAND RIEN NE PARTAIT.
+    // Un appelant qui lit `success` — c'est ce que le nom invite a faire —
+    // annoncait un envoi sur un module volontairement eteint. On garde le
+    // drapeau, mais `success` dit desormais la verite : rien n'est parti.
     if (!TABIBI_CONFIG.enabled) {
-      return { success: true, disabled: true };
+      return { success: false, disabled: true, error: 'envoi desactive' };
     }
     if (!isValidEmail(toEmail)) {
       return { success: false, error: 'Email destinataire invalide' };
@@ -640,6 +685,7 @@ ${isRTL ? '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;6
   }
 
   window.tabibiBrevo = {
+    envoyerEtDire: envoyerEtDire,
     sendEmail: sendEmail,
     templates: Object.keys(templates),
     config: TABIBI_CONFIG,

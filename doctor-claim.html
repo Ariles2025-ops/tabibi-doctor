@@ -493,7 +493,19 @@ async function dcSubmit(){
     }
   } catch(e){}
   var emailLabel = email || 'votre adresse email';
-  _dcToast("✅ Fiche réclamée" + (ordreOk ? " — n° d'ordre enregistré" : "") + ". Vos documents ont été envoyés pour vérification. Notre équipe les examinera sous 48h ouvrées et vous recevrez un email à " + emailLabel + " dès qu'ils seront validés. En attendant, vous pouvez compléter votre profil (bio, tarifs, horaires) — votre fiche ne sera publique qu'après validation.", 'success');
+  // ⚠️ [17/09/2026] CE MESSAGE PROMETTAIT UN E-MAIL QUI NE PEUT PAS PARTIR.
+  // Il annonçait « vous recevrez un email à <adresse> dès qu'ils seront
+  // validés ». Mesure du 17/09 : la fonction edge `send-email` n'est deployee
+  // nulle part — 13 fonctions en production, pas celle-la. L'e-mail de
+  // validation part en 404 depuis l'ecran d'administration, en silence.
+  //
+  // Ce qui reste VRAI, et qui est l'essentiel : la fiche est reclamee, les
+  // documents sont bien partis, et le profil est modifiable tout de suite.
+  // On garde donc tout ça, et on retire la seule phrase qui ne tient pas —
+  // celle qui fait ATTENDRE. Un medecin qui attend un e-mail ne relance pas.
+  //
+  // La phrase reviendra avec l'envoi : voir P-83 au registre.
+  _dcToast("✅ Fiche réclamée" + (ordreOk ? " — n° d'ordre enregistré" : "") + ". Vos documents sont enregistrés et seront examinés par notre équipe. Nous vous contacterons à " + emailLabel + " — sans e-mail automatique pour le moment, pensez à vérifier votre tableau de bord. En attendant, vous pouvez compléter votre profil (bio, tarifs, horaires) — votre fiche ne sera publique qu'après validation.", 'success');
   try { localStorage.removeItem('tabibi_pending_claim_legacy_id'); } catch(e){}
   setTimeout(function(){ location.href = 'medecin-profile.html?onboarding=1'; }, 3500);
 }
