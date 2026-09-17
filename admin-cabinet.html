@@ -317,16 +317,29 @@ async function loadMembers(){
     // [Phase 14.1.1] data-* attributes + event delegation (cf #members-list listener)
     // au lieu d'inline onclick — évite parsing cassé si m.full_name contient
     // UTF-8/quotes/slashes (noms arabes, raison sociale clinique, etc.).
-    const _escAttr = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    //
+    // ⚠️ [16/09/2026] `_escAttr` etait une QUATRIEME copie de l'echappeur du
+    // depot. Elle protegeait les attributs `data-*` — et le TEXTE juste en
+    // dessous, lui, n'etait pas echappe du tout : `${m.full_name}`,
+    // `${m.specialty_fr}` et `${role}` allaient bruts dans `innerHTML`.
+    //
+    // La donnee vient de `cabinet_members_directory_view`, donc de ce qu'un
+    // membre a saisi. Un nom `<img src=x onerror=…>` s'executait dans la page
+    // d'administration du cabinet — celle qui peut retirer des membres.
+    //
+    // `window.esc` et `window.escAttr` sont poses par `js/tabibi-security.js`,
+    // charge en premier ligne 5. Une copie locale de moins, et le texte protege.
+    const _escAttr = window.escAttr;
+    const _esc = window.esc;
     const removeBtn = (m.user_id === CURRENT_USER_ID || role === 'owner') ? ""
       : `<button class="btn btn-icon btn-icon-sm js-remove-member" style="background:#fff0f0;color:#D21010" data-member-id="${_escAttr(m.user_id)}" data-member-name="${_escAttr(m.full_name||'')}" aria-label="Retirer ce membre"><i class="fa fa-trash"></i></button>`;
     return `
       <div class="member-row">
-        <div class="avatar-mini">${ini}</div>
+        <div class="avatar-mini">${_esc(ini)}</div>
         <div>
-          <div style="font-weight:700">${m.full_name||"--"}${pendingTag}</div>
-          <div style="font-size:12px;color:var(--text3)">${m.specialty_fr||""}</div>
-          <span class="role-pill ${pillClass}"><i class="fa fa-shield"></i> ${role}</span>
+          <div style="font-weight:700">${_esc(m.full_name||"--")}${pendingTag}</div>
+          <div style="font-size:12px;color:var(--text3)">${_esc(m.specialty_fr||"")}</div>
+          <span class="role-pill ${_escAttr(pillClass)}"><i class="fa fa-shield"></i> ${_esc(role)}</span>
         </div>
         <div>${removeBtn}</div>
       </div>`;

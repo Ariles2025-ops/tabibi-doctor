@@ -92,10 +92,75 @@
       return JSON.parse(localStorage.getItem(PENDING_QUEUE_KEY) || '[]');
     } catch(e) { return []; }
   }
+  // =====================================================================
+  // ⚠️ [16/09/2026] CETTE FILE POUVAIT FABRIQUER DES DOUBLONS ET ECRIRE UN
+  // JETON SUR LE DISQUE. Les deux defauts etaient LATENTS : mesure faite,
+  // `tabibiFetch` n'a **aucun appelant** dans le depot. Rien ne remplissait
+  // cette file — c'est ce qui rend le correctif sans risque, pas ce qui rend
+  // le defaut acceptable. Un defaut latent attend un appelant.
+  //
+  // 1. LE JETON. `addPendingWrite({ url, opts })` rangeait `opts` TEL QUEL
+  //    dans `localStorage` — en-tetes compris, donc `Authorization: Bearer …`
+  //    et `apikey`. Un jeton ecrit sur le disque du navigateur, sans date de
+  //    peremption cote stockage, lisible par tout script de la page. La regle
+  //    du depot est explicite : on n'ecrit jamais un secret sur disque.
+  //
+  // 2. LE DOUBLON. Un `POST` qui expire n'a pas echoue : il a un resultat
+  //    **INCONNU**. Le serveur l'a peut-etre enregistre avant que le delai
+  //    tombe. Le rejouer, c'est risquer un second rendez-vous pour le meme
+  //    creneau — et le patient ne verrait qu'un message de succes.
+  //
+  // CE QU'ON FAIT. On refuse de rejouer ce qu'on ne sait pas rejouer :
+  //   • les identifiants ne sont JAMAIS ranges ;
+  //   • une ecriture n'entre en file que si l'appelant l'a declaree rejouable
+  //     ET a fourni une cle d'idempotence, renvoyee au serveur en en-tete
+  //     `Idempotency-Key` pour qu'il puisse dedupliquer.
+  //
+  // ⚠️ AUCUN SERVEUR NE LIT CET EN-TETE AUJOURD'HUI. La file est donc, de
+  // fait, fermee — et c'est la reponse honnete : mieux vaut une file vide
+  // qu'une file qui double des rendez-vous. Ce qu'il reste a faire est decrit
+  // au registre (P-80).
+  // =====================================================================
+
+  /** Les en-tetes qu'on ne range jamais, quelle que soit la casse. */
+  const ENTETES_INTERDITS = /^(authorization|apikey|api-key|cookie|x-api-key|proxy-authorization)$/i;
+
+  function sansIdentifiants(headers) {
+    const sortie = {};
+    if (!headers) return sortie;
+    // `Headers` ou objet simple : on couvre les deux.
+    const paires = (typeof headers.forEach === 'function' && !Array.isArray(headers))
+      ? (() => { const l = []; headers.forEach((v, k) => l.push([k, v])); return l; })()
+      : Object.keys(headers).map((k) => [k, headers[k]]);
+    for (const [k, v] of paires) {
+      if (!ENTETES_INTERDITS.test(String(k))) sortie[k] = v;
+    }
+    return sortie;
+  }
+
   function addPendingWrite(entry) {
+    const opts = (entry && entry.opts) || {};
+    const cle = opts.idempotencyKey;
+    // Pas de cle, ou l'appelant ne l'a pas declaree rejouable : on ne met rien
+    // en file. Perdre une ecriture est reparable ; en creer deux ne l'est pas.
+    if (opts.rejouable !== true || !cle) {
+      (window.tabibiErreur || console.warn)(
+        new Error('ecriture non rejouable: ni cle d idempotence ni declaration'),
+        'tabibi-network.js:addPendingWrite');
+      return false;
+    }
     const q = getPendingWrites();
-    q.push({ ...entry, queuedAt: Date.now() });
+    q.push({
+      url: entry.url,
+      opts: {
+        method: opts.method,
+        body: opts.body,
+        headers: { ...sansIdentifiants(opts.headers), 'Idempotency-Key': String(cle) },
+      },
+      queuedAt: Date.now(),
+    });
     try { localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(q)); } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-network.js:98'); }
+    return true;
   }
   async function flushPendingWrites() {
     const q = getPendingWrites();

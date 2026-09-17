@@ -745,16 +745,383 @@ une** — `loadUser`, `renderUserUI`, `hideLoading`, `tabibiT` sont tous protég
 > **Un outil trop bruyant pour être une porte peut rester un bon outil de fouille** — à
 > condition de vérifier chaque touche avant d'y croire.
 
+## Lot 360 — P-71 à P-81
+
+> ⚠️ **La numérotation saute volontairement de P-70 à P-71.** Pendant l'écriture de ce lot,
+> P-69 et P-70 vivaient sur `lot/onboarding-rpc-favoris`, pas encore fusionné : numéroter
+> par-dessus aurait donné **deux problèmes différents sous le même identifiant** le jour de la
+> fusion. Ce jour est arrivé (#144, 16/09) — les deux sections sont juste au-dessus, et rien
+> n'est entré en collision. Le saut était le prix à payer, et il valait moins cher que la
+> collision.
+
+## P-71 — deux puces ne pouvaient rien trouver, jamais
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-71 | Les puces **« Urgences »** et **« Femmes »** rendaient **toujours zéro résultat**, et l'écran répondait « Aucun médecin avec ces filtres » | elles filtrent sur `d.urgent` et `d.g === 'F'`, deux champs **fabriqués à l'hydratation** : `urgent: false` et `g: 'H'`, en dur, pour les 75 035 praticiens. Lecture en base le 16/09 : **aucune colonne de genre ni d'urgence**, ni dans `doctor_profiles`, ni dans `public_doctors` | les deux puces ne sont plus rendues (`PUCES_SANS_DONNEE`) ; l'hydratation cesse d'affirmer une valeur qu'elle n'a pas (`!!d.is_urgent`, `d.gender \|\| null`) | `tests/e2e/puces-recherche.spec.js` — 3 essais × 2 profils | **réglé** |
+
+### Un message qui accuse la recherche
+
+« Aucun médecin avec ces filtres » invite à élargir sa recherche. Ici, aucun élargissement
+n'aurait marché : la faute n'était pas dans la demande, elle était dans la donnée. L'utilisateur
+ne pouvait pas le deviner, et rien ne le lui disait.
+
+### On masque, on ne supprime pas — et on garde les deux filtres
+
+Les deux branches de filtrage sont **justes** ; c'est la donnée qui manquait. Elles restent, et
+`PUCES_SANS_DONNEE` est la seule ligne à modifier le jour où la colonne arrive. Supprimer
+aurait obligé à tout réécrire, donc à réinventer le même filtre — et peut-être moins bien.
+
+### La garde ne compte pas les puces, elle les essaie
+
+Elle prend celles que la page **rend**, les clique une par une, et vérifie qu'aucune ne vide la
+liste alors que le lot reçu devrait passer. Une puce ajoutée demain sur une colonne absente
+échouera ici sans que personne n'ait à y penser.
+
+> ⚠️ **Et elle a d'abord été fausse.** Écrite sans attente, elle vérifiait « il y a 7 fiches »
+> juste après le clic — donc **avant** que `doFilter()` (débounce 300 ms) ait filtré. Elle était
+> vraie immédiatement, et **verte même avec les puces mortes remises**. La contre-épreuve l'a
+> montrée ; la relecture, non. On laisse passer la fenêtre, puis on mesure.
+
+## P-72 — un filtre que personne n'avait posé, un reset qui ne remettait rien
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-72 | Le post-filtre de **prix s'exécutait au chargement** : tout praticien à plus de 5 000 DA disparaissait de l'accueil sans qu'aucun filtre ait été posé. Et après **« réinitialiser »**, la page restait **repliée** | la condition était `opts.maxPrice != null`, or le curseur **démarre à 5 000**. Et `resetFilters()` posait **10 000** alors que la valeur d'origine est 5 000 : `prixModifie` valait donc `true` après un reset | le post-filtre suit `prixModifie` (le curseur a-t-il **bougé**), et le reset revient à `fp.defaultValue` — ce que le HTML déclare | `tests/e2e/filtre-prix.spec.js` — 5 essais × 2 profils. Contre-épreuve : les deux défauts remis, **5 sur 5** échouent | **réglé** |
+
+### Une seule cause, deux symptômes
+
+> **« Une valeur est posée » n'est pas « quelqu'un a choisi ».**
+
+C'est la même distinction que celle extraite la veille pour `_filtresActifs` (P-62), au même
+endroit du code, et elle avait été corrigée **là** sans l'être **ici** : la notion de « filtre
+actif » lisait déjà `prixModifie`, le post-filtre lisait encore `maxPrice != null`. Deux
+lectures du même curseur, dans le même fichier, qui ne disaient pas la même chose.
+
+### Latent n'est pas inoffensif
+
+Mesuré le 16/09 : **75 035 / 75 035** fiches n'ont aucun tarif, et un tarif absent passe le
+filtre. Personne ne disparaissait donc — **aujourd'hui**. Le premier médecin qui saisit 6 000 DA
+disparaissait de l'accueil sans explication. La garde fabrique exprès ce praticien : un essai
+sur des fiches sans tarif serait vert dans les deux sens et ne prouverait rien.
+
+### Le reset et la valeur d'origine
+
+`fp.defaultValue`, c'est exactement ce que l'attribut `value` du HTML déclare. Une seule source :
+le jour où le curseur démarrera ailleurs, le reset suivra tout seul. Recopier `10000` était la
+même faute que les « 58 wilayas » recopiées (P-50) — **un chiffre recopié ne se met jamais à
+jour**.
+
+## P-73 — un nom de membre allait brut dans la page qui peut retirer des membres
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-73 | `admin-cabinet.html` (liste des membres) et `secretaire-dashboard.html` (menu des médecins) injectaient `full_name`, `specialty_fr`, `role` et `user_id` **sans échappement** dans `innerHTML` | la donnée vient de `cabinet_members_directory_view`, donc de ce qu'un membre a saisi. Essai : un nom `<img src=x onerror=…>` **marquait `window.__xss`** sur les deux pages | échappement par `window.esc` / `window.escAttr` (`js/tabibi-security.js`, chargé ligne 5 des deux pages) | `tests/e2e/xss-membres-cabinet.spec.js` — 3 essais × 2 profils | **réglé** |
+
+### La protection existait à côté du trou
+
+`admin-cabinet.html` portait déjà un `_escAttr` **local** — une quatrième copie de l'échappeur
+du dépôt — qui protégeait les attributs `data-*` du bouton « retirer ». Pendant ce temps, le
+**texte** juste au-dessus partait brut. La copie locale est remplacée par `window.escAttr` : une
+copie de moins, et le texte protégé.
+
+### Pourquoi celui-ci compte plus que la moyenne
+
+La charge s'exécutait dans **la page d'administration du cabinet** — celle qui liste les membres
+et peut les retirer. Son lecteur est, par construction, celui qui a le plus de droits.
+
+### La garde ne cherche pas `&lt;`
+
+Chercher l'entité échappée dans le HTML serait garder une **orthographe**. La charge écrit une
+marque globale si elle s'exécute ; on regarde la marque. Et un troisième essai vérifie que
+**cette charge est bien exécutable** dans ce contexte — sans lui, les deux premiers seraient
+verts sur une page non protégée si `onerror` ne se déclenchait pas (CSP, image jamais chargée).
+
+Enfin, un contrôle que l'échappement n'a pas **effacé** le membre : un écran vide passerait le
+test de sécurité sans protéger personne.
+
+## P-74 — le filtre PII de Sentry était posé sur le seul champ que presque rien n'emprunte
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-74 | `beforeSend` n'anonymisait que `event.message`. Une exception **levée** — le cas courant — partait chez Sentry avec l'e-mail et le téléphone en clair | `event.message` n'est renseigné que par `captureMessage()`. Le texte d'une exception vit dans `event.exception.values[].value` ; le reste dans `event.breadcrumbs[].message` / `.data` et `event.request.url` | passe **récursive bornée** sur l'événement entier (profondeur 8, 400 nœuds, cycles coupés), plus une rédaction des query-strings **par nom de paramètre** | `tests/sentry-anonymisation.test.mjs` — 10 essais | **réglé** |
+
+### Le filtre existait, il regardait ailleurs
+
+Ce n'est pas un oubli de protection : c'est une protection posée au mauvais endroit. **Une garde
+qui couvre un cas rare et affiche vert rassure sur ce qu'elle ignore** — le motif du compteur
+`innerHTML` qui voyait 29 cas sur 134, et celui de `verifier:fuseau` qui ne lisait pas `tests/`.
+
+### La query-string se rédige par NOM, pas par motif
+
+`?token=…` n'a la forme ni d'un e-mail ni d'un numéro, et c'est pourtant ce qu'on veut le moins
+voir partir chez un tiers. On rédige donc par nom de paramètre (`token`, `key`, `secret`,
+`password`, `email`, `phone`…), puis on passe les motifs sur ce qui reste. Et **on ne détruit
+pas ce qui sert à déboguer** : le chemin et les paramètres anodins survivent — un essai le garde.
+
+### ⚠️ La garde a d'abord prouvé la mauvaise chose
+
+Écrite d'un trait, elle appelait la fonction de nettoyage **prise à part**. Contre-épreuve :
+`beforeSend` ramené à `event.message` — **les 8 essais sont restés verts**. Ils prouvaient qu'un
+nettoyeur juste existe, pas qu'il soit **branché**.
+
+> C'est le défaut réparé ici, reproduit dans sa propre garde : une fonction peut être juste et
+> n'être jamais appelée.
+
+Deux essais passent désormais par la configuration **réellement remise à `Sentry.init`** — le
+faux SDK est posé par `document.head.appendChild`, qui déclenche `onload`. La contre-épreuve
+les fait échouer.
+
+### Et une borne, pas par élégance
+
+Un `beforeSend` coûteux ralentit **chaque** erreur de la page, donc finit par être retiré — ce
+qui serait pire que pas de filtre. Un événement cyclique ferait geler l'onglet : les cycles sont
+coupés. Les deux cas ont leur essai.
+
+## P-75 — « Un SMS et un email de confirmation vous ont été envoyés »
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-75 | `success.html` annonçait, après **chaque** réservation, deux envois. **Aucun des deux n'existe** | SMS : `js/tabibi-sms.js` porte `enabled: false` et `window.tabibiSMS` **n'est appelé nulle part**. E-mail : ni `reservation.html` ni `js/tabibi-booking.js` n'appellent `sendEmail` — et la boîte d'envoi prévue en base, `appointment_notifications` (déclencheur `trg_appointment_confirmed_outbox`), contient **0 ligne dont 0 envoyée** au 16/09 | la phrase dit ce qui est vrai : le rendez-vous est enregistré et retrouvable. Une seconde ligne prévient qu'aucun SMS ni e-mail ne partira | `tests/canaux-annonces.test.mjs` — 5 essais | **réglé** |
+
+### Ce défaut-là fait ATTENDRE
+
+Le patient ne relance pas : on lui a dit que c'était parti. C'est la famille de P-28
+(« e-mail envoyé » sur trois parcours) et du cron des rappels qui affichait 4 531 exécutions
+« succeeded » en envoyant le mot `TA_CLE`.
+
+### Ce qui est vrai, et qui a été vérifié avant d'être écrit
+
+Le rendez-vous **est** enregistré, il apparaît dans « Mes rendez-vous », et la cloche de
+notification fonctionne — `public.notifications` : 17 lignes, 5 lues. On ne remplace pas une
+promesse par du vide : on dit où retrouver le rendez-vous, et on conseille de garder le
+récapitulatif imprimable qui existait déjà.
+
+### La garde ne interdit pas un mot, elle exige un émetteur
+
+Garder « la phrase ne doit pas dire SMS » aurait bloqué le jour où le SMS marchera. La règle
+est : **un canal ne s'annonce que s'il a un émetteur.** Le fichier mesure d'abord s'il en
+existe un — module activé **et** appelé — et n'exige le silence que dans le cas contraire. Le
+jour où quelqu'un branche l'envoi, le premier essai échoue avec le message
+« `success.html` PEUT et DOIT l'annoncer de nouveau ». **Une garde qui se périme toute seule
+est une garde qu'on désactive ; celle-ci change d'exigence au lieu de se périmer.**
+
+## P-76 — trois vaccins écrits en dur, affichés à tous les patients
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-76 | `patient-profile.html` affichait à **chaque** patient « COVID-19 (rappel) · Pfizer · 12 mars 2024 », « Tétanos / Diphtérie · 8 juin 2022 », « Grippe saisonnière », pastilles vertes **« À jour »** comprises | les trois blocs sont écrits en dur dans le HTML. À côté, la **carte santé** (`#hc-blood`, `#hc-imc`, `#hc-age`, `#hc-allergies`) n'était **jamais remplie**, et « membre depuis **2025** » était figé | tout est alimenté par `patient_medical_data` (déjà chargé dans le formulaire) ; « — » quand la base ne rend rien ; la pastille « membre depuis » disparaît faute de date | `tests/e2e/profil-patient-vraies-donnees.spec.js` — 9 essais × 2 profils. Contre-épreuve sur la page d'avant : **7 sur 9** échouent | **réglé** |
+
+### Ce n'était pas du décor
+
+Le reste de la page — la carte de réservation d'exemple, les portraits de la vitrine — est
+assumé comme vendeur. **Celui-ci était une affirmation médicale sur quelqu'un, sur la page de
+son propre dossier.** Un patient pouvait y lire qu'il était à jour du tétanos sans l'avoir
+jamais été, et le croire : c'est sa fiche, pas une brochure.
+
+### « On ne sait pas » et « zéro » ne se valent pas
+
+Les compteurs de rendez-vous lisaient `tabibi_rdv`. **Ce n'est pas une clé morte** — contrairement
+à ce que l'audit supposait : `patient-dashboard.html` y écrit ce qu'il a lu du serveur. Mais tant
+que le patient n'a pas ouvert son tableau de bord, elle n'existe pas, et « 0 RDV total » était
+alors une **affirmation**, pas un compte. Un patient qui a trois rendez-vous lisait zéro.
+
+Tiret tant qu'on n'a rien lu, chiffre dès qu'on a lu. Les favoris, eux, sont écrits par la page
+elle-même : absent y signifie vraiment zéro, et ils restent à `0`.
+
+### Un IMC ne se calcule pas sur une saisie aberrante
+
+3 cm et 900 kg sont des fautes de frappe. Un IMC calculé dessus serait un nombre **affirmé
+faux**, et pire qu'un tiret : il a l'air d'un calcul. Bornes de plausibilité, sinon « — ».
+
+### Construit en DOM, et c'est mesuré
+
+La première version assemblait des chaînes : le cliquet `verifier:innerhtml` est monté de **135
+à 136**. Réécrit en nœuds DOM (`textContent`) — le compteur est revenu à 135, et il n'y a plus
+aucune liste de caractères à penser à interdire. Un essai vérifie qu'un nom de vaccin piégé ne
+s'exécute pas.
+
+## P-77 — deux copies du nombre de wilayas dormaient ailleurs
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-77 | `js/tabibi-dawini.js` refusait toute demande venant d'une wilaya **au-dessus de 58** — les onze nouvelles étaient rejetées par un contrôle de saisie, **silencieusement**. `js/tabibi-brevo.js` promettait « **48 wilayas** » dans l'e-mail de bienvenue | le lot P-49/P-50 avait aligné les quatre listes et les phrases de l'accueil ; ces deux-là vivaient dans des modules que personne n'avait ouverts | Dawini : `NB_WILAYAS`, **comparé à `_W` par un essai**. Brevo : la phrase se passe du nombre | `tests/wilayas-69.test.mjs` (+2 essais, 13 au total) | **réglé** |
+
+### Le second ne dit plus de nombre du tout
+
+Le découpage a changé **deux fois** (48 → 58 en 2019, 58 → 69 en 2026) et cette copie est restée
+fausse les deux fois. Et elle part **par e-mail** : une fois expédié, on ne le corrige plus.
+Écrire 69 serait la troisième copie à périmer ; ce module n'a pas accès à la liste. **Une phrase
+sans chiffre ne se périme pas.**
+
+### Le premier garde son nombre, mais avec un témoin
+
+Dawini ne peut pas lire `_W`. Le nombre reste écrit — et un essai le **compare** à `_W` : le
+jour où l'un bouge sans l'autre, la porte rougit. L'essai ne vérifie pas « c'est 69 », ce serait
+recopier le chiffre une cinquième fois, dans la garde.
+
+> Un contrôle de saisie qui refuse sans rien dire est le pire endroit où laisser un nombre
+> périmé : personne ne voit d'erreur, la demande disparaît simplement.
+
+## P-78 — une candidature persistait, et personne ne la lisait
+
+> ⚠️ **Cette fiche ferme la moitié « aucun écran ne la lit » de P-69**, ouverte la veille par
+> le lot d'à côté. L'autre moitié — personne n'est prévenu à l'arrivée d'un dossier — reste
+> ouverte sous **P-79**.
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-78 | L'inscription médecin **enregistre** depuis la veille, et **aucun écran ne lisait** `doctor_applications`. L'écran de dépôt disait « Nous vous écrirons » | la table et la RPC sont en place ; la RLS réserve la lecture aux admins ; aucune page ne l'interrogeait. La candidature partait dans une table que personne n'ouvrait | `admin-candidatures.html` — liste **en lecture seule**, filtres par statut, construite en DOM, plus un bouton « Candidatures » au tableau de bord admin | `tests/e2e/admin-candidatures.spec.js` — 9 essais × 2 profils | **réglé** |
+
+### La forme douce du tableau de bord vert
+
+Le système marchait, et personne ne regardait. C'est exactement le cron des rappels qui
+affichait 4 531 exécutions « succeeded » en envoyant le mot `TA_CLE` — sauf qu'ici rien
+n'affichait de faux succès : il n'y avait **aucun écran du tout**, ce qui est la même
+information, en silence.
+
+### L'essai qui compte est celui qui parle d'une AUTRE page
+
+Une liste que personne ne sait ouvrir laisse le défaut intact. Un essai vérifie donc que le
+**tableau de bord admin mène à cette page** — sur la page **servie**, pas sur le fichier du
+dépôt, parce que la suite tourne aussi sur `dist-web` et que c'est le build que le visiteur
+reçoit (P-29). Sans ce lien, les huit autres essais gardent une page que personne n'atteint.
+
+### Une erreur de lecture doit SE VOIR
+
+Une liste vide sur une RLS qui refuse se lit « personne ne s'inscrit » — et on en conclurait
+que le formulaire est cassé, ou pire, qu'il n'intéresse personne. L'échec est affiché comme un
+échec ; un essai le garde.
+
+### Lecture seule, et construite en DOM
+
+Changer un statut serait une **écriture en base**, hors du périmètre de ce lot. La page montre
+ce qui est arrivé ; décider vient après (voir P-79 pour ce qui manque encore).
+
+Les champs viennent d'un formulaire **public** : la page est construite en nœuds DOM
+(`textContent`), il n'y a donc rien à échapper — donc rien à oublier d'échapper. C'est la leçon
+de P-73, appliquée **avant** d'avoir le défaut.
+
+## P-80 — une file qui pouvait doubler un rendez-vous et écrire un jeton sur le disque
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-80 | `tabibi_pending_writes` rejouait des `POST`/`PATCH` **sans idempotence**, et rangeait `opts` **tel quel** dans `localStorage` — en-têtes compris, donc `Authorization: Bearer …` | **latent** : mesuré le 16/09, `tabibiFetch` n'a **aucun appelant** dans le dépôt. Rien ne remplissait cette file | les identifiants ne sont jamais rangés ; une écriture n'entre en file que **déclarée rejouable et munie d'une clé d'idempotence**, renvoyée en en-tête `Idempotency-Key` | `tests/file-ecritures-hors-ligne.test.mjs` — 6 essais. Contre-épreuve : ancienne mise en file, **5 sur 6** échouent | **réglé côté client — serveur ouvert** |
+
+### Un `POST` qui expire n'a pas échoué
+
+Son résultat est **inconnu** : le serveur l'a peut-être enregistré avant que le délai tombe. Le
+rejouer, c'est risquer un second rendez-vous sur le même créneau — et le patient ne verrait
+qu'un message de succès.
+
+> **Perdre une écriture est réparable** — l'utilisateur recommence. **En créer deux ne l'est
+> pas** : personne ne sait qu'il y a un doublon.
+
+### Latent n'est pas acceptable
+
+L'absence d'appelant est ce qui rend la correction **sans risque**, pas ce qui rendait le défaut
+tolérable. Un défaut latent attend un appelant — c'est exactement l'histoire du curseur de prix
+(P-72), inoffensif tant qu'aucun tarif n'est saisi.
+
+Un essai garde ce constat : le jour où quelqu'un appelle `tabibiFetch`, il échoue en disant de
+relire cette fiche. Ce n'est pas une règle, c'est un **réveil**.
+
+### ⚠️ Ce qui reste, et pourquoi la file est de fait fermée
+
+**Aucun serveur ne lit `Idempotency-Key` aujourd'hui.** Tant que ce n'est pas le cas, aucune
+écriture ne devrait être déclarée rejouable — et aucune ne l'est. Mieux vaut une file vide
+qu'une file qui double des rendez-vous.
+
+À décider (écriture en base : validation requise) : une table `idempotence(cle, reponse,
+cree_le)` et un contrôle en tête des RPC d'écriture, ou l'équivalent dans une fonction edge.
+
+## P-81 — une ordonnance au nom de « 3f2504e0... »
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-81 | `medecin-ordonnance.html` affichait **les huit premiers caractères d'un identifiant technique** à la place du nom du patient | le nom était lu dans `public.users`, dont la RLS **scope par `auth.uid()`** : un médecin n'y voit que sa propre ligne. La requête ne levait pas, elle rendait **rien**, et le code tombait dans son `else` : `pid.slice(0, 8) + '...'` | lecture par `doctor_patients_directory` — vérifié en base le 16/09 : `authenticated: SELECT`, filtre `auth.uid()`, passe par `appointments`. Même périmètre, sans la RLS qui bloque | `tests/e2e/ordonnance-nom-patient.spec.js` — 4 essais × 2 profils. Contre-épreuve : **4 sur 4** échouent, sur `"3f2504e0..."` | **réglé** |
+
+### La même correction avait déjà été faite, ailleurs
+
+`js/tabibi-messaging.js:71` porte **le même commentaire**, daté du **05/08/2026**, pour le même
+motif. Le correctif avait été appliqué à un appelant et pas à l'autre.
+
+> C'est la faute de P-65 — `getSupabase` copié sans sa définition — dans l'autre sens : une
+> **correction** qui n'a pas voyagé jusqu'à tous ses sites.
+
+### Un identifiant ne sert jamais de nom
+
+Sur un document médical, « 3f2504e0... » ressemble à un nom tronqué : le médecin ne se dit pas
+que c'est une panne. On préfère écrire « Patient non identifié » — un message est une
+information, un identifiant déguisé n'en est pas une. Trois essais couvrent les trois façons de
+ne pas avoir de nom : refus de lecture, ligne absente, ligne aux deux champs vides.
+
+### Au passage
+
+`verifier:rpc-passage` réclamait depuis un moment l'abaissement du plafond de
+`patient-ordonnances.html` (0 appel direct, plafond 1). Fait. **Un cliquet qu'on n'abaisse pas
+laisse revenir ce qu'il vient de faire disparaître.**
+## P-82 — la porte tuait ce qu'elle mesurait, puis l'accusait
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-82 | CI **rouge sur `e2e`** dans `verifier:toutes`, sans qu'aucun test ne soit nommé — pendant que la suite passait | `spawnSync` capture en **mémoire**, plafonné à 1 MiB. Mesuré : `status: null`, `signal: SIGTERM`, `error: ENOBUFS`, stdout 82 942 o + stderr **960 887 o**. Le script faisait `r.status === null ? 1 : r.status` → **1** | la sortie part **directement dans un fichier** (aucun plafond), et un enfant **tué** est rapporté comme tel, pas comme un essai en échec | `tests/porte-sortie-volumineuse.test.mjs` — 4 essais. Contre-épreuve : ancien lancement remis, **2 sur 4** échouent | **réglé** |
+
+### Le mesureur fabriquait le rouge
+
+`npm run verifier:toutes` sortait rouge à la seconde où `npx playwright test`, sur la même
+machine et le même serveur neuf, rendait **502 passed**. La porte tuait la suite à quelques
+essais de la fin, puis rapportait qu'elle avait échoué.
+
+> C'est le symétrique exact du **faux vert** que ce dépôt traque depuis le début : ici le
+> tableau de bord est rouge, et il a tort. Le coût est le même — on cherche le défaut là où
+> il n'est pas.
+
+Et le signe qui aurait dû alerter était **dans le message** : l'extrait ne nommait aucun test
+tombé. Il n'en nommait aucun parce qu'aucun n'était tombé.
+
+### Pourquoi ce jour-là, et pas avant
+
+Le serveur statique de Playwright imprime **une ligne d'accès par requête**, sur stderr. La
+suite est passée à 502 essais, stderr a franchi le mégaoctet, et le plafond est tombé au milieu
+d'un lot qui n'y était pour rien — d'où trois heures passées à soupçonner les six nouveaux
+essais, puis à les durcir.
+
+> **Un plafond qu'on ne voit pas monter est un plafond qu'on franchit sans le savoir.**
+> Famille du `tail -1` de la boucle shell (13/09) et des « 25 dernières lignes » (P-53) : le
+> mesureur regarde une position, pas un contenu.
+
+### Ce que la garde vérifie, et pourquoi en deux moitiés
+
+Le **mécanisme** d'abord — une capture mémoire meurt au-delà du plafond, un descripteur de
+fichier n'a pas de plafond. Sans cette moitié, la règle du dessous serait une convention que
+personne ne saurait justifier, et qu'on « simplifierait » un jour.
+
+⚠️ Et l'essai du mécanisme a lui-même été **faux au premier jet** : l'enfant appelait
+`process.exit(0)`, or les écritures sur un tube sont asynchrones — la sortie était tronquée à
+un seul morceau, le plafond n'était jamais atteint, et l'essai concluait que le mécanisme
+n'existait pas. Il existait ; c'était l'enfant qui trichait.
+
+### Dixième fois : une garde avalée par des commentaires
+
+Le lecteur de source de cette garde retirait les blocs `/* … */` **avant** les lignes `//`.
+Or le script contient, dans un commentaire de ligne, `tests/*.test.mjs` — dont le `/*` ouvrait
+un faux bloc qui avalait **8 331 caractères**, deux cents lignes de code comprises. L'essai
+concluait que le correctif n'était pas là.
+
+On retire désormais les commentaires de **ligne d'abord** : ils emportent leur faux `/*` avec
+eux.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
 |---|---|---|---|---|---|
 | P-28 | Trois parcours affichent « Email envoyé » alors que **rien ne part** | `README_APP.md` : `RESEND_API_KEY` posé le 20/05, `send-email` jamais écrite | la brique d'envoi existe (`_partage/courriel.ts`) et sert **un** parcours | **garde manquante** pour les trois autres | **ouvert** |
 | P-60 | La carte annonce **« Téléconsultation · Disponible »** et **aucun médecin ne la propose** | mesuré en base le 16/09 : `count(*) filter (where telehealth_enabled)` = **0** sur **75 035** `doctor_profiles` (et 1 seul `is_verified`) | aucun — c'est une décision produit, pas un correctif de code : ouvrir le drapeau sur de vrais médecins, ou retirer l'annonce | **garde manquante par nature** : un essai hermétique ne voit pas la base. La mesure est à refaire avant chaque annonce | **ouvert** |
-| P-63 | Le curseur « Prix max » **démarre à 5 000 DA et filtre pour de vrai** : en vitrine comme en recherche, tout médecin dont le tarif dépasse 5 000 DA est retiré de la page sans que personne ne l'ait demandé | `js/home-app.js` : le post-filtre client `d.prix == null \|\| d.prix <= opts.maxPrice` n'est **pas** conditionné à un filtre choisi. **Inoffensif aujourd'hui** : mesuré le 16/09, **75 035 / 75 035** praticiens n'ont aucun tarif renseigné, et un tarif nul passe | aucun — décision produit : curseur neutre au départ (10 000), ou libellé qui assume le filtre | **garde manquante** : latent tant que la base n'a pas de tarifs. Le premier médecin qui en saisit un > 5 000 DA disparaît de l'accueil | **ouvert** |
+| ~~P-63~~ | Le curseur « Prix max » filtrait dès 5 000 DA sans que personne ne l'ait demandé | — | **réglé le 16/09 par [P-72](#p-72--un-filtre-que-personne-navait-posé-un-reset-qui-ne-remettait-rien)** : le post-filtre suit `prixModifie`, et le reset revient à `defaultValue` | `tests/e2e/filtre-prix.spec.js` | **réglé — ligne conservée pour qui cherche P-63** |
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
-| P-69 | Une candidature **persiste, et personne n'est prévenu** : aucun écran n'affiche `doctor_applications`, aucune notification ne part à l'arrivée d'un dossier | la table et la RPC sont en place et gardées (P-68 b) ; la RLS autorise la lecture admin, mais **aucune page ne la lit**. L'écran de dépôt dit « Nous vous écrirons » — cette phrase repose aujourd'hui sur quelqu'un qui pense à interroger la table | à faire : une liste admin (le motif d'`admin-doctor-validation.html` demanderait des RPC `admin_*` qui n'existent pas pour cette table, ou un `.from()` direct sous la RLS admin), ou une notification à l'insertion | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **ouvert** |
-| P-31 | Aucun essai réel : vidéo à deux navigateurs, avis sur données réelles, un PDF arabe **regardé**, un SMS de rappel reçu | — | — | **garde manquante par nature** — un humain doit regarder | **ouvert** |
+| P-69 | Une candidature **persiste, et personne n'est prévenu** | la table et la RPC sont en place (P-68 b) ; la RLS autorise la lecture admin. **La moitié « aucun écran ne la lit » est fermée le 16/09 par P-78** — `admin-candidatures.html` existe et le tableau de bord admin y mène. Reste la moitié qui n'a pas d'écran : **rien ne prévient à l'arrivée d'un dossier** | voir **P-79** pour ce qu'il reste à décider | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **partiellement réglé** |
+| P-79 | **Ce qu'il reste à décider sur P-69**, et qui demande une écriture en base | rien ne prévient à l'arrivée d'un dossier, et la liste admin est en **lecture seule** — changer un statut serait une écriture | à trancher : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) **et** RPC admin de changement de statut. **Validation d'Aghiles requise** (règle 3) | **garde manquante par nature** | **ouvert** |
 
 ---
 

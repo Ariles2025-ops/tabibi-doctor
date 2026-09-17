@@ -62,7 +62,10 @@ const PLAFOND = {
   'doctor-analytics.html': 1,
   'js/tabibi-reviews.js': 1,
   'legal/rgpd-droits.html': 1,
-  'patient-ordonnances.html': 1,
+  // [16/09/2026] Passe de 1 a 0 : le fichier est migre, le cliquet le disait a
+  // chaque passage (« abaisser le plafond »). Un cliquet qu'on n'abaisse pas
+  // laisse revenir ce qu'il vient de faire disparaitre.
+  'patient-ordonnances.html': 0,
   'secretaire-dashboard.html': 1,
 };
 

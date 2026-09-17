@@ -1054,12 +1054,32 @@ function renderSpecs(){
   }).join("");
 }
 
+// ⚠️ [16/09/2026] DEUX PUCES NE POUVAIENT RIEN TROUVER, JAMAIS.
+//
+// « Urgences » filtrait sur `d.urgent` et « Femmes » sur `d.g === 'F'`. Or les
+// deux champs etaient FABRIQUES a l'hydratation : `urgent: false` et `g: 'H'`,
+// en dur, pour les 75 035 praticiens. Cliquer l'une ou l'autre rendait donc
+// toujours zero resultat, et l'ecran repondait « Aucun medecin avec ces
+// filtres » — un message qui accuse la recherche alors que la faute est dans
+// la donnee.
+//
+// Mesure en base le 16/09 : **aucune colonne de genre ni d'urgence** n'existe,
+// ni dans `doctor_profiles`, ni dans `public_doctors`. La donnee n'est pas
+// « pas encore branchee » : elle n'existe pas.
+//
+// On ne les rend donc plus. On ne les SUPPRIME pas non plus : le jour ou la
+// colonne arrive, on retire la ligne ci-dessous et la puce revient avec son
+// filtre. Une puce qui ne peut rien trouver est pire qu'une puce absente —
+// elle fait douter l'utilisateur de sa recherche.
+const PUCES_SANS_DONNEE = ['urg', 'fem'];
+
 function renderChips(){
   const prev={};
   document.querySelectorAll(".chip[data-cv]").forEach(c=>{prev[c.dataset.cv]=c.classList.contains("active");});
   document.getElementById("chips").innerHTML=[
     {k:"chip_urg",v:"urg"},{k:"chip_4",v:"4plus"},{k:"chip_cheap",v:"cheap"},{k:"chip_fem",v:"fem"}
-  ].map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
+  ].filter(c=>PUCES_SANS_DONNEE.indexOf(c.v)===-1)
+   .map(c=>`<button class="chip${prev[c.v]?" active":""}" data-cv="${c.v}" onclick="this.classList.toggle('active');doFilter()">${T(c.k)}</button>`).join("");
 }
 
 // [Phase 5.5 fix BUG #1] doFilter() ne filtre plus en mémoire (qui ne contenait
@@ -2126,10 +2146,15 @@ async function loadDoctorCards(opts, page){
         // null si pas de donnée — docCard affiche "Tarif à confirmer" / "Pas encore noté"
         note: (d.rating != null) ? parseFloat(d.rating) : null,
         prix: (d.consultation_fee_dzd != null && d.consultation_fee_dzd > 0) ? parseInt(d.consultation_fee_dzd, 10) : null,
-        urgent: false,  // colonne is_urgent toujours pas dans la vue enrichie
+        // ⚠️ Plus de `false` en dur : la colonne n'existe pas, donc la valeur
+        // est INCONNUE, pas fausse. Lue de la ligne — elle s'allumera toute
+        // seule le jour ou la colonne arrivera.
+        urgent: !!d.is_urgent,
         cert: d.is_verified !== undefined ? !!d.is_verified : false,
         in: ini, bg: clr.bg, tc: clr.tc,
-        g: 'H',  // colonne gender toujours pas dans la vue enrichie
+        // ⚠️ Plus de `'H'` en dur : c'etait affirmer le genre de 75 035
+        // praticiens. Inconnu tant que la colonne n'existe pas.
+        g: d.gender || null,
         avis: parseInt(d.review_count || 0) || 0,
         langs: Array.isArray(d.languages) ? d.languages.map(l => l.toUpperCase()) : ['FR','AR'],
         desc: d.bio || '',
@@ -2154,7 +2179,20 @@ async function loadDoctorCards(opts, page){
     // Post-filter client (colonnes absentes de la vue — skippe si filtre actif
     // sur des colonnes absent = retourne tout vu qu'on ne sait pas filtrer)
     let res2 = [...DOCTORS];
-    if(opts.maxPrice != null){
+    // ⚠️ [16/09/2026] CE FILTRE S'EXECUTAIT AU CHARGEMENT, SANS QUE PERSONNE
+    // NE L'AIT DEMANDE. Sa condition etait `opts.maxPrice != null`, et
+    // `maxPrice` vaut 5 000 des le premier rendu : le curseur DEMARRE la.
+    // Tout praticien affichant plus de 5 000 DA disparaissait donc de
+    // l'accueil, sans filtre pose et sans que rien ne le signale.
+    //
+    // Inoffensif au 16/09 — mesure : 75 035 / 75 035 fiches n'ont aucun tarif,
+    // et un tarif absent passe. Le premier medecin qui saisit 6 000 DA
+    // disparaissait. **Un defaut latent est un defaut : il attend une donnee.**
+    //
+    // La condition est desormais « le curseur a-t-il ete BOUGE » — `prixModifie`,
+    // compare a `defaultValue` — et non « une valeur est-elle posee ». C'est la
+    // meme distinction que pour `_filtresActifs`, au meme endroit du code.
+    if(opts.prixModifie && opts.maxPrice != null){
       // Ne filtre que les docs qui ONT un prix renseigné > maxPrice. Pas de
       // prix renseigné = laisse passer (sinon on cacherait toute la base).
       res2 = res2.filter(d => d.prix == null || d.prix <= opts.maxPrice);
@@ -2162,6 +2200,11 @@ async function loadDoctorCards(opts, page){
     if(opts.minRating > 0){
       res2 = res2.filter(d => d.note != null && d.note >= opts.minRating);
     }
+    // ⚠️ Les filtres « fem » et « urg » sont CONSERVES, et c'est volontaire :
+    // ils sont justes. Ce qui manquait, c'est la donnee — voir
+    // `PUCES_SANS_DONNEE`. Tant que les puces ne sont pas rendues, ces deux
+    // branches ne sont pas atteintes ; le jour ou elles le seront, elles
+    // filtreront sur une vraie valeur au lieu d'un `'H'` fabrique.
     if(opts.chips && opts.chips.indexOf('fem') !== -1){
       res2 = res2.filter(d => d.g === 'F');
     }
@@ -2230,9 +2273,17 @@ function resetFilters(){
   const fs = document.getElementById('f-spec');     if(fs) fs.value = '';
   const fp = document.getElementById('f-price');
   if(fp){
-    fp.value = 10000;
+    // ⚠️ [16/09/2026] « Reinitialiser » posait 10 000 alors que le curseur
+    // DEMARRE a 5 000. Apres un reset, `prixModifie` valait donc `true` — le
+    // curseur avait bouge, de son point de vue — et la page restait repliee
+    // (`body.recherche-active`) alors que plus aucun filtre n'etait actif.
+    //
+    // Remettre a zero, c'est revenir a la valeur d'ORIGINE, pas a une valeur
+    // choisie. `defaultValue`, c'est exactement ce que le HTML declare : une
+    // seule source, et le jour ou l'attribut `value` change, le reset suit.
+    fp.value = fp.defaultValue;
     const pl = document.getElementById('price-lbl');
-    if(pl) pl.textContent = '10 000 DA';
+    if(pl) pl.textContent = parseInt(fp.value, 10).toLocaleString() + ' DA';
   }
   document.querySelectorAll('.chip.active').forEach(c => c.classList.remove('active'));
   doFilter(true);

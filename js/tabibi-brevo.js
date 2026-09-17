@@ -146,7 +146,14 @@ ${isRTL ? '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;6
           h2: 'Bonjour ' + (name || 'cher patient') + ',',
           intro: 'Bienvenue sur <strong>Tabibi</strong>, la 1ère plateforme algérienne de prise de RDV médical en ligne.',
           features_title: 'Avec Tabibi, vous pouvez :',
-          li1: '🔍 Trouver un médecin dans 48 wilayas',
+          // ⚠️ [16/09/2026] DISAIT « 48 wilayas ». Le decoupage a change DEUX
+          // fois depuis (48 -> 58 en 2019, 58 -> 69 par le decret 26-206 du
+          // 25/05/2026) et ce chiffre est reste faux les deux fois. Il part
+          // par E-MAIL : une fois expedie, on ne le corrige plus.
+          // On ne le remplace pas par 69 — ce serait la troisieme copie a
+          // perimer. Ce module n'a pas acces a la liste des wilayas ; la
+          // phrase se passe donc du nombre, et redevient vraie pour toujours.
+          li1: '🔍 Trouver un médecin partout en Algérie',
           li2: '📅 Prendre RDV 24h/24 en quelques clics',
           li3: '⏰ Recevoir des rappels automatiques',
           li4: '⭐ Consulter les avis vérifiés des patients',
@@ -158,7 +165,7 @@ ${isRTL ? '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;6
           h2: 'مرحبًا ' + (name || 'عزيزي المريض') + '،',
           intro: 'مرحبًا بك في <strong>طبيبي</strong>، أول منصة جزائرية لحجز المواعيد الطبية عبر الإنترنت.',
           features_title: 'مع طبيبي، يمكنك :',
-          li1: '🔍 العثور على طبيب في 48 ولاية',
+          li1: '🔍 العثور على طبيب في جميع ولايات الجزائر',
           li2: '📅 حجز موعد 24/24 ببضع نقرات',
           li3: '⏰ تلقي تذكيرات تلقائية',
           li4: '⭐ الاطلاع على تقييمات المرضى الموثقة',
@@ -170,7 +177,7 @@ ${isRTL ? '<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;6
           h2: 'Hello ' + (name || 'dear patient') + ',',
           intro: 'Welcome to <strong>Tabibi</strong>, Algeria\'s 1st online medical appointment booking platform.',
           features_title: 'With Tabibi, you can:',
-          li1: '🔍 Find a doctor in 48 wilayas',
+          li1: '🔍 Find a doctor anywhere in Algeria',
           li2: '📅 Book 24/7 in a few clicks',
           li3: '⏰ Receive automatic reminders',
           li4: '⭐ See verified patient reviews',

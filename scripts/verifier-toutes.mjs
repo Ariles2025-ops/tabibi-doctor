@@ -23,7 +23,40 @@
 // Usage : npm run verifier:toutes
 // =====================================================================
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, openSync, closeSync } from 'node:fs';
+
+// =====================================================================
+// [17/09/2026] LA PORTE TUAIT CE QU'ELLE MESURAIT, PUIS L'ACCUSAIT
+// =====================================================================
+// `verifier:toutes` sortait ROUGE sur `e2e` pendant que `npx playwright test`,
+// lance a la meme seconde sur la meme machine, rendait **502 passed**.
+//
+// Mesure du spawnSync fautif :
+//
+//     status : null          signal : SIGTERM
+//     error  : ENOBUFS — spawnSync npm ENOBUFS
+//     stdout :  82 942 o  +  stderr : 960 887 o  =  1 043 829 o
+//
+// `spawnSync` capture en MEMOIRE, plafonne a 1 MiB par defaut. Au-dela, Node
+// **tue l'enfant** (SIGTERM) et rend `status: null`. Et ce script faisait :
+//
+//     const code = r.status === null ? 1 : r.status;   // -> 1
+//
+// Donc : la suite passait, la porte la tuait a quelques tests de la fin, et
+// rapportait « La porte e2e sort en 1 ». **Un faux rouge fabrique par le
+// mesureur.** Le pire des deux mondes : on ne peut pas le distinguer d'un vrai
+// echec, et l'extrait ne nomme aucun test tombe — puisqu'aucun n'est tombe.
+//
+// Pourquoi maintenant : le serveur statique de Playwright imprime une ligne
+// d'acces par requete, sur stderr. La suite a grossi (502 essais), stderr a
+// franchi le mega-octet, et le plafond est tombe pile au milieu d'un lot.
+// **Un plafond qu'on ne voit pas monter est un plafond qu'on franchit sans le
+// savoir.**
+//
+// Correctif : la sortie va DIRECTEMENT dans un fichier (aucun plafond), et on
+// la relit pour l'extrait. Et si l'enfant est tue quand meme, on le DIT au
+// lieu de le confondre avec un echec de test.
+// =====================================================================
 
 const PORTES = [
   ['eslint',   'npx',  ['eslint', 'js', 'src', 'scripts', '--quiet']],
@@ -126,12 +159,9 @@ function extraire(nom, sortie) {
   // Ce qui parle d'abord ; a defaut, la fin, qui vaut mieux que rien.
   const choix = (parlantes.length ? parlantes : lignes).slice(-30);
 
-  let chemin = null;
-  try {
-    mkdirSync('test-results', { recursive: true });
-    chemin = `test-results/porte-${nom}.log`;
-    writeFileSync(chemin, sortie + '\n');
-  } catch { /* un disque plein ne doit pas masquer l'echec qu'on rapporte */ }
+  // Le fichier existe deja : la sortie y a ete ecrite DIRECTEMENT par l'enfant,
+  // sans passer par un tampon plafonne (voir l'en-tete du fichier).
+  const chemin = `test-results/porte-${nom}.log`;
 
   const bloc = choix.map((l) => '  ' + l).join('\n');
   return chemin
@@ -169,9 +199,37 @@ for (const [nom, cmd, args] of PORTES) {
     continue;
   }
   const t = Date.now();
-  const r = spawnSync(cmd, args, { encoding: 'utf8', shell: false });
-  const code = r.status === null ? 1 : r.status;
+  // ⚠️ La sortie part dans un FICHIER, pas dans un tampon memoire. `spawnSync`
+  // plafonne sa capture a 1 MiB et TUE l'enfant au-dela : la porte e2e a ete
+  // rapportee rouge alors que ses 502 essais passaient. Un descripteur de
+  // fichier n'a pas de plafond.
+  mkdirSync('test-results', { recursive: true });
+  const journal = `test-results/porte-${nom}.log`;
+  const fd = openSync(journal, 'w');
+  let r;
+  try {
+    r = spawnSync(cmd, args, { stdio: ['ignore', fd, fd], shell: false });
+  } finally {
+    closeSync(fd);
+  }
   const duree = ((Date.now() - t) / 1000).toFixed(1) + 's';
+
+  // ⚠️ UN ENFANT TUE N'EST PAS UN ESSAI QUI ECHOUE. On les distingue, parce
+  // que les confondre a coute une journee : le message disait « la porte sort
+  // en 1 » et l'extrait ne nommait aucun test — puisqu'aucun n'etait tombe.
+  if (r.status === null) {
+    const cause = r.signal ? `tue par ${r.signal}` : 'termine sans code';
+    console.log(`  ${ROUGE('  !!  ')} ${nom.padEnd(10)} ${duree}`);
+    console.error('');
+    console.error(ROUGE(`✗ La porte « ${nom} » n'a pas rendu de code : ${cause}`
+      + `${r.error ? ` (${r.error.code || r.error.message})` : ''}.`));
+    console.error(ROUGE('  Ce n\'est PAS un essai en echec : c\'est l\'execution qui a ete interrompue.'));
+    console.error(`  Sortie partielle : ${journal}`);
+    echec = nom;
+    break;
+  }
+
+  const code = r.status;
   if (code === 0) {
     console.log(`  ${VERT('  ok  ')} ${nom.padEnd(10)} ${duree}`);
     continue;
@@ -179,7 +237,8 @@ for (const [nom, cmd, args] of PORTES) {
   console.log(`  ${ROUGE(` ${String(code).padStart(4)} `)} ${nom.padEnd(10)} ${duree}`);
   console.error('');
   console.error(ROUGE(`✗ La porte « ${nom} » sort en ${code}. On s'arrete ici.`));
-  const sortie = ((r.stdout || '') + (r.stderr || '')).trimEnd();
+  let sortie = '';
+  try { sortie = readFileSync(journal, 'utf8').trimEnd(); } catch { /* journal illisible */ }
   if (sortie) console.error(extraire(nom, sortie));
   echec = nom;
   break;

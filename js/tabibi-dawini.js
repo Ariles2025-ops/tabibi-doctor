@@ -47,6 +47,10 @@
 (function () {
   'use strict';
 
+  // Nombre de wilayas — decret presidentiel 26-206 du 25/05/2026 (58 -> 69).
+  // Temoin de coherence : tests/wilayas-69.test.mjs compare a `_W`.
+  var NB_WILAYAS = 69;
+
   if (window.tabibiDawini && typeof window.tabibiDawini.createRequest === 'function') {
     return;
   }
@@ -223,7 +227,17 @@
     }
     var meds = (opts.medicaments || []).map(function (m) { return String(m).trim(); }).filter(Boolean);
     var wilaya = parseInt(opts.wilayaCode, 10);
-    if (!meds.length || meds.length > 10 || isNaN(wilaya) || wilaya < 1 || wilaya > 58) {
+    // ⚠️ [16/09/2026] CETTE BORNE DISAIT 58. Le decret 26-206 du 25/05/2026 a
+    // porte l'Algerie a 69 wilayas, et les quatre listes du front ont ete
+    // alignees (P-49/P-50) — celle-ci, non. Une demande Dawini depuis une des
+    // onze nouvelles wilayas etait donc REFUSEE, silencieusement, par un
+    // controle de saisie que personne ne regardait.
+    //
+    // Le nombre reste ecrit ici — le module n'a pas acces a la liste des
+    // wilayas — mais un essai le compare a `_W` dans `js/home-app.js` : le jour
+    // ou l'un des deux bouge sans l'autre, la porte rougit. **Un chiffre
+    // recopie ne se met pas a jour tout seul ; on lui met un temoin.**
+    if (!meds.length || meds.length > 10 || isNaN(wilaya) || wilaya < 1 || wilaya > NB_WILAYAS) {
       return { ok: false, error: CODES.ERR_INVALID_INPUT };
     }
     try {

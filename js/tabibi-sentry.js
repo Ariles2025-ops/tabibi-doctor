@@ -25,6 +25,119 @@ window.tabibiErreur = function (erreur, contexte) {
 (function () {
   'use strict';
 
+  // =====================================================================
+  // ANONYMISATION — ce qui part chez un tiers ne revient jamais
+  // =====================================================================
+  // ⚠️ Le filtre ne couvrait que `event.message`, qui n'est renseigne que par
+  // `captureMessage()`. Une exception LEVEE — le cas courant — n'y passait
+  // pas : son texte vit dans `event.exception.values[].value`. On nettoyait le
+  // seul champ que presque rien n'emprunte.
+  //
+  // Les motifs sont ceux d'avant, inchanges. Ce qui change, c'est OU on les
+  // applique : partout, en une passe recursive bornee.
+
+  /** Les trois formes de PII qu'on sait reconnaitre. */
+  var _MOTIFS = [
+    [/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email]'],
+    [/\+?213[\s\-.]?\d{2}[\s\-.]?\d{2}[\s\-.]?\d{2}[\s\-.]?\d{2}/g, '[tel]'],
+    [/0[567]\d{8}/g, '[tel]']
+  ];
+
+  /** Les noms de parametres dont on ne garde JAMAIS la valeur. */
+  var _PARAM_SENSIBLE = /^(token|access_token|refresh_token|key|apikey|api_key|secret|password|pwd|email|mail|phone|tel|telephone)$/i;
+
+  function _nettoyerTexte(t) {
+    var out = String(t);
+    for (var i = 0; i < _MOTIFS.length; i++) out = out.replace(_MOTIFS[i][0], _MOTIFS[i][1]);
+    return out;
+  }
+
+  /**
+   * Une URL, sans les valeurs de ses parametres sensibles.
+   *
+   * ⚠️ On ne se contente pas des motifs PII : `?token=…` n'a la forme ni d'un
+   * e-mail ni d'un numero, et c'est pourtant ce qu'on veut le moins voir
+   * partir. On redige donc par NOM de parametre, puis on passe les motifs sur
+   * ce qui reste.
+   */
+  function _nettoyerUrl(u) {
+    var url = String(u);
+    var i = url.indexOf('?');
+    if (i === -1) return _nettoyerTexte(url);
+    var base = url.slice(0, i);
+    var reste = url.slice(i + 1);
+    var frag = '';
+    var h = reste.indexOf('#');
+    if (h !== -1) { frag = reste.slice(h); reste = reste.slice(0, h); }
+    var parties = reste.split('&').map(function (kv) {
+      var j = kv.indexOf('=');
+      if (j === -1) return kv;
+      var nom = kv.slice(0, j);
+      return _PARAM_SENSIBLE.test(decodeURIComponent(nom)) ? (nom + '=[redige]') : kv;
+    });
+    return _nettoyerTexte(base + '?' + parties.join('&') + frag);
+  }
+
+  /**
+   * Passe recursive sur une valeur d'evenement.
+   *
+   * ⚠️ BORNEE, et c'est delibere : profondeur 8, 400 noeuds. Un `beforeSend`
+   * qui coute cher ralentit CHAQUE erreur de la page — et un filtre couteux
+   * finit par etre retire, ce qui est pire que pas de filtre du tout. Les
+   * cycles sont coupes par la liste `vus` : un evenement Sentry en contient
+   * (contexts qui se referencent), et une recursion infinie dans `beforeSend`
+   * gelerait l'onglet.
+   */
+  function _nettoyer(valeur, profondeur, vus, compteur) {
+    if (valeur == null || profondeur > 8 || compteur.n > 400) return valeur;
+    if (typeof valeur === 'string') { compteur.n++; return _nettoyerTexte(valeur); }
+    if (typeof valeur !== 'object') return valeur;
+    if (vus.indexOf(valeur) !== -1) return valeur;
+    vus.push(valeur);
+
+    if (Object.prototype.toString.call(valeur) === '[object Array]') {
+      for (var i = 0; i < valeur.length; i++) {
+        compteur.n++;
+        valeur[i] = _nettoyer(valeur[i], profondeur + 1, vus, compteur);
+      }
+      return valeur;
+    }
+    for (var k in valeur) {
+      if (!Object.prototype.hasOwnProperty.call(valeur, k)) continue;
+      compteur.n++;
+      if (compteur.n > 400) break;
+      // Une URL se nettoie autrement qu'un texte : par nom de parametre.
+      if (/^(url|href|request_url|from|to)$/i.test(k) && typeof valeur[k] === 'string') {
+        valeur[k] = _nettoyerUrl(valeur[k]);
+      } else {
+        valeur[k] = _nettoyer(valeur[k], profondeur + 1, vus, compteur);
+      }
+    }
+    return valeur;
+  }
+
+  /**
+   * Nettoie l'evenement entier, en place.
+   *
+   * ⚠️ `event.user.id` est un UUID : il ne ressemble ni a un e-mail ni a un
+   * numero, aucun motif ne le touche. On le garde — c'est ce qui permet de
+   * relier deux erreurs au meme compte sans savoir qui c'est.
+   */
+  function _nettoyerEvenement(event) {
+    if (!event || typeof event !== 'object') return event;
+    var vus = [];
+    var compteur = { n: 0 };
+    var garde = event.user ? event.user.id : undefined;
+    _nettoyer(event, 0, vus, compteur);
+    if (event.user && garde !== undefined) event.user.id = garde;
+    return event;
+  }
+
+  // Exposee pour les essais : on ne peut pas faire lever une vraie exception
+  // dans le SDK depuis un essai hermetique, et un filtre qu'on ne peut pas
+  // essayer est un filtre qu'on croit sur parole.
+  window.tabibiSentryNettoyer = _nettoyerEvenement;
+
   function getDSN() {
     if (window.TABIBI_CONFIG && typeof window.TABIBI_CONFIG.SENTRY_DSN === 'string') {
       var d = window.TABIBI_CONFIG.SENTRY_DSN.trim();
@@ -116,13 +229,26 @@ window.tabibiErreur = function (erreur, contexte) {
               delete event.user.username;
               delete event.user.ip_address;
             }
-            // Strip PII patterns dans le message d'erreur (defensif)
-            if (event.message && typeof event.message === 'string') {
-              event.message = event.message
-                .replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email]')
-                .replace(/\+?213[\s\-.]?\d{2}[\s\-.]?\d{2}[\s\-.]?\d{2}[\s\-.]?\d{2}/g, '[tel]')
-                .replace(/0[567]\d{8}/g, '[tel]');
-            }
+            // ⚠️ [16/09/2026] ON NE NETTOYAIT QUE `event.message`.
+            //
+            // Or un evenement Sentry porte le texte a QUATRE autres endroits au
+            // moins, et c'est meme la ou il finit le plus souvent :
+            //
+            //   event.exception.values[].value   le message de l'exception —
+            //                                    c'est LUI que Sentry affiche
+            //   event.breadcrumbs[].message      « POST /rest/v1/… »
+            //   event.breadcrumbs[].data         corps, url, parametres
+            //   event.request.url                ?email=…&phone=…
+            //
+            // `event.message` n'est renseigne que par `captureMessage()`. Une
+            // exception levee — le cas courant — passait donc a cote du filtre
+            // **entierement**. Le nettoyage etait pose sur le seul champ que
+            // presque rien n'emprunte.
+            //
+            // On passe desormais sur l'evenement en entier (voir `_nettoyer`),
+            // bornes en profondeur et en nombre de noeuds : un `beforeSend` qui
+            // coute cher est un `beforeSend` qu'on finit par retirer.
+            _nettoyerEvenement(event);
           } catch (e) { (window.tabibiErreur || console.warn)(e, 'tabibi-sentry.js:126'); }
           return event;
         }
