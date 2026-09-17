@@ -68,7 +68,7 @@
 <!-- [Phase 0] Header factorisé → js/tabibi-header.js (variante app : accueil + lockup
      #hdr-title dynamique + cloche #notif-count + pill #user-pill + logout + langbar).
      Hooks page inchangés : toggleNotif()/toggleMenu()/logout() restent définis ici. -->
-<div data-tabibi-header data-variant="app" data-home="index.html" data-title-key="my_space"></div>
+<div data-tabibi-header data-variant="app" data-home="accueil-public.html" data-title-key="my_space"></div>
 <script src="js/tabibi-header.js"></script>
 
 <!-- DROPDOWN NOTIFICATIONS -->
@@ -102,7 +102,7 @@
        (la recherche médecin est désormais centralisée sur la home et le booking
        passe par doctor-profile.html → reservation.html). CTA Mes RDV redirige vers
        /mes-rdv.html (Phase 5.2.4). L'ancien switch tab interne est désactivé. -->
-  <button class="dash-tab" onclick="location.href='index.html';return false" aria-label="Réserver un RDV"><i class="fa fa-calendar-plus"></i> <span data-i18n="tab_book">Réserver</span></button>
+  <button class="dash-tab" onclick="location.href='accueil-public.html#name-search';return false" aria-label="Réserver un RDV"><i class="fa fa-calendar-plus"></i> <span data-i18n="tab_book">Réserver</span></button>
   <button class="dash-tab" onclick="location.href='mes-rdv.html';return false" aria-label="Mes rendez-vous"><i class="fa fa-calendar-check"></i> <span data-i18n="tab_rdv">Mes RDV</span></button>
   <button class="dash-tab active" onclick="sw('overview',this)"><i class="fa fa-chart-line"></i> <span data-i18n="tab_view">Vue</span></button>
   <button class="dash-tab" onclick="sw('docs',this)"><i class="fa fa-file-medical"></i> <span data-i18n="tab_docs">Documents</span></button>
@@ -122,7 +122,7 @@
       <div style="font-size:13px;opacity:.85;margin-bottom:4px" id="greet">Bonjour <i class="fa fa-sun" style="color:#fbbf24"></i></div>
       <div style="font-size:22px;font-weight:800" id="welcome-name">Bienvenue</div>
       <p style="font-size:13px;opacity:.75;margin-top:4px">Votre espace santé Tabibi</p>
-      <button class="btn btn-white btn-sm" style="margin-top:12px" onclick="location.href='index.html';return false"><i class="fa fa-search"></i> Trouver un médecin</button>
+      <button class="btn btn-white btn-sm" style="margin-top:12px" onclick="location.href='accueil-public.html#name-search';return false"><i class="fa fa-search"></i> Trouver un médecin</button>
     </div>
     <div style="padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
       <div class="card" style="padding:14px;border-left:3px solid var(--blue)"><div id="ov-up" style="font-size:22px;font-weight:800;color:var(--blue)">0</div><div style="font-size:11px;color:var(--text3)" data-i18n="upcoming_rdv">RDV à venir</div></div>
@@ -137,7 +137,7 @@
     <div style="padding:14px 16px">
       <div style="font-size:14px;font-weight:700;margin-bottom:10px"><i class="fa fa-bolt" style="color:#f59e0b"></i> Accès rapide</div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
-        <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="location.href='index.html';return false"><i class="fa fa-search" style="font-size:22px;color:var(--blue);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_book">Réserver</div></button>
+        <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="location.href='accueil-public.html#name-search';return false"><i class="fa fa-search" style="font-size:22px;color:var(--blue);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_book">Réserver</div></button>
         <a class="card card-tap" style="padding:14px;text-align:center;border:none;display:block;color:inherit;text-decoration:none" href="patient-ordonnances.html"><i class="fa fa-file-prescription" style="font-size:22px;color:var(--blue);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="my_prescriptions">Ordonnances</div></a>
         <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="goTab(3)"><i class="fa fa-file-medical" style="font-size:22px;color:var(--green);margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_docs">Documents</div></button>
         <button class="card card-tap" style="padding:14px;text-align:center;border:none" onclick="location.href='patient-profile.html'"><i class="fa fa-user" style="font-size:22px;color:#7c3aed;margin-bottom:6px" aria-hidden="true"></i><div style="font-size:11px;font-weight:700" data-i18n="tab_profile">Profil</div></button>
@@ -253,7 +253,7 @@ async function logout(){
     sessionStorage.setItem("tabibi_just_logged_out", "1");
   } catch(e) {}
   toastM(tabibiT('toast_logout_success',"Déconnexion réussie"),"success");
-  setTimeout(()=>location.href="index.html",500);
+  setTimeout(()=>location.href="accueil-public.html",500);
 }
 
 /* ─── NOTIFICATIONS ─── */
@@ -807,7 +807,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
       '<div class="card" style="padding:18px;text-align:center">' +
         '<i class="fa fa-calendar-plus" style="font-size:28px;color:var(--text3);margin-bottom:10px;display:block" aria-hidden="true"></i>' +
         '<div style="font-size:13px;color:var(--text2);margin-bottom:12px">Aucun RDV à venir pour le moment.</div>' +
-        '<a href="index.html" class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Trouver un médecin</a>' +
+        '<a href="accueil-public.html#name-search" class="btn btn-primary btn-sm"><i class="fa fa-search"></i> Trouver un médecin</a>' +
       '</div>';
   }
   function _renderNextRdv(rdv){

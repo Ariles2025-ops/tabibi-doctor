@@ -192,7 +192,7 @@
     <div class="card" id="confirm-summary" style="text-align:start;margin-bottom:16px"></div>
     <div style="display:flex;flex-direction:column;gap:10px">
       <a href="mes-rdv.html" class="btn btn-primary btn-full btn-lg"><i class='fa fa-calendar'></i> <span data-i18n="see_my_appointments">Voir mes rendez-vous</span></a>
-      <a href="index.html" class="btn btn-ghost btn-full btn-lg"><i class='fa fa-home'></i> <span data-i18n="back_home">Retour à l'accueil</span></a>
+      <a href="accueil-public.html" class="btn btn-ghost btn-full btn-lg"><i class='fa fa-home'></i> <span data-i18n="back_home">Retour à l'accueil</span></a>
     </div>
   </div>
 
@@ -640,7 +640,7 @@ function init(){
   // Validation params URL
   if(!doctorId){
     toast(_t('err_invalid_link', "Lien invalide : médecin manquant."), "error");
-    setTimeout(function(){ location.href = "index.html"; }, 1500);
+    setTimeout(function(){ location.href = "accueil-public.html"; }, 1500);
     return;
   }
 
@@ -669,7 +669,7 @@ function init(){
 
 function goBackSafe(){
   if(document.referrer) history.back();
-  else window.location.href = "index.html";
+  else window.location.href = "accueil-public.html";
 }
 
 document.addEventListener("DOMContentLoaded", init);

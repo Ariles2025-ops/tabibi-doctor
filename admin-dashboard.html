@@ -33,7 +33,7 @@
 <!-- [Phase 0] Header factorisé → js/tabibi-header.js (variante app + slots).
      Slots = contenu admin tel quel : sous-titre statique, cloche démo,
      pill #user-pill violet "AT", logout. Volontairement SANS langbar (comme avant). -->
-<div data-tabibi-header data-variant="app" data-home="index.html">
+<div data-tabibi-header data-variant="app" data-home="accueil-public.html">
   <span data-slot="sub">Administration · طبيبي</span>
   <div data-slot="actions">
     <button title="Mon compte" id="user-pill" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;font-weight:800;font-size:13px;border:none;cursor:default;flex-shrink:0;box-shadow:0 2px 6px rgba(124,58,237,.4);display:flex;align-items:center;justify-content:center"><span id="user-init">AT</span></button>
@@ -185,7 +185,7 @@ async function logout(){
     localStorage.removeItem("tabibi_role");
     sessionStorage.setItem("tabibi_just_logged_out", "1");
   } catch(e) {}
-  location.href="index.html";
+  location.href="accueil-public.html";
 }
 
 // [Phase 2 launch] Données démo retirées — admin = gestion via la console Supabase.

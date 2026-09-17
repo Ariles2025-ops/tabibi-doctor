@@ -45,7 +45,12 @@ window.TABIBI_CONFIG = {
     medecin: 'doctor-dashboard.html',  // alias FR
     admin: 'admin-dashboard.html',
     pharmacie: 'dawini-pharmacie.html',  // [DAWINI 2026-07-08] compte pharmacie → espace Dawini
-    afterLogout: 'index.html',
+    // ⚠️ [17/09/2026] C'ETAIT LA PORTE FERMEE. `index.html` est la page
+    // « Bientot disponible » depuis l'inversion du 13/09 : se deconnecter
+    // renvoyait donc TOUT LE MONDE — patient, medecin, admin — hors de
+    // l'application. C'est la redirection la plus centrale du depot
+    // (`auth.signOut()` la lit pour tous les roles).
+    afterLogout: 'accueil-public.html',
     notLoggedIn: 'login.html',
     afterPasswordReset: 'login.html?reset=ok',
     afterEmailVerified: 'login.html?email=verified',

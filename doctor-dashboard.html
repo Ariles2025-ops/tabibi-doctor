@@ -163,7 +163,7 @@
      Les slots reprennent TEL QUEL le contenu spécifique médecin :
      #hdr-title/#hdr-sub, langbar, #med-msg-link, cloche #med-notif-count,
      pill #user-pill "DR", logout. Hooks toggleNotif/toggleMenu/logout inchangés. -->
-<div data-tabibi-header data-variant="app" data-home="index.html">
+<div data-tabibi-header data-variant="app" data-home="accueil-public.html">
   <span data-slot="sub"><span id="hdr-title" data-i18n-skip>Espace médecin</span><span id="hdr-sub" hidden>Praticien · Tabibi PRO</span> · طبيبي</span>
   <div data-slot="actions">
     <div data-langbar style="flex-shrink:0;margin-right:4px"></div>
@@ -384,7 +384,7 @@ async function logout(){
     sessionStorage.setItem("tabibi_just_logged_out", "1");
   } catch(e) {}
   toastM(tabibiT('toast_logout_success',"Déconnexion réussie"),"success");
-  setTimeout(()=>location.href="index.html",500);
+  setTimeout(()=>location.href="accueil-public.html",500);
 }
 async function toggleNotif(){
   var drop=document.getElementById("notif-drop");

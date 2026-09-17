@@ -121,12 +121,13 @@
     header.className = 'app-bar';
     header.setAttribute('role', 'banner');
     if (variant === 'auth') {
-      header.innerHTML = buildAuth(ph.getAttribute('data-back') || 'index.html');
+      // ⚠️ Defaut = l'accueil OUVERT. `index.html` est la porte fermee.
+      header.innerHTML = buildAuth(ph.getAttribute('data-back') || 'accueil-public.html');
     } else if (variant === 'app') {
       // Slots optionnels : contenus page-spécifiques déjà parsés dans le placeholder
       var subSlot = ph.querySelector('[data-slot="sub"]');
       var actionsSlot = ph.querySelector('[data-slot="actions"]');
-      header.innerHTML = buildApp(ph.getAttribute('data-home') || 'index.html',
+      header.innerHTML = buildApp(ph.getAttribute('data-home') || 'accueil-public.html',
                                   ph.getAttribute('data-title-key') || 'my_space',
                                   subSlot ? subSlot.innerHTML : null,
                                   actionsSlot ? actionsSlot.innerHTML : null);

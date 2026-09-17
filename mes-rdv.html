@@ -400,7 +400,7 @@ function _renderEmpty(section){
        + '<i class="fa fa-calendar-xmark ico"></i>'
        + '<div class="title">'+_escapeHtml(m.title)+'</div>'
        + '<div class="sub">'+_escapeHtml(m.sub)+'</div>'
-       + '<a href="index.html" class="btn btn-primary btn-lg"><i class="fa fa-search"></i> '+_escapeHtml(_t('rdv_find_doctor', 'Trouver un médecin'))+'</a>'
+       + '<a href="accueil-public.html#name-search" class="btn btn-primary btn-lg"><i class="fa fa-search"></i> '+_escapeHtml(_t('rdv_find_doctor', 'Trouver un médecin'))+'</a>'
        + '</div>';
 }
 
@@ -641,7 +641,7 @@ function _escapeAttr(s){ return _escapeHtml(s); }
 // ── Goback + init ───────────────────────────────────────────────────────
 function goBackSafe(){
   if(document.referrer) history.back();
-  else window.location.href = "index.html";
+  else window.location.href = "accueil-public.html";
 }
 
 function init(){

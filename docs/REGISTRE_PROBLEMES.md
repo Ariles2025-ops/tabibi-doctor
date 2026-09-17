@@ -1378,7 +1378,13 @@ partait de `dawini.html` en la croyant publique et sortait rouge avec un correct
 pas une gêne d'essai, c'est la portée du défaut : **il ne frappait que des gens connectés**, déjà
 à l'intérieur, à qui la barre du bas proposait la sortie.
 
-## P-92 — 22 liens vers la porte fermée, hors barre du bas
+## ~~P-92~~ — 22 liens vers la porte fermée, hors barre du bas — **réglé le 18/09 par [P-100](#p-100--54-chemins-menaient-encore-a-la-porte-close-et-les-pires-netaient-pas-des-liens)**
+
+> L'inventaire ci-dessous est **juste et incomplet** : il cherchait des `href`. P-100 a trouvé
+> **onze** emplacements de plus — `afterLogout`, les défauts de l'en-tête, les gardes d'accès —
+> qui ne sont pas des liens et qui décident pourtant d'où l'on atterrit. Conservé tel quel : c'est
+> ce que sa méthode pouvait voir.
+
 
 | ID | symptôme | preuve | correctif | garde | statut |
 |---|---|---|---|---|---|
@@ -1608,6 +1614,58 @@ la passerelle, donc ils acceptent n'importe quel nom d'argument. **La garde pos�
 limite** — elle recopie la signature réelle en tête de fichier et vérifie que le front s'y tient.
 Le jour où la fonction change en base, c'est cette constante qu'il faudra mettre à jour.
 
+## P-100 — 54 chemins menaient encore à la porte close, et les pires n'étaient pas des liens
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-100 | Boutons « Trouver un médecin », « Retour à l'accueil », logos, **et surtout la redirection après déconnexion** menaient à `index.html` — la page « Bientôt disponible » | inventaire du 18/09 : **43** liens et `location.*` (dont `legal/`, qui exige `../`), **plus 11** dans l'épine dorsale que le premier grep ne voyait pas | tout repointé sur `accueil-public.html`, avec `#name-search` quand l'intention est « trouver / réserver » | `tests/porte-fermee-liens.test.mjs` (3 essais, **parcourt le dépôt**) + `tests/e2e/porte-fermee-navigation.spec.js` (5 essais × 2 cibles). Contre-épreuves : `afterLogout` remis → **2 + 2 rouges** ; un bouton repointé → **1 rouge** ; `../` retiré aux pages légales → **2 rouges** | **réglé** |
+
+### ⚠️ Les onze qui comptaient le plus n'étaient pas des `href`
+
+P-92 avait inventorié **22 liens**. Un second passage, sur les formes que le premier grep ne
+cherchait pas, en a trouvé onze autres — et ce sont eux la vraie colonne vertébrale :
+
+| emplacement | portée |
+|---|---|
+| `js/config.js:48` — `afterLogout` | **tous les rôles, à chaque déconnexion**. La redirection la plus centrale du dépôt |
+| `js/tabibi-header.js:124,129` | les **défauts** de l'en-tête partagé : ils s'appliquent à toute page qui oublie son attribut |
+| `data-home` / `data-back` × **10 pages** | l'en-tête de chaque espace connecté |
+| `js/home-app.js:448,453` | `requireAuth` / `requireRole` — où l'on renvoie quelqu'un qui n'a pas le droit d'être là |
+| `404.html:124` · `conversation.html` · `messages.html` · `teleconsultation.html:27` | replis de rôle et recherche |
+
+**Un inventaire par `href` ne voit pas une redirection.** Celui de P-92 était juste et incomplet :
+il avait cherché la forme qu'on remarque, pas celle qui décide.
+
+### Deux gardes, parce qu'une seule ne suffit pas
+
+- **`tests/porte-fermee-liens.test.mjs`** parcourt **tout le dépôt**. Une page ajoutée demain avec
+  un « Retour à l'accueil » vers `index.html` y sera attrapée **sans que personne l'inscrive nulle
+  part**. C'est la différence entre une liste et un filet — et c'est exactement ce qui manquait à
+  P-92, qui listait.
+- **`tests/e2e/porte-fermee-navigation.spec.js`** vérifie que **la cible répond**. Interdire
+  `index.html` sans regarder où l'on arrive remplacerait une mauvaise destination par aucune ; un
+  lien vers une page absente ne lève pas d'erreur non plus, il affiche un 404 que personne ne
+  surveille.
+
+Les deux vérifient aussi que **la porte close le reste** : sans ça, elles seraient vertes le jour où
+quelqu'un défait l'inversion du 13/09, et les 54 liens repointés deviendraient un détour inutile.
+
+### ⚠️ Deux fois où ma garde se trompait de critère
+
+1. Elle cherchait un marqueur **`tabibi-porte` dans le source** pour reconnaître la porte close. Il
+   n'y est pas : `scripts/porte.mjs` le pose dans `dist-web`. **Rouge sur un dépôt parfaitement
+   sain** — et une garde qui accuse le code juste finit désactivée.
+2. Elle lisait `[data-tabibi-header] a`. Or `render()` fait
+   `ph.parentNode.replaceChild(header, ph)` : l'attribut **n'existe plus** une fois l'en-tête
+   construit. Zéro lien trouvé, donc **rouge avec ou sans le correctif** — le pire genre d'essai.
+
+### Le cas qu'il ne fallait pas repointer
+
+`js/tabibi-desktop-nav.js` garde `'index.html': 'agenda-cabinet.html'` dans son remappage. Ce n'est
+pas une cible, c'est un **filet** : sur le bundle desktop, tout lien oublié vers `index.html` est
+renvoyé sur la page pro au lieu de mourir. Le retirer rendrait muets précisément les liens qu'on
+n'aurait pas vus.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -1618,7 +1676,7 @@ Le jour où la fonction change en base, c'est cette constante qu'il faudra mettr
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-69 | Une candidature **persiste, et personne n'est prévenu** | la table et la RPC sont en place (P-68 b) ; la RLS autorise la lecture admin. **La moitié « aucun écran ne la lit » est fermée le 16/09 par P-78** — `admin-candidatures.html` existe et le tableau de bord admin y mène. Reste la moitié qui n'a pas d'écran : **rien ne prévient à l'arrivée d'un dossier** | voir **P-79** pour ce qu'il reste à décider | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **partiellement réglé** |
 | P-79 | **Ce qu'il reste à décider sur P-69**, et qui demande une écriture en base | rien ne prévient à l'arrivée d'un dossier, et la liste admin est en **lecture seule** — changer un statut serait une écriture | à trancher : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) **et** RPC admin de changement de statut. **Validation d'Aghiles requise** (règle 3) | **garde manquante par nature** | **ouvert** |
-| P-92 | **22 liens** vers `index.html` — la porte fermée — dans 18 pages, hors barre du bas : « Trouver un médecin », « Retour à l'accueil », le pied de l'accueil, et quatre redirections de déconnexion | `git grep -n 'href="index.html'`, relevé le 17/09 en corrigeant [P-91](#p-91--la-barre-du-bas-renvoyait-lutilisateur-dehors) | à trancher : tout pointer sur `accueil-public.html` (juste porte ouverte **et** fermée), ou assumer `index.html` et l'état transitoire | **garde manquante** — P-91 ne couvre que `js/tabibi-nav.js` | **ouvert** |
+| ~~P-92~~ | **22 liens** vers `index.html` — la porte fermée — dans 18 pages, hors barre du bas | `git grep -n 'href="index.html'`, relevé le 17/09 | **réglé le 18/09 par [P-100](#p-100--54-chemins-menaient-encore-a-la-porte-close-et-les-pires-netaient-pas-des-liens)** : 54 emplacements repointés, dont l'épine dorsale (`afterLogout`, défauts de l'en-tête, gardes d'accès) | `tests/porte-fermee-liens.test.mjs` + `tests/e2e/porte-fermee-navigation.spec.js` | **réglé — ligne conservée pour qui cherche P-92** |
 | P-94 | La porte `e2e` rouge renvoie vers un journal **qui n'existe plus** : Playwright vide `test-results/`, où le lanceur écrit | constaté le 17/09 : gate rouge, aucun `.log` sur le disque. `scripts/verifier-toutes.mjs:207` | écrire les journaux hors du répertoire que Playwright gère | **garde manquante** — à écrire avec le correctif | **ouvert** |
 | P-87 | Sur téléphone, **le bandeau cookies recouvre la barre d'onglets** : les six onglets du bas sont inatteignables tant qu'on n'a pas répondu | mesuré le 17/09 en écrivant la garde de P-86 : `document.elementFromPoint()` au centre du bouton loupe rend `#tabibi-cookie-banner`. Hauteur de vue 727 px, bandeau à partir de 727, bouton centré à 696 | à trancher : remonter le bandeau au-dessus de la barre, ou décaler la barre tant que le bandeau est là. **Arbitrage d'affichage, pas un correctif évident** — le bandeau doit rester lisible | **garde manquante** : l'essai de P-86 se place volontairement APRÈS la réponse au bandeau | **ouvert** |
 
