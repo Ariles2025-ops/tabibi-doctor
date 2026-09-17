@@ -789,7 +789,9 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
         <br><br>
         ${tabibiT('med_pending_verify',"Notre équipe va vérifier vos qualifications (diplôme + Conseil de l'Ordre) sous <strong>48h ouvrées maximum</strong>.")}
         <br><br>
-        Nous vous notifierons au <strong>${_esc(phone)}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
+        ${tabibiT('med_pending_contact', 'Notre équipe vous recontactera au')} <strong>${_esc(phone)}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
+        <br>
+        <span style="font-size:12.5px;color:#64748b">${tabibiT('med_pending_no_auto', "Aucune notification automatique n'est envoyée pour l'instant : pensez à ouvrir votre tableau de bord.")}</span>
       </p>
       ${docsBlock}
       ${footerCta}

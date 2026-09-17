@@ -496,16 +496,25 @@ async function validateDoctor(doctorId, email, name) {
       }
     } catch(e){}
 
-    if (window.tabibiBrevo) {
-      try {
-        const firstName = name.split(' ')[0].replace('Dr.', '').replace('Dr', '').trim() || name;
-        await window.tabibiBrevo.sendEmail('medecin_validated', email, { firstName, lang: docLang });
-      } catch (e) {
-        console.warn('[admin] Email validation failed');
-      }
+    // ⚠️ [17/09/2026] CE TOAST DISAIT « Email envoyé. » SANS RIEN LIRE.
+    // `sendEmail` ne leve pas : elle REND `{ success: false }`. Le `try/catch`
+    // ne se declenchait donc jamais, et le resultat partait a la poubelle.
+    //
+    // Mesure du 17/09 : la fonction edge `send-email` **n'est deployee nulle
+    // part** (13 fonctions en production, pas celle-la). Chaque appel part en
+    // 404. L'admin lisait « Email envoyé », ne prevenait pas le medecin, et le
+    // medecin attendait. C'est P-28, et c'est le meme motif que le cron des
+    // rappels : l'ecran de controle disait autre chose que ce qui se passait.
+    //
+    // On dit desormais ce qui s'est REELLEMENT passe — et la validation, elle,
+    // a bien eu lieu : le message le distingue clairement de l'e-mail.
+    let _mail = { ok: false, phrase: '' };
+    if (window.tabibiBrevo && window.tabibiBrevo.envoyerEtDire) {
+      const firstName = name.split(' ')[0].replace('Dr.', '').replace('Dr', '').trim() || name;
+      _mail = await window.tabibiBrevo.envoyerEtDire('medecin_validated', email, { firstName, lang: docLang });
     }
 
-    toastM(`✓ ${name} validé. Email envoyé.`, "success");
+    toastM(`✓ ${name} validé. ${_mail.phrase}`, _mail.ok ? "success" : "info");
     await loadDoctorsFromSupabase();
     renderD();
 
@@ -555,16 +564,16 @@ async function rejectDoctor(doctorId, email, name) {
       }
     } catch(e){}
 
-    if (window.tabibiBrevo) {
-      try {
-        const firstName = name.split(' ')[0].replace('Dr.', '').replace('Dr', '').trim() || name;
-        await window.tabibiBrevo.sendEmail('medecin_rejected', email, { firstName, reason, lang: docLang });
-      } catch (e) {
-        console.warn('[admin] Email rejection failed');
-      }
+    // Meme correction qu'a la validation : on lit le resultat au lieu de
+    // l'annoncer. Un refus non transmis est pire qu'une validation non
+    // transmise — le medecin reste sans nouvelle et sans motif.
+    let _mail = { ok: false, phrase: '' };
+    if (window.tabibiBrevo && window.tabibiBrevo.envoyerEtDire) {
+      const firstName = name.split(' ')[0].replace('Dr.', '').replace('Dr', '').trim() || name;
+      _mail = await window.tabibiBrevo.envoyerEtDire('medecin_rejected', email, { firstName, reason, lang: docLang });
     }
 
-    toastM(`${name} rejeté. Email envoyé.`, "info");
+    toastM(`${name} rejeté. ${_mail.phrase}`, "info");
     await loadDoctorsFromSupabase();
     renderD();
 

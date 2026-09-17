@@ -1112,6 +1112,84 @@ concluait que le correctif n'était pas là.
 On retire désormais les commentaires de **ligne d'abord** : ils emportent leur faux `/*` avec
 eux.
 
+## P-83 — « Email envoyé. » : la fonction d'envoi n'est déployée nulle part
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-83 | Quatre écrans appelaient `tabibiBrevo.sendEmail()` et annonçaient **« Email envoyé. »** sans lire le résultat | **lu sur le projet Supabase le 17/09 : `send-email` n'existe pas.** Treize fonctions edge en production — `send-sms`, `verify-turnstile`, `acces-pilote`… — pas celle-là. Chaque appel part en **404** et rend `{ success: false }` | `envoyerEtDire()` rend une **phrase vraie** ; les écrans d'admin l'affichent. `doctor-claim` ne fait plus attendre un e-mail ; `signup` n'annonce plus de notification automatique | `tests/canaux-annonces.test.mjs` (+5 essais). Contre-épreuve : état d'avant remis, **4 essais** échouent | **réglé côté écran — envoi ouvert (P-28)** |
+
+### Le `try/catch` ne servait à rien
+
+```js
+try { await window.tabibiBrevo.sendEmail('medecin_validated', email, …); }
+catch (e) { console.warn('[admin] Email validation failed'); }
+toastM(`✓ ${name} validé. Email envoyé.`, "success");
+```
+
+`sendEmail` **ne lève pas** : elle **rend** `{ success: false }`. Le `catch` n'était donc jamais
+atteint, et le résultat partait à la poubelle une ligne plus bas. L'admin lisait « Email
+envoyé », ne prévenait pas le médecin à la main, et le médecin attendait.
+
+> C'est le cron des rappels, en plus petit : **l'écran de contrôle dit autre chose que ce qui se
+> passe.** Et ici il le dit à la personne dont dépend le rattrapage.
+
+### Deuxième face : un « succès » qui n'envoyait rien
+
+`sendEmail` rendait `{ success: true, disabled: true }` quand le module est éteint. Un appelant
+qui lit `success` — ce que le nom invite à faire — annonçait un envoi sur un module qui
+n'envoie rien. `success` vaut désormais `false` : le drapeau reste, le mensonge part.
+
+### La règle gardée ne se périme pas
+
+On n'interdit pas le mot « e-mail » : on exige qu'un écran qui annonce un envoi **lise le
+résultat**. Le jour où `send-email` est déployée, rien à changer — la phrase devient vraie toute
+seule, parce qu'elle vient du résultat et non d'un littéral.
+
+⚠️ Et la règle **ne vise pas les promesses d'avenir** : ma première version accusait
+`waiting-list.html` (« Vous recevrez un email dès le lancement »), qui est un engagement pour
+décembre sur une liste réellement enregistrée. Ce qui rendait `doctor-claim` fautif n'était pas
+le futur, c'était la **dépendance** : on disait au médecin d'attendre un e-mail pour connaître
+une décision, par un canal muet.
+
+⚠️ Et la garde est restée **verte sur « Email envoyé. »** au premier jet : le `é` du fichier
+était décomposé (e + U+0301), celui du motif composé (U+00E9). Deux chaînes identiques à l'œil,
+jamais égales. Lecture normalisée en NFC, motifs sur des **radicaux** — un accent dans une
+expression régulière est un piège qu'on ne voit pas.
+
+## P-84 — la seule porte vers du HTML était ouverte pour une étiquette qui n'en avait pas besoin
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-84 | `toast()` portait une option `{html:true}` rendant le message par `innerHTML` | **un seul appelant** l'empruntait, pour `fav_add` et `fav_rm` — et `fav_rm` ne contient aucun balisage. `sms_ok`, le troisième libellé cité par le commentaire, n'avait **aucun appelant** et annonçait « Confirmation SMS envoyée » alors qu'aucun SMS ne part (P-75) | la porte est **fermée** ; l'icône se demande par un **nom** choisi dans une table interne (`ICONES_SUP`) | `tests/e2e/xss-toast.spec.js` — 4 essais réécrits, dont un nom d'icône piégé | **réglé** |
+
+Le commentaire de cette même fonction disait, quinze lignes plus haut : « on cesse de
+l'interpréter […] il n'y a rien à oublier ». **La porte contredisait cette phrase dans la
+fonction qui la porte.**
+
+> Une exception gardée reste une exception : c'est la seule chose qu'on aura à vérifier à chaque
+> relecture, pour toujours.
+
+`sms_ok` est retiré des trois dictionnaires internes : orphelin **et** faux.
+
+## P-85 — « Docteur Benali » ne trouvait personne
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-85 | Écrire la civilité devant le nom — la façon la plus naturelle de nommer un médecin — **vidait** la recherche | mesuré sur la base de production, même RPC, même jour : `benali` → **131** praticiens, `dr benali` → **46**, `docteur benali` → **0** | `_sansCivilite()` retire les civilités du texte libre, sur les **deux** chemins (texte brut et reste d'analyse) | `tests/e2e/recherche-texte-libre.spec.js` (+6 essais). Contre-épreuve : **4 essais** échouent sans le correctif | **réglé** |
+
+### Ce n'était pas le défaut soupçonné
+
+L'audit supposait qu'un « Dr » pouvait transformer un nom en spécialité (« Dr Cardin » →
+cardio). **Faux** : `_analyserTexteLibre` fait de l'égalité **stricte** sur les listes de la
+base, et aucune civilité ne ressemble à une spécialité. Le défaut était **en aval**, dans ce qui
+part au serveur — et il était plus grave que le soupçon : pas un mauvais résultat, **aucun**.
+
+Deux refus explicites, chacun gardé :
+- on ne mange pas un nom propre — seuls les **mots entiers** de la liste sautent, « Drissi »
+  survit intact ;
+- une saisie faite **que** de civilités part quand même — rendre une recherche vide à quelqu'un
+  qui a tapé quelque chose, c'est lui montrer la vitrine sans lui dire pourquoi.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

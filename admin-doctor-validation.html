@@ -384,14 +384,17 @@ async function doValidate(){
     const r = await window.tabibiRpc('admin_validate_doctor', {p_doctor_id:id, p_action:'validate', p_notes:null});
     if (!r.ok) throw new Error(r.erreur);
     const data = r.data;
-    if(window.tabibiBrevo){
-      try{
-        const fn=name.replace(/^dr\.?\s*/i,'').split(' ')[0]||name;
-        await window.tabibiBrevo.sendEmail('medecin_validated',email,{firstName:fn,lang:'fr'});
-      }catch(e){console.warn('[dv] Brevo medecin_validated:',e);}
+    // ⚠️ [17/09/2026] Ce toast ne MENTAIT pas — il ne disait rien de l'e-mail.
+    // L'admin repartait en croyant le medecin prevenu. `send-email` n'est
+    // deployee nulle part (mesure du 17/09) : l'envoi echoue a chaque fois, en
+    // silence. On dit ce qui s'est passe, pour que quelqu'un prenne le relais.
+    let _mail = { ok: false, phrase: '' };
+    if(window.tabibiBrevo && window.tabibiBrevo.envoyerEtDire){
+      const fn=name.replace(/^dr\.?\s*/i,'').split(' ')[0]||name;
+      _mail = await window.tabibiBrevo.envoyerEtDire('medecin_validated',email,{firstName:fn,lang:'fr'});
     }
     closeModals();
-    toastM(name+' validé avec succès','success');
+    toastM(name+' validé avec succès. '+_mail.phrase, _mail.ok?'success':'info');
     await Promise.all([loadCounts(),loadList()]);
   }catch(e){
     console.error('[dv] doValidate:',e);
@@ -445,16 +448,13 @@ async function doReject(){
       const r = await window.tabibiRpc('admin_validate_doctor', {p_doctor_id:id, p_action:'reject', p_notes:reason});
       if (!r.ok) throw new Error(r.erreur);
       const data = r.data;
-    if(window.tabibiBrevo){
-      try{
-        const fn=name.replace(/^dr\.?\s*/i,'').split(' ')[0]||name;
-        await window.tabibiBrevo.sendEmail('medecin_rejected',email,{firstName:fn,reason,lang:'fr'});
-      }catch(e){
-        console.warn('[dv] Brevo medecin_rejected fallback',{doctor_id:id,email,reason});
-      }
+    let _mail = { ok: false, phrase: '' };
+    if(window.tabibiBrevo && window.tabibiBrevo.envoyerEtDire){
+      const fn=name.replace(/^dr\.?\s*/i,'').split(' ')[0]||name;
+      _mail = await window.tabibiBrevo.envoyerEtDire('medecin_rejected',email,{firstName:fn,reason,lang:'fr'});
     }
     closeModals();
-    toastM(name+' rejeté','info');
+    toastM(name+' rejeté. '+_mail.phrase,'info');
     await Promise.all([loadCounts(),loadList()]);
   }catch(e){
     console.error('[dv] doReject:',e);
