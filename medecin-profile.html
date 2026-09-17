@@ -900,6 +900,25 @@ async function saveAll(){
   // [Phase 4.B.1] Si session Supabase active, pousser vers la DB via RPC.
   // Sinon : comportement localStorage-only legacy.
   var didDbSave = false; window._mpDidDbSave = false;  // [SEC 2026-07-09] exposé pour saveAndPublish
+  // ══════════════════════════════════════════════════════════════════
+  // [17/09/2026] « Profil sauvegardé ! » S'AFFICHAIT APRES UN ECHEC
+  // ══════════════════════════════════════════════════════════════════
+  // Les branches d'erreur METIER font `return` — bio trop longue, tarif
+  // invalide, session expiree. Mais la branche « reseau / inconnue » et le
+  // `catch` tombaient dans la suite du code, qui affiche le toast VERT.
+  // L'ecran disait donc « Sauvegarde DB echouee » puis, une ligne plus bas,
+  // « Profil sauvegarde ! » en vert. Le medecin retient le vert.
+  //
+  // ⚠️ ON NE MET PAS UN `return` SEC. La retombee sur `localStorage` est
+  // VOULUE : la copie locale est gardee, et le message d'erreur le dit
+  // (« copie locale gardee »). Un `return` avant l'ecriture locale ferait
+  // perdre la saisie — on remplacerait un mensonge par une perte de
+  // donnees. C'est le TOAST VERT qu'il faut retirer, pas la sauvegarde.
+  //
+  // ⚠️ ET PAS `if (!didDbSave) -> erreur` NON PLUS : sans session, aucune
+  // sauvegarde distante n'est TENTEE, et le mode local est un succes
+  // legitime. Trois etats, pas deux.
+  var dbEchouee = false;
   try {
     if (window.tabibiDoctor && await window.tabibiDoctor.hasSession()) {
       // Mapping form -> params RPC update_my_doctor_profile
@@ -947,18 +966,30 @@ async function saveAll(){
       } else {
         // Erreur réseau / inconnue : on continue vers le fallback localStorage
         console.warn('[saveAll] DB save failed, fallback localStorage:', res.error);
+        dbEchouee = true;
         toastM(tabibiT('mp_toast_save_failed','Sauvegarde DB échouée — copie locale gardée. Réessayez plus tard.'), "error");
       }
     }
   } catch (e) {
+    // ⚠️ CE `catch` NE DISAIT RIEN DU TOUT. Une coupure reseau au milieu de
+    // l'appel sortait ici, en silence, et l'ecran affichait le toast vert.
+    // Un `console.warn` n'est pas un message : personne n'ouvre la console.
     console.warn('[saveAll] DB save exception (fallback localStorage)', e);
+    dbEchouee = true;
+    toastM(tabibiT('mp_toast_save_failed','Sauvegarde DB échouée — copie locale gardée. Réessayez plus tard.'), "error");
   }
 
   // Cache localStorage TOUJOURS (single source of truth pour mode démo + cache UI)
   localStorage.setItem("tabibi_user", JSON.stringify(u));
   if (didDbSave) {
     toastM(tabibiT('toast_profile_saved',"Profil sauvegardé ✓") + " (Tabibi DB)", "success");
+  } else if (dbEchouee) {
+    // Rien de plus : le message d'erreur est deja a l'ecran, et il dit que
+    // la copie locale est gardee. Ajouter un vert par-dessus le
+    // contredirait — c'etait exactement le defaut.
   } else {
+    // Aucune sauvegarde distante TENTEE (pas de session) : le mode local
+    // est le comportement attendu, et c'est un vrai succes.
     toastM(tabibiT('toast_profile_saved',"Profil sauvegardé !"), "success");
   }
 }

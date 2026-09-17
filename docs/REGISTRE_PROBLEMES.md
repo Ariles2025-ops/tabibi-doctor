@@ -1381,6 +1381,22 @@ pas une gêne d'essai, c'est la portée du défaut : **il ne frappait que des ge
 |---|---|---|---|---|---|
 | P-92 | Hors barre du bas, **22 liens** dans **18 pages** mènent à `index.html` — la porte fermée. Dont des boutons d'action : « Trouver un médecin » (`mes-rdv.html:403`, `patient-dashboard.html:810`, `about.html:162`), « Retour à l'accueil » (`reservation.html:195`, `success.html:66`, `verify-email.html:92`, `dawini-pharmacie.html:138`), le lien du pied de `accueil-public.html:1435`, et trois `location.href="index.html"` après déconnexion (`patient-dashboard.html:256`, `doctor-dashboard.html:387`, `medecin-profile.html:1007`, `patient-profile.html:658`) | `git grep -n 'href="index.html'` — liste complète relevée le 17/09 | **à trancher, et ce n'est pas mécanique** : après `porte.mjs ouverte`, `index.html` redevient l'accueil et ces liens redeviennent justes. Soit on les pointe tous sur `accueil-public.html` (juste dans les deux états), soit on décide qu'ils restent `index.html` et que la porte fermée est un état transitoire assumé | **garde manquante** : P-91 ne couvre que `js/tabibi-nav.js` | **ouvert** |
 
+## P-95 — « Profil sauvegardé ! » en vert, juste après « Sauvegarde échouée »
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-95 | Dans `saveAll()` (`medecin-profile.html`), un échec réseau affichait le message d'erreur **puis** le toast vert « Profil sauvegardé ! ». Le médecin retient le vert, ferme la page, et croit ses horaires enregistrés | les branches d'erreur **métier** font `return` ; la branche « réseau / inconnue » et le `catch` retombaient dans la suite du code, qui affiche le vert. Le `catch` ne faisait même qu'un `console.warn` : l'écran n'affichait **que** le vert | un troisième état, `dbEchouee` : réussie → vert « (Tabibi DB) » · **échouée → rouge seul** · non tentée → vert | `tests/e2e/profil-medecin-faux-succes.spec.js` — 5 essais × 2 cibles. Contre-épreuves : vert inconditionnel → **4 rouges** ; `return` sec → **2 rouges** | **réglé** |
+
+### Pourquoi ni un `return`, ni `if (!didDbSave) → erreur`
+
+**Le `return` que suggérait la consigne aurait fait perdre la saisie.** La retombée sur
+`localStorage` est voulue — le message d'erreur promet « copie locale gardée ». Sortir avant
+l'écriture locale aurait remplacé un mensonge par une **perte de données**. La garde le prouve :
+un `return` à cet endroit sort **2 rouges**, dont l'essai « la saisie locale est CONSERVÉE ».
+
+**Et `if (!didDbSave) → erreur` aurait inventé une panne.** Sans session, aucune sauvegarde
+distante n'est **tentée** : le mode local est le comportement attendu. Trois états, pas deux.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
