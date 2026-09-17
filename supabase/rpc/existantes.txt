@@ -10,6 +10,16 @@
 # par un vrai `--base --ecrire` au prochain passage : si le fichier ne bouge
 # pas, la reproduction etait fidele.
 #
+# [17/09/2026] `maj_statut_candidature` ajoutee A LA MAIN, seule, meme discipline.
+# Appliquee en base par le stratege ; lue par le MCP EN LECTURE sur `pg_proc` :
+# `p_id uuid, p_statut text -> doctor_applications`, SECURITY DEFINER, corps
+# verrouille par `is_admin()`. Je n'ai rien ecrit en base.
+#
+# ⚠️ ECART CONSTATE A LA LECTURE : le GRANT porte sur `authenticated` **ET**
+# `anon`, alors que la consigne disait `authenticated`. Le corps refuse quand
+# meme (is_admin), donc ce n'est pas une elevation ; c'est une surface plus
+# large que voulue. Signale au RETOUR — je ne corrige pas un GRANT moi-meme.
+#
 # [16/09/2026] `soumettre_candidature_medecin` ajoutee A LA MAIN, seule, meme
 # discipline : le jeton de `--base --ecrire` est toujours revoque. Lue par le
 # MCP Supabase EN LECTURE sur `pg_proc` : elle existe, `p jsonb -> uuid`,
@@ -57,6 +67,7 @@ get_my_doctor_profile
 get_patient_medical_data
 get_video_session
 invite_cabinet_member
+maj_statut_candidature
 mark_video_session_ended
 mark_video_session_started
 praticien

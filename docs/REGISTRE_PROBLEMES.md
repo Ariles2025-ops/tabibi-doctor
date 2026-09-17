@@ -1190,6 +1190,98 @@ Deux refus explicites, chacun gardé :
 - une saisie faite **que** de civilités part quand même — rendre une recherche vide à quelqu'un
   qui a tapé quelque chose, c'est lui montrer la vitrine sans lui dire pourquoi.
 
+## P-86 — la loupe emmenait vers les filtres, pas vers la barre
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-86 | Sur l'accueil, toucher la **loupe** de la barre d'onglets faisait défiler la page jusqu'aux **menus déroulants** — wilaya, spécialité, tri, prix — en laissant la barre de saisie trois écrans plus haut | `js/tabibi-nav.js` déclarait `href: 'index.html#sec-search'`, et `tabClick()` traite toute ancre pareil : `getElementById(anchor)` puis `scrollIntoView`. Or `#sec-search` **existe** sur l'accueil — c'est le bloc des filtres | la loupe vise `#name-search` et y met le **focus** (`preventScroll`, puis défilement doux) | `tests/e2e/loupe-recherche.spec.js` — 8 essais. Contre-épreuve : ancien code remis, **6** échouent | **réglé** |
+
+### La page faisait exactement ce qu'on lui demandait
+
+Il n'y avait ni bogue de défilement ni ancre cassée : `#sec-search` est un identifiant valide,
+présent, et `scrollIntoView` l'a trouvé. **On lui demandait la mauvaise chose.** Ce sont les
+défauts les plus longs à voir — rien n'échoue, rien ne s'affiche en rouge, l'utilisateur se
+contente de ne pas trouver la barre.
+
+### Défiler ne suffisait pas : il fallait le curseur
+
+Sur un téléphone, la différence entre « le clavier s'ouvre » et « il ne se passe rien » est
+exactement là. Le traitement d'ancre générique s'arrête au défilement ; la loupe a donc son
+propre cas, comme la carte et le calendrier en avaient déjà un.
+
+`preventScroll` **puis** `scrollIntoView` : le focus seul ferait sauter la page d'un coup, sans
+transition, et parfois au mauvais endroit quand un en-tête colle.
+
+### Ce que la garde a dû apprendre en chemin
+
+- **La barre du bas est un élément de téléphone.** `@media(min-width:768px){ nav.tab-bar{display:none} }` :
+  sur ordinateur, ce bouton n'existe pas. Les essais qui le cliquent sont donc `skip` ailleurs —
+  plutôt que de relâcher leurs assertions jusqu'à ce qu'ils passent partout. Un essai à part
+  vérifie ce masquage, sinon un lecteur croirait la loupe du bas universelle.
+- **Sur ordinateur, la seule loupe est celle DANS le champ**, et elle porte `pointer-events:none`.
+  Playwright refuse de « cliquer » un élément qui ne peut pas recevoir l'événement — et il a
+  raison, personne ne le clique jamais. On clique donc **aux coordonnées** : ce qui est mesuré,
+  c'est ce qui arrive quand un doigt se pose là.
+
+### ⚠️ Trouvé en écrivant l'essai, et ça dépasse la loupe
+
+Sur téléphone, **`#tabibi-cookie-banner` recouvre toute la barre d'onglets** :
+`document.elementFromPoint()` au centre de la loupe rend le bandeau, pas le bouton. Les **six**
+onglets sont inatteignables tant qu'on n'a pas répondu au bandeau — pas seulement la loupe.
+Voir P-87.
+
+## P-88 — une égalité de spécificité est une dépendance à l'ordre des fichiers
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-88 | Sur le **site construit**, la barre d'onglets du bas — un élément de téléphone — s'affichait **sur ordinateur**, en grand, par-dessus la page | `accueil-public.html` masque `nav.tab-bar` au-dessus de 768 px ; `css/tabibi-ui.css` porte `nav.tab-bar{display:flex}`, **exactement la même spécificité** (0,0,1,1). À égalité, c'est l'**ordre** qui tranche — et il s'inverse au build. Mesuré sur `dist-web`, largeur 1280 : `display: flex` | la règle passe par l'**ID** (`nav#tab-bar.tab-bar`, 0,1,1,1) : elle gagne quel que soit l'ordre | `tests/e2e/loupe-recherche.spec.js` — l'essai « la barre du bas est masquée » **tournait déjà sur les deux cibles** et c'est lui qui l'a trouvé | **réglé** |
+
+### Le commentaire disait « spécificité alignée ». C'était le problème.
+
+`/* [UI v2] specificite alignee sur nav.tab-bar du design system */` — aligner une spécificité,
+c'est décider que **l'ordre d'inclusion** tranchera. Tant que les deux fichiers arrivent dans
+le bon ordre, tout va bien ; le jour où un empaqueteur les réorganise, la page change d'avis
+sans que rien n'ait été modifié.
+
+> **Sources vertes, build faux** : c'est exactement P-29, où l'import du sélecteur de langue
+> disparaissait à la construction. La suite tourne sur les deux cibles depuis — et c'est cette
+> décision-là, prise il y a des jours, qui a attrapé celui-ci.
+
+### Trouvé par une garde écrite pour autre chose
+
+L'essai vérifiait que la barre du bas est masquée sur ordinateur — une précaution de lecture,
+pour qu'on ne croie pas la loupe du bas universelle. Il est sorti **rouge sur `dist-web` et vert
+sur les sources**, ce qui ne laissait qu'une explication.
+
+## P-89 — la liste des candidatures peut enfin décider
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-89 | `admin-candidatures.html` était en **lecture seule** : on voyait les dossiers, on ne pouvait rien en faire (P-78/P-79) | la RPC existe désormais — lue en base le 17/09 : `maj_statut_candidature(p_id uuid, p_statut text) -> doctor_applications`, SECURITY DEFINER, corps verrouillé par `is_admin()` | boutons **Contacter / Approuver / Rejeter / Remettre à vérifier**, appelés **par la passerelle**, l'écran ne bougeant que sur la **ligne rendue** | `tests/e2e/admin-candidatures.spec.js` (+7 essais, 16 au total). Contre-épreuves : succès sans lire la ligne → 1 rouge ; verrou retiré → 1 rouge | **réglé** |
+
+### Trois règles, trois défauts déjà payés ici
+
+1. **Par la passerelle**, jamais `supabase.rpc` en direct — une réponse PostgREST a deux
+   moitiés, et `tabibiRpc` lit les deux.
+2. **On exige la LIGNE**, pas l'absence d'erreur. `ok:true` avec `data:null` est déjà arrivé
+   dans ce dépôt : sans ce contrôle, l'écran annoncerait un changement qui n'a pas eu lieu
+   (P-68 b, P-83). Et c'est la ligne du **serveur** qui remplace la locale — `reviewed_at` et
+   `reviewed_by` viennent de lui, on ne les devine pas.
+3. **Les boutons se désactivent pendant l'appel.** Deux clics feraient deux écritures, et la
+   seconde écraserait la première sans que personne le sache. Appliqué **avant** d'avoir le
+   défaut, cette fois.
+
+Et un quatrième, plus discret : une carte ne propose **pas** le statut qu'elle porte déjà — une
+écriture qui ne change rien est du bruit, et une occasion de se tromper.
+
+### ⚠️ Un écart de droits, constaté à la lecture — non corrigé
+
+La consigne disait `GRANT … TO authenticated`. Lu en base : l'`EXECUTE` porte sur
+**`authenticated` ET `anon`**. Le corps refuse quand même (`is_admin()`), donc ce n'est **pas**
+une élévation de privilège — c'est une surface plus large que voulue, et un `anon` peut
+déclencher l'exécution de la fonction. **Je ne corrige pas un GRANT moi-même** : c'est une
+écriture en base. Signalé au RETOUR.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -1200,6 +1292,7 @@ Deux refus explicites, chacun gardé :
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-69 | Une candidature **persiste, et personne n'est prévenu** | la table et la RPC sont en place (P-68 b) ; la RLS autorise la lecture admin. **La moitié « aucun écran ne la lit » est fermée le 16/09 par P-78** — `admin-candidatures.html` existe et le tableau de bord admin y mène. Reste la moitié qui n'a pas d'écran : **rien ne prévient à l'arrivée d'un dossier** | voir **P-79** pour ce qu'il reste à décider | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **partiellement réglé** |
 | P-79 | **Ce qu'il reste à décider sur P-69**, et qui demande une écriture en base | rien ne prévient à l'arrivée d'un dossier, et la liste admin est en **lecture seule** — changer un statut serait une écriture | à trancher : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) **et** RPC admin de changement de statut. **Validation d'Aghiles requise** (règle 3) | **garde manquante par nature** | **ouvert** |
+| P-87 | Sur téléphone, **le bandeau cookies recouvre la barre d'onglets** : les six onglets du bas sont inatteignables tant qu'on n'a pas répondu | mesuré le 17/09 en écrivant la garde de P-86 : `document.elementFromPoint()` au centre du bouton loupe rend `#tabibi-cookie-banner`. Hauteur de vue 727 px, bandeau à partir de 727, bouton centré à 696 | à trancher : remonter le bandeau au-dessus de la barre, ou décaler la barre tant que le bandeau est là. **Arbitrage d'affichage, pas un correctif évident** — le bandeau doit rester lisible | **garde manquante** : l'essai de P-86 se place volontairement APRÈS la réponse au bandeau | **ouvert** |
 
 ---
 

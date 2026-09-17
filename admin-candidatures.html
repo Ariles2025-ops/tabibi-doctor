@@ -37,6 +37,14 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 .champ .val{font-size:13.5px;color:#334155;word-break:break-word}
 .vide{text-align:center;padding:48px 16px;color:var(--text3)}
 .vide i{font-size:42px;opacity:.35;display:block;margin-bottom:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--border)}
+.act{padding:7px 13px;border-radius:8px;border:1px solid var(--border);background:#fff;font-family:inherit;font-weight:700;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:var(--text2)}
+.act:hover:not(:disabled){filter:brightness(.97)}
+.act:disabled{opacity:.55;cursor:default}
+.act-contacted{border-color:#7dd3fc;color:#075985}
+.act-approved{border-color:#86efac;color:#065f46}
+.act-rejected{border-color:#fca5a5;color:#991b1b}
+.act-msg{font-size:12px;color:var(--text3);align-self:center}
 </style>
 </head>
 <body>
@@ -70,6 +78,10 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
 <script src="js/supabase-client.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/tabibi-security.js"></script>
+<!-- ⚠️ La passerelle AVANT le script en ligne qui l'appelle : `verifier:passerelle`
+     l'exige, et il a raison — une page qui appelle `tabibiRpc` au chargement sans
+     l'avoir chargee trouve `undefined` (defaut de dawini-pharmacie, 13/09). -->
+<script src="js/tabibi-rpc.js"></script>
 <script src="js/tabibi-lang.js"></script>
 <script src="js/tabibi-i18n.js"></script>
 
@@ -150,7 +162,97 @@ body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;background:var(--b
       [_t('ac_f_ref', 'Référence'), c.id]
     ].forEach(function (p) { grille.appendChild(champ(p[0], p[1])); });
     carteEl.appendChild(grille);
+    carteEl.appendChild(actions(c));
     return carteEl;
+  }
+
+  // =====================================================================
+  // [17/09/2026] CHANGER UN STATUT — la moitie qui manquait a P-78
+  // =====================================================================
+  // La liste montrait les candidatures et ne permettait rien : lecture seule,
+  // parce que changer un statut est une ECRITURE et que la RPC n'existait pas.
+  // Elle existe desormais — `public.maj_statut_candidature(p_id, p_statut)`,
+  // SECURITY DEFINER, verrouillee par `is_admin()`, rendant la ligne a jour.
+  //
+  // ⚠️ TROIS REGLES, ET CHACUNE VIENT D'UN DEFAUT DE CE DEPOT :
+  //
+  //  1. On passe par `window.tabibiRpc`, jamais `supabase.rpc` en direct. Une
+  //     reponse PostgREST a deux moities — transport et metier — et la
+  //     passerelle lit les deux (`verifier:rpc-passage`).
+  //
+  //  2. On ne met a jour l'ecran QUE sur la ligne rendue par le serveur. Pas
+  //     « ca n'a pas leve » : la LIGNE. C'est la lecon de P-68 b et de P-83 —
+  //     un ecran qui annonce un succes que personne n'a verifie est le defaut
+  //     le plus courant de ce produit.
+  //
+  //  3. Les boutons se desactivent pendant l'appel. Deux clics feraient deux
+  //     ecritures, et la seconde ecraserait la premiere sans que personne le
+  //     sache (P-68 b, le verrou d'envoi).
+
+  /** Les transitions proposees : tous les statuts SAUF celui de la ligne. */
+  var ACTIONS = {
+    contacted: ['ac_do_contacted', 'Contacter', 'fa-phone'],
+    approved:  ['ac_do_approved',  'Approuver', 'fa-check'],
+    rejected:  ['ac_do_rejected',  'Rejeter',   'fa-xmark'],
+    pending_verification: ['ac_do_pending', 'Remettre à vérifier', 'fa-rotate-left']
+  };
+
+  function actions(c) {
+    var boite = document.createElement('div');
+    boite.className = 'actions';
+
+    var message = document.createElement('span');
+    message.className = 'act-msg';
+    message.setAttribute('role', 'status');
+
+    var boutons = Object.keys(ACTIONS)
+      .filter(function (st) { return st !== c.status; })
+      .map(function (st) {
+        var def = ACTIONS[st];
+        var b = document.createElement('button');
+        b.className = 'act act-' + st;
+        b.dataset.statut = st;
+        b.dataset.pour = c.id;
+        var ico = document.createElement('i');
+        ico.className = 'fa ' + def[2];
+        ico.setAttribute('aria-hidden', 'true');
+        var txt = document.createElement('span');
+        txt.textContent = _t(def[0], def[1]);   // textContent : rien a echapper
+        b.appendChild(ico); b.appendChild(txt);
+        b.addEventListener('click', function () { changerStatut(c, st, boite, message); });
+        return b;
+      });
+
+    boutons.forEach(function (b) { boite.appendChild(b); });
+    boite.appendChild(message);
+    return boite;
+  }
+
+  async function changerStatut(c, statut, boite, message) {
+    var boutons = boite.querySelectorAll('button');
+    // Verrou : deux clics feraient deux ecritures.
+    boutons.forEach(function (b) { b.disabled = true; });
+    message.textContent = _t('ac_en_cours', 'Enregistrement…');
+
+    var r = (typeof window.tabibiRpc === 'function')
+      ? await window.tabibiRpc('maj_statut_candidature', { p_id: c.id, p_statut: statut })
+      : { ok: false, data: null, erreur: 'passerelle_absente' };
+
+    // ⚠️ On exige la LIGNE, pas l'absence d'erreur. Une RPC qui rend `null`
+    // sans lever — cas deja vu ici — laisserait l'ecran annoncer un changement
+    // qui n'a pas eu lieu.
+    var ligne = r.ok ? r.data : null;
+    if (!ligne || !ligne.id || !ligne.status) {
+      message.textContent = _t('ac_maj_ko', 'Statut NON modifié') + ' (' + String(r.erreur || 'réponse vide').slice(0, 60) + ')';
+      boutons.forEach(function (b) { b.disabled = false; });
+      return;
+    }
+
+    // On remplace la ligne locale par CELLE DU SERVEUR : `reviewed_at` et
+    // `reviewed_by` viennent de lui, on ne les devine pas.
+    var i = TOUTES.findIndex(function (x) { return x.id === ligne.id; });
+    if (i > -1) { TOUTES[i] = ligne; } else { TOUTES.push(ligne); }
+    rendre();
   }
 
   function vide(texte, icone) {

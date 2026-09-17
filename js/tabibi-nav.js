@@ -53,7 +53,16 @@
 
   var ITEMS = [
     { id: 'home',    icon: 'fa-home',             i18n: 'nav_home',    href: 'index.html' },
-    { id: 'search',  icon: 'fa-search',           i18n: 'nav_docs',    href: 'index.html#sec-search' },
+    // ⚠️ [17/09/2026] CETTE ANCRE POINTAIT SUR `#sec-search` — le bloc FILTRES.
+    // Sur l'accueil, cet element EXISTE : `tabClick` le trouvait et y faisait
+    // defiler la page. Un utilisateur qui touche la loupe pour CHERCHER se
+    // retrouvait devant deux menus deroulants et un curseur de prix, la barre
+    // de saisie restee trois ecrans plus haut.
+    //
+    // La loupe vise desormais la barre elle-meme — et ne se contente pas d'y
+    // faire defiler : elle y met le FOCUS. Toucher une loupe, c'est vouloir
+    // taper.
+    { id: 'search',  icon: 'fa-search',           i18n: 'nav_docs',    href: 'index.html#name-search' },
     { id: 'carte',   icon: 'fa-map-location-dot', i18n: 'nav_map',     href: '#carte' },
     { id: 'rdv',     icon: 'fa-calendar-check',   i18n: 'nav_rdv',     href: '#' },
     { id: 'spec',    icon: 'fa-stethoscope',      i18n: 'nav_spec',    href: 'index.html#sec-spec' },
@@ -85,6 +94,29 @@
   }
 
   function tabClick(id, href) {
+    // La loupe : le curseur dans la barre, pas un defilement vers les filtres.
+    //
+    // ⚠️ On NE passe PAS par le traitement d'ancre generique plus bas : il fait
+    // `scrollIntoView` et s'arrete la. Ce qui manque a un champ de recherche
+    // qu'on vient de demander, c'est le curseur dedans — sur telephone, c'est
+    // meme la difference entre « le clavier s'ouvre » et « il ne se passe rien ».
+    //
+    // `preventScroll` puis `scrollIntoView` : le focus seul ferait sauter la
+    // page d'un coup, sans transition, et parfois au mauvais endroit quand un
+    // en-tete colle. On separe les deux gestes pour garder le defilement doux.
+    if (id === 'search') {
+      var champ = document.getElementById('name-search');
+      if (champ) {
+        // `catch` sans liaison : l ancienne forme laissait un `e` inutilise, et
+        // le cliquet de dette le comptait — a juste titre.
+        try { champ.focus({ preventScroll: true }); } catch { champ.focus(); }
+        champ.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
+      // Sous-page sans barre de recherche : on va la ou elle existe.
+      go(href || 'index.html#name-search');
+      return;
+    }
     if (id === 'carte') {
       if (typeof window.openMapOverlay === 'function') { window.openMapOverlay(); return; }
       go('index.html#carte'); return;
