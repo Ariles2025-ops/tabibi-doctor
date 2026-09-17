@@ -1329,6 +1329,92 @@ Aucune proposition de migration n'était nécessaire : la vue expose déjà `is_
 `show_claim_badge` = `NOT COALESCE(dp.is_claimed, false)` — une colonne écrite exprès pour cet
 encart, et jamais lue jusqu'ici. **Le signal existait ; c'est l'entrée qui manquait.**
 
+## P-93 — on ne pouvait créer un compte qu'avec un numéro algérien
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-93 | **Aucun moyen de s'inscrire sans SMS.** `signup.html` n'offrait que `signUp({phone,password})` + OTP. Un SMS qui n'arrive pas, un numéro étranger, un test rapide : aucune issue | `js/auth.js` exposait `signUp(email,password,role)` et `signIn(email,password)` **depuis toujours** — aucune page ne les appelait pour créer un compte | sélecteur **Numéro / E-mail** sur `signup.html` (le chemin SMS reste le défaut et ne change pas d'une ligne) ; création du profil **extraite** et partagée par les deux chemins ; les deux issues de `signUp` par e-mail traitées séparément | `tests/e2e/auth-email.spec.js` — 12 essais × 2 cibles. Contre-épreuves : « pas de session » traité en succès → **2 rouges** ; `role` retiré des métadonnées → **2 rouges** ; `required` ne suit plus le mode → **12 rouges** ; message « ce numéro » sur le chemin e-mail → **2 rouges** ; « Connexion admin » remis → **2 rouges** | **réglé** |
+
+### ⚠️ La connexion par e-mail EXISTAIT — elle s'appelait « Connexion admin »
+
+`login.html` portait déjà `doLogin()`, complet et fonctionnel, appelant
+`signInWithPassword({email})` par `window.tabibi.auth.signIn`. Il était derrière **un lien gris de
+12 px** nommé « Connexion admin », en bas de page. Quelqu'un qui a un compte e-mail et n'est pas
+administrateur n'avait **aucune raison de cliquer dessus**.
+
+Il n'y avait donc presque rien à écrire : il y avait à **montrer**. Le correctif est un sélecteur ;
+`doLogin()` n'est pas modifié.
+
+### La création du profil est EXTRAITE, pas recopiée
+
+Le bloc qui horodate les consentements, complète `public.users`, journalise dans `consents_log` et
+aiguille selon le rôle vivait **dans** `verifyOtpAndCreateProfile`, soudé au SMS. Il est désormais
+`creerProfilEtRediriger(sessUser, P, btn, origText)`, appelé par les deux chemins.
+
+**Recopier aurait fait deux versions de l'écriture des consentements** — et le jour où l'une
+change, l'autre ment. Trois valeurs seulement dépendent du chemin : `email` (de la session),
+`phone` (NULL quand on s'inscrit par e-mail), et le contact affiché dans la modale du médecin.
+
+### ⚠️ Les deux issues de `signUp` par e-mail, et pourquoi elles ne se ressemblent pas
+
+Selon le réglage « Confirm email » du projet Supabase — **que le front ne connaît pas** :
+
+| retour | ce que ça veut dire | ce qu'on fait |
+|---|---|---|
+| `session` non nulle | le compte est utilisable tout de suite | profil créé par le chemin commun, entrée dans l'application |
+| `session: null` | le compte existe, **personne n'est connecté**, un lien est parti | écran « Vérifiez votre boîte mail » — **aucune redirection, aucun « Compte créé ! »** |
+
+Traiter le second comme le premier poserait un tableau de bord vide devant quelqu'un que la
+première requête déconnecterait. C'est la faute de **P-67** (succès annoncé sans persistance) et de
+**P-83** (« Email envoyé » sans expéditeur), et elle ne se refait pas.
+
+### Trois pièges d'interface, mesurés
+
+1. **`required` doit suivre le mode.** Laissé sur le champ caché, le formulaire devient impossible
+   à soumettre et le navigateur tente de mettre le focus sur un champ invisible : Chrome jette
+   « An invalid form control is not focusable » et **le bouton ne fait plus rien, sans un mot**.
+2. **`type="email"` accepte `a@b`** — un domaine sans point. Sans le contrôle JS, l'inscription
+   partirait avec une adresse qui ne recevra jamais rien. Le navigateur ne suffit pas, et la garde
+   tient précisément cet écart.
+3. **« Ce numéro a déjà un compte » sur une inscription par e-mail** est un mensonge poli : la
+   personne n'a saisi aucun numéro et relit le sien trois fois. Les messages suivent le chemin
+   emprunté, en FR/AR/EN.
+
+### Deux essais que j'ai dû corriger avant de les croire
+
+- **Le bouchon ne prenait pas.** J'avais posé un accesseur sur `window.tabibi` ; or
+  `js/supabase-client.js` fait `window.tabibi = window.tabibi || {}` **puis** assigne `.supabase`
+  directement sur l'objet. L'espion n'était jamais branché, les pages parlaient au vrai client, et
+  cinq essais sortaient rouges avec un correctif bon. On intercepte désormais `createClient`.
+  **Un bouchon qui ne prend pas ne rate pas bruyamment — il laisse le vrai code tourner.**
+- **L'ordre des routes Playwright n'est pas un détail.** Le bouchon de la page d'arrivée, posé
+  *avant* `hermetiser`, ne servait jamais : la route `**` d'`hermetiser` est plus récente, et son
+  `route.continue()` envoie la requête **au serveur** au lieu de rendre la main aux routes plus
+  anciennes. Le vrai tableau de bord se chargeait et effaçait `tabibi_user` — essai instable une
+  fois sur deux, pour une raison qui n'avait rien à voir avec le code mesuré.
+
+### Ce que ce lot NE fait PAS
+
+Aucune migration, aucun DDL : Supabase Auth gère les comptes, et le profil passe par le **même**
+chemin applicatif qu'avant. Le réglage « Confirm email » du projet **n'est pas touché** — le front
+gère les deux cas sans le connaître, et c'est volontaire.
+
+## P-94 — la porte e2e efface le journal qu'elle vient d'ecrire
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-94 | Quand la porte `e2e` sort en rouge, `verifier-toutes.mjs` affiche « Sortie partielle : `test-results/porte-e2e.log` » — **et ce fichier n'existe plus**. On apprend qu'on est rouge, pas pourquoi | constaté le 17/09 en écrivant P-93 : gate rouge, `ls test-results/*.log` → aucun fichier. Playwright **vide son `outputDir`** (`test-results/`) au démarrage, or c'est là que le lanceur ouvre son journal (`scripts/verifier-toutes.mjs:207`). L'enfant efface donc le journal de son propre parent | écrire les journaux **hors** de `test-results/`, dans un répertoire que Playwright ne gère pas. Une ligne | **garde manquante** — à écrire avec le correctif : une porte rouge doit laisser sa sortie lisible | **ouvert** |
+
+### C'est la deuxième fois que la porte elle-même ment
+
+**P-82** : le lanceur tuait l'enfant qu'il mesurait (`maxBuffer` dépassé, SIGTERM, `status: null`
+lu comme un échec). Le correctif — écrire dans un descripteur de fichier plutôt qu'en mémoire — a
+posé le journal **dans le seul répertoire que Playwright efface**.
+
+**L'outil de mesure fait partie de ce qu'il faut mesurer.** Ici le coût est modeste — on relance
+`npx playwright test` à la main, c'est ce que j'ai fait — mais le message désigne un fichier comme
+s'il existait, et c'est exactement ce qu'une porte ne doit jamais faire.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -1339,6 +1425,7 @@ encart, et jamais lue jusqu'ici. **Le signal existait ; c'est l'entrée qui manq
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-69 | Une candidature **persiste, et personne n'est prévenu** | la table et la RPC sont en place (P-68 b) ; la RLS autorise la lecture admin. **La moitié « aucun écran ne la lit » est fermée le 16/09 par P-78** — `admin-candidatures.html` existe et le tableau de bord admin y mène. Reste la moitié qui n'a pas d'écran : **rien ne prévient à l'arrivée d'un dossier** | voir **P-79** pour ce qu'il reste à décider | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **partiellement réglé** |
 | P-79 | **Ce qu'il reste à décider sur P-69**, et qui demande une écriture en base | rien ne prévient à l'arrivée d'un dossier, et la liste admin est en **lecture seule** — changer un statut serait une écriture | à trancher : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) **et** RPC admin de changement de statut. **Validation d'Aghiles requise** (règle 3) | **garde manquante par nature** | **ouvert** |
+| P-94 | La porte `e2e` rouge renvoie vers un journal **qui n'existe plus** : Playwright vide `test-results/`, où le lanceur écrit | constaté le 17/09 : gate rouge, aucun `.log` sur le disque. `scripts/verifier-toutes.mjs:207` | écrire les journaux hors du répertoire que Playwright gère | **garde manquante** — à écrire avec le correctif | **ouvert** |
 | P-87 | Sur téléphone, **le bandeau cookies recouvre la barre d'onglets** : les six onglets du bas sont inatteignables tant qu'on n'a pas répondu | mesuré le 17/09 en écrivant la garde de P-86 : `document.elementFromPoint()` au centre du bouton loupe rend `#tabibi-cookie-banner`. Hauteur de vue 727 px, bandeau à partir de 727, bouton centré à 696 | à trancher : remonter le bandeau au-dessus de la barre, ou décaler la barre tant que le bandeau est là. **Arbitrage d'affichage, pas un correctif évident** — le bandeau doit rester lisible | **garde manquante** : l'essai de P-86 se place volontairement APRÈS la réponse au bandeau | **ouvert** |
 
 ---

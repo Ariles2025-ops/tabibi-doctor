@@ -95,7 +95,7 @@
   </div>
   <div class="card" style="max-width:480px;margin:0 auto 16px">
     <div id="role-picker-label" style="font-size:13px;font-weight:700;color:var(--text2);margin-bottom:10px" data-i18n="i_am">Je suis :</div>
-    <div role="radiogroup" aria-labelledby="role-picker-label" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div id="role-picker" role="radiogroup" aria-labelledby="role-picker-label" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
       <button type="button" role="radio" aria-checked="true" class="role-btn active" onclick="selRole('patient',this)" style="padding:14px;border:2px solid var(--blue);border-radius:12px;background:var(--blue-l);color:var(--blue);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
         <i class="fa fa-user" style="font-size:20px" aria-hidden="true"></i><span data-i18n="role_patient">Patient</span></button>
       <button type="button" role="radio" aria-checked="false" class="role-btn" onclick="selRole('medecin',this)" style="padding:14px;border:2px solid var(--border);border-radius:12px;background:#fff;color:var(--text2);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:6px">
@@ -134,8 +134,38 @@
         <div class="form-group"><label class="form-label" for="sf"><span data-i18n="first_name">Prénom</span> *</label><input class="form-control" id="sf" required autocomplete="given-name"></div>
         <div class="form-group"><label class="form-label" for="sl"><span data-i18n="last_name">Nom</span> *</label><input class="form-control" id="sl" required autocomplete="family-name"></div>
       </div>
-      <div class="form-group"><label class="form-label" for="sp"><span data-i18n="phone">Téléphone</span> *</label>
+      <!-- ══════════════════════════════════════════════════════════════
+           [17/09/2026] S'INSCRIRE PAR NUMERO **OU** PAR E-MAIL
+           ══════════════════════════════════════════════════════════════
+           Le parcours telephone reste le chemin par defaut et n'est PAS
+           touche : meme signUp({phone,password}), meme OTP SMS, meme ecran.
+           On ajoute un second chemin a cote, pour qui n'a pas de numero
+           algerien sous la main — ou pour qui le SMS n'arrive pas.
+
+           ⚠️ `radiogroup` et non deux boutons : un lecteur d'ecran doit
+           entendre « 1 sur 2 », et les fleches doivent changer de choix.
+           Un « segmented control » fait de <button> ne dit rien de tout ca. -->
+      <div class="form-group">
+        <div class="form-label" id="su-mode-label" data-i18n="su_mode_label">Créer le compte avec</div>
+        <div id="su-mode" role="radiogroup" aria-labelledby="su-mode-label"
+             style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">
+          <button type="button" class="btn" id="su-mode-phone" role="radio" aria-checked="true" tabindex="0"
+                  onclick="suMode('phone')" data-mode="phone"
+                  style="padding:10px;border-radius:10px;font-weight:700;font-size:14px">
+            <i class="fa fa-phone" aria-hidden="true"></i> <span data-i18n="su_mode_phone">Numéro</span>
+          </button>
+          <button type="button" class="btn" id="su-mode-email" role="radio" aria-checked="false" tabindex="-1"
+                  onclick="suMode('email')" data-mode="email"
+                  style="padding:10px;border-radius:10px;font-weight:700;font-size:14px">
+            <i class="fa fa-envelope" aria-hidden="true"></i> <span data-i18n="su_mode_email">E-mail</span>
+          </button>
+        </div>
+      </div>
+      <div class="form-group" id="su-grp-phone"><label class="form-label" for="sp"><span data-i18n="phone">Téléphone</span> *</label>
         <div class="input-wrap"><i class="fa fa-phone ii-l" aria-hidden="true"></i><input class="form-control" id="sp" type="tel" required style="padding-inline-start:42px" placeholder="0555 123 456" data-i18n-placeholder="ph_phone_dz_alt" autocomplete="tel"></div></div>
+      <div class="form-group hidden" id="su-grp-email"><label class="form-label" for="se"><span data-i18n="email">E-mail</span> *</label>
+        <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i><input class="form-control" id="se" type="email" style="padding-inline-start:42px" placeholder="vous@exemple.com" data-i18n-placeholder="ph_email_exemple" autocomplete="email"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:6px" data-i18n="su_email_hint">Aucun SMS : nous vous enverrons un lien de confirmation par e-mail.</div></div>
       <div class="form-group"><label class="form-label" for="spw"><span data-i18n="password">Mot de passe</span> *</label>
         <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
           <input class="form-control" id="spw" type="password" required minlength="6" style="padding-inline-start:42px" placeholder="6 caractères minimum" data-i18n-placeholder="ph_password_6_min" autocomplete="new-password">
@@ -214,6 +244,23 @@
     </form>
 
     <!-- ── ÉCRAN OTP (phase 2 : code SMS → vérification + création du profil) ── -->
+    <!-- ⚠️ [17/09/2026] PAS DE FAUX SUCCES. Quand Supabase exige la
+         confirmation, `signUp` rend `session: null` — le compte existe mais
+         personne n'est connecte. Annoncer « Compte cree ! » et rediriger
+         mènerait sur un tableau de bord vide, puis sur l'ecran de connexion.
+         C'est exactement la faute de P-67 (succes annonce sans persistance)
+         et de P-83 (« Email envoye » sans expediteur) : on ECRIT CE QUI EST. -->
+    <div id="su-screen-confirm" class="hidden" role="status" aria-live="polite">
+      <div style="text-align:center;padding:8px 0 4px">
+        <i class="fa fa-envelope-circle-check" aria-hidden="true" style="font-size:44px;color:#0F7560"></i>
+        <h2 style="font-size:20px;font-weight:800;color:#0f172a;margin:12px 0 6px" data-i18n="su_confirm_title">Vérifiez votre boîte mail</h2>
+        <p style="font-size:14px;color:var(--text2);margin-bottom:4px" data-i18n="su_confirm_body">Nous venons de vous envoyer un lien de confirmation. Ouvrez-le pour activer votre compte, puis connectez-vous.</p>
+        <p id="su-confirm-target" style="font-size:13px;font-weight:700;color:#0f172a;margin:10px 0"></p>
+        <p style="font-size:12px;color:var(--text3)" data-i18n="su_confirm_spam">Rien reçu ? Regardez dans les indésirables.</p>
+        <a href="login.html" class="btn btn-primary btn-full btn-xl" style="margin-top:14px"><i class="fa fa-right-to-bracket"></i> <span data-i18n="sign_in">Se connecter</span></a>
+      </div>
+    </div>
+
     <div id="su-screen-otp" class="hidden">
       <form id="su-otp-form" onsubmit="verifyOtpAndCreateProfile(event)">
         <div class="form-group"><label class="form-label" for="su-code">Code reçu par SMS</label>
@@ -279,6 +326,50 @@ function selRole(r,btn){
   if(mcRow) mcRow.classList.toggle("hidden", r!=="patient");
   if(mc){ if(r==="patient"){ mc.setAttribute("required",""); } else { mc.removeAttribute("required"); mc.checked=false; } }
 }
+// ══════════════════════════════════════════════════════════════════════
+// [17/09/2026] LE MODE D'INSCRIPTION — numero (defaut) ou e-mail
+// ══════════════════════════════════════════════════════════════════════
+// ⚠️ `required` se DEPLACE avec le mode. Laisser `required` sur un champ
+// `hidden` rend le formulaire impossible a soumettre, et le navigateur essaie
+// de mettre le focus sur un champ invisible : Chrome jette
+// « An invalid form control is not focusable », et l'utilisateur voit un bouton
+// qui ne fait rien, sans un mot d'explication.
+var SU_MODE = 'phone';
+
+function suMode(mode){
+  SU_MODE = (mode === 'email') ? 'email' : 'phone';
+  var estMail = SU_MODE === 'email';
+  var gp = document.getElementById('su-grp-phone'), ge = document.getElementById('su-grp-email');
+  var cp = document.getElementById('sp'), ce = document.getElementById('se');
+  if(gp) gp.classList.toggle('hidden', estMail);
+  if(ge) ge.classList.toggle('hidden', !estMail);
+  if(cp){ cp.required = !estMail; }
+  if(ce){ ce.required = estMail; }
+
+  // Les deux boutons portent l'etat : `aria-checked` pour le lecteur d'ecran,
+  // `tabindex` pour que la tabulation entre dans le groupe une seule fois.
+  ['phone','email'].forEach(function(m){
+    var b = document.getElementById('su-mode-' + m);
+    if(!b) return;
+    var actif = (m === SU_MODE);
+    b.setAttribute('aria-checked', actif ? 'true' : 'false');
+    b.setAttribute('tabindex', actif ? '0' : '-1');
+    b.classList.toggle('btn-primary', actif);
+  });
+  var champ = estMail ? ce : cp;
+  if(champ){ try{ champ.focus({preventScroll:true}); }catch(_){ champ.focus(); } }
+}
+
+// Fleches : un radiogroup se parcourt au clavier, sinon ce n'en est pas un.
+document.addEventListener('keydown', function(ev){
+  var g = document.getElementById('su-mode');
+  if(!g || !g.contains(ev.target)) return;
+  if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'].indexOf(ev.key) === -1) return;
+  ev.preventDefault();
+  suMode(SU_MODE === 'phone' ? 'email' : 'phone');
+  var b = document.getElementById('su-mode-' + SU_MODE); if(b) b.focus();
+});
+
 function togglePw(id,btn){const i=document.getElementById(id);const t=i.type==="password";i.type=t?"text":"password";btn.querySelector("i").className=t?"fa fa-eye-slash":"fa fa-eye";}
 
 // === État + helpers OTP (inscription par téléphone, modèle WhatsApp) ===
@@ -309,9 +400,31 @@ function mapOtpError(error){
 // Erreur du signUp({phone,password}) → message FR clair.
 function mapSignupError(error){
   var m = ((error && (error.message || error.error_description)) || "").toLowerCase();
-  if (m.includes("already") || m.includes("registered") || m.includes("exists"))
-    return "Ce numéro a déjà un compte. Connectez-vous.";
-  if (m.includes("password")) return "Mot de passe trop faible (6 caractères minimum).";
+
+  // ⚠️ [17/09/2026] « CE NUMERO A DEJA UN COMPTE » SUR UNE INSCRIPTION PAR
+  // E-MAIL EST UN MENSONGE POLI : la personne n'a saisi aucun numero, elle
+  // relit trois fois le sien et ne comprend pas. Le message suit le chemin
+  // emprunte, et il est traduit — un message anglais brut de Supabase n'est
+  // pas un message, c'est un journal technique affiche par erreur.
+  var parMail = (typeof SU_MODE !== 'undefined' && SU_MODE === 'email');
+
+  if (m.includes("already") || m.includes("registered") || m.includes("exists")) {
+    return parMail
+      ? tabibiT('su_err_email_taken', "Cette adresse e-mail a déjà un compte. Connectez-vous.")
+      : "Ce numéro a déjà un compte. Connectez-vous.";
+  }
+  if (parMail && (m.includes("invalid") && m.includes("email")))
+    return tabibiT('toast_email_format_invalid', "Format d'email invalide");
+  if (m.includes("password"))
+    return parMail
+      ? tabibiT('su_err_password_weak', "Mot de passe trop faible : 6 caractères minimum.")
+      : "Mot de passe trop faible (6 caractères minimum).";
+  // Supabase brime les envois d'e-mail par heure : le dire vaut mieux que
+  // « Erreur inattendue ».
+  if (parMail && (m.includes("rate limit") || m.includes("too many")))
+    return tabibiT('su_err_email_rate', "Trop de tentatives. Patientez quelques minutes avant de réessayer.");
+  if (parMail)
+    return tabibiT('su_err_email_generic', "Création du compte impossible pour le moment. Réessayez dans un instant.");
   return mapOtpError(error);
 }
 
@@ -381,8 +494,21 @@ async function doSignup(e){
   const fn = sf.value.trim(), ln = sl.value.trim(), ph = sp.value.trim(), wi = sw.value;
   const pw = (document.getElementById("spw") ? document.getElementById("spw").value : "");
 
+  const em = (document.getElementById("se") ? document.getElementById("se").value.trim().toLowerCase() : "");
+  const parMail = (SU_MODE === 'email');
+
   if(!fn || !ln){ toastM(tabibiT('toast_firstname_lastname_required',"Prénom et nom obligatoires"),"error"); return; }
-  if(!ph){ toastM("Numéro de téléphone obligatoire","error"); return; }
+  if(parMail){
+    if(!em){ toastM(tabibiT('su_err_email_required',"Adresse e-mail obligatoire"),"error"); return; }
+    // ⚠️ On valide MEME si `tabibiSec` manque a l'appel. La version qui
+    // n'essayait que `if (window.tabibiSec)` laissait passer n'importe quoi des
+    // que le module n'etait pas charge — et c'est precisement quand quelque
+    // chose ne va pas qu'une validation sert.
+    var emOk = (window.tabibiSec && window.tabibiSec.validateEmail)
+      ? window.tabibiSec.validateEmail(em)
+      : /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(em);
+    if(!emOk){ toastM(tabibiT('toast_email_format_invalid',"Format d'email invalide"),"error"); return; }
+  } else if(!ph){ toastM("Numéro de téléphone obligatoire","error"); return; }
   if(pw.length < 6){ toastM("Le mot de passe doit faire au moins 6 caractères.","error"); return; }
   if(!cgu.checked){ toastM(tabibiT('toast_cgu_required',"Vous devez accepter les CGU pour créer un compte"),"error"); return; }
   if(!document.getElementById("privacy").checked){ toastM(tabibiT('toast_privacy_required',"Vous devez consentir à la politique de confidentialité"),"error"); return; }
@@ -397,12 +523,14 @@ async function doSignup(e){
     if(!cabCode || cabCode.length < 10){ toastM(tabibiT('toast_cabinet_code_required',"Le code d'invitation cabinet est obligatoire pour ce rôle."),"error"); return; }
   }
 
-  var phone = toE164(ph);
-  if(phone.length < 8){ toastM("Numéro de téléphone invalide","error"); return; }
+  var phone = parMail ? null : toE164(ph);
+  if(!parMail && phone.length < 8){ toastM("Numéro de téléphone invalide","error"); return; }
 
-  // Anti-bruteforce local (chaque SMS coûte) : 5 / 60 s par numéro.
+  // Anti-bruteforce local. Cote SMS, chaque envoi coute de l'argent ; cote
+  // e-mail, rien n'est facture mais un formulaire ouvert reste un formulaire
+  // ouvert. Meme bride, seau different.
   if (window.tabibiSec && window.tabibiSec.rateLimit) {
-    var lim = window.tabibiSec.rateLimit("otp:" + phone, 5, 60000);
+    var lim = window.tabibiSec.rateLimit((parMail ? "mail:" + em : "otp:" + phone), 5, 60000);
     if (!lim.allowed) { toastM(lim.reason, "error"); return; }
   }
   if(!window.tabibi || !window.tabibi.supabase){ toastM(tabibiT('toast_auth_unavailable',"Service d'authentification indisponible. Réessayez."),"error"); return; }
@@ -410,7 +538,7 @@ async function doSignup(e){
   // Capture EN MÉMOIRE uniquement. Les états de consentement sont mémorisés ;
   // leurs horodatages + l'écriture base se font en phase 2, après verifyOtp.
   _pendingSignup = {
-    role: cur, firstName: fn, lastName: ln, phone: phone, wilaya: wi,
+    role: cur, firstName: fn, lastName: ln, phone: phone, email: parMail ? em : "", wilaya: wi,
     specialty: (cur==="medecin") ? ssp.value : "",
     cabinetCode: cabCode,
     marketingConsent: document.getElementById("marketing-consent").checked
@@ -423,6 +551,49 @@ async function doSignup(e){
   try{
     // Captcha Turnstile obligatoire (protège le crédit SMS contre les bots).
     var captchaToken = (await _captchaTokenFor("form")) || undefined;
+
+    // ══════════════════════════════════════════════════════════════════
+    // CHEMIN E-MAIL — aucun SMS, et DEUX issues possibles
+    // ══════════════════════════════════════════════════════════════════
+    // ⚠️ `signUp` par e-mail rend l'une ou l'autre, selon un reglage du projet
+    // Supabase (« Confirm email ») que le front NE CONNAIT PAS :
+    //   (a) une SESSION tout de suite  → le compte est utilisable, on cree le
+    //       profil par le MEME chemin que l'OTP et on entre ;
+    //   (b) `session: null`            → le compte existe, personne n'est
+    //       connecte, un lien part par courriel.
+    //
+    // Les deux sont des succes. Traiter (b) comme (a) — annoncer « Compte
+    // cree ! » et rediriger — poserait un tableau de bord vide devant
+    // quelqu'un que la premiere requete deconnecterait. C'est la faute de
+    // P-67 et de P-83, et on ne la refait pas : ON LIT LA SESSION.
+    if(parMail){
+      var resM = await window.tabibi.supabase.auth.signUp({
+        email: em,
+        password: pw,
+        options: {
+          captchaToken: captchaToken,
+          data: { role: cur, first_name: fn, last_name: ln },
+          emailRedirectTo: window.location.origin + "/email-verified.html"
+        }
+      });
+      if(resM && resM.error){ _resetCaptcha("form"); toastM(mapSignupError(resM.error),"error"); return; }
+
+      var sessM = (resM.data && resM.data.session) || null;
+      var userM = (resM.data && resM.data.user) || null;
+
+      if(sessM && userM){
+        // (a) session immediate : meme travail que l'OTP, meme fonction.
+        await creerProfilEtRediriger(userM, _pendingSignup, btn, origText);
+        return;
+      }
+
+      // (b) confirmation requise : on le DIT, et on ne redirige nulle part.
+      var fEm = document.getElementById("su-form"); if(fEm) fEm.classList.add("hidden");
+      var cEm = document.getElementById("su-screen-confirm"); if(cEm) cEm.classList.remove("hidden");
+      var tEm = document.getElementById("su-confirm-target"); if(tEm) tEm.textContent = em;
+      return;
+    }
+
     // signUp({phone,password}) : pose le MOT DE PASSE à la création ET envoie
     // l'OTP SMS de vérification du numéro (1 seul SMS). channel:"sms" = canal SMS.
     // role + nom en metadata → trigger handle_new_auth_user (raw_user_meta_data->>'role').
@@ -473,25 +644,31 @@ async function suResendOtp(e){
 // RLS : INSERT/UPDATE sur public.users exigent auth.uid()=id → on écrit ICI,
 // jamais avant verifyOtp. Les consentements 18-07 sont horodatés + écrits
 // UNIQUEMENT dans l'upsert profileData ci-dessous (après que la session existe).
-async function verifyOtpAndCreateProfile(e){
-  if(e) e.preventDefault();
-  if(!_pendingSignup){ suBackToForm(); toastM("Session expirée, recommencez.","error"); return; }
-  var token = (document.getElementById("su-code").value || "").trim();
-  if(!/^[0-9]{4,8}$/.test(token)){ toastM("Code incorrect. Saisissez les 6 chiffres reçus.","error"); return; }
-
-  var P = _pendingSignup;
-  const btn = e.target.querySelector('button[type="submit"]');
-  const origText = btn ? btn.innerHTML : "";
-  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Création en cours…'; }
-
-  try{
-    var vres = await window.tabibi.supabase.auth.verifyOtp({ phone: P.phone, token: token, type: "sms" });
-    if(vres && vres.error){ if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapOtpError(vres.error),"error"); return; }
-
-    var sessUser = (vres.data && vres.data.user) || null;
-    if(!sessUser){ if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('signup_err_unexpected',"Erreur inattendue. Réessayez ou contactez support@tabibi.doctor"),"error"); return; }
-
-    // [18-07] Horodatage des consentements — généré ET écrit ICI (post-OTP), jamais avant.
+// ══════════════════════════════════════════════════════════════════════
+// [17/09/2026] LA CREATION DU PROFIL, EXTRAITE — un seul chemin pour deux
+// ══════════════════════════════════════════════════════════════════════
+// Ce bloc vivait DANS `verifyOtpAndCreateProfile`, soude au SMS. L'inscription
+// par e-mail a exactement le meme travail a faire une fois la session ouverte :
+// horodater les consentements, completer `public.users`, journaliser dans
+// `consents_log`, puis aiguiller selon le role.
+//
+// ⚠️ EXTRAIT, PAS RECOPIE. Recopier aurait fait deux versions de l'ecriture des
+// consentements — et le jour ou l'une change, l'autre ment. C'est la meme raison
+// qui a fait extraire la tab-bar d'index.html vers `js/tabibi-nav.js`.
+//
+// Ce qui change dans le corps, et c'est tout :
+//   - `email`  vient de la session (ou du formulaire en repli), plus « null »
+//     en dur avec un commentaire « telephone seul »
+//   - `phone`  vaut NULL quand on s'est inscrit par e-mail
+//   - la modale du medecin affiche le contact QUI EXISTE
+//
+// @param sessUser  l'utilisateur de la session ouverte (OTP verifie, ou signUp
+//                  e-mail qui a rendu une session)
+// @param P         `_pendingSignup` — ce que le formulaire a capture en memoire
+// @param btn       le bouton de soumission, a reactiver en cas de sortie
+async function creerProfilEtRediriger(sessUser, P, btn, origText){
+    // [18-07] Horodatage des consentements — généré ET écrit ICI, une fois la
+    // session ouverte, jamais avant.
     var nowIso = new Date().toISOString();
     var consents = {
       cgu_accepted_at: nowIso,
@@ -504,12 +681,15 @@ async function verifyOtpAndCreateProfile(e){
     // Compléter le profil (la ligne public.users est déjà créée par le trigger).
     const profileData = {
       id: sessUser.id,
-      email: sessUser.email || null,        // téléphone seul → email NULL
+      // Le compte porte ce que son chemin lui a donne : un e-mail OU un
+      // numero, jamais les deux invente. `sessUser` fait foi — c'est la
+      // session, pas le formulaire.
+      email: sessUser.email || P.email || null,
       first_name: P.firstName,
       last_name: P.lastName,
       full_name: P.firstName + " " + P.lastName,
       role: P.role,
-      phone: P.phone,
+      phone: P.phone || sessUser.phone || null,   // inscription par e-mail → NULL
       wilaya_fr: P.wilaya,
       consent_terms_at:       consents.cgu_accepted_at,
       consent_privacy_at:     consents.privacy_accepted_at,
@@ -619,7 +799,10 @@ async function verifyOtpAndCreateProfile(e){
         }
       }
       // Session active : la modale s'affiche ; signOut + redirect au clic de fermeture.
-      showMedecinPendingModal(P.phone, P.firstName, _profileId);   // [C3] _profileId → uploader in-app si fiche claimée
+      // ⚠️ Le contact affiche est celui QUI EXISTE. Sans ce repli, un
+      // medecin inscrit par e-mail lisait « Notre equipe vous recontactera
+      // au » suivi de rien.
+      showMedecinPendingModal(P.phone || P.email || "", P.firstName, _profileId);   // [C3] _profileId → uploader in-app si fiche claimée
       if(btn){ btn.disabled=false; btn.innerHTML=origText; }
       return;
     }
@@ -628,6 +811,27 @@ async function verifyOtpAndCreateProfile(e){
     _persistAndGo(sessUser.id, "patient", "active", P, consents);
     toastM(tabibiT('toast_signup_success',"Compte créé avec succès !"),"success");
     setTimeout(function(){ location.href="patient-dashboard.html"; }, 800);
+}
+
+async function verifyOtpAndCreateProfile(e){
+  if(e) e.preventDefault();
+  if(!_pendingSignup){ suBackToForm(); toastM("Session expirée, recommencez.","error"); return; }
+  var token = (document.getElementById("su-code").value || "").trim();
+  if(!/^[0-9]{4,8}$/.test(token)){ toastM("Code incorrect. Saisissez les 6 chiffres reçus.","error"); return; }
+
+  var P = _pendingSignup;
+  const btn = e.target.querySelector('button[type="submit"]');
+  const origText = btn ? btn.innerHTML : "";
+  if(btn){ btn.disabled = true; btn.innerHTML = '<i class="fa fa-circle-notch fa-spin"></i> Création en cours…'; }
+
+  try{
+    var vres = await window.tabibi.supabase.auth.verifyOtp({ phone: P.phone, token: token, type: "sms" });
+    if(vres && vres.error){ if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(mapOtpError(vres.error),"error"); return; }
+
+    var sessUser = (vres.data && vres.data.user) || null;
+    if(!sessUser){ if(btn){btn.disabled=false;btn.innerHTML=origText;} toastM(tabibiT('signup_err_unexpected',"Erreur inattendue. Réessayez ou contactez support@tabibi.doctor"),"error"); return; }
+
+    await creerProfilEtRediriger(sessUser, P, btn, origText);
 
   } catch(err){
     console.error("[signup] verify/profile error:", err);
@@ -719,10 +923,13 @@ async function journaliserConsentements(P){
 function _persistAndGo(id, role, status, P, consents){
   try{
     localStorage.setItem("tabibi_user", JSON.stringify({
-      id: id, email: "", role: role, status: status,
+      // ⚠️ Cette valeur etait "" EN DUR. Un compte cree par e-mail se
+      // serait affiche sans adresse dans toute l'application, alors
+      // qu'elle est la seule chose qu'il possede.
+      id: id, email: P.email || "", role: role, status: status,
       name: P.firstName + " " + P.lastName,
       initials: ((P.firstName[0]||"")+(P.lastName[0]||"")).toUpperCase(),
-      firstName: P.firstName, lastName: P.lastName, phone: P.phone, ville: P.wilaya,
+      firstName: P.firstName, lastName: P.lastName, phone: P.phone || "", ville: P.wilaya,
       consents: consents, fromSupabase: true
     }));
     localStorage.setItem("tabibi_role", role);
@@ -741,6 +948,9 @@ function _esc(s){
   });
 }
 
+// ⚠️ `phone` porte desormais un numero OU une adresse e-mail, selon le
+// chemin d'inscription. La phrase s'accorde (« au » / « a ») au lieu
+// d'afficher « recontactera au vous@exemple.com ».
 function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId = id fiche claimée → uploader in-app
   const modal = document.createElement('div');
   modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;";
@@ -789,7 +999,9 @@ function showMedecinPendingModal(phone, prenom, profileId) {   // [C3] profileId
         <br><br>
         ${tabibiT('med_pending_verify',"Notre équipe va vérifier vos qualifications (diplôme + Conseil de l'Ordre) sous <strong>48h ouvrées maximum</strong>.")}
         <br><br>
-        ${tabibiT('med_pending_contact', 'Notre équipe vous recontactera au')} <strong>${_esc(phone)}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
+        ${(String(phone).indexOf('@') > -1
+             ? tabibiT('med_pending_contact_email', 'Notre équipe vous recontactera à')
+             : tabibiT('med_pending_contact', 'Notre équipe vous recontactera au'))} <strong>${_esc(phone)}</strong>${tabibiT('med_pending_email_2',' dès que votre compte sera activé.')}
         <br>
         <span style="font-size:12.5px;color:#64748b">${tabibiT('med_pending_no_auto', "Aucune notification automatique n'est envoyée pour l'instant : pensez à ouvrir votre tableau de bord.")}</span>
       </p>
