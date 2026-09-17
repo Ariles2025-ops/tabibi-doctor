@@ -1397,6 +1397,33 @@ un `return` à cet endroit sort **2 rouges**, dont l'essai « la saisie locale e
 **Et `if (!didDbSave) → erreur` aurait inventé une panne.** Sans session, aucune sauvegarde
 distante n'est **tentée** : le mode local est le comportement attendu. Trois états, pas deux.
 
+## P-96 — le bouton figé sur « Validation… »
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-96 | `admin-doctor-validation.html` : `doValidate()` et `doReject()` désactivaient le bouton et posaient le tourniquet **avant** de vérifier le client base. Sans client, le `return` partait sans rien remettre — bouton mort qui tourne, modale à fermer à la main | le toast rouge disparaît en 3 s ; **le bouton figé reste**, et c'est lui qu'on regarde | `_rendreLeBouton()` : le geste est sorti dans une fonction, et les **quatre** chemins de sortie passent par elle | `tests/e2e/admin-validation-bouton-fige.spec.js` — 4 essais × 2 cibles. Contre-épreuve : `return` sans remise en état → **6 rouges** | **réglé** |
+
+### Les `catch` le faisaient déjà
+
+La remise en état existait, écrite à la main dans chaque `catch`. Le défaut n'était pas
+l'ignorance du geste : **c'est une sortie anticipée qui l'oubliait.** D'où la fonction commune
+plutôt qu'une troisième copie — le prochain `return` ajouté la trouvera.
+
+Le bouton de rejet revient **actif**, pas « comme avant » : son état normal est *désactivé* tant
+que le motif fait moins de 20 caractères, et on n'arrive là qu'avec un motif valide. Le remettre
+désactivé aurait remplacé un bouton figé par un bouton inerte.
+
+### ⚠️ Le cliquet `innerhtml` a attrapé ma première version
+
+`_rendreLeBouton(b, html)` posait `b.innerHTML = html`. Le compteur est monté **134 → 135**, et il
+avait raison : `html` est un **paramètre**. Les quatre appels lui passent des libellés constants,
+mais la signature accepte n'importe quoi — le jour où l'un d'eux y met le nom d'un médecin, plus
+rien ne l'arrête. La fonction construit désormais les nœuds (`createElement` + `textContent`), et
+le compteur est revenu à **134**.
+
+**Une garde qui n'accuse que ce qui est déjà exploitable arrive trop tard.** Celle-ci compte les
+formes, pas les dégâts.
+
 ## P-97 — le salut du tableau de bord médecin : diagnostic reçu, défaut absent
 
 | ID | symptôme annoncé | ce qui a été mesuré | correctif | garde | statut |

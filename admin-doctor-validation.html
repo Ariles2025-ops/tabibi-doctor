@@ -360,13 +360,46 @@ function updValBtn(){
   const b=document.getElementById('btn-val');
   b.disabled=!ok;b.style.opacity=ok?'1':'.5';b.style.cursor=ok?'pointer':'not-allowed';
 }
+// ══════════════════════════════════════════════════════════════════════
+// [17/09/2026] UN BOUTON QUI TOURNE POUR TOUJOURS
+// ══════════════════════════════════════════════════════════════════════
+// `doValidate()` et `doReject()` desactivaient le bouton et posaient le
+// tourniquet AVANT de verifier que le client base existe. Quand il manque, le
+// `return` partait **sans rien remettre** : l'admin restait devant
+// « Validation... » qui tourne, un bouton mort, et une modale qu'il faut
+// fermer a la main pour retrouver un ecran utilisable.
+//
+// ⚠️ Les `catch` faisaient DEJA cette remise en etat, a la main, chacun de son
+// cote. Le defaut n'est pas qu'on ne savait pas le faire : c'est qu'une sortie
+// anticipee l'oubliait. On sort donc le geste dans une fonction, et les deux
+// chemins d'echec passent par elle — le prochain `return` ajoute la trouvera.
+//
+// ⚠️ EN NOEUDS DOM, PAS EN `innerHTML`. Premiere version : `b.innerHTML=html`.
+// Le cliquet est monte de 134 a 135 — et il avait raison : `html` est un
+// PARAMETRE. Les quatre appels lui passent aujourd'hui des libelles constants,
+// mais la signature accepte n'importe quoi, et le jour ou l'un d'eux y met le
+// nom d'un medecin, plus rien ne l'arrete. On construit donc les noeuds.
+function _rendreLeBouton(b, classeIcone, libelle){
+  if(!b) return;
+  b.disabled=false; b.style.opacity='1'; b.style.cursor='pointer';
+  b.textContent='';
+  var i=document.createElement('i');
+  i.className=classeIcone; i.setAttribute('aria-hidden','true');
+  b.appendChild(i);
+  b.appendChild(document.createTextNode(' '+libelle));
+}
+
 async function doValidate(){
   if(!_act)return;
   const{id,name,email}=_act;
   const b=document.getElementById('btn-val');
   b.disabled=true;b.innerHTML='<i class="fa fa-spinner fa-spin"></i> Validation...';
   const sb=window.tabibi&&window.tabibi.supabase;
-  if(!sb){toastM('Supabase indisponible','error');return;}
+  if(!sb){
+    toastM('Supabase indisponible','error');
+    _rendreLeBouton(b,'fa fa-check','Valider');
+    return;
+  }
   try{
     // [13/09/2026] Ce code ne capturait meme pas `data`. admin_validate_doctor rend
     // son refus DANS la reponse : {"ok":false,"error":"not_admin"} ou
@@ -399,8 +432,7 @@ async function doValidate(){
   }catch(e){
     console.error('[dv] doValidate:',e);
     toastM('Erreur validation : '+(e.message||'inconnue'),'error');
-    b.disabled=false;b.style.opacity='1';b.style.cursor='pointer';
-    b.innerHTML='<i class="fa fa-check"></i> Valider';
+    _rendreLeBouton(b,'fa fa-check','Valider');
   }
 }
 
@@ -438,7 +470,13 @@ async function doReject(){
   const b=document.getElementById('btn-rej');
   b.disabled=true;b.innerHTML='<i class="fa fa-spinner fa-spin"></i> Rejet...';
   const sb=window.tabibi&&window.tabibi.supabase;
-  if(!sb){toastM('Supabase indisponible','error');return;}
+  if(!sb){
+    toastM('Supabase indisponible','error');
+    // Le motif fait deja 20 caracteres (controle plus haut) : le bouton
+    // revient ACTIF, dans l'etat ou l'admin l'avait laisse.
+    _rendreLeBouton(b,'fa fa-xmark','Confirmer le rejet');
+    return;
+  }
   try{
       // Meme defaut que la validation, et meme consequence : un e-mail de REJET
       // partait vers le medecin alors que rien n'etait ecrit en base. reason_required
@@ -459,8 +497,7 @@ async function doReject(){
   }catch(e){
     console.error('[dv] doReject:',e);
     toastM('Erreur rejet : '+(e.message||'inconnue'),'error');
-    b.disabled=false;b.style.opacity='1';b.style.cursor='pointer';
-    b.innerHTML='<i class="fa fa-xmark"></i> Confirmer le rejet';
+    _rendreLeBouton(b,'fa fa-xmark','Confirmer le rejet');
   }
 }
 
