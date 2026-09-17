@@ -1533,6 +1533,44 @@ corrigé le diagnostic reçu : la page visée n'était pas la bonne (P-90), la m
 manquait (P-91), et ici le défaut n'existait pas.
 
 
+## P-98 — « ce médecin n'a pas activé les RDV », et deux boutons pour réserver
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-98 | Dans la modale d'aperçu de l'accueil, une fiche **non réservable** affichait « Ce médecin n'a pas encore activé les RDV en ligne » **dans la zone des créneaux**, et juste en dessous **« Confirmer ce créneau »**, puis tout en bas **« Prendre RDV »** | `js/home-app.js:1343` et `:1357` : les deux boutons étaient rendus **sans condition**. Les gestionnaires refusaient bien — mais **après le clic**, par un toast qui disparaît en 3 s | les deux appels suivent la réservabilité, calculée **une fois** en haut de `showDoctorModal()`. Non réservable → un bouton **désactivé** qui dit pourquoi, et pour une fiche non revendiquée un lien vers sa fiche publique, qui porte le tunnel pré-rempli (P-90) | `tests/e2e/fiche-cta-reservation.spec.js` — 6 essais × 2 cibles. Contre-épreuves : CTA inconditionnels → **8 rouges** ; CTA masqués pour tous → **2 rouges** ; bouton désactivé rendu actif → **6 rouges** | **réglé** |
+
+### La condition était déjà écrite trois fois
+
+`claimed && validationStatus === 'approved'` — dans `bookDoc()` (l.1306), `renderProfileSlots()`
+(l.1381) et `confirmFromProfile()` (l.1413). Elle vient de `public_doctors` (`is_claimed`,
+`validation_status`, mappées l.2238-2239). **Rien à inventer : il fallait la lire avant de dessiner
+le bouton, au lieu de la lire après le clic.** Le correctif la calcule une fois plutôt que d'ajouter
+une quatrième lecture qui pourrait dériver.
+
+### Trois états, parce que « pas réservable » recouvre deux situations
+
+| état | ce que voit la personne |
+|---|---|
+| réservable | les deux appels à l'action, **inchangés** |
+| revendiquée, **en validation** | bouton désactivé « Validation en cours — bientôt disponible ». **Pas** de proposition de revendication : la fiche l'est déjà |
+| **non revendiquée** | bouton désactivé « Réservation en ligne pas encore disponible » **+** « Vous êtes ce médecin ? Revendiquez cette fiche » → sa fiche publique |
+
+Dire l'un pour l'autre enverrait un médecin revendiquer une fiche qu'il a déjà revendiquée.
+
+### `doctor-profile.html` n'était PAS concernée
+
+Vérifié avant d'y toucher : `_refreshReserveBtnState()` (l.672) désactive déjà le bouton et affiche
+une mention explicite, avec les mêmes trois états. **Aucune ligne modifiée là-bas** — et un essai
+l'a rejoint, pour que personne ne « corrige » ce qui marche.
+
+### ⚠️ Un essai qui mesurait l'inverse de ce qu'il croyait
+
+Ma première version reconnaissait les appels à l'action **par leur texte** (`/réserver/i`). Elle en
+trouvait **un seul** sur une fiche réservable — parce que le bouton du bas dit « Prendre RDV » et
+celui des créneaux « Confirmer ce créneau ». Elle lit désormais le `onclick` : `bookDoc(`,
+`confirmFromProfile(`. **Un essai accroché aux libellés casse au premier changement de formulation**,
+et en attendant il raconte n'importe quoi.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

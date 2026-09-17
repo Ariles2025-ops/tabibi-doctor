@@ -1311,6 +1311,27 @@ function bookDoc(id){
 
 function showDoctorModal(d){
   const n=dname(d),s=dspec(d),c=dcity(d);
+  // ══════════════════════════════════════════════════════════════════
+  // [17/09/2026] DEUX BOUTONS QUI NE MENAIENT NULLE PART
+  // ══════════════════════════════════════════════════════════════════
+  // La modale affichait « Ce medecin n'a pas encore active les RDV en ligne »
+  // DANS la zone des creneaux, et juste en dessous deux appels a l'action bien
+  // visibles : « Confirmer ce creneau » et « Reserver ». Les deux refusaient
+  // au clic — mais apres coup, par un toast qui disparait en trois secondes.
+  //
+  // ⚠️ LA CONDITION N'EST PAS DEVINEE. C'est exactement celle que `bookDoc()`,
+  // `confirmFromProfile()` et `renderProfileSlots()` appliquent deja, toutes
+  // les trois : `claimed && validationStatus === 'approved'`. On la calcule ici
+  // une fois, au lieu d'ajouter une quatrieme lecture qui pourrait deriver.
+  //
+  // Trois etats, parce que « pas reservable » recouvre deux situations tres
+  // differentes pour la personne en face :
+  //   reservable ...... les appels a l'action, comme avant
+  //   en validation ... la fiche est revendiquee, un humain verifie
+  //   non revendiquee . personne ne tient cette fiche — et c'est la qu'on
+  //                     propose au medecin de la revendiquer (cf. P-90)
+  const _reservable = !!(d.claimed && d.validationStatus === 'approved');
+  const _enValidation = !!(d.claimed && !_reservable);
   const modal=document.createElement("div");
   modal.className="modal-bg";
   modal.style.zIndex="600";
@@ -1340,7 +1361,9 @@ function showDoctorModal(d){
             </div>
             <div class="slots-grid" id="prof-slots"></div>
             <div id="slot-confirm-txt" class="hidden" style="background:var(--blue-l);border-radius:var(--r12);padding:10px;font-size:13px;color:var(--blue);margin:10px 0;display:flex;align-items:center;gap:6px"><i class='fa fa-check-circle'></i><span id="slot-txt"></span></div>
-            <button class="btn btn-primary btn-full btn-lg" style="margin-top:8px" onclick="confirmFromProfile('${d.id}')"><i class='fa fa-calendar-check'></i> ${T("confirm_slot")}</button>
+            ${_reservable
+              ? `<button class="btn btn-primary btn-full btn-lg" style="margin-top:8px" onclick="confirmFromProfile('${d.id}')"><i class='fa fa-calendar-check'></i> ${T("confirm_slot")}</button>`
+              : ``}
           </div>
           <!-- About -->
           <div class="card" style="margin-bottom:14px">
@@ -1355,7 +1378,10 @@ function showDoctorModal(d){
               ${(d.diplomes||[]).map(dp=>`<div style="display:flex;align-items:flex-start;gap:8px;font-size:12px;color:var(--text2);margin-bottom:6px"><i class='fa fa-graduation-cap fa-xs' style='color:var(--blue);flex-shrink:0;margin-top:2px'></i>${dp}</div>`).join("")}
             </div>
           </div>
-          <button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> ${T("rdv")}</button>
+          ${_reservable
+            ? `<button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> ${T("rdv")}</button>`
+            : `<button class="btn btn-full btn-xl" id="cta-indispo" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed"><i class='fa fa-calendar-xmark'></i> ${hEsc(_enValidation ? T("cta_validation_pending") : T("cta_booking_unavailable"))}</button>
+               ${_enValidation ? `` : `<a href="doctor-profile.html?id=${encodeURIComponent(d.id)}" id="cta-revendiquer" rel="nofollow" class="btn btn-full" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:#fff;color:var(--text2);font-weight:700"><i class='fa fa-id-card'></i> ${hEsc(T("cta_claim_this"))}</a>`}`}
           <div style="height:20px"></div>
         </div>
       </div>
