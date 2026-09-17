@@ -16,8 +16,9 @@
    - Comportement index INCHANGÉ : mêmes 6 onglets, mêmes hooks
      (openMapOverlay, openModal, isLogged, goDash, T) résolus au clic.
    - Fallbacks hors index (pages sans ces hooks inline) :
-       carte → index.html#carte · rdv → mes-rdv.html ·
-       profile → login.html · ancres d'index → navigation vers index.
+       carte → accueil-public.html#carte · rdv → mes-rdv.html ·
+       profile → login.html · ancres de l'accueil → navigation
+       vers accueil-public.html (JAMAIS index.html : porte fermee).
    - i18n : window.T (index) puis window.tabibiT (tabibi-i18n.js), sinon
      dico fr/ar/en embarqué (copie exacte du TR d'index — les clés nav_*
      n'existent PAS dans tabibi-i18n.js à ce jour).
@@ -52,7 +53,27 @@
   }
 
   var ITEMS = [
-    { id: 'home',    icon: 'fa-home',             i18n: 'nav_home',    href: 'index.html' },
+    // =================================================================
+    // [17/09/2026] `index.html` N'EST PAS L'ACCUEIL — C'EST LA PORTE FERMEE
+    // =================================================================
+    // Depuis l'inversion du 13/09 (cf. `scripts/verifier-porte.mjs`),
+    // `index.html` a la racine EST la page « Bientot disponible », et
+    // l'application vit dans `accueil-public.html`. Ces items n'avaient pas
+    // suivi : depuis mes-rdv, reservation ou dawini, Accueil / Specialites /
+    // Carte / loupe renvoyaient l'utilisateur DEHORS — sur la porte close,
+    // alors qu'il etait deja a l'interieur.
+    //
+    // ⚠️ Et ils ne visaient pas seulement la mauvaise page : `#sec-spec` et
+    // `#name-search` n'existent QUE sur `accueil-public.html`. La cible
+    // portait donc une ancre qui ne pouvait pas etre trouvee sur la page
+    // visee — deux fautes qui se cachaient l'une l'autre.
+    //
+    // ⚠️ APRES L'OUVERTURE, `porte.mjs ouverte` copie `accueil-public.html`
+    // PAR-DESSUS `index.html` : les deux URL servent alors la meme page, et
+    // `accueil-public.html` porte deja `<link rel="canonical" href="…/">`.
+    // Ces liens restent donc justes dans les deux etats de la porte — ce que
+    // `index.html` ne fait pas.
+    { id: 'home',    icon: 'fa-home',             i18n: 'nav_home',    href: 'accueil-public.html' },
     // ⚠️ [17/09/2026] CETTE ANCRE POINTAIT SUR `#sec-search` — le bloc FILTRES.
     // Sur l'accueil, cet element EXISTE : `tabClick` le trouvait et y faisait
     // defiler la page. Un utilisateur qui touche la loupe pour CHERCHER se
@@ -62,10 +83,10 @@
     // La loupe vise desormais la barre elle-meme — et ne se contente pas d'y
     // faire defiler : elle y met le FOCUS. Toucher une loupe, c'est vouloir
     // taper.
-    { id: 'search',  icon: 'fa-search',           i18n: 'nav_docs',    href: 'index.html#name-search' },
+    { id: 'search',  icon: 'fa-search',           i18n: 'nav_docs',    href: 'accueil-public.html#name-search' },
     { id: 'carte',   icon: 'fa-map-location-dot', i18n: 'nav_map',     href: '#carte' },
     { id: 'rdv',     icon: 'fa-calendar-check',   i18n: 'nav_rdv',     href: '#' },
-    { id: 'spec',    icon: 'fa-stethoscope',      i18n: 'nav_spec',    href: 'index.html#sec-spec' },
+    { id: 'spec',    icon: 'fa-stethoscope',      i18n: 'nav_spec',    href: 'accueil-public.html#sec-spec' },
     { id: 'profile', icon: 'fa-user',             i18n: 'nav_profile', href: '#' }
   ];
 
@@ -114,12 +135,22 @@
         return;
       }
       // Sous-page sans barre de recherche : on va la ou elle existe.
-      go(href || 'index.html#name-search');
+      // ⚠️ C'est CE repli qui envoyait sur la porte fermee : le cas special
+      // au-dessus ne joue que sur l'accueil, donc la garde de la loupe, qui
+      // s'ouvrait sur l'accueil, ne l'a jamais traverse. Une garde ne couvre
+      // que le chemin qu'elle emprunte.
+      go(href || 'accueil-public.html#name-search');
       return;
     }
     if (id === 'carte') {
       if (typeof window.openMapOverlay === 'function') { window.openMapOverlay(); return; }
-      go('index.html#carte'); return;
+      // ⚠️ IL N'EXISTE AUCUN `id="carte"` DANS LE DEPOT — verifie, pas suppose.
+      // La carte est une surcouche (`#map-overlay`, `hidden`) qu'on OUVRE ;
+      // il n'y a pas d'ancre vers laquelle defiler. `#carte` est donc une
+      // consigne, pas une ancre — et `js/home-app.js` la lit a l'arrivee.
+      // Sans cette moitie-la, on remplacait une porte fermee par un
+      // cul-de-sac : l'accueil s'afficherait, et pas la carte.
+      go('accueil-public.html#carte'); return;
     }
     if (id === 'rdv' || id === 'profile') {
       if (typeof window.isLogged === 'function') {           // index : hooks inline présents

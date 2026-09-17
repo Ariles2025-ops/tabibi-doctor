@@ -2455,3 +2455,30 @@ window.selectProfileSlot=selectProfileSlot; window.confirmFromProfile=confirmFro
 window.finalBooking=finalBooking;window.openMapOverlay=openMapOverlay;window.closeMapOverlay=closeMapOverlay;window._tbOpenDoc=_tbOpenDoc;
 window.showPatientDashboardModal=showPatientDashboardModal;
 window.showDoctorDashboardModal=showDoctorDashboardModal;
+
+// =====================================================================
+// [17/09/2026] `#carte` A L'ARRIVEE : OUVRIR LA CARTE, PAS S'ARRETER DEVANT
+// =====================================================================
+// La barre du bas, depuis une sous-page, ne peut pas appeler `openMapOverlay`
+// — la fonction vit ici, sur l'accueil. Elle navigue donc vers
+// `accueil-public.html#carte`, et c'est a l'arrivee qu'on ouvre.
+//
+// ⚠️ IL N'Y A PAS D'ANCRE `#carte` DANS LE DEPOT, et il ne doit pas y en
+// avoir : la carte est une surcouche `hidden`, pas une section de la page.
+// `#carte` est une CONSIGNE. Sans ce bloc, l'onglet Carte afficherait
+// l'accueil et rien d'autre — un cul-de-sac silencieux, exactement ce qu'on
+// vient de retirer en cessant de viser la porte fermee.
+(function () {
+  function ouvrirSiDemande() {
+    if (window.location.hash !== '#carte') return;
+    if (typeof window.openMapOverlay !== 'function') return;
+    window.openMapOverlay();
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ouvrirSiDemande);
+  } else {
+    ouvrirSiDemande();
+  }
+  // Depuis l'accueil lui-meme, le hash change sans rechargement.
+  window.addEventListener('hashchange', ouvrirSiDemande);
+})();
