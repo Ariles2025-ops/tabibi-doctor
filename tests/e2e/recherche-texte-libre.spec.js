@@ -141,6 +141,63 @@ test.describe('recherche en texte libre', () => {
     expect(dernier.p_wilaya).toBeNull();
   });
 
+  // ─────────────────────────────────────────────────────────────────
+  // [17/09/2026] « Dr » DEVANT UN NOM FAISAIT DISPARAITRE LES DEUX TIERS
+  // ─────────────────────────────────────────────────────────────────
+  // Mesure sur la base de production, meme RPC, meme jour :
+  //
+  //     « benali »          -> 131 praticiens
+  //     « dr benali »       ->  46
+  //     « docteur benali »  ->   0
+  //
+  // Le texte partait tel quel en `p_q`, et la civilite se retrouvait comparee
+  // au NOM. Un patient qui ecrit « Docteur Benali » — la facon la plus
+  // naturelle de nommer un medecin — ne trouvait **personne**.
+  //
+  // ⚠️ Ce n'etait PAS le defaut soupconne (« Dr Cardin » devenant « cardio ») :
+  // l'analyse fait de l'egalite STRICTE sur les listes de la base, une civilite
+  // ne ressemble a aucune specialite. Le defaut etait en aval.
+  for (const [saisie, attendu] of [
+    ['dr benali', 'benali'],
+    ['docteur benali', 'benali'],
+    ['Dr. Benali', 'Benali'],
+    ['pr benali', 'benali'],
+  ]) {
+    test(`« ${saisie} » part sans la civilite`, async ({ page }) => {
+      const { appels } = await bouchonnerRecherche(page);
+      await poserListes(page);
+      await page.goto(PAGE, ATTENDRE);
+      await chercher(page, saisie);
+
+      const dernier = appels[appels.length - 1];
+      expect(dernier, 'aucun appel n est parti').toBeTruthy();
+      expect(dernier.p_q, `la civilite part encore au serveur`).toBe(attendu);
+    });
+  }
+
+  test('un nom qui ressemble a une civilite n est PAS mange', async ({ page }) => {
+    // ⚠️ LA CONTRE-EPREUVE. Retirer trop serait pire que ne rien retirer : on
+    // ne doit pas amputer un nom propre. Seuls les mots ENTIERS de la liste
+    // sautent — « Drissi » commence par « dr » et doit survivre intact.
+    const { appels } = await bouchonnerRecherche(page);
+    await poserListes(page);
+    await page.goto(PAGE, ATTENDRE);
+    await chercher(page, 'drissi');
+
+    expect(appels[appels.length - 1].p_q).toBe('drissi');
+  });
+
+  test('une saisie faite QUE de civilites part quand meme', async ({ page }) => {
+    // On ne rend pas une recherche vide a quelqu'un qui a tape quelque chose :
+    // il verrait la vitrine sans comprendre pourquoi.
+    const { appels } = await bouchonnerRecherche(page);
+    await poserListes(page);
+    await page.goto(PAGE, ATTENDRE);
+    await chercher(page, 'dr');
+
+    expect(appels[appels.length - 1].p_q).toBe('dr');
+  });
+
   test('le champ vide ne declenche aucune recherche — l invite revient', async ({ page }) => {
     // La CONTRE-EPREUVE du premier essai : si le court-circuit avait ete
     // simplement supprime, la page appellerait le serveur sans aucun critere a

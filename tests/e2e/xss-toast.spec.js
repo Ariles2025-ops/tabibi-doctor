@@ -90,32 +90,64 @@ test.describe("le toast n'execute pas ce qu'on lui donne", () => {
     expect(r.texte).toBe('Un message ordinaire');
   });
 
-  test("les libelles de NOTRE dictionnaire gardent leur balisage", async ({ page }) => {
-    // Trois entrees du dictionnaire portent volontairement une icone
-    // (`fav_add`, `fav_rm`, `sms_ok`). Elles passent par une porte explicite.
-    // Le point : cette porte existe, et elle est la SEULE voie vers du HTML.
+  test("il n'existe PLUS de porte vers du HTML — meme demandee", async ({ page }) => {
+    // ⚠️ [17/09/2026] CE QUI A CHANGE, ET POURQUOI.
+    //
+    // `toast()` portait une porte `{html:true}`, « reservee aux libelles de
+    // NOTRE dictionnaire ». Mesure avant de trancher : **un seul appelant**
+    // l'empruntait, pour `fav_add` et `fav_rm` — et `fav_rm` ne contenait aucun
+    // balisage. `sms_ok`, le troisieme libelle cite, n'avait AUCUN appelant, et
+    // annonçait « Confirmation SMS envoyee » alors qu'aucun SMS ne part (P-75).
+    //
+    // Le commentaire de la fonction disait, quinze lignes plus haut : « on
+    // cesse de l'interpreter […] il n'y a rien a oublier ». La porte
+    // contredisait cette phrase dans la fonction qui la porte.
+    //
+    // **Une exception gardee reste une exception** : c'est la seule chose qu'on
+    // aura a verifier a chaque relecture, pour toujours. L'icone se demande
+    // maintenant par un NOM choisi dans une table interne — rien de ce qui
+    // vient de l'appelant n'est interprete.
     await page.goto('/accueil-public.html', ATTENDRE);
-    await page.waitForTimeout(400);
     const r = await page.evaluate(() => {
       window.toast("Ajoute aux favoris <i class='fa fa-heart'></i>", 'success', 200, { html: true });
       const t = document.querySelector('#toast-wrap .toast');
-      return { coeurs: t.querySelectorAll('i.fa-heart').length };
+      return { coeurs: t.querySelectorAll('i.fa-heart').length, texte: t.textContent };
     });
-    expect(r.coeurs, 'le balisage volontaire du dictionnaire est perdu').toBe(1);
+    expect(r.coeurs, 'la porte vers du HTML est revenue').toBe(0);
+    // Et le message reste lisible : on n'a pas remplace le balisage par du vide.
+    expect(r.texte).toContain('Ajoute aux favoris');
   });
 
-  test("AUCUN appel du produit ne demande le rendu HTML avec une donnee externe", async ({ page }) => {
-    // La porte `{html:true}` est une exception : elle ne doit servir qu'a des
-    // chaines litterales ou a `T(...)`. Si un jour quelqu'un y passe une
-    // variable, ce test le dit — c'est la porte qui redeviendrait le trou.
+  test("l'icone se demande par un NOM, jamais par du balisage", async ({ page }) => {
+    await page.goto('/accueil-public.html', ATTENDRE);
+    const r = await page.evaluate(() => {
+      window.toast('Ajoute aux favoris', 'success', 200, { icone: 'coeur' });
+      const t = document.querySelector('#toast-wrap .toast');
+      return { coeurs: t.querySelectorAll('i.fa-heart').length };
+    });
+    expect(r.coeurs, 'le coeur des favoris a disparu').toBe(1);
+  });
+
+  test("un nom d'icone INCONNU ne produit rien — pas une balise fabriquee", async ({ page }) => {
+    // La contre-epreuve de la table : elle doit REFUSER ce qu'elle ne connait
+    // pas, au lieu de construire une classe a partir de l'entree.
+    await page.goto('/accueil-public.html', ATTENDRE);
+    const r = await page.evaluate(() => {
+      window.toast('Message', 'info', 200, { icone: 'fa-bomb" onload="window.__xss=1' });
+      const t = document.querySelector('#toast-wrap .toast');
+      return { icones: t.querySelectorAll('i').length, xss: window.__xss };
+    });
+    expect(r.icones, 'une icone a ete fabriquee a partir de l entree').toBe(1);  // celle du type
+    expect(r.xss).toBeUndefined();
+  });
+
+  test("AUCUN appel du produit ne demande le rendu HTML", async ({ page }) => {
+    // La porte n'existe plus : plus aucun appel ne doit la reclamer.
     const src = await page.request.get('/js/home-app.js').then((r) => r.text());
-    const appels = src.match(/toast\([^;]*\{\s*html\s*:\s*true\s*\}\s*\)/g) || [];
-    expect(appels.length, 'aucun appel opt-in trouve : le test ne garde plus rien')
-      .toBeGreaterThan(0);
-    for (const a of appels) {
-      const premier = a.slice(6, a.indexOf(','));
-      expect(premier.trim(), `rendu HTML demande pour une expression non litterale : ${a.slice(0, 70)}`)
-        .toMatch(/^(T\(|["'`])/);
-    }
+    const sansCommentaires = src
+      .split('\n').map((l) => l.replace(/(^|[^:"'`\\])\/\/.*$/, '$1')).join('\n')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ');
+    const appels = sansCommentaires.match(/toast\([^;]*\{\s*html\s*:\s*true\s*\}\s*\)/g) || [];
+    expect(appels, `un appel reclame de nouveau du HTML : ${appels[0] || ''}`).toHaveLength(0);
   });
 });

@@ -20,7 +20,7 @@ const TR = {
   fr:{
     welcome:"Bienvenue",logout_ok:"Déconnecté",bad_creds:"Email ou mot de passe incorrect.",
     fill_all:"Veuillez remplir tous les champs.",pass_short:"Mot de passe : 6 caractères minimum.",
-    signup_ok:"Compte créé avec succès !",fav_add:"Ajouté aux favoris <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"Retiré des favoris",
+    signup_ok:"Compte créé avec succès !",fav_add:"Ajouté aux favoris",fav_rm:"Retiré des favoris",
     conn_req:"Connectez-vous pour réserver",reset_ok:"Filtres réinitialisés",
     docs_choose_filter:"Choisissez une wilaya ou une spécialité",docs_choose_filter_sub:"La liste s'affiche dès qu'un de ces deux filtres est renseigné.",no_docs:"Aucun médecin trouvé",try_other:"Essayez d'autres critères",docs_load_err:"Impossible de charger les médecins",docs_load_err_sub:"Vérifiez votre connexion.",retry:"Réessayer",
     cert:"Certifié",urgent:"Urgences",available:"Disponible",rdv:"Prendre RDV",
@@ -44,7 +44,6 @@ const TR = {
     pay_ins:"Assurance (CNAS/CASNOS)",pay_ins_s:"Présentez votre carte d'assuré",
     confirm_rdv:"Confirmer le RDV",rdv_ok:"RDV confirmé !",
     slot_req:"Veuillez sélectionner un créneau",reason_req:"Veuillez indiquer le motif",
-    sms_ok:"Confirmation SMS envoyée <i class='fa fa-check'></i>",
     cancel_rdv:"Annuler ce rendez-vous ?",rdv_cancelled:"RDV annulé",
     save_ok:"Sauvegardé !",profile_ok:"Profil mis à jour !",
     slot_added:"Créneau ajouté !",slot_fill:"Remplissez tous les champs",
@@ -93,7 +92,7 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
   ar:{
     welcome:"مرحباً",logout_ok:"تم تسجيل الخروج",bad_creds:"البريد أو كلمة المرور غير صحيحة.",
     fill_all:"يرجى ملء جميع الحقول.",pass_short:"كلمة المرور: 6 أحرف على الأقل.",
-    signup_ok:"تم إنشاء الحساب بنجاح!",fav_add:"تمت الإضافة للمفضلة <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"تمت الإزالة من المفضلة",
+    signup_ok:"تم إنشاء الحساب بنجاح!",fav_add:"تمت الإضافة للمفضلة",fav_rm:"تمت الإزالة من المفضلة",
     conn_req:"سجّل دخولك للحجز",reset_ok:"تمت إعادة التعيين",
     docs_choose_filter:"اختر ولاية أو تخصصًا",docs_choose_filter_sub:"تظهر القائمة بمجرد تحديد أحد هذين الفلترين.",no_docs:"لا يوجد طبيب مطابق",try_other:"حاول تغيير المعايير",
     cert:"معتمد",urgent:"طوارئ",available:"متاح",rdv:"حجز موعد",
@@ -117,7 +116,6 @@ nav_doctors:"Médecins",cta_login:"Se connecter",cta_signup:"Créer un compte",
     pay_ins:"التأمين (CNAS/CASNOS)",pay_ins_s:"قدّم بطاقة التأمين",
     confirm_rdv:"تأكيد الموعد",rdv_ok:"تم تأكيد الموعد!",
     slot_req:"يرجى اختيار وقت",reason_req:"يرجى ذكر السبب",
-    sms_ok:"تم إرسال تأكيد SMS <i class='fa fa-check'></i>",
     cancel_rdv:"إلغاء هذا الموعد؟",rdv_cancelled:"تم إلغاء الموعد",
     save_ok:"تم الحفظ!",profile_ok:"تم تحديث الملف!",
     slot_added:"تمت إضافة الوقت!",slot_fill:"يرجى ملء الحقول",
@@ -166,7 +164,7 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
   en:{
     welcome:"Welcome",logout_ok:"Logged out",bad_creds:"Incorrect email or password.",
     fill_all:"Please fill in all fields.",pass_short:"Password: min 6 characters.",
-    signup_ok:"Account created successfully!",fav_add:"Added to favorites <i class='fa fa-heart' style='color:var(--red)'></i>",fav_rm:"Removed from favorites",
+    signup_ok:"Account created successfully!",fav_add:"Added to favorites",fav_rm:"Removed from favorites",
     conn_req:"Sign in to book",reset_ok:"Filters reset",
     docs_choose_filter:"Pick a wilaya or a specialty",docs_choose_filter_sub:"The list appears as soon as one of these two filters is set.",no_docs:"No doctors found",try_other:"Try different criteria",
     cert:"Certified",urgent:"Urgent",available:"Available",rdv:"Book",
@@ -190,7 +188,6 @@ nav_doctors:"الأطباء",cta_login:"تسجيل الدخول",cta_signup:"إ�
     pay_ins:"Insurance (CNAS/CASNOS)",pay_ins_s:"Show your insurance card",
     confirm_rdv:"Confirm appointment",rdv_ok:"Appointment confirmed!",
     slot_req:"Please select a slot",reason_req:"Please enter the reason",
-    sms_ok:"SMS confirmation sent <i class='fa fa-check'></i>",
     cancel_rdv:"Cancel this appointment?",rdv_cancelled:"Appointment cancelled",
     save_ok:"Saved!",profile_ok:"Profile updated!",
     slot_added:"Slot added!",slot_fill:"Please fill in all fields",
@@ -528,6 +525,10 @@ function goDash(){const r=user?.role;window.location.href=r==="medecin"?"doctor-
 // On ne « nettoie » pas le message : on cesse de l'interpreter. Un assainisseur
 // est une liste de ce qu'on a pense a interdire ; `textContent` n'interprete
 // rien, et il n'y a rien a oublier.
+// Les seules icones qu'un appelant peut demander en plus de celle du type.
+// Une TABLE, pas une chaine : on ne peut y mettre que ce qui y figure deja.
+const ICONES_SUP = { coeur: "fa-heart", coche: "fa-check" };
+
 function toast(msg,type="info",ms=3500,opts){
   let c=document.getElementById("toast-wrap");
   if(!c){c=document.createElement("div");c.id="toast-wrap";c.className="toast-wrap";document.body.appendChild(c);}
@@ -538,12 +539,30 @@ function toast(msg,type="info",ms=3500,opts){
   ico.className="fa "+(icons[type]||icons.info);
   ico.setAttribute("aria-hidden","true");
   t.appendChild(ico);
-  if(opts&&opts.html===true){
-    // Reserve aux libelles de NOTRE dictionnaire (fav_add, fav_rm, sms_ok) qui
-    // portent une icone. Jamais pour une donnee qui vient d'ailleurs.
-    const span=document.createElement("span");span.innerHTML=String(msg==null?"":msg);t.appendChild(span);
-  }else{
-    t.appendChild(document.createTextNode(String(msg==null?"":msg)));
+  // ⚠️ [17/09/2026] LA PORTE `{html:true}` EST FERMEE.
+  //
+  // Elle existait pour trois libelles du dictionnaire qui portaient leur propre
+  // icone en HTML. Mesure avant de trancher : **un seul appelant** l'utilisait,
+  // pour `fav_add` et `fav_rm` — et `fav_rm` ne contient aucun balisage. Quant
+  // a `sms_ok`, il n'avait **aucun appelant** et annoncait « Confirmation SMS
+  // envoyee » alors qu'aucun SMS ne part (P-75).
+  //
+  // Le commentaire de cette meme fonction dit, quinze lignes plus haut :
+  // « on cesse de l'interpreter […] il n'y a rien a oublier ». La porte
+  // contredisait cette phrase dans la fonction qui la porte. Une exception
+  // gardee reste une exception : c'est la seule chose qu'on aura a verifier a
+  // chaque relecture, pour toujours.
+  //
+  // L'icone se demande desormais par `opts.icone`, choisie dans une table
+  // INTERNE. Rien de ce qui vient de l'appelant n'est interprete : le message
+  // est du texte, l'icone est un nom qu'on reconnait ou qu'on ignore.
+  t.appendChild(document.createTextNode(String(msg==null?"":msg)));
+  if(opts&&opts.icone&&ICONES_SUP[opts.icone]){
+    const sup=document.createElement("i");
+    sup.className="fa "+ICONES_SUP[opts.icone];
+    sup.setAttribute("aria-hidden","true");
+    sup.style.marginInlineStart="6px";
+    t.appendChild(sup);
   }
   c.appendChild(t);
   setTimeout(()=>{t.style.transition="all .28s";t.style.opacity="0";t.style.transform="translateY(-6px)";setTimeout(()=>t.remove(),300);},ms);
@@ -679,7 +698,7 @@ function getFavs(){try{return JSON.parse(localStorage.getItem("tabibi_favs")||"[
 function isFav(id){return getFavs().includes(id);}
 function toggleFav(id,btn){
   const f=getFavs(),i=f.indexOf(id);
-  if(i>-1){f.splice(i,1);toast(T("fav_rm"),"info",3500,{html:true});}else{f.push(id);toast(T("fav_add"),"success",3500,{html:true});}
+  if(i>-1){f.splice(i,1);toast(T("fav_rm"),"info",3500);}else{f.push(id);toast(T("fav_add"),"success",3500,{icone:"coeur"});}
   localStorage.setItem("tabibi_favs",JSON.stringify(f));
   const act=f.includes(id);
   document.querySelectorAll(`[data-fid="${id}"]`).forEach(b=>{b.classList.toggle("is-fav",act);b.querySelector("i").className=act?"fa fa-heart":"far fa-heart";});
@@ -2001,6 +2020,50 @@ function _analyserTexteLibre(texte, wilayas, specialites){
 
 // [C1] Arguments de la RPC chercher_praticiens. Le texte libre est passé tel
 // quel : c'est la RPC qui neutralise les jokers ilike et borne à 60 caractères.
+// =====================================================================
+// [17/09/2026] « Dr » DEVANT UN NOM FAISAIT DISPARAITRE LES DEUX TIERS
+// =====================================================================
+// Mesure sur la base de production, meme RPC, meme jour :
+//
+//     « benali »          -> 131 praticiens
+//     « dr benali »       ->  46
+//     « docteur benali »  ->   0
+//
+// Le texte part tel quel en `p_q`, et la civilite se retrouve comparee au NOM.
+// Un patient qui ecrit « Docteur Benali » — la facon la plus naturelle de
+// nommer un medecin — ne trouve **personne**, et rien ne lui dit pourquoi.
+//
+// ⚠️ Ce n'etait PAS le defaut soupconne (« Dr Cardin » devenant « cardio ») :
+// `_analyserTexteLibre` fait de l'egalite STRICTE sur les listes de la base,
+// une civilite n'y ressemble a aucune specialite. Le defaut etait en aval,
+// dans ce qui part au serveur.
+//
+// On retire donc les civilites du texte libre — et seulement si autre chose
+// reste : « dr » seul n'a pas de sens, autant le laisser chercher.
+
+/** Civilites, normalisees : sans accent, sans point, en minuscules. */
+const _CIVILITES = new Set([
+  'dr', 'dre', 'docteur', 'docteure', 'doc',
+  'pr', 'prof', 'professeur',
+  'mr', 'm', 'mme', 'mlle',
+  // Arabe : le texte arabe ne passe PAS par la normalisation latine, on
+  // compare donc les formes telles qu'elles s'ecrivent.
+  'د', 'دكتور', 'الدكتور', 'طبيب', 'الطبيب',
+]);
+
+function _sansCivilite(q){
+  const brut = String(q == null ? '' : q).trim();
+  if(!brut) return null;
+  const mots = brut.split(/\s+/).filter(Boolean);
+  const gardes = mots.filter((mot) => {
+    const n = mot.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[.]/g, '');
+    return !_CIVILITES.has(n);
+  });
+  // Si l'utilisateur n'a tape QUE des civilites, on ne lui rend pas une
+  // recherche vide : on laisse partir ce qu'il a ecrit.
+  return gardes.length ? gardes.join(' ') : brut;
+}
+
 function _buildDoctorCardsArgs(opts, page){
   let wilaya = opts.ville || null;
   let spec   = opts.spec  || null;
@@ -2016,7 +2079,10 @@ function _buildDoctorCardsArgs(opts, page){
   return {
     p_wilaya:     wilaya,
     p_specialite: spec,
-    p_q:          q,
+    // ⚠️ Applique aux DEUX chemins — le texte brut comme le reste rendu par
+    // l'analyse. Ne le mettre que dans l'un des deux laisserait la moitie du
+    // defaut, sur le cas le plus courant : une recherche sans menu choisi.
+    p_q:          _sansCivilite(q),
     p_type:       null,
     p_page:       Math.min(100, Math.max(1, page || 1)),
     p_limite:     Math.min(50, PER)
