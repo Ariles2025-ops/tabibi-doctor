@@ -6,7 +6,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="description" content="Vous êtes médecin ? Trouvez votre fiche et réclamez-la pour gérer vos rendez-vous sur Tabibi.">
 <link rel="canonical" href="https://tabibi.doctor/doctor-claim.html">
-<meta name="robots" content="noindex,nofollow">
+<!-- ⚠️ [17/09/2026] ETAIT `noindex,nofollow`. C'est la PORTE D'ENTREE des
+     medecins : un praticien qui cherche « revendiquer ma fiche Tabibi » ne
+     pouvait pas la trouver. Une page qu'on veut voir trouver et qu'on interdit
+     d'indexer, c'est une porte fermee de l'interieur.
+
+     Ce qu'elle expose : un formulaire, et une recherche de fiches
+     REVENDICABLES — des noms deja publics, servis par la meme vue
+     `public_doctors` que l'annuaire. Aucune donnee privee, aucune page de
+     compte. Rien de plus que ce que l'accueil montre deja.
+
+     `follow` aussi : sans lui, les liens de cette page ne seraient pas suivis
+     — dont le retour vers l'annuaire. -->
+<meta name="robots" content="index,follow">
 <meta name="theme-color" content="#0E5F46">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="images/icon-192.png">

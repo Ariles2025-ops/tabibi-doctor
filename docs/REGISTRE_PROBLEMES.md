@@ -1282,6 +1282,53 @@ une élévation de privilège — c'est une surface plus large que voulue, et un
 déclencher l'exécution de la fonction. **Je ne corrige pas un GRANT moi-même** : c'est une
 écriture en base. Signalé au RETOUR.
 
+## P-90 — le tunnel de revendication n'avait pas de porte d'entrée
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-90 | La fiche publique d'un médecin non revendiqué ne menait **pas** au tunnel de revendication : elle ne proposait que « Par WhatsApp » | mesuré en base le 17/09 : `doctor_profiles` → **75 035** fiches, **1** revendiquée, **75 035** avec `legacy_id`. Le tunnel (`doctor-claim.html`, RPC `claim_my_doctor_profile`) existe depuis des semaines et **rien de public n'y menait** | le bloc de `doctor-profile.html` est reconstruit : appel principal vers `doctor-claim.html?legacy_id=N` (**fiche pré-remplie**), WhatsApp conservé en second | `tests/e2e/revendication-fiche.spec.js` — 11 essais × 2 cibles. Contre-épreuves : CTA retiré → **6 rouges** ; appel montré sur une fiche déjà revendiquée → **6 rouges** ; téléphone glissé dans le bloc → **2 rouges** ; `noindex` remis sur le tunnel → **2 rouges** ; clé anglaise retirée → **2 rouges** | **réglé** |
+
+### Ce n'est pas une réparation, c'est une brique qui manquait
+
+Rien n'était cassé : le tunnel marche, la RPC marche, la fiche s'affiche. Ce qui manquait,
+c'est le chemin **de l'une vers l'autre** — et un chemin absent ne déclenche aucune erreur,
+ne remplit aucun journal, n'échoue à aucun essai. **1 fiche revendiquée sur 75 035** est le
+seul endroit où ça se voyait, et ce n'est pas un endroit que quelqu'un regarde.
+
+### Partie B — une porte d'entrée qu'on interdit d'indexer est une porte fermée de l'intérieur
+
+`doctor-claim.html` portait `noindex,nofollow`. Un médecin qui cherche « revendiquer ma fiche »
+ne pouvait pas la trouver ; le seul chemin passait par une fiche… qui ne pointait pas dessus.
+Elle est repassée en `index,follow`. **La contre-épreuve est dans la garde** : les cinq pages de
+compte (`patient-dashboard`, `doctor-dashboard`, `medecin-profile`, `patient-profile`,
+`admin-candidatures`) sont vérifiées `noindex,nofollow` dans le **même** essai — ouvrir une
+porte ne doit rien ouvrir d'autre.
+
+### Deux détails qui auraient rendu la garde verte pour rien
+
+1. **Le lien du CTA.** Tout le bloc est déjà sous `if (d.legacy_id)` ; le `? :` que j'avais
+   écrit pour le cas « pas de `legacy_id` » était **du code mort**, et l'essai qui l'éprouvait
+   aurait été vert sans jamais entrer dedans. Ternaire retiré, essai remplacé par celui qui dit
+   la vérité : **sans `legacy_id`, il n'y a pas de bloc du tout**.
+2. **L'i18n.** `_t(cle, defaut)` retombe sur le français quand une clé manque : un encart
+   « traduit » reste donc parfaitement vert en anglais tout en affichant du français. La garde
+   lit le **texte rendu** dans chaque langue et **refuse le repli français** — c'est elle qui
+   sort rouge quand on retire `dp_claim_cta` de `en.js`.
+
+### Ce que la garde de confidentialité éprouve vraiment
+
+Lu en base : `public_doctors` n'expose **ni `phone` ni `email`**, et **aucune** des 75 034
+fiches non revendiquées ne porte d'`address`. La ligne bouchonnée est donc **plus sale que la
+réalité** — volontairement. L'essai ne prouve pas que la vue soit propre (elle l'est, c'est
+mesuré) : il prouve que **le front ne laisserait pas fuiter** un champ que la vue laisserait
+passer un jour. Sans ce choix, l'essai n'éprouverait que ce qui ne peut pas arriver.
+
+### Aucune écriture en base
+
+Aucune proposition de migration n'était nécessaire : la vue expose déjà `is_claimed`, et même
+`show_claim_badge` = `NOT COALESCE(dp.is_claimed, false)` — une colonne écrite exprès pour cet
+encart, et jamais lue jusqu'ici. **Le signal existait ; c'est l'entrée qui manquait.**
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
