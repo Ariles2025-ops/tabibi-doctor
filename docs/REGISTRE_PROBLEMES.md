@@ -1253,6 +1253,35 @@ L'essai vérifiait que la barre du bas est masquée sur ordinateur — une préc
 pour qu'on ne croie pas la loupe du bas universelle. Il est sorti **rouge sur `dist-web` et vert
 sur les sources**, ce qui ne laissait qu'une explication.
 
+## P-89 — la liste des candidatures peut enfin décider
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-89 | `admin-candidatures.html` était en **lecture seule** : on voyait les dossiers, on ne pouvait rien en faire (P-78/P-79) | la RPC existe désormais — lue en base le 17/09 : `maj_statut_candidature(p_id uuid, p_statut text) -> doctor_applications`, SECURITY DEFINER, corps verrouillé par `is_admin()` | boutons **Contacter / Approuver / Rejeter / Remettre à vérifier**, appelés **par la passerelle**, l'écran ne bougeant que sur la **ligne rendue** | `tests/e2e/admin-candidatures.spec.js` (+7 essais, 16 au total). Contre-épreuves : succès sans lire la ligne → 1 rouge ; verrou retiré → 1 rouge | **réglé** |
+
+### Trois règles, trois défauts déjà payés ici
+
+1. **Par la passerelle**, jamais `supabase.rpc` en direct — une réponse PostgREST a deux
+   moitiés, et `tabibiRpc` lit les deux.
+2. **On exige la LIGNE**, pas l'absence d'erreur. `ok:true` avec `data:null` est déjà arrivé
+   dans ce dépôt : sans ce contrôle, l'écran annoncerait un changement qui n'a pas eu lieu
+   (P-68 b, P-83). Et c'est la ligne du **serveur** qui remplace la locale — `reviewed_at` et
+   `reviewed_by` viennent de lui, on ne les devine pas.
+3. **Les boutons se désactivent pendant l'appel.** Deux clics feraient deux écritures, et la
+   seconde écraserait la première sans que personne le sache. Appliqué **avant** d'avoir le
+   défaut, cette fois.
+
+Et un quatrième, plus discret : une carte ne propose **pas** le statut qu'elle porte déjà — une
+écriture qui ne change rien est du bruit, et une occasion de se tromper.
+
+### ⚠️ Un écart de droits, constaté à la lecture — non corrigé
+
+La consigne disait `GRANT … TO authenticated`. Lu en base : l'`EXECUTE` porte sur
+**`authenticated` ET `anon`**. Le corps refuse quand même (`is_admin()`), donc ce n'est **pas**
+une élévation de privilège — c'est une surface plus large que voulue, et un `anon` peut
+déclencher l'exécution de la fonction. **Je ne corrige pas un GRANT moi-même** : c'est une
+écriture en base. Signalé au RETOUR.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
