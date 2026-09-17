@@ -75,6 +75,32 @@
   </div>
   <div class="card" style="max-width:480px;margin:0 auto">
 
+    <!-- ══════════════════════════════════════════════════════════════
+         [17/09/2026] SE CONNECTER PAR NUMERO **OU** PAR E-MAIL
+         ══════════════════════════════════════════════════════════════
+         ⚠️ LA CONNEXION PAR E-MAIL EXISTAIT DEJA, ENTIEREMENT ECRITE ET
+         FONCTIONNELLE — `doLogin()` appelle `signInWithPassword({email})` par
+         `window.tabibi.auth.signIn`. Elle etait seulement ETIQUETEE
+         « Connexion admin », derriere un lien gris de 12 px en bas de page.
+         Quiconque avait un compte e-mail et n'etait pas administrateur n'avait
+         aucune raison de cliquer dessus.
+         Il n'y a donc presque rien a ecrire ici : il y a a MONTRER. Le chemin
+         telephone reste par defaut et ne change pas d'une ligne. -->
+    <div class="form-group">
+      <div class="form-label" id="lo-mode-label" data-i18n="lo_mode_label">Se connecter avec</div>
+      <div id="lo-mode" role="radiogroup" aria-labelledby="lo-mode-label"
+           style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button type="button" class="btn btn-primary" id="lo-mode-phone" role="radio" aria-checked="true" tabindex="0"
+                onclick="loMode('phone')" style="padding:10px;border-radius:10px;font-weight:700;font-size:14px">
+          <i class="fa fa-phone" aria-hidden="true"></i> <span data-i18n="lo_mode_phone">Numéro</span>
+        </button>
+        <button type="button" class="btn" id="lo-mode-email" role="radio" aria-checked="false" tabindex="-1"
+                onclick="loMode('email')" style="padding:10px;border-radius:10px;font-weight:700;font-size:14px">
+          <i class="fa fa-envelope" aria-hidden="true"></i> <span data-i18n="lo_mode_email">E-mail</span>
+        </button>
+      </div>
+    </div>
+
     <!-- ── ÉCRAN 1 : CONNEXION (numéro + mot de passe, ZÉRO SMS) ── -->
     <div id="screen-phone">
       <form id="pwLoginForm" onsubmit="doPhoneLogin(event)">
@@ -144,17 +170,18 @@
       </form>
     </div>
 
-    <!-- ── LIEN ADMIN ── -->
-    <div id="admin-link" style="text-align:center;margin-top:18px;font-size:12px">
-      <a href="#" onclick="showAdmin(event)" style="color:var(--text3);font-weight:600"><i class="fa fa-user-shield"></i> Connexion admin</a>
-    </div>
+    <!-- ⚠️ LE LIEN « Connexion admin » EST RETIRE, PAS L'ECRAN. Il ne
+         designait rien d'administratif : c'etait la connexion par e-mail de
+         tout le monde, sous un nom qui en ecartait tout le monde. Le selecteur
+         du haut y mene desormais. `showAdmin()` reste defini — d'autres pages
+         et le retour arriere s'en servent. -->
 
-    <!-- ── ÉCRAN 3 : ADMIN (email + mot de passe, flux existant inchangé) ── -->
+    <!-- ── ÉCRAN 3 : E-MAIL + mot de passe (flux existant, INCHANGE) ── -->
     <div id="screen-admin" class="hidden">
       <form id="loginForm" onsubmit="doLogin(event)">
         <div class="form-group"><label class="form-label" for="le" data-i18n="email">Email</label>
           <div class="input-wrap"><i class="fa fa-envelope ii-l" aria-hidden="true"></i>
-            <input class="form-control" id="le" type="email" style="padding-inline-start:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
+            <input class="form-control" id="le" type="email" autocapitalize="none" spellcheck="false" style="padding-inline-start:42px" placeholder="vous@tabibi.dz" data-i18n-placeholder="ph_email_tabibi" autocomplete="email"></div></div>
         <div class="form-group"><label class="form-label" for="lp" data-i18n="password">Mot de passe</label>
           <div class="input-wrap"><i class="fa fa-lock ii-l" aria-hidden="true"></i>
             <input class="form-control" id="lp" type="password" style="padding-inline-start:42px" placeholder="••••••••" autocomplete="current-password">
@@ -163,11 +190,8 @@
             <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
           </div>
         </div>
-        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-user-shield"></i> Connexion admin</button>
+        <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> <span data-i18n="sign_in">Se connecter</span></button>
       </form>
-      <div style="text-align:center;margin-top:12px;font-size:12px">
-        <a href="#" onclick="showPhone(event)" style="color:var(--text3);font-weight:600">← Retour à la connexion par téléphone</a>
-      </div>
     </div>
 
     <div style="text-align:center;margin-top:18px;font-size:13px;color:var(--text3)">
@@ -211,6 +235,40 @@ function mapOtpError(error){
   return "Échec de l'envoi/vérification du code. Réessayez.";
 }
 
+// ══════════════════════════════════════════════════════════════════════
+// [17/09/2026] NUMERO OU E-MAIL — montrer un chemin qui existait deja
+// ══════════════════════════════════════════════════════════════════════
+// `doLogin()` et l'ecran `#screen-admin` ne changent pas : ils marchaient.
+// Ce qui manquait, c'est qu'on puisse les ATTEINDRE sans se croire admin.
+function _loMarquerMode(mode){
+  ['phone','email'].forEach(function(m){
+    var b = document.getElementById('lo-mode-' + m);
+    if(!b) return;
+    var actif = (m === mode);
+    b.setAttribute('aria-checked', actif ? 'true' : 'false');
+    b.setAttribute('tabindex', actif ? '0' : '-1');
+    b.classList.toggle('btn-primary', actif);
+  });
+}
+
+function loMode(mode){
+  showScreen(mode === 'email' ? 'admin' : 'phone');
+  var champ = document.getElementById(mode === 'email' ? 'le' : 'lp-phone');
+  if(champ){ try{ champ.focus({preventScroll:true}); }catch(_){ champ.focus(); } }
+}
+
+// Un radiogroup se parcourt au clavier, sinon ce n'en est pas un.
+document.addEventListener('keydown', function(ev){
+  var g = document.getElementById('lo-mode');
+  if(!g || !g.contains(ev.target)) return;
+  if(['ArrowRight','ArrowDown','ArrowLeft','ArrowUp'].indexOf(ev.key) === -1) return;
+  ev.preventDefault();
+  var courant = document.getElementById('lo-mode-email');
+  var versMail = !(courant && courant.getAttribute('aria-checked') === 'true');
+  loMode(versMail ? 'email' : 'phone');
+  var b = document.getElementById('lo-mode-' + (versMail ? 'email' : 'phone')); if(b) b.focus();
+});
+
 // ── Bascule d'écrans ──────────────────────────────────────────────────────
 function showScreen(which){
   ["phone","reset","reset-otp","reset-newpw","admin"].forEach(function(s){
@@ -219,6 +277,15 @@ function showScreen(which){
   });
   var adminLink = document.getElementById("admin-link");
   if (adminLink) adminLink.classList.toggle("hidden", which !== "phone");
+
+  // ⚠️ [17/09/2026] Le selecteur ne s'affiche QUE devant les deux ecrans de
+  // connexion. Pendant « mot de passe oublie » (trois ecrans), il proposerait
+  // de basculer vers un formulaire qui n'a rien a voir, et le retour serait un
+  // mystere. Et il doit SUIVRE l'ecran : `showAdmin()`/`showPhone()` sont
+  // appeles d'ailleurs, un etat qui ne suit pas est un etat qui ment.
+  var grpMode = document.getElementById("lo-mode");
+  if (grpMode) grpMode.classList.toggle("hidden", which !== "phone" && which !== "admin");
+  if (which === "phone" || which === "admin") _loMarquerMode(which === "admin" ? "email" : "phone");
   // [FIX Safari 2026-07-30] Widget rendu à l'affichage de l'écran (dans un
   // conteneur display:none, Turnstile calcule une taille nulle).
   if (which === "reset") _ensureCaptcha("reset");

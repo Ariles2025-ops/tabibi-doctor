@@ -22,6 +22,20 @@
 // (une RPC qui emet un code + un ecran admin qui l'affiche). Le supprimer sera
 // alors un geste delibere, pas un oubli.
 // =====================================================================
+// ---------------------------------------------------------------------
+// ⚠️ [17/09/2026] LE SELECTEUR EST RESSERRE SUR `#role-picker`
+// ---------------------------------------------------------------------
+// Il lisait `[role="radiogroup"] button[role="radio"]` **sur toute la page**, a
+// une epoque ou il n'y avait qu'un seul radiogroup. `signup.html` en porte un
+// second depuis P-93 : le choix « Numero / E-mail », qui ne parle pas de roles.
+// L'essai comptait donc 4 boutons et sortait rouge pour une raison etrangere a
+// ce qu'il garde.
+//
+// **Ce n'est pas un assouplissement.** Il exige toujours EXACTEMENT deux
+// boutons de role, toujours `role_patient` puis `role_doctor`, et la recherche
+// de `selRole('secretaire')` reste a l'echelle de la PAGE — un bouton cache
+// ailleurs compterait encore. On a retire une ambiguite, pas une exigence.
+// ---------------------------------------------------------------------
 const { test, expect } = require('@playwright/test');
 // [14/09/2026] AUCUNE REQUETE HORS LOCALHOST. Voir tests/e2e/_hermetique.js :
 // la CI rougissait sur une dependance reseau (Sentry CDN sur chaque page,
@@ -54,7 +68,7 @@ test.describe('inscription publique — les roles proposes', () => {
 
   test('les deux roles qui aboutissent sont proposes', async ({ page }) => {
     await page.goto('/signup.html', ATTENDRE);
-    const roles = page.locator('[role="radiogroup"] button[role="radio"]');
+    const roles = page.locator('#role-picker button[role="radio"]');
     await expect(roles).toHaveCount(2);
     await expect(roles.nth(0).locator('[data-i18n]')).toHaveAttribute('data-i18n', 'role_patient');
     await expect(roles.nth(1).locator('[data-i18n]')).toHaveAttribute('data-i18n', 'role_doctor');
@@ -64,9 +78,9 @@ test.describe('inscription publique — les roles proposes', () => {
     await page.goto('/signup.html', ATTENDRE);
 
     // Aucun bouton de role ne le propose.
-    const roles = page.locator('[role="radiogroup"] button[role="radio"]');
+    const roles = page.locator('#role-picker button[role="radio"]');
     await expect(roles).toHaveCount(2);
-    const cles = await page.locator('[role="radiogroup"] button[role="radio"] [data-i18n]')
+    const cles = await page.locator('#role-picker button[role="radio"] [data-i18n]')
                            .evaluateAll((els) => els.map((e) => e.getAttribute('data-i18n')));
     expect(cles).not.toContain('role_secretaire');
 
