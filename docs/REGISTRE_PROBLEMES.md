@@ -1397,6 +1397,25 @@ un `return` à cet endroit sort **2 rouges**, dont l'essai « la saisie locale e
 **Et `if (!didDbSave) → erreur` aurait inventé une panne.** Sans session, aucune sauvegarde
 distante n'est **tentée** : le mode local est le comportement attendu. Trois états, pas deux.
 
+## P-97 — le salut du tableau de bord médecin : diagnostic reçu, défaut absent
+
+| ID | symptôme annoncé | ce qui a été mesuré | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-97 | « L'en-tête affiche `hello`, `good_morning` etc. car ces clés sont absentes des dictionnaires » | **les quatre clés sont présentes dans les trois dictionnaires**, avec de vraies traductions (arrivées avec `1409c27`), et **l'écran n'affiche aucune clé brute** — mesuré en FR/AR/EN, sur les sources **et** sur `dist-web` | **aucun** : rien à corriger. En ajouter aurait cassé la parité i18n sans rien réparer | `tests/e2e/salut-medecin-i18n.spec.js` — 5 essais × 2 cibles, ajoutés quand même | **sans objet — garde posée** |
+
+### Le risque est réel, même si le défaut ne l'est pas
+
+`tabibiI18n.T(key)` rend `TR[lang][key]`, sinon `TR.fr[key]`, **sinon la clé elle-même**
+(`js/tabibi-i18n.js:98`). Le salut dépend donc du **moment**, pas du vocabulaire : dictionnaire
+pas encore chargé → « hello » à l'écran. Et `document.write`, qui l'insère de façon synchrone sur
+les sources, est **inopérant en module ES** (build Vite) où `chargerLangue()` prend le relais de
+façon asynchrone — la famille de P-29, sources vertes et build faux. La garde tourne donc sur les
+deux cibles.
+
+**Une consigne n'est pas une mesure.** Trois lots de suite ont commencé par une vérification qui a
+corrigé le diagnostic reçu : la page visée n'était pas la bonne (P-90), la moitié du correctif
+manquait (P-91), et ici le défaut n'existait pas.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
