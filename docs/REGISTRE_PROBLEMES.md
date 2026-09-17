@@ -1719,6 +1719,50 @@ retirés avant comparaison, et la contre-épreuve sort **2 rouges**.
 Les clés `dp_claim_wa` et `dp_claim_wa_msg` sont retirées des trois dictionnaires (parité tenue :
 **1580 clés par langue, 0 manquante**), et `rawName`, qui ne servait qu'au texte WhatsApp, avec.
 
+## P-102 — « Mes ordonnances » interrogeait une table qui n'existe pas
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-102 | La page patient « Mes ordonnances » affichait, **à chaque ouverture**, « Erreur de chargement — Could not find the table `public.my_prescriptions` in the schema cache ». **Un patient n'avait aucun moyen de voir ses ordonnances** | trouvé en live par Aghiles. `patient-ordonnances.html:412` lisait `my_prescriptions` ; cette table **n'existe pas** en base | la page lit `prescriptions` (RLS `patient_id = auth.uid()`), et les noms de médecin en **seconde lecture** sur `public.users` | `tests/e2e/patient-ordonnances.spec.js` — 6 essais × 2 cibles. Contre-épreuves : `my_prescriptions` remis → **8 rouges** ; liste rendue dépendante de la seconde lecture → **2 rouges** | **réglé** |
+
+### ⚠️ AUCUNE MIGRATION N'ÉTAIT NÉCESSAIRE — vérifié en base avant d'écrire
+
+Le SEQ autorisait à **proposer** une vue `my_prescriptions` si aucune source lisible n'existait.
+Il en existait une :
+
+| ce qu'il fallait | ce que la base dit déjà |
+|---|---|
+| lire ses ordonnances | `prescriptions_select_fusion` : `patient_id = auth.uid()` — **déjà ouvert** |
+| lire le nom du prescripteur | `users_select_fusion` autorise le patient sur les médecins **avec qui il a un rendez-vous** : `role = 'medecin' AND id IN (select doctor_id from appointments where patient_id = auth.uid())` |
+
+**Deux lectures et non une jointure**, pour une raison mesurée : les clés étrangères de
+`prescriptions` pointent vers **`auth.users`**, que PostgREST n'expose pas. L'imbrication
+`select('*, doctor:users(…)')` ne peut donc pas fonctionner — ce n'est pas un choix de style.
+
+### La seconde lecture ne peut pas faire tomber la première
+
+Si les noms sont refusés, **la liste s'affiche quand même**. Une ordonnance sans le nom de son
+prescripteur garde son numéro, sa date, ses médicaments et son PDF — l'essentiel. Faire dépendre
+toute la liste de cette requête ramènerait l'écran vide qu'on vient de retirer, pour une ordonnance
+parfaitement lisible. La contre-épreuve l'éprouve : **2 rouges**.
+
+Et on n'écrit pas « **Dr** » tout seul quand le nom manque : c'est « Médecin prescripteur »
+(FR/AR/EN). Un préfixe sans nom n'est pas un nom.
+
+### ⚠️ Ma première contre-épreuve est passée au vert sans rien prouver
+
+J'ai remis `my_prescriptions` par un remplacement… qui a touché **le premier des trois**
+`supa.from('prescriptions')` du fichier — celui du téléchargement de PDF, pas celui de la liste.
+Les 12 essais sont restés verts, et j'ai failli conclure que la garde ne valait rien.
+
+**Une contre-épreuve qui casse autre chose que ce qu'on mesure ne dit rien du tout.** Refaite sur
+la bonne ligne : **8 rouges**.
+
+### Deux autres lectures, déjà correctes
+
+`patient-ordonnances.html:267` et `:283` lisaient **déjà** `prescriptions` (chemins du PDF). Le
+défaut ne concernait que `load()` — vérifié, et **aucune ligne modifiée** ailleurs.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
