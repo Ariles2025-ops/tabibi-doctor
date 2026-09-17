@@ -8,6 +8,11 @@
 // Et la fiche publique — la page qu'un médecin trouve en cherchant son propre
 // nom — n'y menait **pas** : elle ne proposait que « Par WhatsApp ».
 //
+// ⚠️ MISE À JOUR DU 18/09 : ce chemin WhatsApp a été **retiré** (décision
+// d'Aghiles — un médecin parti sur WhatsApp ne crée pas de compte). Le bloc ne
+// porte donc plus qu'un seul appel : le tunnel. L'essai qui exigeait WhatsApp
+// a été retourné en essai qui l'interdit, au même endroit.
+//
 // Lu en base : la vue `public_doctors` expose déjà `is_claimed`, et même
 // `show_claim_badge` = `NOT COALESCE(dp.is_claimed, false)` — une colonne
 // écrite exprès pour ça. Le signal était là ; c'est l'entrée qui manquait.
@@ -105,16 +110,60 @@ test.describe('revendiquer sa fiche depuis la fiche publique', () => {
     expect(nfc(await lien.innerText())).toContain(nfc('Revendiquer ma fiche'));
   });
 
-  test('WhatsApp reste, en SECOND — on ajoute une porte, on n’en ferme pas une', async ({ page }) => {
-    // Le chemin WhatsApp marche : il y a un humain au bout. Le retirer pour
-    // « simplifier » remplacerait un chemin qui aboutit par un qui n'a encore
-    // jamais servi. Cet essai garde les DEUX.
+  test('AUCUN chemin WhatsApp dans le bloc — un seul appel, le tunnel', async ({ page }) => {
+    // ══════════════════════════════════════════════════════════════════
+    // ⚠️ CET ESSAI DISAIT L'INVERSE, ET C'EST MOI QUI L'AVAIS ÉCRIT
+    // ══════════════════════════════════════════════════════════════════
+    // Version du 17/09 : « WhatsApp reste, en SECOND — on ajoute une porte, on
+    // n'en ferme pas une ». L'argument tenait côté parcours : c'est un chemin
+    // qui aboutit, avec un humain au bout.
+    //
+    // Il rate ce qui compte ici. **Un médecin parti sur WhatsApp ne crée pas de
+    // compte** : il écrit à une équipe, quelqu'un lui répond à la main, et la
+    // plateforme n'a gagné ni utilisateur ni fiche revendiquée. Décision
+    // d'Aghiles le 18/09 — et c'est son arbitrage, pas le mien.
+    //
+    // L'essai est **retourné**, pas supprimé : la trace de la décision reste
+    // lisible là où elle s'applique.
     await ouvrir(page, { is_claimed: false });
     await attendreLeBloc(page);
 
-    const wa = page.locator('#claim-cta-wa');
-    await expect(wa).toBeVisible();
-    expect(await wa.getAttribute('href')).toMatch(/^https:\/\/wa\.me\/\d+\?text=/);
+    expect(await page.locator('#claim-cta-wa').count(),
+      'le chemin WhatsApp est revenu dans le bloc de revendication').toBe(0);
+
+    const bloc = page.locator('#claim-status-block');
+    const liens = await bloc.locator('a').evaluateAll(
+      (as) => as.map((a) => a.getAttribute('href') || '').join(' '));
+    expect(liens, 'un lien WhatsApp subsiste dans le bloc').not.toMatch(/wa\.me|whatsapp/i);
+    expect(nfc(await bloc.innerText()), 'le bloc parle encore de WhatsApp')
+      .not.toMatch(/whatsapp/i);
+
+    // ⚠️ ET L'APPEL RESTANT MÈNE TOUJOURS AU TUNNEL. Retirer un chemin sans
+    // vérifier l'autre laisserait un bloc sans aucune issue.
+    await expect(page.locator('#claim-cta-link'))
+      .toHaveAttribute('href', 'doctor-claim.html?legacy_id=4242');
+  });
+
+  test('les autres usages WhatsApp du dépôt ne sont PAS touchés', async ({ page }) => {
+    // ⚠️ La contre-épreuve du retrait. « Retirer WhatsApp » pris au pied de la
+    // lettre aurait coupé le formulaire de cas urgent — un canal qui n'a rien à
+    // voir avec l'inscription et où quelqu'un attend une réponse. Ce qui est
+    // retiré, c'est le chemin qui REMPLACE une inscription, pas la messagerie.
+    // ⚠️ ON RETIRE LES COMMENTAIRES D'ABORD, ET C'EST UNE CORRECTION, PAS UN
+    // ORNEMENT. Ma première version lisait le HTML brut : en coupant pour de
+    // vrai le lien de `cas-grave.html` (contre-épreuve), l'essai RESTAIT VERT —
+    // parce qu'un commentaire du fichier contient « wa.me ». Une garde qui lit
+    // les commentaires se rassure toute seule. Douzième fois dans ce dépôt.
+    const nu = (t) => t
+      .split('\n').map((l) => l.replace(/(^|[^:"'`\\])\/\/.*$/, '$1')).join('\n')
+      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+      .replace(/<!--[\s\S]*?-->/g, ' ');
+
+    const urgence = nu(await page.request.get('/cas-grave.html').then((r) => r.text()));
+    expect(urgence, 'le canal WhatsApp des cas urgents a disparu').toMatch(/wa\.me/);
+
+    const partage = nu(await page.request.get('/waiting-list.html').then((r) => r.text()));
+    expect(partage, 'le partage de la liste d’attente a disparu').toMatch(/wa\.me/);
   });
 
   test('fiche DÉJÀ revendiquée : aucun appel à revendiquer', async ({ page }) => {
@@ -150,16 +199,34 @@ test.describe('revendiquer sa fiche depuis la fiche publique', () => {
   });
 
   test('un nom piégé ne devient pas du HTML', async ({ page }) => {
-    // Le bloc est construit en nœuds DOM : il n'y a rien à échapper, donc rien
-    // à oublier d'échapper. On le vérifie plutôt que de le croire — le nom
-    // repart dans le lien WhatsApp, et c'est là que les chaînes se recollent.
+    // ⚠️ CET ESSAI A PERDU SA CIBLE LE 18/09, et il fallait le dire plutôt que
+    // le laisser mourir. Il lisait l'URL WhatsApp : c'était là que le nom et
+    // des chaînes se recollaient. Ce lien n'existe plus.
+    //
+    // Le nom ne rentre plus du tout dans le bloc de revendication — ce qui est
+    // la meilleure protection possible, et exactement ce qu'un essai doit
+    // constater au lieu de le supposer. On élargit donc à **toute la page** :
+    // le nom y est rendu (en-tête, titre), et c'est là que l'échappement compte
+    // désormais.
     await ouvrir(page, { is_claimed: false, full_name: '<img src=x onerror="window.__xss=1">' });
     await attendreLeBloc(page);
 
+    expect(await page.evaluate(() => window.__xss),
+      'le nom piégé s’est exécuté').toBeUndefined();
     expect(await page.locator('#claim-status-block img').count()).toBe(0);
-    expect(await page.evaluate(() => window.__xss)).toBeUndefined();
-    const href = await page.locator('#claim-cta-wa').getAttribute('href');
-    expect(href, 'le nom part brut dans l’URL WhatsApp').not.toContain('<img');
+    // Aucune balise `img` injectée nulle part par ce nom — les images
+    // légitimes de la page ont une source, celle-ci serait `x`.
+    expect(await page.locator('img[src="x"]').count(),
+      'le nom piégé a produit une balise dans la page').toBe(0);
+    // Et il s'affiche bien QUELQUE PART, en texte : un essai vert parce que le
+    // nom a disparu ne prouverait rien.
+    //
+    // ⚠️ Comparaison INSENSIBLE À LA CASSE : la page applique un
+    // `text-transform: capitalize`, et `innerText` rend le texte TRANSFORMÉ —
+    // « Dr. <Img Src=X … ». Un essai qui compare au caractère près accuserait
+    // ici une feuille de style, pas un défaut d'échappement.
+    expect(nfc(await page.locator('#d-name').innerText()))
+      .toMatch(/<img src=x/i);
   });
 
   test('une fiche sans `legacy_id` n’affiche PAS le bloc', async ({ page }) => {
