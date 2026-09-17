@@ -295,6 +295,7 @@ ne retire un filet qu'après avoir constaté que l'autre chemin fonctionne. Ici,
 Le placeholder est posé **à l'exécution** par l'en-tête : `inject()` pouvait arriver avant
 lui, ne rien trouver, et ne jamais repasser. Un `MutationObserver` rattrape — **borné à 8 s,
 parce qu'une attente sans fin est une fuite, pas un filet**.
+
 ## 69 wilayas — et deux divergences trouvées en chemin
 
 | ID | symptôme | preuve mesurée | correctif | garde | statut |
@@ -352,6 +353,7 @@ heurtés en ajoutant les onze nouvelles.
 codes. C'est l'étape du stratège, après validation d'Aghiles. Tant qu'elle n'a pas eu lieu,
 **les onze nouvelles wilayas sont sélectionnables et ne rendront aucun médecin** — c'est
 attendu, et ce n'est pas un bug.
+
 ## 🔴 P-51 — la barre de recherche ne cherchait plus, depuis six jours
 
 | | |
@@ -1061,6 +1063,7 @@ ne pas avoir de nom : refus de lecture, ligne absente, ligne aux deux champs vid
 `verifier:rpc-passage` réclamait depuis un moment l'abaissement du plafond de
 `patient-ordonnances.html` (0 appel direct, plafond 1). Fait. **Un cliquet qu'on n'abaisse pas
 laisse revenir ce qu'il vient de faire disparaître.**
+
 ## P-82 — la porte tuait ce qu'elle mesurait, puis l'accusait
 
 | ID | symptôme | preuve mesurée | correctif | garde | statut |
@@ -1466,6 +1469,69 @@ posé le journal **dans le seul répertoire que Playwright efface**.
 **L'outil de mesure fait partie de ce qu'il faut mesurer.** Ici le coût est modeste — on relance
 `npx playwright test` à la main, c'est ce que j'ai fait — mais le message désigne un fichier comme
 s'il existait, et c'est exactement ce qu'une porte ne doit jamais faire.
+
+## P-95 — « Profil sauvegardé ! » en vert, juste après « Sauvegarde échouée »
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-95 | Dans `saveAll()` (`medecin-profile.html`), un échec réseau affichait le message d'erreur **puis** le toast vert « Profil sauvegardé ! ». Le médecin retient le vert, ferme la page, et croit ses horaires enregistrés | les branches d'erreur **métier** font `return` ; la branche « réseau / inconnue » et le `catch` retombaient dans la suite du code, qui affiche le vert. Le `catch` ne faisait même qu'un `console.warn` : l'écran n'affichait **que** le vert | un troisième état, `dbEchouee` : réussie → vert « (Tabibi DB) » · **échouée → rouge seul** · non tentée → vert | `tests/e2e/profil-medecin-faux-succes.spec.js` — 5 essais × 2 cibles. Contre-épreuves : vert inconditionnel → **4 rouges** ; `return` sec → **2 rouges** | **réglé** |
+
+### Pourquoi ni un `return`, ni `if (!didDbSave) → erreur`
+
+**Le `return` que suggérait la consigne aurait fait perdre la saisie.** La retombée sur
+`localStorage` est voulue — le message d'erreur promet « copie locale gardée ». Sortir avant
+l'écriture locale aurait remplacé un mensonge par une **perte de données**. La garde le prouve :
+un `return` à cet endroit sort **2 rouges**, dont l'essai « la saisie locale est CONSERVÉE ».
+
+**Et `if (!didDbSave) → erreur` aurait inventé une panne.** Sans session, aucune sauvegarde
+distante n'est **tentée** : le mode local est le comportement attendu. Trois états, pas deux.
+
+## P-96 — le bouton figé sur « Validation… »
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-96 | `admin-doctor-validation.html` : `doValidate()` et `doReject()` désactivaient le bouton et posaient le tourniquet **avant** de vérifier le client base. Sans client, le `return` partait sans rien remettre — bouton mort qui tourne, modale à fermer à la main | le toast rouge disparaît en 3 s ; **le bouton figé reste**, et c'est lui qu'on regarde | `_rendreLeBouton()` : le geste est sorti dans une fonction, et les **quatre** chemins de sortie passent par elle | `tests/e2e/admin-validation-bouton-fige.spec.js` — 4 essais × 2 cibles. Contre-épreuve : `return` sans remise en état → **6 rouges** | **réglé** |
+
+### Les `catch` le faisaient déjà
+
+La remise en état existait, écrite à la main dans chaque `catch`. Le défaut n'était pas
+l'ignorance du geste : **c'est une sortie anticipée qui l'oubliait.** D'où la fonction commune
+plutôt qu'une troisième copie — le prochain `return` ajouté la trouvera.
+
+Le bouton de rejet revient **actif**, pas « comme avant » : son état normal est *désactivé* tant
+que le motif fait moins de 20 caractères, et on n'arrive là qu'avec un motif valide. Le remettre
+désactivé aurait remplacé un bouton figé par un bouton inerte.
+
+### ⚠️ Le cliquet `innerhtml` a attrapé ma première version
+
+`_rendreLeBouton(b, html)` posait `b.innerHTML = html`. Le compteur est monté **134 → 135**, et il
+avait raison : `html` est un **paramètre**. Les quatre appels lui passent des libellés constants,
+mais la signature accepte n'importe quoi — le jour où l'un d'eux y met le nom d'un médecin, plus
+rien ne l'arrête. La fonction construit désormais les nœuds (`createElement` + `textContent`), et
+le compteur est revenu à **134**.
+
+**Une garde qui n'accuse que ce qui est déjà exploitable arrive trop tard.** Celle-ci compte les
+formes, pas les dégâts.
+
+## P-97 — le salut du tableau de bord médecin : diagnostic reçu, défaut absent
+
+| ID | symptôme annoncé | ce qui a été mesuré | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-97 | « L'en-tête affiche `hello`, `good_morning` etc. car ces clés sont absentes des dictionnaires » | **les quatre clés sont présentes dans les trois dictionnaires**, avec de vraies traductions (arrivées avec `1409c27`), et **l'écran n'affiche aucune clé brute** — mesuré en FR/AR/EN, sur les sources **et** sur `dist-web` | **aucun** : rien à corriger. En ajouter aurait cassé la parité i18n sans rien réparer | `tests/e2e/salut-medecin-i18n.spec.js` — 5 essais × 2 cibles, ajoutés quand même | **sans objet — garde posée** |
+
+### Le risque est réel, même si le défaut ne l'est pas
+
+`tabibiI18n.T(key)` rend `TR[lang][key]`, sinon `TR.fr[key]`, **sinon la clé elle-même**
+(`js/tabibi-i18n.js:98`). Le salut dépend donc du **moment**, pas du vocabulaire : dictionnaire
+pas encore chargé → « hello » à l'écran. Et `document.write`, qui l'insère de façon synchrone sur
+les sources, est **inopérant en module ES** (build Vite) où `chargerLangue()` prend le relais de
+façon asynchrone — la famille de P-29, sources vertes et build faux. La garde tourne donc sur les
+deux cibles.
+
+**Une consigne n'est pas une mesure.** Trois lots de suite ont commencé par une vérification qui a
+corrigé le diagnostic reçu : la page visée n'était pas la bonne (P-90), la moitié du correctif
+manquait (P-91), et ici le défaut n'existait pas.
+
 
 ## Ouverts — aucune garde, et c'est le sujet
 
