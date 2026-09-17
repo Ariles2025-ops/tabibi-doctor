@@ -498,7 +498,17 @@ body.recherche-active [data-replier-recherche]{ display:none !important; }
 }
 @media(min-width:768px){
   .app-bar{background:rgba(255,255,255,.72);border-bottom:1px solid rgba(15,42,36,.10)}
-  nav.tab-bar{display:none}  /* [UI v2] specificite alignee sur nav.tab-bar du design system */
+  /* ⚠️ [17/09/2026] « SPECIFICITE ALIGNEE » NE SUFFISAIT PAS — et ça ne se voyait
+     que sur le BUILD. `css/tabibi-ui.css` porte `nav.tab-bar{display:flex}`, exactement
+     la meme specificite (0,0,1,1). A egalite, c'est l'ORDRE qui tranche :
+       • sources  : le <style> de la page vient apres le <link> -> la page gagne, barre masquee ;
+       • dist-web : l'ordre s'inverse -> le design system gagne, et la barre du bas
+         s'affiche en grand sur un ecran de 1280 px.
+     Mesure du 17/09 sur dist-web, largeur 1280 : `display: flex`.
+     On passe donc par l'ID (0,1,1,1) : la regle gagne quel que soit l'ordre.
+     **Une egalite de specificite est une dependance a l'ordre des fichiers**, et
+     l'ordre des fichiers change au build — c'est la famille de P-29. */
+  nav#tab-bar.tab-bar{display:none}
   .page{padding-bottom:24px}
 }
 @media (prefers-reduced-motion:reduce){.doc-card:hover,.spec-chip:hover,.hero-stat:hover{transform:none}}

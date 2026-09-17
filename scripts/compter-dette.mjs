@@ -16,7 +16,7 @@ const PLAFONDS = {
   'no-empty': 0,           // 74 -> 0 le 09/09/2026 : chaque catch signale via window.tabibiErreur
   'no-unused-vars': 39,   // 117 -> 43 le 09/09/2026, -> 39 le 14/09 (le compteur ne doit que BAISSER)
   'no-console': 28,
-  'no-restricted-properties': 57, // innerHTML dans js/ ; 58 -> 57 le 12/09/2026 — un cliquet qui ne se resserre jamais ne sert à rien
+  'no-restricted-properties': 56, // innerHTML dans js/ ; 58 -> 57 le 12/09/2026, 57 -> 56 le 17/09/2026 — un cliquet qui ne se resserre jamais ne sert à rien
   'no-undef': 0,
   // [13/09/2026] Horloge locale. Plafond au compte REEL apres correction
   // (18 -> 3), jamais releve « en attendant ».
