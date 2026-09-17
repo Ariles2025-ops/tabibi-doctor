@@ -34,6 +34,14 @@
   /* Hors bundle mais avec équivalent pro raisonnable */
   var REMAP = {
     'index.html': 'agenda-cabinet.html',        // logo / « Accueil »
+    // ⚠️ [17/09/2026] SANS CETTE LIGNE, LA BARRE DU BAS MEURT SUR LE
+    // BUNDLE DESKTOP. `js/tabibi-nav.js` vise desormais
+    // `accueil-public.html` (la porte fermee vivant dans `index.html`).
+    // Or `safeHref` rend `null` pour toute page hors bundle et sans
+    // equivalent — et `go()` s'arrete net sur `null`. Accueil,
+    // Specialites et la loupe seraient devenus des boutons qui ne font
+    // RIEN : on aurait remplace une mauvaise destination par aucune.
+    'accueil-public.html': 'agenda-cabinet.html',
     'mes-rdv.html': 'agenda-cabinet.html',      // tab-bar « Mes RDV »
     'patient-dashboard.html': 'login.html',
     'admin-dashboard.html': 'login.html'

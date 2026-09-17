@@ -1329,6 +1329,58 @@ Aucune proposition de migration n'était nécessaire : la vue expose déjà `is_
 `show_claim_badge` = `NOT COALESCE(dp.is_claimed, false)` — une colonne écrite exprès pour cet
 encart, et jamais lue jusqu'ici. **Le signal existait ; c'est l'entrée qui manquait.**
 
+## P-91 — la barre du bas renvoyait l'utilisateur dehors
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-91 | Depuis une sous-page (mes RDV, réservation, dawini…), **Accueil**, **Spécialités**, **Carte** et la **loupe** menaient à `index.html` — la page « Bientôt disponible ». Un utilisateur déjà **dans** l'application se retrouvait devant la porte close | `js/tabibi-nav.js` : trois items et deux replis de `tabClick` visaient `index.html`, alors que l'inversion du 13/09 en a fait la **porte fermée** et que l'application vit dans `accueil-public.html` | les items et les replis visent `accueil-public.html` ; `#carte` ouvre réellement la carte à l'arrivée ; `accueil-public.html` ajoutée au remappage desktop | `tests/e2e/nav-barre-bas.spec.js` — 9 essais × 2 cibles. Contre-épreuves : cibles `index.html` remises → **16 rouges** ; ouverture de la carte retirée → **2 rouges** ; remappage desktop retiré → **2 rouges** | **réglé** |
+
+### Deux fautes qui se cachaient l'une l'autre
+
+`#sec-spec` et `#name-search` n'existent **que** sur `accueil-public.html`. La cible portait donc
+à la fois la mauvaise page **et** une ancre introuvable sur cette page : corriger l'une sans
+l'autre n'aurait rien donné, et aurait donné l'impression d'avoir corrigé.
+
+### ⚠️ Pourquoi la garde de P-86 n'a pas vu celui-ci
+
+Elle s'ouvre sur l'accueil, où le cas spécial `id === 'search'` trouve le champ et met le focus
+**sans jamais naviguer**. Le repli `go(href)` — la ligne qui partait sur la porte fermée — n'était
+sur aucun de ses chemins. Pire : c'est **ce lot-là** qui a écrit `index.html#name-search`, en
+corrigeant l'ancre sans regarder la page.
+
+**Une garde ne couvre que le chemin qu'elle emprunte.** Celle-ci part donc d'une **sous-page**, là
+où le repli est le seul chemin possible.
+
+### Deux culs-de-sac évités, mesurés en écrivant le correctif
+
+1. **`#carte` n'existe nulle part.** Vérifié : aucun `id="carte"` dans le dépôt. La carte est une
+   surcouche `hidden` qu'on **ouvre** (`openMapOverlay`, dans `js/home-app.js`). Pointer l'onglet
+   sur `accueil-public.html#carte` sans rien à l'arrivée aurait affiché l'accueil et pas la carte.
+   `js/home-app.js` lit donc ce hash à l'arrivée — `#carte` est une **consigne**, pas une ancre.
+2. **Le bundle desktop rendait le bouton mort.** `js/tabibi-desktop-nav.js` renvoie `null` pour
+   toute page hors bundle sans équivalent, et `go()` s'arrête net sur `null`. Sans ajouter
+   `accueil-public.html` au remappage, Accueil / Spécialités / loupe seraient devenus des boutons
+   qui ne font **rien** sur le desktop — une mauvaise destination remplacée par aucune.
+
+### ⚠️ Ce que ce lot NE ferme PAS — voir P-92
+
+Les onglets sont propres ; **22 autres liens** vers `index.html` subsistent dans 18 pages, dont
+des boutons « Trouver un médecin » qui mènent à la porte close. Hors périmètre de ce lot, listés
+en P-92.
+
+### Les huit pages à barre du bas sont derrière la connexion
+
+Mesuré en écrivant la garde : sauf l'accueil, **toutes** exigent une session. Ma première version
+partait de `dawini.html` en la croyant publique et sortait rouge avec un correctif bon. Ce n'est
+pas une gêne d'essai, c'est la portée du défaut : **il ne frappait que des gens connectés**, déjà
+à l'intérieur, à qui la barre du bas proposait la sortie.
+
+## P-92 — 22 liens vers la porte fermée, hors barre du bas
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-92 | Hors barre du bas, **22 liens** dans **18 pages** mènent à `index.html` — la porte fermée. Dont des boutons d'action : « Trouver un médecin » (`mes-rdv.html:403`, `patient-dashboard.html:810`, `about.html:162`), « Retour à l'accueil » (`reservation.html:195`, `success.html:66`, `verify-email.html:92`, `dawini-pharmacie.html:138`), le lien du pied de `accueil-public.html:1435`, et trois `location.href="index.html"` après déconnexion (`patient-dashboard.html:256`, `doctor-dashboard.html:387`, `medecin-profile.html:1007`, `patient-profile.html:658`) | `git grep -n 'href="index.html'` — liste complète relevée le 17/09 | **à trancher, et ce n'est pas mécanique** : après `porte.mjs ouverte`, `index.html` redevient l'accueil et ces liens redeviennent justes. Soit on les pointe tous sur `accueil-public.html` (juste dans les deux états), soit on décide qu'ils restent `index.html` et que la porte fermée est un état transitoire assumé | **garde manquante** : P-91 ne couvre que `js/tabibi-nav.js` | **ouvert** |
+
 ## P-93 — on ne pouvait créer un compte qu'avec un numéro algérien
 
 | ID | symptôme | preuve | correctif | garde | statut |
@@ -1425,6 +1477,7 @@ s'il existait, et c'est exactement ce qu'une porte ne doit jamais faire.
 | P-64 | La section « Nos praticiens — Des médecins de confiance » montre **quatre médecins inventés** (« Dr. Nadia K. », « Dr. Yacine B. »…) avec badge **« Vérifié »** et notes **★ 4.9 / 5.0** | `accueil-public.html`, `#sec-vitrine` : noms, spécialités, wilayas et notes écrits en dur ; photos Unsplash. Un commentaire signale les photos comme provisoires — **pas les identités ni les notes** | aucun : même famille que « Dr. Amine · 09:30 » (P-27) et les six articles de blog qui n'existaient pas (P-47) | **garde manquante** — à trancher : vrais praticiens, ou section explicitement présentée comme une illustration | **ouvert** |
 | P-69 | Une candidature **persiste, et personne n'est prévenu** | la table et la RPC sont en place (P-68 b) ; la RLS autorise la lecture admin. **La moitié « aucun écran ne la lit » est fermée le 16/09 par P-78** — `admin-candidatures.html` existe et le tableau de bord admin y mène. Reste la moitié qui n'a pas d'écran : **rien ne prévient à l'arrivée d'un dossier** | voir **P-79** pour ce qu'il reste à décider | **garde manquante** : un essai ne peut pas vérifier qu'un humain regarde | **partiellement réglé** |
 | P-79 | **Ce qu'il reste à décider sur P-69**, et qui demande une écriture en base | rien ne prévient à l'arrivée d'un dossier, et la liste admin est en **lecture seule** — changer un statut serait une écriture | à trancher : notification à l'insertion (déclencheur → `send-email`, ou ligne dans `notifications`) **et** RPC admin de changement de statut. **Validation d'Aghiles requise** (règle 3) | **garde manquante par nature** | **ouvert** |
+| P-92 | **22 liens** vers `index.html` — la porte fermée — dans 18 pages, hors barre du bas : « Trouver un médecin », « Retour à l'accueil », le pied de l'accueil, et quatre redirections de déconnexion | `git grep -n 'href="index.html'`, relevé le 17/09 en corrigeant [P-91](#p-91--la-barre-du-bas-renvoyait-lutilisateur-dehors) | à trancher : tout pointer sur `accueil-public.html` (juste porte ouverte **et** fermée), ou assumer `index.html` et l'état transitoire | **garde manquante** — P-91 ne couvre que `js/tabibi-nav.js` | **ouvert** |
 | P-94 | La porte `e2e` rouge renvoie vers un journal **qui n'existe plus** : Playwright vide `test-results/`, où le lanceur écrit | constaté le 17/09 : gate rouge, aucun `.log` sur le disque. `scripts/verifier-toutes.mjs:207` | écrire les journaux hors du répertoire que Playwright gère | **garde manquante** — à écrire avec le correctif | **ouvert** |
 | P-87 | Sur téléphone, **le bandeau cookies recouvre la barre d'onglets** : les six onglets du bas sont inatteignables tant qu'on n'a pas répondu | mesuré le 17/09 en écrivant la garde de P-86 : `document.elementFromPoint()` au centre du bouton loupe rend `#tabibi-cookie-banner`. Hauteur de vue 727 px, bandeau à partir de 727, bouton centré à 696 | à trancher : remonter le bandeau au-dessus de la barre, ou décaler la barre tant que le bandeau est là. **Arbitrage d'affichage, pas un correctif évident** — le bandeau doit rester lisible | **garde manquante** : l'essai de P-86 se place volontairement APRÈS la réponse au bandeau | **ouvert** |
 
