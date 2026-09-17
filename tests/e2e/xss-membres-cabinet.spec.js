@@ -110,24 +110,27 @@ test.describe('un nom de membre piégé ne s’exécute pas', () => {
 
   test('admin-cabinet : la liste des membres n’exécute rien', async ({ page }) => {
     await page.goto('/admin-cabinet.html', ATTENDRE);
-    await expect(page.locator('#members-list')).not.toBeEmpty({ timeout: 8000 });
-    await page.waitForTimeout(600);   // laisse le temps à une charge de partir
+    // ⚠️ ON ATTEND LE RENDU, PAS UNE DUREE. Une charge qui s'exécute le fait au
+    // moment où le HTML est posé : une fois le nom affiché, le verdict est
+    // rendu. Dormir 600 ms rendrait l'essai vert sur une page lente qui n'a
+    // simplement rien affiché — un vert qui ne protège personne.
+    //
+    // Et c'est aussi LA MOITIÉ QU'ON OUBLIE : échapper ne doit pas faire
+    // disparaître le membre.
+    await expect(page.locator('#members-list')).toContainText('img src=x', { timeout: 8000 });
 
     expect(await page.evaluate(() => window.__xss), 'la charge s’est exécutée').toBeUndefined();
-    // ⚠️ LA MOITIÉ QU'ON OUBLIE : échapper ne doit pas faire disparaître le
-    // membre. Un écran vide passerait le premier contrôle sans rien protéger.
-    await expect(page.locator('#members-list')).toContainText('img src=x');
     expect(await page.locator('#members-list img').count(), 'une balise a été construite').toBe(0);
   });
 
   test('secrétaire : le menu des médecins n’exécute rien', async ({ page }) => {
     await page.goto('/secretaire-dashboard.html', ATTENDRE);
+    // Le nom reste lisible dans l'option, en TEXTE — et c'est ce rendu qui fait
+    // foi : une fois l'option posée, une charge se serait déjà exécutée.
     await expect(page.locator('#na-doctor option')).toHaveCount(1, { timeout: 8000 });
-    await page.waitForTimeout(600);
+    await expect(page.locator('#na-doctor option').first()).toContainText('img src=x');
 
     expect(await page.evaluate(() => window.__xss), 'la charge s’est exécutée').toBeUndefined();
-    // Le nom reste lisible dans l'option, en TEXTE.
-    await expect(page.locator('#na-doctor option').first()).toContainText('img src=x');
     expect(await page.locator('#na-doctor img').count()).toBe(0);
   });
 

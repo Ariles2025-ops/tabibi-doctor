@@ -74,15 +74,23 @@ async function bouchonner(page, parTable) {
   }));
 }
 
-/** Saisit l'identifiant du patient et déclenche l'affichage. */
+/**
+ * Saisit l'identifiant du patient et attend que la page ait INTERROGÉ la base.
+ *
+ * ⚠️ Pas de sommeil : le faux client note chaque table demandée, et une table
+ * de plus est la preuve que `refreshPatientDisplay()` a tourné. Une durée fixe
+ * ne prouverait que la vitesse de la machine.
+ */
 async function poserPatient(page, pid) {
+  const avant = (await page.evaluate(() => window.__tables.length));
   await page.evaluate((id) => {
     const el = document.getElementById('f_patient_id');
     el.value = id;
     el.dispatchEvent(new Event('change', { bubbles: true }));
     el.dispatchEvent(new Event('blur', { bubbles: true }));
   }, pid);
-  await page.waitForTimeout(700);
+  await expect.poll(() => page.evaluate(() => window.__tables.length),
+    { timeout: 10000 }).toBeGreaterThan(avant);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -115,9 +123,9 @@ test.describe('le nom du patient sur une ordonnance', () => {
     await page.goto(PAGE, ATTENDRE);
     await poserPatient(page, PID);
 
+    await expect(page.locator('#pv-pat')).toHaveText(/non identifié/i, { timeout: 8000 });
     const vu = await page.locator('#pv-pat').textContent();
     expect(vu, 'l’identifiant est encore affiché comme un nom').not.toContain('3f2504e0');
-    expect(vu).toMatch(/non identifié/i);
   });
 
   test('patient inconnu de la vue : on le dit, on n’invente pas', async ({ page }) => {

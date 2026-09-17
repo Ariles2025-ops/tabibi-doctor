@@ -156,7 +156,12 @@ test.describe('la liste admin des candidatures', () => {
     await bouchonnerAuth(page, null);   // requireAuth rend null : accès refusé
     await bouchonner(page, { data: CANDIDATURES, error: null });
     await page.goto(PAGE, ATTENDRE);
-    await page.waitForTimeout(700);
+    // ⚠️ On attend un FAIT, pas une durée : que la garde d'authentification ait
+    // répondu. Dormir 700 ms marche ici et ment sur une machine plus lente —
+    // et l'essai deviendrait vert parce que la page n'a pas EU LE TEMPS de
+    // charger, pas parce qu'elle a refusé.
+    await expect.poll(() => page.evaluate(() => window.__roleDemande),
+      { timeout: 8000 }).not.toBeNull();
 
     expect(await page.locator('.cand-card').count()).toBe(0);
     expect(await page.evaluate(() => window.__table),

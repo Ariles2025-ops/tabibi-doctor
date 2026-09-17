@@ -43,9 +43,12 @@ async function ouvrir(page, { medical = null, user = {}, rdvCache = null } = {})
              signOut: async () => {}, logout: async () => {}
            };`,
   }));
+  // Le témoin `CHARGE` part avec le dossier : il ne change rien à ce qui est
+  // mesuré, et il rend le `.then()` de la page OBSERVABLE.
+  const dossier = medical ? { medical_history: TEMOIN, ...medical } : null;
   await page.route('**/js/tabibi-pii-migration.js', (route) => route.fulfill({
     status: 200, contentType: 'application/javascript',
-    body: `window.tabibiPII = { load: async () => (${JSON.stringify(medical)}), save: async () => ({ ok: true }) };`,
+    body: `window.tabibiPII = { load: async () => (${JSON.stringify(dossier)}), save: async () => ({ ok: true }) };`,
   }));
   await page.addInitScript(([u, cache]) => {
     localStorage.setItem('tabibi_lang', 'fr');
@@ -60,6 +63,29 @@ async function ouvrir(page, { medical = null, user = {}, rdvCache = null } = {})
 
 const texte = async (page, sel) => ((await page.locator(sel).textContent()) || '').trim();
 
+/**
+ * Attend que la page ait FINI de peupler la fiche — sans dormir.
+ *
+ * ⚠️ Une attente fixe est un pari sur la vitesse de la machine : elle tient sur
+ * un portable et ment sur un runner partagé. On attend donc un FAIT.
+ *
+ * Deux cas, deux faits différents :
+ *  • dossier médical rendu par la base — `tabibiPII.load()` remplit d'abord le
+ *    formulaire, PUIS rappelle `peuplerFicheSante()`. Le témoin `CHARGE`, posé
+ *    dans un champ qu'aucun essai n'inspecte, prouve que ce `.then()` a tourné.
+ *  • aucun dossier (`load()` rend `null`) — la page sort de son `.then()` sans
+ *    rien faire : seul le premier appel, synchrone, a peuplé la fiche. Le fait
+ *    observable est alors le carnet, qui n'est jamais vide (liste ou message).
+ */
+const TEMOIN = 'CHARGE';
+async function ficheRemplie(page, avecDossier) {
+  if (avecDossier) {
+    await expect(page.locator('#f_history')).toHaveValue(TEMOIN, { timeout: 8000 });
+  } else {
+    await expect(page.locator('#vacc-list')).not.toBeEmpty({ timeout: 8000 });
+  }
+}
+
 test.beforeEach(async ({ page }) => {
   await hermetiser(page);
   await neutraliserCaptcha(page);
@@ -69,6 +95,7 @@ test.describe('le profil patient n’affiche que du vrai', () => {
 
   test('AUCUN vaccin codé en dur, quel que soit le dossier', async ({ page }) => {
     await ouvrir(page, { medical: null });
+    await ficheRemplie(page, false);
     const page_txt = (await page.locator('main').innerText()).replace(/\s+/g, ' ');
     for (const faux of ['COVID-19', 'Pfizer', '12 mars 2024', 'Tétanos', 'Diphtérie', '8 juin 2022', 'Grippe saisonnière']) {
       expect(page_txt, `« ${faux} » est encore affiché à tous les patients`).not.toContain(faux);
@@ -103,7 +130,7 @@ test.describe('le profil patient n’affiche que du vrai', () => {
 
   test('sans donnée, la carte santé reste à « — » — elle n’invente pas', async ({ page }) => {
     await ouvrir(page, { medical: { blood_type: null, height_cm: null, weight_kg: null, allergies: null } });
-    await page.waitForTimeout(600);
+    await ficheRemplie(page, true);
     for (const id of ['#hc-imc', '#hc-age', '#hc-allergies']) {
       expect(await texte(page, id), `${id} affiche une valeur inventée`).toBe('—');
     }
@@ -113,7 +140,7 @@ test.describe('le profil patient n’affiche que du vrai', () => {
     // ⚠️ 3 cm et 900 kg sont des fautes de frappe. Un IMC calculé dessus serait
     // un nombre AFFIRMÉ faux — pire qu'un tiret, parce qu'il a l'air d'un calcul.
     await ouvrir(page, { medical: { height_cm: 3, weight_kg: 900 } });
-    await page.waitForTimeout(600);
+    await ficheRemplie(page, true);
     expect(await texte(page, '#hc-imc')).toBe('—');
   });
 
@@ -125,21 +152,21 @@ test.describe('le profil patient n’affiche que du vrai', () => {
     // Sans date connue, la pastille disparaît : « 2025 » en dur était une date
     // de plus à ne pas croire.
     await ouvrir(page, { medical: null });
-    await page.waitForTimeout(600);
+    await ficheRemplie(page, false);
     await expect(page.locator('#member-badge')).toBeHidden();
   });
 
   test('les compteurs disent « — » tant qu’on n’a rien lu, « 0 » quand on sait', async ({ page }) => {
     await ouvrir(page, { medical: null });          // aucun cache serveur
-    await page.waitForTimeout(600);
+    await ficheRemplie(page, false);
     expect(await texte(page, '#rdv-count'), 'un patient qui a des RDV lirait « 0 »').toBe('—');
 
     await ouvrir(page, { medical: null, rdvCache: [] });   // cache lu, vraiment vide
-    await page.waitForTimeout(600);
+    await ficheRemplie(page, false);
     expect(await texte(page, '#rdv-count')).toBe('0');
 
     await ouvrir(page, { medical: null, rdvCache: [{ id: 'a', status: 'Confirmed' }, { id: 'b', status: 'Done' }] });
-    await page.waitForTimeout(600);
+    await ficheRemplie(page, false);
     expect(await texte(page, '#rdv-count')).toBe('2');
     expect(await texte(page, '#upcoming-count')).toBe('1');
   });

@@ -1061,6 +1061,57 @@ ne pas avoir de nom : refus de lecture, ligne absente, ligne aux deux champs vid
 `verifier:rpc-passage` réclamait depuis un moment l'abaissement du plafond de
 `patient-ordonnances.html` (0 appel direct, plafond 1). Fait. **Un cliquet qu'on n'abaisse pas
 laisse revenir ce qu'il vient de faire disparaître.**
+## P-82 — la porte tuait ce qu'elle mesurait, puis l'accusait
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-82 | CI **rouge sur `e2e`** dans `verifier:toutes`, sans qu'aucun test ne soit nommé — pendant que la suite passait | `spawnSync` capture en **mémoire**, plafonné à 1 MiB. Mesuré : `status: null`, `signal: SIGTERM`, `error: ENOBUFS`, stdout 82 942 o + stderr **960 887 o**. Le script faisait `r.status === null ? 1 : r.status` → **1** | la sortie part **directement dans un fichier** (aucun plafond), et un enfant **tué** est rapporté comme tel, pas comme un essai en échec | `tests/porte-sortie-volumineuse.test.mjs` — 4 essais. Contre-épreuve : ancien lancement remis, **2 sur 4** échouent | **réglé** |
+
+### Le mesureur fabriquait le rouge
+
+`npm run verifier:toutes` sortait rouge à la seconde où `npx playwright test`, sur la même
+machine et le même serveur neuf, rendait **502 passed**. La porte tuait la suite à quelques
+essais de la fin, puis rapportait qu'elle avait échoué.
+
+> C'est le symétrique exact du **faux vert** que ce dépôt traque depuis le début : ici le
+> tableau de bord est rouge, et il a tort. Le coût est le même — on cherche le défaut là où
+> il n'est pas.
+
+Et le signe qui aurait dû alerter était **dans le message** : l'extrait ne nommait aucun test
+tombé. Il n'en nommait aucun parce qu'aucun n'était tombé.
+
+### Pourquoi ce jour-là, et pas avant
+
+Le serveur statique de Playwright imprime **une ligne d'accès par requête**, sur stderr. La
+suite est passée à 502 essais, stderr a franchi le mégaoctet, et le plafond est tombé au milieu
+d'un lot qui n'y était pour rien — d'où trois heures passées à soupçonner les six nouveaux
+essais, puis à les durcir.
+
+> **Un plafond qu'on ne voit pas monter est un plafond qu'on franchit sans le savoir.**
+> Famille du `tail -1` de la boucle shell (13/09) et des « 25 dernières lignes » (P-53) : le
+> mesureur regarde une position, pas un contenu.
+
+### Ce que la garde vérifie, et pourquoi en deux moitiés
+
+Le **mécanisme** d'abord — une capture mémoire meurt au-delà du plafond, un descripteur de
+fichier n'a pas de plafond. Sans cette moitié, la règle du dessous serait une convention que
+personne ne saurait justifier, et qu'on « simplifierait » un jour.
+
+⚠️ Et l'essai du mécanisme a lui-même été **faux au premier jet** : l'enfant appelait
+`process.exit(0)`, or les écritures sur un tube sont asynchrones — la sortie était tronquée à
+un seul morceau, le plafond n'était jamais atteint, et l'essai concluait que le mécanisme
+n'existait pas. Il existait ; c'était l'enfant qui trichait.
+
+### Dixième fois : une garde avalée par des commentaires
+
+Le lecteur de source de cette garde retirait les blocs `/* … */` **avant** les lignes `//`.
+Or le script contient, dans un commentaire de ligne, `tests/*.test.mjs` — dont le `/*` ouvrait
+un faux bloc qui avalait **8 331 caractères**, deux cents lignes de code comprises. L'essai
+concluait que le correctif n'était pas là.
+
+On retire désormais les commentaires de **ligne d'abord** : ils emportent leur faux `/*` avec
+eux.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

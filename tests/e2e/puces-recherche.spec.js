@@ -46,14 +46,32 @@ function lignes(n) {
   }));
 }
 
+/**
+ * Bouchonne les deux RPC et COMPTE les appels.
+ *
+ * ⚠️ Le compteur n'est pas un ornement : `doFilter()` est débounce à 300 ms, et
+ * une assertion posée juste après un clic lit l'écran d'AVANT. Attendre une
+ * durée fixe marche sur une machine rapide et ment sur une machine lente — la
+ * première version de cet essai est restée verte avec les puces mortes remises.
+ * On attend donc que le serveur ait été RE-INTERROGÉ, ce qui est le signal
+ * exact que le filtre a été appliqué.
+ */
 async function bouchonner(page) {
-  await page.route('**/rest/v1/rpc/praticiens_vitrine', (route) => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify(lignes(PER)),
-  }));
-  await page.route('**/rest/v1/rpc/chercher_praticiens', (route) => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ total: PER, page: 1, limite: PER, lignes: lignes(PER) }),
-  }));
+  const appels = { n: 0 };
+  await page.route('**/rest/v1/rpc/praticiens_vitrine', (route) => {
+    appels.n++;
+    return route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(lignes(PER)),
+    });
+  });
+  await page.route('**/rest/v1/rpc/chercher_praticiens', (route) => {
+    appels.n++;
+    return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ total: PER, page: 1, limite: PER, lignes: lignes(PER) }),
+    });
+  });
+  return appels;
 }
 
 test.beforeEach(async ({ page }) => {
@@ -69,7 +87,7 @@ test.describe('les puces de recherche', () => {
     // page rend, les clique une par une, et vérifie qu'aucune ne vide la liste
     // alors que le lot reçu devrait passer. Une puce ajoutée demain sur une
     // colonne absente échouera ici sans que personne n'ait à y penser.
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
 
@@ -79,25 +97,30 @@ test.describe('les puces de recherche', () => {
 
     for (const cv of puces) {
       const bouton = page.locator(`.chip[data-cv="${cv}"]`);
+
+      // ⚠️ ON ATTEND UN SIGNAL, PAS UNE DUREE. `doFilter()` est débounce à
+      // 300 ms : juste après le clic, la liste porte encore les fiches d'avant,
+      // et une assertion « il y a PER fiches » serait vraie **immédiatement**.
+      // La contre-épreuve l'a montré — l'essai passait avec les puces mortes
+      // remises. Le serveur ré-interrogé est la preuve que le filtre a tourné,
+      // et elle ne dépend pas de la vitesse de la machine.
+      const avant = appels.n;
       await bouton.click();
-      // ⚠️ IL FAUT ATTENDRE AVANT DE REGARDER. `doFilter()` est débounce à
-      // 300 ms : juste après le clic, la liste porte encore les fiches
-      // d'avant. Une assertion qui poll « il y a PER fiches » serait donc
-      // vraie **immédiatement**, et verte même sur une puce qui vide tout.
-      // La contre-épreuve l'a montré : l'essai passait avec les puces mortes
-      // remises. On laisse passer la fenêtre, PUIS on mesure.
-      await page.waitForTimeout(800);
+      await expect.poll(() => appels.n, { timeout: 10000 }).toBeGreaterThan(avant);
+
       await expect(
         page.locator('#docs-list .doc-card'),
         `la puce « ${cv} » ne trouve rien alors que le lot devrait passer`,
       ).toHaveCount(PER);
+
+      const avantRelache = appels.n;
       await bouton.click();   // on la relâche avant la suivante
-      await page.waitForTimeout(600);
+      await expect.poll(() => appels.n, { timeout: 10000 }).toBeGreaterThan(avantRelache);
     }
   });
 
   test('les deux puces sans donnée ne sont plus proposées', async ({ page }) => {
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
 
@@ -111,7 +134,7 @@ test.describe('les puces de recherche', () => {
     // ⚠️ La contre-épreuve de la correction : masquer les puces sans corriger
     // l'hydratation aurait laissé `g:'H'` dans l'objet — une affirmation fausse
     // sur chaque praticien, prête à ressortir au premier code qui la lit.
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
 

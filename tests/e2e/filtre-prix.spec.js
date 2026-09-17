@@ -52,14 +52,40 @@ function lignes() {
   return l;
 }
 
+/**
+ * Bouchonne les deux RPC et COMPTE les appels.
+ *
+ * ⚠️ Le compteur remplace les attentes fixes : `doFilter()` est débounce à
+ * 300 ms, et une lecture posée juste après vaut ce qu'elle vaut sur la machine
+ * qui l'exécute. Un serveur ré-interrogé est un fait ; 800 ms est un pari.
+ */
 async function bouchonner(page) {
-  await page.route('**/rest/v1/rpc/praticiens_vitrine', (route) => route.fulfill({
-    status: 200, contentType: 'application/json', body: JSON.stringify(lignes()),
-  }));
-  await page.route('**/rest/v1/rpc/chercher_praticiens', (route) => route.fulfill({
-    status: 200, contentType: 'application/json',
-    body: JSON.stringify({ total: PER, page: 1, limite: PER, lignes: lignes() }),
-  }));
+  const appels = { n: 0 };
+  await page.route('**/rest/v1/rpc/praticiens_vitrine', (route) => {
+    appels.n++;
+    return route.fulfill({
+      status: 200, contentType: 'application/json', body: JSON.stringify(lignes()),
+    });
+  });
+  await page.route('**/rest/v1/rpc/chercher_praticiens', (route) => {
+    appels.n++;
+    return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ total: PER, page: 1, limite: PER, lignes: lignes() }),
+    });
+  });
+  return appels;
+}
+
+/** Bouge le curseur et attend que le serveur ait été RE-interrogé. */
+async function bougerCurseur(page, appels, valeur) {
+  const avant = appels.n;
+  await page.evaluate((v) => {
+    const fp = document.getElementById('f-price');
+    fp.value = String(v);
+    fp.dispatchEvent(new Event('input'));
+  }, valeur);
+  await expect.poll(() => appels.n, { timeout: 10000 }).toBeGreaterThan(avant);
 }
 
 const repliee = (page) => page.evaluate(() => document.body.classList.contains('recherche-active'));
@@ -73,7 +99,7 @@ test.beforeEach(async ({ page }) => {
 test.describe('le filtre de prix', () => {
 
   test('un praticien à 6 000 DA reste visible tant que le curseur n’a pas bougé', async ({ page }) => {
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
     await expect(page.locator('#docs-list')).toContainText(/sixmille/i);
@@ -82,7 +108,7 @@ test.describe('le filtre de prix', () => {
   test('la page n’est PAS repliée au chargement — aucun filtre n’a été posé', async ({ page }) => {
     // Le curseur à sa valeur de départ ne doit compter pour personne : ni pour
     // le post-filtre, ni pour « l'utilisateur cherche-t-il ? ».
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
     expect(await repliee(page), 'la page se replie toute seule au chargement').toBe(false);
@@ -92,39 +118,32 @@ test.describe('le filtre de prix', () => {
     // ⚠️ LA CONTRE-ÉPREUVE. Sans elle, on aurait pu « corriger » en désactivant
     // le filtre de prix pour de bon : les deux essais du dessus seraient verts
     // et le curseur ne servirait plus à rien.
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
 
-    await page.evaluate(() => {
-      const fp = document.getElementById('f-price');
-      fp.value = '3000';
-      fp.dispatchEvent(new Event('input'));
-    });
-    await page.waitForTimeout(800);
+    await bougerCurseur(page, appels, 3000);
 
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER - 1);
     await expect(page.locator('#docs-list')).not.toContainText(/sixmille/i);
-    expect(await repliee(page), 'un curseur bougé est bien une recherche').toBe(true);
+    await expect.poll(() => repliee(page), { timeout: 8000 },
+      ).toBe(true);   // un curseur bougé est bien une recherche
   });
 
   test('après « réinitialiser », la page se rouvre ENTIÈREMENT', async ({ page }) => {
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
 
-    await page.evaluate(() => {
-      const fp = document.getElementById('f-price');
-      fp.value = '3000';
-      fp.dispatchEvent(new Event('input'));
-    });
-    await page.waitForTimeout(800);
-    expect(await repliee(page)).toBe(true);
+    await bougerCurseur(page, appels, 3000);
+    await expect.poll(() => repliee(page), { timeout: 8000 }).toBe(true);
 
+    const avantReset = appels.n;
     await page.evaluate(() => window.resetFilters());
-    await page.waitForTimeout(800);
+    await expect.poll(() => appels.n, { timeout: 10000 }).toBeGreaterThan(avantReset);
 
-    expect(await repliee(page), 'la page reste repliée après un reset').toBe(false);
+    await expect.poll(() => repliee(page), { timeout: 8000 },
+      ).toBe(false);   // la page reste repliée après un reset ?
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER);
     await expect(page.locator('#docs-list')).toContainText(/sixmille/i);
   });
@@ -132,17 +151,14 @@ test.describe('le filtre de prix', () => {
   test('« réinitialiser » remet le curseur à sa valeur d’ORIGINE', async ({ page }) => {
     // Il posait 10 000 — une valeur que personne n'avait choisie, et qui
     // faisait croire au reste du code que le curseur avait bougé.
-    await bouchonner(page);
+    const appels = await bouchonner(page);
     await page.goto(PAGE, ATTENDRE);
     await expect(page.locator('#docs-list .doc-card')).toHaveCount(PER, { timeout: 8000 });
 
-    await page.evaluate(() => {
-      const fp = document.getElementById('f-price');
-      fp.value = '3000';
-      fp.dispatchEvent(new Event('input'));
-    });
-    await page.waitForTimeout(600);
+    await bougerCurseur(page, appels, 3000);
+    const avantReset = appels.n;
     await page.evaluate(() => window.resetFilters());
+    await expect.poll(() => appels.n, { timeout: 10000 }).toBeGreaterThan(avantReset);
 
     const etat = await page.evaluate(() => {
       const fp = document.getElementById('f-price');
