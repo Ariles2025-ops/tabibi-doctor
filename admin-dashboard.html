@@ -541,11 +541,29 @@ async function rejectDoctor(doctorId, email, name) {
     // garantie : l'e-mail de REFUS est apres ce point, il ne part pas sur un refus
     // de la fonction. Un « votre fiche est rejetee » envoye alors que rien n'a ete
     // rejete en base serait aussi grave que l'inverse.
+    // ══════════════════════════════════════════════════════════════
+    // [17/09/2026] CET APPEL N'ATTEIGNAIT AUCUNE FONCTION
+    // ══════════════════════════════════════════════════════════════
+    // Il passait `p_reason` ET `p_notes`. Signature lue en base le 17/09 :
+    //
+    //   admin_validate_doctor(p_doctor_id uuid, p_action text,
+    //                         p_notes text DEFAULT NULL) -> jsonb
+    //
+    // UNE SEULE, sans `p_reason`. PostgREST apparie par NOMS d'arguments :
+    // un nom inconnu et il ne trouve aucune surcharge. Le rejet d'un medecin
+    // depuis ce tableau de bord ne s'executait donc JAMAIS — il tombait dans
+    // le `catch`, et l'admin lisait « Erreur : … » sans savoir pourquoi.
+    //
+    // ⚠️ ET `p_notes` EST LE MOTIF, pas un commentaire d'ambiance. Le corps de
+    // la fonction l'ecrit dans `doctor_profiles.validation_rejected_reason` et
+    // REFUSE en dessous de 3 caracteres (`reason_required`). La constante
+    // « Rejete via admin dashboard » aurait donc, une fois l'appel repare,
+    // remplace le motif ecrit par l'admin — et c'est ce motif que le medecin
+    // recoit par courriel. On envoie le vrai.
     const r = await window.tabibiRpc('admin_validate_doctor', {
       p_doctor_id: doctorId,
       p_action: 'reject',
-      p_reason: reason,
-      p_notes: 'Rejeté via admin dashboard'
+      p_notes: reason
     });
 
     if (!r.ok) throw new Error(r.erreur);

@@ -1571,6 +1571,43 @@ celui des créneaux « Confirmer ce créneau ». Elle lit désormais le `onclick
 `confirmFromProfile(`. **Un essai accroché aux libellés casse au premier changement de formulation**,
 et en attendant il raconte n'importe quoi.
 
+## P-99 — le rejet d'un médecin appelait une fonction qui n'existe pas
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-99 | **Rejeter un médecin depuis `admin-dashboard.html` n'aboutissait jamais.** L'admin saisissait un motif, voyait « Erreur : … » et recommençait | l'appel passait `p_reason` **et** `p_notes` (`admin-dashboard.html:544`). Signature lue en base le 17/09, **la seule** : `admin_validate_doctor(p_doctor_id uuid, p_action text, p_notes text DEFAULT NULL) -> jsonb`. **PostgREST apparie par noms d'arguments** : un nom inconnu, aucune surcharge trouvée | `p_reason` retiré ; le **motif réel** part dans `p_notes` | `tests/e2e/rejet-admin-signature.spec.js` — 4 essais × 2 cibles. Contre-épreuves : `p_reason` remis → **4 rouges** ; bonne signature mais motif constant → **2 rouges** | **réglé** |
+
+### `p_notes` EST le motif — lu dans le corps de la fonction
+
+```sql
+IF p_notes IS NULL OR length(trim(p_notes)) < 3 THEN
+  RETURN jsonb_build_object('ok', false, 'error', 'reason_required');
+UPDATE doctor_profiles SET … validation_rejected_reason = p_notes
+```
+
+La constante « Rejeté via admin dashboard » aurait donc, **une fois l'appel réparé**, remplacé le
+motif écrit par l'admin — et c'est ce motif que le médecin reçoit par courriel. **Réparer la
+signature sans réparer le contenu aurait donné un rejet qui marche et qui ne dit rien.** La garde
+tient les deux moitiés séparément : la seconde contre-épreuve n'échoue que sur le contenu.
+
+### Pourquoi personne ne l'avait vu
+
+L'écran **échouait proprement** : le `catch` affichait « Erreur : … ». Rien ne brûlait, aucun
+journal ne criait, et la fonction voisine — la validation — marchait. **Un bouton qui échoue
+poliment se confond avec un bouton qu'on utilise mal.**
+
+`admin-doctor-validation.html` (l.417 et l.486) était **déjà correct** : vérifié avant d'y toucher,
+**aucune ligne modifiée**. La garde vérifie désormais **les deux écrans** — c'est précisément le
+fait qu'ils aient divergé qui a produit ce défaut.
+
+### Trouvé par une lecture de la base, pas par un essai
+
+Ce défaut est sorti de l'audit source du 17/09 (`.claude/AUDIT-CC.md`), en comparant **ce que le
+front envoie** à **ce que la base déclare**. Aucun essai e2e ne pouvait l'attraper : ils bouchonnent
+la passerelle, donc ils acceptent n'importe quel nom d'argument. **La garde posée ici a la même
+limite** — elle recopie la signature réelle en tête de fichier et vérifie que le front s'y tient.
+Le jour où la fonction change en base, c'est cette constante qu'il faudra mettre à jour.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
