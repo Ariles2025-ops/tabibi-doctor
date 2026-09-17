@@ -1,6 +1,8 @@
 {
-  "plafond": 135,
-  "total_innerhtml": 322,
-  "note": "Nombre d'innerHTML recevant une donnee NON constante. Ne doit que BAISSER. Regenere par : node scripts/verifier-innerhtml.mjs --ecrire",
-  "mis_a_jour": "2026-09-15"
+  "plafond": 134,
+  "total_innerhtml": 319,
+  "mesure": "v2",
+  "note": "Nombre d'innerHTML dont la valeur n'est pas PROUVABLEMENT sure. Ne doit que BAISSER. Regenere par : node scripts/verifier-innerhtml.mjs --ecrire",
+  "attention": "v2 ne se compare PAS a v1. La v1 (plafond 12) ne regardait que les gabarits et les concatenations ecrits sur place ; elle ne voyait pas `el.innerHTML = html`, ou `html` est assemble ailleurs. La v2 compte aussi ces valeurs OPAQUES. Le chiffre monte parce que la mesure voit plus loin, pas parce que le code a empire.",
+  "mis_a_jour": "2026-09-17"
 }

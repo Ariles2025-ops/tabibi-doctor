@@ -508,36 +508,104 @@ async function loadDoc(){
       claimBlock.id = 'claim-status-block';
       claimBlock.style.cssText = 'margin:12px 0';
 
+      // =================================================================
+      // [17/09/2026] L'ENTREE DU TUNNEL — la brique qui manquait
+      // =================================================================
+      // Le tunnel de revendication existe depuis des semaines
+      // (`doctor-claim.html`, `claim_my_doctor_profile`, gestion d'erreurs),
+      // et la fiche publique n'y menait PAS : elle proposait uniquement
+      // « Réclamer via WhatsApp ». Sur 75 035 fiches, une seule est
+      // revendiquée — le tunnel n'avait pas de porte d'entrée.
+      //
+      // Le CTA principal mène desormais au tunnel, **avec la fiche
+      // pré-remplie** (`?legacy_id=N` — le paramètre que `doctor-claim`
+      // attend déjà, cf. son bloc B2). WhatsApp reste, en second : c'est un
+      // chemin qui MARCHE, avec un humain au bout. On ajoute une porte, on
+      // n'en ferme pas une.
+      //
+      // ⚠️ CONSTRUIT EN NŒUDS DOM. L'ancienne version assemblait des chaînes
+      // avec `d.legacy_id` et `d.rawName` dedans — `textContent` n'interprète
+      // rien, et le cliquet `innerhtml` ne bouge pas d'un cran.
+      //
+      // ⚠️ AUCUNE DONNÉE PRIVÉE : ni téléphone ni e-mail du médecin. Le
+      // mapper pose d'ailleurs `phone: null` tant que rien n'est branché. Ce
+      // bloc n'affiche que le nom déjà public et un numéro d'équipe.
       if (!d._isClaimed) {
-        // ── Fiche non revendiquée : badge + CTA WhatsApp ──────────────────
-        var _waText = 'Bonjour, je souhaite revendiquer la fiche #'
-          + d.legacy_id + ' - Dr ' + (d.rawName || d.fr || 'Médecin');
-        var _waUrl = 'https://wa.me/213777169074?text=' + encodeURIComponent(_waText);
-        claimBlock.innerHTML =
-          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">'
-          + '<span style="background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;'
-          +   'padding:3px 10px;border-radius:20px;border:1px solid #f59e0b;display:inline-flex;align-items:center;gap:5px">'
-          +   '<i class="fa fa-circle-exclamation" style="font-size:10px"></i> Fiche non revendiquée'
-          + '</span>'
-          + '</div>'
-          + '<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:14px 16px">'
-          +   '<div style="font-weight:700;font-size:14px;color:#14532d;margin-bottom:4px">C\'est votre fiche ?</div>'
-          +   '<div style="font-size:13px;color:#166534;margin-bottom:12px">Contactez notre équipe pour la revendiquer en quelques minutes.</div>'
-          +   '<a href="' + _waUrl + '" target="_blank" rel="noopener noreferrer"'
-          +     ' style="display:inline-flex;align-items:center;gap:8px;background:#25d366;color:#fff;'
-          +     'padding:9px 16px;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none">'
-          +     '<i class="fa-brands fa-whatsapp" style="font-size:16px"></i> Réclamer via WhatsApp'
-          +   '</a>'
-          + '</div>';
+        var badge = document.createElement('div');
+        badge.style.cssText = 'display:flex;align-items:center;gap:6px;margin-bottom:10px';
+        var pastille = document.createElement('span');
+        pastille.style.cssText = 'background:#fef3c7;color:#92400e;font-size:11px;font-weight:700;'
+          + 'padding:3px 10px;border-radius:20px;border:1px solid #f59e0b;display:inline-flex;align-items:center;gap:5px';
+        var icoP = document.createElement('i');
+        icoP.className = 'fa fa-circle-exclamation'; icoP.style.fontSize = '10px';
+        icoP.setAttribute('aria-hidden', 'true');
+        pastille.appendChild(icoP);
+        pastille.appendChild(document.createTextNode(' ' + _t('dp_claim_badge', 'Fiche non revendiquée')));
+        badge.appendChild(pastille);
+
+        var carte = document.createElement('div');
+        carte.id = 'claim-cta';
+        carte.style.cssText = 'background:#f0fdf4;border:1px solid #86efac;border-radius:12px;padding:14px 16px';
+
+        var titre = document.createElement('div');
+        titre.style.cssText = 'font-weight:700;font-size:14px;color:#14532d;margin-bottom:4px';
+        titre.textContent = _t('dp_claim_title', 'Vous êtes ce médecin ?');
+        var sous = document.createElement('div');
+        sous.style.cssText = 'font-size:13px;color:#166534;margin-bottom:12px';
+        sous.textContent = _t('dp_claim_sub', 'Revendiquez votre fiche : vous pourrez gérer vos horaires et recevoir des rendez-vous.');
+
+        // ── CTA principal : le tunnel, fiche pré-remplie ────────────────
+        var lien = document.createElement('a');
+        lien.id = 'claim-cta-link';
+        // Pas de branche « sans legacy_id » ici : tout ce bloc est deja sous
+        // `if (d.legacy_id)`. Un `? :` a cet endroit serait du code mort, et
+        // une garde ecrite dessus serait verte sans rien prouver.
+        lien.href = 'doctor-claim.html?legacy_id=' + encodeURIComponent(d.legacy_id);
+        lien.rel = 'nofollow';   // le tunnel est une action, pas une page de contenu a faire remonter
+        lien.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:#0F7560;color:#fff;'
+          + 'padding:9px 16px;border-radius:10px;font-weight:700;font-size:13px;text-decoration:none';
+        var icoL = document.createElement('i');
+        icoL.className = 'fa fa-id-card'; icoL.style.fontSize = '15px';
+        icoL.setAttribute('aria-hidden', 'true');
+        lien.appendChild(icoL);
+        lien.appendChild(document.createTextNode(' ' + _t('dp_claim_cta', 'Revendiquer ma fiche')));
+
+        // ── Second chemin : WhatsApp, qui marche deja ──────────────────
+        var _waText = _t('dp_claim_wa_msg', 'Bonjour, je souhaite revendiquer la fiche')
+          + ' #' + (d.legacy_id || '') + ' - ' + (d.rawName || d.fr || '');
+        var wa = document.createElement('a');
+        wa.id = 'claim-cta-wa';
+        wa.href = 'https://wa.me/213777169074?text=' + encodeURIComponent(_waText);
+        wa.target = '_blank'; wa.rel = 'noopener noreferrer nofollow';
+        wa.style.cssText = 'display:inline-flex;align-items:center;gap:8px;background:#fff;color:#166534;'
+          + 'border:1px solid #86efac;padding:9px 16px;border-radius:10px;font-weight:700;font-size:13px;'
+          + 'text-decoration:none;margin-inline-start:8px';
+        var icoW = document.createElement('i');
+        icoW.className = 'fa-brands fa-whatsapp'; icoW.style.fontSize = '16px';
+        icoW.setAttribute('aria-hidden', 'true');
+        wa.appendChild(icoW);
+        wa.appendChild(document.createTextNode(' ' + _t('dp_claim_wa', 'Par WhatsApp')));
+
+        var rangee = document.createElement('div');
+        rangee.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px 0;align-items:center';
+        rangee.appendChild(lien); rangee.appendChild(wa);
+
+        carte.appendChild(titre); carte.appendChild(sous); carte.appendChild(rangee);
+        claimBlock.appendChild(badge); claimBlock.appendChild(carte);
       } else {
-        // ── Fiche revendiquée : badge vert uniquement ─────────────────────
-        claimBlock.innerHTML =
-          '<div style="display:flex;align-items:center;gap:6px">'
-          + '<span style="background:#f0fdf4;color:#166534;font-size:11px;font-weight:700;'
-          +   'padding:3px 10px;border-radius:20px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px">'
-          +   '<i class="fa fa-circle-check" style="font-size:10px"></i> Fiche revendiquée par le médecin'
-          + '</span>'
-          + '</div>';
+        // ── Fiche revendiquée : badge vert, et AUCUN appel a revendiquer ──
+        var badgeOk = document.createElement('div');
+        badgeOk.style.cssText = 'display:flex;align-items:center;gap:6px';
+        var pOk = document.createElement('span');
+        pOk.style.cssText = 'background:#f0fdf4;color:#166534;font-size:11px;font-weight:700;'
+          + 'padding:3px 10px;border-radius:20px;border:1px solid #86efac;display:inline-flex;align-items:center;gap:5px';
+        var icoOk = document.createElement('i');
+        icoOk.className = 'fa fa-circle-check'; icoOk.style.fontSize = '10px';
+        icoOk.setAttribute('aria-hidden', 'true');
+        pOk.appendChild(icoOk);
+        pOk.appendChild(document.createTextNode(' ' + _t('dp_claimed_badge', 'Fiche revendiquée par le médecin')));
+        badgeOk.appendChild(pOk);
+        claimBlock.appendChild(badgeOk);
       }
 
       if (hdr.firstChild) hdr.insertBefore(claimBlock, hdr.firstChild);
