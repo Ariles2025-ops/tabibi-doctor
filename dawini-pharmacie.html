@@ -135,7 +135,7 @@
     <i class="fa fa-user-lock" aria-hidden="true"></i>
     <div style="font-size:16px;font-weight:800;margin-bottom:8px" data-i18n="dw_ph_not_pharmacy">Accès réservé aux pharmacies partenaires</div>
     <div style="font-size:13px;color:var(--text2);max-width:40ch;margin:0 auto 18px" data-i18n="dw_ph_not_pharmacy_sub">Ce compte n'est pas relié à une fiche pharmacie. Contactez Tabibi pour devenir partenaire.</div>
-    <a class="btn btn-primary" href="index.html" data-i18n="dw_ph_back_home">Retour à l'accueil</a>
+    <a class="btn btn-primary" href="accueil-public.html" data-i18n="dw_ph_back_home">Retour à l'accueil</a>
   </div>
 
   <div id="dwp-main" class="dwp-shell" hidden>
@@ -187,7 +187,7 @@
 // ========================================================================
 function _t(k, f){ return (typeof tabibiT === 'function') ? tabibiT(k, f) : f; }
 function _esc(s){ var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
-function goBackSafe(){ if (history.length > 1) history.back(); else window.location = 'index.html'; }
+function goBackSafe(){ if (history.length > 1) history.back(); else window.location = 'accueil-public.html'; }
 function toastM(msg, kind){
   if (typeof window.toast === 'function') return window.toast(msg, kind);
   // [DW-UX 2026-07-09] toast premium — fini alert()

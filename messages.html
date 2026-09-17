@@ -113,7 +113,7 @@ document.addEventListener('DOMContentLoaded', async function(){
   // pour ne pas polluer l'historique). Couvre l'acces direct par URL / bookmark.
   if(!(window.TABIBI_FEATURES && window.TABIBI_FEATURES.messaging)){
     var _r=''; try{ _r=(JSON.parse(localStorage.getItem('tabibi_user')||'{}').role||''); }catch(e){}
-    location.replace((_r==='medecin'||_r==='doctor') ? 'doctor-dashboard.html' : (_r==='patient' ? 'patient-dashboard.html' : 'index.html'));
+    location.replace((_r==='medecin'||_r==='doctor') ? 'doctor-dashboard.html' : (_r==='patient' ? 'patient-dashboard.html' : 'accueil-public.html'));
     return;
   }
   M = window.tabibiMessaging;   // [MSG-fix] scripts charges -> window.tabibiMessaging dispo

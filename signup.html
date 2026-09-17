@@ -68,7 +68,7 @@
 <script>(function(){var k=function(){var s=document.getElementById("splash");if(s)s.remove();var l=document.getElementById("loading");if(l)l.classList.add("hidden");};k();document.addEventListener("DOMContentLoaded",k);})();</script>
 <div class="app-root">
 <!-- [Phase 0] Header factorisé → js/tabibi-header.js (variante auth : retour + logo + langbar) -->
-<div data-tabibi-header data-variant="auth" data-back="index.html"></div>
+<div data-tabibi-header data-variant="auth" data-back="accueil-public.html"></div>
 <script src="js/tabibi-header.js"></script>
 <main id="main" class="page" style="padding:0" role="main">
   <section class="auth-hero">
@@ -1074,9 +1074,9 @@ function medecinPendingClose(force){
   }
   try { localStorage.removeItem('tabibi_user'); localStorage.removeItem('tabibi_role'); } catch(e){}
   if (window.tabibi && window.tabibi.auth && typeof window.tabibi.auth.signOut === 'function') {
-    window.tabibi.auth.signOut().catch(function(){ location.href='index.html'; });
+    window.tabibi.auth.signOut().catch(function(){ location.href='accueil-public.html'; });
   } else {
-    location.href='index.html';
+    location.href='accueil-public.html';
   }
 }
 

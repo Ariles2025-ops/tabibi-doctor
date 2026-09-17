@@ -445,12 +445,12 @@ async function login(email, password) {
 
 function logout() { user = null; localStorage.removeItem("tabibi_user"); }
 
-function requireAuth(redirect = "index.html") {
+function requireAuth(redirect = "accueil-public.html") {
   loadUser();
   if (!isLogged()) { window.location.href = redirect; return false; }
   return true;
 }
-function requireRole(role, redirect = "index.html") {
+function requireRole(role, redirect = "accueil-public.html") {
   loadUser();
   if (!isLogged() || user.role !== role) { window.location.href = redirect; return false; }
   return true;
@@ -473,7 +473,7 @@ function openModal(tab) {
 function handleLogout() {
   logout(); renderUserUI(); toast(T("logout_ok"),"info");
   const onDash=["patient-dashboard","doctor-dashboard","admin-dashboard"].some(p=>window.location.pathname.includes(p));
-  if(onDash) setTimeout(()=>window.location.href="index.html",600);
+  if(onDash) setTimeout(()=>window.location.href="accueil-public.html",600);
 }
 
 /* ══ USER UI ══════════════════════════════════════════════════ */

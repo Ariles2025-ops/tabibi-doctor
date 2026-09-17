@@ -655,7 +655,7 @@ async function logout(){
     else { const sb = window.tabibi && window.tabibi.supabase; if (sb) await sb.auth.signOut(); }
   } catch(e) { console.warn('[logout]', e); }
   localStorage.removeItem("tabibi_user");
-  location.href="index.html";
+  location.href="accueil-public.html";
 }
 
 /* FAMILLE */
