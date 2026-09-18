@@ -292,12 +292,26 @@
     }
   }
 
+  /**
+   * Le nom du prescripteur — ou une mention honnête quand il manque.
+   *
+   * ⚠️ « Dr » tout seul n'est pas un nom. Le nom vient d'une SECONDE lecture
+   * (`public.users`), autorisée par la RLS uniquement pour les médecins avec
+   * qui le patient a un rendez-vous. Quand cette lecture ne rend rien —
+   * ordonnance sans rendez-vous rattaché, requête en échec — on écrit
+   * « Médecin prescripteur » plutôt qu'un « Dr » orphelin.
+   */
+  function nomMedecin(p) {
+    const nom = `${(p.doctor_first_name || '').trim()} ${(p.doctor_last_name || '').trim()}`.trim();
+    return nom ? `Dr ${nom}` : T('po_doctor_unknown', 'Médecin prescripteur');
+  }
+
   function openDetail(p) {
     const meds = Array.isArray(p.medications) ? p.medications : [];
     const html = `
       <div style="margin-bottom:14px;font-size:12px;color:var(--text3)">
         ${escapeHtml(p.prescription_number)} — ${escapeHtml(T('po_issued_on', 'emise le'))} ${fmtDate(p.issue_date)} ${escapeHtml(T('po_by', 'par'))}
-        <strong>Dr ${escapeHtml(p.doctor_first_name || '')} ${escapeHtml(p.doctor_last_name || '')}</strong>
+        <strong>${escapeHtml(nomMedecin(p))}</strong>
       </div>
       <ul class="meds-detail">
         ${meds.map((m, i) => `
@@ -320,7 +334,7 @@
     const meds = Array.isArray(p.medications) ? p.medications : [];
     const pills = meds.slice(0, 4).map((m) => `<span class="pill">${escapeHtml(m.name)}</span>`).join('');
     const more = meds.length > 4 ? `<span class="pill" style="background:var(--bg3);color:var(--text2)">+${meds.length - 4}</span>` : '';
-    const doctorName = `Dr ${(p.doctor_first_name || '').trim()} ${(p.doctor_last_name || '').trim()}`.trim();
+    const doctorName = nomMedecin(p);
     const canDownload = !!p.pdf_storage_path && p.status !== 'cancelled';
 
     return `
@@ -409,8 +423,32 @@
     const { data: { user } } = await supa.auth.getUser();
     if (!user) { location.href = 'login.html'; return; }
 
-    const { data, error } = await supa.from('my_prescriptions')
+    // ══════════════════════════════════════════════════════════════════
+    // [18/09/2026] `my_prescriptions` N'EXISTE PAS — et n'a jamais existé
+    // ══════════════════════════════════════════════════════════════════
+    // La page affichait, à chaque ouverture :
+    //   « Erreur de chargement : Could not find the table
+    //     'public.my_prescriptions' in the schema cache »
+    // Un patient n'avait donc AUCUN moyen de voir ses ordonnances.
+    //
+    // ⚠️ VÉRIFIÉ EN BASE AVANT D'ÉCRIRE (18/09), pas supposé :
+    //   · la table réelle est `prescriptions`
+    //   · sa RLS `prescriptions_select_fusion` autorise déjà le patient :
+    //     `patient_id = auth.uid()` — rien à ouvrir, rien à migrer
+    //   · les noms de médecin ne sont PAS sur cette table. Ils vivent sur
+    //     `public.users`, et la RLS `users_select_fusion` les laisse lire au
+    //     patient **pour les médecins avec qui il a un rendez-vous** :
+    //       role = 'medecin' AND id IN (select doctor_id from appointments
+    //                                    where patient_id = auth.uid())
+    //
+    // D'où DEUX lectures au lieu d'une jointure : les clés étrangères de
+    // `prescriptions` pointent vers `auth.users`, que PostgREST n'expose pas —
+    // l'imbrication `select('*, doctor:users(...)')` ne peut donc pas marcher.
+    // Aucune vue à créer : la seule chose qui manquait était de viser la bonne
+    // table.
+    const { data, error } = await supa.from('prescriptions')
       .select('*')
+      .eq('patient_id', user.id)
       .order('issue_date', { ascending: false })
       .limit(500);
     if (error) {
@@ -418,7 +456,31 @@
       $('#list').innerHTML = `<div class="empty"><i class="fa fa-triangle-exclamation"></i><h3>${escapeHtml(T('po_load_error', 'Erreur de chargement'))}</h3><p>${escapeHtml(error.message)}</p></div>`;
       return;
     }
-    state.all = (data || []).filter((p) => p.status !== 'draft');
+
+    const ordonnances = (data || []).filter((p) => p.status !== 'draft');
+
+    // ── Le nom du médecin, en seconde lecture ────────────────────────
+    // ⚠️ SI ELLE ÉCHOUE, LA PAGE S'AFFICHE QUAND MÊME. Une ordonnance sans le
+    // nom de son prescripteur reste utile — son numéro, sa date, ses
+    // médicaments et son PDF sont là. Faire dépendre toute la liste de cette
+    // requête-ci ramènerait l'écran vide qu'on vient de retirer.
+    const ids = [...new Set(ordonnances.map((o) => o.doctor_id).filter(Boolean))];
+    let medecins = {};
+    if (ids.length) {
+      const { data: docs, error: eDocs } = await supa.from('users')
+        .select('id, first_name, last_name, specialty_fr')
+        .in('id', ids);
+      if (eDocs) console.warn('[ordonnances] noms de médecins indisponibles', eDocs.message);
+      for (const d of (docs || [])) medecins[d.id] = d;
+    }
+    for (const o of ordonnances) {
+      const d = medecins[o.doctor_id] || {};
+      o.doctor_first_name = d.first_name || '';
+      o.doctor_last_name  = d.last_name || '';
+      o.doctor_specialty  = d.specialty_fr || '';
+    }
+
+    state.all = ordonnances;
     applyFilter();
   }
 
