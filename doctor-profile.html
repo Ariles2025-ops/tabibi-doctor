@@ -235,6 +235,32 @@ function _doctorAvatar(rowOrName){
 // public_doctors (si elle implémente l'anonymisation côté serveur). Le JS
 // affiche le full_name reçu tel quel via tabibiDoctorName.format().
 
+// ══════════════════════════════════════════════════════════════════════
+// [18/09/2026] QUI A LE DROIT DE VOIR « Vous êtes ce médecin ? »
+// ══════════════════════════════════════════════════════════════════════
+// Le bloc de revendication s'affichait AUSSI à un patient connecté. Un patient
+// ne sera jamais « ce médecin » : on lui proposait une action qui n'a aucun
+// sens pour lui, sur la fiche du praticien qu'il vient peut-être de consulter.
+//
+// ⚠️ LA LECTURE EST CELLE QUE LA PAGE FAIT DÉJÀ AILLEURS — `tabibi_user` dans
+// `localStorage` (cf. `_refreshReserveBtnState`, l.705). On ne branche pas une
+// seconde source de vérité pour une question d'affichage : `reservation.html`
+// reste l'endroit où la vraie session est vérifiée, au moment d'agir.
+//
+// ⚠️ ET LES RÔLES SONT NORMALISÉS. `js/auth.js` accepte `doctor`, `médecin` et
+// `medecin` pour la même personne (`requireAuth`). Comparer à la seule chaîne
+// « medecin » masquerait le bloc à un médecin dont le profil dit « doctor ».
+function _peutRevendiquer() {
+  var u = null;
+  try { u = JSON.parse(localStorage.getItem('tabibi_user') || 'null'); } catch (e) { u = null; }
+  // Visiteur non connecté : c'est LUI qu'on veut atteindre — un médecin qui
+  // tombe sur sa propre fiche depuis une recherche.
+  if (!u || !u.id) return true;
+  var role = String(u.role || '').toLowerCase();
+  if (role === 'doctor' || role === 'médecin') role = 'medecin';
+  return role === 'medecin';
+}
+
 // [FIX 2026-05-21] Mapping Supabase public_doctors -> shape attendue par l'UI
 // [Phase 5.2.3-fix 2026-05-22] displayName via tabibiDoctorName.format() :
 // préfixe "Dr." seulement si entity_type = médecin, sinon nom brut.
@@ -592,7 +618,23 @@ async function loadDoc(){
         rangee.appendChild(lien);
 
         carte.appendChild(titre); carte.appendChild(sous); carte.appendChild(rangee);
-        claimBlock.appendChild(badge); claimBlock.appendChild(carte);
+
+        // ══════════════════════════════════════════════════════════════
+        // [18/09/2026] LE BADGE POUR TOUS, L'APPEL POUR QUI PEUT Y REPONDRE
+        // ══════════════════════════════════════════════════════════════
+        // ⚠️ MA PREMIERE VERSION CONDITIONNAIT TOUT LE BLOC, et elle mentait :
+        // un patient sur une fiche NON revendiquee serait tombe dans la branche
+        // `else`, celle du badge vert « Fiche revendiquee par le medecin ».
+        // On aurait masque une proposition absurde en la remplacant par une
+        // information FAUSSE — nettement pire.
+        //
+        // Le badge « Fiche non revendiquee » reste donc visible pour tout le
+        // monde : c'est une information vraie, et elle explique au patient
+        // pourquoi la reservation est desactivee. Seule la CARTE d'appel
+        // (« Vous etes ce medecin ? ») est reservee au visiteur non connecte et
+        // au medecin — un patient ne sera jamais « ce medecin ».
+        claimBlock.appendChild(badge);
+        if (_peutRevendiquer()) claimBlock.appendChild(carte);
       } else {
         // ── Fiche revendiquée : badge vert, et AUCUN appel a revendiquer ──
         var badgeOk = document.createElement('div');
