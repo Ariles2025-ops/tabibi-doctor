@@ -142,3 +142,52 @@ test('les pages légales reviennent vers l’accueil ouvert — avec le bon `../
   await expect.poll(() => page.url(), { timeout: 10000 }).toContain('accueil-public.html');
   await expect(page.locator('#name-search')).toBeAttached({ timeout: 10000 });
 });
+
+test('le blog revient vers l’accueil ouvert — et le clic y arrive', async ({ page }) => {
+  // ⚠️ [18/09/2026] `blog/` ÉTAIT EXCLU DE LA GARDE DE SOURCE. Ses deux
+  // « Accueil » visaient `../index.html` : ils marchaient, et déposaient le
+  // lecteur devant la porte close. **Une exclusion est un angle mort qu'on
+  // s'accorde** — celui-ci cachait exactement ce que la garde existe pour
+  // attraper. Le dossier est sorti de la liste ignorée dans le même lot.
+  const html = await page.request.get('/blog/index.html').then((r) => r.text());
+  expect(html, 'le blog renvoie encore sur la porte fermée')
+    .not.toMatch(/href="\.\.\/index\.html"/);
+
+  await page.goto('/blog/index.html', ATTENDRE);
+  const retour = page.locator('.back-bar a').first();
+  await expect(retour).toBeVisible({ timeout: 8000 });
+  await retour.click();
+  await expect.poll(() => page.url(), { timeout: 10000 }).toContain('accueil-public.html');
+  await expect(page.locator('#name-search')).toBeAttached({ timeout: 10000 });
+});
+
+test('« Accueil » et « Ouvrir sur le web » ne visent plus la RACINE', async ({ page }) => {
+  // ⚠️ LA FORME QUI NE NOMME PAS SA CIBLE. `href="/"` sert la racine — et
+  // depuis l'inversion du 13/09, la racine EST la porte fermée. Aucune
+  // recherche sur « index.html » ne pouvait trouver ces quatre liens :
+  //
+  //     api-docs.html:180,185   la marque et les deux « Accueil » fr/en
+  //     telecharger.html:72,90  « ouvrir Tabibi sur le web » — dit à un
+  //                             utilisateur d'iPhone que tout marche déjà là
+  //
+  // Le second est le pire : il s'affiche précisément à qui n'a PAS d'autre
+  // moyen d'utiliser le produit.
+  for (const chemin of ['/api-docs.html', '/telecharger.html']) {
+    const html = await page.request.get(chemin).then((r) => r.text());
+    expect(html, `${chemin} : un lien vise encore la racine, donc la porte fermée`)
+      .not.toMatch(/href="\/"/);
+    expect(html, `${chemin} : plus aucun lien vers l’accueil ouvert`)
+      .toMatch(/href="\/accueil-public\.html"/);
+  }
+
+  // Et le clic arrive vraiment : on ne remplace pas une mauvaise destination
+  // par une destination absente.
+  // ⚠️ ON VISE LE LIEN DU PIED DE PAGE, PAS LE PREMIER DU DOCUMENT. Le premier
+  // vit dans `#ios-notice`, un bloc `hidden` qui ne s'affiche qu'aux iPhone :
+  // mesuré, le clic expirait sur « element is not visible » — l'essai accusait
+  // un lien parfaitement bon parce qu'il en avait attrapé un autre.
+  await page.goto('/telecharger.html', ATTENDRE);
+  await page.locator('.foot a[href="/accueil-public.html"]').first().click();
+  await expect.poll(() => page.url(), { timeout: 10000 }).toContain('accueil-public.html');
+  await expect(page.locator('#name-search')).toBeAttached({ timeout: 10000 });
+});

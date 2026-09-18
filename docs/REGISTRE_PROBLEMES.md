@@ -2049,6 +2049,74 @@ d'authentification l'emporte réellement (mesuré sur le corps de la requête).
 **La recette Safari reste à faire à la main** (P-31). Une garde hermétique ne peut pas prouver
 qu'un tiers, coupé par construction, se comporte bien.
 
+## P-116 — les liens qui menaient à la porte close SANS jamais la nommer
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-116 a | `api-docs.html` (×3) et `telecharger.html` (×2) renvoyaient sur la porte fermée par des liens `href="/"` | **la racine EST la porte fermée** depuis l'inversion du 13/09. Un lien vers `/` y mène sans citer `index.html` — donc **aucune recherche par nom de fichier ne pouvait les trouver**, ni celle de P-92, ni celle de P-100 | les cinq liens visent `/accueil-public.html` | `tests/porte-fermee-liens.test.mjs` (2 motifs ajoutés) + `tests/e2e/porte-fermee-navigation.spec.js` (2 essais) | **réglé** |
+| P-116 b | `blog/index.html:53` et `:144` visaient `../index.html` | **`blog` était dans la liste ignorée de la garde de P-100** | les deux liens visent `../accueil-public.html` ; **`blog` sort de la liste ignorée** | même garde | **réglé** |
+| P-116 c | **576 pages `seo/`** portent un CTA « Voir les disponibilités » vers `https://tabibi.doctor/index.html?specialty=…&wilaya=…` | URL **absolue**, et `seo` est exclu de la garde. Deux angles morts superposés | **non corrigé dans ce lot** — un cliquet plafonne le nombre à 576 et le réaffiche à chaque passage | cliquet dans `tests/porte-fermee-liens.test.mjs` | **ouvert, mesuré, plafonné** |
+
+### Un inventaire par nom de fichier rate tout ce qui vise un chemin
+
+P-92 a compté 22 liens, P-100 en a repointé 54. Les deux cherchaient la chaîne `index.html`.
+**`href="/"` n'en contient pas** — et mène exactement au même endroit.
+
+Le pire des cinq est `telecharger.html:72` : « ouvrir Tabibi sur le web », affiché **précisément à
+qui est sur iPhone** et n'a donc aucun autre moyen d'utiliser le produit. On lui indiquait la porte
+close.
+
+### Une exclusion est un angle mort qu'on s'accorde
+
+`blog` était dans `IGNORE`. La garde de P-100 parcourt le dépôt « pour attraper une page ajoutée
+demain » — et sautait un dossier qui contenait, au moment où elle a été écrite, deux liens fautifs.
+**Elle a certifié un dépôt qu'elle n'avait pas entièrement lu.**
+
+### ⚠️ Pourquoi un CLIQUET sur les 576 pages SEO, et pas un correctif
+
+Repointer 576 fichiers produit **un diff que personne ne relit** — la faute que ce dépôt documente
+depuis le `git add -A` du 13/09. C'est un lot à part entière.
+
+Le cliquet fait ce qu'un cliquet fait : il **interdit d'en ajouter un de plus**, il **imprime le
+chiffre** à chaque passage des portes, et il **exige que le plafond soit abaissé dans le même
+commit** que toute baisse — sinon il cesse de serrer. Un cliquet qu'on n'abaisse jamais devient un
+plafond décoratif.
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on remet | résultat |
+|---|---|
+| `blog/index.html` sur `../index.html` | **1 rouge** unités + **1 rouge** e2e |
+| `api-docs.html` / `telecharger.html` sur `href="/"` | **1 rouge** unités + **1 rouge** e2e |
+| une page SEO de plus vers la porte | **1 rouge** (le cliquet) |
+
+### ⚠️ Et une garde qui accusait un lien parfaitement bon
+
+Mon essai cliquait `a[href="/accueil-public.html"]` — **le premier du document**, qui vit dans
+`#ios-notice`, un bloc `hidden` réservé aux iPhone. Le clic expirait sur « element is not
+visible ». L'essai était rouge à cause du lien qu'il avait attrapé, pas de celui qu'il visait.
+
+## ⚠️ Instabilité observée — `tests/e2e/fuseau-cabinet.spec.js`
+
+**Ce n'est pas un défaut de ce lot, et ça mérite une ligne.** Au premier passage de la suite sur
+`dist-web`, 3 essais sont sortis rouges — `capture aux trois fuseaux`, les trois fuseaux — sur :
+
+```
+page.goto('/mes-rdv.html')  →  Test timeout of 30000ms exceeded
+                               navigating … waiting until "domcontentloaded"
+```
+
+Les **mêmes trois** essais étaient *flaky* côté mobile (verts au réessai), le run entier a duré
+**3,6 min au lieu de 2,3**, et le fichier isolé rend **26/26**. Relance complète : **778 passed,
+sortie 0.** C'est le serveur statique saturé, pas le produit.
+
+Mais **un vert obtenu au réessai n'est pas un vert.** Ce fichier est le plus lourd de la suite —
+trois chargements complets de page avec un `waitForTimeout(1500)` fixe — et c'est donc lui qui
+tombe le premier quand le banc est chargé. **Une porte qui rougit au hasard apprend aux gens à
+relancer jusqu'au vert**, ce qui est exactement l'inverse de ce qu'elle est censée produire.
+
+À traiter : remplacer l'attente fixe par une attente sur un état observable. **Lot à part.**
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

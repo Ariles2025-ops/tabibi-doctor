@@ -34,7 +34,16 @@ const RACINE = process.cwd();
 // parler d'`index.html`, c'est son sujet.
 const IGNORE = new Set([
   'node_modules', '.git', 'dist', 'dist-web', 'www', 'ios', 'android', 'desktop',
-  'seo', 'blog', 'v2', 'porte', 'test-results', 'playwright-report', 'scripts',
+  // ⚠️ [18/09/2026] `blog` EST SORTI DE CETTE LISTE. Il y était, et
+  // `blog/index.html` renvoyait sur la porte close — deux fois — sans que rien
+  // ne le dise. **Une exclusion est un angle mort qu'on s'accorde**, et
+  // celle-ci cachait exactement ce que la garde existe pour attraper.
+  //
+  // `seo` reste exclu, et c'est une décision documentée, pas un oubli : ses
+  // 576 pages visent `https://tabibi.doctor/index.html?specialty=…`. Les
+  // repointer est un lot à part (diff de 576 fichiers). Un cliquet dédié, plus
+  // bas, empêche ce nombre de grandir en silence.
+  'seo', 'v2', 'porte', 'test-results', 'playwright-report', 'scripts',
   'supabase', 'migrations', 'tests', 'assets', 'images', '.claude',
 ]);
 
@@ -78,6 +87,14 @@ const CIBLES = [
   { quoi: 'location.replace', motif: /location\.replace\(\s*["'](?:\.\.\/)?index\.html/gi },
   { quoi: 'data-home/back', motif: /data-(?:home|back)\s*=\s*["']index\.html/gi },
   { quoi: 'redirection de config', motif: /afterLogout\s*:\s*["']index\.html/gi },
+  // ⚠️ [18/09/2026] LA FORME QUI NE NOMME PAS SA CIBLE. `href="/"` sert la
+  // RACINE — et depuis l'inversion du 13/09, la racine EST la porte fermée.
+  // Quatre liens y menaient (`api-docs.html` ×3, `telecharger.html` ×2) et
+  // aucune recherche sur « index.html » ne pouvait les trouver.
+  //
+  // **Un inventaire par nom de fichier rate tout ce qui vise un chemin.**
+  { quoi: 'lien vers la racine', motif: /href\s*=\s*["']\/["']/gi },
+  { quoi: 'redirection vers la racine', motif: /location(?:\.href)?\s*=\s*["']\/["']/gi },
 ];
 
 test('aucune page de l’application ne renvoie vers index.html (la porte close)', () => {
@@ -138,4 +155,51 @@ test('les valeurs par défaut des modules visent l’accueil ouvert', () => {
   const home = nu(readFileSync(join(RACINE, 'js/home-app.js'), 'utf8'));
   assert.doesNotMatch(home, /redirect\s*=\s*"index\.html"/,
     'une garde d’accès renvoie encore sur la porte fermée');
+});
+
+// =====================================================================
+// LE CLIQUET DES PAGES SEO — 576 CTA PUBLICS SUR LA PORTE CLOSE
+// =====================================================================
+// ⚠️ MESURÉ LE 18/09/2026. Les 576 pages de `seo/` portent toutes le même
+// bouton d'appel :
+//
+//     <a class="btn" href="https://tabibi.doctor/index.html?specialty=…&wilaya=…">
+//       Voir les disponibilités</a>
+//
+// **URL absolue, donc invisible à toute recherche de lien relatif** — et P-100,
+// qui a repointé 54 emplacements, excluait déjà `seo/`. Ce sont des pages
+// d'atterrissage publiques : leur seul bouton dépose le visiteur sur
+// « Bientôt disponible ».
+//
+// ⚠️ POURQUOI UN CLIQUET ET PAS UN CORRECTIF. Repointer 576 fichiers produit
+// un diff que personne ne relit — la faute que ce dépôt documente depuis le
+// `git add -A` du 13/09. C'est un lot à part entière, et il est au registre.
+//
+// Ce cliquet fait ce qu'un cliquet fait : **il interdit d'en ajouter un de
+// plus**, et il rend le chiffre visible à chaque passage des portes. Le jour
+// où le lot passe, ce nombre tombe à 0 et la ligne devient une assertion
+// d'absence.
+// =====================================================================
+const SEO_PLAFOND = 576;
+
+test(`les pages SEO visent encore la porte close — au plus ${SEO_PLAFOND}`, () => {
+  const dossier = join(RACINE, 'seo');
+  let total = 0;
+  let pages = 0;
+  for (const nom of readdirSync(dossier)) {
+    if (!/\.html$/i.test(nom)) continue;
+    const src = nu(readFileSync(join(dossier, nom), 'utf8'));
+    const trouvees = src.match(/https:\/\/tabibi\.doctor\/index\.html/gi);
+    if (trouvees) { total += trouvees.length; pages += 1; }
+  }
+  console.log(`  seo/ : ${total} lien(s) vers la porte close, sur ${pages} page(s)`);
+  assert.ok(total <= SEO_PLAFOND,
+    `${total} liens SEO vers la porte close (plafond ${SEO_PLAFOND}) : il y en a de NOUVEAUX. ` +
+    'Une page SEO neuve doit viser accueil-public.html.');
+  // ⚠️ ET ON EXIGE QUE LE PLAFOND SOIT SERRÉ. Un cliquet qu'on n'abaisse
+  // jamais devient un plafond décoratif : si le lot passe et que le nombre
+  // tombe, cet essai le dit, et le plafond doit suivre dans le même commit.
+  assert.ok(total >= SEO_PLAFOND,
+    `Plus que ${total} liens (plafond ${SEO_PLAFOND}) : abaissez SEO_PLAFOND a ${total} ` +
+    'dans le meme commit, sinon le cliquet ne serre plus rien.');
 });
