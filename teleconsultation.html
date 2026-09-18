@@ -8,9 +8,38 @@
 <script src="js/tabibi-features.js"></script>
 <script>
 (function(){
-  // Early redirect si feature video désactivée — évite de charger Daily SDK
-  // et de tenter des appels RPC inexistants (Phase 7.1 confirmé : get_video_session
-  // et set_video_recording_consent absents en DB, cf SQL_TODO-008).
+  // ══════════════════════════════════════════════════════════════════
+  // GARDE-FOU DE DRAPEAU — PAS UNE ABSENCE DE RPC
+  // ══════════════════════════════════════════════════════════════════
+  // ⚠️ [18/09/2026] CE COMMENTAIRE DISAIT L'INVERSE DE LA REALITE. Il
+  // affirmait, et c'est conserve barre parce qu'il a servi de reference :
+  //
+  //     ~~get_video_session et set_video_recording_consent absents en DB,
+  //       cf SQL_TODO-008~~
+  //
+  // **Les quatre RPC existent.** Lu sur `pg_proc` le 18/09/2026, schema
+  // `public` :
+  //
+  //     get_video_session(p_session_id uuid)
+  //     mark_video_session_started(p_session_id uuid)
+  //     mark_video_session_ended(p_session_id uuid, p_duration integer)
+  //     set_video_recording_consent(p_session_id uuid, p_consent boolean)
+  //
+  // Et `js/tabibi-features.js:44` le disait deja correctement depuis le 14/09
+  // — deux fichiers du meme depot se contredisaient. Le risque n'etait pas
+  // theorique : quelqu'un qui « corrige » sur la foi de ces lignes casse la
+  // video, qui MARCHE (drapeau `video: true`, edge `create-video-room`
+  // deployee).
+  //
+  // Ce que fait reellement le bloc ci-dessous : un GARDE-FOU DE DRAPEAU. Si
+  // `TABIBI_FEATURES.video` repasse a `false` — parce que le flux casse en
+  // seance, cas prevu par le commentaire de `tabibi-features.js` — la page
+  // affiche « bientot disponible » au lieu de charger le SDK Daily pour rien.
+  // Aujourd'hui le drapeau est OUVERT, donc **ce bloc ne se declenche pas**.
+  //
+  // Une regle de ce depot, et c'est la troisieme fois qu'elle sert :
+  // **un document qui dit « il n'y a pas de X » doit porter la date et la
+  // methode de la mesure qui l'etablit, sinon il ne fait que repeter.**
   if (window.TABIBI_FEATURES && window.TABIBI_FEATURES.video === false) {
     document.addEventListener('DOMContentLoaded', function(){
       // Cache tous les écrans + montre un état "Bientôt disponible"
