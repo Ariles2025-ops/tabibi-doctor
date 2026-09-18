@@ -841,11 +841,39 @@ function _tbLoadPins(){
     .then(function(d){ _tbDocs=d||[]; _tbRenderPins(); })
     .catch(function(){ _tbDocs=[]; _tbRenderPins(); });
 }
+// ══════════════════════════════════════════════════════════════════════
+// [18/09/2026] UNE EPINGLE SANS COORDONNEES CASSE TOUTE LA CARTE
+// ══════════════════════════════════════════════════════════════════════
+// Mesure en base le 18/09 :
+//
+//     doctor_profiles : 75 035 lignes · AVEC GPS : 0 · SANS GPS : 75 035
+//
+// Pas « presque aucune » : AUCUNE. `L.latLng(null, null)` jette
+// (« Invalid LatLng object »), et l'exception part d'un `forEach` — donc elle
+// interrompt le rendu ENTIER : compteur jamais mis a jour, et sur un clic de
+// filtre (`_tbMapFilter`), rien ne rattrape le jet.
+//
+// ⚠️ ON IGNORE, ON NE REMPLACE PAS. Poser ces medecins au centre de leur
+// wilaya — ou pire, au centre du pays — inventerait une adresse : la carte
+// dirait « ce medecin est ICI » alors que personne ne le sait. La couche des
+// BULLES par wilaya, elle, dit une chose vraie (« environ N medecins dans
+// cette region ») et ne depend d'aucun GPS : c'est elle qui porte la vue, et
+// elle n'est pas touchee.
+//
+// ⚠️ `Number.isFinite` ET PAS `!= null` : `latitude` peut arriver en chaine
+// ("36.75") ou en NaN apres un parse rate. `Number.isFinite('36.75')` est
+// FAUX — et c'est voulu : on ne devine pas le type d'une coordonnee, on exige
+// un nombre. Le jour ou la base renverra des chaines, cette garde le dira en
+// n'affichant aucune epingle, au lieu de jeter.
+function _tbEstCoord(v){ return typeof v === 'number' && Number.isFinite(v); }
+
 function _tbRenderPins(){
   if(!_tbPins) return; _tbPins.clearLayers();
   const w=(document.getElementById('map-f-w')||{}).value||'';
   const s=(document.getElementById('map-f-s')||{}).value||'';
-  _tbDocs.filter(function(d){return (!w||(d.wilaya_fr||'')===w)&&(!s||(d.specialty_fr||'')===s);}).forEach(function(d){
+  _tbDocs.filter(function(d){return (!w||(d.wilaya_fr||'')===w)&&(!s||(d.specialty_fr||'')===s);})
+    .filter(function(d){ return _tbEstCoord(d.latitude) && _tbEstCoord(d.longitude); })
+    .forEach(function(d){
     const ic=L.divIcon({className:'',html:'<div class="tb-pin"><i class="fa fa-user-doctor"></i></div>',iconSize:[34,34],iconAnchor:[17,32],popupAnchor:[0,-30]});
     const m=L.marker([d.latitude,d.longitude],{icon:ic});
     const note=d.rating?('<span class="tb-rate">★ '+Number(d.rating).toFixed(1)+'</span>'+(d.review_count?' · '+d.review_count+' avis':'')):'';
