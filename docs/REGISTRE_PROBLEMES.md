@@ -2117,6 +2117,74 @@ module. Elle est tenue **à la source**, dans `tests/ordonnances-modale-source.t
 Ce même fichier garde **une troisième assertion** : que le `.modal` global de `components-v2.css`
 **existe toujours**. Le jour où il disparaît, la garde le dit — au lieu de continuer à protéger
 contre un conflit qui n'existe plus.
+## P-111 — « Se déconnecter » au milieu de l'écran, et une classe « large » défaite en ligne
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-111 | Sur PC, dans l'espace connecté, le bouton « Se déconnecter » s'affichait **au milieu de la page**. Signalé en live par Aghiles | `patient-profile.html` et `medecin-profile.html` sont **les deux seules pages espace sans bouton de déconnexion dans la barre du haut**. Leur unique sortie était un `btn-full` posé dans le corps de la page : dans un conteneur élargi par [P-104](#p-104--les-espaces-connectés-tenaient-dans-un-couloir-de-760-px), un `btn-full` **est** un bouton centré au milieu de l'écran | bouton de déconnexion **à droite dans `header.app-bar`** sur les deux pages ; le bouton de page prend la classe `.logout-en-page`, masquée **au-delà de 1024 px seulement** | `tests/e2e/logout-barre-pc.spec.js` — 10 essais × 2 cibles | **réglé** |
+| P-111 b | `admin-cabinet.html` se déclarait `page page-large` et restait plafonnée à **960 px** sur un écran de 1280 | `style="…max-width:960px…"` **en ligne** sur le `<main>` : un style en ligne bat toute feuille, y compris `.page.page-large { max-width:none }` | le cap en ligne est retiré ; la page suit le shell `.app-root` (1100 px, 1240 au-delà de 1440) comme les autres espaces | même fichier | **réglé** |
+
+### Le relevé qui a désigné les coupables
+
+Toutes les pages « espace » ouvertes une à une, fenêtre de 1280 px, position du bouton mesurée :
+
+```
+patient-profile.html    PAGE   x=106  w=1068  centre = 640   ← le milieu EXACT
+medecin-profile.html    PAGE   x=614  w=638   centre = 933
+patient-dashboard.html  BARRE  x=1002 w=36    centre = 1020  ✓
+doctor-dashboard.html   BARRE  x=1220 w=40    centre = 1240  ✓
+agenda-cabinet.html     BARRE  x=1220 w=40    centre = 1240  ✓
+secretaire-dashboard    BARRE  x=1102 w=40    centre = 1122  ✓
+admin-dashboard.html    BARRE  x=1106 w=36    centre = 1124  ✓
+```
+
+**Le défaut n'était pas « un bouton mal placé » : c'était une barre incomplète.** Les cinq pages
+correctes ont toutes leur sortie dans la barre ; les deux fautives n'en avaient pas, donc le corps
+de page faisait l'appoint. Corriger le bouton sans ajouter la barre aurait supprimé la sortie.
+
+### ⚠️ On ne coupe pas la sortie du téléphone pour ranger celle du PC
+
+Le bouton de page **reste** : sur mobile, la barre du haut n'a pas la place d'un libellé, et c'est
+la seule sortie. Il est masqué **à partir de 1024 px**, là où la barre prend le relais — jamais en
+dessous. La contre-épreuve mobile est dans la garde, et elle est là précisément pour interdire ce
+raccourci.
+
+### Une classe qui dit « large », un `style=` qui dit 960
+
+`admin-cabinet.html` portait les deux. **Le style en ligne gagne, en silence, et la classe reste
+là pour faire croire que c'est réglé.** Même famille que P-110 (l'ordre des feuilles) et
+[P-88](#p-88--une-égalité-de-spécificité-est-une-dépendance-à-lordre-des-fichiers) : le sélecteur
+qu'on lit n'est pas toujours celui qui s'applique. **Un cap en dur qui double un cap de shell est
+un cap qui finira par diverger de l'autre.**
+
+### ⚠️ `agenda-cabinet` mesure 732 px, ET C'EST VOULU — la garde l'écrit
+
+Poste de travail à trois colonnes : rail fixe de 224 px, panneau fixe de 324 px, agenda au centre.
+`1280 − 224 − 324 − marges ≈ 732`. **Une garde qui exigerait « plus de 1000 px partout » ferait
+« corriger » une mise en page juste** — la faute que ce dépôt documente depuis P-82. Un essai
+dédié vérifie donc que le rail et le panneau sont **toujours là**, et dit pourquoi le chiffre est
+petit.
+
+### Deux fois où ma propre garde s'est trompée — corrigées, pas contournées
+
+1. **Le fourre-tout de routes avalait `users`.** Playwright essaie les routes de la **plus récente
+   à la plus ancienne** : `**/rest/v1/**` posé en dernier gagnait sur `**/rest/v1/users*`, toutes
+   les pages admin se croyaient ouvertes à un patient et **redirigeaient**. Mon premier relevé
+   « mesurait » `patient-dashboard` cinq fois de suite sans que rien ne le signale.
+2. **La garde accusait un rail de navigation.** Elle ne connaissait que `.ag-sidebar` ; les autres
+   pages pro reçoivent `.tbi-pro-sidebar` (`js/tabibi-pro-sidebar.js`). `medecin-profile` sortait
+   rouge pour un bouton parfaitement à sa place. **Une garde calibrée sur un seul relevé ne garde
+   qu'un seul cas** — la première version ne refusait d'ailleurs qu'un bouton à moins de 20 % du
+   centre, ce qui attrapait `patient-profile` (640) et laissait passer `medecin-profile` (933).
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on retire ou remet | résultat |
+|---|---|
+| la règle `.logout-en-page` (≥ 1024 px) | **2 rouges** |
+| le bouton de barre de `patient-profile` | **2 rouges** |
+| le cap `max-width:960px` en ligne de `admin-cabinet` | **1 rouge** |
+| le masquage rendu **global** au lieu de ≥ 1024 px | **1 rouge** — la sortie mobile |
 
 ## Ouverts — aucune garde, et c'est le sujet
 

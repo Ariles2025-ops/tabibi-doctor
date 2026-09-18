@@ -45,6 +45,13 @@
   <button class="btn btn-soft btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> <span data-i18n="pp_save_short">Sauver</span></button>
   <!-- [i18n] sélecteur de langue factorisé -->
   <div data-langbar></div>
+  <!-- [18/09/2026] LA DECONNEXION VA A DROITE DANS LA BARRE, JAMAIS AU MILIEU
+       DE LA PAGE. Mesure du 18/09 sur une fenetre de 1280 px : le seul bouton
+       « Se deconnecter » de cette page etait un `btn-full` de 1068 px dont le
+       centre tombait a 640 px — le milieu exact de l'ecran — et la barre du
+       haut n'en avait AUCUN. Meme repere que `agenda-cabinet.html:163` et
+       `secretaire-dashboard.html:91`. -->
+  <button type="button" onclick="logout()" class="btn btn-icon btn-ghost" style="color:#D21010;flex-shrink:0" title="Déconnexion" aria-label="Se déconnecter"><i class="fa fa-right-from-bracket" aria-hidden="true"></i></button>
 </header>
 <main class="page page-large" style="padding:0 0 80px">
   <!-- COVER -->
@@ -271,7 +278,11 @@
 
     <!-- BOUTONS GLOBAUX -->
     <button class="btn btn-primary btn-full btn-xl" style="margin-top:8px" onclick="saveAll()"><i class="fa fa-save"></i> <span data-i18n="pp_save_all">Sauvegarder toutes les modifications</span></button>
-    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> <span data-i18n="pp_logout">Se déconnecter</span></button>
+    <!-- ⚠️ CE BOUTON RESTE — il est le seul chemin de deconnexion sur telephone,
+         ou la barre du haut n'a pas la place. Il est masque AU-DELA DE 1024 px
+         (voir la regle `.logout-en-page` de `styles/app.css`), la ou la barre
+         prend le relais. Le retirer tout court couperait la sortie aux mobiles. -->
+    <button class="btn btn-ghost btn-full logout-en-page" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> <span data-i18n="pp_logout">Se déconnecter</span></button>
   </div>
 </main>
 <div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>

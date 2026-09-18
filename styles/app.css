@@ -435,6 +435,28 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
      cap qui finit par diverger de l'autre. */
   .page.page-large { max-width: none; margin-inline: 0; }
 
+  /* ══════════════════════════════════════════════════════════════════
+     [18/09/2026] « SE DECONNECTER » AU MILIEU DE L'ECRAN
+     ══════════════════════════════════════════════════════════════════
+     Signale en live par Aghiles. Mesure du 18/09, fenetre de 1280 px :
+
+         patient-profile.html   btn-full  x=106  w=1068  centre = 640
+         medecin-profile.html   btn-full  x=614  w=638   centre = 933
+
+     640, c'est le milieu EXACT de la fenetre — et ces deux pages n'avaient
+     AUCUN bouton de deconnexion dans la barre du haut, contrairement a
+     `patient-dashboard`, `doctor-dashboard`, `agenda-cabinet`,
+     `secretaire-dashboard` et `admin-dashboard`, qui en ont un a droite.
+
+     Le skill de design tranche : sur PC, la deconnexion est A DROITE dans la
+     barre superieure, jamais centree au milieu de la page.
+
+     ⚠️ ON NE SUPPRIME PAS LE BOUTON DE PAGE. Sur telephone, la barre du haut
+     n'a pas la place d'un libelle, et ce bouton est la SEULE sortie. On le
+     masque a partir de 1024 px — la ou la barre prend le relais — et pas en
+     dessous. Une regle de bureau ne doit jamais couper une sortie mobile. */
+  .logout-en-page { display: none !important; }
+
   /* largeur de travail confortable : le contenu remplit le shell centré (fini la colonne 480) */
   .container { max-width: none; padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px); }
   .tab-bar, .install-banner { max-width: 1100px; }
