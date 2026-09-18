@@ -2185,6 +2185,80 @@ petit.
 | le bouton de barre de `patient-profile` | **2 rouges** |
 | le cap `max-width:960px` en ligne de `admin-cabinet` | **1 rouge** |
 | le masquage rendu **global** au lieu de ≥ 1024 px | **1 rouge** — la sortie mobile |
+## P-112 — trois pages dont les erreurs n'arrivaient nulle part
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-112 | Sentry est branché (DSN réel, 27 pages instrumentées, PII anonymisées depuis P-74) — mais **trois pages ne l'incluaient pas** : `accueil-public.html` (la plus visitée), `patient-ordonnances.html` (celle du défaut de modale remonté en live, P-110) et `index.html` (la porte fermée). Une erreur y était **invisible** | simple oubli d'inclusion — les balises `js/config.js` puis `js/tabibi-sentry.js` en bas de page | les trois pages instrumentées comme les 27 autres, `config.js` **avant** `tabibi-sentry.js`. Sur `accueil-public.html`, `config.js` est repris **en script classique** (voir plus bas) | `tests/e2e/sentry-couverture.spec.js` (8 essais × 2 cibles) + `tests/porte-jumelle-source.test.mjs` (3 essais) | **réglé** |
+
+### ⚠️ Sur `accueil-public.html`, poser le monitoring seul ne l'aurait pas activé
+
+Sa configuration n'arrive que par le point d'entrée Vite — un `<script type="module">`, donc
+**différé jusqu'après l'analyse du document**. Un `tabibi-sentry.js` classique s'exécute **avant**
+lui : il aurait lu `window.TABIBI_CONFIG` absent, conclu « pas de DSN », et **se serait désactivé
+en silence**, exactement comme en mode dev.
+
+**La page aurait porté la balise sans être surveillée** — et une garde qui compte les balises
+aurait été verte. D'où le `js/config.js` classique repris juste avant, et d'où l'essai qui mesure
+l'**ordre des balises**, pas leur présence. `config.js` ne fait qu'affecter une globale : le relire
+est sans effet de bord.
+
+### La porte fermée existe en DEUX exemplaires — et rien dans `verifier:toutes` ne le dit
+
+`index.html` à la racine et `porte/porte-fermee.html` doivent être le **même fichier, à l'octet
+près** : `scripts/verifier-porte.mjs` compare leurs SHA-256, et c'est ce qui fait de la porte
+**l'état du dépôt** plutôt que le geste d'un déploiement (P-82).
+
+**⚠️ Mais `verifier:porte` n'est pas dans la liste `PORTES` de `scripts/verifier-toutes.mjs`**
+— relevé le 18/09. Un lot qui touche la page fermée peut donc être **vert de bout en bout** et
+faire diverger les jumelles sans que rien ne le signale. `tests/porte-jumelle-source.test.mjs`
+comble ce trou : il tourne dans la porte `unites`, qui, elle, est obligatoire.
+
+### ⚠️ Deux fois où ma propre garde a mesuré autre chose que ce qu'elle disait
+
+1. **Elle s'est accusée de sa propre documentation.** L'essai d'ordre lisait le document **brut** :
+   le commentaire que je venais d'écrire au-dessus des balises cite `js/tabibi-sentry.js` avant
+   `js/config.js`. **Rouge sur un ordre parfaitement juste. Treizième fois que ce dépôt rencontre
+   cette faute** — d'où le retrait des commentaires avant toute recherche.
+2. **Elle comparait les jumelles sur le BUILD.** Sur `dist-web`, Vite traite `index.html` comme un
+   point d'entrée (5 544 o) et **n'émet pas** `porte/porte-fermee.html` : la copie de la page
+   fermée est faite **après** le build par `scripts/porte.mjs`, et seulement sur
+   `npm run porte:fermee`. L'essai sortait rouge sur un dépôt sain — **deuxième application de la
+   leçon de P-108 en deux lots** : une assertion sur des fichiers du dépôt appartient à un essai
+   qui lit le dépôt.
+
+Et une troisième, plus bête : l'essai ouvrait `patient-ordonnances.html` **sans session**. La page
+redirige vers `login.html`, `page.evaluate` meurt sur « Execution context was destroyed », et
+l'essai sortait rouge **sans jamais avoir atteint la page qu'il prétendait juger**.
+
+### Ce que la garde NE prouve pas
+
+Qu'une erreur **part vraiment** chez Sentry. `_hermetique` coupe le réseau vers les tiers : le SDK
+du CDN ne se charge jamais, `window.Sentry` n'existe pas, et **c'est voulu** — un essai qui
+enverrait des événements polluerait la production. Ce qui est vérifié, c'est le **câblage** :
+`window.tabibiErreur` est posé, le DSN est réel (pas un gabarit `REPLACE_`), et l'ordre des balises
+fait que le monitoring le verra.
+
+L'essai de comportement, lui, **ne dit rien de l'ordre** : mesuré, il reste vert quand on retire la
+balise `config.js` d'`accueil-public`, parce que le module différé a fini par poser la globale.
+C'est écrit dans la garde, à côté de l'assertion.
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on retire ou inverse | résultat |
+|---|---|
+| le monitoring d'`accueil-public.html` | **1 rouge** |
+| `config.js` d'`accueil-public.html` (monitoring seul) | **1 rouge** — l'essai de balises |
+| l'ordre des deux balises dans la porte | **2 rouges** e2e, **1 rouge** unités |
+| le monitoring d'**une seule** des deux copies de la porte | **3 rouges** e2e, **2 rouges** unités, `verifier:porte` **sort en 1** |
+
+### À trancher par le stratège
+
+La porte fermée charge désormais `config.js` et le SDK Sentry. C'est ce que demandait le SEQ
+(« couvrir pour cohérence »), et c'est défendable — mais **cette page n'a aucun script métier**,
+donc presque aucune erreur à remonter, et elle gagne un appel CDN. Si l'on préfère la garder
+inerte, le retrait se fait **dans les deux copies** et l'essai de balises de
+`tests/porte-jumelle-source.test.mjs` est à retirer avec.
 
 ## Ouverts — aucune garde, et c'est le sujet
 

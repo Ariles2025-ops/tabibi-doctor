@@ -1489,6 +1489,24 @@ body.recherche-active [data-replier-recherche]{ display:none !important; }
 <!-- [Phase 7.4] Feature flags (video/payments/notifications/reviews/analytics/sentry) -->
 <!-- [Phase 10.5] Plausible analytics — chargé conditionnellement si analytics=true -->
 <!-- [Phase 11.3] Service Worker registration — fix bug majeur audit P5.4 #5 -->
+<!-- ══════════════════════════════════════════════════════════════════
+     [18/09/2026] LA PAGE LA PLUS VISITEE N'ETAIT PAS SURVEILLEE
+     ══════════════════════════════════════════════════════════════════
+     27 pages incluent `js/tabibi-sentry.js` ; celle-ci, non. Ses erreurs ne
+     remontaient nulle part.
+
+     ⚠️ ET `js/config.js` EST REPRIS ICI EN SCRIPT CLASSIQUE, MEME S'IL EST
+     DEJA IMPORTE PAR LE POINT D'ENTREE Vite ci-dessous. Ce n'est pas un
+     doublon : un `<script type="module">` est DIFFERE jusqu'apres l'analyse du
+     document, alors qu'un script classique s'execute tout de suite. Poser
+     `tabibi-sentry.js` seul le ferait tourner AVANT que le module ait defini
+     `window.TABIBI_CONFIG` — il lirait un DSN absent et se desactiverait, en
+     silence, exactement comme en mode dev. Le fichier ne fait qu'affecter une
+     globale : le relire est sans effet de bord.
+
+     L'ORDRE COMPTE : config.js AVANT tabibi-sentry.js. -->
+<script src="js/config.js"></script>
+<script src="js/tabibi-sentry.js"></script>
 <script type="module" src="./src/entries/index.js"></script>
 </body>
 </html>
