@@ -1956,6 +1956,61 @@ revient sans qu'on retouche le code** — un essai le vérifie en posant un rend
    **destinataire réel est vérifié à la source**, dans un second essai. Deux moitiés, deux essais,
    plutôt qu'un seul qui prétendrait mesurer ce qu'il ne voit pas.
 
+## P-108 — « Nouvelle clé : undefined », et l'admin la transmet au partenaire
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-108 | `admin-api-keys.html:548-553` lisait `row.new_secret` **sans vérifier qu'une ligne existe**. Sur une réponse vide : `TypeError` muet, ou le mot « **undefined** » affiché dans la boîte de dialogue — que l'admin copie et envoie au partenaire | corps de `rotate_api_key` lu en base le 18/09 (voir ci-dessous) | on exige la ligne **et** un `new_secret` non vide avant d'afficher ; message clair sinon, et `loadKeys()` pour montrer l'état **réel** | `tests/e2e/apikey-rotation.spec.js` — 6 essais × 2 cibles. Contre-épreuves : lecture sans garde → **8 rouges** ; garde qui refuse tout → **6 rouges** | **réglé** |
+
+### ⚠️ Le défaut n'est pas celui qu'annonçait la consigne
+
+La consigne décrivait « **0 row** ». Lu en base, le corps de la fonction :
+
+```sql
+IF NOT FOUND THEN RAISE EXCEPTION 'Clé % introuvable', p_key_id;   -- → error, déjà traité
+…
+RETURN NEXT;                                                        -- toujours atteint
+```
+
+**Le cas « zéro ligne » n'est pas atteignable aujourd'hui.** Ce qui l'est :
+
+```sql
+SELECT * INTO v_pair FROM public.generate_api_key_pair(...);
+new_secret := v_pair.key_id || ':' || v_pair.secret_plain;
+```
+
+`SELECT INTO` **ne lève pas** quand rien ne vient : `v_pair` reste NULL, la concaténation rend
+**NULL**. **La ligne existe, et son secret est vide.** C'est un chemin du code, pas une hypothèse.
+
+Le correctif couvre **les deux** — celui qui peut arriver et celui qui ne peut pas encore : un
+`RETURN QUERY` ajouté demain rendrait le second réel, et la garde serait déjà là.
+
+### Pas de `data.error` — et c'est écrit dans le code
+
+Ce retour est une `TABLE`, **sans enveloppe métier**. Tester `data.error` aurait ajouté du code mort
+qui a l'air d'une garde — la faute relevée par l'audit du 17/09 sur trois lots de la file (N8, N9,
+N13). On juge sur la **présence** de la ligne et du champ.
+
+### ⚠️ Ma garde de source sortait ROUGE sur le build — et elle avait tort
+
+Le premier jet mettait l'assertion de **forme** (`if (!secret)` présent, `${row.new_secret}` absent)
+dans l'essai e2e. Celui-ci lit le fichier **servi** : sur `dist-web`, Vite **minifie** le script en
+ligne, `if (!secret)` devient `if(!o)`, et l'essai accusait **un code parfaitement correct**.
+
+Famille de **P-29** (sources vertes, build faux), dans l'autre sens. **Une assertion sur la forme du
+source appartient à un essai qui lit le DÉPÔT**, pas la sortie de build : elle vit désormais dans
+`tests/apikey-rotation-source.test.mjs`. Les essais de **comportement** restent en e2e et passent
+sur les deux cibles.
+
+⚠️ Et je l'ai failli manquer : mon filtre de lecture du rapport tronquait la ligne « 2 failed » et
+n'affichait que « 762 passed ». **Un résumé qui ne montre que le vert n'est pas une preuve.**
+
+### Deux détails qui évitent un second « undefined »
+
+- `expires_old_at` manquant affiche « date inconnue », pas `undefined` ;
+- après un refus, `loadKeys()` est **quand même** appelé : l'ancienne clé a pu être marquée à
+  expirer **avant** l'échec, et l'écran doit montrer l'état réel, pas celui d'avant l'appel.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

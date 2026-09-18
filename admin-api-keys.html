@@ -547,10 +547,48 @@
     if (!confirm(`Émettre une nouvelle clé pour ${keyId} ? L'ancienne expirera dans 7 jours.`)) return;
     const { data, error } = await supabase.rpc("rotate_api_key", { p_key_id: keyId });
     if (error) { alert("Erreur : " + error.message); return; }
-    const row = Array.isArray(data) ? data[0] : data;
+
+    // ══════════════════════════════════════════════════════════════════
+    // [18/09/2026] « Nouvelle clé : undefined » — et l'admin y croit
+    // ══════════════════════════════════════════════════════════════════
+    // `rotate_api_key` rend une TABLE(new_secret, expires_old_at). Le code
+    // lisait `row.new_secret` SANS verifier qu'une ligne existe : sur une
+    // reponse vide, `row` vaut `undefined` et l'acces leve — ou, pire, affiche
+    // le mot « undefined » dans la boite de dialogue. L'admin copie alors une
+    // chaine qui n'est pas une cle, et la transmet au partenaire.
+    //
+    // ⚠️ LU EN BASE LE 18/09 — LE DEFAUT N'EST PAS CELUI QU'ON CROIT.
+    // Le corps de la fonction fait `RAISE EXCEPTION` quand la cle est
+    // introuvable (donc : `error`, deja traite) et termine TOUJOURS par
+    // `RETURN NEXT`. Le cas « zero ligne » n'est donc PAS atteignable
+    // aujourd'hui. Ce qui l'est :
+    //
+    //     SELECT * INTO v_pair FROM public.generate_api_key_pair(...);
+    //     new_secret := v_pair.key_id || ':' || v_pair.secret_plain;
+    //
+    // `SELECT INTO` ne leve PAS quand rien ne vient : `v_pair` reste NULL, et
+    // la concatenation rend **NULL**. La ligne existe alors, et son secret est
+    // vide. C'est ce cas-la qu'on garde — pas une hypothese, un chemin du code.
+    //
+    // ⚠️ PAS DE `data.error` : ce retour n'a pas d'enveloppe metier. On juge
+    // sur la PRESENCE de la ligne et du champ.
+    const lignes = Array.isArray(data) ? data : (data ? [data] : []);
+    const row = lignes[0];
+    const secret = row && row.new_secret != null ? String(row.new_secret).trim() : '';
+    if (!secret) {
+      alert(
+        "La rotation n'a renvoyé AUCUNE clé.\n\n" +
+        "L'ancienne clé peut avoir été marquée à expirer : vérifiez la liste " +
+        "avant de réessayer, et contactez le support si le problème persiste."
+      );
+      loadKeys();   // l'ecran doit montrer l'etat REEL, pas celui d'avant l'appel
+      return;
+    }
+
+    const expire = row.expires_old_at ? row.expires_old_at : "date inconnue";
     alert(
-      `Nouvelle clé (à transmettre au partenaire, copiez-la maintenant) :\n\n${row.new_secret}\n\n` +
-      `L'ancienne clé expirera à : ${row.expires_old_at}`
+      `Nouvelle clé (à transmettre au partenaire, copiez-la maintenant) :\n\n${secret}\n\n` +
+      `L'ancienne clé expirera à : ${expire}`
     );
     loadKeys();
   };
