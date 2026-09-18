@@ -2049,6 +2049,75 @@ d'authentification l'emporte réellement (mesuré sur le corps de la requête).
 **La recette Safari reste à faire à la main** (P-31). Une garde hermétique ne peut pas prouver
 qu'un tiers, coupé par construction, se comporte bien.
 
+## P-110 — une modale VIDE, collée à gauche, et un chargement qui ne finissait jamais
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-110 | Sur `patient-ordonnances.html`, patient connecté **sans aucune ordonnance**, une modale « Détail de l'ordonnance » **vide** (titre + Fermer, rien d'autre) s'affichait **collée à gauche**, pendant que la liste disait « Aucune ordonnance active ». Remonté en live | `styles/components-v2.css:707` définit un `.modal` **global** qui est un **PANNEAU** (`width:100%; max-width:480px; display:flex; flex-direction:column; animation`), alors que cette page appelle `.modal` sa **surcouche** (`position:fixed; inset:0; display:none`). **Même spécificité (0,1,0)** → l'**ordre** tranche, et **il s'inverse au build** | la surcouche passe par l'**ID** — `#modal.modal` (1,0,0), qui gagne quel que soit l'ordre — et **neutralise explicitement** ce que le panneau imposait (`max-width`, `flex-direction`, `animation`, `border-radius`, `box-shadow`, `overflow`). Plus deux lignes de défense : `openDetail` refuse un `p` nul, et le squelette est retiré sur les sorties anticipées de `load()` | `tests/e2e/ordonnances-modale-vide.spec.js` (5 essais × 2 cibles) + `tests/ordonnances-modale-source.test.mjs` (3 essais) | **réglé** |
+
+### La mesure, pas l'hypothèse : l'ordre s'inverse au build
+
+Le SEQ supposait une modale ouverte par erreur au chargement. **Mesure du 18/09, même page,
+même navigateur, sur les deux cibles :**
+
+```
+sources    #modal → display: none   max-width: 480px
+dist-web   #modal → display: FLEX   max-width: 480px
+```
+
+Personne n'ouvrait rien. **Sur le site déployé, la surcouche était visible en permanence**, large
+de 480 px — d'où « collée à gauche » — et vide, puisqu'aucun détail n'avait été demandé.
+
+**C'est [P-88](#p-88--une-égalité-de-spécificité-est-une-dépendance-à-lordre-des-fichiers) à la
+lettre** (`nav.tab-bar`, 13/09), et c'est la seconde fois. Une égalité de spécificité n'est pas un
+style : c'est une **dépendance à l'ordre de concaténation**, et Vite ne le garantit pas.
+
+### Le `max-width` seul aurait suffi à laisser le défaut visible
+
+Redéclarer `display` sans toucher `max-width` aurait fermé la modale — et laissé une surcouche
+de 480 px le jour où elle s'ouvre. **Un correctif qui répare le symptôme le plus bruyant et laisse
+le reste est un correctif à moitié.** D'où la neutralisation explicite des six propriétés que le
+panneau imposait et que la page ne déclarait pas.
+
+### Un écran qui charge indéfiniment ment autant qu'un faux succès
+
+`applyFilter()` retire bien le squelette — mais il n'est atteint **que si `load()` va au bout**.
+Sans client base, la fonction sortait sur un `return` après un simple toast : **les trois barres
+grises tournaient pour toujours**, et l'écran n'a plus jamais rien dit. Mesuré : `skeletons = 3`
+sur ce chemin, `0` sur le chemin normal. Même famille que
+[P-95](#p-95--profil-sauvegardé--en-vert-juste-après-sauvegarde-échouée) : **l'écran promet que
+quelque chose arrive.**
+
+### Les contre-épreuves — mesurées, pas annoncées
+
+| ce qu'on retire | sources | dist-web | unités |
+|---|---|---|---|
+| l'**ID** du sélecteur (`#modal.modal` → `.modal`) | **10 verts** ⚠️ | **8 rouges** / 2 verts | **1 rouge** |
+| l'arrêt du squelette dans `load()` | **2 rouges** / 8 verts | — | — |
+| la garde `if (!p || !p.id)` de `openDetail` | — | — | **1 rouge** |
+
+**La première ligne est la leçon du lot.** Sans l'ID, la garde est **verte sur les sources** et
+rouge sur le build : elle n'a de valeur que parce qu'elle tourne **sur les deux cibles**. Une garde
+qui n'aurait tourné que sur les sources aurait certifié un produit cassé.
+
+### ⚠️ Et `dist-web` périmé m'a fait conclure l'inverse
+
+Première mesure après correctif : rouge. J'ai cru le correctif faux. **`dist-web` datait d'avant
+les corrections** — je mesurais le passé. Après `npm run build` : 10/10.
+**Mesurer un build sans le reconstruire, c'est mesurer hier** (famille de la règle 8 : le
+cache-bust vaut aussi pour le build lui-même).
+
+### Une assertion de FORME appartient à un essai qui lit le dépôt
+
+La garde de `openDetail` (`p` nul) n'est pas atteignable depuis la page : la fonction est locale au
+module. Elle est tenue **à la source**, dans `tests/ordonnances-modale-source.test.mjs` — leçon de
+[P-108](#p-108--nouvelle-clé--undefined-et-ladmin-la-transmet-au-partenaire), où Vite minifiait
+`if (!secret)` en `if(!o)` et rendait un essai rouge sur du code juste.
+
+Ce même fichier garde **une troisième assertion** : que le `.modal` global de `components-v2.css`
+**existe toujours**. Le jour où il disparaît, la garde le dit — au lieu de continuer à protéger
+contre un conflit qui n'existe plus.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
