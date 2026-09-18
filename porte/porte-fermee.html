@@ -147,5 +147,15 @@
 
     <p class="cs__foot">© 2026 Tabibi — Algérie</p>
   </main>
+  <!-- [18/09/2026] Monitoring de la porte fermee. L'ordre compte :
+       config.js AVANT tabibi-sentry.js.
+
+       ⚠️ CE FICHIER EXISTE EN DEUX EXEMPLAIRES IDENTIQUES : `index.html` a la
+       racine et `porte/porte-fermee.html`. `scripts/verifier-porte.mjs`
+       compare leurs empreintes SHA-256 et sort en 1 a la moindre difference —
+       c'est ce qui garantit que la porte est l'ETAT DU DEPOT et non le geste
+       d'un deploiement. Toute modification se fait donc DANS LES DEUX. -->
+  <script src="js/config.js"></script>
+  <script src="js/tabibi-sentry.js"></script>
 </body>
 </html>
