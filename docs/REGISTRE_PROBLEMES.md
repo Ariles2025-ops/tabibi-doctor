@@ -2259,6 +2259,79 @@ La porte fermée charge désormais `config.js` et le SDK Sentry. C'est ce que de
 donc presque aucune erreur à remonter, et elle gagne un appel CDN. Si l'on préfère la garder
 inerte, le retrait se fait **dans les deux copies** et l'essai de balises de
 `tests/porte-jumelle-source.test.mjs` est à retirer avec.
+## P-113 — deux fichiers du même dépôt se contredisaient sur un fait vérifiable
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-113 | `teleconsultation.html:11-13` affirmait « `get_video_session` et `set_video_recording_consent` **absents en DB** (SQL_TODO-008) ». **Faux** — et `js/tabibi-features.js:44` disait déjà correctement le contraire depuis le 14/09 | un commentaire écrit en Phase 7.1 et jamais relu après la création des fonctions | le commentaire dit ce que la base dit, avec **la date et la méthode** de la mesure ; l'ancienne affirmation est **conservée barrée** parce qu'elle a servi de référence | `tests/teleconsult-doc-honnete.test.mjs` — 4 essais | **réglé** |
+
+**Aucune ligne exécutable modifiée** : `git diff` hors commentaires est vide. La téléconsultation
+n'était pas cassée et ne l'est toujours pas.
+
+### La mesure, refaite ici plutôt que reprise du rapport
+
+Lu sur `pg_proc` le 18/09/2026, schéma `public` :
+
+```
+get_video_session(p_session_id uuid)
+mark_video_session_started(p_session_id uuid)
+mark_video_session_ended(p_session_id uuid, p_duration integer)
+set_video_recording_consent(p_session_id uuid, p_consent boolean)
+```
+
+### Le danger n'était pas le commentaire — c'était ce qu'on ferait en le croyant
+
+Le bloc qu'il documente est un **garde-fou de drapeau**, pas une parade à des RPC manquantes : si
+`TABIBI_FEATURES.video` repasse à `false` — cas **explicitement prévu** par le commentaire de
+`tabibi-features.js`, « si le flux casse en séance, ce drapeau se referme » — la page affiche
+« bientôt disponible » au lieu de charger le SDK Daily pour rien. Aujourd'hui le drapeau est
+ouvert : **ce bloc ne se déclenche pas.**
+
+Un intervenant qui « corrigeait » sur la foi des trois lignes périmées cassait une vidéo qui marche.
+
+### On ne remplace pas un mensonge par un cul-de-sac
+
+Supprimer l'affirmation aurait laissé un vide : le lecteur suivant n'aurait toujours eu **aucune
+raison** de croire que les RPC existent. D'où les quatre signatures, la date, et `pg_proc` écrits
+dans la page — et un essai qui exige les trois. **Une règle de référence n'est pas une mesure**
+(CLAUDE.md, leçon du 13/09) : c'est la troisième fois qu'elle sert.
+
+### Pourquoi un essai qui lit un commentaire
+
+Parce que **le correctif EST un commentaire** : il n'a aucune trace à l'exécution, donc aucun essai
+de comportement ne peut le garder. Sans lui, ce lot serait « un correctif sans garde » — un sursis
+(règle 10).
+
+### ⚠️ Trois pièges de garde, rencontrés et corrigés dans ce seul lot
+
+1. **Elle se serait accusée de sa propre citation.** Le mensonge est conservé **barré** (`~~…~~`)
+   pour que qui cherche `SQL_TODO-008` tombe sur sa réfutation. L'essai **retire donc le texte
+   barré avant de chercher** — sinon il refusait la citation qu'il exige lui-même. **Quatorzième
+   fois que ce dépôt croise cette faute**, première fois qu'elle est évitée d'avance.
+2. **Elle exigeait `video: true`.** C'était faux : refermer le drapeau est une décision prévue et
+   légitime. Une garde qui virerait rouge ce jour-là **pleurerait sur du code juste, et finirait
+   désactivée**. Elle vérifie maintenant que les deux fichiers s'accordent sur le **fait**, pas sur
+   l'état du drapeau. *(Et elle restait verte au test, pour une deuxième raison : le fichier cite
+   `video: true` dans sa propre documentation.)*
+3. **Un `/EXISTENT/i` nu était satisfait par une phrase voisine.** `js/tabibi-features.js:133`
+   contient un second « elles existent », à propos des RPC d'avis. L'assertion restait verte même
+   en effaçant la ligne qui compte. **Une garde qui peut être satisfaite par une phrase voisine ne
+   garde rien** : elle est désormais ancrée sur `set_video_recording_consent`.
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on remet ou retire | attendu | résultat |
+|---|---|---|
+| le commentaire périmé d'origine | rouge | **2 rouges** |
+| le mensonge retiré **sans le remplacer** (les 4 RPC effacées) | rouge | **1 rouge** |
+| le garde-fou de drapeau supprimé, commentaire gardé | rouge | **1 rouge** |
+| `js/tabibi-features.js` n'affirme plus que les RPC **vidéo** existent | rouge | **1 rouge** |
+| le drapeau `video` **refermé** | **vert** — c'est une décision, pas un défaut | **vert** ✓ |
+
+### Ce qui reste à Aghiles
+
+La recette vidéo réelle — un appel de bout en bout entre deux humains. Aucune garde hermétique ne
+peut la remplacer : `_hermetique` coupe le réseau vers Daily par construction.
 
 ## Ouverts — aucune garde, et c'est le sujet
 
