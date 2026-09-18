@@ -190,6 +190,14 @@
             <a href="forgot-password.html" style="font-size:12px;color:var(--blue);font-weight:600" data-i18n="forgot_password">Mot de passe oublié ?</a>
           </div>
         </div>
+        <!-- ⚠️ [18/09/2026] CAPTCHA VISIBLE — SANS LUI, SAFARI REFUSE TOUT.
+             Ce formulaire n'avait AUCUN widget rendu : le jeton retombait sur
+             le chemin INVISIBLE (`getCaptchaToken`), que WebKit ne complete
+             JAMAIS (PAT 401 + ITP, deja documente l.121 pour le telephone).
+             Supabase exige le captcha, refusait, et l'ecran affichait
+             « Email ou mot de passe incorrect » — sur un mot de passe JUSTE.
+             Mesure en prod, Safari, testeur reel. -->
+        <div class="tbi-captcha-slot" style="display:none;margin-bottom:12px"></div>
         <button class="btn btn-primary btn-full btn-xl" type="submit"><i class="fa fa-right-to-bracket"></i> <span data-i18n="sign_in">Se connecter</span></button>
       </form>
     </div>
@@ -290,6 +298,10 @@ function showScreen(which){
   // conteneur display:none, Turnstile calcule une taille nulle).
   if (which === "reset") _ensureCaptcha("reset");
   if (which === "reset-otp") _ensureCaptcha("otp");
+  // ⚠️ RENDU ICI, PAS AU CHARGEMENT. Dans un conteneur `display:none`,
+  // Turnstile calcule une taille nulle — c'est la raison pour laquelle
+  // `reset` et `otp` sont deja traites de cette facon.
+  if (which === "admin") _ensureCaptcha("loginEmail");
 }
 function showAdmin(e){ if(e) e.preventDefault(); showScreen("admin"); }
 function showPhone(e){ if(e) e.preventDefault(); showScreen("phone"); }
@@ -306,7 +318,11 @@ function showReset(e){ if(e) e.preventDefault(); var p=document.getElementById("
 var _cw = {
   login: { id: null, token: null, rendered: false, sel: "#pwLoginForm .tbi-captcha-slot" },
   reset: { id: null, token: null, rendered: false, sel: "#resetPhoneForm .tbi-captcha-slot" },
-  otp:   { id: null, token: null, rendered: false, sel: "#resetOtpForm .tbi-captcha-slot" }
+  otp:   { id: null, token: null, rendered: false, sel: "#resetOtpForm .tbi-captcha-slot" },
+  // ⚠️ [18/09/2026] Le quatrieme, et celui qui manquait : la connexion par
+  // E-MAIL. Les trois autres couvraient le telephone et le renvoi de code ;
+  // l'ecran e-mail, lui, n'avait aucun widget — donc aucun jeton sur WebKit.
+  loginEmail: { id: null, token: null, rendered: false, sel: "#screen-admin .tbi-captcha-slot" }
 };
 function _ensureCaptcha(key){
   var w = _cw[key];
@@ -632,7 +648,28 @@ async function doLogin(e){
       return;
     }
 
-    await window.tabibi.auth.signIn(email, pw);
+    // ══════════════════════════════════════════════════════════════════
+    // [18/09/2026] LE JETON VISIBLE, PASSE EXPLICITEMENT
+    // ══════════════════════════════════════════════════════════════════
+    // `window.tabibi.auth.signIn()` demande son jeton a `getCaptchaToken()` —
+    // le chemin INVISIBLE. C'est exactement ce qui echouait sur Safari.
+    // On appelle donc `signInWithPassword` comme le fait deja `doPhoneLogin`
+    // quelques lignes plus haut, avec le jeton du widget VISIBLE.
+    //
+    // ⚠️ `|| undefined` ET PAS `|| null` : Supabase traite une cle absente
+    // autrement qu'une cle a `null`. C'est la forme utilisee par les trois
+    // autres appels de ce fichier ; on ne l'invente pas ici.
+    var captchaEmail = (await _captchaTokenFor("loginEmail")) || undefined;
+    var resEmail = await window.tabibi.supabase.auth.signInWithPassword({
+      email: email, password: pw, options: { captchaToken: captchaEmail }
+    });
+    if (resEmail && resEmail.error) {
+      // Un jeton est a USAGE UNIQUE : sans remise a zero, la seconde tentative
+      // repart avec un jeton deja consomme et echoue pour une AUTRE raison que
+      // la premiere — c'est ce que font deja les trois autres formulaires.
+      _resetCaptcha("loginEmail");
+      throw resEmail.error;
+    }
 
     // Récupérer le profil depuis la base
     const user = await window.tabibi.auth.getUser();
