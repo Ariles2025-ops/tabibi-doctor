@@ -59,7 +59,12 @@
     <button onclick="window.location='doctor-dashboard.html'" class="btn btn-icon btn-ghost" data-i18n-title="back_to_dashboard" title="Tableau de bord" aria-label="back_to_dashboard"><i class="fa fa-table-columns" aria-hidden="true"></i></button>
   </header>
 
-  <main class="page page-large" role="main" style="padding:16px;max-width:960px;margin:0 auto">
+  <!-- [18/09/2026] `max-width:960px` EN LIGNE DEFAISAIT `page-large`. Un style
+       en ligne bat toute feuille : la page se declarait large et restait
+       plafonnee a 960 px sur un ecran de 1280 (mesure du 18/09), quand les
+       autres espaces suivent le shell `.app-root` (1100 px, 1240 au-dela de
+       1440). Deux caps qui se suivent, c'est un cap qui diverge de l'autre. -->
+  <main class="page page-large" role="main" style="padding:16px">
 
     <!-- Section 1 : Cabinet selector (si plusieurs cabinets) -->
     <section class="cab-section" id="sec-selector" style="display:none">

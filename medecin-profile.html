@@ -129,6 +129,10 @@
   <div class="app-bar-body"><div class="app-bar-title" data-i18n="mp_pagetitle">Profil médecin</div><div class="app-bar-sub" data-i18n="mp_pagesub">Compte professionnel</div></div>
   <button class="btn btn-success btn-sm" onclick="saveAll()"><i class="fa fa-save"></i> <span data-i18n="mp_save_short">Sauver</span></button>
   <div data-langbar></div>
+  <!-- [18/09/2026] Meme correctif que `patient-profile.html` : la deconnexion
+       va A DROITE dans la barre. Mesure du 18/09 sur 1280 px : le bouton de la
+       page faisait 638 px, centre a 933 px, et la barre n'en avait aucun. -->
+  <button type="button" onclick="logout()" class="btn btn-icon btn-ghost" style="color:#D21010;flex-shrink:0" title="Déconnexion" aria-label="Se déconnecter"><i class="fa fa-right-from-bracket" aria-hidden="true"></i></button>
 </header>
 
 <!-- [Phase 4.B.1] Bandeau "Vous n'avez pas encore réclamé votre fiche" — affiché si get_my_doctor_profile() retourne null OU si update_my_doctor_profile retourne 'profile_not_found_or_not_claimed' -->
@@ -413,7 +417,9 @@
       <i class="fa fa-rocket"></i> <span data-i18n="ob_publish_btn">Sauvegarder et publier ma fiche</span>
     </button>
 
-    <button class="btn btn-ghost btn-full" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> <span data-i18n="mp_logout">Se déconnecter</span></button>
+    <!-- ⚠️ Conserve pour le telephone — masque au-dela de 1024 px, voir
+         `.logout-en-page` dans `styles/app.css`. -->
+    <button class="btn btn-ghost btn-full logout-en-page" style="margin-top:10px" onclick="logout()"><i class="fa fa-right-from-bracket"></i> <span data-i18n="mp_logout">Se déconnecter</span></button>
   </div>
 </main>
 <div id="toast-container" style="position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:9999"></div>
