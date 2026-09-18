@@ -2011,6 +2011,44 @@ n'affichait que « 762 passed ». **Un résumé qui ne montre que le vert n'est 
 - après un refus, `loadKeys()` est **quand même** appelé : l'ancienne clé a pu être marquée à
   expirer **avant** l'échec, et l'écran doit montrer l'état réel, pas celui d'avant l'appel.
 
+## P-109 — « Email ou mot de passe incorrect » sur un mot de passe JUSTE (Safari)
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-109 | Sur `/login` onglet « E-mail », **Safari** refusait des identifiants **corrects** avec le message « Email ou mot de passe incorrect ». Remonté en prod par un testeur réel | le captcha **visible** n'était rendu que pour trois écrans (`login` téléphone, `reset`, `otp`). L'écran e-mail n'avait **aucun widget** : son jeton retombait sur le chemin **invisible** (`getCaptchaToken`), que WebKit **ne complète jamais** (PAT 401 + ITP, déjà documenté `login.html:121`). Supabase exige le captcha → refus | un quatrième widget `loginEmail`, rendu **à la bascule d'écran**, et `doLogin` passe **son** jeton à `signInWithPassword` | `tests/e2e/captcha-email-visible.spec.js` — 6 essais × 2 cibles. Contre-épreuves : slot retiré → **2 rouges** ; retour à `auth.signIn` → **2 rouges** ; rendu au chargement → **2 rouges** | **réglé** |
+
+### Le message accusait l'utilisateur d'une faute qu'il n'avait pas commise
+
+Le refus du captcha remonte comme un échec d'authentification, et `doLogin` affiche — **par
+prudence, pour ne pas révéler quel champ est faux** — « Email ou mot de passe incorrect ».
+
+Cette prudence est juste. **Mais appliquée à un refus qui n'a rien à voir avec les identifiants,
+elle envoie quelqu'un vérifier son mot de passe pendant que le vrai problème est ailleurs.** Un
+message générique protège ; il ne doit pas couvrir toutes les causes.
+
+### Rendu à la bascule, pas au chargement
+
+Dans un conteneur `display:none`, **Turnstile calcule une taille nulle** — c'est pourquoi `reset` et
+`otp` étaient déjà rendus à l'affichage de leur écran. Rendre `loginEmail` au `DOMContentLoaded`
+aurait produit un widget de 0 px : **un correctif qui ne corrige rien**, et une contre-épreuve le
+montre (**2 rouges**).
+
+### ⚠️ `signup.html` n'a PAS le même défaut — vérifié
+
+Son captcha `form` est rendu au chargement sur un formulaire **visible**, et le chemin e-mail
+(P-93) utilise déjà `_captchaTokenFor("form")`. Rien à corriger ; signalé au RETOUR pour que
+personne n'ouvre un lot inutile.
+
+### Ce que la garde NE prouve pas
+
+Que **Safari** accepte. Les essais tournent sur Chromium, et `_hermetique` coupe le réseau vers
+Cloudflare : le vrai widget ne se charge jamais. Ce qui est vérifié, c'est **le câblage** — le slot
+existe, il est demandé au bon moment, le jeton part par le bon chemin, et la requête
+d'authentification l'emporte réellement (mesuré sur le corps de la requête).
+
+**La recette Safari reste à faire à la main** (P-31). Une garde hermétique ne peut pas prouver
+qu'un tiers, coupé par construction, se comporte bien.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
