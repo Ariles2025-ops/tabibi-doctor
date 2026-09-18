@@ -96,9 +96,50 @@
   .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .page-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 
-  .modal { position: fixed; inset: 0; background: var(--overlay); display: none; align-items: center; justify-content: center; z-index: var(--z-modal); padding: 16px; }
-  .modal.open { display: flex; }
-  .modal-content { background: var(--card); max-width: 520px; width: 100%; border-radius: var(--r16); padding: 24px; box-shadow: var(--s4); max-height: 90vh; overflow: auto; }
+  /* ══════════════════════════════════════════════════════════════════
+     [18/09/2026] LA MODALE S'OUVRAIT SEULE, VIDE ET COLLEE A GAUCHE
+     ══════════════════════════════════════════════════════════════════
+     ⚠️ MESURE, PAS SUPPOSE. `styles/components-v2.css:707` definit un `.modal`
+     GLOBAL qui est un PANNEAU, pas une surcouche :
+
+         .modal { width:100%; max-width:480px; display:flex;
+                  flex-direction:column; animation:modal-in-mobile; … }
+
+     Cette page appelle `.modal` sa SURCOUCHE (`position:fixed; inset:0;
+     display:none`). Les deux selecteurs ont la MEME specificite (0,1,0) :
+     c'est l'ORDRE qui tranche. Sur les sources, le `<style>` de la page vient
+     apres le lien — elle gagne. **Au build, l'ordre s'inverse.**
+
+     Mesure du 18/09, meme page, meme navigateur :
+
+         sources    #modal -> display: none   max-width: 480px
+         dist-web   #modal -> display: FLEX   max-width: 480px
+
+     Sur le site deploye, la surcouche etait donc VISIBLE en permanence, large
+     de 480 px (d'ou « collee a gauche »), et vide — puisque personne n'avait
+     ouvert de detail. Exactement le symptome remonte.
+
+     C'est P-88 a la lettre (`nav.tab-bar`, 13/09) : specificite alignee,
+     ordre qui decide, build qui l'inverse. Meme correctif — ON PASSE PAR
+     L'ID (1,0,0) : il gagne quel que soit l'ordre des feuilles.
+
+     ⚠️ Et on NEUTRALISE explicitement ce que le panneau impose et que la page
+     ne declarait pas : `max-width` (la fuite visible meme sur les sources),
+     `flex-direction`, `animation`, `border-radius`, `box-shadow`, `overflow`.
+     Ne redeclarer que `display` aurait laisse la surcouche a 480 px. */
+  #modal.modal {
+    position: fixed; inset: 0; background: var(--overlay);
+    display: none; align-items: center; justify-content: center;
+    z-index: var(--z-modal); padding: 16px;
+    width: auto; max-width: none; max-height: none;
+    flex-direction: row; border-radius: 0; box-shadow: none;
+    overflow: auto; animation: none;
+  }
+  #modal.modal.open { display: flex; }
+  .modal-content { background: var(--card); max-width: 520px; width: 100%; border-radius: var(--r16); padding: 24px; box-shadow: var(--s4); max-height: 90vh; overflow: auto;
+    /* ⚠️ `margin:auto` centre le panneau MEME si la surcouche perdait son
+       `display:flex` : une seconde ligne de defense, pas un doublon. */
+    margin: auto; }
   .modal h3 { margin: 0 0 12px; font-size: 17px; }
   .meds-detail { list-style: none; padding: 0; margin: 0; }
   .meds-detail li { padding: 12px 0; border-bottom: 1px solid var(--border); }
@@ -312,6 +353,18 @@
   }
 
   function openDetail(p) {
+    // ⚠️ [18/09/2026] UNE MODALE VIDE EST PIRE QU'AUCUNE MODALE : elle donne
+    // l'impression d'un ecran casse, et il faut la fermer pour repartir. Sans
+    // ordonnance, il n'y a RIEN a montrer — on n'ouvre pas.
+    //
+    // La cause du symptome remonte etait ailleurs (conflit de specificite, voir
+    // le CSS plus haut). Cette garde-ci est la SECONDE ligne : le jour ou un
+    // appel arrive avec `p` nul — liste rechargee pendant le clic, identifiant
+    // qui ne correspond plus — l'ecran ne s'ouvre pas sur du vide.
+    if (!p || !p.id) {
+      if (window.console && console.warn) console.warn('[ordonnances] detail sans donnee : modale non ouverte');
+      return;
+    }
     const meds = Array.isArray(p.medications) ? p.medications : [];
     const html = `
       <div style="margin-bottom:14px;font-size:12px;color:var(--text3)">
@@ -422,9 +475,32 @@
     });
   }
 
+  /**
+   * Remplace le squelette de chargement par un message.
+   *
+   * ⚠️ [18/09/2026] LE SQUELETTE NE PARTAIT PAS SUR LES SORTIES ANTICIPEES.
+   * `applyFilter()` le remplace bien — mais il n'est atteint que si `load()`
+   * va jusqu'au bout. Sans client base, la fonction sortait sur un `return`
+   * apres un simple toast : **les trois barres grises tournaient pour
+   * toujours**, et l'ecran n'a plus jamais rien dit. Mesure du 18/09 :
+   * `skeletons = 3` sur ce chemin, contre 0 sur le chemin normal.
+   *
+   * Un ecran qui charge indefiniment ment autant qu'un faux succes : il
+   * promet que quelque chose arrive.
+   */
+  function arreterChargement(message) {
+    const liste = $('#list');
+    if (!liste) return;
+    liste.innerHTML = `<div class="empty"><i class="fa fa-triangle-exclamation"></i><h3>${escapeHtml(message)}</h3></div>`;
+  }
+
   async function load() {
     const supa = window.tabibi && window.tabibi.supabase;
-    if (!supa) { showToast(T('po_service_unavailable', 'Service indisponible'), 'err'); return; }
+    if (!supa) {
+      showToast(T('po_service_unavailable', 'Service indisponible'), 'err');
+      arreterChargement(T('po_service_unavailable', 'Service indisponible'));
+      return;
+    }
     const { data: { user } } = await supa.auth.getUser();
     if (!user) { location.href = 'login.html'; return; }
 
@@ -489,6 +565,17 @@
     applyFilter();
   }
 
+  // ⚠️ DERNIER FILET. `load()` est appelee sans `await` par l'initialisation :
+  // une exception inattendue partirait dans le vide et laisserait le squelette
+  // tourner. On la rattrape ICI, au seul endroit qui peut encore parler a
+  // l'ecran.
+  function chargerEtDire() {
+    return load().catch(function (e) {
+      if (window.console && console.warn) console.warn('[ordonnances] chargement', e);
+      arreterChargement(T('po_load_error', 'Erreur de chargement'));
+    });
+  }
+
   // Tabs
   document.addEventListener('DOMContentLoaded', () => {
     $$('.tab').forEach((t) => t.addEventListener('click', () => {
@@ -508,7 +595,7 @@
       if (e.target === $('#modal')) $('#modal').classList.remove('open');
     });
 
-    load();
+    chargerEtDire();
   });
 
 })();
