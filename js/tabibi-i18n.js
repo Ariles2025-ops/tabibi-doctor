@@ -271,6 +271,29 @@
       if (tr && tr !== key) el.setAttribute('placeholder', tr);
     });
 
+    // ══════════════════════════════════════════════════════════════════
+    // [18/09/2026] aria-label — LE SEUL ATTRIBUT QUI N'AVAIT PAS SON CANAL
+    // ══════════════════════════════════════════════════════════════════
+    // `placeholder` et `title` avaient le leur ; `aria-label`, non. Faute de
+    // canal, dix-sept champs portaient un aria-label RECOPIE de leur
+    // placeholder : « 2500 », « CO-2025-XXXX », « 0661 234 567 ». Un lecteur
+    // d'ecran annoncait l'EXEMPLE a la place de l'intitule.
+    //
+    // ⚠️ ET C'EST PIRE QUE DE NE RIEN METTRE : `aria-label` PRIME sur le
+    // `<label>` associe. Sur `patient-profile.html`, le label « N° matricule »
+    // etait correctement lie par `for` — et rendu muet par un aria-label qui
+    // disait « XX-XXXX-XXXXXXX ».
+    //
+    // Le nom de l'attribut est `data-i18n-aria-label` et pas autre chose :
+    // `translateAttributes()` saute deja tout element portant
+    // `data-i18n-<attr>`. Les deux mecanismes s'accordent sans se marcher
+    // dessus, par construction.
+    document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
+      const key = el.getAttribute('data-i18n-aria-label');
+      const tr = T(key);
+      if (tr && tr !== key) el.setAttribute('aria-label', tr);
+    });
+
     // title
     document.querySelectorAll('[data-i18n-title]').forEach(function (el) {
       const key = el.getAttribute('data-i18n-title');

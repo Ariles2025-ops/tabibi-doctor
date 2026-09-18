@@ -2118,6 +2118,76 @@ Ce même fichier garde **une troisième assertion** : que le `.modal` global de 
 **existe toujours**. Le jour où il disparaît, la garde le dit — au lieu de continuer à protéger
 contre un conflit qui n'existe plus.
 
+## P-117 — le lecteur d'écran annonçait l'exemple, ou la clé de traduction
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-117 a | **33 champs** portaient un `aria-label` recopié de leur placeholder : « 2500 », « CO-2025-XXXX », « 0661 234 567 », « Ahmed », « Benali »… Un lecteur d'écran annonce « deux mille cinq cents » là où il devrait dire « Tarif consultation » | recopie du placeholder — la seule valeur du champ qui, elle, était traduite | intitulés réels, traduits **fr/ar/en**, via `data-i18n-aria-label` | `tests/aria-exemples.test.mjs` (4 essais) + `tests/e2e/aria-intitules.spec.js` (5 × 2 cibles) | **réglé** |
+| P-117 b | **8 champs** portaient une **clé i18n BRUTE** comme nom accessible : `ph_hero_search` sur la recherche de l'accueil — la page la plus visitée — et `mo_med_name_ph`, `mo_med_dosage_ph`… sur l'ordonnancier, plus `back_to_dashboard` | idem, en pire : la clé n'est même pas du texte | mêmes intitulés traduits | mêmes gardes | **réglé** |
+| P-117 c | **`js/tabibi-i18n.js` n'avait pas de canal `aria-label`** — `placeholder` et `title` avaient le leur | cause racine des deux précédents | canal `data-i18n-aria-label` ajouté, par construction compatible avec la passe automatique | essai dédié + contre-épreuve e2e | **réglé** |
+| P-117 d | `admin-cabinet.html:59` pointait `data-i18n-title="back_to_dashboard"` — **une clé qui n'existait dans aucun dictionnaire** | — | clé ajoutée fr/ar/en : son `title` se traduit enfin, lui aussi | parité i18n | **réglé** |
+
+### ⚠️ Un `aria-label` est PIRE que rien quand il ment
+
+**Il prime sur le `<label>` associé.** Sur `patient-profile.html`, le label « N° matricule » était
+correctement lié par `for` — et rendu **muet** par un `aria-label` qui disait « XX-XXXX-XXXXXXX ».
+**Retirer l'attribut aurait suffi à améliorer la page ; le recopier l'a dégradée.**
+
+### Le canal manquant est la cause, pas un détail
+
+Sans `data-i18n-aria-label`, un intitulé correct reste en français pour un lecteur arabophone. Le
+placeholder, lui, était traduit — d'où la tentation de le recopier. **Corriger les 41 attributs
+sans ajouter le canal aurait reproduit le défaut au premier champ suivant.**
+
+Le nom de l'attribut n'est pas arbitraire : `translateAttributes()` saute déjà tout élément portant
+`data-i18n-<attr>`. Les deux mécanismes s'accordent **par construction**, sans se marcher dessus.
+
+### Le SEQ en nommait 6 — la mesure en a trouvé 41
+
+Le SEQ listait `medecin-profile:243/244`, `onboarding-medecin:138/175`, `patient-profile:177`,
+`secretaire-dashboard:183`. Le même défaut existait sur **12 fichiers**. Une garde qui n'aurait
+couvert que les six aurait été verte sur 35 défauts identiques. **Un essai de fichiers est un
+filet ; une liste est une liste.**
+
+### ⚠️ Quatre fois où ma propre garde s'est trompée — toutes mesurées, toutes corrigées
+
+1. **Son motif `placeholder="…"` attrapait `data-i18n-placeholder="…"`** (la chaîne y est
+   contenue). Elle comparait l'`aria-label` à une **clé**, pas au placeholder, et criait sur
+   `accueil-public.html` — dont le placeholder rendu vaut « Dr. Benali, Cardiologie, Alger... »,
+   **vérifié au navigateur**. D'où un `(?<![-\w])`.
+2. **Le même motif, deux essais plus loin, sur `aria-label`** : il attrapait
+   `data-i18n-aria-label="…"`, dont la valeur **est** une clé par construction. La garde
+   s'accusait de ses propres corrections — dix-sept fois.
+3. **Elle refusait TOUTE copie du placeholder.** Rouge sur `api-docs.html` (« Email
+   professionnel »), `medecin-profile` (« Nom de votre cabinet »), `patient-profile` (« Numéro de
+   carte CHIFA ») — des placeholders qui **sont** de vrais intitulés. Les recopier est redondant,
+   pas faux. **Une garde qui pleure sur du code juste finit désactivée.**
+4. **Elle traitait un attribut CALCULÉ comme du code échappé.** `dawini.html` et
+   `dawini-pharmacie.html` construisent leur `aria-label` par concaténation `' + _t(…) + '` : ce
+   qui arrive dans le DOM est le texte traduit. **Une garde qui lit le littéral d'un gabarit ne lit
+   pas ce que l'écran dit.**
+
+### Deux gardes, parce qu'elles ne gardent pas la même chose
+
+| | |
+|---|---|
+| `tests/aria-exemples.test.mjs` | parcourt le **dépôt** : un champ ajouté demain est attrapé sans inscription préalable. Vérifie aussi que **le canal existe** et que **les clés visées existent dans les trois dictionnaires** — un `data-i18n-aria-label` vers une clé absente ne fait **rien**, en silence |
+| `tests/e2e/aria-intitules.spec.js` | mesure le **nom accessible rendu**, en **fr et en ar**. C'est lui qui prouve que la traduction arrive vraiment |
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on remet ou retire | résultat |
+|---|---|
+| les fichiers d'origine (`medecin-profile`, `patient-profile`, `accueil-public`) | **2 rouges** |
+| le canal `data-i18n-aria-label` retiré de `js/tabibi-i18n.js` | **1 rouge** unités + **1 rouge** e2e |
+| une clé d'`aria-label` retirée du dictionnaire FR | **1 rouge** |
+| un `aria-label` d'exemple ajouté sur un champ neuf | **2 rouges** |
+| les placeholders d'exemple **supprimés** au lieu d'être déplacés | **1 rouge** |
+
+La dernière ligne est ce que le SEQ demandait explicitement — « garder l'exemple en placeholder
+visuel » : un correctif qui les effacerait aurait réparé l'accessibilité **en abîmant
+l'utilisabilité**.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
