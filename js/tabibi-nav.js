@@ -85,9 +85,17 @@
     // taper.
     { id: 'search',  icon: 'fa-search',           i18n: 'nav_docs',    href: 'accueil-public.html#name-search' },
     { id: 'carte',   icon: 'fa-map-location-dot', i18n: 'nav_map',     href: '#carte' },
-    { id: 'rdv',     icon: 'fa-calendar-check',   i18n: 'nav_rdv',     href: '#' },
+    // ⚠️ [18/09/2026] CES DEUX ENTREES DECLARAIENT `href: '#'`.
+    // Elles n'etaient pas mortes — `tabClick` a une branche dediee — mais le
+    // `'#'` ne disait RIEN a qui lit le fichier, et il ne dit rien non plus au
+    // remappage du bundle desktop (`safeHref`), qui travaille sur des chemins.
+    // Une cible declaree est une cible qu'on peut verifier.
+    { id: 'rdv',     icon: 'fa-calendar-check',   i18n: 'nav_rdv',     href: 'mes-rdv.html' },
     { id: 'spec',    icon: 'fa-stethoscope',      i18n: 'nav_spec',    href: 'accueil-public.html#sec-spec' },
-    { id: 'profile', icon: 'fa-user',             i18n: 'nav_profile', href: '#' }
+    // `login.html` est le defaut DECLARE : c'est la destination d'un visiteur.
+    // Un utilisateur connecte est aiguille vers SON espace a l'execution, par
+    // `_espaceDeLUtilisateur()` — un href statique ne peut pas connaitre le role.
+    { id: 'profile', icon: 'fa-user',             i18n: 'nav_profile', href: 'login.html' }
   ];
 
   function initTabBar(active) {
@@ -112,6 +120,38 @@
       href = s;
     }
     window.location.href = href;
+  }
+
+  /**
+   * Ou mene « Profil » — et pourquoi ce n'etait pas `login.html`.
+   *
+   * ⚠️ LE DEFAUT : le repli envoyait vers `login.html` SANS REGARDER LA
+   * SESSION. Sur l'accueil, `window.isLogged` / `window.goDash` existent (ils
+   * viennent de `js/home-app.js`) et le bon ecran s'ouvrait. **Partout
+   * ailleurs** — mes-rdv, reservation, dawini, notifications — ces hooks
+   * n'existent pas : un patient DEJA CONNECTE qui touchait « Profil »
+   * atterrissait sur l'ecran de connexion.
+   *
+   * ⚠️ LA TABLE DES ESPACES EXISTE DEJA : `TABIBI_CONFIG.REDIRECTS`, celle
+   * qu'utilise `auth.js` apres une connexion. On la lit au lieu d'ecrire une
+   * seconde liste role -> page, qui divergerait au premier role ajoute.
+   *
+   * ⚠️ ET LA SESSION SE LIT COMME AILLEURS : `tabibi_user` dans
+   * `localStorage` — meme source que `loadUser()` (home-app) et
+   * `_peutRevendiquer()` (doctor-profile). La vraie session est verifiee par
+   * la page d'arrivee ; ici on choisit une DESTINATION, pas un droit.
+   */
+  function _espaceDeLUtilisateur() {
+    var red = (window.TABIBI_CONFIG && window.TABIBI_CONFIG.REDIRECTS) || {};
+    var connexion = red.notLoggedIn || 'login.html';
+    var u = null;
+    // `catch` sans liaison : le cliquet de dette compte les `e` inutilises,
+    // et il a raison — il en a attrape un ici, ajoute par ce lot meme.
+    try { u = JSON.parse(localStorage.getItem('tabibi_user') || 'null'); } catch { u = null; }
+    if (!u || !u.id) return connexion;
+    var role = String(u.role || '').toLowerCase();
+    if (role === 'médecin') role = 'medecin';
+    return red[role] || connexion;
   }
 
   function tabClick(id, href) {
@@ -160,7 +200,8 @@
         }
         if (typeof window.goDash === 'function') { window.goDash(); return; }
       }
-      go((id === 'rdv') ? 'mes-rdv.html' : 'login.html');
+      // `rdv` a une seule destination ; `profile` depend de qui regarde.
+      go((id === 'rdv') ? (href || 'mes-rdv.html') : _espaceDeLUtilisateur());
       return;
     }
     if (href && href.indexOf('#') > -1) {
