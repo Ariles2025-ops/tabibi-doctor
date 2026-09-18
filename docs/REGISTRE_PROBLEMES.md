@@ -2049,6 +2049,62 @@ d'authentification l'emporte réellement (mesuré sur le corps de la requête).
 **La recette Safari reste à faire à la main** (P-31). Une garde hermétique ne peut pas prouver
 qu'un tiers, coupé par construction, se comporte bien.
 
+## P-115 — « Changer la photo » ouvrait une boîte de dialogue de démonstration
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-115 | Le bouton appareil photo posé sur l'avatar de `patient-profile.html` ouvrait une `alert()` : « Choisissez une image (**à brancher avec un input file dans la version production**) » | `changeAvatar()` (l.634) était un bouchon de démonstration, jamais remplacé | le bouton est **désactivé** (`disabled`, `aria-disabled`, libellé « — bientôt disponible ») et `changeAvatar()` **supprimée** | `tests/e2e/avatar-bouton-mort.spec.js` — 5 essais × 2 cibles | **réglé** |
+
+Le message disait à l'utilisateur, en toutes lettres, qu'il n'était pas en production. **Un bouton
+qui annonce une action et n'en fait aucune use la confiance aussi sûrement qu'un faux succès.**
+
+### ⚠️ Désactivé, pas supprimé — et ce n'est pas de la prudence, c'est une mesure
+
+Le composant d'upload **existe et est déjà chargé par cette page** (`js/tabibi-avatar.js`, l.6) :
+redimensionnement 400 × 400, centre-crop, envoi vers le bucket `avatars`, mise à jour de
+`users.photo_url`, suppression de l'ancien fichier. **Et le chemin serveur est complet** — lu en
+base le 18/09 :
+
+```
+bucket `avatars`        public · 5 Mo · image/jpeg, image/png, image/webp
+avatars_user_upload     INSERT  auth.uid()::text = storage.foldername(name)[1]
+avatars_user_update     UPDATE  idem
+avatars_user_delete     DELETE  idem
+avatars_public_read     SELECT  bucket_id = 'avatars'
+```
+
+et le composant écrit bien dans `<userId>/avatar-<timestamp>.jpg` — exactement la forme que les
+policies exigent.
+
+**Il ne manque que l'appel.** Le bouton n'appelait pas `TabibiAvatar.init({ allowUpload: true })` ;
+il appelait un `alert()`. Supprimer le bouton effacerait la piste, le laisser « actif »
+continuerait le mensonge : il est **désactivé et visible**, et la garde interdit les deux dérives —
+un essai vire rouge s'il est réactivé, un autre s'il est supprimé.
+
+### Pourquoi je n'ai pas branché l'upload dans ce lot
+
+Le SEQ le met explicitement hors périmètre. Et surtout : **je ne peux pas prouver un envoi réel
+ici.** `_hermetique` coupe le réseau, il n'y a pas de Storage à écrire, et la règle 5 interdit de
+valider un chemin qu'on n'a pas mesuré. Ce que j'ai mesuré — le composant, le bucket, les quatre
+policies, la forme du chemin — est **dans le registre** pour que le lot suivant tienne en quelques
+lignes.
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on remet | résultat |
+|---|---|
+| le fichier d'origine | **3 rouges** / 2 verts |
+| le bouton **supprimé** au lieu d'être désactivé | **3 rouges** |
+| le bouton **réactivé** (`disabled` retiré) | **1 rouge** |
+
+### Reste
+
+`ios/App/App/public/patient-profile.html:487` et
+`android/app/src/main/assets/public/patient-profile.html:487` portent la **même** fonction de
+démonstration. Ce sont des copies produites par `npx cap sync` : elles se régénèrent depuis la
+source et n'ont pas été éditées à la main ici. **Elles resteront fausses jusqu'au prochain
+`cap sync`.**
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

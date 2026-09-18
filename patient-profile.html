@@ -51,7 +51,18 @@
   <div style="background:linear-gradient(135deg,#0a4d3e,#0F7560,#1a8a73);padding:24px 16px 28px;color:#fff;text-align:center;position:relative">
     <div style="position:relative;width:88px;height:88px;margin:0 auto 12px">
       <div id="ava" style="width:88px;height:88px;border-radius:50%;background:#fff;color:#0F7560;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:4px solid rgba(255,255,255,.3)">?</div>
-      <button onclick="changeAvatar()" style="position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;border:3px solid #fff;font-size:12px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center" aria-label="Changer la photo"><i class="fa fa-camera"></i></button>
+      <!-- ⚠️ [18/09/2026] CE BOUTON NE FAISAIT RIEN — il ouvrait une `alert()` :
+           « Choisissez une image (a brancher avec un input file dans la version
+           production) ». Un bouton qui annonce une action et n'en fait aucune
+           use la confiance aussi surement qu'un faux succes.
+
+           DESACTIVE, PAS SUPPRIME. Le composant d'upload EXISTE et est deja
+           charge par cette page (`js/tabibi-avatar.js`, l.6) : il redimensionne
+           a 400x400, envoie vers le bucket `avatars` et met a jour
+           `users.photo_url`. Le supprimer effacerait la piste ; le laisser
+           « actif » continuerait le mensonge. Voir le RETOUR du SEQ 88 pour ce
+           qu'il manque exactement. -->
+      <button type="button" disabled aria-disabled="true" style="position:absolute;bottom:-2px;right:-2px;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;border:3px solid #fff;font-size:12px;cursor:not-allowed;opacity:.55;padding:0;display:flex;align-items:center;justify-content:center" title="Bientôt disponible" aria-label="Changer la photo — bientôt disponible"><i class="fa fa-camera" aria-hidden="true"></i></button>
     </div>
     <h2 id="pname" style="font-size:20px;font-weight:800;margin:0">--</h2>
     <p id="pemail" style="opacity:.85;font-size:13px;margin-top:2px;margin-bottom:0">--</p>
@@ -631,7 +642,10 @@ function viewSessions(){
   // [SEC 2026-07-09] plus de sessions INVENTÉES : fonctionnalité honnêtement absente
   toastM(tabibiT('pp_sessions_soon',"Gestion des sessions bientôt disponible."),"info");
 }
-function changeAvatar(){alert(tabibiT('alert_change_avatar_demo',"Choisissez une image (à brancher avec un input file dans la version production)"));}
+/* ⚠️ `changeAvatar()` est SUPPRIMEE. Elle ne faisait qu'une `alert()` de
+   demonstration. Une fonction morte laissee en place finit rappelee par
+   quelqu'un qui croit qu'elle marche — c'est ce qui est arrive ici : le bouton
+   de la couverture l'appelait depuis des mois. */
 function exportData(format){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   const rdvs=JSON.parse(localStorage.getItem("tabibi_rdv")||"[]");
