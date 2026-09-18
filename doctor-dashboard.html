@@ -783,7 +783,7 @@ function renderToday(){
         ${window.tabibiStatutRdv.decrire(r.status).peut("marquerTermine")?`<button class="btn btn-soft btn-sm" onclick="markDone('${_eJs(r.id)}')"><i class="fa fa-check-double"></i> ${tabibiT('dd_mark_done','Marquer terminé')}</button>
             <button class="btn btn-ghost btn-sm" style="color:var(--text2)" onclick="markNoShow('${_eJs(r.id)}')"><i class="fa fa-user-slash"></i> ${tabibiT('dd_mark_noshow','Absent')}</button>`:""}
         ${r.patientPhone?`<a class="btn btn-ghost btn-sm" href="tel:${encodeURIComponent(r.patientPhone)}" style="text-decoration:none"><i class="fa fa-phone"></i> ${tabibiT('dd_call','Appeler')}</a>`:""}
-        <button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${_eJs(r.id)}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>
+        ${r.patientEmail?`<button class="btn btn-ghost btn-sm" onclick="contactPatientByEmail('${_eJs(r.id)}')"><i class="fa fa-envelope"></i> ${tabibiT('dd_email','Email')}</button>`:""}
         <button class="btn btn-ghost btn-sm" onclick="alert(tabibiT('label_patient_colon','Patient : ')+'${_eJs(r.patientName)}\\n'+tabibiT('label_reason_colon','Motif : ')+'${_eJs(r.motif)}\\n'+tabibiT('label_duration_colon','Durée : ')+'${_eJs(r.duree||30)} '+tabibiT('label_min_unit','min'))"><i class="fa fa-eye"></i> ${tabibiT('dd_details','Détails')}</button>
       </div>
     </div>`).join("");
@@ -866,8 +866,33 @@ function contactPatientByEmail(rdvId){
     doctorName + '\n' +
     '(Envoyé via Tabibi — tabibi.doctor)'
   );
-  // Le médecin ouvrira son client mail et complètera le destinataire
-  window.location.href = 'mailto:?subject=' + subject + '&body=' + body;
+  // ══════════════════════════════════════════════════════════════════
+  // [18/09/2026] UN `mailto:` SANS DESTINATAIRE N'EST PAS UN RACCOURCI
+  // ══════════════════════════════════════════════════════════════════
+  // Cette ligne ouvrait `mailto:?subject=…` — champ « À » VIDE. Le commentaire
+  // d'origine disait « le medecin completera le destinataire » : il ne le peut
+  // pas. Il n'a pas l'adresse, et l'application non plus.
+  //
+  // ⚠️ MESURE EN BASE LE 18/09, et c'est elle qui tranche : la vue
+  // `doctor_patients_directory` — la SEULE source de patients accessible a un
+  // medecin, la RLS de `public.users` ne lui montrant que sa propre ligne —
+  // expose exactement :
+  //
+  //     id · first_name · last_name · phone
+  //
+  // PAS D'E-MAIL. Ce n'est pas « pas encore charge » : ce n'est pas expose.
+  // Le bouton est donc masque tant que `r.patientEmail` n'existe pas, comme le
+  // bouton « Appeler » l'est deja sur `r.patientPhone` — meme forme, meme
+  // regle. Le jour ou la vue exposera l'adresse, le bouton revient tout seul.
+  //
+  // ⚠️ ON NE VA PAS CHERCHER L'ADRESSE AILLEURS. Ce serait une question de
+  // droits (RLS), pas d'affichage — hors de ce lot, et supervisee.
+  if (!r.patientEmail) {
+    if (window.console && console.warn) console.warn('[dd] contact e-mail sans adresse : bouton masque');
+    return;
+  }
+  window.location.href = 'mailto:' + encodeURIComponent(r.patientEmail)
+    + '?subject=' + subject + '&body=' + body;
 }
 
 async function updateRdvStatusInSupabase(sbId, status){

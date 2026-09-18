@@ -1923,6 +1923,39 @@ par épingles est vide **parce que la donnée n'existe pas**, et c'est ce qu'ell
 jour où des coordonnées arrivent, les épingles reviennent sans qu'on retouche le code — un essai
 avec un médecin géolocalisé le vérifie déjà.
 
+## P-107 — « Contacter par e-mail » ouvrait un mail sans destinataire
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-107 | Sur le tableau de bord médecin, « Email » ouvrait le client mail avec le champ **« À » vide** (`doctor-dashboard.html:870`, `mailto:?subject=…`). Le commentaire d'origine disait « le médecin complétera le destinataire » — **il ne le peut pas** | lu en base le 18/09 : `doctor_patients_directory` — la **seule** source de patients accessible à un médecin, la RLS de `public.users` ne lui montrant que sa propre ligne — expose `id · first_name · last_name · phone`. **Pas d'e-mail** | le bouton suit la donnée, comme « Appeler » suit `r.patientPhone` ; et la fonction refuse d'ouvrir un `mailto:` sans destinataire | `tests/e2e/mailto-sans-destinataire.spec.js` — 5 essais × 2 cibles. Contre-épreuves : bouton inconditionnel + mailto vide → **4 rouges** ; bouton « Appeler » masqué aussi → **2 rouges** | **réglé** |
+
+### Ce n'est pas « pas encore chargé » : ce n'est pas exposé
+
+La distinction décide du correctif. Une donnée absente **du chargement** se corrige en la
+chargeant ; une donnée absente **de la vue** ne se corrige pas côté front — c'est une question de
+droits, donc **supervisée**, et hors de ce lot. Le bouton est masqué, pas contourné.
+
+### La forme du correctif existait déjà dans le fichier
+
+Le bouton « Appeler » est rendu **conditionnellement** sur `r.patientPhone`. « Email » suit
+désormais la même règle sur `r.patientEmail`. **Le jour où la vue exposera l'adresse, le bouton
+revient sans qu'on retouche le code** — un essai le vérifie en posant un rendez-vous avec e-mail.
+
+⚠️ Et le bouton « Appeler » est **gardé explicitement** : le téléphone, lui, **est** exposé. Un
+« masquons les boutons de contact » l'aurait emporté — la contre-épreuve sort **2 rouges**.
+
+### ⚠️ Deux fois où mon essai mesurait autre chose que son sujet
+
+1. **La date.** `renderToday()` filtre sur `r.date === tabibiTemps.aujourdhui()` (fuseau du
+   cabinet). Mon rendez-vous était daté « dans deux jours » : il ne s'affichait nulle part, et
+   l'essai cherchait un bouton dans une liste vide — **rouge avec ou sans le correctif**.
+2. **L'interception de `mailto:`.** J'ai essayé de capturer la navigation en redéfinissant
+   `location.href` : « Cannot redefine property: href ». `mailto:` ne produit par ailleurs aucune
+   requête réseau. **Il n'y a aucun moyen honnête d'observer cette navigation depuis la page.**
+   L'essai vérifie donc ce qu'il peut — le bouton revient quand l'adresse existe — et le
+   **destinataire réel est vérifié à la source**, dans un second essai. Deux moitiés, deux essais,
+   plutôt qu'un seul qui prétendrait mesurer ce qu'il ne voit pas.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
