@@ -1888,6 +1888,41 @@ redirige un médecin **avant** que la barre du bas existe. Il échouait à l'ouv
 du câblage qu'il garde. Les cas « médecin » et « visiteur » passent désormais par
 `notifications.html`, qui accepte tout rôle connecté.
 
+## P-106 — 75 035 épingles sans coordonnées, et une carte qui casse à la première
+
+| ID | symptôme | preuve mesurée | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-106 | La couche « épingles par médecin » de la carte construisait `L.marker([null, null])`. Leaflet jette (« Invalid LatLng object ») **depuis un `forEach`** : le rendu entier s'interrompt, le compteur n'est jamais mis à jour, et sur un clic de filtre (`_tbMapFilter`) rien ne rattrape le jet | lu en base le 18/09 : `doctor_profiles` → **75 035 lignes, 0 avec GPS, 75 035 sans**. Pas « presque aucune » : **aucune** | `_tbEstCoord()` + un `.filter()` avant `L.marker` (`js/home-app.js:868` et `:875`) | `tests/e2e/carte-wilaya.spec.js` — 7 essais × 2 cibles. Contre-épreuves : garde retirée → **4 rouges** ; médecins sans GPS posés au centre du pays → **6 rouges** ; bulles coupées → **12 rouges** | **réglé** |
+
+### ⚠️ On IGNORE, on ne REMPLACE pas
+
+Poser ces médecins au centre de leur wilaya — ou du pays — **inventerait une adresse**. La carte
+dirait « ce médecin est **ici** » alors que personne ne le sait. C'est la famille de P-64 (quatre
+praticiens inventés en vitrine), en plus difficile à repérer : un point sur une carte ne ressemble
+pas à un mensonge.
+
+La contre-épreuve l'éprouve explicitement : « réparer » en posant les sans-GPS à `[28.4, 2.8]` sort
+**6 rouges**.
+
+### La vue voulue ne dépend d'aucun GPS
+
+Les **bulles par wilaya** (`_tbRenderBubbles`, `DZ_WILAYAS` + `stats_publiques.par_wilaya`) disent
+une chose vraie — « environ N médecins dans cette région » — et **n'ont jamais eu besoin de
+coordonnées individuelles**. Ce lot n'y touche pas ; les couper sort **12 rouges**.
+
+### `Number.isFinite`, et pas `!= null`
+
+`Number.isFinite('36.75')` est **faux**, et c'est voulu : on n'accepte pas une coordonnée dont il
+faudrait deviner le type. Le jour où la base renverra des chaînes, la carte n'affichera **aucune**
+épingle — au lieu d'en inventer ou de jeter. Un essai couvre ce cas.
+
+### Ce que ce lot NE fait PAS
+
+Aucun géocodage, aucune écriture en base. **Les 75 035 fiches restent sans coordonnées** : la carte
+par épingles est vide **parce que la donnée n'existe pas**, et c'est ce qu'elle doit montrer. Le
+jour où des coordonnées arrivent, les épingles reviennent sans qu'on retouche le code — un essai
+avec un médecin géolocalisé le vérifie déjà.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
