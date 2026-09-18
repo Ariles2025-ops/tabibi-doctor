@@ -19,6 +19,13 @@
 <link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
   .notif-shell { padding: 14px 16px; max-width: 480px; margin: 0 auto; }
+  /* ⚠️ [18/09/2026] CE 480 px NE GAGNE PLUS, et il ne faut PAS ajouter
+     de surcharge ici. `.page.page-large` (specificite 0,2,0) bat
+     `.notif-shell` (0,1,0) sur le meme element, quel que soit l'ordre des
+     feuilles. J'avais d'abord ajoute un `@media` de plus : ma
+     contre-epreuve l'a retire et TOUT EST RESTE VERT — c'etait du code
+     mort qui avait l'air d'une garde. Le 480 px reste utile en dessous
+     de 1024, ou `page-large` ne s'applique pas. */
   .notif-card { background:#fff; border-radius: var(--r12); padding: 14px; margin-bottom: 10px; display:flex; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
   .notif-card.unread { border-inline-start: 3px solid var(--blue); }
   .notif-card .ico { width: 40px; height: 40px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 16px; flex-shrink: 0; }
@@ -42,7 +49,7 @@
   <div data-langbar></div>
 </header>
 
-<main class="page notif-shell" role="main">
+<main class="page page-large notif-shell" role="main">
 
   <!-- Disclaimer feature flag OFF -->
   <div class="notif-disclaimer" data-feature-not="notifications">

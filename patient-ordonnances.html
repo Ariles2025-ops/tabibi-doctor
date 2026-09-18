@@ -32,6 +32,11 @@
   .lang-btn.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
 
   .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px; }
+  /* ⚠️ [18/09/2026] Cette page n'a PAS de `.page` : elle pose son propre
+     conteneur. Le `page-large` partage ne l'aurait donc jamais touchee —
+     verifie, pas suppose. 880 px est deja lisible ; on l'ouvre au meme
+     niveau que les autres espaces sur grand ecran. */
+  @media (min-width: 1024px) { .wrap { max-width: 1100px; } }
 
   .header-card { background: linear-gradient(135deg, var(--color-primary) 0%, var(--brand-green-900) 100%);
                  color: #fff; padding: 26px 24px; border-radius: var(--r16); margin-bottom: 22px; box-shadow: var(--shadow-primary); }

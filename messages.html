@@ -19,6 +19,13 @@
 <link rel="stylesheet" href="css/tabibi-ui.css">
 <style>
   .msg-shell { padding: 14px 16px; max-width: 480px; margin: 0 auto; }
+  /* ⚠️ [18/09/2026] CE 480 px NE GAGNE PLUS, et il ne faut PAS ajouter
+     de surcharge ici. `.page.page-large` (specificite 0,2,0) bat
+     `.msg-shell` (0,1,0) sur le meme element, quel que soit l'ordre des
+     feuilles. J'avais d'abord ajoute un `@media` de plus : ma
+     contre-epreuve l'a retire et TOUT EST RESTE VERT — c'etait du code
+     mort qui avait l'air d'une garde. Le 480 px reste utile en dessous
+     de 1024, ou `page-large` ne s'applique pas. */
   .conv-card { display:flex; gap:12px; align-items:center; background:#fff; border-radius: var(--r12); padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,.06); text-decoration:none; color:inherit; }
   .conv-card.unread { border-left: 3px solid var(--blue); }
   .conv-card .ava { width:42px; height:42px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; background:#e7f3ef; color:#0a4d3e; }
@@ -43,7 +50,7 @@
   <div data-langbar></div>
 </header>
 
-<main class="page msg-shell" role="main">
+<main class="page page-large msg-shell" role="main">
 
   <!-- Disclaimer feature flag OFF -->
   <div class="msg-disclaimer" data-feature-not="messaging">

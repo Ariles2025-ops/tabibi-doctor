@@ -1796,6 +1796,57 @@ Le badge « Fiche non revendiquée » reste donc pour tout le monde : c'est vrai
 patient pourquoi il ne peut pas réserver. Seule la **carte d'appel** est réservée. Un essai garde
 cette moitié-là ; masquer le bloc entier sort **2 rouges**.
 
+## P-104 — les espaces connectés tenaient dans un couloir de 760 px
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-104 | Sur un écran de bureau, les tableaux de bord (patient, médecin, mes RDV, notifications, ordonnances…) s'affichaient dans une colonne étroite, avec du vide de part et d'autre | `styles/app.css:415`, `@media (min-width:1024px)` : `.page { max-width: 760px }`, alors que le shell `.app-root` fait déjà **1100 px** (1240 au-delà de 1440). Signalé en live par Aghiles | **opt-in** `class="page page-large"` sur 12 pages espace + `.page.page-large { max-width: none }` ; `patient-ordonnances.html` ouvre son propre `.wrap` (880 → 1100) | `tests/e2e/largeur-espaces.spec.js` — 10 essais × 2 cibles, **largeurs mesurées** à 1280 px et 390 px. Contre-épreuves : règle retirée → **8 rouges** ; `.page` élargi pour tous → **2 rouges** | **réglé** |
+
+### La règle de 760 px est VOLONTAIRE — on ne l'a pas supprimée
+
+Elle date du 08/07 : « fin du mobile étiré, colonne de lecture centrée ». Elle a **raison** pour de
+la prose — une confirmation, une page légale, un tunnel de réservation. Elle a **tort** pour un
+tableau de bord.
+
+D'où un **opt-in** plutôt qu'un élargissement global : `success.html`, `verify-email.html` et les
+pages légales gardent leur colonne. Un essai le vérifie explicitement — élargir `.page` pour tout
+le monde sort **2 rouges**.
+
+Et `max-width: none` plutôt qu'une valeur en dur : la largeur reste bornée par `.app-root`.
+**Deux caps qui se suivent, c'est un cap qui finit par diverger de l'autre.**
+
+### ⚠️ Ma contre-épreuve a trouvé du code mort dans mon propre correctif
+
+`messages.html` et `notifications.html` posent leur propre `max-width: 480px`. J'avais donc ajouté
+une surcharge `@media (min-width:1024px)` dans chacune… et **la contre-épreuve l'a retirée sans
+qu'aucun essai ne tombe**.
+
+Explication, vérifiée par la mesure : `.page.page-large` (**0,2,0**) bat `.notif-shell` (**0,1,0**)
+sur le **même élément**, quel que soit l'ordre des feuilles. Mes deux surcharges ne servaient à
+rien — **du code mort qui avait l'air d'une garde**. Retirées. Le 480 px reste utile en dessous de
+1024, où `page-large` ne s'applique pas.
+
+C'est le cousin exact de P-88 (spécificité égale, ordre qui tranche), pris par le bon bout cette
+fois : ici la spécificité **n'est pas** égale, et c'est ce qui rend la surcharge inutile.
+
+### Trois pages n'avaient pas la même structure — vérifié, pas supposé
+
+| page | conteneur | traitement |
+|---|---|---|
+| 12 pages espace | `.page` | classe `page-large` |
+| `messages` · `notifications` | `.page` **+** `.msg-shell` / `.notif-shell` | la classe suffit (spécificité) |
+| `patient-ordonnances` | **`.wrap` seul, aucun `.page`** | surcharge propre, 880 → 1100 |
+
+Une garde qui n'aurait mesuré que `patient-dashboard` aurait laissé les trois dernières dans le
+couloir.
+
+### Ce que la garde ne mesure pas, et pourquoi
+
+`messages.html` est derrière un **drapeau éteint** (`tabibi-features.js:93`, `messaging: false`) :
+la page se redirige avant de se dessiner, aucune largeur n'y est mesurable. Son cap est donc
+vérifié **à la source**, et l'essai le dit. Le jour où le drapeau s'allume, la ligne se déplace
+dans la liste mesurée.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
