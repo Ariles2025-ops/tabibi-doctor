@@ -413,6 +413,28 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
              défaut sur TOUTES les pages. Les pages à layout desktop dédié (index,
              dawini, dawini-pharmacie) neutralisent via leur CSS inline. */
           max-width: 760px; margin-inline: auto; }
+  /* ══════════════════════════════════════════════════════════════════
+     [18/09/2026] LES ESPACES CONNECTÉS SORTENT DE LA COLONNE DE LECTURE
+     ══════════════════════════════════════════════════════════════════
+     La règle `.page { max-width: 760px }` juste au-dessus est VOLONTAIRE et
+     reste le défaut : 760 px, c'est une colonne de lecture: la bonne largeur
+     pour de la prose (confirmations, pages légales, tunnels).
+
+     Elle est fausse pour un TABLEAU DE BORD. Sur un écran de bureau, un
+     patient voyait ses rendez-vous dans un couloir de 760 px avec du vide de
+     part et d'autre, alors que le shell `.app-root` fait déjà 1100 px
+     (1240 au-delà de 1440). Signalé en live par Aghiles.
+
+     ⚠️ OPT-IN, PAS GLOBAL. Élargir `.page` pour tout le monde étirerait aussi
+     `success.html`, `verify-email.html` ou les pages légales — où la colonne
+     étroite est ce qu'on veut. Les pages « espace » se déclarent avec
+     `class="page page-large"` ; les autres ne bougent pas d'un pixel.
+
+     `max-width: none` et pas une valeur en dur : la largeur reste bornée par
+     `.app-root` (1100/1240), déjà centré. Deux caps qui se suivent, c'est un
+     cap qui finit par diverger de l'autre. */
+  .page.page-large { max-width: none; margin-inline: 0; }
+
   /* largeur de travail confortable : le contenu remplit le shell centré (fini la colonne 480) */
   .container { max-width: none; padding-left: clamp(20px,3vw,40px); padding-right: clamp(20px,3vw,40px); }
   .tab-bar, .install-banner { max-width: 1100px; }
