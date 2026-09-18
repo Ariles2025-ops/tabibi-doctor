@@ -1847,6 +1847,47 @@ la page se redirige avant de se dessiner, aucune largeur n'y est mesurable. Son 
 vérifié **à la source**, et l'essai le dit. Le jour où le drapeau s'allume, la ligne se déplace
 dans la liste mesurée.
 
+## P-105 — « Profil » renvoyait un utilisateur CONNECTÉ vers l'écran de connexion
+
+| ID | symptôme annoncé | ce qui a été mesuré | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-105 | « les entrées `rdv` et `profile` de la barre du bas ont `href:'#'` → **boutons morts** » | **à moitié faux, et le vrai défaut est pire.** `tabClick` a une branche dédiée qui n'utilise jamais leur `href` : « Mes RDV » marchait. Mais le repli envoyait vers `login.html` **sans regarder la session** — un patient **déjà connecté** atterrissait sur l'écran de connexion, **partout sauf sur l'accueil** | `_espaceDeLUtilisateur()` lit `tabibi_user` et **`TABIBI_CONFIG.REDIRECTS`** ; les deux entrées déclarent enfin une cible (`js/tabibi-nav.js:92`, `:99`, `:129`) | `tests/e2e/nav-rdv-profil.spec.js` — 6 essais × 2 cibles. Contre-épreuves : repli d'origine → **4 rouges** ; table recopiée en dur → **4 rouges** ; `href:'#'` remis → **4 rouges** | **réglé** |
+
+### Pourquoi ça ne se voyait que hors de l'accueil
+
+```js
+if (typeof window.isLogged === 'function') { … }   // n'existe QUE sur l'accueil
+go((id === 'rdv') ? 'mes-rdv.html' : 'login.html');
+```
+
+`window.isLogged` et `window.goDash` viennent de **`js/home-app.js`**, chargé par l'accueil **et par
+lui seul**. Sur l'accueil, le bon écran s'ouvrait ; sur mes-rdv, réservation, dawini ou
+notifications, **le repli s'appliquait et ignorait la session**.
+
+**Un défaut qui ne se produit pas là où on le teste survit longtemps.** C'est le même mécanisme que
+P-91 : la garde de la loupe s'ouvrait sur l'accueil, donc ne traversait jamais le repli.
+
+### On lit la table des espaces, on ne la recopie pas
+
+`TABIBI_CONFIG.REDIRECTS` associe déjà chaque rôle à son espace — c'est la table qu'`auth.js`
+utilise après une connexion. Écrire « patient → tableau de bord, sinon connexion » aurait laissé un
+**médecin connecté** devant l'écran de connexion, et aurait divergé au premier rôle ajouté. Un essai
+interdit explicitement de recopier un `*-dashboard.html` dans la barre : le faire sort **4 rouges**.
+
+### Les `href: '#'` sont quand même corrigés
+
+Ils n'étaient pas la cause, mais ils ne disaient rien — ni à qui lit le fichier, ni au remappage du
+bundle desktop (`safeHref`), qui travaille sur des **chemins**. `rdv` déclare `mes-rdv.html`,
+`profile` déclare `login.html` (la destination d'un visiteur ; un connecté est aiguillé à
+l'exécution, un `href` statique ne peut pas connaître le rôle).
+
+### ⚠️ Un essai qui échouait pour une raison étrangère à son sujet
+
+Mon essai « médecin » ouvrait `mes-rdv.html` — qui appelle `requireAuth('patient')` (l.658) et
+redirige un médecin **avant** que la barre du bas existe. Il échouait à l'ouverture, sans rien dire
+du câblage qu'il garde. Les cas « médecin » et « visiteur » passent désormais par
+`notifications.html`, qui accepte tout rôle connecté.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |
