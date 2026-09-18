@@ -1763,6 +1763,39 @@ la bonne ligne : **8 rouges**.
 `patient-ordonnances.html:267` et `:283` lisaient **déjà** `prescriptions` (chemins du PDF). Le
 défaut ne concernait que `load()` — vérifié, et **aucune ligne modifiée** ailleurs.
 
+## P-103 — « Vous êtes ce médecin ? » proposé à un patient connecté
+
+| ID | symptôme | preuve | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-103 | Sur la fiche publique **et** dans la modale de l'accueil, l'appel « Vous êtes ce médecin ? Revendiquez cette fiche » s'affichait à **n'importe qui**, patient connecté compris — sur la fiche du praticien qu'il venait peut-être de consulter | trouvé en live par Aghiles. Aucune condition de rôle n'existait : `doctor-profile.html` ne lisait la session que pour le bouton de réservation (l.705), la modale pas du tout | l'appel n'est montré qu'au **visiteur non connecté** et au **médecin** ; `doctor-profile.html:253` + `:637`, `js/home-app.js:449` + `:1405` | `tests/e2e/revendication-role.spec.js` — 10 essais × 2 cibles. Contre-épreuves : condition retirée → **4 rouges** ; normalisation du rôle retirée → **4 rouges** ; bloc entier masqué au patient → **2 rouges** | **réglé** |
+
+### La condition est celle que les pages lisent déjà
+
+`tabibi_user` dans `localStorage` — comme `_refreshReserveBtnState` (`doctor-profile.html`) et
+`loadUser()` (`js/home-app.js`). **On ne branche pas une seconde source de vérité pour une question
+d'affichage** : `reservation.html` reste l'endroit où la vraie session est vérifiée, au moment
+d'agir.
+
+### ⚠️ Les trois écritures du rôle
+
+`js/auth.js` normalise `doctor`, `médecin` et `medecin` vers la même valeur. Comparer à la seule
+chaîne « medecin » masquerait l'appel à un médecin dont le profil dit « **doctor** » —
+**exactement la personne qu'on veut atteindre**. La garde éprouve les trois : retirer la
+normalisation sort **4 rouges**.
+
+### ⚠️ Ce qui reste visible pour tout le monde — et pourquoi j'ai dû le corriger
+
+Ma première version conditionnait **tout le bloc**. Elle mentait : un patient sur une fiche **non
+revendiquée** serait tombé dans la branche `else`, celle du badge **vert** « Fiche revendiquée par
+le médecin ».
+
+**On aurait masqué une proposition absurde en la remplaçant par une information fausse** — et qui
+contredit le bouton de réservation désactivé juste à côté. Nettement pire que le défaut d'origine.
+
+Le badge « Fiche non revendiquée » reste donc pour tout le monde : c'est vrai, et ça explique au
+patient pourquoi il ne peut pas réserver. Seule la **carte d'appel** est réservée. Un essai garde
+cette moitié-là ; masquer le bloc entier sort **2 rouges**.
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

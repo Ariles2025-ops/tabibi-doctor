@@ -433,6 +433,27 @@ function isLogged()  { return !!user; }
 function getRole()   { return user?.role || null; }
 
 /**
+ * Qui a le droit de voir « Vous etes ce medecin ? ».
+ *
+ * ⚠️ [18/09/2026] Ce lien s'affichait AUSSI a un patient connecte. Un patient
+ * ne sera jamais « ce medecin » : on lui proposait une action qui n'a aucun
+ * sens pour lui, sur la fiche du praticien qu'il vient de consulter.
+ *
+ * ⚠️ LES ROLES SONT NORMALISES. `js/auth.js` accepte `doctor`, `médecin` et
+ * `medecin` pour la meme personne. Comparer a la seule chaine « medecin »
+ * masquerait le lien a un medecin dont le profil dit « doctor ».
+ *
+ * Le visiteur NON CONNECTE le voit : c'est lui qu'on veut atteindre — un
+ * medecin qui tombe sur sa propre fiche depuis une recherche.
+ */
+function peutRevendiquer() {
+  if (!isLogged()) return true;
+  let role = String(getRole() || '').toLowerCase();
+  if (role === 'doctor' || role === 'médecin') role = 'medecin';
+  return role === 'medecin';
+}
+
+/**
  * LOGIN — OBSOLÈTE (v10)
  * L'authentification se fait via Supabase Auth dans login.html.
  * Cette fonction est conservée comme stub pour compatibilité.
@@ -1381,7 +1402,7 @@ function showDoctorModal(d){
           ${_reservable
             ? `<button class="btn btn-primary btn-full btn-xl" onclick="bookDoc('${d.id}');this.closest('.modal-bg').remove();document.body.style.overflow=''"><i class='fa fa-calendar-plus'></i> ${T("rdv")}</button>`
             : `<button class="btn btn-full btn-xl" id="cta-indispo" disabled aria-disabled="true" style="opacity:.55;cursor:not-allowed"><i class='fa fa-calendar-xmark'></i> ${hEsc(_enValidation ? T("cta_validation_pending") : T("cta_booking_unavailable"))}</button>
-               ${_enValidation ? `` : `<a href="doctor-profile.html?id=${encodeURIComponent(d.id)}" id="cta-revendiquer" rel="nofollow" class="btn btn-full" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:#fff;color:var(--text2);font-weight:700"><i class='fa fa-id-card'></i> ${hEsc(T("cta_claim_this"))}</a>`}`}
+               ${(_enValidation || !peutRevendiquer()) ? `` : `<a href="doctor-profile.html?id=${encodeURIComponent(d.id)}" id="cta-revendiquer" rel="nofollow" class="btn btn-full" style="margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);background:#fff;color:var(--text2);font-weight:700"><i class='fa fa-id-card'></i> ${hEsc(T("cta_claim_this"))}</a>`}`}
           <div style="height:20px"></div>
         </div>
       </div>
