@@ -2049,6 +2049,72 @@ d'authentification l'emporte réellement (mesuré sur le corps de la requête).
 **La recette Safari reste à faire à la main** (P-31). Une garde hermétique ne peut pas prouver
 qu'un tiers, coupé par construction, se comporte bien.
 
+## P-114 — « 2FA activée — vos connexions sont sécurisées » : faux à deux niveaux
+
+| ID | symptôme | cause | correctif | garde | statut |
+|---|---|---|---|---|---|
+| P-114 a | `medecin-profile.html` faisait tout le parcours TOTP — QR code, validation du code, dix codes de secours — puis affichait « **2FA activée — vos connexions sont sécurisées** » | `save2FAToProfile()` écrivait le secret **en clair** dans `localStorage` (`u._totp_secret_temp`) avec un `// TODO Edge Function`. Le secret ne quittait jamais le navigateur | état honnête « en préparation » pour tout le monde, levier **désactivé** avec la pastille « BIENTÔT », et refus en tête de `open2FASetup()` | `tests/e2e/2fa-honnete.spec.js` — 7 essais × 2 cibles | **réglé (niveau A)** |
+| P-114 b | `medecin-profile.html:377` annonçait « 2FA obligatoire (recommandé) · **SMS de vérification à chaque connexion** », interrupteur **allumé d'usine** | `toggleSwitch()` bascule une classe CSS ; `saveAll()` range la valeur dans `u.settings` — du `localStorage` que **rien ne lit**. Aucun SMS n'est envoyé | l'interrupteur est retiré au profit d'une pastille « BIENTÔT » et d'une description honnête, traduite fr/ar/en | même fichier | **réglé** |
+
+### ⚠️ Le second défaut est le pire, et il n'était pas dans le rapport
+
+**Aucune vérification TOTP à la connexion.** Relevé le 18/09 : ni `login.html`, ni `js/auth.js` ne
+demandent de code. **Même persisté côté serveur, ce secret n'aurait rien protégé** — personne ne
+l'aurait jamais demandé.
+
+La promesse était donc fausse à **deux** niveaux : le secret n'allait nulle part, et il n'aurait
+servi à rien s'il y était allé.
+
+### Ce qui existe déjà en base, et qui ne suffit pas
+
+Lu le 18/09 :
+
+```
+enroll_two_factor(p_secret_b32 text, p_recovery_codes text[]) → jsonb   SECURITY DEFINER
+disable_two_factor()                                          → jsonb   SECURITY DEFINER
+two_factor_secrets    12 colonnes · RLS active · policy tfs_select_self · 0 ligne
+```
+
+**La persistance est à portée de main.** Ce lot ne la branche pas, volontairement : le brancher
+sans la vérification à la connexion produirait la **même promesse fausse**, simplement rangée plus
+proprement. Le niveau B reste supervisé — il touche l'authentification.
+
+### Un faux positif de sécurité est pire qu'une absence de sécurité
+
+Il fait baisser la garde de quelqu'un qui croyait s'être protégé. Même famille que « Email
+envoyé » sans envoi (P-28) et « Profil sauvegardé ! » après un échec
+([P-95](#p-95--profil-sauvegardé--en-vert-juste-après-sauvegarde-échouée)) — sauf qu'ici, le
+mensonge porte sur **l'accès aux dossiers de patients**, et qu'il était **allumé d'usine**.
+
+### ⚠️ Et on le dit à ceux qui avaient « activé »
+
+Se contenter de changer l'écran aurait laissé les anciens « activés » avec un secret en clair dans
+leur navigateur et l'idée d'être protégés. **Le taire serait continuer le mensonge sous une autre
+forme.** L'écran leur dit que cette activation n'a jamais rien protégé, et propose d'effacer les
+traces locales — un bouton, pas une purge silencieuse.
+
+### Deux verrous, pas un
+
+Le bouton est `disabled` **et** `open2FASetup()` refuse en tête. Un `disabled` se retire depuis la
+console, et la fonction est globale. Le reste du parcours est **conservé tel quel** : il est
+correct, il lui manque son serveur — le supprimer ferait disparaître la 2FA de la feuille de route,
+et un essai de contre-épreuve l'interdit (`le levier a été supprimé au lieu d'être désactivé`).
+
+### Les contre-épreuves — mesurées
+
+| ce qu'on remet | résultat |
+|---|---|
+| le fichier d'origine | **5 rouges** / 2 verts |
+| le refus retiré de `open2FASetup` (bouton `disabled` seul) | **1 rouge** |
+| le levier **supprimé** au lieu d'être désactivé | **2 rouges** |
+
+### Ce qui reste — et c'est le vrai sujet
+
+| | |
+|---|---|
+| **niveau B, supervisé** | brancher `enroll_two_factor` / `disable_two_factor`, **et** ajouter la demande du code TOTP à la connexion. Sans le second, le premier ne change rien |
+| `patient-profile.html:218` | porte le **même** interrupteur `sec_2fa` décoratif (« Code de vérification par SMS »), éteint par défaut. Hors périmètre de ce SEQ, isolé à `medecin-profile.html` — **à traiter** |
+
 ## Ouverts — aucune garde, et c'est le sujet
 
 | ID | symptôme | preuve | correctif | garde | statut |

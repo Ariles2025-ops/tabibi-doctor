@@ -374,7 +374,16 @@
       <div class="sec-title-bar"><i style="background:#e0e7ff;color:#4338ca"><i class="fa fa-lock"></i></i>
         <div><div class="lbl" data-i18n="mp_sec_title">Sécurité du compte</div><div class="desc" data-i18n="mp_sec_sub">Protection professionnelle</div></div></div>
       <button class="btn btn-ghost btn-full" style="justify-content:flex-start;margin-bottom:8px" onclick="changePassword()"><i class="fa fa-key"></i> <span data-i18n="mp_change_password">Changer le mot de passe</span></button>
-      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_2fa_required">2FA obligatoire (recommandé)</div><div class="desc" data-i18n="mp_2fa_required_d">SMS de vérification à chaque connexion</div></div><div class="toggle-switch on" data-key="sec_2fa" onclick="toggleSwitch(this)"></div></div>
+      <!-- ⚠️ [18/09/2026] CET INTERRUPTEUR ETAIT SUR « ON » PAR DEFAUT et annoncait
+           « SMS de verification a chaque connexion ». Il n'envoie aucun SMS : il
+           bascule une classe CSS, et `saveAll()` range la valeur dans
+           `u.settings` — du `localStorage`. Aucune connexion ne le lit.
+
+           C'etait le faux positif de securite le plus visible de la page : un
+           medecin lisait « obligatoire » et « a chaque connexion » sur un
+           reglage allume d'usine. Desactive et eteint, avec la pastille
+           « BIENTOT », tant que la verification n'existe pas. -->
+      <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_2fa_required">2FA obligatoire (recommandé)</div><div class="desc" data-i18n="mp_2fa_required_d">Pas encore active : aucun code n'est demandé à la connexion</div></div><span style="font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800" data-i18n="mp_2fa_soon_badge">BIENTÔT</span></div>
       <div class="row-setting"><div class="info"><div class="name" data-i18n="mp_autolock">Verrouillage automatique</div><div class="desc" data-i18n="mp_autolock_d">Après 15 min d'inactivité</div></div><div class="toggle-switch on" data-key="sec_lock" onclick="toggleSwitch(this)"></div></div>
     </div>
 
@@ -383,7 +392,19 @@
       <div class="sec-title-bar" style="border-bottom-color:#e7f3ef"><i style="background:#0E5F46;color:#fff"><i class="fa fa-shield-halved"></i></i>
         <div><div class="lbl" style="color:#0a4d3e" data-i18n="mp_sec_title">Sécurité du compte</div><div class="desc" data-i18n="mp_2fa_sub">Double authentification (2FA)</div></div></div>
       <div id="twofa-status" style="margin-bottom:12px"></div>
-      <button id="twofa-toggle-btn" class="btn btn-primary btn-full" onclick="open2FASetup()"><i class="fa fa-lock"></i> <span data-i18n="mp_config_2fa">Configurer la 2FA</span></button>
+      <!-- ⚠️ [18/09/2026] BOUTON DESACTIVE, ET CE N'EST PAS UN OUBLI.
+           Le parcours d'activation existait et marchait — mais il n'ecrivait le
+           secret TOTP et les codes de secours QUE dans `localStorage`, puis
+           affichait « 2FA activee — vos connexions sont securisees ».
+
+           Mesure du 18/09 : AUCUNE verification TOTP a la connexion. Ni dans
+           `login.html`, ni dans `js/auth.js`. Meme persistee cote serveur, une
+           2FA que personne ne verifie ne protege rien.
+
+           Meme convention que `patient-profile.html` pour un levier non branche :
+           desactive, `aria-disabled`, pastille « BIENTOT ». Un bouton qui ne
+           fait rien doit avoir l'air de ne rien faire. -->
+      <button id="twofa-toggle-btn" class="btn btn-ghost btn-full" disabled aria-disabled="true" style="justify-content:flex-start;opacity:.55;cursor:not-allowed" title="Bientôt disponible"><i class="fa fa-lock"></i> <span data-i18n="mp_config_2fa">Configurer la 2FA</span> <span style="margin-inline-start:auto;font-size:10px;background:#F4EEE2;color:#8A6A1F;border-radius:999px;padding:2px 8px;font-weight:800" data-i18n="mp_2fa_soon_badge">BIENTÔT</span></button>
     </div>
 
     <!-- MODAL 2FA -->
@@ -740,31 +761,127 @@ async function loadProfile(){
 function toggleSwitch(el){el.classList.toggle("on");}
 
 // ─── 2FA TOTP ─────────────────────────────────────────────────────
+/* ══════════════════════════════════════════════════════════════════
+   [18/09/2026] « 2FA ACTIVÉE — VOS CONNEXIONS SONT SÉCURISÉES » : FAUX
+   ══════════════════════════════════════════════════════════════════
+   Ce qui se passait réellement à l'activation (`save2FAToProfile`) :
+
+       u._totp_secret_temp = _2faSecret;   // secret TOTP, EN CLAIR
+       u._totp_backup_hashes = hashes;
+       localStorage.setItem("tabibi_user", …);
+       // TODO Edge Function : envoyer à Supabase
+
+   Le secret ne quittait jamais le navigateur. Vider les données du site,
+   changer d'appareil, ouvrir une fenêtre privée : la « 2FA » disparaissait.
+
+   ⚠️ ET LE PIRE N'EST PAS LÀ. Mesure du 18/09 : **aucune vérification TOTP
+   à la connexion** — ni `login.html`, ni `js/auth.js` ne demandent de code.
+   Même persistée côté serveur, une 2FA que personne ne vérifie ne protège
+   rien. Le message promettait une protection qui n'existait à AUCUN niveau.
+
+   **Un faux positif de sécurité est pire qu'une absence de sécurité** : il
+   fait baisser la garde de quelqu'un qui croyait s'être protégé. C'est la
+   même famille que « Email envoyé » sans envoi (P-28) et « Profil
+   sauvegardé ! » après un échec (P-95) — sauf qu'ici, le mensonge porte sur
+   l'accès aux dossiers de patients.
+
+   ⚠️ CE QUI EXISTE DÉJÀ EN BASE, ET QUI NE SUFFIT PAS (lu le 18/09) :
+       enroll_two_factor(p_secret_b32 text, p_recovery_codes text[]) → jsonb
+       disable_two_factor() → jsonb          (SECURITY DEFINER, authenticated)
+       two_factor_secrets   12 colonnes, RLS active, 0 ligne
+   La persistance est donc à portée — mais elle ne rendrait pas la 2FA vraie
+   tant que la connexion ne demande pas de code. Le branchement complet est
+   SUPERVISÉ (il touche l'authentification) : voir le RETOUR.
+   ══════════════════════════════════════════════════════════════════ */
+
+/** Un panneau d'information, construit SANS innerHTML (compteur P-84). */
+function _panneau2FA(fond, encre, icone, titre, corps){
+  const bloc = document.createElement("div");
+  bloc.style.cssText = "background:" + fond + ";color:" + encre +
+    ";padding:12px 14px;border-radius:10px;font-size:13px;line-height:1.5";
+  const t = document.createElement("div");
+  t.style.cssText = "font-weight:700;margin-bottom:4px";
+  const ic = document.createElement("i");
+  ic.className = "fa " + icone;
+  ic.setAttribute("aria-hidden", "true");
+  t.appendChild(ic);
+  t.appendChild(document.createTextNode(" " + titre));
+  const c = document.createElement("div");
+  c.textContent = corps;
+  bloc.appendChild(t);
+  bloc.appendChild(c);
+  return bloc;
+}
+
 function render2FAStatus(){
-  const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
-  const enabled = u.totp_enabled === true;
   const statusEl = document.getElementById("twofa-status");
   const btn = document.getElementById("twofa-toggle-btn");
-  if (!statusEl || !btn) return;
-  if (enabled) {
-    statusEl.innerHTML = '<div style="background:#f0fdf4;color:#065f46;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600"><i class="fa fa-circle-check"></i> 2FA activée — vos connexions sont sécurisées</div>';
-    btn.innerHTML = '<i class="fa fa-circle-xmark"></i> Désactiver la 2FA';
-    btn.className = 'btn btn-ghost btn-full';
-    btn.style.color = 'var(--red)';
-    btn.onclick = disable2FA;
-  } else {
-    statusEl.innerHTML = '<div style="background:#fef3c7;color:#92400e;padding:10px 14px;border-radius:10px;font-size:13px"><i class="fa fa-warning"></i> 2FA non activée. Recommandé pour protéger les données de vos patients.</div>';
-    btn.innerHTML = '<i class="fa fa-lock"></i> Configurer la 2FA';
-    btn.className = 'btn btn-primary btn-full';
-    btn.style.color = '';
-    btn.onclick = open2FASetup;
-  }
+  if (!statusEl) return;
+
+  // ⚠️ L'ÉTAT EST LE MÊME POUR TOUT LE MONDE. Il ne dépend plus de
+  // `u.totp_enabled` : cette valeur ne décrivait qu'un drapeau local, et s'en
+  // servir pour afficher « sécurisé » est précisément le défaut corrigé ici.
+  statusEl.textContent = "";
+  statusEl.appendChild(_panneau2FA("#fef3c7", "#92400e", "fa-hourglass-half",
+    tabibiT("mp_2fa_soon_title", "Double authentification — en préparation"),
+    tabibiT("mp_2fa_soon_body",
+      "Aucun code ne vous est demandé à la connexion : la vérification côté serveur n'est pas encore en place. Nous l'activerons quand elle protégera réellement votre compte.")));
+
+  // Le levier reste désactivé même si quelqu'un le réactive depuis la console.
+  if (btn) { btn.disabled = true; btn.setAttribute("aria-disabled", "true"); btn.onclick = null; }
+
+  // ⚠️ ET ON LE DIT À CEUX QUI AVAIENT « ACTIVÉ ». Leur secret dort en clair
+  // dans ce navigateur et n'a jamais rien protégé : le taire serait continuer
+  // le mensonge sous une autre forme.
+  const u = JSON.parse(localStorage.getItem("tabibi_user") || "{}");
+  const traces = u.totp_enabled === true || !!u._totp_secret_temp || !!u._totp_backup_hashes;
+  if (!traces) return;
+
+  const alerte = _panneau2FA("#fee2e2", "#991b1b", "fa-triangle-exclamation",
+    tabibiT("mp_2fa_local_title", "Une activation faite ici n'a jamais protégé votre compte"),
+    tabibiT("mp_2fa_local_body",
+      "Elle n'existait que dans ce navigateur, et aucun code n'était demandé à la connexion. Le secret y est encore stocké en clair : mieux vaut l'effacer."));
+  alerte.style.marginTop = "8px";
+  statusEl.appendChild(alerte);
+
+  const purge = document.createElement("button");
+  purge.type = "button";
+  purge.className = "btn btn-ghost btn-full";
+  purge.style.marginTop = "8px";
+  const ic = document.createElement("i");
+  ic.className = "fa fa-eraser";
+  ic.setAttribute("aria-hidden", "true");
+  purge.appendChild(ic);
+  purge.appendChild(document.createTextNode(" " +
+    tabibiT("mp_2fa_local_clear", "Effacer les traces locales")));
+  purge.addEventListener("click", purger2FALocale);
+  statusEl.appendChild(purge);
+}
+
+/** Retire du navigateur ce qui ne protégeait rien — et le dit. */
+function purger2FALocale(){
+  const u = JSON.parse(localStorage.getItem("tabibi_user") || "{}");
+  delete u.totp_enabled;
+  delete u._totp_secret_temp;
+  delete u._totp_backup_hashes;
+  localStorage.setItem("tabibi_user", JSON.stringify(u));
+  render2FAStatus();
+  toastM(tabibiT("toast_2fa_local_cleared", "Traces locales effacées"), "success");
 }
 
 let _2faSecret = null;
 let _2faBackupCodes = null;
 
 async function open2FASetup(){
+  // ⚠️ [18/09/2026] REFUS EN TÊTE, ET PAS SEULEMENT UN BOUTON DÉSACTIVÉ.
+  // Un `disabled` se retire depuis la console, et cette fonction est globale.
+  // Tant que la vérification à la connexion n'existe pas, ce parcours ne doit
+  // pas pouvoir aboutir : il écrirait un secret en clair dans le navigateur et
+  // annoncerait une protection inexistante. Le reste du parcours est
+  // CONSERVÉ tel quel — il est correct, il lui manque son serveur.
+  toastM(tabibiT("mp_2fa_soon_title", "Double authentification — en préparation"), "info");
+  return;
+  /* eslint-disable no-unreachable */
   if (!window.tabibi2FA) { toastM(tabibiT('toast_2fa_module_not_loaded',"Module 2FA non chargé"), "error"); return; }
   const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
   _2faSecret = window.tabibi2FA.generateSecret();
@@ -788,6 +905,7 @@ async function open2FASetup(){
   `;
   document.getElementById("twofa-modal").classList.remove("hidden");
   setTimeout(()=>document.getElementById("twofa-code-input")?.focus(),300);
+  /* eslint-enable no-unreachable */
 }
 
 async function verify2FACode(){
@@ -852,16 +970,10 @@ function close2FASetup(){
   _2faBackupCodes = null;
 }
 
-function disable2FA(){
-  if (!confirm(tabibiT('confirm_disable_2fa',"Désactiver la 2FA réduit la sécurité de votre compte. Continuer ?"))) return;
-  const u = JSON.parse(localStorage.getItem("tabibi_user")||"{}");
-  delete u.totp_enabled;
-  delete u._totp_secret_temp;
-  delete u._totp_backup_hashes;
-  localStorage.setItem("tabibi_user", JSON.stringify(u));
-  render2FAStatus();
-  toastM(tabibiT('toast_2fa_disabled','2FA désactivée'), 'info');
-}
+/* ⚠️ `disable2FA` a été remplacée par `purger2FALocale`, plus haut. L'ancienne
+   disait « 2FA désactivée » — ce qui laissait croire qu'elle avait été active.
+   Le nouveau nom dit ce qui se passe vraiment : on efface des traces locales
+   qui n'ont jamais rien protégé. */
 
 async function saveAll(){
   const u=JSON.parse(localStorage.getItem("tabibi_user")||"{}");
