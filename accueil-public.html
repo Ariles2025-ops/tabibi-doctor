@@ -447,20 +447,6 @@ input[type=range]::-webkit-slider-thumb{appearance:none;width:20px;height:20px;b
 .hero-search::placeholder{color:var(--text4)}
 .hero-si{position:absolute;left:19px;top:50%;transform:translateY(-50%);color:var(--blue);font-size:17px;pointer-events:none}
 [dir="rtl"] .hero-search{padding:16px 52px 16px 16px}
-/* [DOCTOLIB 2026] Barre de recherche à deux champs (charte Tabibi) */
-.dl-search{display:flex;gap:8px;background:#fff;border:1px solid var(--border);border-radius:var(--r16);padding:7px;box-shadow:var(--shadow-search);max-width:640px}
-.dl-field{flex:1;display:flex;align-items:center;gap:10px;padding:0 14px;height:54px;border-radius:var(--r12);min-width:0;transition:background var(--t1)}
-.dl-field:focus-within{background:var(--bg2)}
-.dl-field.dl-loc{flex:0 0 42%;border-inline-start:1px solid var(--border)}
-.dl-field .dl-ic{color:var(--blue);font-size:16px;flex:none}
-.dl-input{border:0!important;outline:0;background:transparent;font-family:inherit;font-size:15px;color:var(--text);width:100%;min-width:0;box-shadow:none!important;padding:0!important;height:auto}
-.dl-input::placeholder{color:var(--text4)}
-.dl-select{appearance:none;-webkit-appearance:none;cursor:pointer;color:var(--text)}
-.dl-go{flex:none;height:54px;padding:0 22px;border:0;border-radius:var(--r12);background:var(--ink);color:#fff;font-weight:700;font-size:14.5px;font-family:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:filter var(--t1),transform var(--t1)}
-.dl-go:hover{filter:brightness(1.18)}
-.dl-go:active{transform:scale(.97)}
-@media (max-width:560px){.dl-search{flex-direction:column}.dl-field.dl-loc{flex:1;border-inline-start:0;border-top:1px solid var(--border)}.dl-go{width:100%;justify-content:center;height:50px}}
-
 [dir="rtl"] .hero-si{left:auto;right:19px}
 .hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}
 
@@ -1083,16 +1069,9 @@ body.recherche-active [data-replier-recherche]{ display:none !important; }
       <div class="hero-badge"><span class="hero-dot" aria-hidden="true"></span><span id="hbadge">75 000+ médecins référencés en Algérie</span></div>
       <h1 class="hero-title" id="hero-t">Votre santé ne devrait jamais attendre.</h1>
       <p class="hero-sub" id="hero-s" data-i18n="hero_sub">Prenez rendez-vous avec un médecin partout en Algérie — 69 wilayas, 24h/24.</p>
-      <div class="hero-search-wrap dl-search">
-        <label class="dl-field">
-          <i class="fa fa-magnifying-glass dl-ic" aria-hidden="true"></i>
-          <input class="hero-search dl-input" type="search" id="name-search" data-i18n="s_ph" data-i18n-placeholder="ph_hero_search" placeholder="Nom, spécialité, établissement..." oninput="doFilter()" autocomplete="off" aria-label="ph_hero_search">
-        </label>
-        <label class="dl-field dl-loc">
-          <i class="fa fa-location-dot dl-ic" aria-hidden="true"></i>
-          <select class="dl-input dl-select" id="f-ville" aria-label="Filtrer par wilaya" onchange="doFilter()"><option value="" id="opt-allcities">Toutes les wilayas</option></select>
-        </label>
-        <button type="button" class="dl-go" onclick="doFilter(true);var d=document.getElementById('sec-docs');if(d)d.scrollIntoView({behavior:'smooth'})"><i class="fa fa-magnifying-glass" aria-hidden="true"></i> Rechercher</button>
+      <div class="hero-search-wrap">
+        <i class='hero-si fa fa-search' aria-hidden='true'></i>
+        <input class="hero-search" type="search" id="name-search" data-i18n="s_ph" data-i18n-placeholder="ph_hero_search" placeholder="Dr. Benali, Cardiologie, Alger..." oninput="doFilter()" autocomplete="off" aria-label="ph_hero_search">
       </div>
       <!-- [V4C 2026-07-08] Note paiement (design v4) -->
       <div class="v4-paynote"><i class="fa fa-credit-card" aria-hidden="true"></i> <span data-i18n="v4_pay">Paiement au cabinet — espèces ou carte Chifa. Aucun prépaiement en ligne.</span></div>
@@ -1232,8 +1211,9 @@ body.recherche-active [data-replier-recherche]{ display:none !important; }
 
   <!-- SEARCH FILTERS -->
   <div id="sec-search" style="padding:0 var(--gutter) 8px">
-    <div style="margin-bottom:8px">
-      <select class="form-control" id="f-spec" aria-label="Filtrer par spécialité" onchange="doFilter()" style="font-size:13px;width:100%"><option value="" id="opt-allspecs">Toutes les spécialités</option></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <select class="form-control" id="f-ville" aria-label="Filtrer par wilaya" onchange="doFilter()" style="font-size:13px"><option value="" id="opt-allcities">Toutes les wilayas</option></select>
+      <select class="form-control" id="f-spec" aria-label="Filtrer par spécialité" onchange="doFilter()" style="font-size:13px"><option value="" id="opt-allspecs">Toutes les spécialités</option></select>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end">
       <div>
