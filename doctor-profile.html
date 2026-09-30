@@ -28,7 +28,7 @@
 <meta name="twitter:description" content="Consultez le profil du médecin, sa spécialité, ses créneaux disponibles et prenez rendez-vous en ligne sur Tabibi. Service gratuit, médecins certifiés.">
 <meta name="twitter:image" content="https://tabibi.doctor/assets/og-image.jpg">
 <meta name="twitter:image:alt" content="Tabibi — Trouvez votre médecin en Algérie">
-<meta name="theme-color" content="#0E5F46">
+<meta name="theme-color" content="#0F7560">
 <link rel="manifest" href="manifest.json"><link rel="apple-touch-icon" href="images/icon-192.png">
 <meta name="tabibi-page-key" content="title_doctor_profile_long">
 <title>Profil médecin | Tabibi — RDV en ligne en Algérie</title>
@@ -61,11 +61,20 @@
   <!-- [i18n] sélecteur de langue factorisé → js/tabibi-langbar.js -->
   <div data-langbar></div>
 </header>
+<style id="pf-doctolib">
+@media(min-width:1024px){
+  main.page{max-width:920px;margin:0 auto;padding:0 24px 120px!important}
+  .pf-cover{border-radius:0 0 26px 26px;padding:34px 32px 40px!important}
+  .pf-cover #d-name{font-size:28px!important}
+  .pf-cover #d-ava{width:104px!important;height:104px!important;font-size:38px!important}
+  main.page .card{padding:22px!important}
+}
+</style>
 <main class="page" style="padding:0 0 90px">
   <!-- COVER -->
-  <div style="background:linear-gradient(135deg,#0a4d3e,#0E5F46);padding:24px 16px 30px;color:#fff;position:relative">
+  <div class="pf-cover" style="background:linear-gradient(135deg,#0a4d3e,#0F7560);padding:24px 16px 30px;color:#fff;position:relative">
     <div style="display:flex;gap:14px;align-items:center;margin-bottom:12px">
-      <div id="d-ava" style="width:88px;height:88px;border-radius:22px;background:#fff;color:#0E5F46;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:3px solid rgba(255,255,255,.4)">DR</div>
+      <div id="d-ava" style="width:88px;height:88px;border-radius:22px;background:#fff;color:#0F7560;display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:800;border:3px solid rgba(255,255,255,.4)">DR</div>
       <div style="flex:1;min-width:0">
         <div id="d-name" style="font-size:20px;font-weight:800">--</div>
         <div id="d-spec" style="font-size:13px;opacity:.85">--</div>
@@ -217,7 +226,7 @@ function isUuid(s){
 // [Phase 5.2.3-fix 2026-05-22] Utilise tabibiDoctorName.initials() (Unicode-safe).
 function _doctorAvatar(rowOrName){
   var bg = ['#e7f3ef','#e7f3ef','#fef3c7','#fff0f0','#ede9fe','#cffafe','#fce7f3','#e0e7ff'];
-  var tc = ['#0E5F46','#0a4d3e','#b45309','#b91c1c','#6d28d9','#0891b2','#be185d','#3730a3'];
+  var tc = ['#0F7560','#0a4d3e','#b45309','#b91c1c','#6d28d9','#0891b2','#be185d','#3730a3'];
   // Compat : accepte soit un profile {full_name, entity_type, ...} soit une string.
   var profile = (typeof rowOrName === 'object' && rowOrName) ? rowOrName : { full_name: String(rowOrName || '') };
   var hashKey = profile.full_name || profile.full_name_ar || 'Dr';
@@ -381,8 +390,8 @@ function _injectPhase13Sections(d){
     var feeTxt = (d.telehealthFee != null) ? (d.telehealthFee.toLocaleString() + ' DA') : _t('price_tbd', 'Tarif à confirmer');
     html += '<div class="card" style="padding:14px;margin-bottom:10px;background:linear-gradient(135deg,#f8fafc,#e7f3ef);border:1px solid #93c5fd">'
          +   '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">'
-         +     '<i class="fa fa-video" style="font-size:20px;color:#0E5F46"></i>'
-         +     '<div style="font-size:14px;font-weight:700;color:#0E5F46">' + _t('teleconsult_available', 'Téléconsultation disponible') + '</div>'
+         +     '<i class="fa fa-video" style="font-size:20px;color:#0F7560"></i>'
+         +     '<div style="font-size:14px;font-weight:700;color:#0F7560">' + _t('teleconsult_available', 'Téléconsultation disponible') + '</div>'
          +   '</div>'
          +   '<div style="font-size:13px;color:var(--text2)">' + _t('secure_video_consult', 'Consultation vidéo sécurisée') + ' — ' + esc(feeTxt) + '</div>'
          + '</div>';
@@ -390,7 +399,7 @@ function _injectPhase13Sections(d){
   // Moyens de paiement acceptés (toujours afficher si au moins un)
   var pmBadges = [];
   if (d.acceptsCash)  pmBadges.push('<span class="badge" style="background:#fef3c7;color:#92400e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-money-bill-wave fa-xs"></i> ' + _t('badge_cash','Espèces') + '</span>');
-  if (d.acceptsCard)  pmBadges.push('<span class="badge" style="background:#e7f3ef;color:#0E5F46;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-credit-card fa-xs"></i> ' + _t('badge_card','Carte') + '</span>');
+  if (d.acceptsCard)  pmBadges.push('<span class="badge" style="background:#e7f3ef;color:#0F7560;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-credit-card fa-xs"></i> ' + _t('badge_card','Carte') + '</span>');
   if (d.acceptsChifa) pmBadges.push('<span class="badge" style="background:#e7f3ef;color:#0a4d3e;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;display:inline-flex;align-items:center;gap:5px;margin:2px"><i class="fa fa-id-card fa-xs"></i> ' + _t('badge_chifa','Chifa') + '</span>');
   if (pmBadges.length) {
     html += '<div class="card" style="padding:14px;margin-bottom:10px">'
@@ -467,7 +476,7 @@ async function loadDoc(){
     } else {
       avaEl.textContent = d.in || '?';
       avaEl.style.background = d.bg || '#e7f3ef';
-      avaEl.style.color = d.tc || '#0E5F46';
+      avaEl.style.color = d.tc || '#0F7560';
     }
     document.getElementById("d-name").textContent = d.fr || 'Dr ?';
     document.getElementById("d-spec").innerHTML = '<i class="fa fa-stethoscope fa-xs"></i> ' + esc(d.spec || '') + ' &middot; ' + esc(d.ville || '');

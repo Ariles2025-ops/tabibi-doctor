@@ -373,6 +373,40 @@ function _resetCaptcha(key){
 }
 document.addEventListener("DOMContentLoaded", function(){ _ensureCaptcha("login"); });
 
+// ── [2026-09-30] Continuité mobile ↔ web ────────────────────────────────────
+// Un patient inscrit PAR E-MAIL sur l'app mobile arrive ici sur l'onglet
+// « Numéro » (défaut) et échoue s'il tape son e-mail dans le champ téléphone.
+// Le compte est bon (même projet Supabase, même auth.users) — c'est l'onglet
+// qui ne l'est pas. On lève la friction SANS toucher au design :
+//   (1) un « @ » saisi/collé dans le champ Numéro → bascule automatique vers
+//       l'écran E-mail, en y reportant la saisie ;
+//   (2) mémorisation du dernier mode et restauration au chargement.
+(function(){
+  var LS = "tabibi_login_mode";
+  function _remember(m){ try{ localStorage.setItem(LS, m); }catch(_){} }
+  document.addEventListener("DOMContentLoaded", function(){
+    var tel  = document.getElementById("lp-phone");
+    var mail = document.getElementById("le");
+    if (tel && mail){
+      tel.addEventListener("input", function(){
+        if (tel.value.indexOf("@") === -1) return;   // rien à faire pour un vrai numéro
+        var v = tel.value.trim();
+        tel.value = "";
+        loMode("email");                              // écran e-mail + focus (fonction existante)
+        mail.value = v;
+        try{ mail.setSelectionRange(v.length, v.length); }catch(_){}
+        _remember("email");
+      });
+    }
+    var bMail = document.getElementById("lo-mode-email");
+    var bTel  = document.getElementById("lo-mode-phone");
+    if (bMail) bMail.addEventListener("click", function(){ _remember("email"); });
+    if (bTel)  bTel.addEventListener("click", function(){ _remember("phone"); });
+    var m = null; try{ m = localStorage.getItem(LS); }catch(_){}
+    if (m === "email") loMode("email");               // téléphone reste le défaut
+  });
+})();
+
 // [DEBUG captcha ?debug=1] Suffixe de diagnostic : code Turnstile capturé
 // (js/tabibi-turnstile.js pose window.__ttErr), présence du token (tronqué,
 // jamais complet), et erreur GoTrue brute (status + code + message).
